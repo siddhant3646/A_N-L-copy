@@ -1,0 +1,377 @@
+{
+  "version": "1.0",
+  "description": "Question-Answer patterns for job application automation",
+  "platform_defaults": {
+    "naukri": {
+      "experience_years": "3.8 Years",
+      "experience_months": "46",
+      "numeric_only_experience": false
+    },
+    "linkedin": {
+      "experience_years": "4",
+      "experience_months": "46",
+      "numeric_only_experience": true
+    },
+    "instahyre": {
+      "experience_years": "3.8 Years",
+      "experience_months": "46",
+      "numeric_only_experience": false
+    }
+  },
+  "patterns": {
+    "experience": {
+      "patterns": [
+        "years of experience",
+        "months of experience",
+        "total experience",
+        "overall experience",
+        "year of exp",
+        "total exp",
+        "your total exp",
+        "what is your total exp",
+        "experience in your chosen engineering field",
+        "years of work experience do you have"
+      ],
+      "category": "experience",
+      "requires_context": true
+    },
+    "current_salary": {
+      "patterns": [
+        "current salary",
+        "current ctc",
+        "current annual ctc",
+        "monthly salary",
+        "current ctc in lakhs",
+        "current ctc in lpa",
+        "current ctc [in lpa]",
+        "ctc in lacs per annum",
+        "cctc",
+        "what is your cctc",
+        "your cctc"
+      ],
+      "category": "salary",
+      "default": "13.5 LPA",
+      "numeric_default": "13.5"
+    },
+    "expected_salary": {
+      "patterns": [
+        "expected salary",
+        "expected ctc",
+        "expected annual ctc",
+        "expected ctc in lakhs",
+        "expected ctc in lpa",
+        "expected ctc [in lpa]",
+        "ectc",
+        "what is your ectc",
+        "your ectc"
+      ],
+      "category": "salary",
+      "default": "20 LPA",
+      "numeric_default": "20"
+    },
+    "notice_period": {
+      "patterns": [
+        "notice period",
+        "serving notice",
+        "your np",
+        "what is your np",
+        "mention np"
+      ],
+      "category": "notice_period",
+      "default": "30 days",
+      "numeric_default": "30"
+    },
+    "location_current": {
+      "patterns": [
+        "current location",
+        "current city",
+        "currently located",
+        "where are you located",
+        "where do you stay",
+        "stay currently"
+      ],
+      "category": "location",
+      "default": "Noida"
+    },
+    "location_preferred": {
+      "patterns": [
+        "preferred location",
+        "preferred city",
+        "city preference",
+        "interview city"
+      ],
+      "category": "location",
+      "default": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune"
+    },
+    "contact_phone": {
+      "patterns": [
+        "phone number",
+        "mobile number",
+        "contact number"
+      ],
+      "category": "personal_info",
+      "default": "7905828880",
+      "sensitive": true
+    },
+    "contact_email": {
+      "patterns": [
+        "email address",
+        "email id"
+      ],
+      "category": "personal_info",
+      "default": "siddhant3646@gmail.com",
+      "sensitive": true
+    },
+    "skills_tech_stack": {
+      "patterns": [
+        "tech stack",
+        "major tech stack",
+        "tech-stack",
+        "worked upon",
+        "technologies worked"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis"
+    },
+    "skills_languages": {
+      "patterns": [
+        "programming languages",
+        "which python libraries",
+        "python libraries",
+        "python packages"
+      ],
+      "category": "skills",
+      "default": "Java, Python, JavaScript"
+    },
+    "proficiency_rating": {
+      "patterns": [
+        "rate proficiency",
+        "rate yourself",
+        "rate your proficiency",
+        "on a scale of 1-10",
+        "on a scale of 1 to 10",
+        "proficiency in"
+      ],
+      "category": "skills",
+      "default": "8"
+    },
+    "willing_relocate": {
+      "patterns": [
+        "willing to relocate",
+        "comfortable working in shift",
+        "shift timing",
+        "night shift",
+        "rotational shift",
+        "remote work",
+        "hybrid work"
+      ],
+      "category": "yes_no",
+      "default": "Yes"
+    },
+    "authorization": {
+      "patterns": [
+        "work authorization",
+        "legally authorized",
+        "background check",
+        "drug test"
+      ],
+      "category": "yes_no",
+      "default": "Yes"
+    },
+    "visa_sponsorship": {
+      "patterns": [
+        "visa sponsorship",
+        "require sponsorship"
+      ],
+      "category": "yes_no",
+      "default": "No"
+    },
+    "education_degree": {
+      "patterns": [
+        "degree",
+        "highest education",
+        "educational qualification"
+      ],
+      "category": "education",
+      "default": "B.Tech Computer Science"
+    },
+    "education_university": {
+      "patterns": [
+        "college name",
+        "university",
+        "graduation year"
+      ],
+      "category": "education",
+      "default": "VIT Bhopal University"
+    },
+    "education_cgpa": {
+      "patterns": [
+        "cgpa",
+        "percentage"
+      ],
+      "category": "education",
+      "default": "8.5"
+    },
+    "personal_dob": {
+      "patterns": [
+        "date of birth",
+        "dob",
+        "date of birth as per pan"
+      ],
+      "category": "personal_info",
+      "default": "17/12/2000",
+      "sensitive": true
+    },
+    "personal_pan": {
+      "patterns": [
+        "pan number",
+        "pan card number",
+        "pan card",
+        "mention your pan"
+      ],
+      "category": "personal_info",
+      "default": "MTKPS1941P",
+      "sensitive": true
+    },
+    "company_current": {
+      "patterns": [
+        "current employer",
+        "current company",
+        "payroll company",
+        "current payroll company"
+      ],
+      "category": "employment",
+      "default": "Fiserv"
+    },
+    "interview_availability": {
+      "patterns": [
+        "face to face interview",
+        "f2f interview",
+        "available for interview",
+        "interested for interview",
+        "virtual interview",
+        "telephonic interview",
+        "video interview"
+      ],
+      "category": "availability",
+      "default": "Yes"
+    },
+    "interview_slots": {
+      "patterns": [
+        "tentative dates",
+        "time slots",
+        "interview slot",
+        "interview availability",
+        "weekday interview",
+        "dates and time slots"
+      ],
+      "category": "availability",
+      "default": "Any slot available - flexible with dates and times on weekdays"
+    },
+    "assessment_availability": {
+      "patterns": [
+        "technical assessment",
+        "available to take a technical assessment",
+        "coding assessment",
+        "online assessment",
+        "available for assessment"
+      ],
+      "category": "availability",
+      "default": "Yes"
+    },
+    "contract_to_hire": {
+      "patterns": [
+        "contract to hire",
+        "c2h position",
+        "interested in c2h"
+      ],
+      "category": "yes_no",
+      "default": "Yes"
+    },
+    "job_change_reason": {
+      "patterns": [
+        "reason for job change",
+        "why job change",
+        "why are you looking",
+        "why switching",
+        "reason for leaving",
+        "reasons for your job change"
+      ],
+      "category": "preference",
+      "default": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals"
+    },
+    "preferred_role": {
+      "patterns": [
+        "preferred position",
+        "frontend/backend",
+        "frontend or backend",
+        "preferred role",
+        "which role"
+      ],
+      "category": "preference",
+      "default": "Backend"
+    },
+    "referral": {
+      "patterns": [
+        "referred for this position",
+        "referred by",
+        "employee referral",
+        "encouraged to apply"
+      ],
+      "category": "yes_no",
+      "default": "No"
+    }
+  },
+  "categories": {
+    "experience": {
+      "description": "Work experience related questions",
+      "smart_fallback": true,
+      "context_required": ["platform"]
+    },
+    "salary": {
+      "description": "CTC and compensation questions",
+      "smart_fallback": true
+    },
+    "notice_period": {
+      "description": "Notice period and availability",
+      "smart_fallback": true
+    },
+    "location": {
+      "description": "Location and relocation questions",
+      "smart_fallback": true
+    },
+    "skills": {
+      "description": "Technical skills and proficiency",
+      "smart_fallback": true
+    },
+    "yes_no": {
+      "description": "Binary yes/no questions",
+      "smart_fallback": true,
+      "default": "Yes"
+    },
+    "personal_info": {
+      "description": "Personal details (sensitive)",
+      "smart_fallback": false,
+      "requires_exact_match": true
+    },
+    "education": {
+      "description": "Education background",
+      "smart_fallback": true
+    },
+    "availability": {
+      "description": "Interview and assessment availability",
+      "smart_fallback": true
+    },
+    "preference": {
+      "description": "Job preferences",
+      "smart_fallback": true
+    }
+  },
+  "learning": {
+    "enabled": true,
+    "auto_learn_threshold": 0.8,
+    "user_confirmation": true,
+    "log_unknown": true,
+    "unknown_questions_log": "~/Desktop/sentinel_errors/unknown_questions.log"
+  }
+}

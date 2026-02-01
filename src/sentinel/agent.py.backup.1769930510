@@ -168,8 +168,6 @@ KNOWN_QA_PATTERNS = {
     'exp in kafka': 'Yes',
     'experience in kafka': 'Yes',
     # Location
-    'city': 'Noida',
-    'home address': 'Noida',
     'currently located': 'Noida',
     'where are you located': 'Noida',
     # On-site / Availability
@@ -1797,11 +1795,11 @@ class SentinelAgent:
                         
                         if 'LINKEDIN_SUCCESS' in next_result:
                             self.linkedin_applications += 1
-                            print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted!")
+                            print(f"🎉 LinkedIn Application {self.linkedin_applications}/6 Submitted!")
                             submit_attempt_count = 0  # Reset on success
                             
-                            if self.linkedin_applications >= 5:
-                                print("✅ LinkedIn target (5 applications) reached. Task complete!")
+                            if self.linkedin_applications >= 6:
+                                print("✅ LinkedIn target (6 applications) reached. Task complete!")
                                 self.state.task_complete = True
                                 break
                                 
@@ -2285,22 +2283,20 @@ class SentinelAgent:
                     print("✅ Checkbox clicked, trying Apply...")
                     await asyncio.sleep(random.uniform(4, 8))
                     # Try to click apply immediately with robust logic and 2s monitoring
-                    # NOTE: Using regular function expression for better Playwright compatibility
-                    apply_result = await self._page.evaluate("""function() {
+                    apply_result = await self._page.evaluate("""async () => {
                         const applyBtn = document.querySelector('.multi-apply-button');
                         if (applyBtn && applyBtn.offsetParent !== null) {
                             applyBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                            // NOTE: await removed - Python handles delays between evaluate calls
-
+                            await new Promise(r => setTimeout(r, 500));
+                            
                             applyBtn.click();
                             applyBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-
-                            // MONITOR: Check for error snackbar
-                            // NOTE: Loop-based await removed - single check only, Python handles polling
-                            for (let i = 0; i < 1; i++) {
-                                // NOTE: await new Promise removed - Python handles delays between evaluate calls
+                            
+                            // MONITOR: Check for error snackbar for up to 2 seconds
+                            for (let i = 0; i < 4; i++) {
+                                await new Promise(r => setTimeout(r, 500));
                                 // Target the exact structure found in DOM inspection
                                 const snackBody = document.querySelector('.ss-snackbar-body');
                                 if (snackBody && snackBody.offsetParent !== null) {
@@ -2536,7 +2532,7 @@ class SentinelAgent:
         for iteration in range(max_iterations):
             await asyncio.sleep(random.uniform(1.5, 3))
             
-            result = await self._page.evaluate(f"""async () => {{
+            result = await self._page.evaluate(f"""() => {{
                 const KNOWN_PATTERNS = {patterns_json};
                 
                 const fuzzyMatch = (question) => {{
@@ -2787,16 +2783,13 @@ class SentinelAgent:
         
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
-            # NOTE: This function must NOT use async/await - Playwright's evaluate handles timing via Python asyncio
-            # Using a function expression (wrapped in parens) - function statements require a name in JS
-            js_code = f"""(function() {{
+            js_code = f"""async () => {{
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = {patterns_json};
                 const MAX_RETRIES = 3;
                 
                 // 2. SHARED UTILS (Restored from Legacy)
-                // NOTE: sleep removed - use Python's asyncio.sleep() between evaluate calls instead
-                // const sleep = (ms) => new Promise(r => setTimeout(r, ms));  // REMOVED - causes SyntaxError
+                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
                 const isVisible = (elem) => !!(elem && (elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length));
 
                 // Fuzzy Matcher implementation
@@ -2833,17 +2826,6 @@ class SentinelAgent:
                 // LINKEDIN LOGIC (Restored)
                 // ============================================================
                 if (isLinkedIn) {{
-                    // FIRST: Check for city dropdown and select first option
-                    const cityDropdown = document.querySelector('[role="listbox"]');
-                    if (cityDropdown) {{
-                        const options = cityDropdown.querySelectorAll('[role="option"]');
-                        if (options.length > 0) {{
-                            // Click the first option
-                            options[0].click();
-                            return 'LINKEDIN_CITY_SELECTED';
-                        }}
-                    }}
-                    
                     // DEBUG: Log DOM structure for troubleshooting
                     console.log('=== LINKEDIN DOM DEBUG ===');
                     console.log('URL: ' + window.location.href);
@@ -2927,14 +2909,14 @@ class SentinelAgent:
                             if (continueBtn) {{
                                 console.log('LINKEDIN: Clicking "Continue applying" button');
                                 continueBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
+                                await new Promise(r => setTimeout(r, 2000));
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }} else if (allButtons.length > 0) {{
                                 // Fallback: click the LAST button (typically the primary action on right)
                                 console.log('LINKEDIN: Fallback - clicking LAST button (index ' + (allButtons.length - 1) + ')');
                                 const lastBtn = allButtons[allButtons.length - 1];
                                 lastBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
+                                await new Promise(r => setTimeout(r, 2000));
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }}
                         }}
@@ -2949,14 +2931,15 @@ class SentinelAgent:
                             const doneBtn = successModal.querySelector('button');
                             if (doneBtn && doneBtn.innerText.toLowerCase().includes('done')) {{
                                 doneBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
+                                // Wait for modal to fully dismiss and DOM to settle
+                                await new Promise(r => setTimeout(r, 1000));
                                 return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
                             }}
                             // Fallback: any button in success modal
                             const anyBtn = successModal.querySelector('button.artdeco-button--primary, button');
                             if (anyBtn) {{
                                 anyBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
+                                await new Promise(r => setTimeout(r, 1000));
                                 return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
                             }}
                         }}
@@ -2973,7 +2956,8 @@ class SentinelAgent:
                         const closeBtn = document.querySelector('button[aria-label="Dismiss"], button.artdeco-toast-item__dismiss');
                         if (closeBtn) closeBtn.click();
                         successDetected = true;
-                        // NOTE: await removed - Python handles delays between evaluate calls
+                        // Small wait to allow DOM to settle after dismissal
+                        await new Promise(r => setTimeout(r, 300));
                     }}
 
                     // NAVIGATION & SKIP LOGIC: Move to next job if current is applied or not Easy Apply
@@ -3002,7 +2986,8 @@ class SentinelAgent:
                     
                     // If we have a sidebar, try to navigate to next job if needed
                     if (sidebar) {{
-                        // NOTE: await removed - Python handles delays between evaluate calls
+                        // Wait for UI to settle
+                        await new Promise(r => setTimeout(r, 800));
                         
                         // Find all job cards - use the selector that works
                         const jobCards = Array.from(sidebar.querySelectorAll('li.scaffold-layout__list-item'));
@@ -3054,17 +3039,17 @@ class SentinelAgent:
                                     
                                     console.log('LINKEDIN: Clicking first unapplied job at index ' + i + ', ID=' + cardId);
                                     card.scrollIntoView({{ block: 'center' }});
-                                    // NOTE: await removed - Python handles delays between evaluate calls
+                                    await new Promise(r => setTimeout(r, 600));
                                     
                                     const link = card.querySelector('a');
                                     if (link) {{
                                         link.click();
-                                        // NOTE: await removed - Python handles delays between evaluate calls
+                                        await new Promise(r => setTimeout(r, 3000));
                                         return 'LINKEDIN_FIRST_JOB: Opened job ' + cardId;
                                     }}
                                     
                                     card.click();
-                                    // NOTE: await removed - Python handles delays between evaluate calls
+                                    await new Promise(r => setTimeout(r, 3000));
                                     return 'LINKEDIN_FIRST_JOB: Clicked job ' + cardId;
                                 }}
                                 console.log('LINKEDIN: All jobs appear to be applied');
@@ -3117,7 +3102,7 @@ class SentinelAgent:
                                     
                                     // Found unapplied job - navigate to it
                                     card.scrollIntoView({{ block: 'center' }});
-                                    // NOTE: await removed - Python handles delays between evaluate calls
+                                    await new Promise(r => setTimeout(r, 800));
                                     
                                     // Strategy 1: Try to find clickable link with href
                                     const link = card.querySelector('a');
@@ -3128,7 +3113,8 @@ class SentinelAgent:
                                         link.click();
                                         console.log('LINKEDIN: Clicked link for job ' + cardId);
                                         
-                                        // NOTE: await removed - Python handles delays between evaluate calls
+                                        // Wait for navigation
+                                        await new Promise(r => setTimeout(r, 3000));
                                         
                                         // Check if we navigated
                                         const newUrl = window.location.href;
@@ -3141,7 +3127,7 @@ class SentinelAgent:
                                     // Strategy 2: Click the card itself
                                     console.log('LINKEDIN: Trying card.click()');
                                     card.click();
-                                    // NOTE: await removed - Python handles delays between evaluate calls
+                                    await new Promise(r => setTimeout(r, 2000));
                                     return 'LINKEDIN_NAVIGATED: Clicked card ' + cardId;
                                 }}
                                 
@@ -3151,9 +3137,10 @@ class SentinelAgent:
                                 sidebar.scrollTop += 800;
                                 return 'LINKEDIN_SCROLLED: Looking for more jobs';
                             }}
-                        }} else {{
-                            console.log('LINKEDIN: Sidebar not found with any selector, continuing with apply flow');
                         }}
+                    }} else {{
+                        console.log('LINKEDIN: Sidebar not found with any selector, continuing with apply flow');
+                    }}
                     
                     // If success was detected but we didn't navigate to a new job above,
                     // it means we're still on the success page. Return success to trigger navigation.
@@ -3202,21 +3189,13 @@ class SentinelAgent:
                                 if (!textInput.value || textInput.value.trim() === '') {{
                                     // LinkedIn often requires whole numbers - detect and normalize
                                     const qLower = qText.toLowerCase();
-                                    const isNumericField = qLower.includes('number') ||
+                                    const isNumericField = qLower.includes('number') || 
                                                            qLower.includes('how many') ||
                                                            qLower.includes('experience') ||
                                                            qLower.includes('years') ||
-                                                           qLower.includes('notice') ||
-                                                           qLower.includes('period') ||
-                                                           qLower.includes('days') ||
-                                                           qLower.includes('ctc') ||
-                                                           qLower.includes('salary') ||
-                                                           qLower.includes('pay') ||
                                                            textInput.type === 'number';
                                     
-                                    // Only use default '4' for known experience fields, not for all numeric fields
-                                    const isExperienceField = qLower.includes('experience') || qLower.includes('years');
-                                    let value = answer || (isExperienceField ? '4' : '');
+                                    let value = answer || (isNumericField ? '4' : '');
                                     
                                     if (isNumericField && value) {{
                                         // Normalize: Strip "Years", "LPA", etc. and round if needed
@@ -3226,13 +3205,9 @@ class SentinelAgent:
                                             if (qLower.includes('experience') || qLower.includes('years')) {{
                                                 value = '4';
                                             }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay')) {{
-                                                // For salary fields, keep only digits and decimal.
+                                                // For salary fields, keep only digits and decimal. 
                                                 // e.g. "20 LPA" -> "20"
-                                                value = value.replace(/[^0-9.]/g, '');
-                                            }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
-                                                // For notice period, extract just the number
-                                                // e.g. "30 days" -> "30"
-                                                value = value.replace(/[^0-9.]/g, '');
+                                                value = value.replace(/[^0-9.]/g, ''); 
                                             }} else {{
                                                 // Otherwise just use the numeric part
                                                 value = numericValue.includes('.') ? Math.round(parseFloat(numericValue)).toString() : numericValue;
@@ -3241,22 +3216,6 @@ class SentinelAgent:
                                     }}
                                     
                                     finalAnswer = value;
-
-                                    // Check if this is a city/location typeahead field
-                                    const isCityTypeahead = textInput.getAttribute('role') === 'combobox' ||
-                                                           textInput.getAttribute('aria-autocomplete') === 'list' ||
-                                                           qLower.includes('city') ||
-                                                           qLower.includes('location');
-                                    
-                                    if (isCityTypeahead && value) {{
-                                        // For city typeaheads, type the value and return special code
-                                        textInput.focus();
-                                        textInput.value = value;
-                                        textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        // Don't blur - keep focus for dropdown to appear
-                                        return 'LINKEDIN_CITY_TYPED:' + value;
-                                    }}
 
                                     const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
                                     if (setter) setter.call(textInput, value);
@@ -3397,8 +3356,16 @@ class SentinelAgent:
                                 }}
                                 
                                 // Final fallback: click first option
-                                if (!clicked) {{
-                                    radios[0].click();
+                                if (!clicked) {{ 
+                                    radios[0].click(); 
+                                    const label = radios[0].parentElement?.innerText || radios[0].nextElementSibling?.innerText || radios[0].value || '';
+                                    selectedOption = label.trim();
+                                    finalAnswer = selectedOption;
+                                }}
+                            }}
+                            
+                                if (!clicked) {{ 
+                                    radios[0].click(); 
                                     const label = radios[0].parentElement?.innerText || radios[0].nextElementSibling?.innerText || radios[0].value || '';
                                     selectedOption = label.trim();
                                     finalAnswer = selectedOption;
@@ -3449,12 +3416,11 @@ class SentinelAgent:
                         return 'CLICKED_NEXT_OR_SUBMIT';
                     }}
                 }}
-            }}
-            
-            // ============================================================
-            // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
-            // ============================================================
-            if (isNaukri) {{
+                
+                // ============================================================
+                // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
+                // ============================================================
+                if (isNaukri) {{
                     const TARGET_JOBS = 5;
                     
                     // 0. Dismiss any feedback modals (non-blocking)
@@ -3462,16 +3428,16 @@ class SentinelAgent:
                         el => el.innerText && el.innerText.includes('Are these jobs relevant') && 
                               el.innerText.length < 1000 && el.offsetParent !== null
                     );
-                        if (feedbackSection) {{
+                    if (feedbackSection) {{
                         const yesBtn = feedbackSection.querySelector('button');
                         if (yesBtn && yesBtn.innerText.toLowerCase().includes('yes')) {{
                             yesBtn.click();
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            await new Promise(r => setTimeout(r, 500));
                         }} else {{
                             const anyBtn = feedbackSection.querySelector('button');
                             if (anyBtn) {{
                                 anyBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
+                                await new Promise(r => setTimeout(r, 500));
                             }}
                         }}
                         // No early return! Proceed with job application
@@ -3782,7 +3748,8 @@ class SentinelAgent:
                         // If we selected some jobs, click Apply with robustness
                         if (clickedCount > 0) {{
                             applyBtn.scrollIntoView({{ block: 'center', behavior: 'smooth' }});
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            // Extra wait for scroll
+                            await sleep(500);
                             
                             // Robust click sequence
                             applyBtn.click();
@@ -3790,10 +3757,9 @@ class SentinelAgent:
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                             applyBtn.dispatchEvent(new MouseEvent('click', {{ bubbles: true, cancelable: true, view: window }}));
                             
-                            // MONITOR: Check for error snackbar
-                            // NOTE: Loop-based await removed - single check only, Python handles polling
-                            for (let i = 0; i < 1; i++) {{
-                                // NOTE: await sleep(500) removed - Python handles delays between evaluate calls
+                            // MONITOR: Check for error snackbar for up to 2 seconds
+                            for (let i = 0; i < 4; i++) {{
+                                await sleep(500);
                                 const snackBody = document.querySelector('.ss-snackbar-body');
                                 if (snackBody && snackBody.offsetParent !== null) {{
                                     const text = snackBody.innerText.toLowerCase();
@@ -3817,17 +3783,16 @@ class SentinelAgent:
                         const alreadyChecked = document.querySelectorAll('i.naukicon-ot-Checked, .tuple-check-box i.checked, input[type="checkbox"]:checked').length;
                         if (alreadyChecked > 0) {{
                             applyBtn.scrollIntoView({{ block: 'center', behavior: 'smooth' }});
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            await sleep(500);
                             
                             applyBtn.click();
                             applyBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                             applyBtn.dispatchEvent(new MouseEvent('click', {{ bubbles: true, cancelable: true, view: window }}));
                             
-                            // MONITOR: Check for error snackbar
-                            // NOTE: Loop-based await removed - single check only, Python handles polling
-                            for (let i = 0; i < 1; i++) {{
-                                // NOTE: await sleep(500) removed - Python handles delays between evaluate calls
+                            // MONITOR: Check for error snackbar for up to 2 seconds
+                            for (let i = 0; i < 4; i++) {{
+                                await sleep(500);
                                 const snackBody = document.querySelector('.ss-snackbar-body');
                                 if (snackBody && snackBody.offsetParent !== null) {{
                                     const text = snackBody.innerText.toLowerCase();
@@ -4308,9 +4273,8 @@ class SentinelAgent:
                 }}
 
                 return 'NO_ACTION';
-            }})"""
+            }}"""
             
-            # Playwright automatically invokes the function expression
             result = await self._page.evaluate(js_code)
             return result
             

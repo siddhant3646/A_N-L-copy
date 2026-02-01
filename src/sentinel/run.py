@@ -24,11 +24,13 @@ class Browser:
 
         self.playwright = await async_playwright().start()
         args = [
-            '--no-sandbox', 
+            '--no-sandbox',
             '--disable-blink-features=AutomationControlled',
             '--start-maximized',
             '--disable-session-crashed-bubble',
-            '--no-restore-session-state'
+            '--no-restore-session-state',
+            '--ignore-certificate-errors',  # Fixes ERR_SSL_VERSION_OR_CIPHER_MISMATCH on some sites
+            '--ignore-ssl-errors'  # Additional SSL error suppression
         ]
         
         final_user_data_dir = self.user_data_dir

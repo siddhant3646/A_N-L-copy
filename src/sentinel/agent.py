@@ -3335,11 +3335,11 @@ class SentinelAgent:
                                      if (isNumericField && value) {{
                                          // Smart numeric field handling with proper defaults
                                          const numericValue = value.replace(/[^0-9.]/g, '');
-                                         if (numericValue) {{
-                                             if (qLower.includes('experience') || qLower.includes('years')) {{
-                                                 // Experience: Use correct value (3.8) instead of forcing 4
-                                                 value = '3.8';
-                                             }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
+                                          if (numericValue) {{
+                                              if (qLower.includes('experience') || qLower.includes('years')) {{
+                                                  // Experience: Use '4' for LinkedIn, '3.8' for other platforms
+                                                  value = isLinkedIn ? '4' : '3.8';
+                                              }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
                                                  // Salary: Extract the correct numeric value based on expected/current
                                                  if (qLower.includes('expected')) {{
                                                      value = '20';  // Expected salary
@@ -3423,6 +3423,9 @@ class SentinelAgent:
                                 if (select.selectedIndex <= 0) {{
                                     let matched = false;
                                     
+                                    // Smart location handling for dropdowns
+                                    const qTextLowerSelect = (qText || '').toLowerCase();
+                                    
                                     // Use smart matcher if we have an answer
                                     if (answer) {{
                                         // Check if this is a salary question
@@ -3452,9 +3455,6 @@ class SentinelAgent:
                                             matched = true;
                                         }}
                                     }}
-                                    
-                                    // Smart location handling for dropdowns
-                                    const qTextLowerSelect = (qText || '').toLowerCase();
                                     const isCurrentLocationQuestionSelect = qTextLowerSelect.includes('present location') || qTextLowerSelect.includes('current location') || 
                                                                       qTextLowerSelect.includes('live in') || qTextLowerSelect.includes('living in') || 
                                                                       qTextLowerSelect.includes('based in') || qTextLowerSelect.includes('located in') ||

@@ -3999,8 +3999,9 @@ class SentinelAgent:
                             const isCityQuestion = qTextLower.includes('city') || qTextLower.includes('relocate') || qTextLower.includes('location');
                             const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
                             
-                            for (const cb of allCheckboxes) {{
-                                // Find Label using mcc__label or standard methods
+                            // FIRST: Check if this is a binary Yes/No question
+                            // Build label map first for all checkboxes
+                            const checkboxLabels = allCheckboxes.map(cb => {{
                                 let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
                                 if (!label && cb.id) {{
                                     label = document.querySelector(`label[for="${{cb.id}}"]`);
@@ -4008,97 +4009,89 @@ class SentinelAgent:
                                 if (!label) {{
                                     label = cb.parentElement; 
                                 }}
-                                
                                 const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
-                                const lowerLabel = labelText.toLowerCase();
-
-                                debugLog.push("CB: " + labelText);
+                                return {{ cb, labelText, lowerLabel: labelText.toLowerCase() }};
+                            }});
+                            
+                            // Check if binary (exactly 2 checkboxes with Yes/No labels)
+                            const isBinaryYesNo = allCheckboxes.length === 2 && 
+                                checkboxLabels.every(({ lowerLabel }) => 
+                                    lowerLabel.includes('yes') || lowerLabel.includes('no')
+                                );
+                            
+                            if (isBinaryYesNo) {{
+                                // Find the Yes checkbox
+                                const yesCheckbox = checkboxLabels.find(({ lowerLabel }) => 
+                                    lowerLabel.includes('yes') && !lowerLabel.includes('not')
+                                );
                                 
-                                // Ignore job list checkboxes
-                                if (cb.closest('.naukicon-ot-checkbox')) continue;
-
-                                // ALWAYS ignore "Skip"
-                                if (lowerLabel.includes('skip')) continue;
-                                
-                                // If already checked, count but don't re-click
-                                if (cb.checked) {{
-                                    clickedCount++;
-                                    continue;
-                                }}
-
-                                // For city questions, prefer "Both" or "All" option first
-                                if (isCityQuestion) {{
-                                    if (lowerLabel.includes('both') || lowerLabel.includes('all')) {{
-                                        cb.click();
-                                        if (!cb.checked) {{
-                                            cb.checked = true;
-                                            cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        }}
-                                        // Click save and return immediately
-                                        const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                        if (saveBtn) {{ 
-                                            saveBtn.click(); 
-                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected Both/All locations'; 
-                                        }}
+                                if (yesCheckbox && !yesCheckbox.cb.checked) {{
+                                    yesCheckbox.cb.click();
+                                    if (!yesCheckbox.cb.checked) {{
+                                        yesCheckbox.cb.checked = true;
+                                        yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     }}
-                                    // Continue to select all cities
+                                    clickedCount = 1;
+                                    debugLog.push("CB: " + yesCheckbox.labelText);
+                                }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
                                 }}
-
-                                // For binary Yes/No questions, only select ONE appropriate option
-                                const isBinaryQuestion = allCheckboxes.length === 2 && 
-                                    allCheckboxes.every(cbx => {{
-                                        const lbl = cbx.closest('label') || cbx.parentElement;
-                                        const txt = (lbl ? (lbl.innerText || cbx.id || '') : '').toLowerCase();
-                                        return txt.includes('yes') || txt.includes('no');
-                                    }});
-                                
-                                if (isBinaryQuestion) {{
-                                    // For Yes/No questions, select "Yes" by default or based on positive keywords
-                                    const shouldSelectYes = lowerLabel.includes('yes') && 
-                                        !lowerLabel.includes('not') && 
-                                        !lowerLabel.includes('no ');
-                                    const shouldSelectNo = lowerLabel.includes('no') && 
-                                        !lowerLabel.includes('not') && 
-                                        (lowerLabel === 'no' || lowerLabel.startsWith('no '));
+                            }} else {{
+                                // Not binary - process normally
+                                for (const cb of allCheckboxes) {{
+                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
+                                    if (!label && cb.id) {{
+                                        label = document.querySelector(`label[for="${{cb.id}}"]`);
+                                    }}
+                                    if (!label) {{
+                                        label = cb.parentElement; 
+                                    }}
                                     
-                                    // Default to "Yes" for most questions unless explicitly negative
-                                    if (shouldSelectYes) {{
-                                        cb.click();
-                                        if (!cb.checked) {{
-                                            cb.checked = true;
-                                            cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        }}
+                                    const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
+                                    const lowerLabel = labelText.toLowerCase();
+
+                                    debugLog.push("CB: " + labelText);
+                                    
+                                    // Ignore job list checkboxes
+                                    if (cb.closest('.naukicon-ot-checkbox')) continue;
+
+                                    // ALWAYS ignore "Skip"
+                                    if (lowerLabel.includes('skip')) continue;
+                                    
+                                    // If already checked, count but don't re-click
+                                    if (cb.checked) {{
                                         clickedCount++;
-                                        // Break after selecting Yes for binary questions
-                                        break;
-                                    }} else if (shouldSelectNo) {{
-                                        // Skip No option for now, we'll select it if Yes wasn't found
                                         continue;
                                     }}
-                                }}
 
-                                // ACTION: Click the checkbox (for non-binary questions)
-                                
-                                // Verification & Fallback
-                                if (!cb.checked) {{
-                                     cb.checked = true;
-                                     cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                }}
-                                
-                                clickedCount++;
-                            }}
-                            
-                            // Fallback for binary questions: if nothing was selected, select first "Yes" option
-                            if (clickedCount === 0 && allCheckboxes.length === 2) {{
-                                const firstCheckbox = allCheckboxes[0];
-                                const firstLabel = firstCheckbox.closest('label') || firstCheckbox.parentElement;
-                                const firstLabelText = (firstLabel ? (firstLabel.innerText || firstCheckbox.id || '') : '').toLowerCase();
-                                if (firstLabelText.includes('yes')) {{
-                                    firstCheckbox.click();
-                                    if (!firstCheckbox.checked) {{
-                                        firstCheckbox.checked = true;
-                                        firstCheckbox.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    // For city questions, prefer "Both" or "All" option first
+                                    if (isCityQuestion) {{
+                                        if (lowerLabel.includes('both') || lowerLabel.includes('all')) {{
+                                            cb.click();
+                                            if (!cb.checked) {{
+                                                cb.checked = true;
+                                                cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            }}
+                                            // Click save and return immediately
+                                            const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                            if (saveBtn) {{ 
+                                                saveBtn.click(); 
+                                                return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected Both/All locations'; 
+                                            }}
+                                        }}
+                                        // Continue to select all cities
                                     }}
+
+                                    // ACTION: Click the checkbox (for non-binary questions)
+                                    cb.click();
+                                    
+                                    // Verification & Fallback
+                                    if (!cb.checked) {{
+                                         cb.checked = true;
+                                         cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    
                                     clickedCount++;
                                 }}
                             }}

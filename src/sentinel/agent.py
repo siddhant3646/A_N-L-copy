@@ -4044,8 +4044,40 @@ class SentinelAgent:
                                     // Continue to select all cities
                                 }}
 
-                                // ACTION: Click the checkbox
-                                cb.click();
+                                // For binary Yes/No questions, only select ONE appropriate option
+                                const isBinaryQuestion = allCheckboxes.length === 2 && 
+                                    allCheckboxes.every(cbx => {{
+                                        const lbl = cbx.closest('label') || cbx.parentElement;
+                                        const txt = (lbl ? (lbl.innerText || cbx.id || '') : '').toLowerCase();
+                                        return txt.includes('yes') || txt.includes('no');
+                                    }});
+                                
+                                if (isBinaryQuestion) {{
+                                    // For Yes/No questions, select "Yes" by default or based on positive keywords
+                                    const shouldSelectYes = lowerLabel.includes('yes') && 
+                                        !lowerLabel.includes('not') && 
+                                        !lowerLabel.includes('no ');
+                                    const shouldSelectNo = lowerLabel.includes('no') && 
+                                        !lowerLabel.includes('not') && 
+                                        (lowerLabel === 'no' || lowerLabel.startsWith('no '));
+                                    
+                                    // Default to "Yes" for most questions unless explicitly negative
+                                    if (shouldSelectYes) {{
+                                        cb.click();
+                                        if (!cb.checked) {{
+                                            cb.checked = true;
+                                            cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        }}
+                                        clickedCount++;
+                                        // Break after selecting Yes for binary questions
+                                        break;
+                                    }} else if (shouldSelectNo) {{
+                                        // Skip No option for now, we'll select it if Yes wasn't found
+                                        continue;
+                                    }}
+                                }}
+
+                                // ACTION: Click the checkbox (for non-binary questions)
                                 
                                 // Verification & Fallback
                                 if (!cb.checked) {{
@@ -4054,6 +4086,21 @@ class SentinelAgent:
                                 }}
                                 
                                 clickedCount++;
+                            }}
+                            
+                            // Fallback for binary questions: if nothing was selected, select first "Yes" option
+                            if (clickedCount === 0 && allCheckboxes.length === 2) {{
+                                const firstCheckbox = allCheckboxes[0];
+                                const firstLabel = firstCheckbox.closest('label') || firstCheckbox.parentElement;
+                                const firstLabelText = (firstLabel ? (firstLabel.innerText || firstCheckbox.id || '') : '').toLowerCase();
+                                if (firstLabelText.includes('yes')) {{
+                                    firstCheckbox.click();
+                                    if (!firstCheckbox.checked) {{
+                                        firstCheckbox.checked = true;
+                                        firstCheckbox.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount++;
+                                }}
                             }}
                             
                             if (clickedCount > 0) {{

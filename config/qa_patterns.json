@@ -38,6 +38,7 @@
     "current_salary": {
       "patterns": [
         "current salary",
+        "what is your current salary",
         "current ctc",
         "current annual ctc",
         "monthly salary",
@@ -56,6 +57,7 @@
     "expected_salary": {
       "patterns": [
         "expected salary",
+        "what is your expected salary",
         "expected ctc",
         "expected annual ctc",
         "expected ctc in lakhs",

@@ -31,12 +31,19 @@ KNOWN_QA_PATTERNS = {
     'year of exp': '3.8 Years',
     # Salary (LPA format for Naukri)
     'current salary': '13.5 LPA',
+    'what is your current salary?': '13.5 LPA',
     'expected salary': '20 LPA',
-    'current ctc': '13.5 LPA',
-    'expected ctc': '20 LPA',
-    'monthly salary': '112500',
-    'expected annual ctc': '20 LPA',
-    'current annual ctc': '13.5 LPA',
+    'what is your expected salary?': '20 LPA',
+    'gross salary': '13.5 LPA',  # Default to current, will be overridden if "expected" is detected
+    'gross current salary': '13.5 LPA',
+    'gross expected salary': '20 LPA',
+    'salary expectations': '20 LPA',
+    # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
+    'salary range': '10-15 Lacs',  # For current salary
+    'current salary range': '10-15 Lacs',
+    'expected salary range': '15-20 Lacs',
+    'annual salary': '10-15 Lacs',
+    'ctc range': '10-15 Lacs',
     # Personal
     'phone number': '7905828880',
     'mobile number': '7905828880',
@@ -70,6 +77,47 @@ KNOWN_QA_PATTERNS = {
     'hybrid work': 'Yes',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
+    # Walk-in Interview - Always "No" since user is based in Noida
+    'available for walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
+    'walk in on': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
+    'walk-in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
+    'walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
+    # Employment/Relationship - Always "No"
+    'employed by any of the': 'No',
+    'currently employed as a': 'No',
+    'third party': 'No',
+    'temporary employee': 'No',
+    'have you ever worked for': 'No',
+    'previously employed by': 'No',
+    'close relative working': 'No',
+    'relative working': 'No',
+    'family member working': 'No',
+    'family members working': 'No',
+    'family members in company': 'No',
+    'relatives in company': 'No',
+    'relatives working in': 'No',
+    'family in company': 'No',
+    'conflict of interest': 'No',
+    'currently an employee of': 'No',
+    # Location Specific Questions - User is in Noida, willing to relocate
+    'present location': 'Noida',
+    'location': 'Noida',
+    'current location': 'Noida',
+    'based in': 'Noida',
+    'current city': 'Noida',
+    'live in': 'Noida',
+    'living in': 'Noida',
+    'located in': 'Noida',
+    'residing in': 'Noida',
+    'residence': 'Noida',
+    # Location preference questions
+    'preferred location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'location preference': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'work location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'relocation': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'willing to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'open to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
+    'relocate to': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     # Skills
     'programming languages': 'Java, Python, JavaScript',
     'technical skills': 'Java, Spring Boot, React, AWS, Docker',
@@ -212,7 +260,13 @@ KNOWN_QA_PATTERNS = {
     # Hiring Manager Message
     'message to the hiring manager': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'message to hiring manager': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'your message': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'cover letter': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'message': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'why are you interested': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'why do you want': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'additional information': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
+    'comments': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     # CTC in Lakhs (for questions specifically asking in lakhs/LPA)
     'current ctc in lakhs': '13.5',
     'current ctc in lpa': '13.5',
@@ -2819,6 +2873,44 @@ class SentinelAgent:
                         if (text.includes(ans) || ans.includes(text)) return opt;
                     }}
                     return null;
+                }};
+                
+                // Helper: Find salary range match for range-based options
+                const findSalaryRangeMatch = (answer, options, isCurrentSalary) => {{
+                    if (!answer || !options || options.length === 0) return null;
+                    
+                    // Extract numeric salary from answer (e.g., "13.5 LPA" → 13.5)
+                    const salaryMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    if (!salaryMatch) return null;
+                    const salary = parseFloat(salaryMatch[1]);
+                    
+                    let bestMatch = null;
+                    let bestScore = -1;
+                    
+                    for (const opt of options) {{
+                        const text = (opt.text || opt.label || '').toLowerCase();
+                        
+                        // Match patterns like "0-5 Lacs", "10-15 Lacs Per Annum", "5 to 10 LPA"
+                        const rangeMatch = text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                        if (rangeMatch) {{
+                            const min = parseFloat(rangeMatch[1]);
+                            const max = parseFloat(rangeMatch[2]);
+                            
+                            // Check if salary falls within this range
+                            if (salary >= min && salary <= max) {{
+                                // Score based on how centered the salary is in the range
+                                const rangeCenter = (min + max) / 2;
+                                const score = 1 - Math.abs(salary - rangeCenter) / (max - min);
+                                
+                                if (score > bestScore) {{
+                                    bestScore = score;
+                                    bestMatch = opt;
+                                }}
+                            }}
+                        }}
+                    }}
+                    
+                    return bestMatch;
                 }};                
                 
                 // Helper: Check if answer is affirmative
@@ -3214,31 +3306,61 @@ class SentinelAgent:
                                                            qLower.includes('pay') ||
                                                            textInput.type === 'number';
                                     
-                                    // Only use default '4' for known experience fields, not for all numeric fields
-                                    const isExperienceField = qLower.includes('experience') || qLower.includes('years');
-                                    let value = answer || (isExperienceField ? '4' : '');
+                                     // Only use default '4' for known experience fields, not for all numeric fields
+                                     const isExperienceField = qLower.includes('experience') || qLower.includes('years');
+                                     const isSalaryField = qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('gross') || qLower.includes('expectation');
+                                     const isNoticeField = qLower.includes('notice') || qLower.includes('period') || qLower.includes('days');
+                                     
+                                     // Determine default value based on field type
+                                     let defaultValue = '';
+                                     if (isExperienceField) defaultValue = '4';
+                                     else if (isSalaryField) {{
+                                         // Smart salary detection: check if "expected" or "current" is mentioned
+                                         if (qLower.includes('expected') || qLower.includes('expectation')) {{
+                                             defaultValue = '20 LPA';  // Expected salary
+                                         }} else if (qLower.includes('current')) {{
+                                             defaultValue = '13.5 LPA';  // Current salary
+                                         }} else if (qLower.includes('gross')) {{
+                                             // For "gross salary" without context, check if "expected" is also mentioned
+                                             defaultValue = qLower.includes('expected') ? '20 LPA' : '13.5 LPA';
+                                         }} else {{
+                                             defaultValue = '20 LPA';  // Default to expected salary for generic salary fields
+                                         }}
+                                     }}
+                                     else if (isNoticeField) defaultValue = '30 days';
+                                    else if (textInput.tagName.toLowerCase() === 'textarea') defaultValue = 'I am excited about this opportunity and believe my experience would be valuable to your team.';
                                     
-                                    if (isNumericField && value) {{
-                                        // Normalize: Strip "Years", "LPA", etc. and round if needed
-                                        const numericValue = value.replace(/[^0-9.]/g, '');
-                                        if (numericValue) {{
-                                            // Force '4' if it's experience/years and numeric
-                                            if (qLower.includes('experience') || qLower.includes('years')) {{
-                                                value = '4';
-                                            }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay')) {{
-                                                // For salary fields, keep only digits and decimal.
-                                                // e.g. "20 LPA" -> "20"
-                                                value = value.replace(/[^0-9.]/g, '');
-                                            }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
-                                                // For notice period, extract just the number
-                                                // e.g. "30 days" -> "30"
-                                                value = value.replace(/[^0-9.]/g, '');
-                                            }} else {{
-                                                // Otherwise just use the numeric part
-                                                value = numericValue.includes('.') ? Math.round(parseFloat(numericValue)).toString() : numericValue;
-                                            }}
-                                        }}
-                                    }}
+                                    let value = answer || defaultValue;
+                                    
+                                     if (isNumericField && value) {{
+                                         // Smart numeric field handling with proper defaults
+                                         const numericValue = value.replace(/[^0-9.]/g, '');
+                                         if (numericValue) {{
+                                             if (qLower.includes('experience') || qLower.includes('years')) {{
+                                                 // Experience: Use correct value (3.8) instead of forcing 4
+                                                 value = '3.8';
+                                             }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
+                                                 // Salary: Extract the correct numeric value based on expected/current
+                                                 if (qLower.includes('expected')) {{
+                                                     value = '20';  // Expected salary
+                                                 }} else if (qLower.includes('current')) {{
+                                                     value = '13.5';  // Current salary  
+                                                 }} else if (value.includes('20')) {{
+                                                     value = '20';  // If value contains 20, use 20
+                                                 }} else if (value.includes('13.5')) {{
+                                                     value = '13.5';  // If value contains 13.5, use 13.5
+                                                 }} else {{
+                                                     value = '20';  // Default to expected salary
+                                                 }}
+                                             }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
+                                                 // Notice period: Extract just the number
+                                                 value = '30';
+                                             }} else {{
+                                                 // Otherwise just use the numeric part
+                                                 value = numericValue.includes('.') ? Math.round(parseFloat(numericValue)).toString() : numericValue;
+                                             }}
+                                         }}
+                                     }}
                                     
                                     finalAnswer = value;
 
@@ -3263,6 +3385,29 @@ class SentinelAgent:
                                     textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     textInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                    
+                                    // Check for validation errors and retry with numeric-only if needed
+                                    setTimeout(() => {{
+                                        // Look for validation errors near this input
+                                        const parent = textInput.closest('div[class*="form"], div[class*="field"], div[class*="group"], form-group');
+                                        const errorElement = parent ? parent.querySelector('[class*="error"], [class*="invalid"], [role="alert"], .error-message') : null;
+                                        const errorText = errorElement ? errorElement.innerText.toLowerCase() : '';
+                                        
+                                        // If there's a validation error and the value contains non-numeric characters
+                                        if ((errorText.includes('numeric') || errorText.includes('number') || errorText.includes('invalid') || textInput.classList.contains('error')) && 
+                                            (value.includes('lpa') || value.includes('years') || value.includes('days'))) {{
+                                            
+                                            // Retry with numeric-only value
+                                            const numericValue = value.replace(/[^0-9.]/g, '');
+                                            if (numericValue) {{
+                                                if (setter) setter.call(textInput, numericValue);
+                                                textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                                textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                textInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                                finalAnswer = numericValue;
+                                            }}
+                                        }}
+                                    }}, 500); // Wait 500ms for validation to trigger
                                 }} else {{
                                     finalAnswer = textInput.value;
                                 }}
@@ -3280,7 +3425,25 @@ class SentinelAgent:
                                     
                                     // Use smart matcher if we have an answer
                                     if (answer) {{
-                                        const bestMatch = findBestMatch(answer, selectOptions);
+                                        // Check if this is a salary question
+                                        const isSalaryQuestionSelect = qTextLowerSelect.includes('salary') || 
+                                                                       qTextLowerSelect.includes('ctc') || 
+                                                                       qTextLowerSelect.includes('current salary') ||
+                                                                       qTextLowerSelect.includes('expected salary');
+                                        const isExpectedSalarySelect = qTextLowerSelect.includes('expected');
+                                        
+                                        let bestMatch = null;
+                                        
+                                        if (isSalaryQuestionSelect) {{
+                                            // Use smart salary range matching
+                                            bestMatch = findSalaryRangeMatch(answer, selectOptions, !isExpectedSalarySelect);
+                                        }}
+                                        
+                                        // Fallback to regular matching if no salary range match found
+                                        if (!bestMatch) {{
+                                            bestMatch = findBestMatch(answer, selectOptions);
+                                        }}
+                                        
                                         if (bestMatch) {{
                                             select.value = bestMatch.value;
                                             select.dispatchEvent(new Event('change', {{ bubbles: true }}));
@@ -3290,9 +3453,76 @@ class SentinelAgent:
                                         }}
                                     }}
                                     
+                                    // Smart location handling for dropdowns
+                                    const qTextLowerSelect = (qText || '').toLowerCase();
+                                    const isCurrentLocationQuestionSelect = qTextLowerSelect.includes('present location') || qTextLowerSelect.includes('current location') || 
+                                                                      qTextLowerSelect.includes('live in') || qTextLowerSelect.includes('living in') || 
+                                                                      qTextLowerSelect.includes('based in') || qTextLowerSelect.includes('located in') ||
+                                                                      qTextLowerSelect.includes('residing in') || qTextLowerSelect.includes('current city');
+                                    const isLocationPreferenceQuestionSelect = qTextLowerSelect.includes('preferred location') || qTextLowerSelect.includes('location preference') ||
+                                                               qTextLowerSelect.includes('work location') || qTextLowerSelect.includes('relocate') ||
+                                                               qTextLowerSelect.includes('willing to relocate');
+                                    const hasBangaloreOptionsSelect = selectOptions.some(o => o.text.toLowerCase().includes('bangalore'));
+                                    
+                                    if (!matched && hasBangaloreOptionsSelect) {{
+                                        if (isCurrentLocationQuestionSelect) {{
+                                            // For current location questions: Select "Outside Bangalore" since user is in Noida
+                                            const outsideBangaloreOption = selectOptions.find(o => 
+                                                o.text.toLowerCase().includes('outside') && o.text.toLowerCase().includes('bangalore')
+                                            );
+                                            if (outsideBangaloreOption) {{
+                                                select.value = outsideBangaloreOption.value;
+                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                selectedOption = outsideBangaloreOption.text;
+                                                finalAnswer = 'Outside Bangalore';
+                                                matched = true;
+                                            }}
+                                        }} else if (isLocationPreferenceQuestionSelect) {{
+                                            // For location preference questions: Select preferred metro cities
+                                            const preferredCityOption = selectOptions.find(o => {{
+                                                const text = o.text.toLowerCase();
+                                                return text.includes('bangalore') || text.includes('hyderabad') || text.includes('mumbai') || text.includes('pune') || text.includes('delhi');
+                                            }});
+                                            if (preferredCityOption) {{
+                                                select.value = preferredCityOption.value;
+                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                selectedOption = preferredCityOption.text;
+                                                finalAnswer = preferredCityOption.text;
+                                                matched = true;
+                                            }}
+                                        }}
+                                    }}
+                                    
                                     // Fallback: try to match Yes/No based on answer type
+                                    // Or if question requires "No" answer (employment/relationship questions)
+                                    const noRequiredPatternsSelect = [
+                                        'employed by any of the',
+                                        'currently employed as a',
+                                        'third party / temporary',
+                                        'have you ever worked for',
+                                        'close relative working at',
+                                        'relative working',
+                                        'family member working',
+                                        'conflict of interest',
+                                        'currently an employee of',
+                                        'previously employed by'
+                                    ];
+                                    const shouldAnswerNoSelect = noRequiredPatternsSelect.some(pattern => qTextLowerSelect.includes(pattern));
+                                    
                                     if (!matched) {{
-                                        if (isYes(answer)) {{
+                                        if (shouldAnswerNoSelect) {{
+                                            // Force "No" for employment/relationship questions
+                                            const noOption = selectOptions.find(o =>
+                                                ['no', 'false', 'decline'].includes(o.text.toLowerCase())
+                                            );
+                                            if (noOption) {{
+                                                select.value = noOption.value;
+                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                selectedOption = noOption.text;
+                                                finalAnswer = noOption.text;
+                                                matched = true;
+                                            }}
+                                        }} else if (isYes(answer)) {{
                                             const yesOption = selectOptions.find(o =>
                                                 ['yes', 'true', 'agree', 'accept'].includes(o.text.toLowerCase())
                                             );
@@ -3352,6 +3582,48 @@ class SentinelAgent:
                                     }}
                                 }}
                                 
+                                // Smart location handling - Current vs Preferred vs Bangalore-specific questions
+                                const qTextLower = (qText || '').toLowerCase();
+                                const isCurrentLocationQuestion = qTextLower.includes('present location') || qTextLower.includes('current location') || 
+                                                                qTextLower.includes('live in') || qTextLower.includes('living in') || 
+                                                                qTextLower.includes('based in') || qTextLower.includes('located in') ||
+                                                                qTextLower.includes('residing in') || qTextLower.includes('current city');
+                                const isLocationPreferenceQuestion = qTextLower.includes('preferred location') || qTextLower.includes('location preference') ||
+                                                             qTextLower.includes('work location') || qTextLower.includes('relocate') ||
+                                                             qTextLower.includes('willing to relocate');
+                                const hasBangaloreOptions = Array.from(radios).some(r => {{
+                                    const label = (r.parentElement?.innerText || r.nextElementSibling?.innerText || r.value || '').toLowerCase();
+                                    return label.includes('bangalore');
+                                }});
+                                
+                                if (!clicked && hasBangaloreOptions) {{
+                                    if (isCurrentLocationQuestion) {{
+                                        // For current location questions: Select "Outside Bangalore" since user is in Noida
+                                        for (const radio of radios) {{
+                                            const label = (radio.parentElement?.innerText || radio.nextElementSibling?.innerText || radio.value || '').toLowerCase();
+                                            if (label.includes('outside') && label.includes('bangalore')) {{
+                                                radio.click();
+                                                clicked = true;
+                                                selectedOption = 'Outside Bangalore';
+                                                finalAnswer = 'Outside Bangalore';
+                                                break;
+                                            }}
+                                        }}
+                                    }} else if (isLocationPreferenceQuestion) {{
+                                        // For location preference questions: Select Bangalore or preferred location
+                                        for (const radio of radios) {{
+                                            const label = (radio.parentElement?.innerText || radio.nextElementSibling?.innerText || radio.value || '').toLowerCase();
+                                            if (label.includes('bangalore') || label.includes('hyderabad') || label.includes('mumbai') || label.includes('pune')) {{
+                                                radio.click();
+                                                clicked = true;
+                                                selectedOption = label.trim();
+                                                finalAnswer = label.trim();
+                                                break;
+                                            }}
+                                        }}
+                                    }}
+                                }}
+                                
                                 // Use smart matcher if we have an answer and nothing selected
                                 if (!clicked && answer) {{
                                     const radioOptions = Array.from(radios).map(r => ({{
@@ -3360,7 +3632,25 @@ class SentinelAgent:
                                         value: r.value
                                     }}));
                                     
-                                    const bestMatch = findBestMatch(answer, radioOptions);
+                                    // Check if this is a salary question
+                                    const isSalaryQuestion = qTextLower.includes('salary') || 
+                                                             qTextLower.includes('ctc') || 
+                                                             qTextLower.includes('current salary') ||
+                                                             qTextLower.includes('expected salary');
+                                    const isExpectedSalary = qTextLower.includes('expected');
+                                    
+                                    let bestMatch = null;
+                                    
+                                    if (isSalaryQuestion) {{
+                                        // Use smart salary range matching
+                                        bestMatch = findSalaryRangeMatch(answer, radioOptions, !isExpectedSalary);
+                                    }}
+                                    
+                                    // Fallback to regular matching if no salary range match found
+                                    if (!bestMatch) {{
+                                        bestMatch = findBestMatch(answer, radioOptions);
+                                    }}
+                                    
                                     if (bestMatch) {{
                                         bestMatch.element.click();
                                         clicked = true;
@@ -3396,12 +3686,95 @@ class SentinelAgent:
                                     }}
                                 }}
                                 
+                                // Check for questions that should ALWAYS be answered "No"
+                                // These are employment history, relative, and conflict of interest questions
+                                const noRequiredPatterns = [
+                                    'employed by any of the',
+                                    'currently employed as a',
+                                    'third party / temporary',
+                                    'have you ever worked for',
+                                    'close relative working at',
+                                    'relative working',
+                                    'family member working',
+                                    'family members working',
+                                    'family members in company',
+                                    'relatives in company',
+                                    'relatives working in',
+                                    'family in company',
+                                    'conflict of interest',
+                                    'currently an employee of',
+                                    'previously employed by'
+                                ];
+                                const shouldAnswerNo = noRequiredPatterns.some(pattern => qTextLower.includes(pattern));
+                                
+                                // If question requires "No" and nothing selected yet
+                                if (!clicked && shouldAnswerNo) {{
+                                    for (const radio of radios) {{
+                                        const label = radio.parentElement?.innerText || radio.nextElementSibling?.innerText || '';
+                                        if (['no', 'false', 'decline'].includes(label.toLowerCase())) {{
+                                            radio.click();
+                                            clicked = true;
+                                            selectedOption = label.trim();
+                                            finalAnswer = selectedOption;
+                                            break;
+                                        }}
+                                    }}
+                                }}
+                                
                                 // Final fallback: click first option
                                 if (!clicked) {{
                                     radios[0].click();
                                     const label = radios[0].parentElement?.innerText || radios[0].nextElementSibling?.innerText || radios[0].value || '';
                                     selectedOption = label.trim();
                                     finalAnswer = selectedOption;
+                                }}
+                            }}
+                            
+                            // Handle checkboxes (Privacy Policy, Terms & Conditions, etc.)
+                            const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+                            if (checkboxes.length > 0) {{
+                                inputType = 'checkbox';
+                                options = Array.from(checkboxes).map(cb => {{
+                                    const label = cb.closest('label') || document.querySelector('label[for="' + cb.id + '"]');
+                                    return label ? label.innerText.trim() : (cb.value || '');
+                                }}).filter(t => t);
+                                
+                                for (const checkbox of checkboxes) {{
+                                    // Skip already checked boxes
+                                    if (checkbox.checked) continue;
+                                    
+                                    const labelEl = checkbox.closest('label') || document.querySelector('label[for="' + checkbox.id + '"]');
+                                    const labelText = labelEl ? labelEl.innerText.toLowerCase() : '';
+                                    
+                                    // Check if this is a privacy policy / terms checkbox
+                                    const isPrivacyOrTerms = 
+                                        labelText.includes('privacy') ||
+                                        labelText.includes('terms') ||
+                                        labelText.includes('conditions') ||
+                                        labelText.includes('agree') ||
+                                        labelText.includes('smartrecruiters') ||
+                                        labelText.includes('syngenta') ||
+                                        checkbox.id?.toLowerCase().includes('privacy') ||
+                                        checkbox.id?.toLowerCase().includes('terms') ||
+                                        checkbox.name?.toLowerCase().includes('privacy') ||
+                                        checkbox.name?.toLowerCase().includes('terms') ||
+                                        checkbox.className?.toLowerCase().includes('privacy') ||
+                                        checkbox.className?.toLowerCase().includes('terms');
+                                    
+                                    // Click if it's privacy/terms related or if answer suggests agreement
+                                    if (isPrivacyOrTerms || isYes(answer)) {{
+                                        checkbox.scrollIntoView({{ block: 'center' }});
+                                        checkbox.click();
+                                        selectedOption = 'checked: ' + labelText;
+                                        finalAnswer = 'Agreed to ' + labelText;
+                                        
+                                        // Return special code to indicate checkbox was clicked
+                                        return 'LINKEDIN_CHECKBOX_CHECKED|' + JSON.stringify({{
+                                            question: qText,
+                                            label: labelText,
+                                            checked: true
+                                        }});
+                                    }}
                                 }}
                             }}
                             

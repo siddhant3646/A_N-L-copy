@@ -29,6 +29,19 @@ KNOWN_QA_PATTERNS = {
     'total experience': '3.8 Years',
     'overall experience': '3.8 Years',
     'year of exp': '3.8 Years',
+    # Experience Range Questions - map to appropriate radio button ranges
+    'experience': '3.8 Years',
+    'years': '3.8 Years',
+    'java experience': '3.8 Years',
+    'react experience': '3.8 Years',
+    'angular experience': '3.8 Years',
+    'nodejs experience': '3.8 Years',
+    'javascript experience': '3.8 Years',
+    'ci/cd experience': '3.8 Years',
+    'full stack experience': '3.8 Years',
+    'backend experience': '3.8 Years',
+    'frontend experience': '3.8 Years',
+    'software experience': '3.8 Years',
     # Salary (LPA format for Naukri)
     'current salary': '13.5 LPA',
     'what is your current salary?': '13.5 LPA',
@@ -2875,6 +2888,67 @@ class SentinelAgent:
                     return null;
                 }};
                 
+                // Helper: Find best matching radio button for experience ranges
+                const findBestRadioMatch = (answer, radios) => {{
+                    if (!answer || !radios || radios.length === 0) return null;
+                    
+                    const ans = answer.toLowerCase();
+                    let bestRadio = null;
+                    let bestScore = -1;
+                    
+                    // Extract years from answer for better matching
+                    const yearMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const answerYears = yearMatch ? parseFloat(yearMatch[1]) : 0;
+                    
+                    for (const radio of radios) {{
+                        const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                        const lowerLabel = label.toLowerCase();
+                        let score = 0;
+                        
+                        // Exact text match
+                        if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {{
+                            score = 100;
+                        }}
+                        // Check for "yes" or "serving" for Yes/No questions
+                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) && 
+                                (ans.includes('yes') || ans.includes('serving'))) {{
+                            score = 90;
+                        }}
+                        // Experience range matching
+                        else {{
+                            // Look for range patterns like "0-2", "2-5", "3-5", etc.
+                            const rangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                            if (rangeMatch && answerYears > 0) {{
+                                const min = parseFloat(rangeMatch[1]);
+                                const max = parseFloat(rangeMatch[2]);
+                                
+                                if (answerYears >= min && answerYears <= max) {{
+                                    // Calculate how centered the answer is in the range
+                                    const rangeSize = max - min;
+                                    const offset = Math.abs(answerYears - (min + max) / 2);
+                                    score = Math.max(0, 80 - (offset / rangeSize * 20));
+                                }}
+                            }}
+                            // Single year match
+                            else if (answerYears > 0) {{
+                                const singleYearMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                if (singleYearMatch) {{
+                                    const radioYears = parseFloat(singleYearMatch[1]);
+                                    const diff = Math.abs(answerYears - radioYears);
+                                    score = Math.max(0, 90 - diff * 10);
+                                }}
+                            }}
+                        }}
+                        
+                        if (score > bestScore) {{
+                            bestScore = score;
+                            bestRadio = radio;
+                        }}
+                    }}
+                    
+                    return bestRadio;
+                }};
+                
                 // Helper: Find salary range match for range-based options
                 const findSalaryRangeMatch = (answer, options, isCurrentSalary) => {{
                     if (!answer || !options || options.length === 0) return null;
@@ -3955,22 +4029,47 @@ class SentinelAgent:
                             if (saveBtn) {{ saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED'; }}
                         }}
                         
-                        // Try radio buttons (prefer Yes) - for Yes/No/Skip questions
+                        // Try radio buttons - enhanced logic with better matching
                         const radios = document.querySelectorAll('input[type="radio"]');
                         if (radios.length > 0) {{
                             let clicked = false;
-                            for (const radio of radios) {{
-                                const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
-                                if (label.toLowerCase().includes('yes') || label.toLowerCase().includes('serving')) {{
-                                    if (!radio.checked) {{ radio.click(); clicked = true; }}
-                                    break;
+                            const qText = (document.querySelector('.chatbot_MessageContainer li.botItem:last-of-type .botMsg') ||
+                                         document.querySelector('.botMsg.msg') ||
+                                         document.querySelector('li.botItem .botMsg'))?.innerText || 'Unknown question';
+                            
+                            // First try fuzzy matching for radio button questions
+                            const fuzzyAnswer = fuzzyMatch(qText);
+                            let bestRadio = null;
+                            
+                            if (fuzzyAnswer) {{
+                                // Use the enhanced matching function
+                                bestRadio = findBestRadioMatch(fuzzyAnswer, radios);
+                            }}
+                            
+                            // If no fuzzy match found, try Yes/No logic
+                            if (!bestRadio) {{
+                                for (const radio of radios) {{
+                                    const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                                    if (label.toLowerCase().includes('yes') || 
+                                        label.toLowerCase().includes('serving') ||
+                                        label.toLowerCase().includes('currently')) {{
+                                        bestRadio = radio;
+                                        break;
+                                    }}
                                 }}
                             }}
-                            // Fallback: click first unselected radio
-                            if (!clicked && radios.length > 0 && !radios[0].checked) {{ 
-                                radios[0].click(); 
+                            
+                            // Final fallback: use first unselected radio
+                            if (!bestRadio && radios.length > 0 && !radios[0].checked) {{ 
+                                bestRadio = radios[0]; 
+                            }}
+                            
+                            // Click the selected radio button
+                            if (bestRadio && !bestRadio.checked) {{ 
+                                bestRadio.click(); 
                                 clicked = true; 
                             }}
+                            
                             if (clicked) {{
                                 // Save button is div.sendMsg, not button element!
                                 const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
@@ -4002,9 +4101,9 @@ class SentinelAgent:
                             // FIRST: Check if this is a binary Yes/No question
                             // Build label map first for all checkboxes
                             const checkboxLabels = allCheckboxes.map(cb => {{
-                                let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
+                                let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${cb.id}"]`);
                                 if (!label && cb.id) {{
-                                    label = document.querySelector(`label[for="${{cb.id}}"]`);
+                                    label = document.querySelector(`label[for="${cb.id}"]`);
                                 }}
                                 if (!label) {{
                                     label = cb.parentElement; 
@@ -4040,9 +4139,9 @@ class SentinelAgent:
                             }} else {{
                                 // Not binary - process normally
                                 for (const cb of allCheckboxes) {{
-                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
+                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${cb.id}"]`);
                                     if (!label && cb.id) {{
-                                        label = document.querySelector(`label[for="${{cb.id}}"]`);
+                                        label = document.querySelector(`label[for="${cb.id}"]`);
                                     }}
                                     if (!label) {{
                                         label = cb.parentElement; 
@@ -4154,7 +4253,7 @@ class SentinelAgent:
                             const nextIdx = currentIdx + 1;
                             if (nextIdx < tabOrder.length) {{
                                 const nextTabId = tabOrder[nextIdx];
-                                const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
+                                const nextTab = document.querySelector(`#${nextTabId} .tab-list-item`) ||
                                                document.getElementById(nextTabId);
                                 if (nextTab) {{
                                     nextTab.click();
@@ -4281,7 +4380,7 @@ class SentinelAgent:
                         const nextIdx = currentIdx + 1;
                         if (nextIdx < tabOrder.length) {{
                             const nextTabId = tabOrder[nextIdx];
-                            const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
+                            const nextTab = document.querySelector(`#${nextTabId} .tab-list-item`) ||
                                            document.getElementById(nextTabId);
                             if (nextTab) {{
                                 nextTab.click();

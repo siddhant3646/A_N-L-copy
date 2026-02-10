@@ -70,6 +70,8 @@ KNOWN_QA_PATTERNS = {
     'previous company': 'Fiserv',
     # Notice
     'notice period': '30 days',
+    'what is your notice period': '30 days',
+    'what is your notice period?': '30 days',
     'serving notice': 'Yes',
     # Education
     'graduation year': '2022',
@@ -88,6 +90,11 @@ KNOWN_QA_PATTERNS = {
     'drug test': 'Yes',
     'remote work': 'Yes',
     'hybrid work': 'Yes',
+    'work from office': 'Yes',
+    'comfortable to work from office': 'Yes',
+    'work from office 6 days': 'Yes',
+    'work from office 5 days': 'Yes',
+    'wfo': 'Yes',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
     # Walk-in Interview - Always "No" since user is based in Noida
@@ -287,10 +294,16 @@ KNOWN_QA_PATTERNS = {
     'current ctc(in lpa)': '13.5',
     'current ctc (in lpa)': '13.5',
     'ctc in lacs per annum': '13.5',
+    'current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum?': '13.5',
     'ctc in lacs': '13.5',
     'expected ctc in lakhs': '20',
     'expected ctc in lpa': '20',
     'expected ctc [in lpa]': '20',
+    'expected ctc in lacs per annum': '20',
+    'what is your expected ctc in lacs per annum': '20',
+    'what is your expected ctc in lacs per annum?': '20',
     'ctc in lakhs': '20',
     # CCTC = Current CTC (abbreviation)
     'cctc': '13.5',
@@ -325,6 +338,11 @@ KNOWN_QA_PATTERNS = {
     'tcs registration no': 'N/A - Not registered in TCS',
     'ep no': 'N/A',
     'ep number': 'N/A',
+    # Portfolio URL
+    'portfolio url': 'https://siddhant3646.github.io/Portfolio/',
+    'online portfolio': 'https://siddhant3646.github.io/Portfolio/',
+    'portfolio link': 'https://siddhant3646.github.io/Portfolio/',
+    'online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
     # Angular + Microservices Experience
     'exp in angular and microservices': '3.8 years experience in both Angular and Microservices architecture',
     'exp. in angular': '3.8 years',
@@ -496,6 +514,7 @@ class SentinelAgent:
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None  # Timestamp when LinkedIn can resume
         self.naukri_rate_limit_until = None  # Timestamp when Naukri can resume
+        self._linkedin_scroll_attempted = False  # Track if we tried scrolling for null cards
         self._task_context = NAUKRI_TASK_CONTEXT
         self._steps_since_cleanup = 0  # Track steps for memory cleanup
         self._logged_questions = set()  # Track already logged questions to avoid duplicates
@@ -795,7 +814,17 @@ class SentinelAgent:
                 return KNOWN_QA_PATTERNS.get('serving notice', 'Yes'), 0.95
             elif 'in days' in question_lower:
                 return '30', 0.98
-            return KNOWN_QA_PATTERNS.get('notice period', '30 days'), 0.95
+            else:
+                # Generic notice period question
+                # LinkedIn: just number, Naukri: include LWD and full text
+                if self._current_platform == 'linkedin':
+                    return '30', 0.95
+                elif self._current_platform == 'naukri':
+                    lwd_date = datetime.now() + timedelta(days=30)
+                    lwd_formatted = lwd_date.strftime('%d %B %Y')
+                    return f'30 days (LWD: {lwd_formatted})', 0.95
+                else:
+                    return '30 days', 0.95
         
         if is_location_question:
             if 'preferred' in question_lower:
@@ -1707,7 +1736,36 @@ class SentinelAgent:
                 # LinkedIn: Navigation results
                 if 'LINKEDIN_NAVIGATED' in result:
                     print(f"✅ {result}")
-                    await asyncio.sleep(random.uniform(4, 6))  # Wait for job details to load
+                    if 'card null' in result.lower() or 'card None' in result:
+                        if not self._linkedin_scroll_attempted:
+                            print("⚠️  Null card detected - trying to scroll down first...")
+                            self._linkedin_scroll_attempted = True
+                            try:
+                                # Scroll the job list to load more jobs
+                                await self._page.evaluate("""() => {
+                                    const sidebar = document.querySelector('.scaffold-layout__list') || 
+                                                   document.querySelector('.jobs-search-results-list');
+                                    if (sidebar) {
+                                        sidebar.scrollTop += 800;
+                                        return 'Scrolled job list';
+                                    }
+                                    window.scrollTo(0, window.scrollY + 800);
+                                    return 'Scrolled window';
+                                }""")
+                                await asyncio.sleep(random.uniform(3, 5))
+                            except Exception as e:
+                                print(f"⚠️  Scroll failed: {e}")
+                        else:
+                            print("⚠️  Null card still detected after scroll - refreshing page...")
+                            self._linkedin_scroll_attempted = False  # Reset for next time
+                            try:
+                                await self._page.reload(wait_until='domcontentloaded', timeout=15000)
+                                await asyncio.sleep(random.uniform(5, 8))
+                            except Exception as e:
+                                print(f"⚠️  Refresh failed: {e}")
+                    else:
+                        self._linkedin_scroll_attempted = False  # Reset on successful navigation
+                        await asyncio.sleep(random.uniform(4, 6))  # Wait for job details to load
                     continue
                 
                 # LinkedIn: Scrolled for more jobs
@@ -2526,7 +2584,37 @@ class SentinelAgent:
                 if 'NO_MORE_JOBS' in result:
                     print(f"   ℹ️ Result: {result}")  # Debug log
                     if 'NO_CARDS' in result:
-                        print("❌ No job cards found on page! Check selectors.")
+                        if 'linkedin.com' in current_url:
+                            if not self._linkedin_scroll_attempted:
+                                print("❌ No job cards found on LinkedIn - trying to scroll down first...")
+                                self._linkedin_scroll_attempted = True
+                                try:
+                                    # Scroll the job list to load more jobs
+                                    await self._page.evaluate("""() => {
+                                        const sidebar = document.querySelector('.scaffold-layout__list') || 
+                                                       document.querySelector('.jobs-search-results-list');
+                                        if (sidebar) {
+                                            sidebar.scrollTop += 800;
+                                            return 'Scrolled job list';
+                                        }
+                                        window.scrollTo(0, window.scrollY + 800);
+                                        return 'Scrolled window';
+                                    }""")
+                                    await asyncio.sleep(random.uniform(3, 5))
+                                    continue  # Continue loop to try again after scroll
+                                except Exception as e:
+                                    print(f"⚠️  Scroll failed: {e}")
+                            else:
+                                print("❌ Still no job cards after scroll - refreshing page...")
+                                self._linkedin_scroll_attempted = False
+                                try:
+                                    await self._page.reload(wait_until='domcontentloaded', timeout=15000)
+                                    await asyncio.sleep(random.uniform(5, 8))
+                                    continue  # Continue loop to try again after refresh
+                                except Exception as e:
+                                    print(f"⚠️  Refresh failed: {e}")
+                        else:
+                            print("❌ No job cards found on page! Check selectors.")
                     else:
                         print("📭 No more jobs to apply. Task complete.")
                     self.state.task_complete = True
@@ -2609,10 +2697,15 @@ class SentinelAgent:
                 const fuzzyMatch = (question) => {{
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
+                    let bestMatch = null;
+                    let bestKeyLen = 0;
                     for (const [key, val] of Object.entries(KNOWN_PATTERNS)) {{
-                        if (qLower.includes(key.toLowerCase())) return val;
+                        if (qLower.includes(key.toLowerCase()) && key.length > bestKeyLen) {{
+                            bestMatch = val;
+                            bestKeyLen = key.length;
+                        }}
                     }}
-                    return null;
+                    return bestMatch;
                 }};
                 
                 // PRIORITY 0: Check for error snackbar immediately
@@ -2929,13 +3022,28 @@ class SentinelAgent:
                                     score = Math.max(0, 80 - (offset / rangeSize * 20));
                                 }}
                             }}
-                            // Single year match
+                            // Single year match (e.g., "3+", "2+", "5")
                             else if (answerYears > 0) {{
-                                const singleYearMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
-                                if (singleYearMatch) {{
-                                    const radioYears = parseFloat(singleYearMatch[1]);
-                                    const diff = Math.abs(answerYears - radioYears);
-                                    score = Math.max(0, 90 - diff * 10);
+                                // First try to match "X+" or "X +" patterns (like "3+", "3 +")
+                                const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                if (plusMatch) {{
+                                    const radioYears = parseFloat(plusMatch[1]);
+                                    // "3+" means 3 or more, so if answer is >=3, it's a good match
+                                    if (answerYears >= radioYears) {{
+                                        score = 90;
+                                    }} else {{
+                                        // Answer is less than X+, still calculate score
+                                        const diff = Math.abs(answerYears - radioYears);
+                                        score = Math.max(0, 85 - diff * 10);
+                                    }}
+                                }} else {{
+                                    // Try simple number match
+                                    const singleYearMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                    if (singleYearMatch) {{
+                                        const radioYears = parseFloat(singleYearMatch[1]);
+                                        const diff = Math.abs(answerYears - radioYears);
+                                        score = Math.max(0, 90 - diff * 10);
+                                    }}
                                 }}
                             }}
                         }}
@@ -3413,22 +3521,35 @@ class SentinelAgent:
                                               if (qLower.includes('experience') || qLower.includes('years')) {{
                                                   // Experience: Use '4' for LinkedIn, '3.8' for other platforms
                                                   value = isLinkedIn ? '4' : '3.8';
-                                              }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
-                                                 // Salary: Extract the correct numeric value based on expected/current
-                                                 if (qLower.includes('expected')) {{
-                                                     value = '20';  // Expected salary
-                                                 }} else if (qLower.includes('current')) {{
-                                                     value = '13.5';  // Current salary  
-                                                 }} else if (value.includes('20')) {{
-                                                     value = '20';  // If value contains 20, use 20
-                                                 }} else if (value.includes('13.5')) {{
-                                                     value = '13.5';  // If value contains 13.5, use 13.5
-                                                 }} else {{
-                                                     value = '20';  // Default to expected salary
-                                                 }}
-                                             }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
-                                                 // Notice period: Extract just the number
-                                                 value = '30';
+                                               }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
+                                                  // Salary: Extract the correct numeric value based on expected/current
+                                                  let salaryValue;
+                                                  if (qLower.includes('expected')) {{
+                                                      salaryValue = '20';  // Expected salary
+                                                  }} else if (qLower.includes('current')) {{
+                                                      salaryValue = '13.5';  // Current salary  
+                                                  }} else if (value.includes('20')) {{
+                                                      salaryValue = '20';  // If value contains 20, use 20
+                                                  }} else if (value.includes('13.5')) {{
+                                                      salaryValue = '13.5';  // If value contains 13.5, use 13.5
+                                                  }} else {{
+                                                      salaryValue = '20';  // Default to expected salary
+                                                  }}
+                                                  
+                                                  // Check if the field expects INR values (needs conversion to actual INR)
+                                                  // "Enter a whole number larger than 100" validation means values should be actual INR amounts
+                                                  if (qLower.includes('inr') && !qLower.includes('lpa') && !qLower.includes('lacs') && !qLower.includes('lakhs')) {{
+                                                      // Convert LPA to INR (e.g., 13.5 LPA -> 1350000, 20 LPA -> 2000000)
+                                                      // 1 LPA = 100,000 INR
+                                                      const lpaValue = parseFloat(salaryValue);
+                                                      value = Math.round(lpaValue * 100000).toString();
+                                                  }} else {{
+                                                      value = salaryValue;
+                                                  }}
+                                               }}
+                                              }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
+                                                  // Notice period: Extract just the number
+                                                  value = '30';
                                              }} else {{
                                                  // Otherwise just use the numeric part
                                                  value = numericValue.includes('.') ? Math.round(parseFloat(numericValue)).toString() : numericValue;
@@ -3467,18 +3588,35 @@ class SentinelAgent:
                                         const errorElement = parent ? parent.querySelector('[class*="error"], [class*="invalid"], [role="alert"], .error-message') : null;
                                         const errorText = errorElement ? errorElement.innerText.toLowerCase() : '';
                                         
+                                        // Check if the error requires value larger than 100 (CTC in thousands/thousands format)
+                                        const requiresLargeNumber = errorText.includes('larger than 100') || errorText.includes('greater than 100');
+                                        
                                         // If there's a validation error and the value contains non-numeric characters
-                                        if ((errorText.includes('numeric') || errorText.includes('number') || errorText.includes('invalid') || textInput.classList.contains('error')) && 
-                                            (value.includes('lpa') || value.includes('years') || value.includes('days'))) {{
+                                        if ((errorText.includes('numeric') || errorText.includes('number') || errorText.includes('invalid') || requiresLargeNumber || textInput.classList.contains('error')) && 
+                                            (value.includes('lpa') || value.includes('years') || value.includes('days') || requiresLargeNumber)) {{
                                             
-                                            // Retry with numeric-only value
-                                            const numericValue = value.replace(/[^0-9.]/g, '');
-                                            if (numericValue) {{
-                                                if (setter) setter.call(textInput, numericValue);
+                                            let retryValue;
+                                            
+                                            if (requiresLargeNumber) {{
+                                                // Convert LPA to thousands (e.g., 13.5 LPA -> 1350, 20 LPA -> 2000)
+                                                const numericMatch = value.match(/(\d+(?:\.\d+)?)/);
+                                                if (numericMatch) {{
+                                                    const lpaValue = parseFloat(numericMatch[1]);
+                                                    retryValue = Math.round(lpaValue * 100).toString();
+                                                }} else {{
+                                                    retryValue = value.replace(/[^0-9.]/g, '');
+                                                }}
+                                            }} else {{
+                                                // Retry with numeric-only value
+                                                retryValue = value.replace(/[^0-9.]/g, '');
+                                            }}
+                                            
+                                            if (retryValue) {{
+                                                if (setter) setter.call(textInput, retryValue);
                                                 textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                                 textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                                 textInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
-                                                finalAnswer = numericValue;
+                                                finalAnswer = retryValue;
                                             }}
                                         }}
                                     }}, 500); // Wait 500ms for validation to trigger
@@ -3500,26 +3638,41 @@ class SentinelAgent:
                                     // Smart location handling for dropdowns
                                     const qTextLowerSelect = (qText || '').toLowerCase();
                                     
-                                    // Use smart matcher if we have an answer
-                                    if (answer) {{
-                                        // Check if this is a salary question
-                                        const isSalaryQuestionSelect = qTextLowerSelect.includes('salary') || 
-                                                                       qTextLowerSelect.includes('ctc') || 
-                                                                       qTextLowerSelect.includes('current salary') ||
-                                                                       qTextLowerSelect.includes('expected salary');
-                                        const isExpectedSalarySelect = qTextLowerSelect.includes('expected');
-                                        
-                                        let bestMatch = null;
-                                        
-                                        if (isSalaryQuestionSelect) {{
-                                            // Use smart salary range matching
-                                            bestMatch = findSalaryRangeMatch(answer, selectOptions, !isExpectedSalarySelect);
-                                        }}
-                                        
-                                        // Fallback to regular matching if no salary range match found
-                                        if (!bestMatch) {{
-                                            bestMatch = findBestMatch(answer, selectOptions);
-                                        }}
+                                     // Use smart matcher if we have an answer
+                                     if (answer) {{
+                                         // Check if this is a salary question
+                                         const isSalaryQuestionSelect = qTextLowerSelect.includes('salary') || 
+                                                                        qTextLowerSelect.includes('ctc') || 
+                                                                        qTextLowerSelect.includes('current salary') ||
+                                                                        qTextLowerSelect.includes('expected salary');
+                                         const isExpectedSalarySelect = qTextLowerSelect.includes('expected');
+                                         
+                                         // Check if this is an experience question
+                                         const isExperienceQuestionSelect = qTextLowerSelect.includes('experience') || 
+                                                                            qTextLowerSelect.includes('years');
+                                         
+                                         let bestMatch = null;
+                                         
+                                         if (isSalaryQuestionSelect) {{
+                                             // Use smart salary range matching
+                                             bestMatch = findSalaryRangeMatch(answer, selectOptions, !isExpectedSalarySelect);
+                                         }}
+                                         
+                                         // Special handling for experience questions - look for exact year match
+                                         if (!bestMatch && isExperienceQuestionSelect) {{
+                                             // For LinkedIn, use 4 years; for others use 3.8 years
+                                             const targetYears = isLinkedIn ? '4' : '3.8';
+                                             bestMatch = selectOptions.find(o => {{
+                                                 const text = o.text.toLowerCase();
+                                                 // Match exact year like "4 years" or "4 year"
+                                                 return text.includes(targetYears + ' year');
+                                             }});
+                                         }}
+                                         
+                                         // Fallback to regular matching if no salary range match found
+                                         if (!bestMatch) {{
+                                             bestMatch = findBestMatch(answer, selectOptions);
+                                         }}
                                         
                                         if (bestMatch) {{
                                             select.value = bestMatch.value;
@@ -3826,14 +3979,19 @@ class SentinelAgent:
                                         labelText.includes('terms') ||
                                         labelText.includes('conditions') ||
                                         labelText.includes('agree') ||
+                                        labelText.includes('consent') ||
+                                        labelText.includes('i consent') ||
                                         labelText.includes('smartrecruiters') ||
                                         labelText.includes('syngenta') ||
                                         checkbox.id?.toLowerCase().includes('privacy') ||
                                         checkbox.id?.toLowerCase().includes('terms') ||
+                                        checkbox.id?.toLowerCase().includes('consent') ||
                                         checkbox.name?.toLowerCase().includes('privacy') ||
                                         checkbox.name?.toLowerCase().includes('terms') ||
+                                        checkbox.name?.toLowerCase().includes('consent') ||
                                         checkbox.className?.toLowerCase().includes('privacy') ||
-                                        checkbox.className?.toLowerCase().includes('terms');
+                                        checkbox.className?.toLowerCase().includes('terms') ||
+                                        checkbox.className?.toLowerCase().includes('consent');
                                     
                                     // Click if it's privacy/terms related or if answer suggests agreement
                                     if (isPrivacyOrTerms || isYes(answer)) {{
@@ -4096,14 +4254,16 @@ class SentinelAgent:
                             // City preference order (check qText to see if it's a city question)
                             const qTextLower = qText.toLowerCase();
                             const isCityQuestion = qTextLower.includes('city') || qTextLower.includes('relocate') || qTextLower.includes('location');
+                            const isNoticePeriodQuestion = qTextLower.includes('notice period');
+                            const isExperienceQuestion = qTextLower.includes('experience') || qTextLower.includes('years');
                             const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
                             
                             // FIRST: Check if this is a binary Yes/No question
                             // Build label map first for all checkboxes
                             const checkboxLabels = allCheckboxes.map(cb => {{
-                                let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${cb.id}"]`);
+                                let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
                                 if (!label && cb.id) {{
-                                    label = document.querySelector(`label[for="${cb.id}"]`);
+                                    label = document.querySelector(`label[for="${{cb.id}}"]`);
                                 }}
                                 if (!label) {{
                                     label = cb.parentElement; 
@@ -4114,14 +4274,14 @@ class SentinelAgent:
                             
                             // Check if binary (exactly 2 checkboxes with Yes/No labels)
                             const isBinaryYesNo = allCheckboxes.length === 2 && 
-                                checkboxLabels.every(({ lowerLabel }) => 
-                                    lowerLabel.includes('yes') || lowerLabel.includes('no')
+                                checkboxLabels.every((item) => 
+                                    item.lowerLabel.includes('yes') || item.lowerLabel.includes('no')
                                 );
                             
                             if (isBinaryYesNo) {{
                                 // Find the Yes checkbox
-                                const yesCheckbox = checkboxLabels.find(({ lowerLabel }) => 
-                                    lowerLabel.includes('yes') && !lowerLabel.includes('not')
+                                const yesCheckbox = checkboxLabels.find((item) => 
+                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('not')
                                 );
                                 
                                 if (yesCheckbox && !yesCheckbox.cb.checked) {{
@@ -4136,12 +4296,147 @@ class SentinelAgent:
                                     clickedCount = 1;
                                     debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
                                 }}
+                            }} else if (isCityQuestion && allCheckboxes.length <= 3) {{
+                                // For relocation questions with few checkboxes, select Yes if available
+                                let yesCheckbox = checkboxLabels.find((item) => 
+                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('no')
+                                );
+                                
+                                // If no exact Yes found, look for positive indicators
+                                if (!yesCheckbox) {{
+                                    yesCheckbox = checkboxLabels.find((item) => 
+                                        item.lowerLabel.includes('willing') || 
+                                        item.lowerLabel.includes('agree') ||
+                                        item.lowerLabel.includes('confirm')
+                                    );
+                                }}
+                                
+                                if (yesCheckbox && !yesCheckbox.cb.checked) {{
+                                    yesCheckbox.cb.click();
+                                    if (!yesCheckbox.cb.checked) {{
+                                        yesCheckbox.cb.checked = true;
+                                        yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("RELOC_CB: " + yesCheckbox.labelText);
+                                }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("RELOC_CB: " + yesCheckbox.labelText + " (already checked)");
+                                }}
+                            }} else if (isNoticePeriodQuestion) {{
+                                // For notice period questions, select "Serving Notice Period" option
+                                let bestCheckbox = null;
+                                let bestScore = -1;
+                                let allLabels = []; // Debug: store all found labels
+                                
+                                for (const item of checkboxLabels) {{
+                                    allLabels.push(item.labelText);
+                                    let score = 0;
+                                    const labelLower = item.lowerLabel;
+                                    
+                                    // Highest priority: "Serving Notice Period" option
+                                    if (labelLower.includes('serving notice period')) {{
+                                        score = 100;
+                                    }}
+                                    // Secondary: any option with "serving" in it
+                                    else if (labelLower.includes('serving')) {{
+                                        score = 90;
+                                    }}
+                                    // Third: "Serving Notice" (without "Period")
+                                    else if (labelLower.includes('serving notice')) {{
+                                        score = 85;
+                                    }}
+                                    
+                                    if (score > bestScore) {{
+                                        bestScore = score;
+                                        bestCheckbox = item;
+                                    }}
+                                }}
+                                
+                                // Click only the "Serving Notice Period" checkbox
+                                if (bestCheckbox && bestScore >= 85 && !bestCheckbox.cb.checked) {{
+                                    bestCheckbox.cb.click();
+                                    if (!bestCheckbox.cb.checked) {{
+                                        bestCheckbox.cb.checked = true;
+                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
+                                }} else if (bestCheckbox && bestScore >= 85 && bestCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
+                                }} else {{
+                                    // Serving Notice Period not found - don't select anything and log for debugging
+                                    debugLog.push("NOTICE_CB_ERROR: Serving Notice Period not found. Available: " + allLabels.join(", "));
+                                }}
+                            }} else if (isExperienceQuestion) {{
+                                // For experience questions with checkboxes, select only the best matching range
+                                // Target: 3.8 years experience -> select "3 - 5 years"
+                                let bestCheckbox = null;
+                                let bestScore = -1;
+                                let allLabels = []; // Debug: store all found labels
+                                const targetExperience = 3.8; // Years of experience
+                                
+                                for (const item of checkboxLabels) {{
+                                    allLabels.push(item.labelText);
+                                    let score = 0;
+                                    const labelLower = item.lowerLabel;
+                                    
+                                    // Look for year ranges like "3 - 5 years", "1-2 years", etc.
+                                    const rangeMatch = labelLower.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                    if (rangeMatch) {{
+                                        const min = parseFloat(rangeMatch[1]);
+                                        const max = parseFloat(rangeMatch[2]);
+                                        
+                                        // If target falls within range, high score
+                                        if (targetExperience >= min && targetExperience <= max) {{
+                                            score = 100;
+                                        }}
+                                        // If target is close to range, medium score
+                                        else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {{
+                                            score = 80;
+                                        }}
+                                    }}
+                                    // Look for single year values
+                                    else {{
+                                        const yearMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
+                                        if (yearMatch) {{
+                                            const year = parseFloat(yearMatch[1]);
+                                            const diff = Math.abs(targetExperience - year);
+                                            if (diff <= 0.5) score = 90;
+                                            else if (diff <= 1) score = 70;
+                                            else if (diff <= 2) score = 50;
+                                        }}
+                                    }}
+                                    
+                                    if (score > bestScore) {{
+                                        bestScore = score;
+                                        bestCheckbox = item;
+                                    }}
+                                }}
+                                
+                                // Click only the best matching checkbox
+                                if (bestCheckbox && bestScore >= 50 && !bestCheckbox.cb.checked) {{
+                                    bestCheckbox.cb.click();
+                                    if (!bestCheckbox.cb.checked) {{
+                                        bestCheckbox.cb.checked = true;
+                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
+                                }} else if (bestCheckbox && bestScore >= 50 && bestCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (already checked)");
+                                }} else {{
+                                    // No good match found - log for debugging
+                                    debugLog.push("EXP_CB_ERROR: No matching experience range found. Available: " + allLabels.join(", "));
+                                }}
                             }} else {{
                                 // Not binary - process normally
                                 for (const cb of allCheckboxes) {{
-                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${cb.id}"]`);
+                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
                                     if (!label && cb.id) {{
-                                        label = document.querySelector(`label[for="${cb.id}"]`);
+                                        label = document.querySelector(`label[for="${{cb.id}}"]`);
                                     }}
                                     if (!label) {{
                                         label = cb.parentElement; 
@@ -4253,7 +4548,7 @@ class SentinelAgent:
                             const nextIdx = currentIdx + 1;
                             if (nextIdx < tabOrder.length) {{
                                 const nextTabId = tabOrder[nextIdx];
-                                const nextTab = document.querySelector(`#${nextTabId} .tab-list-item`) ||
+                                const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
                                                document.getElementById(nextTabId);
                                 if (nextTab) {{
                                     nextTab.click();
@@ -4380,7 +4675,7 @@ class SentinelAgent:
                         const nextIdx = currentIdx + 1;
                         if (nextIdx < tabOrder.length) {{
                             const nextTabId = tabOrder[nextIdx];
-                            const nextTab = document.querySelector(`#${nextTabId} .tab-list-item`) ||
+                            const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
                                            document.getElementById(nextTabId);
                             if (nextTab) {{
                                 nextTab.click();

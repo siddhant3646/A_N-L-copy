@@ -3545,9 +3545,9 @@ class SentinelAgent:
                                                       value = Math.round(lpaValue * 100000).toString();
                                                   }} else {{
                                                       value = salaryValue;
-                                                  }}
-                                               }}
-                                              }} else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
+                                                   }}
+                                                }}
+                                               else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
                                                   // Notice period: Extract just the number
                                                   value = '30';
                                              }} else {{

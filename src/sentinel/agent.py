@@ -1693,7 +1693,7 @@ class SentinelAgent:
                 
                 # Naukri: Rate limit detected (error popup)
                 if 'NAUKRI_RATE_LIMITED' in result:
-                    self.naukri_rate_limit_until = datetime.now() + timedelta(hours=3)
+                    self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
                     print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
                     self.state.task_complete = True
                     break
@@ -1847,7 +1847,7 @@ class SentinelAgent:
                         }""")
                         
                         if rate_limited:
-                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
+                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=9)
                             print(f"⚠️ LinkedIn Rate Limit Detected! Pausing until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                             self.state.task_complete = True
                             break
@@ -1896,7 +1896,7 @@ class SentinelAgent:
                         
                         # Check for rate limit in result
                         if 'LINKEDIN_RATE_LIMITED' in next_result:
-                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
+                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=9)
                             print(f"⚠️ LinkedIn Rate Limit! Pausing until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                             self.state.task_complete = True
                             break
@@ -2468,7 +2468,7 @@ class SentinelAgent:
                             continue
                         elif isinstance(chatbot_done, str) and 'NAUKRI_RATE_LIMITED' in chatbot_done:
                             # Error popup detected - set rate limit and exit
-                            self.naukri_rate_limit_until = datetime.now() + timedelta(hours=3)
+                            self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
                             print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
                             self.state.task_complete = True
                             break
@@ -2486,7 +2486,7 @@ class SentinelAgent:
                         continue
                     elif isinstance(chatbot_done, str) and 'NAUKRI_RATE_LIMITED' in chatbot_done:
                         # Error popup detected - set rate limit and exit
-                        self.naukri_rate_limit_until = datetime.now() + timedelta(hours=3)
+                        self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
                         print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
                         self.state.task_complete = True
                         break

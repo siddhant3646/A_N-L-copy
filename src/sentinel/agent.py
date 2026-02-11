@@ -51,6 +51,18 @@ KNOWN_QA_PATTERNS = {
     'gross current salary': '13.5 LPA',
     'gross expected salary': '20 LPA',
     'salary expectations': '20 LPA',
+    # Fixed CTC and Variable Pay - Numeric values
+    'fixed ctc': '1350000',
+    'fixed ctc numeric': '1350000',
+    'fixed ctc numeric input': '1350000',
+    'variable pay': '0',
+    'variable pay numeric': '0',
+    'variable pay numeric input': '0',
+    # Expected Annual CTC in INR
+    'expected annual ctc in inr': '2000000',
+    'expected annual ctc': '2000000',
+    'expected ctc in inr': '2000000',
+    'expected ctc inr': '2000000',
     # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
     'salary range': '10-15 Lacs',  # For current salary
     'current salary range': '10-15 Lacs',
@@ -69,10 +81,13 @@ KNOWN_QA_PATTERNS = {
     'current company': 'Fiserv',
     'previous company': 'Fiserv',
     # Notice
-    'notice period': '30 days',
-    'what is your notice period': '30 days',
-    'what is your notice period?': '30 days',
-    'serving notice': 'Yes',
+    'notice period': 'Serving Notice Period',
+    'what is your notice period': 'Serving Notice Period',
+    'what is your notice period?': 'Serving Notice Period',
+    'serving notice': 'Serving Notice Period',
+    'serving notice period': 'Serving Notice Period',
+    'are you serving notice': 'Serving Notice Period',
+    'currently serving notice': 'Serving Notice Period',
     # Education
     'graduation year': '2022',
     'cgpa': '8.51',
@@ -2699,8 +2714,22 @@ class SentinelAgent:
                     const qLower = question.toLowerCase().trim();
                     let bestMatch = null;
                     let bestKeyLen = 0;
-                    for (const [key, val] of Object.entries(KNOWN_PATTERNS)) {{
-                        if (qLower.includes(key.toLowerCase()) && key.length > bestKeyLen) {{
+                    
+                    // Sort patterns by key length (descending) to prioritize longer, more specific matches
+                    const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
+                    
+                    for (const [key, val] of sortedPatterns) {{
+                        const keyLower = key.toLowerCase();
+                        // Check for exact match first
+                        if (qLower === keyLower) {{
+                            return val;
+                        }}
+                        // Check if question includes the key
+                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
+                            // Skip generic 'years' pattern if question contains salary/ctc/pay keywords
+                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
+                                continue;
+                            }}
                             bestMatch = val;
                             bestKeyLen = key.length;
                         }}
@@ -2963,11 +2992,29 @@ class SentinelAgent:
                 const fuzzyMatch = (question) => {{
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
-                    // Direct Key Lookup
-                    for (const [key, val] of Object.entries(KNOWN_PATTERNS)) {{
-                        if (qLower.includes(key.toLowerCase())) return val;
+                    let bestMatch = null;
+                    let bestKeyLen = 0;
+                    
+                    // Sort patterns by key length (descending) to prioritize longer, more specific matches
+                    const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
+                    
+                    for (const [key, val] of sortedPatterns) {{
+                        const keyLower = key.toLowerCase();
+                        // Check for exact match first
+                        if (qLower === keyLower) {{
+                            return val;
+                        }}
+                        // Check if question includes the key
+                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
+                            // Skip generic 'years' pattern if question contains salary/ctc/pay keywords
+                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
+                                continue;
+                            }}
+                            bestMatch = val;
+                            bestKeyLen = key.length;
+                        }}
                     }}
-                    return null;
+                    return bestMatch;
                 }};               
                 
                 // Helper: Find best matching option
@@ -4297,31 +4344,73 @@ class SentinelAgent:
                                     debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
                                 }}
                             }} else if (isCityQuestion && allCheckboxes.length <= 3) {{
-                                // For relocation questions with few checkboxes, select Yes if available
-                                let yesCheckbox = checkboxLabels.find((item) => 
-                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('no')
+                                // Check if these are actual city checkboxes (not Yes/No)
+                                const cityNames = ['pune', 'mumbai', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'ahmedabad'];
+                                const containsCities = checkboxLabels.some(item => 
+                                    cityNames.some(city => item.lowerLabel.includes(city))
                                 );
                                 
-                                // If no exact Yes found, look for positive indicators
-                                if (!yesCheckbox) {{
-                                    yesCheckbox = checkboxLabels.find((item) => 
-                                        item.lowerLabel.includes('willing') || 
-                                        item.lowerLabel.includes('agree') ||
-                                        item.lowerLabel.includes('confirm')
-                                    );
-                                }}
-                                
-                                if (yesCheckbox && !yesCheckbox.cb.checked) {{
-                                    yesCheckbox.cb.click();
-                                    if (!yesCheckbox.cb.checked) {{
-                                        yesCheckbox.cb.checked = true;
-                                        yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                if (containsCities) {{
+                                    // This is a city selection question - select ALL city options (skip "Skip")
+                                    for (const item of checkboxLabels) {{
+                                        // Skip the "Skip this question" option
+                                        if (item.lowerLabel.includes('skip')) {{
+                                            debugLog.push("CITY_SKIP: " + item.labelText);
+                                            continue;
+                                        }}
+                                        
+                                        // Check if this is a city option
+                                        const isCityOption = cityNames.some(city => item.lowerLabel.includes(city));
+                                        
+                                        if (isCityOption && !item.cb.checked) {{
+                                            item.cb.click();
+                                            if (!item.cb.checked) {{
+                                                item.cb.checked = true;
+                                                item.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            }}
+                                            clickedCount++;
+                                            debugLog.push("CITY_ALL: " + item.labelText);
+                                        }} else if (isCityOption && item.cb.checked) {{
+                                            clickedCount++;
+                                            debugLog.push("CITY_ALL: " + item.labelText + " (already checked)");
+                                        }}
                                     }}
-                                    clickedCount = 1;
-                                    debugLog.push("RELOC_CB: " + yesCheckbox.labelText);
-                                }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
-                                    clickedCount = 1;
-                                    debugLog.push("RELOC_CB: " + yesCheckbox.labelText + " (already checked)");
+                                    
+                                    // Click save button after selecting all cities
+                                    if (clickedCount > 0) {{
+                                        const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                        if (saveBtn) {{ 
+                                            saveBtn.click(); 
+                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected all ' + clickedCount + ' cities | DBG: ' + debugLog.join(', '); 
+                                        }}
+                                    }}
+                                }} else {{
+                                    // For relocation questions with few checkboxes, select Yes if available
+                                    let yesCheckbox = checkboxLabels.find((item) => 
+                                        item.lowerLabel.includes('yes') && !item.lowerLabel.includes('no')
+                                    );
+                                    
+                                    // If no exact Yes found, look for positive indicators
+                                    if (!yesCheckbox) {{
+                                        yesCheckbox = checkboxLabels.find((item) => 
+                                            item.lowerLabel.includes('willing') || 
+                                            item.lowerLabel.includes('agree') ||
+                                            item.lowerLabel.includes('confirm')
+                                        );
+                                    }}
+                                    
+                                    if (yesCheckbox && !yesCheckbox.cb.checked) {{
+                                        yesCheckbox.cb.click();
+                                        if (!yesCheckbox.cb.checked) {{
+                                            yesCheckbox.cb.checked = true;
+                                            yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        }}
+                                        clickedCount = 1;
+                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText);
+                                    }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
+                                        clickedCount = 1;
+                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText + " (already checked)");
+                                    }}
                                 }}
                             }} else if (isNoticePeriodQuestion) {{
                                 // For notice period questions, select "Serving Notice Period" option

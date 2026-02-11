@@ -75,12 +75,15 @@
       "patterns": [
         "notice period",
         "serving notice",
+        "serving notice period",
+        "are you serving notice",
+        "currently serving notice",
         "your np",
         "what is your np",
         "mention np"
       ],
       "category": "notice_period",
-      "default": "30 days",
+      "default": "Serving Notice Period",
       "numeric_default": "30"
     },
     "location_current": {

@@ -3170,8 +3170,9 @@ class SentinelAgent:
                     console.log('URL: ' + window.location.href);
                     console.log('Title: ' + document.title);
                     
-                    // Check sidebar selectors
-                    const debugSelectors = [
+                    // Enhanced sidebar detection
+                    console.log('Sidebar detection:');
+                    const debugSidebarSelectors = [
                         '.jobs-search-results-list',
                         '.scaffold-layout__list-container',
                         'ul.scaffold-layout__list-container',
@@ -3181,12 +3182,20 @@ class SentinelAgent:
                         '.scaffold-layout__list',
                         '[role="main"] .scaffold-layout__list-container',
                         '.jobs-search__results-list',
-                        'div[class*="results-list"]'
+                        'div[class*="results-list"]',
+                        'div[data-test-id="search-results-list"]',
+                        'main > div > div > div > ul',
+                        '.artdeco-list',
+                        'ul[role="list"]'
                     ];
-                    console.log('Sidebar detection:');
-                    for (const sel of debugSelectors) {{
-                        const el = document.querySelector(sel);
-                        console.log('  ' + sel + ': ' + (el ? 'FOUND (' + el.tagName + ')' : 'not found'));
+                    for (const sel of debugSidebarSelectors) {{
+                        const elements = document.querySelectorAll(sel);
+                        const count = elements.length;
+                        if (count > 0) {{
+                            console.log('  ' + sel + ': ' + count + ' found - ' + elements[0].className);
+                        }} else {{
+                            console.log('  ' + sel + ': not found');
+                        }}
                     }}
                     
                     // Check for job cards
@@ -3197,9 +3206,35 @@ class SentinelAgent:
                         '[data-job-id]'
                     ];
                     console.log('Job card detection:');
-                    for (const sel of jobCardSelectors) {{
+                    const debugJobCardSelectors = [
+                        'li.scaffold-layout__list-item',
+                        'li[data-occludable-job-id]',
+                        '.job-card-container',
+                        '[data-job-id]'
+                    ];
+                    for (const sel of debugJobCardSelectors) {{
                         const count = document.querySelectorAll(sel).length;
                         console.log('  ' + sel + ': ' + count + ' found');
+                    }}
+                    
+                    // Enhanced DOM analysis for 2026 LinkedIn
+                    console.log('Enhanced DOM analysis:');
+                    console.log('Total elements with "job" in class: ' + document.querySelectorAll('[class*="job"]').length);
+                    console.log('Total elements with "currentJobId" in href: ' + document.querySelectorAll('[href*="currentJobId"]').length);
+                    console.log('Total links on page: ' + document.querySelectorAll('a').length);
+                    console.log('Total list items: ' + document.querySelectorAll('li').length);
+                    
+                    // Try to find ANY clickable elements that might be job cards
+                    const clickableElements = document.querySelectorAll('a[onclick], button[onclick], a[href*="jobs"], div[onclick]');
+                    console.log('Clickable elements: ' + clickableElements.length);
+                    
+                    // Look for common parent containers that might hold job listings
+                    const potentialContainers = document.querySelectorAll('main, [role="main"], .main, .content, .container, section');
+                    console.log('Potential containers: ' + potentialContainers.length);
+                    for (let i = 0; i < Math.min(potentialContainers.length, 3); i++) {{
+                        const container = potentialContainers[i];
+                        const links = container.querySelectorAll('a[href*="currentJobId"], a[href*="jobs"]');
+                        console.log('  Container ' + i + ': ' + links.length + ' job links');
                     }}
                     
                     // Check Easy Apply button
@@ -3215,6 +3250,112 @@ class SentinelAgent:
                     if (bodyText.includes('Applied')) {{
                         const match = bodyText.match(/Applied[^\\n]{{0,50}}/);
                         console.log('Applied status: "' + (match ? match[0] : 'Found') + '"');
+                        
+                        // Since job is already applied, try aggressive fallback navigation
+                        console.log('JOB APPLIED - attempting aggressive navigation to next job');
+                        
+                        // Look for ANY links that might navigate to jobs
+                        const allLinks = document.querySelectorAll('a[href]');
+                        console.log('Checking ' + allLinks.length + ' links for job navigation...');
+                        for (let i = 0; i < allLinks.length; i++) {{
+                            const link = allLinks[i];
+                            const href = link.href;
+                            
+                            // Log all links that contain job-related terms for debugging
+                            if (href.includes('job') || href.includes('currentJobId') || href.includes('view')) {{
+                                console.log('JOB-LINK: ' + href);
+                            }}
+                            
+                            // Look for job links that are NOT the current job
+                            if (href.includes('currentJobId') && !href.includes('currentJobId=' + new URLSearchParams(window.location.search).get('currentJobId'))) {{
+                                console.log('FOUND NEXT JOB LINK: ' + href);
+                                link.click();
+                                return 'AGGRESSIVE_NAV: Clicked next job link';
+                            }}
+                        }}
+                        
+                        // If no currentJobId links found, try alternative job link detection
+                        console.log('No currentJobId links found, trying alternative detection...');
+                        const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
+                        
+                        for (let i = 0; i < allLinks.length; i++) {{
+                            const link = allLinks[i];
+                            const href = link.href;
+                            const text = link.innerText || '';
+                            
+                            // Look for links that go to job details but aren't the current job
+                            if ((href.includes('/jobs/view/') || href.includes('jobs/view') || text.includes('View job')) && 
+                                !href.includes(currentJobId)) {{
+                                console.log('FOUND ALTERNATIVE JOB LINK: ' + href + ' (text: ' + text + ')');
+                                link.click();
+                                return 'AGGRESSIVE_NAV: Clicked alternative job link';
+                            }}
+                        }}
+                        
+                        // Try URL-based navigation to find next job
+                        console.log('Trying URL-based navigation...');
+                        
+                        // Look for pagination or navigation elements
+                        const paginationButtons = document.querySelectorAll('button[aria-label*="Next"], button[aria-label*="next"], .pagination-next, [data-test="pagination-next"], button[aria-label*="More"]');
+                        for (const btn of paginationButtons) {{
+                            console.log('FOUND PAGINATION BUTTON: ' + btn.innerText + ' - ' + btn.getAttribute('aria-label'));
+                            btn.click();
+                            return 'AGGRESSIVE_NAV: Clicked pagination button';
+                        }}
+                        
+                        // Try to find keyboard navigation support
+                        console.log('Trying keyboard navigation...');
+                        const event = new KeyboardEvent('keydown', {{ 
+                            key: 'ArrowDown', 
+                            code: 'ArrowDown', 
+                            keyCode: 40, 
+                            which: 40,
+                            bubbles: true 
+                        }});
+                        document.activeElement?.dispatchEvent(event);
+                        
+                        // Try clicking on scrollable areas to load more content
+                        const scrollableElements = document.querySelectorAll('[style*="overflow"], .scrollable, main, [role="main"]');
+                        for (const elem of scrollableElements) {{
+                            if (elem.scrollHeight > elem.clientHeight) {{
+                                console.log('Found scrollable element, scrolling down...');
+                                elem.scrollTop = elem.scrollTop + 500;
+                                return 'AGGRESSIVE_NAV: Scrolled in scrollable element';
+                            }}
+                        }}
+                        
+                        // Last resort: Force complete page reload with new search parameters
+                        console.log('FORCING NEW SEARCH - LinkedIn interface changed completely...');
+                        const currentUrl = window.location.href;
+                        const url = new URL(currentUrl);
+                        
+                        // Remove current job to force loading a new job
+                        url.searchParams.delete('currentJobId');
+                        
+                        // Change search parameters to get different results
+                        url.searchParams.set('start', Math.floor(Math.random() * 100)); 
+                        url.searchParams.set('sortBy', 'DD'); // Recent instead of Relevant
+                        url.searchParams.set('f_TP', 'R14400'); // Past 4 hours instead of 24 hours
+                        
+                        // Add timestamp to prevent caching
+                        url.searchParams.set('_t', Date.now());
+                        
+                        console.log('NAVIGATING TO: ' + url.toString());
+                        window.location.href = url.toString();
+                        return 'AGGRESSIVE_NAV: Forced new search with different parameters';
+                        
+                        // If no job links found, try looking for pagination or next buttons
+                        const nextButtons = document.querySelectorAll('button[aria-label*="Next"], button[aria-label*="next"], .pagination-next, [data-test="pagination-next"]');
+                        for (const btn of nextButtons) {{
+                            console.log('FOUND NEXT BUTTON: ' + btn.innerText);
+                            btn.click();
+                            return 'AGGRESSIVE_NAV: Clicked pagination button';
+                        }}
+                        
+                        // Last resort: scroll down to load more jobs
+                        console.log('NO NAVIGATION FOUND - scrolling to load more content');
+                        window.scrollBy(0, 1000);
+                        return 'AGGRESSIVE_NAV: Scrolled for more jobs';
                     }} else {{
                         console.log('Applied status: Not applied');
                     }}
@@ -3299,7 +3440,7 @@ class SentinelAgent:
 
                     // NAVIGATION & SKIP LOGIC: Move to next job if current is applied or not Easy Apply
                     // Try multiple sidebar selectors - LinkedIn changes these frequently
-                    // Based on DOM inspection: .scaffold-layout__list works
+                    // Updated selectors for 2026 LinkedIn DOM structure
                     const sidebarSelectors = [
                         '.scaffold-layout__list',
                         'div[class*="results-list"]',
@@ -3309,7 +3450,22 @@ class SentinelAgent:
                         '.jobs-search-results-list__list',
                         '[data-test-results-list]',
                         '.jobs-search-two-pane__results-list',
-                        '[class*="jobs-search"][class*="list"]'
+                        '[class*="jobs-search"][class*="list"]',
+                        // Additional selectors for 2026 LinkedIn
+                        'div[data-test-id="search-results-list"]',
+                        'div[data-ember-extension]',
+                        'ul[role="list"]',
+                        'div[class*="jobs-search__results-list"]',
+                        'main > div > div > div > ul',
+                        '.jobs-search__right-rail',
+                        '[class*="artdeco-list"]',
+                        'div[class*="jobs-search"][class*="left-rail"]',
+                        '.artdeco-list',
+                        'ul[data-ember-extension]',
+                        // Fallback: look for any container with job cards
+                        'div:has(li[data-occludable-job-id])',
+                        'div:has(li[class*="job-card"])',
+                        'div:has(a[href*="currentJobId"])'
                     ];
                     
                     let sidebar = null;
@@ -3325,8 +3481,29 @@ class SentinelAgent:
                     if (sidebar) {{
                         // NOTE: await removed - Python handles delays between evaluate calls
                         
-                        // Find all job cards - use the selector that works
-                        const jobCards = Array.from(sidebar.querySelectorAll('li.scaffold-layout__list-item'));
+                        // Find all job cards - try multiple selectors for 2026 LinkedIn
+                        const jobCardSelectors = [
+                            'li.scaffold-layout__list-item',
+                            'li[data-occludable-job-id]',
+                            'li[data-job-id]',
+                            '[class*="job-card-container"]',
+                            '[class*="job-card"]',
+                            'li:has(a[href*="currentJobId"])',
+                            'div:has(a[href*="currentJobId"])',
+                            'li:has([class*="job-list"])',
+                            '[data-test="job-card"]',
+                            '[class*="jobs-search-results__list-item"]'
+                        ];
+                        
+                        let jobCards = [];
+                        for (const selector of jobCardSelectors) {{
+                            const cards = Array.from(sidebar.querySelectorAll(selector));
+                            if (cards.length > 0) {{
+                                jobCards = cards;
+                                console.log('LINKEDIN: Found ' + cards.length + ' job cards with selector: ' + selector);
+                                break;
+                            }}
+                        }}
                         console.log('LINKEDIN: Found ' + jobCards.length + ' job cards');
                         
                         // Helper function to extract job ID from card (defined BEFORE use)
@@ -3473,7 +3650,47 @@ class SentinelAgent:
                                 return 'LINKEDIN_SCROLLED: Looking for more jobs';
                             }}
                         }} else {{
-                            console.log('LINKEDIN: Sidebar not found with any selector, continuing with apply flow');
+                            console.log('LINKEDIN: Sidebar not found with any selector, trying fallback navigation');
+                            
+                            // Fallback: Try to find job cards globally without sidebar
+                            const globalJobSelectors = [
+                                'li[data-occludable-job-id]',
+                                'li[data-job-id]',
+                                '[class*="job-card-container"]',
+                                '[class*="job-card"]',
+                                'a[href*="currentJobId"]'
+                            ];
+                            
+                            for (const selector of globalJobSelectors) {{
+                                const elements = document.querySelectorAll(selector);
+                                if (elements.length > 0) {{
+                                    console.log('LINKEDIN: Found ' + elements.length + ' global job elements with selector: ' + selector);
+                                    
+                                    // If current job is applied/success, try to click the next job link
+                                    if (successDetected) {{
+                                        const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
+                                        for (let i = 0; i < elements.length; i++) {{
+                                            const element = elements[i];
+                                            const jobId = element.getAttribute('data-job-id') || 
+                                                         element.getAttribute('data-occludable-job-id') ||
+                                                         (element.href && element.href.match(/currentJobId=(\d+)/)?.[1]);
+                                            
+                                            if (jobId && jobId !== currentJobId) {{
+                                                console.log('LINKEDIN: Fallback - clicking global job element, ID=' + jobId);
+                                                element.scrollIntoView({{ block: 'center' }});
+                                                element.click();
+                                                return 'LINKEDIN_FALLBACK_NAV: Clicked job ' + jobId;
+                                            }}
+                                        }}
+                                    }}
+                                    break;
+                                }}
+                            }}
+                            
+                            // If still no navigation possible, try scrolling down to load more content
+                            console.log('LINKEDIN: No sidebar found, scrolling to load content');
+                            window.scrollBy(0, 800);
+                            return 'LINKEDIN_FALLBACK_SCROLL: Scrolled to load content';
                         }}
                     
                     // If success was detected but we didn't navigate to a new job above,

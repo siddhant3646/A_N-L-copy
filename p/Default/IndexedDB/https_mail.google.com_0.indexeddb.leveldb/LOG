@@ -1,0 +1,15 @@
+2026/02/11-23:12:24.968 33a4 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/11-23:12:24.969 33a4 Recovering log #314
+2026/02/11-23:12:24.973 33a4 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/000314.log 
+2026/02/11-23:12:26.799 339a Compacting 1@1 + 1@2 files
+2026/02/11-23:12:26.828 339a Generated table #317@1: 293 keys, 1263680 bytes
+2026/02/11-23:12:26.828 339a Compacted 1@1 + 1@2 files => 1263680 bytes
+2026/02/11-23:12:26.829 339a compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/11-23:12:26.829 339a Delete type=2 #315
+2026/02/11-23:12:26.829 339a Delete type=2 #313
+2026/02/11-23:12:33.860 339d Level-0 table #319: started
+2026/02/11-23:12:33.885 339d Level-0 table #319: 3147670 bytes OK
+2026/02/11-23:12:33.889 339d Delete type=0 #314
+2026/02/11-23:12:47.758 339d Level-0 table #321: started
+2026/02/11-23:12:47.778 339d Level-0 table #321: 3178748 bytes OK
+2026/02/11-23:12:47.781 339d Delete type=0 #318

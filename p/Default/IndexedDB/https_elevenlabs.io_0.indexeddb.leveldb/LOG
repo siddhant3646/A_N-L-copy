@@ -1,0 +1,13 @@
+2026/02/11-23:09:24.249 339a Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_elevenlabs.io_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/11-23:09:24.249 339a Recovering log #46
+2026/02/11-23:09:24.250 339a Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_elevenlabs.io_0.indexeddb.leveldb/000046.log 
+2026/02/11-23:09:24.298 33a4 Level-0 table #50: started
+2026/02/11-23:09:24.299 33a4 Level-0 table #50: 65040 bytes OK
+2026/02/11-23:09:24.301 33a4 Delete type=0 #46
+2026/02/11-23:09:24.302 33a4 Manual compaction at level-0 from '\x00\x14\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x15\x00\x00\x00' @ 0 : 0; will stop at '\x00\x14\x00\x00\x05' @ 1754 : 1
+2026/02/11-23:09:24.302 33a4 Compacting 1@0 + 1@1 files
+2026/02/11-23:09:24.303 33a4 Generated table #51@0: 76 keys, 30487 bytes
+2026/02/11-23:09:24.303 33a4 Compacted 1@0 + 1@1 files => 30487 bytes
+2026/02/11-23:09:24.304 33a4 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/02/11-23:09:24.304 33a4 Delete type=2 #50
+2026/02/11-23:09:24.304 339a Manual compaction at level-0 from '\x00\x14\x00\x00\x05' @ 1754 : 1 .. '\x00\x15\x00\x00\x00' @ 0 : 0; will stop at (end)

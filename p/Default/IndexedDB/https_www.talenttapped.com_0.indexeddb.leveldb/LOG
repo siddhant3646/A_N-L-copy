@@ -1,0 +1,25 @@
+2026/02/06-09:42:29.378 b4f4d Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.talenttapped.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/06-09:42:29.378 b4f4d Recovering log #4
+2026/02/06-09:42:29.379 b4f4d Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.talenttapped.com_0.indexeddb.leveldb/000004.log 
+2026/02/06-09:42:29.385 b4f58 Level-0 table #8: started
+2026/02/06-09:42:29.386 b4f58 Level-0 table #8: 5218 bytes OK
+2026/02/06-09:42:29.387 b4f58 Delete type=0 #4
+2026/02/06-09:42:29.388 b4f58 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/02/06-09:43:48.588 b4f50 Compacting 1@1 + 1@2 files
+2026/02/06-09:43:48.593 b4f50 Generated table #9@1: 40 keys, 3593 bytes
+2026/02/06-09:43:48.593 b4f50 Compacted 1@1 + 1@2 files => 3593 bytes
+2026/02/06-09:43:48.595 b4f50 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/06-09:43:48.595 b4f50 Delete type=2 #5
+2026/02/06-09:43:48.595 b4f50 Delete type=2 #8
+2026/02/06-09:51:40.353 b4f50 Level-0 table #11: started
+2026/02/06-09:51:40.355 b4f50 Level-0 table #11: 6372 bytes OK
+2026/02/06-09:51:40.357 b4f50 Delete type=0 #7
+2026/02/06-09:51:40.357 b4f50 Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2026/02/06-09:51:40.357 b4f50 Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x03\x01\x02\x012\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x001\x00:\x009\x001\x007\x001\x001\x007\x009\x002\x002\x007\x000\x00:\x00w\x00e\x00b\x00:\x000\x00d\x008\x009\x000\x00d\x007\x00b\x00d\x006\x006\x008\x00a\x00e\x007\x003\x00e\x002\x001\x005\x00d\x00f' @ 185 : 1
+2026/02/06-09:51:40.357 b4f50 Compacting 1@1 + 1@2 files
+2026/02/06-09:51:40.359 b4f50 Generated table #12@1: 36 keys, 3505 bytes
+2026/02/06-09:51:40.359 b4f50 Compacted 1@1 + 1@2 files => 3505 bytes
+2026/02/06-09:51:40.360 b4f50 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/06-09:51:40.360 b4f50 Delete type=2 #11
+2026/02/06-09:51:40.360 b4f50 Delete type=2 #9
+2026/02/06-09:51:40.360 b4f50 Manual compaction at level-1 from '\x00\x03\x01\x02\x012\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x001\x00:\x009\x001\x007\x001\x001\x007\x009\x002\x002\x007\x000\x00:\x00w\x00e\x00b\x00:\x000\x00d\x008\x009\x000\x00d\x007\x00b\x00d\x006\x006\x008\x00a\x00e\x007\x003\x00e\x002\x001\x005\x00d\x00f' @ 185 : 1 .. (end); will stop at (end)

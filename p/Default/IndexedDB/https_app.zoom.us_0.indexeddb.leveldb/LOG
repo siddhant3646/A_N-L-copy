@@ -1,0 +1,7 @@
+2026/02/02-17:21:10.204 c824e Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_app.zoom.us_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/02-17:21:10.204 c824e Recovering log #3
+2026/02/02-17:21:10.205 c824e Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_app.zoom.us_0.indexeddb.leveldb/000003.log 
+2026/02/02-18:30:46.771 c824e Level-0 table #5: started
+2026/02/02-18:30:46.777 c824e Level-0 table #5: 137910 bytes OK
+2026/02/02-18:30:46.780 c824e Delete type=0 #3
+2026/02/02-18:30:46.781 c824e Manual compaction at level-0 from (begin) .. (end); will stop at (end)

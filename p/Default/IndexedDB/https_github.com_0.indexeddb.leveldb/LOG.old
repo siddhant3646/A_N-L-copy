@@ -1,0 +1,15 @@
+2026/02/11-00:24:41.806 3371c Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_github.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/11-00:24:41.806 3371c Recovering log #7
+2026/02/11-00:24:41.806 3371c Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_github.com_0.indexeddb.leveldb/000007.log 
+2026/02/11-08:17:59.740 3371c Level-0 table #12: started
+2026/02/11-08:17:59.741 3371c Level-0 table #12: 477 bytes OK
+2026/02/11-08:17:59.742 3371c Delete type=0 #7
+2026/02/11-08:17:59.743 3371c Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2026/02/11-08:17:59.743 3371c Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x01\x01\x02\x01H\x00k\x00e\x00y\x00-\x00[\x00"\x00g\x00l\x00o\x00b\x00a\x00l\x00-\x00n\x00a\x00v\x00-\x00s\x00i\x00d\x00e\x00-\x00p\x00a\x00n\x00e\x00l\x00"\x00,\x00"\x00/\x00_\x00s\x00i\x00d\x00e\x00-\x00p\x00a\x00n\x00e\x00l\x00s\x00/\x00g\x00l\x00o\x00b\x00a\x00l\x00.\x00j\x00s\x00o\x00n\x00"\x00,\x005\x00,\x002\x000\x00,\x00n\x00u\x00l\x00l\x00,\x00n\x00u\x00l\x00l\x00]' @ 2388 : 0
+2026/02/11-08:17:59.743 3371c Compacting 1@1 + 1@2 files
+2026/02/11-08:17:59.747 3371c Generated table #13@1: 391 keys, 701749 bytes
+2026/02/11-08:17:59.747 3371c Compacted 1@1 + 1@2 files => 701749 bytes
+2026/02/11-08:17:59.747 3371c compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/11-08:17:59.748 3371c Delete type=2 #12
+2026/02/11-08:17:59.748 3371c Delete type=2 #9
+2026/02/11-08:17:59.748 3371c Manual compaction at level-1 from '\x00\x01\x01\x02\x01H\x00k\x00e\x00y\x00-\x00[\x00"\x00g\x00l\x00o\x00b\x00a\x00l\x00-\x00n\x00a\x00v\x00-\x00s\x00i\x00d\x00e\x00-\x00p\x00a\x00n\x00e\x00l\x00"\x00,\x00"\x00/\x00_\x00s\x00i\x00d\x00e\x00-\x00p\x00a\x00n\x00e\x00l\x00s\x00/\x00g\x00l\x00o\x00b\x00a\x00l\x00.\x00j\x00s\x00o\x00n\x00"\x00,\x005\x00,\x002\x000\x00,\x00n\x00u\x00l\x00l\x00,\x00n\x00u\x00l\x00l\x00]' @ 2388 : 0 .. (end); will stop at (end)

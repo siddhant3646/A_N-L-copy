@@ -1,0 +1,15 @@
+2026/02/11-23:09:14.221 339a Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/WebStorage/190/IndexedDB/indexeddb.leveldb/MANIFEST-000001
+2026/02/11-23:09:14.221 339a Recovering log #47
+2026/02/11-23:09:14.223 339a Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/WebStorage/190/IndexedDB/indexeddb.leveldb/000047.log 
+2026/02/11-23:21:30.369 339d Level-0 table #52: started
+2026/02/11-23:21:30.373 339d Level-0 table #52: 446058 bytes OK
+2026/02/11-23:21:30.376 339d Delete type=0 #47
+2026/02/11-23:21:30.377 339d Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2026/02/11-23:21:30.377 339d Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x05\x01\x1f\x04\x03\x01\x06\x00Q\x00U\x00E\x00U\x00E\x00D\x03\x00\x00\x00\x00\x00\x00L@\x03\x000C\xa7\xdc\xc4yB\x00\x03\x00\x00\x00\x00\x00\x00V@' @ 17909 : 1
+2026/02/11-23:21:30.377 339d Compacting 1@1 + 1@2 files
+2026/02/11-23:21:30.380 339d Generated table #53@1: 126 keys, 12591 bytes
+2026/02/11-23:21:30.380 339d Compacted 1@1 + 1@2 files => 12591 bytes
+2026/02/11-23:21:30.381 339d compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/11-23:21:30.381 339d Delete type=2 #49
+2026/02/11-23:21:30.381 339d Delete type=2 #52
+2026/02/11-23:21:30.382 339d Manual compaction at level-1 from '\x00\x05\x01\x1f\x04\x03\x01\x06\x00Q\x00U\x00E\x00U\x00E\x00D\x03\x00\x00\x00\x00\x00\x00L@\x03\x000C\xa7\xdc\xc4yB\x00\x03\x00\x00\x00\x00\x00\x00V@' @ 17909 : 1 .. (end); will stop at (end)

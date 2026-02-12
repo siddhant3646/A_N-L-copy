@@ -1,0 +1,13 @@
+2026/02/01-11:36:32.333 2edb Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_agent.minimax.io_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/01-11:36:32.333 2edb Recovering log #6
+2026/02/01-11:36:32.333 2edb Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_agent.minimax.io_0.indexeddb.leveldb/000006.log 
+2026/02/01-11:36:32.454 2ee4 Level-0 table #11: started
+2026/02/01-11:36:32.454 2ee4 Level-0 table #11: 814 bytes OK
+2026/02/01-11:36:32.456 2ee4 Delete type=0 #6
+2026/02/01-11:36:32.456 2ee4 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/02/01-11:37:40.458 2ede Compacting 1@1 + 1@2 files
+2026/02/01-11:37:40.460 2ede Generated table #12@1: 42 keys, 3596 bytes
+2026/02/01-11:37:40.461 2ede Compacted 1@1 + 1@2 files => 3596 bytes
+2026/02/01-11:37:40.462 2ede compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/01-11:37:40.462 2ede Delete type=2 #11
+2026/02/01-11:37:40.462 2ede Delete type=2 #8

@@ -1,0 +1,15 @@
+2026/02/09-10:48:07.700 d408c Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_meet.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/09-10:48:07.701 d408c Recovering log #7
+2026/02/09-10:48:07.701 d408c Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_meet.google.com_0.indexeddb.leveldb/000007.log 
+2026/02/09-10:48:40.268 d408f Level-0 table #12: started
+2026/02/09-10:48:40.270 d408f Level-0 table #12: 8597 bytes OK
+2026/02/09-10:48:40.273 d408f Delete type=0 #7
+2026/02/09-10:48:40.274 d408f Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2026/02/09-10:48:40.274 d408f Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x02\x01\x02\x01\x13\x00c\x00l\x00i\x00e\x00n\x00t\x00R\x00e\x00g\x00i\x00s\x00t\x00r\x00a\x00t\x00i\x00o\x00n\x00s' @ 1123 : 1
+2026/02/09-10:48:40.274 d408f Compacting 1@1 + 1@2 files
+2026/02/09-10:48:40.276 d408f Generated table #13@1: 53 keys, 6845 bytes
+2026/02/09-10:48:40.276 d408f Compacted 1@1 + 1@2 files => 6845 bytes
+2026/02/09-10:48:40.277 d408f compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/09-10:48:40.277 d408f Delete type=2 #12
+2026/02/09-10:48:40.277 d408f Delete type=2 #9
+2026/02/09-10:48:40.278 d408f Manual compaction at level-1 from '\x00\x02\x01\x02\x01\x13\x00c\x00l\x00i\x00e\x00n\x00t\x00R\x00e\x00g\x00i\x00s\x00t\x00r\x00a\x00t\x00i\x00o\x00n\x00s' @ 1123 : 1 .. (end); will stop at (end)

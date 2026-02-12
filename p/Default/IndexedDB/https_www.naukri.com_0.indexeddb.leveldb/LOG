@@ -1,0 +1,15 @@
+2026/02/11-00:18:23.305 3371c Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.naukri.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/11-00:18:23.306 3371c Recovering log #38
+2026/02/11-00:18:23.308 3371c Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.naukri.com_0.indexeddb.leveldb/000038.log 
+2026/02/11-00:19:57.707 3371c Level-0 table #43: started
+2026/02/11-00:19:57.718 3371c Level-0 table #43: 779061 bytes OK
+2026/02/11-00:19:57.720 3371c Delete type=0 #38
+2026/02/11-00:19:57.722 3371c Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2026/02/11-00:19:57.723 3371c Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x03\x01\x02\x01!\x00w\x00i\x00d\x00g\x00e\x00t\x00D\x00a\x00t\x00a\x00-\x00n\x00i\x00-\x00d\x00e\x00s\x00k\x00t\x00o\x00p\x00-\x00w\x00h\x00t\x00c\x00v\x00-\x00v\x001\x00-\x00c\x001' @ 30395 : 1
+2026/02/11-00:19:57.723 3371c Compacting 1@1 + 1@2 files
+2026/02/11-00:19:57.729 3371c Generated table #44@1: 203 keys, 183090 bytes
+2026/02/11-00:19:57.729 3371c Compacted 1@1 + 1@2 files => 183090 bytes
+2026/02/11-00:19:57.730 3371c compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/02/11-00:19:57.730 3371c Delete type=2 #43
+2026/02/11-00:19:57.730 3371c Delete type=2 #40
+2026/02/11-00:19:57.732 3371c Manual compaction at level-1 from '\x00\x03\x01\x02\x01!\x00w\x00i\x00d\x00g\x00e\x00t\x00D\x00a\x00t\x00a\x00-\x00n\x00i\x00-\x00d\x00e\x00s\x00k\x00t\x00o\x00p\x00-\x00w\x00h\x00t\x00c\x00v\x00-\x00v\x001\x00-\x00c\x001' @ 30395 : 1 .. (end); will stop at (end)

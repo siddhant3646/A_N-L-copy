@@ -3151,1244 +3151,388 @@ class SentinelAgent:
                 const isInstahyre = document.title.includes('Instahyre') || window.location.href.includes('instahyre.com');
 
                 // ============================================================
-                // LINKEDIN LOGIC (Restored)
+                // LINKEDIN LOGIC (CLEAN REWRITE FOR 2025-2026)
+                // Handles obfuscated classes and dynamic DOM structure
                 // ============================================================
                 if (isLinkedIn) {{
-                    // FIRST: Check for city dropdown and select first option
-                    const cityDropdown = document.querySelector('[role="listbox"]');
-                    if (cityDropdown) {{
-                        const options = cityDropdown.querySelectorAll('[role="option"]');
-                        if (options.length > 0) {{
-                            // Click the first option
-                            options[0].click();
-                            return 'LINKEDIN_CITY_SELECTED';
-                        }}
-                    }}
+                    console.log('=== LINKEDIN AUTOMATION STARTED ===');
                     
-                    // DEBUG: Log DOM structure for troubleshooting
-                    console.log('=== LINKEDIN DOM DEBUG ===');
-                    console.log('URL: ' + window.location.href);
-                    console.log('Title: ' + document.title);
-                    
-                    // CHECK LOGIN STATUS
-                    const isLoggedIn = !!(document.querySelector('.global-nav__me-photo') || document.querySelector('#ember14') || document.querySelector('.feed-identity-module'));
-                    console.log('LOGIN STATUS: ' + (isLoggedIn ? 'LOGGED IN ✅' : 'GUEST VIEW ⚠️'));
-                    
-                    if (!isLoggedIn) {{
-                         console.log('DUMP_HTML');
-                    }}
-                    
-                    // Enhanced sidebar detection
-                    console.log('Sidebar detection:');
-                    const debugSidebarSelectors = [
-                        '.jobs-search-results-list',
-                        '.scaffold-layout__list-container',
-                        'ul.scaffold-layout__list-container',
-                        '.jobs-search-results-list__list',
-                        '[data-test-results-list]',
-                        '.jobs-search-two-pane__results-list',
-                        '.scaffold-layout__list',
-                        '[role="main"] .scaffold-layout__list-container',
-                        '.jobs-search__results-list',
-                        'div[class*="results-list"]',
-                        'div[data-test-id="search-results-list"]',
-                        'main > div > div > div > ul',
-                        '.artdeco-list',
-                        'ul[role="list"]',
-                        'section.two-pane-serp-page__results-list',
-                        '.two-pane-serp-page__results-list',
-                        'ul.jobs-search__results-list'
-                    ];
-                    for (const sel of debugSidebarSelectors) {{
-                        const elements = document.querySelectorAll(sel);
-                        const count = elements.length;
-                        if (count > 0) {{
-                            console.log('  ' + sel + ': ' + count + ' found - ' + elements[0].className);
-                        }} else {{
-                            console.log('  ' + sel + ': not found');
-                        }}
-                    }}
-
-                    // START DEBUG: Log first few LI elements to understand structure
-                    console.log('--- LI ELEMENT DEBUG ---');
-                    const allLis = document.querySelectorAll('li');
-                    for(let i=0; i<Math.min(allLis.length, 3); i++) {{
-                        console.log('LI[' + i + '] classes: ' + allLis[i].className);
-                        console.log('LI[' + i + '] html: ' + allLis[i].outerHTML.substring(0, 150) + '...');
-                    }}
-                    console.log('--- END LI DEBUG ---');
-                    
-                    // Check for job cards
-                    const jobCardSelectors = [
-                        'li.scaffold-layout__list-item',
-                        'li[data-occludable-job-id]',
-                        '.job-card-container',
-                        '[data-job-id]'
-                    ];
-                    console.log('Job card detection:');
-                    const debugJobCardSelectors = [
-                        'li.scaffold-layout__list-item',
-                        'li[data-occludable-job-id]',
-                        '.job-card-container',
-                        '[data-job-id]'
-                    ];
-                    for (const sel of debugJobCardSelectors) {{
-                        const count = document.querySelectorAll(sel).length;
-                        console.log('  ' + sel + ': ' + count + ' found');
-                    }}
-                    
-                    // Enhanced DOM analysis for 2026 LinkedIn
-                    console.log('Enhanced DOM analysis:');
-                    console.log('Total elements with "job" in class: ' + document.querySelectorAll('[class*="job"]').length);
-                    console.log('Total elements with "currentJobId" in href: ' + document.querySelectorAll('[href*="currentJobId"]').length);
-                    console.log('Total links on page: ' + document.querySelectorAll('a').length);
-                    console.log('Total list items: ' + document.querySelectorAll('li').length);
-                    
-                    // Try to find ANY clickable elements that might be job cards
-                    const clickableElements = document.querySelectorAll('a[onclick], button[onclick], a[href*="jobs"], div[onclick]');
-                    console.log('Clickable elements: ' + clickableElements.length);
-                    
-                    // Look for common parent containers that might hold job listings
-                    const potentialContainers = document.querySelectorAll('main, [role="main"], .main, .content, .container, section');
-                    console.log('Potential containers: ' + potentialContainers.length);
-                    for (let i = 0; i < Math.min(potentialContainers.length, 3); i++) {{
-                        const container = potentialContainers[i];
-                        const links = container.querySelectorAll('a[href*="currentJobId"], a[href*="jobs"]');
-                        console.log('  Container ' + i + ': ' + links.length + ' job links');
-                    }}
-                    
-                    // Check Easy Apply button
-                    const easyApplyBtn = document.querySelector('button.jobs-apply-button');
-                    console.log('Easy Apply button: ' + (easyApplyBtn ? 'FOUND - "' + easyApplyBtn.innerText.substring(0, 30) + '"' : 'NOT FOUND'));
-                    
-                    // Check current job ID
-                    const currentId = new URLSearchParams(window.location.search).get('currentJobId');
-                    console.log('Current Job ID: ' + currentId);
-                    
-                    // Check applied status
-                    const bodyText = document.body.innerText;
-                    if (bodyText.includes('Applied')) {{
-                        const match = bodyText.match(/Applied[^\\n]{{0,50}}/);
-                        console.log('Applied status: "' + (match ? match[0] : 'Found') + '"');
-                        
-                        // Since job is already applied, try aggressive fallback navigation
-                        console.log('JOB APPLIED - attempting aggressive navigation to next job');
-                        
-                        // Look for ANY links that might navigate to jobs
-                        const allLinks = document.querySelectorAll('a[href]');
-                        console.log('Checking ' + allLinks.length + ' links for job navigation...');
-                        for (let i = 0; i < allLinks.length; i++) {{
-                            const link = allLinks[i];
-                            const href = link.href;
-                            
-                            // Log all links that contain job-related terms for debugging
-                            if (href.includes('job') || href.includes('currentJobId') || href.includes('view')) {{
-                                console.log('JOB-LINK: ' + href);
-                            }}
-                            
-                            // Look for job links that are NOT the current job
-                            if (href.includes('currentJobId') && !href.includes('currentJobId=' + new URLSearchParams(window.location.search).get('currentJobId'))) {{
-                                console.log('FOUND NEXT JOB LINK: ' + href);
-                                link.click();
-                                return 'AGGRESSIVE_NAV: Clicked next job link';
-                            }}
-                        }}
-                        
-                        // If no currentJobId links found, try alternative job link detection
-                        console.log('No currentJobId links found, trying alternative detection...');
-                        const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
-                        
-                        for (let i = 0; i < allLinks.length; i++) {{
-                            const link = allLinks[i];
-                            const href = link.href;
-                            const text = link.innerText || '';
-                            
-                            // Look for links that go to job details but aren't the current job
-                            if ((href.includes('/jobs/view/') || href.includes('jobs/view') || text.includes('View job')) && 
-                                !href.includes(currentJobId)) {{
-                                console.log('FOUND ALTERNATIVE JOB LINK: ' + href + ' (text: ' + text + ')');
-                                link.click();
-                                return 'AGGRESSIVE_NAV: Clicked alternative job link';
-                            }}
-                        }}
-                        
-                        // Try URL-based navigation to find next job
-                        console.log('Trying URL-based navigation...');
-                        
-                        // Look for pagination or navigation elements
-                        const paginationButtons = document.querySelectorAll('button[aria-label*="Next"], button[aria-label*="next"], .pagination-next, [data-test="pagination-next"], button[aria-label*="More"]');
-                        for (const btn of paginationButtons) {{
-                            console.log('FOUND PAGINATION BUTTON: ' + btn.innerText + ' - ' + btn.getAttribute('aria-label'));
-                            btn.click();
-                            return 'AGGRESSIVE_NAV: Clicked pagination button';
-                        }}
-                        
-                        // Try to find keyboard navigation support
-                        console.log('Trying keyboard navigation...');
-                        const event = new KeyboardEvent('keydown', {{ 
-                            key: 'ArrowDown', 
-                            code: 'ArrowDown', 
-                            keyCode: 40, 
-                            which: 40,
-                            bubbles: true 
+                    // Helper: Find elements by text content
+                    const findByText = (selector, text, exact = false) => {{
+                        const elements = document.querySelectorAll(selector);
+                        const searchText = text.toLowerCase();
+                        return Array.from(elements).find(el => {{
+                            const elText = el.innerText.toLowerCase();
+                            return exact ? elText === searchText : elText.includes(searchText);
                         }});
-                        document.activeElement?.dispatchEvent(event);
+                    }};
+                    
+                    // Helper: Find Easy Apply button
+                    const findEasyApplyButton = () => {{
+                        console.log('Looking for Easy Apply button...');
+                        // Method 1: Try by class
+                        let btn = document.querySelector('button.jobs-apply-button');
+                        if (btn) {{
+                            console.log('Found Easy Apply by class');
+                            return btn;
+                        }}
                         
-                        // Try clicking on scrollable areas to load more content
-                        const scrollableElements = document.querySelectorAll('[style*="overflow"], .scrollable, main, [role="main"]');
-                        for (const elem of scrollableElements) {{
-                            if (elem.scrollHeight > elem.clientHeight) {{
-                                console.log('Found scrollable element, scrolling down...');
-                                elem.scrollTop = elem.scrollTop + 500;
-                                return 'AGGRESSIVE_NAV: Scrolled in scrollable element';
+                        // Method 2: Search by text
+                        btn = findByText('button', 'easy apply');
+                        if (btn) {{
+                            console.log('Found Easy Apply by text');
+                            return btn;
+                        }}
+                        
+                        // Method 3: Search all buttons with debug
+                        const buttons = document.querySelectorAll('button');
+                        console.log('Checking', buttons.length, 'buttons');
+                        for (let i = 0; i < buttons.length; i++) {{
+                            const button = buttons[i];
+                            const text = button.innerText.toLowerCase().trim();
+                            // Debug: log all buttons
+                            if (i < 10 || text.includes('apply')) {{
+                                console.log('Button', i, ':', text.substring(0, 50));
+                            }}
+                            if (text.includes('easy apply')) {{
+                                console.log('Found Easy Apply button:', text);
+                                return button;
+                            }}
+                            // Also check for partial matches
+                            if (text.includes('easy') && text.includes('apply')) {{
+                                console.log('Found Easy Apply (partial match):', text);
+                                return button;
                             }}
                         }}
                         
-                        // Last resort: Force complete page reload with new search parameters
-                        console.log('FORCING NEW SEARCH - LinkedIn interface changed completely...');
-                        const currentUrl = window.location.href;
-                        const url = new URL(currentUrl);
-                        
-                        // Remove current job to force loading a new job
-                        url.searchParams.delete('currentJobId');
-                        
-                        // Change search parameters to get different results
-                        url.searchParams.set('start', Math.floor(Math.random() * 100)); 
-                        url.searchParams.set('sortBy', 'DD'); // Recent instead of Relevant
-                        url.searchParams.set('f_TP', 'R14400'); // Past 4 hours instead of 24 hours
-                        
-                        // Add timestamp to prevent caching
-                        url.searchParams.set('_t', Date.now());
-                        
-                        console.log('NAVIGATING TO: ' + url.toString());
-                        window.location.href = url.toString();
-                        return 'AGGRESSIVE_NAV: Forced new search with different parameters';
-                        
-                        // If no job links found, try looking for pagination or next buttons
-                        const nextButtons = document.querySelectorAll('button[aria-label*="Next"], button[aria-label*="next"], .pagination-next, [data-test="pagination-next"]');
-                        for (const btn of nextButtons) {{
-                            console.log('FOUND NEXT BUTTON: ' + btn.innerText);
-                            btn.click();
-                            return 'AGGRESSIVE_NAV: Clicked pagination button';
+                        // Method 4: Look for aria-label
+                        const ariaBtn = document.querySelector('button[aria-label*="Easy Apply"]');
+                        if (ariaBtn) {{
+                            console.log('Found Easy Apply by aria-label');
+                            return ariaBtn;
                         }}
                         
-                        // Last resort: scroll down to load more jobs
-                        console.log('NO NAVIGATION FOUND - scrolling to load more content');
-                        window.scrollBy(0, 1000);
-                        return 'AGGRESSIVE_NAV: Scrolled for more jobs';
-                    }} else {{
-                        console.log('Applied status: Not applied');
-                    }}
-                    console.log('=== END DEBUG ===');
-                    // FIRST: Check for "Job search safety reminder" modal (appears after clicking Easy Apply)
-                    const safetyModal = document.querySelector('[role="dialog"]');
-                    if (safetyModal) {{
-                        const modalText = safetyModal.innerText || '';
-                        if (modalText.includes('Job search safety reminder')) {{
-                            console.log('LINKEDIN: Detected safety reminder modal');
+                        // Method 5: Search in right panel specifically (where job details are shown)
+                        const rightPanel = document.querySelector('[role="main"]') || document.querySelector('main') || document.body;
+                        const rightPanelButtons = rightPanel.querySelectorAll('button');
+                        console.log('Checking', rightPanelButtons.length, 'buttons in right panel');
+                        for (const button of rightPanelButtons) {{
+                            const text = button.innerText.toLowerCase().trim();
+                            if (text.includes('easy apply') || (text.includes('easy') && text.includes('apply'))) {{
+                                console.log('Found Easy Apply in right panel:', text);
+                                return button;
+                            }}
+                        }}
+                        
+                        // Method 6: Search for anchor tags with Easy Apply (LinkedIn uses <a> tags)
+                        console.log('Searching for Easy Apply anchor tags...');
+                        
+                        // 6a: By aria-label
+                        const ariaLink = document.querySelector('a[aria-label*="Easy Apply"]');
+                        if (ariaLink) {{
+                            console.log('Found Easy Apply anchor by aria-label');
+                            return ariaLink;
+                        }}
+                        
+                        // 6b: By data-view-name attribute
+                        const dataViewLink = document.querySelector('a[data-view-name="job-apply-button"]');
+                        if (dataViewLink) {{
+                            console.log('Found Easy Apply anchor by data-view-name');
+                            return dataViewLink;
+                        }}
+                        
+                        // 6c: Search all anchor tags
+                        const links = document.querySelectorAll('a');
+                        console.log('Checking', links.length, 'anchor tags');
+                        for (let i = 0; i < links.length; i++) {{
+                            const link = links[i];
+                            const text = link.innerText.toLowerCase().trim();
+                            // Debug: log anchor tags
+                            if (i < 5 || text.includes('apply')) {{
+                                console.log('Anchor', i, ':', text.substring(0, 50));
+                            }}
+                            if (text.includes('easy apply')) {{
+                                console.log('Found Easy Apply anchor:', text);
+                                return link;
+                            }}
+                        }}
+                        
+                        console.log('Easy Apply button not found');
+                        return null;
+                    }};
+                    
+                    // Helper: Find job cards
+                    const findJobCards = () => {{
+                        const cards = [];
+                        // Method 1: Look for links with currentJobId
+                        const jobLinks = document.querySelectorAll('a[href*="currentJobId"]');
+                        console.log('Job links with currentJobId:', jobLinks.length);
+                        for (const link of jobLinks) {{
+                            const card = link.closest('li') || link.closest('div');
+                            if (card && !cards.includes(card)) cards.push(card);
+                        }}
+                        // Method 2: Look for job links in the left sidebar (obfuscated classes)
+                        if (cards.length === 0) {{
+                            // Find all links that look like job listings
+                            const allLinks = document.querySelectorAll('a');
+                            for (const link of allLinks) {{
+                                const href = link.getAttribute('href') || '';
+                                // Match job detail links
+                                if (href.includes('/jobs/') || href.includes('jobId') || link.innerText.toLowerCase().includes('easy apply')) {{
+                                    const card = link.closest('li') || link.closest('div[class*="_"]');
+                                    if (card && !cards.includes(card) && card.innerText.length > 100) {{
+                                        cards.push(card);
+                                    }}
+                                }}
+                            }}
+                        }}
+                        // Method 3: Look for list items containing job info patterns
+                        if (cards.length === 0) {{
+                            const allLis = document.querySelectorAll('li');
+                            for (const li of allLis) {{
+                                const text = li.innerText.toLowerCase();
+                                const hasJobTitle = li.querySelector('a') !== null;
+                                const hasEasyApply = text.includes('easy apply');
+                                const hasTime = text.includes('hours ago') || text.includes('minutes ago') || text.includes('days ago');
+                                const hasLocation = text.includes('india') || text.includes('bangalore') || text.includes('mumbai') || text.includes('delhi') || text.includes('gurugram') || text.includes('pune') || text.includes('hyderabad');
+                                if (hasJobTitle && (hasEasyApply || hasTime) && hasLocation && li.innerText.length > 80 && li.innerText.length < 1000) {{
+                                    if (!cards.includes(li)) cards.push(li);
+                                }}
+                            }}
+                        }}
+                        console.log('Total job cards found:', cards.length);
+                        return cards;
+                    }};
+                    
+                    // Helper: Get job ID from card
+                    const getJobIdFromCard = (card) => {{
+                        // Try data attributes first
+                        let jobId = card.getAttribute('data-job-id') || card.getAttribute('data-occludable-job-id');
+                        if (jobId) return jobId;
+                        
+                        // Try to find any link with currentJobId
+                        const link = card.querySelector('a[href*="currentJobId"]');
+                        if (link) {{
+                            const href = link.getAttribute('href');
+                            const match = href.match(/currentJobId=(\d+)/);
+                            if (match) return match[1];
+                        }}
+                        
+                        // Fallback: try to extract from any job link
+                        const anyLink = card.querySelector('a[href*="/jobs/"]');
+                        if (anyLink) {{
+                            const href = anyLink.getAttribute('href');
+                            // Try to extract job ID from various URL patterns
+                            const patterns = [
+                                /currentJobId=(\d+)/,
+                                /jobs\/view\/(?:[^\/]+-)?(\d+)/,
+                                /jobs\/(\d+)/
+                            ];
+                            for (const pattern of patterns) {{
+                                const match = href.match(pattern);
+                                if (match) return match[1];
+                            }}
+                        }}
+                        
+                        // Last resort: use index as ID
+                        return null;
+                    }};
+                    
+                    // Helper: Check if job is applied
+                    const isJobApplied = (card) => {{
+                        const text = card.innerText.toLowerCase();
+                        return text.includes('applied') || text.includes('see application');
+                    }};
+                    
+                    // Helper: Check for modals
+                    const checkModals = () => {{
+                        const dialogs = document.querySelectorAll('[role="dialog"]');
+                        console.log('Checking', dialogs.length, 'dialogs for modals');
+                        for (const dialog of dialogs) {{
+                            const text = dialog.innerText.toLowerCase();
+                            if (text.includes('safety reminder')) return {{ type: 'safety', element: dialog }};
+                            if (text.includes('application sent') || text.includes('application submitted')) return {{ type: 'success', element: dialog }};
+                            // Check for application form modal by content
+                            if ((text.includes('apply to') || text.includes('contact info')) && text.includes('email')) {{
+                                console.log('Found application form modal');
+                                return {{ type: 'form', element: dialog }};
+                            }}
+                        }}
+                        // Also check by class selectors
+                        const formModal = document.querySelector('div.jobs-easy-apply-modal, div[data-test-modal="jobs-easy-apply-modal"], .jobs-easy-apply-content');
+                        if (formModal) return {{ type: 'form', element: formModal }};
+                        return null;
+                    }};
+                    
+                    // Get current state
+                    const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
+                    console.log('Current Job ID:', currentJobId);
+                    
+                    // Step 0: Handle modals first (including form modals)
+                    const modal = checkModals();
+                    if (modal) {{
+                        console.log('Modal detected:', modal.type);
+                        console.log('Modal detected:', modal.type);
+                        if (modal.type === 'safety') {{
+                            const buttons = modal.element.querySelectorAll('button');
+                            for (const btn of buttons) {{
+                                if (btn.innerText.toLowerCase().includes('continue')) {{
+                                    btn.click();
+                                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                                }}
+                            }}
+                            if (buttons.length > 0) {{
+                                buttons[buttons.length - 1].click();
+                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                            }}
+                        }}
+                        if (modal.type === 'success') {{
+                            const closeBtn = modal.element.querySelector('button');
+                            if (closeBtn) {{
+                                closeBtn.click();
+                                return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
+                            }}
+                        }}
+                        if (modal.type === 'form') {{
+                            // Form filling logic
+                            console.log('Handling form modal');
                             
-                            // DEBUG: Log all buttons found
-                            const allButtons = safetyModal.querySelectorAll('button');
-                            console.log('LINKEDIN: Found ' + allButtons.length + ' buttons in modal');
-                            for (let i = 0; i < allButtons.length; i++) {{
-                                console.log('  Button ' + i + ': "' + (allButtons[i].innerText || 'empty').trim() + '"');
+                            // Look for next/submit buttons with various texts
+                            const nextBtn = findByText('button', 'next') || 
+                                           findByText('button', 'continue') ||
+                                           findByText('button', 'review') ||
+                                           findByText('button', 'submit') ||
+                                           findByText('button', 'continue to next step') || 
+                                           findByText('button', 'review your application') ||
+                                           findByText('button', 'submit application');
+                            
+                            if (nextBtn) {{
+                                console.log('Found next button:', nextBtn.innerText);
+                                nextBtn.click();
+                                return 'LINKEDIN_FORM_SUBMITTED';
                             }}
                             
-                            // Find "Continue applying" button by text
-                            let continueBtn = null;
-                            for (const btn of allButtons) {{
-                                const btnText = (btn.innerText || '').toLowerCase().trim();
-                                console.log('LINKEDIN: Checking button text: "' + btnText + '"');
-                                if (btnText.includes('continue')) {{
-                                    continueBtn = btn;
-                                    console.log('LINKEDIN: Found continue button!');
-                                    break;
+                            // Fallback: look for any button in the modal footer
+                            const modalButtons = modal.element.querySelectorAll('button');
+                            console.log('Found', modalButtons.length, 'buttons in modal');
+                            for (const btn of modalButtons) {{
+                                const btnText = btn.innerText.toLowerCase();
+                                console.log('Modal button:', btnText);
+                                if (btnText.includes('next') || btnText.includes('continue') || btnText.includes('submit') || btnText.includes('review')) {{
+                                    console.log('Clicking modal button:', btnText);
+                                    btn.click();
+                                    return 'LINKEDIN_FORM_SUBMITTED';
                                 }}
                             }}
                             
-                            if (continueBtn) {{
-                                console.log('LINKEDIN: Clicking "Continue applying" button');
-                                continueBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
-                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                            }} else if (allButtons.length > 0) {{
-                                // Fallback: click the LAST button (typically the primary action on right)
-                                console.log('LINKEDIN: Fallback - clicking LAST button (index ' + (allButtons.length - 1) + ')');
-                                const lastBtn = allButtons[allButtons.length - 1];
-                                lastBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
-                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                            return 'LINKEDIN_FORM_NO_BUTTON';
+                        }}
+                    }}
+                    
+                    // Step 1: If we're on a job page with Easy Apply visible, click it
+                    if (currentJobId) {{
+                        const easyApplyBtn = findEasyApplyButton();
+                        if (easyApplyBtn) {{
+                            console.log('Found Easy Apply button, clicking');
+                            easyApplyBtn.click();
+                            return 'LINKEDIN_EASY_APPLY_CLICKED';
+                        }}
+                    }}
+                    
+                    // Step 2: Find job cards
+                    const jobCards = findJobCards();
+                    console.log('Found', jobCards.length, 'job cards');
+                    
+                    if (jobCards.length === 0) {{
+                        console.log('No job cards found, scrolling...');
+                        window.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: Looking for jobs';
+                    }}
+                    
+                    // Step 3: Navigate to first job if none selected
+                    if (!currentJobId) {{
+                        for (const card of jobCards) {{
+                            if (!isJobApplied(card)) {{
+                                const link = card.querySelector('a');
+                                if (link) {{
+                                    console.log('Clicking first unapplied job');
+                                    link.click();
+                                    return 'LINKEDIN_FIRST_JOB_CLICKED';
+                                }}
                             }}
                         }}
                     }}
                     
-                    // SECOND: Check for success modal ("Application sent" dialog with Done button)
-                    const successModal = document.querySelector('[role="dialog"]');
-                    if (successModal) {{
-                        const modalText = successModal.innerText || '';
-                        if (modalText.includes('Application sent') || modalText.includes('Application submitted')) {{
-                            // Click Done button to close
-                            const doneBtn = successModal.querySelector('button');
-                            if (doneBtn && doneBtn.innerText.toLowerCase().includes('done')) {{
-                                doneBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
-                                return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
-                            }}
-                            // Fallback: any button in success modal
-                            const anyBtn = successModal.querySelector('button.artdeco-button--primary, button');
-                            if (anyBtn) {{
-                                anyBtn.click();
-                                // NOTE: await removed - Python handles delays between evaluate calls
-                                return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
-                            }}
-                        }}
-                    }}
-                    
-                    // Check for artdeco success feedback (modal or toast)
-                    let successDetected = false;
-                    const successToast = document.querySelector('div.artdeco-inline-feedback--success, .artdeco-toast-item--success');
-                    const successVisible = successToast && successToast.offsetParent !== null;
-                    const successInText = document.body.innerText.includes('Application submitted') && 
-                                          document.body.innerText.length < 50000; // Limit scope
-
-                    if (successVisible || successInText) {{
-                        const closeBtn = document.querySelector('button[aria-label="Dismiss"], button.artdeco-toast-item__dismiss');
-                        if (closeBtn) closeBtn.click();
-                        successDetected = true;
-                        // NOTE: await removed - Python handles delays between evaluate calls
-                    }}
-
-                    // NAVIGATION & SKIP LOGIC: Move to next job if current is applied or not Easy Apply
-                    // Try multiple sidebar selectors - LinkedIn changes these frequently
-                    // Updated selectors for 2026 LinkedIn DOM structure
-                    const sidebarSelectors = [
-                        '.scaffold-layout__list',
-                        'div[class*="results-list"]',
-                        '.jobs-search-results-list',
-                        '.scaffold-layout__list-container',
-                        'ul.scaffold-layout__list-container',
-                        '.jobs-search-results-list__list',
-                        '[data-test-results-list]',
-                        '.jobs-search-two-pane__results-list',
-                        '[class*="jobs-search"][class*="list"]',
-                        // Additional selectors for 2026 LinkedIn
-                        'div[data-test-id="search-results-list"]',
-                        'div[data-ember-extension]',
-                        'ul[role="list"]',
-                        'div[class*="jobs-search__results-list"]',
-                        'ul.jobs-search__results-list', // Seen in public HTML
-                        'section.two-pane-serp-page__results-list', // Guest view container
-                        '.two-pane-serp-page__results-list', // Guest view generic
-                        'main > div > div > div > ul',
-                        '.jobs-search__right-rail',
-                        '[class*="artdeco-list"]',
-                        'div[class*="jobs-search"][class*="left-rail"]',
-                        '.artdeco-list',
-                        'ul[data-ember-extension]',
-                        // Fallback: look for any container with job cards
-                        'div:has(li[data-occludable-job-id])',
-                        'div:has(li[class*="job-card"])',
-                        'div:has(a[href*="currentJobId"])'
-                    ];
-                    
-                    let sidebar = null;
-                    for (const selector of sidebarSelectors) {{
-                        sidebar = document.querySelector(selector);
-                        if (sidebar) {{
-                            console.log('LINKEDIN: Found sidebar with selector: ' + selector);
+                    // Step 4: Find current job card
+                    let currentCard = null;
+                    let currentIndex = -1;
+                    for (let i = 0; i < jobCards.length; i++) {{
+                        const cardId = getJobIdFromCard(jobCards[i]);
+                        if (cardId && cardId === currentJobId) {{
+                            currentCard = jobCards[i];
+                            currentIndex = i;
                             break;
                         }}
                     }}
                     
-                    // If we have a sidebar, try to navigate to next job if needed
-                    if (sidebar) {{
-                        // NOTE: await removed - Python handles delays between evaluate calls
-                        
-                        // Find all job cards - try multiple selectors for 2026 LinkedIn
-                        const jobCardSelectors = [
-                            'li.scaffold-layout__list-item',
-                            'li[data-occludable-job-id]',
-                            'li[data-job-id]',
-                            '[class*="job-card-container"]',
-                            '[class*="job-card"]',
-                            'li:has(a[href*="currentJobId"])',
-                            'div:has(a[href*="currentJobId"])',
-                            'li:has([class*="job-list"])',
-                            '[data-test="job-card"]',
-                            '[class*="jobs-search-results__list-item"]',
-                            // Public HTML selectors
-                            '.job-search-card',
-                            '.base-card',
-                            'div[data-entity-urn*="jobPosting"]',
-                            'li:has(a[href*="/jobs/view/"])',
-                            'li' // Fallback for list items if nothing else matches
-                        ];
-                        
-                        let jobCards = [];
-                        for (const selector of jobCardSelectors) {{
-                            const cards = Array.from(sidebar.querySelectorAll(selector));
-                            // Filter false positives if using generic 'li'
-                            const validCards = cards.filter(c => {{
-                                if (selector === 'li') {{
-                                    return c.innerText.length > 20 && (c.querySelector('a') || c.onclick);
-                                }}
-                                return true;
-                            }});
-                            
-                            if (validCards.length > 0) {{
-                                jobCards = validCards;
-                                console.log('LINKEDIN: Found ' + jobCards.length + ' job cards with selector: ' + selector);
+                    // If we can't find the exact job card, use the first unapplied one
+                    if (!currentCard) {{
+                        console.log('Current job card not found by ID, using first unapplied');
+                        for (let i = 0; i < jobCards.length; i++) {{
+                            if (!isJobApplied(jobCards[i])) {{
+                                currentCard = jobCards[i];
+                                currentIndex = i;
                                 break;
                             }}
                         }}
-                        console.log('LINKEDIN: Found ' + jobCards.length + ' job cards');
-                        
-                        // Helper function to extract job ID from card (defined BEFORE use)
-                        const getJobIdFromCard = (card) => {{
-                            // Try data attributes first
-                            let jobId = card.getAttribute('data-job-id') || card.getAttribute('data-occludable-job-id');
-                            if (jobId) return jobId;
-                            
-                            // Try data-entity-urn
-                            const urn = card.getAttribute('data-entity-urn');
-                            if (urn) {{
-                                const match = urn.match(/urn:li:jobPosting:(\d+)/);
-                                if (match) return match[1];
-                            }}
-
-                            // Try to extract from child element
-                            const childWithId = card.querySelector('[data-job-id], [data-occludable-job-id]');
-                            if (childWithId) {{
-                                jobId = childWithId.getAttribute('data-job-id') || childWithId.getAttribute('data-occludable-job-id');
-                                if (jobId) return jobId;
-                            }}
-                            
-                            // Extract from link href (standard view)
-                            const link = card.querySelector('a[href*="currentJobId="]');
-                            if (link) {{
-                                const href = link.getAttribute('href');
-                                const match = href.match(/currentJobId=(\d+)/);
-                                if (match) return match[1];
-                            }}
-                            
-                            // Extract from link href (guest/public view)
-                            const viewLink = card.querySelector('a[href*="/jobs/view/"]');
-                            if (viewLink) {{
-                                const href = viewLink.getAttribute('href');
-                                // Pattern: /jobs/view/[slug]-[id]? or /jobs/view/[id]/
-                                const match = href.match(/view\/[^?]*[-](\d+)(?:\?|\/|$)/) || href.match(/view\/(\d+)(?:\?|\/|$)/);
-                                if (match) return match[1];
-                            }}
-                            
-                            return null;
-                        }};
-                        
-                        if (jobCards.length > 0) {{
-                            // Get current job ID
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const currentJobId = urlParams.get('currentJobId');
-                            console.log('LINKEDIN: Current job ID: ' + currentJobId);
-                            
-                            // NO CURRENT JOB: Click first unapplied job to open it
-                            if (!currentJobId) {{
-                                console.log('LINKEDIN: No current job, looking for first unapplied job');
-                                for (let i = 0; i < jobCards.length; i++) {{
-                                    const card = jobCards[i];
-                                    const cardText = card.innerText || '';
-                                    const cardId = getJobIdFromCard(card);
-                                    
-                                    // Skip applied jobs
-                                    if (cardText.includes('Applied') || cardText.includes('See application')) {{
-                                        console.log('LINKEDIN: Skipping job ' + i + ' (already applied)');
-                                        continue;
-                                    }}
-                                    
-                                    console.log('LINKEDIN: Clicking first unapplied job at index ' + i + ', ID=' + cardId);
-                                    card.scrollIntoView({{ block: 'center' }});
-                                    // NOTE: await removed - Python handles delays between evaluate calls
-                                    
-                                    const link = card.querySelector('a');
-                                    if (link) {{
-                                        link.click();
-                                        // NOTE: await removed - Python handles delays between evaluate calls
-                                        return 'LINKEDIN_FIRST_JOB: Opened job ' + cardId;
-                                    }}
-                                    
-                                    card.click();
-                                    // NOTE: await removed - Python handles delays between evaluate calls
-                                    return 'LINKEDIN_FIRST_JOB: Clicked job ' + cardId;
-                                }}
-                                console.log('LINKEDIN: All jobs appear to be applied');
-                            }}
-                            
-                            // Find currently active card
-                            let activeIndex = -1;
-                            for (let i = 0; i < jobCards.length; i++) {{
-                                const card = jobCards[i];
-                                const cardId = getJobIdFromCard(card);
-                                if (cardId === currentJobId ||
-                                    card.classList.contains('jobs-search-results-list__list-item--active')) {{
-                                    activeIndex = i;
-                                    break;
-                                }}
-                            }}
-                            if (activeIndex === -1) activeIndex = 0;
-                            
-                            // Check if current job is applied
-                            const currentCard = jobCards[activeIndex];
-                            const currentText = currentCard ? currentCard.innerText : '';
-                            const isApplied = currentText.includes('Applied') || 
-                                             currentText.includes('See application') ||
-                                             /Applied\s+\d+\s+(seconds?|minutes?)\s+ago/i.test(currentText);
-                            
-                            console.log('LINKEDIN: Active index=' + activeIndex + ', isApplied=' + isApplied);
-                            
-                            // Check for Easy Apply button
-                            const hasEasyApply = !!document.querySelector('button.jobs-apply-button');
-                            console.log('LINKEDIN: Has Easy Apply=' + hasEasyApply);
-                            
-                            // NAVIGATE if: applied, no easy apply, or success was detected
-                            if (isApplied || !hasEasyApply || successDetected) {{
-                                console.log('LINKEDIN: Looking for next unapplied job, starting from index ' + (activeIndex + 1));
-                                // Find next unapplied job
-                                for (let i = activeIndex + 1; i < jobCards.length; i++) {{
-                                    const card = jobCards[i];
-                                    const cardText = card.innerText || '';
-                                    const cardId = getJobIdFromCard(card);
-                                    
-                                    console.log('LINKEDIN: Checking job ' + i + ', ID=' + cardId);
-                                    
-                                    // Skip applied jobs
-                                    if (cardText.includes('Applied') || cardText.includes('See application')) {{
-                                        console.log('LINKEDIN: Skipping job ' + i + ' (already applied)');
-                                        continue;
-                                    }}
-                                    
-                                    console.log('LINKEDIN: Found unapplied job at index ' + i + ', ID=' + cardId);
-                                    
-                                    // Found unapplied job - navigate to it
-                                    card.scrollIntoView({{ block: 'center' }});
-                                    // NOTE: await removed - Python handles delays between evaluate calls
-                                    
-                                    // Strategy 1: Try to find clickable link with href
-                                    const link = card.querySelector('a');
-                                    console.log('LINKEDIN: Link found=' + (link ? 'YES' : 'NO') + ', href=' + (link ? link.href : 'N/A'));
-                                    
-                                    if (link) {{
-                                        // Click the link to navigate
-                                        link.click();
-                                        console.log('LINKEDIN: Clicked link for job ' + cardId);
-                                        
-                                        // NOTE: await removed - Python handles delays between evaluate calls
-                                        
-                                        // Check if we navigated
-                                        const newUrl = window.location.href;
-                                        if (newUrl.includes(cardId) || newUrl.includes('currentJobId')) {{
-                                            return 'LINKEDIN_NAVIGATED: To job ' + cardId;
-                                        }}
-                                        return 'LINKEDIN_NAVIGATED: Attempted navigation to job ' + cardId;
-                                    }}
-                                    
-                                    // Strategy 2: Click the card itself
-                                    console.log('LINKEDIN: Trying card.click()');
-                                    card.click();
-                                    // NOTE: await removed - Python handles delays between evaluate calls
-                                    return 'LINKEDIN_NAVIGATED: Clicked card ' + cardId;
-                                }}
-                                
-                                console.log('LINKEDIN: No more unapplied jobs found, need to scroll');
-                                
-                                // No more jobs - scroll for more
-                                sidebar.scrollTop += 800;
-                                return 'LINKEDIN_SCROLLED: Looking for more jobs';
-                            }}
-                        }} else {{
-                            console.log('LINKEDIN: Sidebar not found with any selector, trying fallback navigation');
-                            
-                            // Fallback: Try to find job cards globally without sidebar
-                            const globalJobSelectors = [
-                                'li[data-occludable-job-id]',
-                                'li[data-job-id]',
-                                '[class*="job-card-container"]',
-                                '[class*="job-card"]',
-                                'a[href*="currentJobId"]'
-                            ];
-                            
-                            for (const selector of globalJobSelectors) {{
-                                const elements = document.querySelectorAll(selector);
-                                if (elements.length > 0) {{
-                                    console.log('LINKEDIN: Found ' + elements.length + ' global job elements with selector: ' + selector);
-                                    
-                                    // If current job is applied/success, try to click the next job link
-                                    if (successDetected) {{
-                                        const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
-                                        for (let i = 0; i < elements.length; i++) {{
-                                            const element = elements[i];
-                                            const jobId = element.getAttribute('data-job-id') || 
-                                                         element.getAttribute('data-occludable-job-id') ||
-                                                         (element.href && element.href.match(/currentJobId=(\d+)/)?.[1]);
-                                            
-                                            if (jobId && jobId !== currentJobId) {{
-                                                console.log('LINKEDIN: Fallback - clicking global job element, ID=' + jobId);
-                                                element.scrollIntoView({{ block: 'center' }});
-                                                element.click();
-                                                return 'LINKEDIN_FALLBACK_NAV: Clicked job ' + jobId;
-                                            }}
-                                        }}
-                                    }}
-                                    break;
-                                }}
-                            }}
-                            
-                            // If still no navigation possible, try scrolling down to load more content
-                            console.log('LINKEDIN: No sidebar found, scrolling to load content');
-                            window.scrollBy(0, 800);
-                            return 'LINKEDIN_FALLBACK_SCROLL: Scrolled to load content';
-                        }}
-                    
-                    // If success was detected but we didn't navigate to a new job above,
-                    // it means we're still on the success page. Return success to trigger navigation.
-                    // But only if Easy Apply button is NOT present (meaning we can't apply to current job)
-                    if (successDetected) {{
-                        const hasEasyApply = !!document.querySelector('button.jobs-apply-button');
-                        if (!hasEasyApply) {{
-                            console.log('LINKEDIN: Success detected, no Easy Apply button - need to navigate');
-                            return 'LINKEDIN_SUCCESS_NEED_NAV';
-                        }}
                     }}
                     
-                    const modal = document.querySelector('div.jobs-easy-apply-modal, div[data-test-modal="jobs-easy-apply-modal"]');
-                    if (!modal) {{
-                        const easyApplyBtn = document.querySelector('button.jobs-apply-button');
-                        if (easyApplyBtn) {{
-                            const btnText = easyApplyBtn.innerText.toLowerCase();
-                            if (btnText.includes('easy apply')) {{
-                                easyApplyBtn.click();
-                                return 'APPLY_CLICKED_LINKEDIN';
-                            }}
-                            if (btnText.includes('sign in')) {{
-                                return 'LINKEDIN_LOGIN_REQUIRED';
-                            }}
-                            if (btnText.includes('company website')) {{
-                                return 'LINKEDIN_EXTERNAL_APPLY_SKIPPED';
-                            }}
-                        }}
-                        
-                        // Fallback check for Sign In button if main button not found
-                        const signInBtn = Array.from(document.querySelectorAll('button, a.btn-md')).find(el => 
-                            el.innerText.toLowerCase().includes('sign in to apply'));
-                        if (signInBtn) return 'LINKEDIN_LOGIN_REQUIRED';
-
-                        return 'LINKEDIN_NO_MODAL';
+                    if (!currentCard) {{
+                        console.log('No unapplied job cards available');
+                        window.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
                     }}
-                    // Handle Interactions
-                    const nextBtn = document.querySelector('button[aria-label="Continue to next step"], button[aria-label="Review your application"], button[aria-label="Submit application"]');
-                    if (nextBtn) {{
-                        // Collect all question data for logging
-                        const questionLogData = [];
-                        
-                        // Fill ALL form fields before clicking next
-                        const formGroups = modal.querySelectorAll('.fb-dash-form-element, [data-test-form-element], .jobs-easy-apply-form-section__grouping');
-                        
-                        for (const group of formGroups) {{
-                            // Get the label/question for this field
-                            const labelEl = group.querySelector('label, .fb-dash-form-element__label, span[class*="label"]');
-                            const qText = labelEl ? labelEl.innerText : '';
-                            const answer = fuzzyMatch(qText);
-                            
-                            let inputType = '';
-                            let options = [];
-                            let selectedOption = '';
-                            let finalAnswer = answer || '';
-                            
-                            // Handle text inputs
-                            const textInput = group.querySelector('input[type="text"], input[type="number"], input[type="tel"], input[type="email"], textarea');
-                            if (textInput && !textInput.disabled && textInput.offsetParent !== null) {{
-                                inputType = textInput.type || 'text';
-                                if (!textInput.value || textInput.value.trim() === '') {{
-                                    // LinkedIn often requires whole numbers - detect and normalize
-                                    const qLower = qText.toLowerCase();
-                                    const isNumericField = qLower.includes('number') ||
-                                                           qLower.includes('how many') ||
-                                                           qLower.includes('experience') ||
-                                                           qLower.includes('years') ||
-                                                           qLower.includes('notice') ||
-                                                           qLower.includes('period') ||
-                                                           qLower.includes('days') ||
-                                                           qLower.includes('ctc') ||
-                                                           qLower.includes('salary') ||
-                                                           qLower.includes('pay') ||
-                                                           textInput.type === 'number';
-                                    
-                                     // Only use default '4' for known experience fields, not for all numeric fields
-                                     const isExperienceField = qLower.includes('experience') || qLower.includes('years');
-                                     const isSalaryField = qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('gross') || qLower.includes('expectation');
-                                     const isNoticeField = qLower.includes('notice') || qLower.includes('period') || qLower.includes('days');
-                                     
-                                     // Determine default value based on field type
-                                     let defaultValue = '';
-                                     if (isExperienceField) defaultValue = '4';
-                                     else if (isSalaryField) {{
-                                         // Smart salary detection: check if "expected" or "current" is mentioned
-                                         if (qLower.includes('expected') || qLower.includes('expectation')) {{
-                                             defaultValue = '20 LPA';  // Expected salary
-                                         }} else if (qLower.includes('current')) {{
-                                             defaultValue = '13.5 LPA';  // Current salary
-                                         }} else if (qLower.includes('gross')) {{
-                                             // For "gross salary" without context, check if "expected" is also mentioned
-                                             defaultValue = qLower.includes('expected') ? '20 LPA' : '13.5 LPA';
-                                         }} else {{
-                                             defaultValue = '20 LPA';  // Default to expected salary for generic salary fields
-                                         }}
-                                     }}
-                                     else if (isNoticeField) defaultValue = '30 days';
-                                    else if (textInput.tagName.toLowerCase() === 'textarea') defaultValue = 'I am excited about this opportunity and believe my experience would be valuable to your team.';
-                                    
-                                    let value = answer || defaultValue;
-                                    
-                                     if (isNumericField && value) {{
-                                         // Smart numeric field handling with proper defaults
-                                         const numericValue = value.replace(/[^0-9.]/g, '');
-                                          if (numericValue) {{
-                                              if (qLower.includes('experience') || qLower.includes('years')) {{
-                                                  // Experience: Use '4' for LinkedIn, '3.8' for other platforms
-                                                  value = isLinkedIn ? '4' : '3.8';
-                                               }} else if (qLower.includes('ctc') || qLower.includes('salary') || qLower.includes('pay') || qLower.includes('gross')) {{
-                                                  // Salary: Extract the correct numeric value based on expected/current
-                                                  let salaryValue;
-                                                  if (qLower.includes('expected')) {{
-                                                      salaryValue = '20';  // Expected salary
-                                                  }} else if (qLower.includes('current')) {{
-                                                      salaryValue = '13.5';  // Current salary  
-                                                  }} else if (value.includes('20')) {{
-                                                      salaryValue = '20';  // If value contains 20, use 20
-                                                  }} else if (value.includes('13.5')) {{
-                                                      salaryValue = '13.5';  // If value contains 13.5, use 13.5
-                                                  }} else {{
-                                                      salaryValue = '20';  // Default to expected salary
-                                                  }}
-                                                  
-                                                  // Check if the field expects INR values (needs conversion to actual INR)
-                                                  // "Enter a whole number larger than 100" validation means values should be actual INR amounts
-                                                  if (qLower.includes('inr') && !qLower.includes('lpa') && !qLower.includes('lacs') && !qLower.includes('lakhs')) {{
-                                                      // Convert LPA to INR (e.g., 13.5 LPA -> 1350000, 20 LPA -> 2000000)
-                                                      // 1 LPA = 100,000 INR
-                                                      const lpaValue = parseFloat(salaryValue);
-                                                      value = Math.round(lpaValue * 100000).toString();
-                                                  }} else {{
-                                                      value = salaryValue;
-                                                   }}
-                                                }}
-                                               else if (qLower.includes('notice') || qLower.includes('period') || qLower.includes('days')) {{
-                                                  // Notice period: Extract just the number
-                                                  value = '30';
-                                             }} else {{
-                                                 // Otherwise just use the numeric part
-                                                 value = numericValue.includes('.') ? Math.round(parseFloat(numericValue)).toString() : numericValue;
-                                             }}
-                                         }}
-                                     }}
-                                    
-                                    finalAnswer = value;
-
-                                    // Check if this is a city/location typeahead field
-                                    const isCityTypeahead = textInput.getAttribute('role') === 'combobox' ||
-                                                           textInput.getAttribute('aria-autocomplete') === 'list' ||
-                                                           qLower.includes('city') ||
-                                                           qLower.includes('location');
-                                    
-                                    if (isCityTypeahead && value) {{
-                                        // For city typeaheads, type the value and return special code
-                                        textInput.focus();
-                                        textInput.value = value;
-                                        textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        // Don't blur - keep focus for dropdown to appear
-                                        return 'LINKEDIN_CITY_TYPED:' + value;
-                                    }}
-
-                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                    if (setter) setter.call(textInput, value);
-                                    textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                    textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    textInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
-                                    
-                                    // Check for validation errors and retry with numeric-only if needed
-                                    setTimeout(() => {{
-                                        // Look for validation errors near this input
-                                        const parent = textInput.closest('div[class*="form"], div[class*="field"], div[class*="group"], form-group');
-                                        const errorElement = parent ? parent.querySelector('[class*="error"], [class*="invalid"], [role="alert"], .error-message') : null;
-                                        const errorText = errorElement ? errorElement.innerText.toLowerCase() : '';
-                                        
-                                        // Check if the error requires value larger than 100 (CTC in thousands/thousands format)
-                                        const requiresLargeNumber = errorText.includes('larger than 100') || errorText.includes('greater than 100');
-                                        
-                                        // If there's a validation error and the value contains non-numeric characters
-                                        if ((errorText.includes('numeric') || errorText.includes('number') || errorText.includes('invalid') || requiresLargeNumber || textInput.classList.contains('error')) && 
-                                            (value.includes('lpa') || value.includes('years') || value.includes('days') || requiresLargeNumber)) {{
-                                            
-                                            let retryValue;
-                                            
-                                            if (requiresLargeNumber) {{
-                                                // Convert LPA to thousands (e.g., 13.5 LPA -> 1350, 20 LPA -> 2000)
-                                                const numericMatch = value.match(/(\d+(?:\.\d+)?)/);
-                                                if (numericMatch) {{
-                                                    const lpaValue = parseFloat(numericMatch[1]);
-                                                    retryValue = Math.round(lpaValue * 100).toString();
-                                                }} else {{
-                                                    retryValue = value.replace(/[^0-9.]/g, '');
-                                                }}
-                                            }} else {{
-                                                // Retry with numeric-only value
-                                                retryValue = value.replace(/[^0-9.]/g, '');
-                                            }}
-                                            
-                                            if (retryValue) {{
-                                                if (setter) setter.call(textInput, retryValue);
-                                                textInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                                textInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                textInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
-                                                finalAnswer = retryValue;
-                                            }}
-                                        }}
-                                    }}, 500); // Wait 500ms for validation to trigger
-                                }} else {{
-                                    finalAnswer = textInput.value;
-                                }}
-                            }}
-                            
-                            // Handle select dropdowns with smart matching
-                            const select = group.querySelector('select');
-                            if (select && select.offsetParent !== null) {{
-                                inputType = 'select';
-                                const selectOptions = Array.from(select.options);
-                                options = selectOptions.map(o => o.text).filter(t => t.trim());
-                                
-                                if (select.selectedIndex <= 0) {{
-                                    let matched = false;
-                                    
-                                    // Smart location handling for dropdowns
-                                    const qTextLowerSelect = (qText || '').toLowerCase();
-                                    
-                                     // Use smart matcher if we have an answer
-                                     if (answer) {{
-                                         // Check if this is a salary question
-                                         const isSalaryQuestionSelect = qTextLowerSelect.includes('salary') || 
-                                                                        qTextLowerSelect.includes('ctc') || 
-                                                                        qTextLowerSelect.includes('current salary') ||
-                                                                        qTextLowerSelect.includes('expected salary');
-                                         const isExpectedSalarySelect = qTextLowerSelect.includes('expected');
-                                         
-                                         // Check if this is an experience question
-                                         const isExperienceQuestionSelect = qTextLowerSelect.includes('experience') || 
-                                                                            qTextLowerSelect.includes('years');
-                                         
-                                         let bestMatch = null;
-                                         
-                                         if (isSalaryQuestionSelect) {{
-                                             // Use smart salary range matching
-                                             bestMatch = findSalaryRangeMatch(answer, selectOptions, !isExpectedSalarySelect);
-                                         }}
-                                         
-                                         // Special handling for experience questions - look for exact year match
-                                         if (!bestMatch && isExperienceQuestionSelect) {{
-                                             // For LinkedIn, use 4 years; for others use 3.8 years
-                                             const targetYears = isLinkedIn ? '4' : '3.8';
-                                             bestMatch = selectOptions.find(o => {{
-                                                 const text = o.text.toLowerCase();
-                                                 // Match exact year like "4 years" or "4 year"
-                                                 return text.includes(targetYears + ' year');
-                                             }});
-                                         }}
-                                         
-                                         // Fallback to regular matching if no salary range match found
-                                         if (!bestMatch) {{
-                                             bestMatch = findBestMatch(answer, selectOptions);
-                                         }}
-                                        
-                                        if (bestMatch) {{
-                                            select.value = bestMatch.value;
-                                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                            selectedOption = bestMatch.text;
-                                            finalAnswer = bestMatch.text;
-                                            matched = true;
-                                        }}
-                                    }}
-                                    const isCurrentLocationQuestionSelect = qTextLowerSelect.includes('present location') || qTextLowerSelect.includes('current location') || 
-                                                                      qTextLowerSelect.includes('live in') || qTextLowerSelect.includes('living in') || 
-                                                                      qTextLowerSelect.includes('based in') || qTextLowerSelect.includes('located in') ||
-                                                                      qTextLowerSelect.includes('residing in') || qTextLowerSelect.includes('current city');
-                                    const isLocationPreferenceQuestionSelect = qTextLowerSelect.includes('preferred location') || qTextLowerSelect.includes('location preference') ||
-                                                               qTextLowerSelect.includes('work location') || qTextLowerSelect.includes('relocate') ||
-                                                               qTextLowerSelect.includes('willing to relocate');
-                                    const hasBangaloreOptionsSelect = selectOptions.some(o => o.text.toLowerCase().includes('bangalore'));
-                                    
-                                    if (!matched && hasBangaloreOptionsSelect) {{
-                                        if (isCurrentLocationQuestionSelect) {{
-                                            // For current location questions: Select "Outside Bangalore" since user is in Noida
-                                            const outsideBangaloreOption = selectOptions.find(o => 
-                                                o.text.toLowerCase().includes('outside') && o.text.toLowerCase().includes('bangalore')
-                                            );
-                                            if (outsideBangaloreOption) {{
-                                                select.value = outsideBangaloreOption.value;
-                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                selectedOption = outsideBangaloreOption.text;
-                                                finalAnswer = 'Outside Bangalore';
-                                                matched = true;
-                                            }}
-                                        }} else if (isLocationPreferenceQuestionSelect) {{
-                                            // For location preference questions: Select preferred metro cities
-                                            const preferredCityOption = selectOptions.find(o => {{
-                                                const text = o.text.toLowerCase();
-                                                return text.includes('bangalore') || text.includes('hyderabad') || text.includes('mumbai') || text.includes('pune') || text.includes('delhi');
-                                            }});
-                                            if (preferredCityOption) {{
-                                                select.value = preferredCityOption.value;
-                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                selectedOption = preferredCityOption.text;
-                                                finalAnswer = preferredCityOption.text;
-                                                matched = true;
-                                            }}
-                                        }}
-                                    }}
-                                    
-                                    // Fallback: try to match Yes/No based on answer type
-                                    // Or if question requires "No" answer (employment/relationship questions)
-                                    const noRequiredPatternsSelect = [
-                                        'employed by any of the',
-                                        'currently employed as a',
-                                        'third party / temporary',
-                                        'have you ever worked for',
-                                        'close relative working at',
-                                        'relative working',
-                                        'family member working',
-                                        'conflict of interest',
-                                        'currently an employee of',
-                                        'previously employed by'
-                                    ];
-                                    const shouldAnswerNoSelect = noRequiredPatternsSelect.some(pattern => qTextLowerSelect.includes(pattern));
-                                    
-                                    if (!matched) {{
-                                        if (shouldAnswerNoSelect) {{
-                                            // Force "No" for employment/relationship questions
-                                            const noOption = selectOptions.find(o =>
-                                                ['no', 'false', 'decline'].includes(o.text.toLowerCase())
-                                            );
-                                            if (noOption) {{
-                                                select.value = noOption.value;
-                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                selectedOption = noOption.text;
-                                                finalAnswer = noOption.text;
-                                                matched = true;
-                                            }}
-                                        }} else if (isYes(answer)) {{
-                                            const yesOption = selectOptions.find(o =>
-                                                ['yes', 'true', 'agree', 'accept'].includes(o.text.toLowerCase())
-                                            );
-                                            if (yesOption) {{
-                                                select.value = yesOption.value;
-                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                selectedOption = yesOption.text;
-                                                finalAnswer = yesOption.text;
-                                                matched = true;
-                                            }}
-                                        }} else if (isNo(answer)) {{
-                                            const noOption = selectOptions.find(o =>
-                                                ['no', 'false', 'decline'].includes(o.text.toLowerCase())
-                                            );
-                                            if (noOption) {{
-                                                select.value = noOption.value;
-                                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                selectedOption = noOption.text;
-                                                finalAnswer = noOption.text;
-                                                matched = true;
-                                            }}
-                                        }}
-                                    }}
-                                    
-                                    if (!matched && selectOptions.length > 1) {{
-                                        // Default: select first non-empty option
-                                        select.selectedIndex = 1;
-                                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        selectedOption = selectOptions[1].text;
-                                        finalAnswer = selectOptions[1].text;
-                                    }}
-                                }} else {{
-                                    selectedOption = selectOptions[select.selectedIndex]?.text || '';
-                                    finalAnswer = selectedOption;
-                                }}
-                            }}
-                            
-                            // Handle radio buttons with smart matching
-                            const radios = group.querySelectorAll('input[type="radio"]');
-                            if (radios.length > 0) {{
-                                inputType = 'radio';
-                                options = Array.from(radios).map(r => {{
-                                    const label = r.parentElement?.innerText || r.nextElementSibling?.innerText || r.value || '';
-                                    return label.trim();
-                                }}).filter(t => t);
-                                
-                                let clicked = false;
-                                
-                                // Check if already selected
-                                for (const radio of radios) {{
-                                    if (radio.checked) {{ 
-                                        clicked = true; 
-                                        const label = radio.parentElement?.innerText || radio.nextElementSibling?.innerText || radio.value || '';
-                                        selectedOption = label.trim();
-                                        finalAnswer = selectedOption;
-                                        break; 
-                                    }}
-                                }}
-                                
-                                // Smart location handling - Current vs Preferred vs Bangalore-specific questions
-                                const qTextLower = (qText || '').toLowerCase();
-                                const isCurrentLocationQuestion = qTextLower.includes('present location') || qTextLower.includes('current location') || 
-                                                                qTextLower.includes('live in') || qTextLower.includes('living in') || 
-                                                                qTextLower.includes('based in') || qTextLower.includes('located in') ||
-                                                                qTextLower.includes('residing in') || qTextLower.includes('current city');
-                                const isLocationPreferenceQuestion = qTextLower.includes('preferred location') || qTextLower.includes('location preference') ||
-                                                             qTextLower.includes('work location') || qTextLower.includes('relocate') ||
-                                                             qTextLower.includes('willing to relocate');
-                                const hasBangaloreOptions = Array.from(radios).some(r => {{
-                                    const label = (r.parentElement?.innerText || r.nextElementSibling?.innerText || r.value || '').toLowerCase();
-                                    return label.includes('bangalore');
-                                }});
-                                
-                                if (!clicked && hasBangaloreOptions) {{
-                                    if (isCurrentLocationQuestion) {{
-                                        // For current location questions: Select "Outside Bangalore" since user is in Noida
-                                        for (const radio of radios) {{
-                                            const label = (radio.parentElement?.innerText || radio.nextElementSibling?.innerText || radio.value || '').toLowerCase();
-                                            if (label.includes('outside') && label.includes('bangalore')) {{
-                                                radio.click();
-                                                clicked = true;
-                                                selectedOption = 'Outside Bangalore';
-                                                finalAnswer = 'Outside Bangalore';
-                                                break;
-                                            }}
-                                        }}
-                                    }} else if (isLocationPreferenceQuestion) {{
-                                        // For location preference questions: Select Bangalore or preferred location
-                                        for (const radio of radios) {{
-                                            const label = (radio.parentElement?.innerText || radio.nextElementSibling?.innerText || radio.value || '').toLowerCase();
-                                            if (label.includes('bangalore') || label.includes('hyderabad') || label.includes('mumbai') || label.includes('pune')) {{
-                                                radio.click();
-                                                clicked = true;
-                                                selectedOption = label.trim();
-                                                finalAnswer = label.trim();
-                                                break;
-                                            }}
-                                        }}
-                                    }}
-                                }}
-                                
-                                // Use smart matcher if we have an answer and nothing selected
-                                if (!clicked && answer) {{
-                                    const radioOptions = Array.from(radios).map(r => ({{
-                                        element: r,
-                                        text: r.parentElement?.innerText || r.nextElementSibling?.innerText || r.value || '',
-                                        value: r.value
-                                    }}));
-                                    
-                                    // Check if this is a salary question
-                                    const isSalaryQuestion = qTextLower.includes('salary') || 
-                                                             qTextLower.includes('ctc') || 
-                                                             qTextLower.includes('current salary') ||
-                                                             qTextLower.includes('expected salary');
-                                    const isExpectedSalary = qTextLower.includes('expected');
-                                    
-                                    let bestMatch = null;
-                                    
-                                    if (isSalaryQuestion) {{
-                                        // Use smart salary range matching
-                                        bestMatch = findSalaryRangeMatch(answer, radioOptions, !isExpectedSalary);
-                                    }}
-                                    
-                                    // Fallback to regular matching if no salary range match found
-                                    if (!bestMatch) {{
-                                        bestMatch = findBestMatch(answer, radioOptions);
-                                    }}
-                                    
-                                    if (bestMatch) {{
-                                        bestMatch.element.click();
-                                        clicked = true;
-                                        selectedOption = bestMatch.text.trim();
-                                        finalAnswer = selectedOption;
-                                    }}
-                                }}
-                                
-                                // Fallback to Yes/No based on answer type
-                                if (!clicked) {{
-                                    if (isYes(answer)) {{
-                                        for (const radio of radios) {{
-                                            const label = radio.parentElement?.innerText || radio.nextElementSibling?.innerText || '';
-                                            if (['yes', 'true', 'agree'].includes(label.toLowerCase())) {{
-                                                radio.click();
-                                                clicked = true;
-                                                selectedOption = label.trim();
-                                                finalAnswer = selectedOption;
-                                                break;
-                                            }}
-                                        }}
-                                    }} else if (isNo(answer)) {{
-                                        for (const radio of radios) {{
-                                            const label = radio.parentElement?.innerText || radio.nextElementSibling?.innerText || '';
-                                            if (['no', 'false', 'decline'].includes(label.toLowerCase())) {{
-                                                radio.click();
-                                                clicked = true;
-                                                selectedOption = label.trim();
-                                                finalAnswer = selectedOption;
-                                                break;
-                                            }}
-                                        }}
-                                    }}
-                                }}
-                                
-                                // Check for questions that should ALWAYS be answered "No"
-                                // These are employment history, relative, and conflict of interest questions
-                                const noRequiredPatterns = [
-                                    'employed by any of the',
-                                    'currently employed as a',
-                                    'third party / temporary',
-                                    'have you ever worked for',
-                                    'close relative working at',
-                                    'relative working',
-                                    'family member working',
-                                    'family members working',
-                                    'family members in company',
-                                    'relatives in company',
-                                    'relatives working in',
-                                    'family in company',
-                                    'conflict of interest',
-                                    'currently an employee of',
-                                    'previously employed by'
-                                ];
-                                const shouldAnswerNo = noRequiredPatterns.some(pattern => qTextLower.includes(pattern));
-                                
-                                // If question requires "No" and nothing selected yet
-                                if (!clicked && shouldAnswerNo) {{
-                                    for (const radio of radios) {{
-                                        const label = radio.parentElement?.innerText || radio.nextElementSibling?.innerText || '';
-                                        if (['no', 'false', 'decline'].includes(label.toLowerCase())) {{
-                                            radio.click();
-                                            clicked = true;
-                                            selectedOption = label.trim();
-                                            finalAnswer = selectedOption;
-                                            break;
-                                        }}
-                                    }}
-                                }}
-                                
-                                // Final fallback: click first option
-                                if (!clicked) {{
-                                    radios[0].click();
-                                    const label = radios[0].parentElement?.innerText || radios[0].nextElementSibling?.innerText || radios[0].value || '';
-                                    selectedOption = label.trim();
-                                    finalAnswer = selectedOption;
-                                }}
-                            }}
-                            
-                            // Handle checkboxes (Privacy Policy, Terms & Conditions, etc.)
-                            const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-                            if (checkboxes.length > 0) {{
-                                inputType = 'checkbox';
-                                options = Array.from(checkboxes).map(cb => {{
-                                    const label = cb.closest('label') || document.querySelector('label[for="' + cb.id + '"]');
-                                    return label ? label.innerText.trim() : (cb.value || '');
-                                }}).filter(t => t);
-                                
-                                for (const checkbox of checkboxes) {{
-                                    // Skip already checked boxes
-                                    if (checkbox.checked) continue;
-                                    
-                                    const labelEl = checkbox.closest('label') || document.querySelector('label[for="' + checkbox.id + '"]');
-                                    const labelText = labelEl ? labelEl.innerText.toLowerCase() : '';
-                                    
-                                    // Check if this is a privacy policy / terms checkbox
-                                    const isPrivacyOrTerms = 
-                                        labelText.includes('privacy') ||
-                                        labelText.includes('terms') ||
-                                        labelText.includes('conditions') ||
-                                        labelText.includes('agree') ||
-                                        labelText.includes('consent') ||
-                                        labelText.includes('i consent') ||
-                                        labelText.includes('smartrecruiters') ||
-                                        labelText.includes('syngenta') ||
-                                        checkbox.id?.toLowerCase().includes('privacy') ||
-                                        checkbox.id?.toLowerCase().includes('terms') ||
-                                        checkbox.id?.toLowerCase().includes('consent') ||
-                                        checkbox.name?.toLowerCase().includes('privacy') ||
-                                        checkbox.name?.toLowerCase().includes('terms') ||
-                                        checkbox.name?.toLowerCase().includes('consent') ||
-                                        checkbox.className?.toLowerCase().includes('privacy') ||
-                                        checkbox.className?.toLowerCase().includes('terms') ||
-                                        checkbox.className?.toLowerCase().includes('consent');
-                                    
-                                    // Click if it's privacy/terms related or if answer suggests agreement
-                                    if (isPrivacyOrTerms || isYes(answer)) {{
-                                        checkbox.scrollIntoView({{ block: 'center' }});
-                                        checkbox.click();
-                                        selectedOption = 'checked: ' + labelText;
-                                        finalAnswer = 'Agreed to ' + labelText;
-                                        
-                                        // Return special code to indicate checkbox was clicked
-                                        return 'LINKEDIN_CHECKBOX_CHECKED|' + JSON.stringify({{
-                                            question: qText,
-                                            label: labelText,
-                                            checked: true
-                                        }});
-                                    }}
-                                }}
-                            }}
-                            
-                            // Log question data if we have a question
-                            if (qText) {{
-                                questionLogData.push({{
-                                    question: qText,
-                                    answer: finalAnswer,
-                                    inputType: inputType,
-                                    options: options,
-                                    selectedOption: selectedOption
-                                }});
-                            }}
-                        }}
-                        
-                        // Also check for standalone inputs not in form groups
-                        const standaloneInputs = modal.querySelectorAll('input[type="text"]:not([value]), input[type="number"]:not([value])');
-                        for (const input of standaloneInputs) {{
-                            if (!input.value && input.offsetParent !== null) {{
-                                const label = input.closest('div')?.querySelector('label')?.innerText || '';
-                                const answer = fuzzyMatch(label) || '4';
-                                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                if (setter) setter.call(input, answer);
-                                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                
-                                if (label) {{
-                                    questionLogData.push({{
-                                        question: label,
-                                        answer: answer,
-                                        inputType: input.type || 'text',
-                                        options: [],
-                                        selectedOption: answer
-                                    }});
+                    
+                    console.log('Current card index:', currentIndex);
+                    
+                    // Step 5: Check if current job is applied
+                    if (isJobApplied(currentCard)) {{
+                        console.log('Current job is applied, finding next...');
+                        for (let i = currentIndex + 1; i < jobCards.length; i++) {{
+                            if (!isJobApplied(jobCards[i])) {{
+                                const link = jobCards[i].querySelector('a');
+                                if (link) {{
+                                    link.click();
+                                    return 'LINKEDIN_NEXT_JOB_CLICKED';
                                 }}
                             }}
                         }}
-                        
-                        nextBtn.click();
-                        
-                        // Return question data for logging
-                        if (questionLogData.length > 0) {{
-                            return 'CLICKED_NEXT_OR_SUBMIT|' + JSON.stringify(questionLogData);
-                        }}
-                        return 'CLICKED_NEXT_OR_SUBMIT';
+                        window.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
                     }}
+                    
+                    // Step 6: Check for Easy Apply button
+                    const easyApplyBtn = findEasyApplyButton();
+                    if (!easyApplyBtn) {{
+                        console.log('No Easy Apply button, skipping to next job');
+                        for (let i = currentIndex + 1; i < jobCards.length; i++) {{
+                            if (!isJobApplied(jobCards[i])) {{
+                                const link = jobCards[i].querySelector('a');
+                                if (link) {{
+                                    link.click();
+                                    return 'LINKEDIN_NEXT_JOB_CLICKED';
+                                }}
+                            }}
+                        }}
+                        window.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
+                    }}
+                    
+                    // Step 7: Click Easy Apply
+                    console.log('Clicking Easy Apply button');
+                    easyApplyBtn.click();
+                    return 'LINKEDIN_EASY_APPLY_CLICKED';
                 }}
-            }}
-            
-            // ============================================================
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================
             if (isNaukri) {{

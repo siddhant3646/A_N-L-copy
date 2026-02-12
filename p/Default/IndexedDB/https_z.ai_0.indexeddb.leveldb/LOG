@@ -1,0 +1,25 @@
+2026/02/02-16:09:36.505 16dd1 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_z.ai_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/02-16:09:36.505 16dd1 Recovering log #7
+2026/02/02-16:09:36.505 16dd1 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_z.ai_0.indexeddb.leveldb/000007.log 
+2026/02/02-16:09:36.535 16df7 Level-0 table #11: started
+2026/02/02-16:09:36.536 16df7 Level-0 table #11: 2424 bytes OK
+2026/02/02-16:09:36.537 16df7 Delete type=0 #7
+2026/02/02-16:09:36.538 16dd1 Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at '\x00\x05\x00\x00\x05' @ 413 : 1
+2026/02/02-16:09:36.538 16dd1 Compacting 1@0 + 1@1 files
+2026/02/02-16:09:36.538 16dd1 Generated table #12@0: 69 keys, 1308 bytes
+2026/02/02-16:09:36.538 16dd1 Compacted 1@0 + 1@1 files => 1308 bytes
+2026/02/02-16:09:36.539 16dd1 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/02/02-16:09:36.539 16dd1 Manual compaction at level-0 from '\x00\x05\x00\x00\x05' @ 413 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/02/02-16:10:43.522 16df8 Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/02/02-16:11:45.622 16df7 Level-0 table #14: started
+2026/02/02-16:11:45.624 16df7 Level-0 table #14: 4687 bytes OK
+2026/02/02-16:11:45.625 16df7 Delete type=0 #10
+2026/02/02-16:11:45.625 16df7 Delete type=2 #11
+2026/02/02-16:11:45.625 16df7 Delete type=2 #8
+2026/02/02-16:11:45.625 16df7 Manual compaction at level-0 from '\x00\x07\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at '\x00\x07\x00\x00\x05' @ 641 : 1
+2026/02/02-16:11:45.625 16df7 Compacting 1@0 + 1@1 files
+2026/02/02-16:11:45.626 16df7 Generated table #15@0: 131 keys, 1905 bytes
+2026/02/02-16:11:45.626 16df7 Compacted 1@0 + 1@1 files => 1905 bytes
+2026/02/02-16:11:45.627 16df7 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/02/02-16:11:45.627 16df7 Delete type=2 #14
+2026/02/02-16:11:45.627 16dcd Manual compaction at level-0 from '\x00\x07\x00\x00\x05' @ 641 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at (end)

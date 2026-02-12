@@ -1,0 +1,7 @@
+2026/02/07-00:02:17.234 2389 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_elevenlabs.io_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/07-00:02:17.234 2389 Recovering log #40
+2026/02/07-00:02:17.235 2389 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_elevenlabs.io_0.indexeddb.leveldb/000040.log 
+2026/02/07-00:02:17.281 2395 Level-0 table #47: started
+2026/02/07-00:02:17.283 2395 Level-0 table #47: 252673 bytes OK
+2026/02/07-00:02:17.285 2395 Delete type=0 #40
+2026/02/07-00:02:17.288 2389 Manual compaction at level-0 from '\x00\x13\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x14\x00\x00\x00' @ 0 : 0; will stop at (end)

@@ -1,0 +1,7 @@
+2026/02/01-11:38:42.957 2edb Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_agent.minimax.io_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/01-11:38:42.957 2edb Recovering log #10
+2026/02/01-11:38:42.957 2edb Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_agent.minimax.io_0.indexeddb.leveldb/000010.log 
+2026/02/01-11:38:43.064 2ee4 Level-0 table #15: started
+2026/02/01-11:38:43.064 2ee4 Level-0 table #15: 6805 bytes OK
+2026/02/01-11:38:43.065 2ee4 Delete type=0 #10
+2026/02/01-11:38:43.065 2ee8 Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)

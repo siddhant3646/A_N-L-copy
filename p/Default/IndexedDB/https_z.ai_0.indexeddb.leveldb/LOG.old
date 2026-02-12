@@ -1,0 +1,7 @@
+2026/02/02-16:09:21.485 16dcd Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_z.ai_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/02-16:09:21.485 16dcd Recovering log #4
+2026/02/02-16:09:21.485 16dcd Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_z.ai_0.indexeddb.leveldb/000004.log 
+2026/02/02-16:09:21.503 16df7 Level-0 table #8: started
+2026/02/02-16:09:21.504 16df7 Level-0 table #8: 2625 bytes OK
+2026/02/02-16:09:21.505 16df7 Delete type=0 #4
+2026/02/02-16:09:21.505 16dcd Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)

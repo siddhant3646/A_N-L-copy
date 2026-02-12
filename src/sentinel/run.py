@@ -15,11 +15,10 @@ class Browser:
         self.browser = None
 
     async def start(self):
-        # Fix EPERM/Socket issues by forcing local TMPDIR
+        # Fix EPERM/Socket issues by forcing a unique system-standard TMPDIR
         import os
-        import uuid
-        local_tmp = os.path.join(os.getcwd(), "tmp_sentinel", str(uuid.uuid4()))
-        os.makedirs(local_tmp, exist_ok=True)
+        import tempfile
+        local_tmp = tempfile.mkdtemp(prefix="sentinel_")
         os.environ["TMPDIR"] = local_tmp
         print(f"🔧 Set TMPDIR to: {local_tmp}")
 
@@ -44,24 +43,19 @@ class Browser:
             import os
             
             # Create a local profiles dir to minimize path length and avoid EPERM
-            base_temp_dir = os.path.join(os.getcwd(), "profiles")
-            os.makedirs(base_temp_dir, exist_ok=True)
-            
-            # Use fixed profile dir to avoid creating copies each run
-            temp_dir = os.path.join(base_temp_dir, "session")
-            profile_exists = os.path.exists(os.path.join(temp_dir, "Default"))
+            # Use a very short absolute path to avoid macOS socket length limits (104 chars)
+            temp_dir = os.path.abspath(os.path.join(os.getcwd(), "p"))
             os.makedirs(temp_dir, exist_ok=True)
             
             # CLEANUP LOCKS in the destination to prevent ProcessSingleton errors
-            lock_file = os.path.join(temp_dir, "SingletonLock")
-            sock_file = os.path.join(temp_dir, "SingletonSocket")
-            try:
-                if os.path.exists(lock_file):
-                    os.unlink(lock_file)
-                if os.path.exists(sock_file):
-                    os.unlink(sock_file)
-            except:
-                pass
+            import glob
+            for pattern in ["Singleton*", "lock", ".parentlock"]:
+                for stale_file in glob.glob(os.path.join(temp_dir, pattern)):
+                    try:
+                        if os.path.exists(stale_file):
+                            os.unlink(stale_file)
+                    except:
+                        pass
             
             # FORCE FRESH COPY FROM SOURCE EVERY TIME
             # This ensures we pick up the latest login session from the seeded profile
@@ -84,11 +78,9 @@ class Browser:
                     
                     # Use rsync-like logic or just shutil.copytree with ignore
                     def ignore_cache(path, names):
-                        # Service Worker often has locked files or permission issues, and is cache. Ignore it.
-                        ignored = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Service Worker']
-                        # Also ignore Singleton lock files to prevent "profile in use" errors
-                        ignored.extend([n for n in names if n.startswith('Singleton')])
-                        return [n for n in names if n in ignored]
+                        # Cache files and locks often cause EPERM/IO issues.
+                        ignored_patterns = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Singleton', 'lock', '.parentlock']
+                        return [n for n in names if any(p in n for p in ignored_patterns)]
                     
                     shutil.copytree(src_default, dst_default, dirs_exist_ok=True, ignore=ignore_cache)
                     
@@ -116,14 +108,24 @@ class Browser:
         
         if final_user_data_dir:
             print(f"🚀 Launching with User Data: {final_user_data_dir}")
-            self.context = await self.playwright.chromium.launch_persistent_context(
-                user_data_dir=final_user_data_dir,
-                executable_path=self.executable_path,
-                headless=self.headless,
-                args=args,
-                ignore_default_args=["--use-mock-keychain", "--password-store=basic"],
-                viewport=None 
-            )
+            try:
+                self.context = await self.playwright.chromium.launch_persistent_context(
+                    user_data_dir=final_user_data_dir,
+                    executable_path=self.executable_path,
+                    headless=self.headless,
+                    args=args,
+                    ignore_default_args=["--use-mock-keychain", "--password-store=basic"],
+                    viewport=None 
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to launch persistent context: {e}")
+                print("🔄 Falling back to standard launch (WITHOUT profile)...")
+                self.browser = await self.playwright.chromium.launch(
+                    executable_path=self.executable_path,
+                    headless=self.headless,
+                    args=args
+                )
+                self.context = await self.browser.new_context()
         else:
              self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,

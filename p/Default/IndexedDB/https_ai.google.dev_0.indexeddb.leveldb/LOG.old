@@ -1,0 +1,6 @@
+2026/01/21-23:34:00.536 e7d20 Creating DB /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_ai.google.dev_0.indexeddb.leveldb since it was missing.
+2026/01/21-23:34:00.539 e7d20 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_ai.google.dev_0.indexeddb.leveldb/MANIFEST-000001
+2026/01/21-23:34:32.542 e7d20 Level-0 table #5: started
+2026/01/21-23:34:32.544 e7d20 Level-0 table #5: 1221 bytes OK
+2026/01/21-23:34:32.545 e7d20 Delete type=0 #3
+2026/01/21-23:34:32.546 e7d20 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

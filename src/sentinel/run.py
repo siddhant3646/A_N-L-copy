@@ -2,6 +2,7 @@ import asyncio
 import random
 import sys
 import datetime
+import os
 from playwright.async_api import async_playwright
 
 class Browser:
@@ -51,31 +52,40 @@ class Browser:
             profile_exists = os.path.exists(os.path.join(temp_dir, "Default"))
             os.makedirs(temp_dir, exist_ok=True)
             
-            if profile_exists:
-                print(f"📂 Reusing existing profile at: {temp_dir}")
-            else:
-                print(f"📂 Seeding new profile to: {temp_dir}")
+            # CLEANUP LOCKS in the destination to prevent ProcessSingleton errors
+            lock_file = os.path.join(temp_dir, "SingletonLock")
+            sock_file = os.path.join(temp_dir, "SingletonSocket")
+            try:
+                if os.path.exists(lock_file):
+                    os.unlink(lock_file)
+                if os.path.exists(sock_file):
+                    os.unlink(sock_file)
+            except:
+                pass
             
-            # We strictly need to copy the 'Default' profile to the temp dir
-            # Structure must be: TempDir/Default
+            # FORCE FRESH COPY FROM SOURCE EVERY TIME
+            # This ensures we pick up the latest login session from the seeded profile
+            print(f"🔄 Refreshing profile copy at: {temp_dir}")
             
             # Source paths
             src_default = os.path.join(self.user_data_dir, "Default")
             dst_default = os.path.join(temp_dir, "Default")
             
-            # Only copy if profile doesn't exist yet
-            if profile_exists:
-                # Reuse existing profile
-                final_user_data_dir = temp_dir
-            elif os.path.exists(src_default):
+            if os.path.exists(src_default):
                 try:
-                    # Create destination
+                    # Remove existing copy if present
+                    if os.path.exists(dst_default):
+                         # Force delete, ignoring errors (like .DS_Store permissions)
+                         shutil.rmtree(dst_default, ignore_errors=True)
+                    
+                    # Create destination (if rmtree failed to fully delete, this might be no-op or partial)
                     os.makedirs(dst_default, exist_ok=True)
                     print(f"  ⚡ Mirroring full profile (excluding Cache)...")
                     
                     # Use rsync-like logic or just shutil.copytree with ignore
                     def ignore_cache(path, names):
-                        ignored = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad']
+                        # Service Worker often has locked files or permission issues, and is cache. Ignore it.
+                        ignored = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Service Worker']
                         # Also ignore Singleton lock files to prevent "profile in use" errors
                         ignored.extend([n for n in names if n.startswith('Singleton')])
                         return [n for n in names if n in ignored]
@@ -89,15 +99,20 @@ class Browser:
                         print("  📁 Copied: Local State")
                         
                     final_user_data_dir = temp_dir
-                    print("✅ Profile mirrored successfully")
+                    print("✅ Profile refreshed successfully")
                 except Exception as e:
-                    print(f"❌ Aggregated Profile Mirror Failure: {e}")
+                    print(f"❌ Profile Mirror Failure: {e}")
                     final_user_data_dir = self.user_data_dir
             else:
                  print(f"⚠️ Source profile not found at {src_default}")
+                 final_user_data_dir = None
+
         else:
              # Force fresh profile if copying is disabled
              final_user_data_dir = None
+             
+        # FORCE CLEANUP OF crashpad settings if they exist in destination (fixes EPERM)
+        # Actually this is hard because EPERM was on SOURCE. But let's leave it.
         
         if final_user_data_dir:
             print(f"🚀 Launching with User Data: {final_user_data_dir}")

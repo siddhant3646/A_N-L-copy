@@ -3170,6 +3170,14 @@ class SentinelAgent:
                     console.log('URL: ' + window.location.href);
                     console.log('Title: ' + document.title);
                     
+                    // CHECK LOGIN STATUS
+                    const isLoggedIn = !!(document.querySelector('.global-nav__me-photo') || document.querySelector('#ember14') || document.querySelector('.feed-identity-module'));
+                    console.log('LOGIN STATUS: ' + (isLoggedIn ? 'LOGGED IN ✅' : 'GUEST VIEW ⚠️'));
+                    
+                    if (!isLoggedIn) {{
+                         console.log('DUMP_HTML');
+                    }}
+                    
                     // Enhanced sidebar detection
                     console.log('Sidebar detection:');
                     const debugSidebarSelectors = [
@@ -3186,7 +3194,10 @@ class SentinelAgent:
                         'div[data-test-id="search-results-list"]',
                         'main > div > div > div > ul',
                         '.artdeco-list',
-                        'ul[role="list"]'
+                        'ul[role="list"]',
+                        'section.two-pane-serp-page__results-list',
+                        '.two-pane-serp-page__results-list',
+                        'ul.jobs-search__results-list'
                     ];
                     for (const sel of debugSidebarSelectors) {{
                         const elements = document.querySelectorAll(sel);
@@ -3197,6 +3208,15 @@ class SentinelAgent:
                             console.log('  ' + sel + ': not found');
                         }}
                     }}
+
+                    // START DEBUG: Log first few LI elements to understand structure
+                    console.log('--- LI ELEMENT DEBUG ---');
+                    const allLis = document.querySelectorAll('li');
+                    for(let i=0; i<Math.min(allLis.length, 3); i++) {{
+                        console.log('LI[' + i + '] classes: ' + allLis[i].className);
+                        console.log('LI[' + i + '] html: ' + allLis[i].outerHTML.substring(0, 150) + '...');
+                    }}
+                    console.log('--- END LI DEBUG ---');
                     
                     // Check for job cards
                     const jobCardSelectors = [
@@ -3456,6 +3476,9 @@ class SentinelAgent:
                         'div[data-ember-extension]',
                         'ul[role="list"]',
                         'div[class*="jobs-search__results-list"]',
+                        'ul.jobs-search__results-list', // Seen in public HTML
+                        'section.two-pane-serp-page__results-list', // Guest view container
+                        '.two-pane-serp-page__results-list', // Guest view generic
                         'main > div > div > div > ul',
                         '.jobs-search__right-rail',
                         '[class*="artdeco-list"]',
@@ -3492,15 +3515,29 @@ class SentinelAgent:
                             'div:has(a[href*="currentJobId"])',
                             'li:has([class*="job-list"])',
                             '[data-test="job-card"]',
-                            '[class*="jobs-search-results__list-item"]'
+                            '[class*="jobs-search-results__list-item"]',
+                            // Public HTML selectors
+                            '.job-search-card',
+                            '.base-card',
+                            'div[data-entity-urn*="jobPosting"]',
+                            'li:has(a[href*="/jobs/view/"])',
+                            'li' // Fallback for list items if nothing else matches
                         ];
                         
                         let jobCards = [];
                         for (const selector of jobCardSelectors) {{
                             const cards = Array.from(sidebar.querySelectorAll(selector));
-                            if (cards.length > 0) {{
-                                jobCards = cards;
-                                console.log('LINKEDIN: Found ' + cards.length + ' job cards with selector: ' + selector);
+                            // Filter false positives if using generic 'li'
+                            const validCards = cards.filter(c => {{
+                                if (selector === 'li') {{
+                                    return c.innerText.length > 20 && (c.querySelector('a') || c.onclick);
+                                }}
+                                return true;
+                            }});
+                            
+                            if (validCards.length > 0) {{
+                                jobCards = validCards;
+                                console.log('LINKEDIN: Found ' + jobCards.length + ' job cards with selector: ' + selector);
                                 break;
                             }}
                         }}
@@ -3512,6 +3549,13 @@ class SentinelAgent:
                             let jobId = card.getAttribute('data-job-id') || card.getAttribute('data-occludable-job-id');
                             if (jobId) return jobId;
                             
+                            // Try data-entity-urn
+                            const urn = card.getAttribute('data-entity-urn');
+                            if (urn) {{
+                                const match = urn.match(/urn:li:jobPosting:(\d+)/);
+                                if (match) return match[1];
+                            }}
+
                             // Try to extract from child element
                             const childWithId = card.querySelector('[data-job-id], [data-occludable-job-id]');
                             if (childWithId) {{
@@ -3519,11 +3563,20 @@ class SentinelAgent:
                                 if (jobId) return jobId;
                             }}
                             
-                            // Extract from link href
+                            // Extract from link href (standard view)
                             const link = card.querySelector('a[href*="currentJobId="]');
                             if (link) {{
                                 const href = link.getAttribute('href');
                                 const match = href.match(/currentJobId=(\d+)/);
+                                if (match) return match[1];
+                            }}
+                            
+                            // Extract from link href (guest/public view)
+                            const viewLink = card.querySelector('a[href*="/jobs/view/"]');
+                            if (viewLink) {{
+                                const href = viewLink.getAttribute('href');
+                                // Pattern: /jobs/view/[slug]-[id]? or /jobs/view/[id]/
+                                const match = href.match(/view\/[^?]*[-](\d+)(?:\?|\/|$)/) || href.match(/view\/(\d+)(?:\?|\/|$)/);
                                 if (match) return match[1];
                             }}
                             
@@ -3707,10 +3760,25 @@ class SentinelAgent:
                     const modal = document.querySelector('div.jobs-easy-apply-modal, div[data-test-modal="jobs-easy-apply-modal"]');
                     if (!modal) {{
                         const easyApplyBtn = document.querySelector('button.jobs-apply-button');
-                        if (easyApplyBtn && easyApplyBtn.innerText.toLowerCase().includes('easy apply')) {{
-                            easyApplyBtn.click();
-                            return 'APPLY_CLICKED_LINKEDIN';
+                        if (easyApplyBtn) {{
+                            const btnText = easyApplyBtn.innerText.toLowerCase();
+                            if (btnText.includes('easy apply')) {{
+                                easyApplyBtn.click();
+                                return 'APPLY_CLICKED_LINKEDIN';
+                            }}
+                            if (btnText.includes('sign in')) {{
+                                return 'LINKEDIN_LOGIN_REQUIRED';
+                            }}
+                            if (btnText.includes('company website')) {{
+                                return 'LINKEDIN_EXTERNAL_APPLY_SKIPPED';
+                            }}
                         }}
+                        
+                        // Fallback check for Sign In button if main button not found
+                        const signInBtn = Array.from(document.querySelectorAll('button, a.btn-md')).find(el => 
+                            el.innerText.toLowerCase().includes('sign in to apply'));
+                        if (signInBtn) return 'LINKEDIN_LOGIN_REQUIRED';
+
                         return 'LINKEDIN_NO_MODAL';
                     }}
                     // Handle Interactions

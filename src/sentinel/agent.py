@@ -3150,6 +3150,28 @@ class SentinelAgent:
                 const isNaukri = document.title.includes('Naukri') || window.location.href.includes('naukri.com');
                 const isInstahyre = document.title.includes('Instahyre') || window.location.href.includes('instahyre.com');
 
+                // Helper: Query selector that can penetrate Shadow DOM
+                const queryDeep = (selector, root = document) => {{
+                    let match = root.querySelector(selector);
+                    if (match) return match;
+                    const hosts = root.querySelectorAll('*');
+                    for (const host of hosts) {{
+                        if (host.shadowRoot) {{
+                            match = queryDeep(selector, host.shadowRoot);
+                            if (match) return match;
+                        }}
+                    }}
+                    return null;
+                }};
+
+                const queryAllDeep = (selector, root = document, results = []) => {{
+                    root.querySelectorAll(selector).forEach(el => results.push(el));
+                    root.querySelectorAll('*').forEach(el => {{
+                        if (el.shadowRoot) queryAllDeep(selector, el.shadowRoot, results);
+                    }});
+                    return results;
+                }};
+
                 // ============================================================
                 // LINKEDIN LOGIC (CLEAN REWRITE FOR 2025-2026)
                 // Handles obfuscated classes and dynamic DOM structure
@@ -3157,9 +3179,9 @@ class SentinelAgent:
                 if (isLinkedIn) {{
                     console.log('=== LINKEDIN AUTOMATION STARTED ===');
                     
-                    // Helper: Find elements by text content
+                    // Helper: Find elements by text content (Shadow aware)
                     const findByText = (selector, text, exact = false) => {{
-                        const elements = document.querySelectorAll(selector);
+                        const elements = queryAllDeep(selector);
                         const searchText = text.toLowerCase();
                         return Array.from(elements).find(el => {{
                             const elText = el.innerText.toLowerCase();
@@ -3167,371 +3189,220 @@ class SentinelAgent:
                         }});
                     }};
                     
-                    // Helper: Find Easy Apply button
+                    // Helper: Find Easy Apply button on job details page
                     const findEasyApplyButton = () => {{
                         console.log('Looking for Easy Apply button...');
-                        // Method 1: Try by class
-                        let btn = document.querySelector('button.jobs-apply-button');
-                        if (btn) {{
-                            console.log('Found Easy Apply by class');
-                            return btn;
-                        }}
+                        // 1. By class
+                        let btn = queryDeep('button.jobs-apply-button');
+                        if (btn) return btn;
                         
-                        // Method 2: Search by text
-                        btn = findByText('button', 'easy apply');
-                        if (btn) {{
-                            console.log('Found Easy Apply by text');
-                            return btn;
-                        }}
+                        // 2. By aria-label (found during inspection)
+                        btn = queryDeep('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]');
+                        if (btn) return btn;
                         
-                        // Method 3: Search all buttons with debug
-                        const buttons = document.querySelectorAll('button');
-                        console.log('Checking', buttons.length, 'buttons');
-                        for (let i = 0; i < buttons.length; i++) {{
-                            const button = buttons[i];
-                            const text = button.innerText.toLowerCase().trim();
-                            // Debug: log all buttons
-                            if (i < 10 || text.includes('apply')) {{
-                                console.log('Button', i, ':', text.substring(0, 50));
-                            }}
-                            if (text.includes('easy apply')) {{
-                                console.log('Found Easy Apply button:', text);
-                                return button;
-                            }}
-                            // Also check for partial matches
-                            if (text.includes('easy') && text.includes('apply')) {{
-                                console.log('Found Easy Apply (partial match):', text);
-                                return button;
-                            }}
-                        }}
-                        
-                        // Method 4: Look for aria-label
-                        const ariaBtn = document.querySelector('button[aria-label*="Easy Apply"]');
-                        if (ariaBtn) {{
-                            console.log('Found Easy Apply by aria-label');
-                            return ariaBtn;
-                        }}
-                        
-                        // Method 5: Search in right panel specifically (where job details are shown)
-                        const rightPanel = document.querySelector('[role="main"]') || document.querySelector('main') || document.body;
-                        const rightPanelButtons = rightPanel.querySelectorAll('button');
-                        console.log('Checking', rightPanelButtons.length, 'buttons in right panel');
-                        for (const button of rightPanelButtons) {{
-                            const text = button.innerText.toLowerCase().trim();
-                            if (text.includes('easy apply') || (text.includes('easy') && text.includes('apply'))) {{
-                                console.log('Found Easy Apply in right panel:', text);
-                                return button;
-                            }}
-                        }}
-                        
-                        // Method 6: Search for anchor tags with Easy Apply (LinkedIn uses <a> tags)
-                        console.log('Searching for Easy Apply anchor tags...');
-                        
-                        // 6a: By aria-label
-                        const ariaLink = document.querySelector('a[aria-label*="Easy Apply"]');
-                        if (ariaLink) {{
-                            console.log('Found Easy Apply anchor by aria-label');
-                            return ariaLink;
-                        }}
-                        
-                        // 6b: By data-view-name attribute
-                        const dataViewLink = document.querySelector('a[data-view-name="job-apply-button"]');
-                        if (dataViewLink) {{
-                            console.log('Found Easy Apply anchor by data-view-name');
-                            return dataViewLink;
-                        }}
-                        
-                        // 6c: Search all anchor tags
-                        const links = document.querySelectorAll('a');
-                        console.log('Checking', links.length, 'anchor tags');
-                        for (let i = 0; i < links.length; i++) {{
-                            const link = links[i];
-                            const text = link.innerText.toLowerCase().trim();
-                            // Debug: log anchor tags
-                            if (i < 5 || text.includes('apply')) {{
-                                console.log('Anchor', i, ':', text.substring(0, 50));
-                            }}
-                            if (text.includes('easy apply')) {{
-                                console.log('Found Easy Apply anchor:', text);
-                                return link;
-                            }}
-                        }}
-                        
-                        console.log('Easy Apply button not found');
+                        // 3. By data-view-name
+                        btn = queryDeep('a[data-view-name="job-apply-button"], button[data-view-name="job-apply-button"]');
+                        if (btn) return btn;
+
+                        // 4. By text search
+                        btn = findByText('button', 'easy apply') || findByText('a', 'easy apply');
+                        if (btn) return btn;
+
                         return null;
                     }};
-                    
-                    // Helper: Find job cards
-                    const findJobCards = () => {{
-                        const cards = [];
-                        // Method 1: Look for links with currentJobId
-                        const jobLinks = document.querySelectorAll('a[href*="currentJobId"]');
-                        console.log('Job links with currentJobId:', jobLinks.length);
-                        for (const link of jobLinks) {{
-                            const card = link.closest('li') || link.closest('div');
-                            if (card && !cards.includes(card)) cards.push(card);
+
+                    // Helper: Fill LinkedIn form fields
+                    const handleLinkedInForm = (modal) => {{
+                        console.log('Filling LinkedIn form fields (Shadow aware)...');
+                        const formResults = [];
+                        
+                        // 1. Handle text/numeric inputs
+                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
+                        for (const input of textInputs) {{
+                            if (!isVisible(input) || input.value) continue;
+                            
+                            const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
+                                            queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
+                                            input.getAttribute('aria-label') || '';
+                            
+                            if (labelText) {{
+                                const answer = fuzzyMatch(labelText);
+                                if (answer) {{
+                                    console.log('Filling text field:', labelText, 'with:', answer);
+                                    input.value = answer;
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});
+                                }}
+                            }}
                         }}
-                        // Method 2: Look for job links in the left sidebar (obfuscated classes)
-                        if (cards.length === 0) {{
-                            // Find all links that look like job listings
-                            const allLinks = document.querySelectorAll('a');
-                            for (const link of allLinks) {{
-                                const href = link.getAttribute('href') || '';
-                                // Match job detail links
-                                if (href.includes('/jobs/') || href.includes('jobId') || link.innerText.toLowerCase().includes('easy apply')) {{
-                                    const card = link.closest('li') || link.closest('div[class*="_"]');
-                                    if (card && !cards.includes(card) && card.innerText.length > 100) {{
-                                        cards.push(card);
+
+                        // 2. Handle Select elements
+                        const selects = queryAllDeep('select', modal);
+                        for (const select of selects) {{
+                            if (!isVisible(select) || select.value !== 'Select an option') {{
+                                // Skip if already selected or not visible
+                                if (select.value && select.value !== '' && select.value !== 'Select an option') continue;
+                            }}
+                            
+                            const labelText = select.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
+                                            select.getAttribute('aria-label') || '';
+                            
+                            if (labelText) {{
+                                const answer = fuzzyMatch(labelText);
+                                if (answer) {{
+                                    const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value }}));
+                                    const bestOpt = findBestMatch(answer, options);
+                                    if (bestOpt) {{
+                                        console.log('Selecting dropdown:', labelText, 'with:', bestOpt.text);
+                                        select.value = bestOpt.value;
+                                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        formResults.push({{ question: labelText, answer: bestOpt.text, inputType: 'select' }});
                                     }}
                                 }}
                             }}
                         }}
-                        // Method 3: Look for list items containing job info patterns
-                        if (cards.length === 0) {{
-                            const allLis = document.querySelectorAll('li');
-                            for (const li of allLis) {{
-                                const text = li.innerText.toLowerCase();
-                                const hasJobTitle = li.querySelector('a') !== null;
-                                const hasEasyApply = text.includes('easy apply');
-                                const hasTime = text.includes('hours ago') || text.includes('minutes ago') || text.includes('days ago');
-                                const hasLocation = text.includes('india') || text.includes('bangalore') || text.includes('mumbai') || text.includes('delhi') || text.includes('gurugram') || text.includes('pune') || text.includes('hyderabad');
-                                if (hasJobTitle && (hasEasyApply || hasTime) && hasLocation && li.innerText.length > 80 && li.innerText.length < 1000) {{
-                                    if (!cards.includes(li)) cards.push(li);
+
+                        // 3. Handle Radio buttons (e.g., Yes/No questions)
+                        const fieldsets = queryAllDeep('fieldset', modal);
+                        for (const fieldset of fieldsets) {{
+                            const legend = fieldset.querySelector('legend')?.innerText || '';
+                            const radios = Array.from(fieldset.querySelectorAll('input[type="radio"]'));
+                            
+                            if (legend && radios.length > 0 && !radios.some(r => r.checked)) {{
+                                const answer = fuzzyMatch(legend);
+                                if (answer) {{
+                                    const bestRadio = findBestRadioMatch(answer, radios);
+                                    if (bestRadio) {{
+                                        console.log('Clicking radio:', legend, 'with:', bestRadio.id);
+                                        bestRadio.click();
+                                        formResults.push({{ question: legend, answer: answer, inputType: 'radio' }});
+                                    }}
                                 }}
                             }}
                         }}
-                        console.log('Total job cards found:', cards.length);
-                        return cards;
-                    }};
-                    
-                    // Helper: Get job ID from card
-                    const getJobIdFromCard = (card) => {{
-                        // Try data attributes first
-                        let jobId = card.getAttribute('data-job-id') || card.getAttribute('data-occludable-job-id');
-                        if (jobId) return jobId;
                         
-                        // Try to find any link with currentJobId
-                        const link = card.querySelector('a[href*="currentJobId"]');
-                        if (link) {{
-                            const href = link.getAttribute('href');
-                            const match = href.match(/currentJobId=(\d+)/);
-                            if (match) return match[1];
+                        // Find action buttons (Review, Next, Submit)
+                        console.log('Searching for primary action button...');
+                        const primaryBtn = queryDeep('button[aria-label*="Review your application"]', modal) ||
+                                         queryDeep('button[aria-label*="Continue to next step"]', modal) ||
+                                         queryDeep('button[aria-label*="next step"]', modal) ||
+                                         queryDeep('button[aria-label*="Submit application"]', modal) ||
+                                         queryDeep('.jobs-apply-button--primary', modal) ||
+                                         findByText('button', 'submit application') ||
+                                         findByText('button', 'next');
+
+                        if (primaryBtn) {{
+                            console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
+                            primaryBtn.click();
+                            const actionResult = primaryBtn.getAttribute('aria-label')?.includes('Submit') ? 'LINKEDIN_FORM_FINAL_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
+                            return actionResult + (formResults.length > 0 ? '|' + JSON.stringify(formResults) : '');
                         }}
-                        
-                        // Fallback: try to extract from any job link
-                        const anyLink = card.querySelector('a[href*="/jobs/"]');
-                        if (anyLink) {{
-                            const href = anyLink.getAttribute('href');
-                            // Try to extract job ID from various URL patterns
-                            const patterns = [
-                                /currentJobId=(\d+)/,
-                                /jobs\/view\/(?:[^\/]+-)?(\d+)/,
-                                /jobs\/(\d+)/
-                            ];
-                            for (const pattern of patterns) {{
-                                const match = href.match(pattern);
-                                if (match) return match[1];
-                            }}
-                        }}
-                        
-                        // Last resort: use index as ID
-                        return null;
+
+                        return 'LINKEDIN_FORM_STUCK: No button found';
                     }};
-                    
-                    // Helper: Check if job is applied
-                    const isJobApplied = (card) => {{
-                        const text = card.innerText.toLowerCase();
-                        return text.includes('applied') || text.includes('see application');
-                    }};
-                    
-                    // Helper: Check for modals
+
+                    // Check for modals (SHADOW DOM AWARE)
                     const checkModals = () => {{
-                        const dialogs = document.querySelectorAll('[role="dialog"]');
-                        console.log('Checking', dialogs.length, 'dialogs for modals');
+                        console.log('Checking for active modals (Shadow DOM aware)...');
+                        // Search deep for common modal selectors
+                        const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"]');
+                        
                         for (const dialog of dialogs) {{
-                            const text = dialog.innerText.toLowerCase();
-                            if (text.includes('safety reminder')) return {{ type: 'safety', element: dialog }};
-                            if (text.includes('application sent') || text.includes('application submitted')) return {{ type: 'success', element: dialog }};
-                            // Check for application form modal by content
-                            if ((text.includes('apply to') || text.includes('contact info')) && text.includes('email')) {{
-                                console.log('Found application form modal');
+                            if (!isVisible(dialog)) {{
+                                console.log('Found dialog but it is not visible:', dialog.className);
+                                continue;
+                            }}
+                            
+                            const text = dialog.innerText?.toLowerCase() || '';
+                            console.log('Inspecting visible dialog:', dialog.className, 'Text snippet:', text.substring(0, 50));
+                            
+                            // 1. Success Modal
+                            if (text.includes('application sent') || text.includes('application submitted') || text.includes('success')) {{
+                                return {{ type: 'success', element: dialog }};
+                            }}
+                            
+                            // 2. Safety/Reminder Modal
+                            if (text.includes('safety reminder') || text.includes('legal reminder')) {{
+                                return {{ type: 'safety', element: dialog }};
+                            }}
+                            
+                            // 3. Easy Apply Form Modal
+                            if (text.includes('apply to') || 
+                                dialog.querySelector('.jobs-easy-apply-content') || 
+                                dialog.querySelector('[class*="easy-apply"]') ||
+                                dialog.querySelector('form') ||
+                                text.includes('contact info') ||
+                                text.includes('resume') ||
+                                text.includes('additional questions')) {{
                                 return {{ type: 'form', element: dialog }};
                             }}
                         }}
-                        // Also check by class selectors
-                        const formModal = document.querySelector('div.jobs-easy-apply-modal, div[data-test-modal="jobs-easy-apply-modal"], .jobs-easy-apply-content');
-                        if (formModal) return {{ type: 'form', element: formModal }};
                         return null;
                     }};
                     
-                    // Get current state
-                    const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
-                    console.log('Current Job ID:', currentJobId);
-                    
-                    // Step 0: Handle modals first (including form modals)
                     const modal = checkModals();
                     if (modal) {{
-                        console.log('Modal detected:', modal.type);
-                        console.log('Modal detected:', modal.type);
-                        if (modal.type === 'safety') {{
-                            const buttons = modal.element.querySelectorAll('button');
-                            for (const btn of buttons) {{
-                                if (btn.innerText.toLowerCase().includes('continue')) {{
-                                    btn.click();
-                                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                                }}
-                            }}
-                            if (buttons.length > 0) {{
-                                buttons[buttons.length - 1].click();
-                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                            }}
-                        }}
+                        console.log('Active Modal detected:', modal.type);
                         if (modal.type === 'success') {{
-                            const closeBtn = modal.element.querySelector('button');
+                            const closeBtn = modal.element.querySelector('button[aria-label="Dismiss"]') || 
+                                           modal.element.querySelector('.artdeco-modal__dismiss') || 
+                                           modal.element.querySelector('button');
                             if (closeBtn) {{
+                                console.log('Closing success modal...');
                                 closeBtn.click();
                                 return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
                             }}
                         }}
+                        
+                        if (modal.type === 'safety') {{
+                            const continueBtn = findByText('button', 'continue') || modal.element.querySelector('button:last-child');
+                            if (continueBtn) {{
+                                console.log('Continuing from safety modal...');
+                                continueBtn.click();
+                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                            }}
+                        }}
+                        
                         if (modal.type === 'form') {{
-                            // Form filling logic
-                            console.log('Handling form modal');
-                            
-                            // Look for next/submit buttons with various texts
-                            const nextBtn = findByText('button', 'next') || 
-                                           findByText('button', 'continue') ||
-                                           findByText('button', 'review') ||
-                                           findByText('button', 'submit') ||
-                                           findByText('button', 'continue to next step') || 
-                                           findByText('button', 'review your application') ||
-                                           findByText('button', 'submit application');
-                            
-                            if (nextBtn) {{
-                                console.log('Found next button:', nextBtn.innerText);
-                                nextBtn.click();
-                                return 'LINKEDIN_FORM_SUBMITTED';
-                            }}
-                            
-                            // Fallback: look for any button in the modal footer
-                            const modalButtons = modal.element.querySelectorAll('button');
-                            console.log('Found', modalButtons.length, 'buttons in modal');
-                            for (const btn of modalButtons) {{
-                                const btnText = btn.innerText.toLowerCase();
-                                console.log('Modal button:', btnText);
-                                if (btnText.includes('next') || btnText.includes('continue') || btnText.includes('submit') || btnText.includes('review')) {{
-                                    console.log('Clicking modal button:', btnText);
-                                    btn.click();
-                                    return 'LINKEDIN_FORM_SUBMITTED';
-                                }}
-                            }}
-                            
-                            return 'LINKEDIN_FORM_NO_BUTTON';
+                            return handleLinkedInForm(modal.element);
                         }}
                     }}
-                    
-                    // Step 1: If we're on a job page with Easy Apply visible, click it
-                    if (currentJobId) {{
-                        const easyApplyBtn = findEasyApplyButton();
-                        if (easyApplyBtn) {{
-                            console.log('Found Easy Apply button, clicking');
-                            easyApplyBtn.click();
-                            return 'LINKEDIN_EASY_APPLY_CLICKED';
-                        }}
+
+                    // CRITICAL: If a modal is visible but not matched above, do NOT click Easy Apply
+                    const anyModal = queryDeep('.artdeco-modal, [role="dialog"]');
+                    if (anyModal) {{
+                        console.log('Unknown modal detected via deep query. Handling as generic form...');
+                        return handleLinkedInForm(anyModal);
                     }}
-                    
-                    // Step 2: Find job cards
-                    const jobCards = findJobCards();
-                    console.log('Found', jobCards.length, 'job cards');
-                    
-                    if (jobCards.length === 0) {{
-                        console.log('No job cards found, scrolling...');
-                        window.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: Looking for jobs';
-                    }}
-                    
-                    // Step 3: Navigate to first job if none selected
-                    if (!currentJobId) {{
-                        for (const card of jobCards) {{
-                            if (!isJobApplied(card)) {{
-                                const link = card.querySelector('a');
-                                if (link) {{
-                                    console.log('Clicking first unapplied job');
-                                    link.click();
-                                    return 'LINKEDIN_FIRST_JOB_CLICKED';
-                                }}
-                            }}
-                        }}
-                    }}
-                    
-                    // Step 4: Find current job card
-                    let currentCard = null;
-                    let currentIndex = -1;
-                    for (let i = 0; i < jobCards.length; i++) {{
-                        const cardId = getJobIdFromCard(jobCards[i]);
-                        if (cardId && cardId === currentJobId) {{
-                            currentCard = jobCards[i];
-                            currentIndex = i;
-                            break;
-                        }}
-                    }}
-                    
-                    // If we can't find the exact job card, use the first unapplied one
-                    if (!currentCard) {{
-                        console.log('Current job card not found by ID, using first unapplied');
-                        for (let i = 0; i < jobCards.length; i++) {{
-                            if (!isJobApplied(jobCards[i])) {{
-                                currentCard = jobCards[i];
-                                currentIndex = i;
-                                break;
-                            }}
-                        }}
-                    }}
-                    
-                    if (!currentCard) {{
-                        console.log('No unapplied job cards available');
-                        window.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
-                    }}
-                    
-                    console.log('Current card index:', currentIndex);
-                    
-                    // Step 5: Check if current job is applied
-                    if (isJobApplied(currentCard)) {{
-                        console.log('Current job is applied, finding next...');
-                        for (let i = currentIndex + 1; i < jobCards.length; i++) {{
-                            if (!isJobApplied(jobCards[i])) {{
-                                const link = jobCards[i].querySelector('a');
-                                if (link) {{
-                                    link.click();
-                                    return 'LINKEDIN_NEXT_JOB_CLICKED';
-                                }}
-                            }}
-                        }}
-                        window.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
-                    }}
-                    
-                    // Step 6: Check for Easy Apply button
+
+                    // No modal open - handle job selection and clicking Easy Apply
+                    console.log('No modal detected. Checking for Easy Apply button...');
                     const easyApplyBtn = findEasyApplyButton();
-                    if (!easyApplyBtn) {{
-                        console.log('No Easy Apply button, skipping to next job');
-                        for (let i = currentIndex + 1; i < jobCards.length; i++) {{
-                            if (!isJobApplied(jobCards[i])) {{
-                                const link = jobCards[i].querySelector('a');
-                                if (link) {{
-                                    link.click();
-                                    return 'LINKEDIN_NEXT_JOB_CLICKED';
-                                }}
-                            }}
-                        }}
-                        window.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: Looking for more jobs';
+                    if (easyApplyBtn) {{
+                        console.log('Easy Apply button found, clicking...');
+                        easyApplyBtn.click();
+                        return 'LINKEDIN_EASY_APPLY_CLICKED';
                     }}
-                    
-                    // Step 7: Click Easy Apply
-                    console.log('Clicking Easy Apply button');
-                    easyApplyBtn.click();
-                    return 'LINKEDIN_EASY_APPLY_CLICKED';
+
+                    // Navigation logic if needed
+                    console.log('Looking for jobs in list...');
+                    const jobCards = Array.from(document.querySelectorAll('a[href*="currentJobId"], .job-card-container'));
+                    if (jobCards.length === 0) {{
+                        window.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: No jobs found';
+                    }}
+
+                    for (const card of jobCards) {{
+                        const text = card.innerText.toLowerCase();
+                        if (!text.includes('applied') && !text.includes('viewed')) {{
+                            card.click();
+                            return 'LINKEDIN_JOB_SELECTED';
+                        }}
+                    }}
+
+                    window.scrollBy(0, 800);
+                    return 'LINKEDIN_SCROLLED: All visible jobs handled';
                 }}
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================

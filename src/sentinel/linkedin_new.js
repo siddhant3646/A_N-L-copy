@@ -257,6 +257,65 @@
     function handleApplicationForm(modal) {
         console.log('Handling application form...');
         
+        // Handle dropdown questions first
+        const dropdowns = modal.querySelectorAll('select, [role="combobox"], .jobs-easy-apply-form-section__dropdown, [data-test-text-entity-list-form-select]');
+        console.log('Found', dropdowns.length, 'dropdowns');
+        
+        for (const dropdown of dropdowns) {
+            // Check if dropdown needs to be filled
+            const isEmpty = !dropdown.value || dropdown.value === '' || dropdown.innerText.includes('Select an option');
+            
+            if (isEmpty) {
+                console.log('Filling dropdown:', dropdown.innerText.substring(0, 50));
+                
+                // Click to open dropdown
+                dropdown.click();
+                
+                // Wait a moment for options to appear
+                setTimeout(() => {
+                    // Try to find and click "Yes" option
+                    const yesOption = findByText('span, li, div[role="option"]', 'yes', true) ||
+                                     findByText('span, li, div[role="option"]', 'yes');
+                    
+                    if (yesOption) {
+                        yesOption.click();
+                        console.log('Selected Yes for dropdown');
+                    } else {
+                        // Fallback: try to select first non-placeholder option
+                        const options = document.querySelectorAll('[role="option"], .artdeco-dropdown__item');
+                        for (const option of options) {
+                            const text = option.innerText.toLowerCase();
+                            if (text && !text.includes('select')) {
+                                option.click();
+                                console.log('Selected option:', text);
+                                break;
+                            }
+                        }
+                    }
+                }, 100);
+                
+                // Return early to let dropdown settle
+                return 'LINKEDIN_FORM_FILLING_DROPDOWN';
+            }
+        }
+        
+        // Handle text inputs
+        const inputs = modal.querySelectorAll('input[type="text"], input[type="number"], textarea');
+        for (const input of inputs) {
+            if (!input.value && input.placeholder) {
+                const placeholder = input.placeholder.toLowerCase();
+                console.log('Empty input found:', placeholder);
+                
+                // Smart filling based on placeholder keywords
+                if (placeholder.includes('year') || placeholder.includes('experience')) {
+                    input.value = '4';
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('Filled with: 4 years');
+                }
+            }
+        }
+        
         // Find next/submit button
         const nextBtn = findByText('button', 'continue to next step') || 
                        findByText('button', 'review your application') ||
@@ -266,13 +325,14 @@
             return 'LINKEDIN_FORM_NO_BUTTON';
         }
         
-        // Fill form fields (simplified - you'd add your fuzzy matching here)
-        const inputs = modal.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
-        for (const input of inputs) {
-            if (!input.value && input.placeholder) {
-                // You can add smart filling logic here based on placeholder text
-                console.log('Empty input found:', input.placeholder);
+        // Check if form has validation errors
+        const errorMessages = modal.querySelectorAll('.artdeco-inline-feedback__message, [data-test-form-element-error-message]');
+        if (errorMessages.length > 0) {
+            console.log('Validation errors found:', errorMessages.length);
+            for (const error of errorMessages) {
+                console.log('Error:', error.innerText);
             }
+            return 'LINKEDIN_FORM_HAS_ERRORS';
         }
         
         // Click next/submit

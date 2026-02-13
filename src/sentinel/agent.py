@@ -42,6 +42,9 @@ KNOWN_QA_PATTERNS = {
     'backend experience': '3.8 Years',
     'frontend experience': '3.8 Years',
     'software experience': '3.8 Years',
+    'web experience': '3.8 Years',
+    'python experience': '3.8 Years',
+    'programming experience': '3.8 Years',
     # Salary (LPA format for Naukri)
     'current salary': '13.5 LPA',
     'what is your current salary?': '13.5 LPA',
@@ -110,6 +113,8 @@ KNOWN_QA_PATTERNS = {
     'work from office 6 days': 'Yes',
     'work from office 5 days': 'Yes',
     'wfo': 'Yes',
+    'full stack java developer': 'Yes',
+    'java developer': 'Yes',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
     # Walk-in Interview - Always "No" since user is based in Noida
@@ -1726,13 +1731,29 @@ class SentinelAgent:
                 
                 # LinkedIn: Success detected but need to navigate to next job
                 if 'LINKEDIN_SUCCESS_NEED_NAV' in result:
-                    print("✅ LinkedIn success! Need to navigate to next job...")
+                    self.metrics['applications_submitted'] += 1
+                    print(f"✅ LinkedIn success! Total: {self.metrics['applications_submitted']}")
+                    
+                    if 'LinkedIn' in self._task_description and self.metrics['applications_submitted'] >= 5:
+                        print("🎉 LinkedIn limit reached (5 jobs). Stopping task.")
+                        self.state.task_complete = True
+                        break
+
+                    print("   Need to navigate to next job...")
                     await asyncio.sleep(random.uniform(2, 3))
                     continue
                 
                 # LinkedIn: Success modal was closed, need to navigate to next job
                 if 'LINKEDIN_SUCCESS_MODAL_CLOSED' in result:
-                    print("✅ Success modal closed. Looking for next job...")
+                    self.metrics['applications_submitted'] += 1
+                    print(f"✅ Success modal dismissed. Total: {self.metrics['applications_submitted']}")
+                    
+                    if 'LinkedIn' in self._task_description and self.metrics['applications_submitted'] >= 5:
+                        print("🎉 LinkedIn limit reached (5 jobs). Stopping task.")
+                        self.state.task_complete = True
+                        break
+
+                    print("   Looking for next job...")
                     await asyncio.sleep(random.uniform(2, 3))
                     continue
                 
@@ -2981,6 +3002,21 @@ class SentinelAgent:
             js_code = f"""(function() {{
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = {patterns_json};
+                
+                // Platform-specific overrides
+                if (window.location.hostname.includes('linkedin')) {{
+                    const expKeys = [
+                        'years of experience', 'total experience', 'overall experience', 'year of exp',
+                        'experience', 'years', 'java experience', 'react experience', 'angular experience',
+                        'nodejs experience', 'javascript experience', 'ci/cd experience', 'full stack experience',
+                        'backend experience', 'frontend experience', 'software experience', 'web experience',
+                        'python experience', 'programming experience'
+                    ];
+                    expKeys.forEach(k => {{
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
+                    }});
+                }}
+
                 const MAX_RETRIES = 3;
                 
                 // 2. SHARED UTILS (Restored from Legacy)
@@ -3216,10 +3252,30 @@ class SentinelAgent:
                         console.log('Filling LinkedIn form fields (Shadow aware)...');
                         const formResults = [];
                         
+                        // Helper: Check if a field is already filled
+                        const isFieldPreFilled = (element) => {{
+                            if (!element) return false;
+                            if (element.disabled || element.readOnly) return true;
+
+                            const tagName = element.tagName.toLowerCase();
+                            const value = element.value ? element.value.trim() : "";
+
+                            if (tagName === 'input' || tagName === 'textarea') {{
+                                return value.length > 0;
+                            }}
+
+                            if (tagName === 'select') {{
+                                // LinkedIn uses "Select an option" as placeholder.
+                                const isPlaceholder = !value || value === "" || value.toLowerCase().includes("select an option");
+                                return !isPlaceholder;
+                            }}
+                            return false;
+                        }};
+
                         // 1. Handle text/numeric inputs
                         const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
                         for (const input of textInputs) {{
-                            if (!isVisible(input) || input.value) continue;
+                            if (!isVisible(input) || isFieldPreFilled(input)) continue;
                             
                             const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
                                             queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
@@ -3237,28 +3293,149 @@ class SentinelAgent:
                             }}
                         }}
 
-                        // 2. Handle Select elements
-                        const selects = queryAllDeep('select', modal);
-                        for (const select of selects) {{
-                            if (!isVisible(select) || select.value !== 'Select an option') {{
-                                // Skip if already selected or not visible
-                                if (select.value && select.value !== '' && select.value !== 'Select an option') continue;
-                            }}
+                        // 2. Handle Select elements (native and custom LinkedIn dropdowns)
+                        const nativeSelects = queryAllDeep('select', modal);
+                        const customDropdowns = queryAllDeep('[role="combobox"], .jobs-easy-apply-form-section__dropdown, button[aria-expanded], [data-test-text-entity-list-form-select]', modal);
+                        
+                        // Process native <select> elements
+                        for (const select of nativeSelects) {{
+                            if (!isVisible(select) || isFieldPreFilled(select)) continue;
                             
                             const labelText = select.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
+                                            queryDeep(`label[for="${{select.id}}"]`, modal)?.innerText ||
                                             select.getAttribute('aria-label') || '';
                             
                             if (labelText) {{
                                 const answer = fuzzyMatch(labelText);
-                                if (answer) {{
-                                    const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value }}));
-                                    const bestOpt = findBestMatch(answer, options);
+                                
+                                // Determine if we should attempt to select "Yes" based on keywords
+                                const isYesNoQuestion = labelText.toLowerCase().includes('experience') || 
+                                                      labelText.toLowerCase().includes('developer') ||
+                                                      labelText.toLowerCase().includes('comfortable') ||
+                                                      labelText.toLowerCase().includes('willing');
+                                
+                                if (answer || isYesNoQuestion) {{
+                                    const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
+                                    let bestOpt = findBestMatch(answer, options);
+                                    
+                                    // Fallback: If answer is numeric (e.g. "3.8 Years") but options are Yes/No
+                                    if ((!bestOpt && answer) && (labelText.toLowerCase().includes('experience') || labelText.toLowerCase().includes('year'))) {{
+                                        const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
+                                                      options.some(o => o.text.toLowerCase().includes('no'));
+                                        
+                                        if (isYesNo) {{
+                                            // Extract required years from question
+                                            // Matches "3+ years", "minimum 3 years", "at least 3 years"
+                                            const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                            const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
+                                            
+                                            // Extract users years from answer
+                                            const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                            const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
+                                            
+                                            console.log(`Experience Logic: Required ${{reqYears}}, User ${{ansYears}}`);
+                                            
+                                            if (ansYears >= reqYears) {{
+                                                bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
+                                            }} else {{
+                                                // If user has less experience, we might want to lie (aggressive) or be honest
+                                                // For now, let's be aggressive if it's close, or default Yes if parsing failed
+                                                bestOpt = options.find(o => o.text.toLowerCase().includes('yes')); 
+                                            }}
+                                        }}
+                                    }}
+                                    
+                                    // Fallback 2: Implicit Yes/No for Developer/Experience questions where fuzzyMatch returned null
+                                    if (!bestOpt && !answer && isYesNoQuestion) {{
+                                         bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
+                                         if (bestOpt) console.log('Defaulting native select to Yes for:', labelText);
+                                    }}
+
                                     if (bestOpt) {{
-                                        console.log('Selecting dropdown:', labelText, 'with:', bestOpt.text);
+                                        console.log('Selecting native dropdown:', labelText, 'with:', bestOpt.text);
+                                        
+                                        // Robust selection logic
                                         select.value = bestOpt.value;
+                                        if (select.value !== bestOpt.value) {{
+                                            select.selectedIndex = bestOpt.index;
+                                        }}
+                                        
+                                        select.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                         select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        select.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                        
                                         formResults.push({{ question: labelText, answer: bestOpt.text, inputType: 'select' }});
                                     }}
+                                }}
+                            }}
+                        }}
+                        
+                        // Process custom LinkedIn dropdowns (comboboxes)
+                        for (const dropdown of customDropdowns) {{
+                            if (!isVisible(dropdown) || dropdown.tagName === 'SELECT') continue;
+                            
+                            // Check if dropdown needs filling
+                            const dropdownText = dropdown.innerText || dropdown.textContent || '';
+                            const isUnselected = dropdownText.toLowerCase().includes('select an option') || 
+                                               dropdownText.toLowerCase().includes('select') ||
+                                               !dropdown.getAttribute('aria-expanded');
+                            
+                            if (!isUnselected) {{
+                                // console.log('Skipping pre-filled custom dropdown:', dropdownText);
+                                continue;
+                            }}
+                            
+                            // Get label text from parent element
+                            const labelText = dropdown.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
+                                            dropdown.closest('.jobs-easy-apply-form-section__question')?.querySelector('label')?.innerText ||
+                                            dropdown.getAttribute('aria-label') || 
+                                            dropdown.closest('div')?.querySelector('label')?.innerText || '';
+                            
+                            if (labelText) {{
+                                const answer = fuzzyMatch(labelText);
+                                // For Yes/No questions, default to "Yes" if no specific answer found
+                                const isYesNoQuestion = labelText.toLowerCase().includes('experience') || 
+                                                      labelText.toLowerCase().includes('developer');
+                                
+                                // SMART EXPERIENCE CHECK
+                                let calculatedShouldSelectYes = false;
+                                if (answer && (labelText.toLowerCase().includes('experience') || labelText.toLowerCase().includes('year'))) {{
+                                    const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                    const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
+                                    const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                    const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
+                                    if (ansYears >= reqYears) calculatedShouldSelectYes = true;
+                                }}
+
+                                const shouldSelectYes = calculatedShouldSelectYes || (isYesNoQuestion && (!answer || answer.toLowerCase().includes('yes')));
+                                
+                                if (answer || shouldSelectYes) {{
+                                    console.log('Clicking custom dropdown:', labelText);
+                                    dropdown.click();
+                                    
+                                    // Wait briefly for dropdown options to appear
+                                    setTimeout(() => {{
+                                        const yesOption = findByText('[role="option"], li', 'yes', true) ||
+                                                        findByText('span', 'yes', true);
+                                        const noOption = findByText('[role="option"], li', 'no', true) ||
+                                                        findByText('span', 'no', true);
+                                        
+                                        if (shouldSelectYes && yesOption) {{
+                                            console.log('Selecting Yes for:', labelText);
+                                            yesOption.click();
+                                            formResults.push({{ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' }});
+                                        }} else if (!shouldSelectYes && answer && answer.toLowerCase().includes('no') && noOption) {{
+                                            console.log('Selecting No for:', labelText);
+                                            noOption.click();
+                                            formResults.push({{ question: labelText, answer: 'No', inputType: 'custom-dropdown' }});
+                                        }} else if (yesOption) {{
+                                            console.log('Defaulting to Yes for:', labelText);
+                                            yesOption.click();
+                                            formResults.push({{ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' }});
+                                        }}
+                                    }}, 100);
+                                    
+                                    return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN';
                                 }}
                             }}
                         }}
@@ -3276,11 +3453,39 @@ class SentinelAgent:
                                     if (bestRadio) {{
                                         console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         bestRadio.click();
+                                        bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                         formResults.push({{ question: legend, answer: answer, inputType: 'radio' }});
                                     }}
                                 }}
                             }}
                         }}
+                        
+                        // 4. Form Validation Check: Are we missing anything required?
+                        const checkForErrors = () => {{
+                            const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
+                            const requiredSelects = queryAllDeep('select[required], select[aria-required="true"]', modal);
+                            const radioGroups = queryAllDeep('fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element', modal);
+                            
+                            const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !i.value.trim());
+                            
+                            // Strict check for "Select an option" value in native selects
+                            const hasEmptySelect = requiredSelects.some(s => {{
+                                return isVisible(s) && (!s.value || s.value === 'Select an option' || s.selectedIndex === 0);
+                            }});
+                            
+                            const hasEmptyRadio = radioGroups.some(g => {{
+                                const rs = Array.from(g.querySelectorAll('input[type="radio"]'));
+                                return isVisible(g) && rs.length > 0 && !rs.some(r => r.checked);
+                            }});
+                            
+                            const hasVisibleError = !!queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                            
+                            if (hasEmptyInput || hasEmptySelect || hasEmptyRadio || hasVisibleError) {{
+                                console.log('Validation Error detected:', {{ hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasVisibleError }});
+                                return true;
+                            }}
+                            return false;
+                        }};
                         
                         // Find action buttons (Review, Next, Submit)
                         console.log('Searching for primary action button...');
@@ -3293,6 +3498,12 @@ class SentinelAgent:
                                          findByText('button', 'next');
 
                         if (primaryBtn) {{
+                            // Only click if form is valid
+                            if (checkForErrors()) {{
+                                console.log('Form has errors or missing required fields. Waiting for resolution...');
+                                return 'LINKEDIN_FORM_STUCK: Validation errors or required fields missing';
+                            }}
+                            
                             console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
                             primaryBtn.click();
                             const actionResult = primaryBtn.getAttribute('aria-label')?.includes('Submit') ? 'LINKEDIN_FORM_FINAL_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
@@ -3387,22 +3598,97 @@ class SentinelAgent:
 
                     // Navigation logic if needed
                     console.log('Looking for jobs in list...');
-                    const jobCards = Array.from(document.querySelectorAll('a[href*="currentJobId"], .job-card-container'));
-                    if (jobCards.length === 0) {{
+                    // 3. If no Easy Apply button and no modal, we might be on the search page
+                    // We need to select the next job from the list
+                    console.log('Looking for jobs in list...');
+                    
+                    // Find the sidebar with extreme robust fallbacks
+                    // Priority 1: .jobs-search-results-list (standard)
+                    // Priority 2: div[scrollable="true"] on the left side
+                    // Priority 3: Geometry-based fallback (widest scrollable div on the left half)
+                    let sidebar = document.querySelector('.jobs-search-results-list');
+                    
+                    if (!sidebar) {{
+                         const scrollables = Array.from(document.querySelectorAll('div[scrollable="true"]'));
+                         // Find the one that is on the left side and has decent height
+                         sidebar = scrollables.find(el => {{
+                             const rect = el.getBoundingClientRect();
+                             return rect.left < window.innerWidth / 2 && rect.height > 300;
+                         }});
+                    }}
+                    
+                    if (!sidebar) {{
+                         console.log('Sidebar not found by selector, trying geometry...');
+                         // Find any div that is scrollable and on the left
+                         const allDivs = document.querySelectorAll('div');
+                         for (const div of allDivs) {{
+                             const rect = div.getBoundingClientRect();
+                             if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
+                                 if (div.scrollHeight > div.clientHeight || div.style.overflowY === 'auto' || div.style.overflow === 'auto') {{
+                                     sidebar = div;
+                                     break;
+                                 }}
+                             }}
+                         }}
+                    }}
+
+                    if (!sidebar) {{
+                        console.log('Sidebar ABSOLUTELY not found, attempting global scroll...');
                         window.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: No jobs found';
+                        return 'LINKEDIN_SCROLLED: No jobs found (Legacy)';
                     }}
 
-                    for (const card of jobCards) {{
+                    // Find job cards within the sidebar
+                    // Valid cards have data-occludable-job-id or data-job-id
+                    let jobCards = Array.from(sidebar.querySelectorAll('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item'));
+                    
+                    // Fallback to role="button" logic
+                    if (jobCards.length === 0) {{
+                        jobCards = Array.from(sidebar.querySelectorAll('div[role="button"]')).filter(el => 
+                            el.innerText.includes('\\n') && el.innerText.length > 50 
+                        );
+                    }}
+
+                    // Filter valid candidates
+                    // 1. Must be visible
+                    // 2. Must NOT be "Applied"
+                    // 3. Must have "Easy Apply" text
+                    // 4. Must not be the currently active card
+                    const candidates = jobCards.filter(card => {{
                         const text = card.innerText.toLowerCase();
-                        if (!text.includes('applied') && !text.includes('viewed')) {{
-                            card.click();
-                            return 'LINKEDIN_JOB_SELECTED';
+                        const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
+                                        (card.getAttribute('aria-current') === 'true'); // Enhanced active check
+                        
+                        if (isActive) return false;
+                        if (!isVisible(card)) return false;
+                        
+                        // Check explicit "Applied" status
+                        if (text.includes('applied')) {{
+                            // console.log('Skipping applied job:', text.split('\\n')[0]);
+                            return false;
                         }}
+                        
+                        // User requirement: Must be "Easy Apply"
+                        // Note: Some cards might say "Easy Apply" in hidden text, so strict check is good
+                        if (!text.includes('easy apply')) {{
+                            // console.log('Skipping non-Easy Apply job:', text.split('\\n')[0]);
+                            return false;
+                        }}
+                        
+                        return true;
+                    }});
+
+                    if (candidates.length > 0) {{
+                        const nextJob = candidates[0];
+                        console.log('Clicking next job:', nextJob.innerText.split('\\n')[0]);
+                        nextJob.click();
+                        nextJob.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                        return 'LINKEDIN_JOB_SELECTED';
                     }}
 
-                    window.scrollBy(0, 800);
-                    return 'LINKEDIN_SCROLLED: All visible jobs handled';
+                    console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
+                    sidebar.scrollBy(0, 800);
+                    return 'LINKEDIN_SCROLLED: No jobs found';
                 }}
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================

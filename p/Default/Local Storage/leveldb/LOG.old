@@ -1,3 +1,29 @@
-2026/02/12-08:59:59.523 191d2 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/Local Storage/leveldb/MANIFEST-000001
-2026/02/12-08:59:59.527 191d2 Recovering log #1797
-2026/02/12-08:59:59.527 191d2 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/Local Storage/leveldb/001797.log 
+2026/02/13-09:27:36.774 116317 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/Local Storage/leveldb/MANIFEST-000001
+2026/02/13-09:27:36.776 116317 Recovering log #1797
+2026/02/13-09:27:36.776 116317 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/Local Storage/leveldb/001797.log 
+2026/02/13-09:30:06.992 11631f Level-0 table #1803: started
+2026/02/13-09:30:06.998 11631f Level-0 table #1803: 35487 bytes OK
+2026/02/13-09:30:07.000 11631f Delete type=0 #1797
+2026/02/13-09:34:04.141 11631f Level-0 table #1805: started
+2026/02/13-09:34:04.146 11631f Level-0 table #1805: 223658 bytes OK
+2026/02/13-09:34:04.150 11631f Delete type=0 #1802
+2026/02/13-09:46:34.277 11631f Level-0 table #1807: started
+2026/02/13-09:46:34.282 11631f Level-0 table #1807: 32479 bytes OK
+2026/02/13-09:46:34.284 11631f Delete type=0 #1804
+2026/02/13-09:59:46.550 11631f Level-0 table #1809: started
+2026/02/13-09:59:46.552 11631f Level-0 table #1809: 32356 bytes OK
+2026/02/13-09:59:46.554 11631f Delete type=0 #1806
+2026/02/13-09:59:46.555 11631f Compacting 4@0 + 2@1 files
+2026/02/13-09:59:46.571 11631f Generated table #1810@0: 2842 keys, 2199149 bytes
+2026/02/13-09:59:46.580 11631f Generated table #1811@0: 1031 keys, 1199175 bytes
+2026/02/13-09:59:46.580 11631f Compacted 4@0 + 2@1 files => 3398324 bytes
+2026/02/13-09:59:46.582 11631f compacted to: files[ 0 2 1 0 0 0 0 ]
+2026/02/13-09:59:46.583 11631f Delete type=2 #1803
+2026/02/13-09:59:46.583 11631f Delete type=2 #1800
+2026/02/13-09:59:46.583 11631f Delete type=2 #1805
+2026/02/13-09:59:46.583 11631f Delete type=2 #1807
+2026/02/13-09:59:46.583 11631f Delete type=2 #1799
+2026/02/13-09:59:46.583 11631f Delete type=2 #1809
+2026/02/13-10:13:48.787 11631f Level-0 table #1813: started
+2026/02/13-10:13:48.790 11631f Level-0 table #1813: 32326 bytes OK
+2026/02/13-10:13:48.793 11631f Delete type=0 #1808

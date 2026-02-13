@@ -21,13 +21,13 @@
             default: '3.8 Years'
         },
         current_salary: {
-            patterns: ['current salary', 'what is your current salary', 'current ctc', 'current annual ctc', 'monthly salary', 'current ctc in lakhs', 'current ctc in lpa', 'current ctc [in lpa]', 'ctc in lacs per annum', 'cctc', 'what is your cctc', 'your cctc', 'your current ctc'],
+            patterns: ['current salary', 'what is your current salary', 'current ctc', 'current annual ctc', 'monthly salary', 'current ctc in lakhs', 'current ctc in lpa', 'current ctc [in lpa]', 'ctc in lacs per annum', 'cctc', 'what is your cctc', 'your cctc', 'your current ctc', 'what is your current ctc'],
             default: '13.5 LPA',
             numeric_default: '13.5',
             inr_default: '1350000'
         },
         expected_salary: {
-            patterns: ['expected salary', 'what is your expected salary', 'expected ctc', 'expected annual ctc', 'expected ctc in lakhs', 'expected ctc in lpa', 'expected ctc [in lpa]', 'ectc', 'what is your ectc', 'your ectc'],
+            patterns: ['expected salary', 'what is your expected salary', 'expected ctc', 'expected annual ctc', 'expected ctc in lakhs', 'expected ctc in lpa', 'expected ctc [in lpa]', 'ectc', 'what is your ectc', 'your ectc', 'what is your current expected ctc', 'current expected ctc'],
             default: '20 LPA',
             numeric_default: '20',
             inr_default: '2000000'
@@ -78,8 +78,9 @@
             default: 'No'
         },
         education_degree: {
-            patterns: ['degree', 'highest education', 'educational qualification', 'bachelor'],
-            default: 'B.Tech Computer Science'
+            patterns: ['degree', 'highest education', 'educational qualification', 'bachelor', 'educational and professional', 'all educational and professional'],
+            default: 'B.Tech Computer Science',
+            yes_no_default: 'Yes'
         },
         education_university: {
             patterns: ['college name', 'university', 'graduation year'],
@@ -163,16 +164,17 @@
             return data.linkedin_default || '4';
         }
         
-        // For CTC/salary fields, check if we need numeric or text format
+        // For CTC/salary fields, on LinkedIn we should always return numeric inr value
         if (category === 'current_salary' || category === 'expected_salary') {
-            const lowerText = questionText.toLowerCase();
-            if (lowerText.includes('inr') || lowerText.includes('lpa') || lowerText.includes('lacs') || lowerText.includes('lakhs')) {
-                return data.inr_default || data.numeric_default || data.default;
-            }
-            return data.numeric_default || data.default;
+            return data.inr_default; // Always return full numeric value (1350000 or 2000000)
         }
         
-        // For dropdowns/selects, return the default (usually Yes/No)
+        // For education documents question, return Yes for dropdown
+        if (category === 'education_degree' && (fieldType === 'select' || fieldType === 'dropdown')) {
+            return 'Yes';
+        }
+        
+        // For other dropdowns/selects, return the default (usually Yes/No)
         if (fieldType === 'select' || fieldType === 'dropdown') {
             return data.default;
         }

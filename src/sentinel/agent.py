@@ -1729,6 +1729,13 @@ class SentinelAgent:
                         self.state.task_complete = True
                         break
                 
+                # Naukri: Partial success - applied some jobs but need more
+                if 'NAUKRI_SUCCESS_PARTIAL' in result:
+                    print(f"📜 {result}")
+                    print("🔄 Continuing to apply for more jobs...")
+                    await asyncio.sleep(random.uniform(2, 3))
+                    continue
+                
                 # LinkedIn: Success detected but need to navigate to next job
                 if 'LINKEDIN_SUCCESS_NEED_NAV' in result:
                     self.metrics['applications_submitted'] += 1
@@ -2046,7 +2053,10 @@ class SentinelAgent:
                 
                 # Naukri Profile Update - Resume Headline Toggle
                 # NOTE: Only run if NOT an Employment LWD task (same URL, different task)
-                if 'profile' in current_url and 'naukri.com' in current_url and 'Employment' not in self._task_description:
+                # NOTE: Skip if coming from a failed application attempt (error page)
+                if ('profile' in current_url and 'naukri.com' in current_url and 
+                    'Employment' not in self._task_description and 
+                    'myapply' not in current_url and 'saveApply' not in current_url):
                     print("📝 Naukri Profile Page - Running headline update...")
                     try:
                         update_result = await self._page.evaluate("""() => {
@@ -2512,6 +2522,15 @@ class SentinelAgent:
                             print("🎉 Naukri Application Completed!")
                             self.state.task_complete = True
                             break
+                        else:
+                            # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
+                            print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
+                            try:
+                                await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
+                                await asyncio.sleep(random.uniform(4, 6))
+                                continue
+                            except Exception as e:
+                                print(f"   ⚠️ Navigation error: {e}")
                 
                 # Naukri Chatbot handling (for direct APPLY_CLICKED)
                 if 'APPLY_CLICKED' in result and 'LINKEDIN' not in result and 'naukri.com' in current_url:
@@ -2589,6 +2608,15 @@ class SentinelAgent:
                         print("🎉 Naukri Application Completed!")
                         self.state.task_complete = True
                         break
+                    else:
+                        # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
+                        print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
+                        try:
+                            await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
+                            await asyncio.sleep(random.uniform(4, 6))
+                            continue
+                        except Exception as e:
+                            print(f"   ⚠️ Navigation error: {e}")
                 
                 # Naukri: Chatbot detected by scripted fallback - trigger chatbot loop
                 if result == 'CHATBOT_DETECTED' and 'naukri.com' in current_url:
@@ -2797,7 +2825,13 @@ class SentinelAgent:
                     // Try alternative selectors for Naukri questionnaire modals
                     chatLayer = document.querySelector('[class*="drawer"], [class*="modal"], [role="dialog"]');
                 }}
-                if (!chatLayer || chatLayer.offsetParent === null) {{
+                // Check if element is actually visible (not just in DOM)
+                const isVisible = (el) => {{
+                    if (!el) return false;
+                    const rect = el.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0 && rect.top >= 0;
+                }};
+                if (!chatLayer || !isVisible(chatLayer)) {{
                     // Chatbot not visible - check if already done
                     if (document.body.innerText.includes('applied')) {{
                         return 'CHATBOT_COMPLETE';
@@ -2819,36 +2853,68 @@ class SentinelAgent:
                 
                 // Try text input - GLOBAL SEARCH FIRST for Naukri's specific input
                 let input = document.querySelector('input[placeholder*="Type message"], input[placeholder*="type message"], input[placeholder*="message here"]');
-                if (!input || !input.offsetParent) {{
+                if (!input) {{
                     // Try chatLayer if available
                     if (chatLayer) {{
                         input = chatLayer.querySelector('input[type="text"], textarea, input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])');
                     }}
                 }}
-                if (!input || !input.offsetParent) {{
+                if (!input) {{
                     // Global fallback for any visible input
                     input = document.querySelector('[role="dialog"] input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), [class*="modal"] input:not([type="hidden"]), textarea');
                 }}
-                
-                if (input && input.offsetParent !== null) {{
-                    if (!input.value || input.value.trim() === '') {{
-                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                        if (setter) setter.call(input, answer);
-                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        
-                        // Click Save button - search for button with Save text first
-                        let saveBtn = Array.from(document.querySelectorAll('button, div[tabindex], [role="button"]')).find(el => 
-                            el.innerText.toLowerCase().trim() === 'save' && el.offsetParent !== null);
-                        if (!saveBtn) {{
-                            saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                if (!input) {{
+                    // Try finding input inside form within chatLayer
+                    if (chatLayer) {{
+                        const form = chatLayer.querySelector('form');
+                        if (form) {{
+                            input = form.querySelector('input[type="text"], input:not([type="hidden"]), textarea');
                         }}
-                        if (saveBtn && saveBtn.offsetParent !== null) {{
-                            saveBtn.click();
-                            return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
-                        }}
-                        return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
                     }}
+                }}
+                // Final fallback: any input element that's visible
+                if (!input) {{
+                    const allInputs = document.querySelectorAll('input[type="text"]:not([type="hidden"]), textarea');
+                    for (const inp of allInputs) {{
+                        const rect = inp.getBoundingClientRect();
+                        if (rect.width > 0 && rect.height > 0) {{
+                            input = inp;
+                            break;
+                        }}
+                    }}
+                }}
+                
+                if (input) {{
+                    // Always fill the input (overwrite any existing value)
+                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    if (setter) setter.call(input, answer);
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    
+                    // Click Save button - search for button with Save text first
+                    let saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
+                        el.innerText.toLowerCase().trim() === 'save');
+                    if (!saveBtn) {{
+                        saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                    }}
+                    // Handle dynamic ID for send button container (e.g., sendMsgbtn_container__xxxInputBox)
+                    if (!saveBtn) {{
+                        saveBtn = document.querySelector('[id^="sendMsgbtn_container"]');
+                    }}
+                    // Additional fallback: look for any button in the modal/dialog
+                    if (!saveBtn && chatLayer) {{
+                        saveBtn = chatLayer.querySelector('button');
+                    }}
+                    // Final fallback: any button with "save" in text
+                    if (!saveBtn) {{
+                        saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
+                            el.innerText.toLowerCase().includes('save'));
+                    }}
+                    if (saveBtn) {{
+                        saveBtn.click();
+                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
+                    }}
+                    return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
                 }}
                 
                 // Try dropdown (INDEPENDENT block - not nested inside input)
@@ -3005,6 +3071,7 @@ class SentinelAgent:
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {{
+                    // Override experience to 4 years for LinkedIn
                     const expKeys = [
                         'years of experience', 'total experience', 'overall experience', 'year of exp',
                         'experience', 'years', 'java experience', 'react experience', 'angular experience',
@@ -3014,6 +3081,32 @@ class SentinelAgent:
                     ];
                     expKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
+                    }});
+                    
+                    // Override salary/CTC to numeric values for LinkedIn text inputs
+                    const salaryKeys = [
+                        'salary range', 'current salary range', 'expected salary range', 
+                        'annual salary', 'ctc range', 'current ctc', 'expected ctc',
+                        'expected annual ctc in inr', 'expected annual ctc', 'expected ctc in inr', 'expected ctc inr'
+                    ];
+                    salaryKeys.forEach(k => {{
+                        if (KNOWN_PATTERNS[k]) {{
+                            // Use numeric values for LinkedIn text inputs
+                            if (k.includes('current')) {{
+                                KNOWN_PATTERNS[k] = '1350000';
+                            }} else {{
+                                KNOWN_PATTERNS[k] = '2000000';
+                            }}
+                        }}
+                    }});
+                    
+                    // Override notice period to numeric days for LinkedIn
+                    const noticeKeys = [
+                        'notice period', 'what is your notice period', 'what is your notice period?',
+                        'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice'
+                    ];
+                    noticeKeys.forEach(k => {{
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
                     }});
                 }}
 
@@ -4203,7 +4296,8 @@ class SentinelAgent:
                         // If no unchecked boxes in current section, navigate to next tab
                         if (uncheckedBoxes.length === 0) {{
                             // Navigate to next tab in order
-                            const tabOrder = ['profile', 'apply', 'preference', 'similar_jobs', 'top_candidate'];
+                            // Actual tab IDs from DOM: profile, top_candidate, similar_jobs, preference
+                            const tabOrder = ['profile', 'top_candidate', 'similar_jobs', 'preference'];
                             
                             // Find current active tab using CORRECT class: tab-list-active
                             const activeTab = document.querySelector('.tab-list-active');
@@ -4223,11 +4317,34 @@ class SentinelAgent:
                             const nextIdx = currentIdx + 1;
                             if (nextIdx < tabOrder.length) {{
                                 const nextTabId = tabOrder[nextIdx];
-                                const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
-                                               document.getElementById(nextTabId);
+                                
+                                // DEBUG: Log what we're looking for
+                                console.log('NAUKRI DEBUG: Looking for next tab:', nextTabId);
+                                console.log('NAUKRI DEBUG: Current tab:', currentTabId, 'index:', currentIdx);
+                                
+                                // Try multiple selectors to find the tab
+                                let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
+                                
+                                if (!nextTab) {{
+                                    // Fallback: try finding by data-tab attribute or other means
+                                    const allTabs = document.querySelectorAll('.tab-list-item');
+                                    for (const tab of allTabs) {{
+                                        const tabText = tab.innerText.toLowerCase();
+                                        if (tabText.includes(nextTabId.replace('_', ' ')) || 
+                                            tabText.includes(nextTabId.replace('_', ''))) {{
+                                            nextTab = tab;
+                                            console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                            break;
+                                        }}
+                                    }}
+                                }}
+                                
                                 if (nextTab) {{
+                                    console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
                                     nextTab.click();
                                     return 'NAUKRI_NAVIGATING_TO_TAB (0 jobs): ' + nextTabId + ' (from: ' + (currentTabId || 'unknown') + ')';
+                                }} else {{
+                                    console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
                                 }}
                             }}
                             return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
@@ -4330,8 +4447,8 @@ class SentinelAgent:
                         }}
                         
                         // No checkboxes in current section - navigate to next tab in order
-                        // Order: Profile → Applies → Preferences → You might like → Top Candidate
-                        const tabOrder = ['profile', 'apply', 'preference', 'similar_jobs', 'top_candidate'];
+                        // Actual tab IDs from DOM: profile, top_candidate, similar_jobs, preference
+                        const tabOrder = ['profile', 'top_candidate', 'similar_jobs', 'preference'];
                         
                         // Find current active tab using CORRECT class: tab-list-active
                         const activeTab = document.querySelector('.tab-list-active');
@@ -4350,11 +4467,34 @@ class SentinelAgent:
                         const nextIdx = currentIdx + 1;
                         if (nextIdx < tabOrder.length) {{
                             const nextTabId = tabOrder[nextIdx];
-                            const nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`) ||
-                                           document.getElementById(nextTabId);
+                            
+                            // DEBUG: Log what we're looking for
+                            console.log('NAUKRI DEBUG: Looking for next tab:', nextTabId);
+                            console.log('NAUKRI DEBUG: Current tab:', currentTabId, 'index:', currentIdx);
+                            
+                            // Try multiple selectors to find the tab
+                            let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
+                            
+                            if (!nextTab) {{
+                                // Fallback: try finding by data-tab attribute or other means
+                                const allTabs = document.querySelectorAll('.tab-list-item');
+                                for (const tab of allTabs) {{
+                                    const tabText = tab.innerText.toLowerCase();
+                                    if (tabText.includes(nextTabId.replace('_', ' ')) || 
+                                        tabText.includes(nextTabId.replace('_', ''))) {{
+                                        nextTab = tab;
+                                        console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                        break;
+                                    }}
+                                }}
+                            }}
+                            
                             if (nextTab) {{
+                                console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
                                 nextTab.click();
                                 return 'NAUKRI_NAVIGATING_TO_TAB: ' + nextTabId;
+                            }} else {{
+                                console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
                             }}
                         }}
                         

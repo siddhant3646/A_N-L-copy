@@ -1,7 +1,0 @@
-2026/01/15-09:10:21.489 296c Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_assessment.hackerearth.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/01/15-09:10:21.489 296c Recovering log #3
-2026/01/15-09:10:21.489 296c Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_assessment.hackerearth.com_0.indexeddb.leveldb/000003.log 
-2026/01/15-10:04:55.300 296e Level-0 table #5: started
-2026/01/15-10:04:55.302 296e Level-0 table #5: 9957 bytes OK
-2026/01/15-10:04:55.307 296e Delete type=0 #3
-2026/01/15-10:04:55.307 296e Manual compaction at level-0 from (begin) .. (end); will stop at (end)

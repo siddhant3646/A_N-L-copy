@@ -1,6 +1,0 @@
-2026/02/04-00:25:42.264 1bbccb Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_drive.google.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/02/04-00:25:42.264 1bbccb Recovering log #3
-2026/02/04-00:25:42.265 1bbccb Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_drive.google.com_0.indexeddb.leveldb/000003.log 
-2026/02/04-00:28:38.197 1bbcce Level-0 table #5: started
-2026/02/04-00:28:38.203 1bbcce Level-0 table #5: 4086878 bytes OK
-2026/02/04-00:28:38.206 1bbcce Delete type=0 #3

@@ -1,6 +1,0 @@
-2026/01/31-12:39:17.187 2edb Creating DB /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_openrouter.ai_0.indexeddb.leveldb since it was missing.
-2026/01/31-12:39:17.194 2edb Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_openrouter.ai_0.indexeddb.leveldb/MANIFEST-000001
-2026/01/31-12:41:42.471 2edb Level-0 table #5: started
-2026/01/31-12:41:42.473 2edb Level-0 table #5: 901 bytes OK
-2026/01/31-12:41:42.478 2edb Delete type=0 #3
-2026/01/31-12:41:42.479 2edb Manual compaction at level-0 from (begin) .. (end); will stop at (end)

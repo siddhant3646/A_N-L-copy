@@ -1,6 +1,0 @@
-2026/02/02-02:18:14.358 16dcd Creating DB /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_economictimes.indiatimes.com_0.indexeddb.leveldb since it was missing.
-2026/02/02-02:18:14.376 16dcd Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_economictimes.indiatimes.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/02/02-02:18:20.348 16dd1 Level-0 table #5: started
-2026/02/02-02:18:20.349 16dd1 Level-0 table #5: 358 bytes OK
-2026/02/02-02:18:20.353 16dd1 Delete type=0 #3
-2026/02/02-02:18:20.354 16dd1 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

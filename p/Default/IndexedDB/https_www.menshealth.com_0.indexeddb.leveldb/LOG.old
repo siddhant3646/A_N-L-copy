@@ -1,6 +1,0 @@
-2026/02/06-23:06:54.796 2389 Creating DB /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.menshealth.com_0.indexeddb.leveldb since it was missing.
-2026/02/06-23:06:54.808 2389 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.menshealth.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/02/06-23:08:03.056 238c Level-0 table #5: started
-2026/02/06-23:08:03.060 238c Level-0 table #5: 842 bytes OK
-2026/02/06-23:08:03.061 238c Delete type=0 #3
-2026/02/06-23:08:03.061 238c Manual compaction at level-0 from (begin) .. (end); will stop at (end)

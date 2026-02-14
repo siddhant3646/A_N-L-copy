@@ -1,7 +1,0 @@
-2026/02/04-22:42:31.140 2333 Reusing MANIFEST /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.kimi.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/02/04-22:42:31.140 2333 Recovering log #3
-2026/02/04-22:42:31.140 2333 Reusing old log /Users/siddhant/Library/Application Support/Google/Chrome/Default/IndexedDB/https_www.kimi.com_0.indexeddb.leveldb/000003.log 
-2026/02/05-00:16:21.374 2336 Level-0 table #5: started
-2026/02/05-00:16:21.382 2336 Level-0 table #5: 3206025 bytes OK
-2026/02/05-00:16:21.385 2336 Delete type=0 #3
-2026/02/05-00:16:21.386 2336 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

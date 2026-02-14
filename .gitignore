@@ -6,6 +6,7 @@ ENV/
 
 # Browser profiles and cache
 profiles/
+p/
 
 # Temporary sentinel data
 tmp_sentinel/

@@ -292,15 +292,34 @@
         return null;
     }
     
+    
     // Main automation logic
     function runLinkedInAutomation() {
         console.log('=== LINKEDIN AUTOMATION STARTED ===');
         
+        let modal;  // Declare once at function scope
+        
+        // First, check if there are visible autocomplete/dropdown options that need selection
+        // Search in ENTIRE document since LinkedIn renders dropdowns in portals
+        const allDropdownOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, [data-test-typeahead-item], .artdeco-typeahead__result, .jobs-typeahead__item, [class*="typeahead"]');
+        console.log('Checking for dropdown options globally - found:', allDropdownOptions.length);
+        
+        for (const option of allDropdownOptions) {
+            if (option.offsetParent !== null) {
+                const text = option.innerText.toLowerCase().trim();
+                if (text && !text.includes('select') && !text.includes('choose') && text.length > 2) {
+                    console.log('FOUND VISIBLE DROPDOWN OPTION - Selecting:', text);
+                    option.click();
+                    return 'LINKEDIN_DROPDOWN_SELECTED:' + text;
+                }
+            }
+        }
+        
         const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
         console.log('Current Job ID:', currentJobId);
         
-        // Step 1: Handle modals first
-        const modal = checkModals();
+        // Step 1: Handle modals (reuse modal variable)
+        modal = checkModals();
         if (modal) {
             console.log('Modal detected:', modal.type);
             
@@ -585,16 +604,35 @@
             }
         }
         
-        // Handle text inputs
+        // Handle text inputs (including autocomplete/combobox)
         const inputs = modal.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), textarea');
         
         for (const input of inputs) {
-            if (!input.value || input.value.trim() === '') {
-                const placeholder = (input.placeholder || '').toLowerCase();
-                const labelText = getLabelForInput(input);
-                const lowerLabelText = labelText.toLowerCase();
-                const combinedText = placeholder + ' ' + lowerLabelText;
+            const placeholder = (input.placeholder || '').toLowerCase();
+            const labelText = getLabelForInput(input);
+            const lowerLabelText = labelText.toLowerCase();
+            const combinedText = placeholder + ' ' + lowerLabelText;
+            const inputValue = input.value || '';
+            const isEmpty = !inputValue || inputValue.trim() === '';
+            
+            // Check if this is a location/city field that might need autocomplete selection
+            const isLocationField = lowerLabelText.includes('location') || lowerLabelText.includes('city') || 
+                                   placeholder.includes('location') || placeholder.includes('city');
+            
+            // Special handling for location fields: even if they have text, we need to check for dropdown
+            if (isLocationField && !isEmpty) {
+                console.log('Location field has text:', inputValue, '- checking if dropdown needs selection...');
                 
+                // Focus the field to trigger dropdown
+                input.focus();
+                input.dispatchEvent(new Event('focus', { bubbles: true }));
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+                
+                // Return to let the dropdown appear, next iteration will select from it
+                return 'LINKEDIN_LOCATION_TRIGGERED';
+            }
+            
+            if (isEmpty) {
                 console.log('Empty input found - Label:', JSON.stringify(labelText), '| Placeholder:', JSON.stringify(placeholder));
                 console.log('Input element:', input.tagName, input.type, input.className.substring(0, 50));
                 
@@ -622,13 +660,105 @@
                     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
                     nativeInputValueSetter.call(input, fillValue);
                     
-                    // Trigger events
+                    // Trigger events to open autocomplete if needed
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
-                    input.dispatchEvent(new Event('blur', { bubbles: true }));
+                    input.dispatchEvent(new Event('focus', { bubbles: true }));
+                    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
                     
                     filledAny = true;
                     console.log('Filled input successfully');
+                    
+                    // Check if this is a location/city field that might have autocomplete
+                    if (isLocationField) {
+                        console.log('Location field detected - waiting for autocomplete dropdown...');
+                        
+                        // Wait for dropdown to appear and select first option
+                        setTimeout(() => {
+                            // Look for dropdown options in the entire document (they might be in a portal)
+                            const allOptions = document.querySelectorAll('[role="option"], .artdeco-typeahead__result, .jobs-typeahead__item, .artdeco-dropdown__item, li[class*="typeahead"], [data-test-typeahead-item]');
+                            console.log('Found', allOptions.length, 'potential dropdown options in document');
+                            
+                            for (const option of allOptions) {
+                                if (option.offsetParent !== null) {
+                                    const text = option.innerText.trim();
+                                    console.log('Dropdown option text:', text);
+                                    // Click the first option that matches our filled value
+                                    if (text && text.toLowerCase().includes(fillValue.toLowerCase())) {
+                                        console.log('Clicking matching dropdown option:', text);
+                                        option.click();
+                                        return;
+                                    }
+                                }
+                            }
+                            
+                            // If no matching option found, click the first non-placeholder option
+                            for (const option of allOptions) {
+                                if (option.offsetParent !== null) {
+                                    const text = option.innerText.trim().toLowerCase();
+                                    if (text && !text.includes('select') && !text.includes('choose') && text.length > 2) {
+                                        console.log('Clicking first available dropdown option:', option.innerText.trim());
+                                        option.click();
+                                        return;
+                                    }
+                                }
+                            }
+                        }, 500); // Wait 500ms for dropdown to appear
+                        
+                        // Return and let the next iteration check if selection was successful
+                        return 'LINKEDIN_LOCATION_FIELD_FILLED';
+                    }
+                }
+            }
+        }
+        
+        // Check for autocomplete/typeahead dropdown options that appeared after filling inputs
+        // This handles location dropdowns and other autocomplete fields
+        // Note: LinkedIn may render dropdowns in a portal outside the modal, so we search the entire document
+        
+        // First check inside the modal
+        const typeaheadDropdown = modal.querySelector('[data-test-typeahead-results], .artdeco-typeahead__results-list, .jobs-typeahead__list');
+        if (typeaheadDropdown) {
+            const options = typeaheadDropdown.querySelectorAll('[role="option"], .artdeco-typeahead__result, .jobs-typeahead__item, li');
+            console.log('Found typeahead dropdown in modal with', options.length, 'options');
+            
+            for (const option of options) {
+                if (option.offsetParent !== null) {
+                    const text = option.innerText.trim();
+                    console.log('Typeahead option:', text);
+                    // Click the first non-empty option
+                    if (text && text.length > 0) {
+                        console.log('Clicking typeahead option:', text);
+                        option.click();
+                        filledAny = true;
+                        // Wait a moment for selection to register
+                        return 'LINKEDIN_AUTOCOMPLETE_SELECTED';
+                    }
+                }
+            }
+        }
+        
+        // Also check for general autocomplete dropdowns - search in entire document since they might be in a portal
+        let allOptions = modal.querySelectorAll('[role="option"], .artdeco-dropdown__item, [data-test-typeahead-item], .jobs-easy-apply-form-element__dropdown-option, .fb-dropdown__option');
+        console.log('Found', allOptions.length, 'dropdown options in modal');
+        
+        // If none found in modal, search entire document (dropdowns may be rendered in a portal)
+        if (allOptions.length === 0) {
+            allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, [data-test-typeahead-item], .jobs-easy-apply-form-element__dropdown-option, .fb-dropdown__option, .artdeco-typeahead__result, li[class*="typeahead"], [data-test-typeahead-results] [role="option"]');
+            console.log('Found', allOptions.length, 'dropdown options in entire document');
+        }
+        
+        if (allOptions.length > 0) {
+            for (const option of allOptions) {
+                if (option.offsetParent !== null) {
+                    const text = option.innerText.trim();
+                    console.log('Dropdown option text:', text);
+                    // Skip placeholder options
+                    if (text && !text.toLowerCase().includes('select') && !text.toLowerCase().includes('choose') && text.length > 2) {
+                        console.log('Selecting dropdown option:', text);
+                        option.click();
+                        return 'LINKEDIN_DROPDOWN_OPTION_SELECTED';
+                    }
                 }
             }
         }
@@ -692,6 +822,28 @@
         
         if (filledAny) {
             return 'LINKEDIN_FORM_FIELDS_FILLED';
+        }
+        
+        // CRITICAL: Check for visible dropdown options BEFORE clicking Next
+        // This prevents proceeding when a location or other autocomplete dropdown is open
+        const visibleOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, [data-test-typeahead-item], .artdeco-typeahead__result, .jobs-typeahead__item');
+        for (const option of visibleOptions) {
+            if (option.offsetParent !== null) {
+                const text = option.innerText.trim();
+                if (text && text.length > 2 && !text.toLowerCase().includes('select')) {
+                    console.log('WARNING: Dropdown option visible, NOT clicking Next:', text);
+                    return 'LINKEDIN_WAITING_FOR_DROPDOWN_SELECTION';
+                }
+            }
+        }
+        
+        // Also check for any open typeahead results containers
+        const typeaheadContainers = document.querySelectorAll('[data-test-typeahead-results], .artdeco-typeahead__results-list, .jobs-typeahead__list');
+        for (const container of typeaheadContainers) {
+            if (container.offsetParent !== null && container.children.length > 0) {
+                console.log('WARNING: Typeahead dropdown container is visible, NOT clicking Next');
+                return 'LINKEDIN_WAITING_FOR_TYPEAHEAD';
+            }
         }
         
         // Find next/submit button

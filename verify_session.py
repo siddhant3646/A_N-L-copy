@@ -1,9 +1,10 @@
 import asyncio
 import os
 import sys
+from pathlib import Path
 
 # Ensure project root is in path
-sys.path.append(os.getcwd())
+sys.path.insert(0, str(Path(__file__).parent))
 
 from src.sentinel.run import Browser
 from src.core.config import CHROME_USER_DATA, CHROME_EXECUTABLE_PATH

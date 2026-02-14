@@ -2034,6 +2034,10 @@ class SentinelAgent:
                                 except Exception as e:
                                     pass  # Silently handle parse errors
                             continue
+                        elif 'LINKEDIN_AUTOCOMPLETE_OPTION_SELECTED' in next_result:
+                            print("🎯 Selected autocomplete option")
+                            await asyncio.sleep(0.5)  # Brief pause for selection to register
+                            continue
                         elif 'LINKEDIN_CITY_TYPED' in next_result:
                             print("🏙️ Typed city, waiting for dropdown...")
                             await asyncio.sleep(1.5)  # Wait for dropdown to appear
@@ -3365,23 +3369,86 @@ class SentinelAgent:
                             return false;
                         }};
 
+                        // 0. FIRST: Check for visible autocomplete/typeahead dropdown options
+                        // LinkedIn renders these in portals outside the modal, so search entire document
+                        // This MUST run before anything else to select from already-open dropdowns
+                        {{
+                            const dropdownSelectors = '[role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable';
+                            const allDropdownOpts = document.querySelectorAll(dropdownSelectors);
+                            console.log('Pre-check: scanning for visible autocomplete options:', allDropdownOpts.length);
+                            
+                            for (const option of allDropdownOpts) {{
+                                if (option.offsetParent !== null) {{
+                                    const text = option.innerText.trim();
+                                    if (text && text.length > 2 && !text.toLowerCase().includes('select')) {{
+                                        console.log('CLICKING VISIBLE AUTOCOMPLETE OPTION:', text);
+                                        option.click();
+                                        return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{{question: 'autocomplete', answer: text, inputType: 'typeahead'}}]);
+                                    }}
+                                }}
+                            }}
+                        }}
+
                         // 1. Handle text/numeric inputs
                         const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
                         for (const input of textInputs) {{
-                            if (!isVisible(input) || isFieldPreFilled(input)) continue;
-                            
                             const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
                                             queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
                                             input.getAttribute('aria-label') || '';
+                            const lowerLabel = labelText.toLowerCase();
+                            const isLocationField = lowerLabel.includes('location') || lowerLabel.includes('city');
+                            
+                            // Special handling: Location fields that have text but show validation errors
+                            // LinkedIn requires selecting from autocomplete dropdown, not just text
+                            if (isLocationField && isFieldPreFilled(input) && isVisible(input)) {{
+                                // Check if there's a visible validation error on this field
+                                const parentContainer = input.closest('.fb-dash-form-element') || input.closest('.jobs-easy-apply-form-section__question') || input.parentElement?.parentElement;
+                                const hasError = parentContainer && (parentContainer.querySelector('.artdeco-inline-feedback--error') || parentContainer.querySelector('.fb-dash-form-element__error-field'));
+                                const globalError = queryDeep('.artdeco-inline-feedback--error', modal);
+                                
+                                if (hasError || globalError) {{
+                                    console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
+                                    const currentVal = input.value;
+                                    
+                                    // Clear and re-type to trigger autocomplete dropdown
+                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                    nativeSetter.call(input, '');
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    
+                                    // Small delay then re-fill
+                                    nativeSetter.call(input, currentVal);
+                                    input.focus();
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                    
+                                    return 'LINKEDIN_LOCATION_RETRIGGERED';
+                                }}
+                                continue;  // location pre-filled and no error — skip
+                            }}
+                            
+                            if (!isVisible(input) || isFieldPreFilled(input)) continue;
                             
                             if (labelText) {{
                                 const answer = fuzzyMatch(labelText);
                                 if (answer) {{
                                     console.log('Filling text field:', labelText, 'with:', answer);
-                                    input.value = answer;
+                                    
+                                    // Use native setter for React-controlled inputs
+                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                    nativeSetter.call(input, answer);
                                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});
+                                    
+                                    // If this is a location field, trigger autocomplete
+                                    if (isLocationField) {{
+                                        console.log('Location field filled — triggering autocomplete dropdown...');
+                                        input.focus();
+                                        input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                        return 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN';
+                                    }}
                                 }}
                             }}
                         }}
@@ -3548,6 +3615,23 @@ class SentinelAgent:
                                         bestRadio.click();
                                         bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                         formResults.push({{ question: legend, answer: answer, inputType: 'radio' }});
+                                    }}
+                                }}
+                            }}
+                        }}
+                        
+                        // 3.5 Check for any visible autocomplete dropdown options (post-fill catch)
+                        // This handles cases where filling a field triggered a dropdown that needs selection
+                        {{
+                            const dropdownSelectors = '[role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable, .artdeco-typeahead__results-list li';
+                            const postFillOptions = document.querySelectorAll(dropdownSelectors);
+                            for (const option of postFillOptions) {{
+                                if (option.offsetParent !== null) {{
+                                    const text = option.innerText.trim();
+                                    if (text && text.length > 2 && !text.toLowerCase().includes('select')) {{
+                                        console.log('Post-fill: clicking autocomplete option:', text);
+                                        option.click();
+                                        return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{{question: 'autocomplete', answer: text, inputType: 'typeahead'}}]);
                                     }}
                                 }}
                             }}

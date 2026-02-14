@@ -3,6 +3,11 @@ import random
 import sys
 import datetime
 import os
+from pathlib import Path
+
+# Add workspace root to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from playwright.async_api import async_playwright
 
 class Browser:

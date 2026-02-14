@@ -176,7 +176,8 @@ CATEGORY_PATTERNS = {
         "keywords": [
             "willing", "comfortable", "available", "ready", "interested",
             "agree", "accept", "confirm", "authorized", "eligible",
-            "open\s*to", "fine\s*with", "okay\s*with"
+            "open\s*to", "fine\s*with", "okay\s*with", "do you have", 
+            "have all", "educational and professional"
         ],
         "regex_patterns": [
             r"willing\s*to\s*relocate",
@@ -186,7 +187,9 @@ CATEGORY_PATTERNS = {
             r"interested\s*in",
             r"do\s*you\s*have",
             r"have\s*you\s*ever",
-            r"are\s*you"
+            r"are\s*you",
+            r"have\s*your\s*all\s*educational",
+            r"educational\s*and\s*professional"
         ],
         "input_type_hints": ["radio", "checkbox", "select"],
         "requires_numeric": False

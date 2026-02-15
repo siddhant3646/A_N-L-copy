@@ -189,15 +189,19 @@ KNOWN_QA_PATTERNS = {
     'will you now or in the future require sponsorship': 'No',
     'require visa sponsorship': 'No',
     'need sponsorship': 'No',
-    # Gender / Disability / Veteran (LinkedIn EEO questions — decline to answer)
-    'gender': 'Decline to self-identify',
-    'what is your gender': 'Decline to self-identify',
+    # Gender / Disability / Veteran (LinkedIn EEO questions)
+    'gender': 'Male',
+    'what is your gender': 'Male',
     'race': 'Decline to self-identify',
     'ethnicity': 'Decline to self-identify',
-    'disability': 'Decline to self-identify',
-    'disability status': 'Decline to self-identify',
-    'veteran': 'Decline to self-identify',
-    'veteran status': 'Decline to self-identify',
+    'disability': 'No, I don\'t have a disability',
+    'disability status': 'No, I don\'t have a disability',
+    'veteran': 'I am not a protected veteran',
+    'veteran status': 'I am not a protected veteran',
+    # Self-identification form fields
+    'your name': 'Siddhant Singh',
+    'today\'s date': '02/15/2026',
+    'todays date': '02/15/2026',
     'sexual orientation': 'Decline to self-identify',
     # Walk-in Interview - Always "No" since user is based in Noida
     'available for walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',

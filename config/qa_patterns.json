@@ -325,6 +325,46 @@
       ],
       "category": "yes_no",
       "default": "No"
+    },
+    "self_id_gender": {
+      "patterns": [
+        "gender",
+        "what is your gender"
+      ],
+      "category": "self_identification",
+      "default": "Male"
+    },
+    "self_id_veteran": {
+      "patterns": [
+        "veteran",
+        "veteran status"
+      ],
+      "category": "self_identification",
+      "default": "I am not a protected veteran"
+    },
+    "self_id_disability": {
+      "patterns": [
+        "disability",
+        "disability status"
+      ],
+      "category": "self_identification",
+      "default": "No, I don't have a disability"
+    },
+    "self_id_name": {
+      "patterns": [
+        "your name"
+      ],
+      "category": "self_identification",
+      "default": "Siddhant Singh"
+    },
+    "self_id_date": {
+      "patterns": [
+        "today's date",
+        "todays date"
+      ],
+      "category": "self_identification",
+      "default": "02/15/2026",
+      "format": "mm/dd/yyyy"
     }
   },
   "categories": {
@@ -370,6 +410,11 @@
     "preference": {
       "description": "Job preferences",
       "smart_fallback": true
+    },
+    "self_identification": {
+      "description": "Voluntary self-identification questions for EEO compliance",
+      "smart_fallback": false,
+      "requires_exact_match": true
     }
   },
   "learning": {

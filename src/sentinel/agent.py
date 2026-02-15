@@ -17,7 +17,8 @@ from src.sentinel.question_fingerprint import (
     create_fingerprint, create_fingerprint_hash,
     SuccessTracker, FingerprintMatcher,
     detect_expected_format, validate_answer,
-    are_questions_similar
+    are_questions_similar,
+    SYNONYM_MAP, STOP_WORDS
 )
 
 
@@ -50,10 +51,21 @@ KNOWN_QA_PATTERNS = {
     'what is your current salary?': '13.5 LPA',
     'expected salary': '20 LPA',
     'what is your expected salary?': '20 LPA',
-    'gross salary': '13.5 LPA',  # Default to current, will be overridden if "expected" is detected
+    'gross salary': '13.5 LPA',
     'gross current salary': '13.5 LPA',
     'gross expected salary': '20 LPA',
     'salary expectations': '20 LPA',
+    # Current/Expected Annual Salary — common LinkedIn phrasing
+    'current annual salary': '1350000',
+    'what is your current annual salary': '1350000',
+    'what is your current annual salary?': '1350000',
+    'expected annual salary': '2000000',
+    'what is your expected annual salary': '2000000',
+    'what is your expected annual salary?': '2000000',
+    'what is your expected annual salary ?': '2000000',
+    'current ctc': '1350000',
+    'what is your current ctc': '1350000',
+    'what is your current ctc?': '1350000',
     # Fixed CTC and Variable Pay - Numeric values
     'fixed ctc': '1350000',
     'fixed ctc numeric': '1350000',
@@ -67,7 +79,7 @@ KNOWN_QA_PATTERNS = {
     'expected ctc in inr': '2000000',
     'expected ctc inr': '2000000',
     # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
-    'salary range': '10-15 Lacs',  # For current salary
+    'salary range': '10-15 Lacs',
     'current salary range': '10-15 Lacs',
     'expected salary range': '15-20 Lacs',
     'annual salary': '10-15 Lacs',
@@ -79,24 +91,76 @@ KNOWN_QA_PATTERNS = {
     'current location': 'Noida',
     'current city': 'Noida',
     'preferred location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    # Company
+    # Role / Designation
+    'current role': 'SDE-2 Full Stack Developer',
+    'what is your current role': 'SDE-2 Full Stack Developer',
+    'current designation': 'SDE-2 Full Stack Developer',
+    'current position': 'SDE-2 Full Stack Developer',
+    'current job title': 'SDE-2 Full Stack Developer',
+    'job title': 'SDE-2 Full Stack Developer',
+    'designation': 'SDE-2 Full Stack Developer',
+    'role': 'SDE-2 Full Stack Developer',
+    'position': 'SDE-2 Full Stack Developer',
+    # Company / Organization
     'current employer': 'Fiserv',
     'current company': 'Fiserv',
+    'current company name': 'Fiserv',
+    'company name': 'Fiserv',
+    'current organization': 'Fiserv',
+    'current organization name': 'Fiserv',
+    'organization name': 'Fiserv',
+    'current organisation': 'Fiserv',
+    'current organisation name': 'Fiserv',
+    'organisation name': 'Fiserv',
+    'what is your current organization': 'Fiserv',
+    'what is your current organisation': 'Fiserv',
     'previous company': 'Fiserv',
     # Notice
     'notice period': 'Serving Notice Period',
     'what is your notice period': 'Serving Notice Period',
     'what is your notice period?': 'Serving Notice Period',
+    'what is your notice period ?': 'Serving Notice Period',
+    'notice period in days': '30',
+    'notice period days': '30',
     'serving notice': 'Serving Notice Period',
     'serving notice period': 'Serving Notice Period',
     'are you serving notice': 'Serving Notice Period',
+    'are you serving notice period': 'Yes',
+    'are you currently serving notice period': 'Yes',
+    'are you currently serving notice': 'Yes',
     'currently serving notice': 'Serving Notice Period',
+    'currently serving notice period': 'Yes',
     # Education
     'graduation year': '2022',
+    'year of graduation': '2022',
+    'passing year': '2022',
+    'year of passing': '2022',
+    'batch': '2022',
     'cgpa': '8.51',
     'percentage': '85',
     'degree': 'B.Tech Computer Science',
+    'highest qualification': 'B.Tech CSE',
+    'highest degree': 'B.Tech CSE',
+    'educational qualification': 'B.Tech CSE',
+    'qualification': 'B.Tech CSE',
+    'what is your highest qualification': 'B.Tech CSE',
+    'what is your educational qualification': 'B.Tech CSE',
+    'highest education': 'B.Tech CSE',
+    'education': 'B.Tech CSE',
+    'specialization': 'Computer Science and Engineering',
+    'stream': 'Computer Science and Engineering',
+    'branch': 'Computer Science and Engineering',
+    'field of study': 'Computer Science and Engineering',
+    'course': 'B.Tech',
+    'additional months': '0',
+    'additional years': '0',
+    'additional months of experience': '0',
+    'additional years of experience': '0',
     'college name': 'VIT Bhopal University',
+    'university': 'VIT Bhopal University',
+    'university name': 'VIT Bhopal University',
+    'institute': 'VIT Bhopal University',
+    'institute name': 'VIT Bhopal University',
     # Links
     'linkedin url': 'https://www.linkedin.com/in/siddhant3646',
     'github url': 'https://github.com/siddhant3646',
@@ -104,6 +168,11 @@ KNOWN_QA_PATTERNS = {
     'willing to relocate': 'Yes',
     'work authorization': 'Yes',
     'legally authorized': 'Yes',
+    'authorized to work': 'Yes',
+    'are you legally authorized to work in india': 'Yes',
+    'are you legally authorized to work': 'Yes',
+    'do you have the right to work': 'Yes',
+    'eligible to work in india': 'Yes',
     'background check': 'Yes',
     'drug test': 'Yes',
     'remote work': 'Yes',
@@ -117,6 +186,19 @@ KNOWN_QA_PATTERNS = {
     'java developer': 'Yes',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
+    'will you now or in the future require sponsorship': 'No',
+    'require visa sponsorship': 'No',
+    'need sponsorship': 'No',
+    # Gender / Disability / Veteran (LinkedIn EEO questions — decline to answer)
+    'gender': 'Decline to self-identify',
+    'what is your gender': 'Decline to self-identify',
+    'race': 'Decline to self-identify',
+    'ethnicity': 'Decline to self-identify',
+    'disability': 'Decline to self-identify',
+    'disability status': 'Decline to self-identify',
+    'veteran': 'Decline to self-identify',
+    'veteran status': 'Decline to self-identify',
+    'sexual orientation': 'Decline to self-identify',
     # Walk-in Interview - Always "No" since user is based in Noida
     'available for walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
     'walk in on': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
@@ -1770,6 +1852,52 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(4, 6))
                     continue
                 
+                # LinkedIn: Location autocomplete dropdown needs to be clicked
+                if result in ('LINKEDIN_LOCATION_RETRIGGERED', 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN'):
+                    retrigger_count = getattr(self, '_location_retrigger_count', 0) + 1
+                    self._location_retrigger_count = retrigger_count
+                    
+                    if retrigger_count > 3:
+                        print(f"⚠️ Location autocomplete failed after {retrigger_count} attempts, forcing Next...")
+                        self._location_retrigger_count = 0
+                        try:
+                            await self._page.locator('.artdeco-modal--is-open button:has-text("Next"), .jobs-easy-apply-modal button:has-text("Next")').first.click(timeout=2000)
+                        except Exception:
+                            pass
+                        continue
+                    
+                    print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/3)...")
+                    try:
+                        # Use Playwright locators for robust, shadow-aware selection with auto-waiting
+                        selectors = [
+                            '[role="option"]',
+                            '.artdeco-typeahead__result',
+                            '.basic-typeahead__selectable',
+                            'li[class*="typeahead"]',
+                            '[data-test-typeahead-item]'
+                        ]
+                        
+                        clicked = False
+                        for selector in selectors:
+                            locator = self._page.locator(selector).first
+                            if await locator.is_visible(timeout=2000):
+                                text = await locator.inner_text()
+                                print(f"   ✅ Found and clicking: {text.strip()}")
+                                await locator.click()
+                                clicked = True
+                                break
+                        
+                        if clicked:
+                            self._location_retrigger_count = 0
+                            await asyncio.sleep(1)
+                        else:
+                            print("   ⏳ Dropdown option not found/visible, will retry...")
+                            await asyncio.sleep(1)
+                    except Exception as e:
+                        print(f"   ⚠️ Error during selection: {e}")
+                        await asyncio.sleep(1)
+                    continue
+                
                 # LinkedIn: First job opened (when no currentJobId in URL)
                 if 'LINKEDIN_FIRST_JOB' in result:
                     print(f"✅ {result}")
@@ -3062,8 +3190,10 @@ class SentinelAgent:
 
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
-        # Serialize patterns for JS injection
+        # Serialize patterns, synonyms, and stop words for JS injection
         patterns_json = json.dumps(KNOWN_QA_PATTERNS)
+        synonyms_json = json.dumps(SYNONYM_MAP)
+        stopwords_json = json.dumps(list(STOP_WORDS))
         
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
@@ -3072,6 +3202,8 @@ class SentinelAgent:
             js_code = f"""(function() {{
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = {patterns_json};
+                const SYNONYMS = {synonyms_json};
+                const STOP_WORDS_SET = new Set({stopwords_json});
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {{
@@ -3091,12 +3223,18 @@ class SentinelAgent:
                     const salaryKeys = [
                         'salary range', 'current salary range', 'expected salary range', 
                         'annual salary', 'ctc range', 'current ctc', 'expected ctc',
-                        'expected annual ctc in inr', 'expected annual ctc', 'expected ctc in inr', 'expected ctc inr'
+                        'expected annual ctc in inr', 'expected annual ctc', 'expected ctc in inr', 'expected ctc inr',
+                        'current salary', 'expected salary', 'current annual salary',
+                        'what is your current annual salary', 'what is your current annual salary?',
+                        'expected annual salary', 'what is your expected annual salary', 'what is your expected annual salary?',
+                        'what is your current salary?', 'what is your expected salary?',
+                        'what is your current ctc', 'what is your current ctc?',
+                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations'
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
                             // Use numeric values for LinkedIn text inputs
-                            if (k.includes('current')) {{
+                            if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
                                 KNOWN_PATTERNS[k] = '1350000';
                             }} else {{
                                 KNOWN_PATTERNS[k] = '2000000';
@@ -3107,6 +3245,7 @@ class SentinelAgent:
                     // Override notice period to numeric days for LinkedIn
                     const noticeKeys = [
                         'notice period', 'what is your notice period', 'what is your notice period?',
+                        'what is your notice period ?', 'notice period in days', 'notice period days',
                         'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice'
                     ];
                     noticeKeys.forEach(k => {{
@@ -3121,7 +3260,21 @@ class SentinelAgent:
                 // const sleep = (ms) => new Promise(r => setTimeout(r, ms));  // REMOVED - causes SyntaxError
                 const isVisible = (elem) => !!(elem && (elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length));
 
-                // Fuzzy Matcher implementation
+                // Keyword extraction: normalize synonyms, strip stop words
+                const extractKeywords = (text) => {{
+                    const words = text.replace(/[^\w\s]/g, ' ').toLowerCase().split(/\s+/);
+                    const normalized = words.map(w => SYNONYMS[w] || w);
+                    return new Set(normalized.filter(w => !STOP_WORDS_SET.has(w) && w.length > 1));
+                }};
+                
+                // Set intersection helper
+                const setIntersect = (a, b) => {{
+                    const result = new Set();
+                    for (const item of a) {{ if (b.has(item)) result.add(item); }}
+                    return result;
+                }};
+
+                // Two-pass Fuzzy Matcher implementation
                 const fuzzyMatch = (question) => {{
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
@@ -3131,22 +3284,46 @@ class SentinelAgent:
                     // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
                     
+                    // --- PASS 1: Exact / Substring match (fast path) ---
                     for (const [key, val] of sortedPatterns) {{
                         const keyLower = key.toLowerCase();
-                        // Check for exact match first
-                        if (qLower === keyLower) {{
-                            return val;
-                        }}
-                        // Check if question includes the key
+                        if (qLower === keyLower) return val;
                         if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
-                            // Skip generic 'years' pattern if question contains salary/ctc/pay keywords
-                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
-                                continue;
-                            }}
+                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             bestMatch = val;
                             bestKeyLen = key.length;
                         }}
                     }}
+                    
+                    // --- PASS 2: Keyword overlap (fallback if Pass 1 found nothing) ---
+                    if (!bestMatch) {{
+                        const qKeywords = extractKeywords(qLower);
+                        if (qKeywords.size > 0) {{
+                            let bestScore = 0;
+                            for (const [key, val] of sortedPatterns) {{
+                                const kKeywords = extractKeywords(key);
+                                if (kKeywords.size === 0) continue;
+                                const overlap = setIntersect(qKeywords, kKeywords);
+                                const score = overlap.size / Math.max(qKeywords.size, kKeywords.size);
+                                if (score > bestScore && score >= 0.5) {{
+                                    bestScore = score;
+                                    bestMatch = val;
+                                }}
+                            }}
+                        }}
+                    }}
+                    
+                    // --- PASS 3: Smart salary/experience/notice disambiguation (safety net) ---
+                    if (bestMatch) {{
+                        const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
+                        const isExpQ = /experience|years|year|months|exp\.?\b/.test(qLower) && !isSalaryQ;
+                        const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
+                        
+                        if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
+                            bestMatch = qLower.includes('current') ? '1350000' : '2000000';
+                        }}
+                    }}
+                    
                     return bestMatch;
                 }};               
                 
@@ -3411,13 +3588,18 @@ class SentinelAgent:
                                     const currentVal = input.value;
                                     
                                     // Clear and re-type to trigger autocomplete dropdown
-                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                                    nativeSetter.call(input, '');
-                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    
-                                    // Small delay then re-fill
-                                    nativeSetter.call(input, currentVal);
+                                    try {{
+                                        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                        nativeSetter.call(input, '');
+                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        nativeSetter.call(input, currentVal);
+                                    }} catch(e) {{
+                                        input.value = '';
+                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        input.value = currentVal;
+                                    }}
                                     input.focus();
                                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('change', {{ bubbles: true }}));
@@ -3435,9 +3617,14 @@ class SentinelAgent:
                                 if (answer) {{
                                     console.log('Filling text field:', labelText, 'with:', answer);
                                     
-                                    // Use native setter for React-controlled inputs
-                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                                    nativeSetter.call(input, answer);
+                                    // Try native setter for React-controlled inputs, fallback to direct assignment
+                                    try {{
+                                        const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                        const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+                                        nativeSetter.call(input, answer);
+                                    }} catch(e) {{
+                                        input.value = answer;
+                                    }}
                                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});

@@ -176,8 +176,9 @@ CATEGORY_PATTERNS = {
         "keywords": [
             "willing", "comfortable", "available", "ready", "interested",
             "agree", "accept", "confirm", "authorized", "eligible",
-            "open\s*to", "fine\s*with", "okay\s*with", "do you have", 
-            "have all", "educational and professional"
+            "open\\s*to", "fine\\s*with", "okay\\s*with", "do you have", 
+            "have all", "educational and professional", "lawfully authorized",
+            "consent", "collect", "process", "data", "1825 days"
         ],
         "regex_patterns": [
             r"willing\s*to\s*relocate",

@@ -122,6 +122,11 @@ KNOWN_QA_PATTERNS = {
     'what is your notice period ?': 'Serving Notice Period',
     'notice period in days': '30',
     'notice period days': '30',
+    'notice period for your current company in days': '30',
+    'notice period for your current company': '30',
+    'current company notice period': '30',
+    'notice period of your current company': '30',
+    'what is the notice period for your current company': '30',
     'serving notice': 'Serving Notice Period',
     'serving notice period': 'Serving Notice Period',
     'are you serving notice': 'Serving Notice Period',
@@ -169,12 +174,33 @@ KNOWN_QA_PATTERNS = {
     'work authorization': 'Yes',
     'legally authorized': 'Yes',
     'authorized to work': 'Yes',
+    'authorized to lawfully work': 'Yes',
+    'authorized to lawfully work for': 'Yes',
+    'lawfully authorized to work': 'Yes',
+    'authorized to work in': 'Yes',
     'are you legally authorized to work in india': 'Yes',
     'are you legally authorized to work': 'Yes',
+    'are you authorized to lawfully work': 'Yes',
     'do you have the right to work': 'Yes',
     'eligible to work in india': 'Yes',
     'background check': 'Yes',
     'drug test': 'Yes',
+    # Consent / Data Collection Questions (Greenhouse, SmartBear, etc.)
+    'consent to collect': 'Yes',
+    'consent to collect store and process': 'Yes',
+    'collect store and process': 'Yes',
+    'data consent': 'Yes',
+    'consent to process data': 'Yes',
+    'employment consent': 'Yes',
+    '1825 days': 'Yes',
+    '1825 days thereafter': 'Yes',
+    'smartbear has my consent': 'Yes',
+    'greenhouse consent': 'Yes',
+    'data collection consent': 'Yes',
+    'process my data': 'Yes',
+    'store and process': 'Yes',
+    'considering me for employment': 'Yes',
+    'employment consideration': 'Yes',
     'remote work': 'Yes',
     'hybrid work': 'Yes',
     'work from office': 'Yes',
@@ -449,6 +475,19 @@ KNOWN_QA_PATTERNS = {
     'online portfolio': 'https://siddhant3646.github.io/Portfolio/',
     'portfolio link': 'https://siddhant3646.github.io/Portfolio/',
     'online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
+    'website': 'https://siddhant3646.github.io/Portfolio/',
+    'personal website': 'https://siddhant3646.github.io/Portfolio/',
+    'website url': 'https://siddhant3646.github.io/Portfolio/',
+    # How did you hear about us - LinkedIn Easy Apply
+    'how did you hear about us': 'LinkedIn Ad (India)',
+    'how did you hear about this job': 'LinkedIn Ad (India)',
+    'how did you learn about us': 'LinkedIn Ad (India)',
+    'source': 'LinkedIn Ad (India)',
+    'referral source': 'LinkedIn Ad (India)',
+    'where did you hear': 'LinkedIn Ad (India)',
+    'how did you find us': 'LinkedIn Ad (India)',
+    'how did you come across': 'LinkedIn Ad (India)',
+    'heard about': 'LinkedIn Ad (India)',
     # Angular + Microservices Experience
     'exp in angular and microservices': '3.8 years experience in both Angular and Microservices architecture',
     'exp. in angular': '3.8 years',
@@ -785,6 +824,10 @@ class SentinelAgent:
         # Country/State questions
         country_keywords = ['country you currently', 'which country', 'country currently', 'state you', 'which state']
         is_country_question = any(kw in question_lower for kw in country_keywords)
+        
+        # Notice period for current company in days - HIGH PRIORITY to avoid matching company name
+        if 'notice period' in question_lower and 'company' in question_lower and ('days' in question_lower or 'in days' in question_lower):
+            return '30', 0.99
         
         # Handle high-priority question types FIRST
         

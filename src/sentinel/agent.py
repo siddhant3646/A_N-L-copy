@@ -135,6 +135,19 @@ KNOWN_QA_PATTERNS = {
     'are you currently serving notice': 'Yes',
     'currently serving notice': 'Serving Notice Period',
     'currently serving notice period': 'Yes',
+    # LinkedIn specific - "Are You Currently Serving/Served Notice Period?" dropdown
+    'are you currently serving/served notice period': 'Yes',
+    'currently serving/served notice period': 'Yes',
+    'serving/served notice period': 'Yes',
+    'are you currently serving or served notice': 'Yes',
+    'currently serving or served notice': 'Yes',
+    # LinkedIn specific - "Manager wants someone who can join Immediately or within 15-30 days"
+    'manager wants someone who can join immediately or within 15-30 days': 'Yes',
+    'join immediately or within 15-30 days': 'Yes',
+    'can you join immediately or within 15-30 days': 'Yes',
+    'join within 15-30 days': 'Yes',
+    'can join within 15-30 days': 'Yes',
+    'immediately or within 15-30 days': 'Yes',
     # Education
     'graduation year': '2022',
     'year of graduation': '2022',

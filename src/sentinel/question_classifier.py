@@ -178,7 +178,25 @@ CATEGORY_PATTERNS = {
             "agree", "accept", "confirm", "authorized", "eligible",
             "open\\s*to", "fine\\s*with", "okay\\s*with", "do you have", 
             "have all", "educational and professional", "lawfully authorized",
-            "consent", "collect", "process", "data", "1825 days"
+            "consent", "collect", "process", "data", "1825 days",
+            "ai apis", "openai", "anthropic", "ci/cd", "cicd", "cloud servers",
+            "database architecture", "leading architecture"
+        ],
+        "regex_patterns": [
+            r"willing\s*to\s*relocate",
+            r"available\s*for",
+            r"comfortable\s*with",
+            r"ready\s*to",
+            r"interested\s*in",
+            r"do\s*you\s*have",
+            r"have\s*you\s*ever",
+            r"are\s*you",
+            r"have\s*your\s*all\seducational",
+            r"educational\s*and\s*professional",
+            r"integrated\s*any\s*ai",
+            r"deployed\s*applications\s*to\s*cloud",
+            r"designed\s*database\s*architecture",
+            r"worked\s*with\s*ci/cd"
         ],
         "regex_patterns": [
             r"willing\s*to\s*relocate",

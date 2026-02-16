@@ -98,7 +98,7 @@ DETAILS TO USE:
 """
 
 LINKEDIN_JOB_APPLY_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.linkedin.com/jobs/search-results/?f_AL=true&f_TPR=r18000&keywords=%22hiring%22%20AND%20(%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22)%20AND%20India&f_CS=H,I,J immediately.
+NAVIGATE to https://www.linkedin.com/jobs/search-results/?f_AL=true&f_TPR=r18000&keywords=%22hiring%22%20AND%20(%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22)%20AND%20India&f_CS=F,G,H,I,J immediately.
 
 GOAL: Click 'Easy Apply' and submit applications.
 

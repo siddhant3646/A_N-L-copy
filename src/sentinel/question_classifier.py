@@ -583,6 +583,65 @@ class QuestionClassifier:
             return CATEGORY_DEFAULTS[QuestionCategory.PREFERENCE]["domain"]
         return ""
     
+    def get_option_aware_answer(
+        self,
+        question: str,
+        options: List[str],
+        category: Optional[QuestionCategory] = None
+    ) -> Tuple[str, float, str]:
+        """
+        Get an answer that matches available options.
+        
+        Args:
+            question: The question text
+            options: List of available options for select/radio
+            category: Optional pre-determined category
+            
+        Returns:
+            Tuple of (matched_option, confidence, match_type)
+        """
+        from src.patterns.input_aware_resolver import InputAwareResolver, Option, InputType as ResolverInputType
+        
+        base_answer, base_confidence = self.get_answer(question, category)
+        
+        if not options:
+            return base_answer, base_confidence, 'text'
+        
+        opt_objects = [Option(value=o, label=o, index=i) for i, o in enumerate(options)]
+        
+        resolver = InputAwareResolver()
+        result = resolver.resolve(
+            answer=base_answer,
+            input_type=ResolverInputType.SELECT,
+            options=opt_objects,
+            question=question
+        )
+        
+        if result.matched_option:
+            return result.matched_option.label, result.confidence, result.match_type
+        
+        import re
+        for opt in options:
+            answer_nums = re.findall(r'\d+\.?\d*', base_answer)
+            opt_nums = re.findall(r'\d+\.?\d*', opt)
+            
+            if answer_nums and opt_nums:
+                if '-' in opt:
+                    parts = opt.split('-')
+                    try:
+                        low_match = re.search(r'\d+\.?\d*', parts[0])
+                        high_match = re.search(r'\d+\.?\d*', parts[1])
+                        if low_match and high_match:
+                            low = float(low_match.group())
+                            high = float(high_match.group())
+                            val = float(answer_nums[0])
+                            if low <= val <= high:
+                                return opt, 0.9, 'numeric_range'
+                    except:
+                        pass
+        
+        return base_answer, base_confidence * 0.5, 'fallback'
+    
     def detect_input_type(self, element_info: Dict[str, Any]) -> InputType:
         """
         Detect input type from element attributes.

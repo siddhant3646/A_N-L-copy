@@ -2,6 +2,7 @@ import asyncio
 import json
 import random
 import os
+import hashlib
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from typing import Optional, Dict, List, Tuple, Any
@@ -20,6 +21,11 @@ from src.sentinel.question_fingerprint import (
     are_questions_similar,
     SYNONYM_MAP, STOP_WORDS
 )
+from src.patterns.input_aware_resolver import (
+    InputAwareResolver, InputType as ResolverInputType, Option, MatchResult
+)
+from src.sentinel.self_healing import SelfHealingMatcher
+from src.patterns.pattern_learner import PatternLearner
 
 
 # Known question patterns and their answers for fuzzy matching
@@ -1520,8 +1526,29 @@ class SentinelAgent:
         self._fingerprint_matcher.build_from_patterns(KNOWN_QA_PATTERNS)
         self._success_tracker = SuccessTracker()
         
+        # NEW: Input-aware resolver and self-healing components
+        self._input_resolver = InputAwareResolver()
+        self._self_healing = SelfHealingMatcher()
+        self._pattern_learner = PatternLearner()
+        self._error_detector = None  # Initialized when page is available
+        self._error_recovery = None
+        
         # Ensure screenshot directory exists
         os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
+    
+    def _init_error_detection(self):
+        """Initialize error detection components when page is available."""
+        if self._page:
+            from src.sentinel.ui_error_detector import UIErrorDetector, UIErrorRecovery
+            self._error_detector = UIErrorDetector(
+                page=self._page,
+                screenshot_dir=self.SCREENSHOT_DIR
+            )
+            self._error_recovery = UIErrorRecovery(
+                detector=self._error_detector,
+                self_healing_matcher=self._self_healing,
+                input_resolver=self._input_resolver
+            )
 
     def _detect_platform(self) -> str:
         """Detect current platform from URL or context."""
@@ -1615,6 +1642,15 @@ class SentinelAgent:
                 else:
                     print(f"   🔍 Fingerprint match (conf: {confidence:.2f}): {answer[:50]}...")
                     return answer, confidence
+        
+        # ==========================================
+        # PHASE 0.6: Learned Pattern Matching
+        # Check self-healing and pattern learner
+        # ==========================================
+        learned = self._get_learned_answer(question)
+        if learned and learned[1] >= 0.5:
+            print(f"   📚 Learned pattern match (conf: {learned[1]:.2f}): {learned[0][:50]}...")
+            return learned
         
         # ==========================================
         # PHASE 1: Keyword-based Priority Matching
@@ -2019,6 +2055,106 @@ class SentinelAgent:
         except Exception as e:
             print(f"   ⚠️ Error in validation retry: {e}")
             return answer, 0.6
+
+    def _match_answer_to_options(
+        self,
+        answer: str,
+        options: List[str],
+        question: str = ""
+    ) -> Tuple[str, float]:
+        """
+        Match an answer to available options using the input-aware resolver.
+        
+        Args:
+            answer: The intended answer value
+            options: List of available options for select/radio
+            question: Question text for context
+            
+        Returns:
+            Tuple of (matched_option, confidence)
+        """
+        if not options:
+            return answer, 0.5
+        
+        opt_objects = [Option(value=o, label=o, index=i) for i, o in enumerate(options)]
+        
+        result = self._input_resolver.resolve(
+            answer=answer,
+            input_type=ResolverInputType.SELECT,
+            options=opt_objects,
+            question=question
+        )
+        
+        if result.matched_option:
+            return result.matched_option.label, result.confidence
+        
+        return answer, 0.3
+    
+    def _get_learned_answer(self, question: str) -> Optional[Tuple[str, float]]:
+        """
+        Get a learned answer for a question.
+        
+        Checks both self-healing patterns and pattern learner.
+        
+        Returns:
+            Tuple of (answer, confidence) or None
+        """
+        # Check self-healing learned patterns first
+        healed = self._self_healing.get_learned_answer(question)
+        if healed and healed[1] >= 0.5:
+            return healed
+        
+        # Check pattern learner
+        learned = self._pattern_learner.find_answer(question)
+        if learned and learned[1] >= 0.5:
+            return learned
+        
+        return None
+    
+    async def _attempt_form_recovery(self) -> bool:
+        """
+        Attempt to recover from form errors using self-healing.
+        Called AFTER existing JS error detection has found issues.
+        
+        Returns:
+            True if recovery was successful
+        """
+        if not self._error_detector:
+            self._init_error_detection()
+        
+        if not self._error_detector:
+            return False
+        
+        # Detect current errors using Python layer
+        errors = await self._error_detector.detect_errors()
+        
+        if not errors:
+            return False
+        
+        for error in errors:
+            # Try learned patterns for this field
+            if error.field_label:
+                learned = self._get_learned_answer(error.field_label)
+                if learned and learned[1] >= 0.5:
+                    print(f"   🔧 Using learned answer for '{error.field_label[:30]}...': {learned[0]}")
+                    # Record success pattern
+                    pattern = self._self_healing.learning_store.find_pattern_for_question(error.field_label)
+                    if pattern:
+                        self._self_healing.learning_store.record_success(pattern.pattern_id)
+                    return True
+            
+            # Try option matching if options available
+            if error.available_options and error.field_value:
+                matched, confidence = self._match_answer_to_options(
+                    error.field_value,
+                    error.available_options,
+                    error.field_label or ""
+                )
+                if confidence >= 0.7:
+                    print(f"   🔧 Option matched: '{matched}' (conf: {confidence:.0%})")
+                    return True
+        
+        return False
 
     def _log_unknown_question(self, question: str, context: str = "", 
                                input_type: str = "", options: List[str] = None, 
@@ -4806,6 +4942,30 @@ class SentinelAgent:
                                         formResults.push({{ question: labelText, answer: bestOpt.text, inputType: 'select' }});
                                     }}
                                 }}
+                                
+                                // AGGRESSIVE FALLBACK 3: If select still not filled and has Yes/No options, default to Yes
+                                if (!isFieldPreFilled(select)) {{
+                                    const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
+                                    const hasYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
+                                                     options.some(o => o.text.toLowerCase().includes('no'));
+                                    
+                                    if (hasYesNo) {{
+                                        const yesOption = options.find(o => o.text.toLowerCase().includes('yes'));
+                                        if (yesOption) {{
+                                            console.log('AGGRESSIVE FALLBACK: Defaulting to Yes for unfilled select:', labelText);
+                                            select.value = yesOption.value;
+                                            if (select.value !== yesOption.value) {{
+                                                select.selectedIndex = yesOption.index;
+                                            }}
+                                            
+                                            select.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            select.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                            
+                                            formResults.push({{ question: labelText, answer: yesOption.text, inputType: 'select-aggressive' }});
+                                        }}
+                                    }}
+                                }}
                             }}
                         }}
                         
@@ -4906,6 +5066,40 @@ class SentinelAgent:
                                     
                                     return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN';
                                 }}
+                            }}
+                            
+                            // AGGRESSIVE FALLBACK: For unfilled custom dropdowns with Yes/No options
+                            const currentText = dropdown.innerText || dropdown.textContent || '';
+                            const stillUnselected = currentText.toLowerCase().includes('select an option') || 
+                                                   currentText.toLowerCase().includes('select');
+                            
+                            if (stillUnselected && labelText) {{
+                                console.log('AGGRESSIVE FALLBACK: Checking custom dropdown for Yes/No:', labelText);
+                                dropdown.click();
+                                
+                                setTimeout(() => {{
+                                    const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, li');
+                                    let hasYes = false;
+                                    let hasNo = false;
+                                    let yesOption = null;
+                                    
+                                    for (const option of allOptions) {{
+                                        const text = option.innerText.trim().toLowerCase();
+                                        if (text === 'yes' || text.includes('yes')) {{
+                                            hasYes = true;
+                                            yesOption = option;
+                                        }}
+                                        if (text === 'no' || text.includes('no')) hasNo = true;
+                                    }}
+                                    
+                                    if (hasYes && hasNo && yesOption) {{
+                                        console.log('AGGRESSIVE FALLBACK: Selecting Yes for custom dropdown:', labelText);
+                                        yesOption.click();
+                                        formResults.push({{ question: labelText, answer: 'Yes', inputType: 'custom-dropdown-aggressive' }});
+                                    }}
+                                }}, 150);
+                                
+                                return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN_AGGRESSIVE';
                             }}
                         }}
 

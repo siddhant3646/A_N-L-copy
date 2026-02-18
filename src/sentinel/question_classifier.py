@@ -492,14 +492,14 @@ class QuestionClassifier:
             "number" in question
         )
         
-        # For LinkedIn, we need to return full numeric value (1350000 or 2000000) instead of lakhs
+        # For LinkedIn, return plain numbers (13.5 or 20) without LPA suffix
         if self.platform == "linkedin":
             if "current" in question or "cctc" in question:
-                return "1350000"  # 13.5 LPA as numeric
+                return "13.5"
             elif "expected" in question or "ectc" in question:
-                return "2000000"  # 20 LPA as numeric
+                return "20"
             else:
-                return "2000000"
+                return "20"
         else:
             if "current" in question or "cctc" in question:
                 return "13.5" if is_numeric else "13.5 LPA"

@@ -129,6 +129,10 @@
         referral: {
             patterns: ['referred for this position', 'referred by', 'employee referral', 'encouraged to apply'],
             default: 'No'
+        },
+        privacy_consent: {
+            patterns: ['i consent', 'privacy notice', 'declare that you have read', 'agree to the privacy', 'read and agree', 'privacy policy agreement', 'consent to'],
+            default: 'Yes'
         }
     };
     
@@ -164,9 +168,9 @@
             return data.linkedin_default || '4';
         }
         
-        // For CTC/salary fields, on LinkedIn we should always return numeric inr value
+        // For CTC/salary fields, on LinkedIn we should always return plain numeric value (13.5 or 20)
         if (category === 'current_salary' || category === 'expected_salary') {
-            return data.inr_default; // Always return full numeric value (1350000 or 2000000)
+            return data.numeric_default; // Return plain numbers: 13.5 or 20
         }
         
         // For education documents question, return Yes for dropdown
@@ -539,12 +543,44 @@
                 console.log('Filling dropdown - Label detected:', JSON.stringify(labelText));
                 console.log('Dropdown innerText preview:', dropdown.innerText.substring(0, 100));
                 
+                const lowerLabel = labelText.toLowerCase();
+                
+                // SPECIAL CASE: For "learn about" / "hear about" / "source" questions, select ANY first option
+                const isLearnAboutQuestion = lowerLabel.includes('learn about') || 
+                                            lowerLabel.includes('hear about') || 
+                                            lowerLabel.includes('how did you') ||
+                                            lowerLabel.includes('where did you') ||
+                                            lowerLabel.includes('source') ||
+                                            lowerLabel.includes('miratech');
+                
+                if (isLearnAboutQuestion) {
+                    console.log('Learn about question detected - selecting first available option');
+                    
+                    // Click to open dropdown
+                    dropdown.click();
+                    
+                    // Wait for options to appear and select first non-placeholder
+                    setTimeout(() => {
+                        const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, li');
+                        for (const option of allOptions) {
+                            const text = option.innerText.trim().toLowerCase();
+                            if (text && !text.includes('select') && !text.includes('choose') && text.length > 2) {
+                                option.click();
+                                console.log('Selected first option for learn about question:', option.innerText.trim());
+                                filledAny = true;
+                                break;
+                            }
+                        }
+                    }, 300);
+                    
+                    return 'LINKEDIN_FORM_FILLING_DROPDOWN';
+                }
+                
                 // Use QA patterns to determine the answer
                 let selectValue = getAnswerForQuestion(labelText, 'select');
                 
                 // If no pattern match, use smart defaults based on keywords
                 if (!selectValue) {
-                    const lowerLabel = labelText.toLowerCase();
                     if (lowerLabel.includes('notice') || lowerLabel.includes('lwd')) {
                         // Don't select dropdown for notice period, we'll fill the text input
                         continue;
@@ -636,14 +672,21 @@
                 console.log('Empty input found - Label:', JSON.stringify(labelText), '| Placeholder:', JSON.stringify(placeholder));
                 console.log('Input element:', input.tagName, input.type, input.className.substring(0, 50));
                 
+                // Check if input expects numeric values only
+                const isNumericInput = input.type === 'number' || 
+                                      input.getAttribute('inputmode') === 'numeric' ||
+                                      input.getAttribute('pattern')?.includes('\\d') ||
+                                      input.className.toLowerCase().includes('number') ||
+                                      input.className.toLowerCase().includes('decimal');
+                
                 // Use QA patterns to get the answer
                 let fillValue = getAnswerForQuestion(labelText, 'text');
                 
                 // If no pattern match, use smart fallback based on keywords
                 if (!fillValue) {
-                    if (combinedText.includes('notice') || combinedText.includes('lwd')) {
+                    if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {
                         fillValue = '30';
-                        console.log('Fallback: Filling notice period with: 30 days');
+                        console.log('Fallback: Filling notice/join period with: 30');
                     } else if (combinedText.includes('phone') || combinedText.includes('mobile')) {
                         fillValue = '7905828880';
                         console.log('Fallback: Filling phone number');
@@ -653,6 +696,15 @@
                     }
                 } else {
                     console.log('Pattern matched! Filling with:', fillValue);
+                }
+                
+                // If it's a numeric input, extract just the number from the answer
+                if (fillValue && isNumericInput) {
+                    const numericMatch = fillValue.match(/(\d+\.?\d*)/);
+                    if (numericMatch) {
+                        fillValue = numericMatch[1];
+                        console.log('Extracted numeric value for number field:', fillValue);
+                    }
                 }
                 
                 if (fillValue) {
@@ -763,6 +815,64 @@
             }
         }
         
+        // Handle checkboxes (consent, privacy policy, etc.)
+        // Search in modal first, then fall back to entire document
+        let checkboxes = modal.querySelectorAll('input[type="checkbox"]');
+        
+        // Also try broader selectors in case checkboxes are in shadow DOM or different structure
+        if (checkboxes.length === 0) {
+            checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            console.log('No checkboxes in modal, searching entire document - found:', checkboxes.length);
+        }
+        
+        // Further filter to only unchecked checkboxes that are visible
+        checkboxes = Array.from(checkboxes).filter(cb => !cb.checked && cb.offsetParent !== null);
+        
+        console.log('Found', checkboxes.length, 'visible unchecked checkboxes');
+        
+        for (const checkbox of checkboxes) {
+            // Check if already checked
+            if (checkbox.checked) continue;
+            
+            // Get the question text from the checkbox or its label
+            let questionText = getLabelForInput(checkbox) || checkbox.getAttribute('aria-label') || '';
+            
+            // If no label found, try to get text from nearby elements or parent containers
+            if (!questionText) {
+                // Look for text in parent fieldset or form section
+                let parent = checkbox.closest('fieldset, .jobs-easy-apply-form-section__question, [data-test-form-element]');
+                if (parent) {
+                    questionText = parent.innerText.substring(0, 300);
+                }
+            }
+            
+            console.log('Checkbox question:', JSON.stringify(questionText));
+            
+            // Get answer from patterns
+            const answer = getAnswerForQuestion(questionText, 'checkbox');
+            
+            // Check the checkbox if answer is Yes or if it's a privacy/consent checkbox
+            const questionLower = questionText.toLowerCase();
+            const isPrivacyOrConsent = questionLower.includes('privacy') || 
+                                      questionLower.includes('consent') ||
+                                      questionLower.includes('agree') ||
+                                      questionLower.includes('declare') ||
+                                      questionLower.includes('i consent');
+            
+            if (answer && answer.toLowerCase() === 'yes') {
+                checkbox.click();
+                console.log('Checked checkbox for:', questionText.substring(0, 50));
+                filledAny = true;
+            } else if (isPrivacyOrConsent) {
+                // Default to checking privacy/consent checkboxes
+                checkbox.click();
+                console.log('Checked privacy/consent checkbox:', questionText.substring(0, 50));
+                filledAny = true;
+            } else {
+                console.log('Skipping checkbox - not privacy/consent related:', questionText.substring(0, 50));
+            }
+        }
+        
         // Handle radio buttons (Yes/No questions)
         const radioGroups = modal.querySelectorAll('fieldset, [role="radiogroup"], .jobs-easy-apply-form-section__question');
         console.log('Found', radioGroups.length, 'potential radio groups');
@@ -860,9 +970,31 @@
         // Check if form still has validation errors after filling
         const remainingErrors = modal.querySelectorAll('.artdeco-inline-feedback__message, [data-test-form-element-error-message]');
         let errorCount = 0;
+        let hasCheckboxError = false;
         for (const error of remainingErrors) {
             if (error.offsetParent !== null && error.innerText.trim()) {
                 errorCount++;
+                const errorText = error.innerText.toLowerCase();
+                if (errorText.includes('checkbox') || errorText.includes('consent') || errorText.includes('agree') || errorText.includes('select')) {
+                    hasCheckboxError = true;
+                }
+            }
+        }
+        
+        // Fallback: If we have checkbox/consent validation errors, try to check ALL unchecked checkboxes
+        if (hasCheckboxError && errorCount > 0) {
+            console.log('Checkbox/consent validation error detected - attempting to check all unchecked checkboxes');
+            const allCheckboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked)');
+            let checkedCount = 0;
+            for (const cb of allCheckboxes) {
+                if (cb.offsetParent !== null) {
+                    cb.click();
+                    checkedCount++;
+                }
+            }
+            if (checkedCount > 0) {
+                console.log('Checked', checkedCount, 'checkboxes as fallback');
+                return 'LINKEDIN_CHECKBOXES_CHECKED_FALLBACK';
             }
         }
         

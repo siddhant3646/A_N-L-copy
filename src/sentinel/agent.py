@@ -46,7 +46,7 @@ KNOWN_QA_PATTERNS = {
     'web experience': '3.8 Years',
     'python experience': '3.8 Years',
     'programming experience': '3.8 Years',
-    # Salary (LPA format for Naukri)
+    # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
     'current salary': '13.5 LPA',
     'what is your current salary?': '13.5 LPA',
     'expected salary': '20 LPA',
@@ -286,6 +286,14 @@ KNOWN_QA_PATTERNS = {
     'production applications end-to-end': '5',
     'production applications end to end': '5',
     'built end-to-end': '5',
+    'end-to-end full stack projects': 'Yes',
+    'end to end full stack': 'Yes',
+    'worked on any end-to-end': 'Yes',
+    'full stack projects': 'Yes',
+    'interested in joining this 6 months contract role': 'Yes',
+    'contract role': 'Yes',
+    '6 months contract': 'Yes',
+    'interested in joining': 'Yes',
     'ci/cd pipelines': 'Yes',
     'cicd pipelines': 'Yes',
     'ci cd pipelines': 'Yes',
@@ -301,6 +309,20 @@ KNOWN_QA_PATTERNS = {
     'located in': 'Noida',
     'residing in': 'Noida',
     'residence': 'Noida',
+    # Address fields
+    'street': 'Sector 137',
+    'street address': 'Sector 137',
+    'address line 1': 'Sector 137',
+    'address line1': 'Sector 137',
+    'state': 'Uttar Pradesh',
+    'state/province': 'Uttar Pradesh',
+    'province': 'Uttar Pradesh',
+    'zip': '201301',
+    'zip code': '201301',
+    'postal code': '201301',
+    'pincode': '201301',
+    'pin code': '201301',
+    'zip/postal code': '201301',
     # Location preference questions
     'preferred location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'location preference': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
@@ -521,6 +543,8 @@ KNOWN_QA_PATTERNS = {
     'how did you hear about us': 'LinkedIn Ad (India)',
     'how did you hear about this job': 'LinkedIn Ad (India)',
     'how did you learn about us': 'LinkedIn Ad (India)',
+    'where did you learn about miratech': 'LinkedIn Ad (India)',
+    'where did you learn about us': 'LinkedIn Ad (India)',
     'source': 'LinkedIn Ad (India)',
     'referral source': 'LinkedIn Ad (India)',
     'where did you hear': 'LinkedIn Ad (India)',
@@ -676,16 +700,29 @@ KNOWN_QA_PATTERNS = {
     # ========== PHASE 1: MISSING PATTERNS ADDED FOR ROBUSTNESS ==========
     
     # NOTICE PERIOD - Joining Date Variations (20+ patterns)
-    'how soon can you join': '30 days',
-    'when can you start': '30 days from offer date',
-    'earliest joining date': '30 days from offer date',
-    'available from': '30 days from offer',
-    'immediate joining': 'Can join immediately after serving notice period',
-    'join by': 'Within 30 days',
-    'joining availability': '30 days',
-    'joining date': '30 days from offer',
-    'when are you available': '30 days from offer date',
-    'how many days notice': '30 days',
+    'how soon can you join': '30',
+    'when can you start': '30',
+    'earliest joining date': '30',
+    'available from': '30',
+    'immediate joining': '30',
+    'join by': '30',
+    'joining availability': '30',
+    'joining date': '30',
+    'when are you available': '30',
+    'how many days notice': '30',
+    'how soon you can join us': '30',
+    'how soon can you join us': '30',
+    'when can you join': '30',
+    'join us': '30',
+    'if offered the role, within how many days will you be able to join': '30',
+    'within how many days will you be able to join': '30',
+    'how many days will you be able to join': '30',
+    'able to join': '30',
+    'offered the role': '30',
+    'how immediate can you join if gets selected': '30',
+    'how immediate can you join': '30',
+    'immediate can you join': '30',
+    'if gets selected': '30',
     'days required for notice': '30 days',
     'notice period buyout': 'Yes, open to buyout discussion',
     'buyout option': 'Yes, can discuss buyout with current employer',
@@ -702,6 +739,7 @@ KNOWN_QA_PATTERNS = {
     # SALARY - Component Variations (15+ patterns)
     'monthly salary': '112500',
     'monthly ctc': '112500',
+    'monthly gross': '1.5',
     'per month salary': '112500',
     'take home': '95000',
     'in hand salary': '95000',
@@ -923,14 +961,14 @@ KNOWN_QA_PATTERNS = {
     '5 year plan': 'Grow into Technical Lead/Architect role',
     'short term goal': 'Contribute effectively to the team',
     'long term goal': 'Technical leadership and architecture',
-    'immediate joiner': 'Can join after 30 days notice period',
-    'can join immediately': 'Can join after serving 30 days notice',
-    'how soon': '30 days from offer acceptance',
-    'urgent requirement': 'Yes, can join in 30 days',
-    'immediate opening': 'Can join in 30 days',
-    'immediate requirement': 'Available in 30 days',
-    'asap': '30 days from offer date',
-    'as soon as possible': '30 days from offer acceptance',
+    'immediate joiner': '30',
+    'can join immediately': '30',
+    'how soon': '30',
+    'urgent requirement': '30',
+    'immediate opening': '30',
+    'immediate requirement': '30',
+    'asap': '30',
+    'as soon as possible': '30',
     
     # REFERRAL & SOURCE - Extended (12+ patterns)
     'how did you hear': 'LinkedIn',
@@ -1003,10 +1041,10 @@ KNOWN_QA_PATTERNS = {
     'calendar': 'Can schedule anytime as per mutual convenience',
     'schedule interview': 'Yes, please share available slots',
     'interview slot': 'Any slot works - flexible',
-    'availability': '30 days from offer date',
-    'available immediately': 'Can join after 30 days notice period',
-    'how early can you join': '30 days from offer',
-    'earliest': '30 days from offer acceptance',
+    'availability': '30',
+    'available immediately': '30',
+    'how early can you join': '30',
+    'earliest': '30',
     
     # ADDITIONAL LINKEDIN SPECIFIC
     'linkedin specific': 'Applying via LinkedIn Easy Apply',
@@ -1014,12 +1052,14 @@ KNOWN_QA_PATTERNS = {
     'linkedin job': 'Found on LinkedIn',
     'job id': 'Found via LinkedIn',
     
-    # SALARY NEGOTIATION
+    # SALARY NEGOTIATION - Only used when explicitly asked about negotiation/flexibility
     'negotiable': 'Yes, open to negotiation within range',
     'open to negotiation': 'Yes, can discuss compensation',
     'salary negotiable': 'Yes, within reasonable range',
-    'expectation': '20 LPA but open to discussion',
-    'range': '15-20 LPA range',
+    'negotiation': 'Yes, open to discussion',
+    'discuss salary': 'Yes, willing to discuss',
+    'salary discussion': 'Yes, open to discussion',
+    'range': '15-20 LPA',
     'flexible on salary': 'Yes, flexible within reason',
     
     # MISCELLANEOUS - Yes/No Questions
@@ -1250,6 +1290,9 @@ KNOWN_QA_PATTERNS = {
     
     # SECTION 5: PRIVACY & LEGAL (20 patterns)
     'you declare that you read and agree to the privacy policy': 'Yes',
+    'you declare that you have read and agree to the privacy notice': 'Yes',
+    'you declare that you have read and agree to the privacy notice of miratech': 'Yes',
+    'privacy notice consent': 'Yes',
     'i have read and agree to the privacy policy': 'Yes',
     'i agree to the privacy policy': 'Yes',
     'do you agree to the privacy policy': 'Yes',
@@ -1753,17 +1796,17 @@ class SentinelAgent:
         if is_salary_question:
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
-                return '13.5 LPA', 0.98
+                return '13.5', 0.98
             if 'ectc' in question_lower:
-                return '20 LPA', 0.98
+                return '20', 0.98
             
-            # Check for expected vs current - always use LPA format
+            # Check for expected vs current - use plain numbers
             if 'expected' in question_lower or 'expect' in question_lower:
-                return '20 LPA', 0.95
+                return '20', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
-                return '13.5 LPA', 0.95
+                return '13.5', 0.95
             # Default to expected if unclear
-            return '20 LPA', 0.90
+            return '20', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -1914,11 +1957,11 @@ class SentinelAgent:
                     print(f"   🔧 Fixed numeric answer: {answer} -> {fixed_answer}")
             
             elif format_type == 'salary_lpa':
-                # Extract numeric part and add LPA
+                # Extract numeric part only (no LPA suffix for LinkedIn)
                 import re
                 match = re.search(r'(\d+\.?\d*)', answer)
                 if match:
-                    fixed_answer = f"{match.group(1)} LPA"
+                    fixed_answer = match.group(1)
                     print(f"   🔧 Fixed salary answer: {answer} -> {fixed_answer}")
             
             elif format_type == 'salary_inr':
@@ -4235,11 +4278,11 @@ class SentinelAgent:
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
-                            // Use numeric values for LinkedIn text inputs
+                            // Use plain numeric values (13.5, 20) for LinkedIn text inputs - NOT full INR values
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '1350000';
+                                KNOWN_PATTERNS[k] = '13.5';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '2000000';
+                                KNOWN_PATTERNS[k] = '20';
                             }}
                         }}
                     }});
@@ -4614,8 +4657,25 @@ class SentinelAgent:
                             
                             if (!isVisible(input) || isFieldPreFilled(input)) continue;
                             
+                            // Check if input expects numeric values only
+                            const isNumericInput = input.type === 'number' || 
+                                                  input.getAttribute('inputmode') === 'numeric' ||
+                                                  input.getAttribute('pattern')?.includes('\\d') ||
+                                                  input.className?.toLowerCase().includes('number') ||
+                                                  input.className?.toLowerCase().includes('decimal');
+                            
                             if (labelText) {{
-                                const answer = fuzzyMatch(labelText);
+                                let answer = fuzzyMatch(labelText);
+                                
+                                // If it's a numeric input, extract just the number from the answer
+                                if (answer && isNumericInput) {{
+                                    const numericMatch = answer.match(/(\d+\.?\d*)/);
+                                    if (numericMatch) {{
+                                        answer = numericMatch[1];
+                                        console.log('Extracted numeric value for number field:', answer);
+                                    }}
+                                }}
+                                
                                 if (answer) {{
                                     console.log('Filling text field:', labelText, 'with:', answer);
                                     
@@ -4654,21 +4714,51 @@ class SentinelAgent:
                                             queryDeep(`label[for="${{select.id}}"]`, modal)?.innerText ||
                                             select.getAttribute('aria-label') || '';
                             
+                            const lowerLabel = labelText.toLowerCase();
+                            
+                            // SPECIAL CASE: For "learn about" / "hear about" / "source" questions, select ANY first option
+                            const isLearnAboutQuestion = lowerLabel.includes('learn about') || 
+                                                        lowerLabel.includes('hear about') || 
+                                                        lowerLabel.includes('how did you') ||
+                                                        lowerLabel.includes('where did you') ||
+                                                        lowerLabel.includes('source');
+                            
+                            if (isLearnAboutQuestion) {{
+                                console.log('Learn about question detected in native select - selecting first non-placeholder option');
+                                const options = Array.from(select.options);
+                                // Skip first option if it's a placeholder
+                                const firstRealOption = options.find(o => {{
+                                    const text = o.text.toLowerCase();
+                                    return !text.includes('select') && !text.includes('choose') && text.trim().length > 0;
+                                }});
+                                
+                                if (firstRealOption) {{
+                                    select.value = firstRealOption.value;
+                                    select.selectedIndex = firstRealOption.index;
+                                    select.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    select.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                    console.log('Selected first option:', firstRealOption.text);
+                                    formResults.push({{ question: labelText, answer: firstRealOption.text, inputType: 'select' }});
+                                }}
+                                continue;
+                            }}
+                            
                             if (labelText) {{
                                 const answer = fuzzyMatch(labelText);
                                 
                                 // Determine if we should attempt to select "Yes" based on keywords
-                                const isYesNoQuestion = labelText.toLowerCase().includes('experience') || 
-                                                      labelText.toLowerCase().includes('developer') ||
-                                                      labelText.toLowerCase().includes('comfortable') ||
-                                                      labelText.toLowerCase().includes('willing');
+                                const isYesNoQuestion = lowerLabel.includes('experience') || 
+                                                      lowerLabel.includes('developer') ||
+                                                      lowerLabel.includes('comfortable') ||
+                                                      lowerLabel.includes('willing');
                                 
                                 if (answer || isYesNoQuestion) {{
                                     const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
                                     let bestOpt = findBestMatch(answer, options);
                                     
                                     // Fallback: If answer is numeric (e.g. "3.8 Years") but options are Yes/No
-                                    if ((!bestOpt && answer) && (labelText.toLowerCase().includes('experience') || labelText.toLowerCase().includes('year'))) {{
+                                    if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {{
                                         const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
                                                       options.some(o => o.text.toLowerCase().includes('no'));
                                         
@@ -4740,15 +4830,45 @@ class SentinelAgent:
                                             dropdown.getAttribute('aria-label') || 
                                             dropdown.closest('div')?.querySelector('label')?.innerText || '';
                             
+                            const lowerLabel = labelText.toLowerCase();
+                            
+                            // SPECIAL CASE: For "learn about" / "hear about" / "source" questions, select ANY first option
+                            const isLearnAboutQuestion = lowerLabel.includes('learn about') || 
+                                                        lowerLabel.includes('hear about') || 
+                                                        lowerLabel.includes('how did you') ||
+                                                        lowerLabel.includes('where did you') ||
+                                                        lowerLabel.includes('source');
+                            
+                            if (isLearnAboutQuestion) {{
+                                console.log('Learn about question detected - selecting first available option');
+                                dropdown.click();
+                                
+                                setTimeout(() => {{
+                                    const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, li');
+                                    for (const option of allOptions) {{
+                                        const text = option.innerText.trim();
+                                        const lowerText = text.toLowerCase();
+                                        if (text && !lowerText.includes('select') && !lowerText.includes('choose') && text.length > 2) {{
+                                            console.log('Selected first option for learn about question:', text);
+                                            option.click();
+                                            formResults.push({{ question: labelText, answer: text, inputType: 'custom-dropdown' }});
+                                            break;
+                                        }}
+                                    }}
+                                }}, 200);
+                                
+                                return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN';
+                            }}
+                            
                             if (labelText) {{
                                 const answer = fuzzyMatch(labelText);
                                 // For Yes/No questions, default to "Yes" if no specific answer found
-                                const isYesNoQuestion = labelText.toLowerCase().includes('experience') || 
-                                                      labelText.toLowerCase().includes('developer');
+                                const isYesNoQuestion = lowerLabel.includes('experience') || 
+                                                      lowerLabel.includes('developer');
                                 
                                 // SMART EXPERIENCE CHECK
                                 let calculatedShouldSelectYes = false;
-                                if (answer && (labelText.toLowerCase().includes('experience') || labelText.toLowerCase().includes('year'))) {{
+                                if (answer && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {{
                                     const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
                                     const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
                                     const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
@@ -4809,6 +4929,97 @@ class SentinelAgent:
                             }}
                         }}
                         
+                        // 3.2 Handle Checkboxes (consent, privacy policy, etc.)
+                        // Search for all checkboxes including those with specific LinkedIn classes
+                        const checkboxes = queryAllDeep('input[type="checkbox"], .fb-form-element__checkbox', modal);
+                        console.log('Found', checkboxes.length, 'checkboxes in modal');
+                        
+                        for (const checkbox of checkboxes) {{
+                            if (!isVisible(checkbox) || checkbox.checked) continue;
+                            
+                            // Get label text for the checkbox - try multiple methods
+                            let labelText = '';
+                            
+                            // Method 1: Check for aria-labelledby
+                            const labelledBy = checkbox.getAttribute('aria-labelledby');
+                            if (labelledBy) {{
+                                const labelEl = document.getElementById(labelledBy);
+                                if (labelEl) labelText = labelEl.innerText;
+                            }}
+                            
+                            // Method 2: Check for aria-label
+                            if (!labelText) {{
+                                labelText = checkbox.getAttribute('aria-label') || '';
+                            }}
+                            
+                            // Method 3: Check for id and find matching label
+                            if (!labelText && checkbox.id) {{
+                                const label = queryDeep(`label[for="${{checkbox.id}}"]`, modal);
+                                if (label) labelText = label.innerText;
+                            }}
+                            
+                            // Method 4: Look for label in parent fieldset (LinkedIn specific structure)
+                            if (!labelText) {{
+                                const fieldset = checkbox.closest('fieldset');
+                                if (fieldset) {{
+                                    // Get text from legend or the entire fieldset
+                                    const legend = fieldset.querySelector('legend');
+                                    if (legend) {{
+                                        labelText = legend.innerText;
+                                    }} else {{
+                                        labelText = fieldset.innerText.substring(0, 300);
+                                    }}
+                                }}
+                            }}
+                            
+                            // Method 5: Try to find label by data-test attribute (LinkedIn specific)
+                            if (!labelText) {{
+                                const parent = checkbox.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element]');
+                                if (parent) {{
+                                    // Look for label with data-test-text-selectable-option__label
+                                    const label = parent.querySelector('[data-test-text-selectable-option__label], label');
+                                    if (label) {{
+                                        labelText = label.innerText || label.getAttribute('data-test-text-selectable-option__label') || '';
+                                    }}
+                                    // If still no label, get all text from parent
+                                    if (!labelText) {{
+                                        labelText = parent.innerText.substring(0, 300);
+                                    }}
+                                }}
+                            }}
+                            
+                            // Method 6: Check sibling labels
+                            if (!labelText) {{
+                                const parent = checkbox.parentElement;
+                                if (parent) {{
+                                    const siblingLabel = parent.querySelector('label');
+                                    if (siblingLabel) {{
+                                        labelText = siblingLabel.innerText;
+                                    }}
+                                }}
+                            }}
+                            
+                            console.log('Checkbox label text found:', labelText.substring(0, 100));
+                            const lowerLabel = labelText.toLowerCase();
+                            
+                            // Check if this is a privacy/consent checkbox
+                            const isConsentCheckbox = lowerLabel.includes('consent') || 
+                                                     lowerLabel.includes('privacy') || 
+                                                     lowerLabel.includes('agree') ||
+                                                     lowerLabel.includes('declare') ||
+                                                     lowerLabel.includes('i consent') ||
+                                                     lowerLabel.includes('read and agree');
+                            
+                            if (isConsentCheckbox) {{
+                                console.log('Checking consent/privacy checkbox:', labelText.substring(0, 50));
+                                checkbox.click();
+                                checkbox.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                formResults.push({{ question: labelText, answer: 'Checked', inputType: 'checkbox' }});
+                            }} else {{
+                                console.log('Skipping checkbox - not consent/privacy related:', labelText.substring(0, 50));
+                            }}
+                        }}
+                        
                         // 3.5 Check for any visible autocomplete dropdown options (post-fill catch)
                         // This handles cases where filling a field triggered a dropdown that needs selection
                         {{
@@ -4844,10 +5055,15 @@ class SentinelAgent:
                                 return isVisible(g) && rs.length > 0 && !rs.some(r => r.checked);
                             }});
                             
+                            // Check for unchecked required checkboxes (privacy/consent)
+                            const requiredCheckboxes = queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal);
+                            const uncheckedCheckboxes = requiredCheckboxes.filter(cb => isVisible(cb) && !cb.checked);
+                            const hasUncheckedCheckbox = uncheckedCheckboxes.length > 0;
+                            
                             const hasVisibleError = !!queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
                             
-                            if (hasEmptyInput || hasEmptySelect || hasEmptyRadio || hasVisibleError) {{
-                                console.log('Validation Error detected:', {{ hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasVisibleError }});
+                            if (hasEmptyInput || hasEmptySelect || hasEmptyRadio || hasUncheckedCheckbox || hasVisibleError) {{
+                                console.log('Validation Error detected:', {{ hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasUncheckedCheckbox, hasVisibleError }});
                                 return true;
                             }}
                             return false;

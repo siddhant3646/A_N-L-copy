@@ -57,6 +57,10 @@ from .pattern_learner import (
     OptionMappingLearner,
 )
 
+from src.sentinel.semantic_matcher import (
+    SemanticQuestionMatcher,
+)
+
 __all__ = [
     # Pattern Loader
     'PatternLoader',
@@ -67,11 +71,11 @@ __all__ = [
     'get_pattern_answer',
     'PatternLoadError',
     'PatternValidationError',
-    
+
     # Pattern Matcher
     'PatternMatcher',
     'create_matcher',
-    
+
     # Input Aware Resolver
     'InputType',
     'InputAwareResolver',
@@ -79,9 +83,12 @@ __all__ = [
     'MatchResult',
     'NumericRangeMatcher',
     'OptionExtractor',
-    
+
     # Pattern Learner
     'PatternLearner',
     'PatternExpander',
     'OptionMappingLearner',
+
+    # Semantic Matcher
+    'SemanticQuestionMatcher',
 ]

@@ -154,6 +154,22 @@ KNOWN_QA_PATTERNS = {
     'join within 15-30 days': 'Yes',
     'can join within 15-30 days': 'Yes',
     'immediately or within 15-30 days': 'Yes',
+    # Radio button questions (Yes/No)
+    'any offer in hand': 'No',
+    'do you have any offer': 'No',
+    'offer in hand': 'No',
+    'any offers': 'No',
+    'currently holding offer': 'No',
+    'are you comfortable working during overlapping us hours': 'Yes',
+    'comfortable working us hours': 'Yes',
+    'overlapping us hours': 'Yes',
+    'us hours weekly calls': 'Yes',
+    'have you ever been employed by': 'No',
+    'previously employed': 'No',
+    'worked for navan': 'No',
+    'worked for reed': 'No',
+    'applied to navan': 'No',
+    'affiliated companies': 'No',
     # Education
     'graduation year': '2022',
     'year of graduation': '2022',
@@ -1549,6 +1565,65 @@ class SentinelAgent:
                 self_healing_matcher=self._self_healing,
                 input_resolver=self._input_resolver
             )
+    
+    def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
+        """
+        Format answer appropriately for the field type.
+        
+        Args:
+            answer: The raw answer
+            question: The question text
+            field_type: Type of form field (text, number, email, etc.)
+            
+        Returns:
+            Formatted answer
+        """
+        import re
+        
+        question_lower = question.lower()
+        
+        # Check if field expects numeric input
+        expects_number = (
+            field_type == "number" or
+            "number" in question_lower or
+            "decimal" in question_lower or
+            "how many" in question_lower or
+            "rate your" in question_lower or
+            "proficiency" in question_lower or
+            "confidence" in question_lower or
+            "years of" in question_lower or
+            "experience" in question_lower
+        )
+        
+        if expects_number:
+            # Extract numeric value from answer
+            # Handle cases like "3.8 Years" -> "3.8", "8 out of 10" -> "8"
+            match = re.search(r'(\d+\.?\d*)', answer)
+            if match:
+                numeric = match.group(1)
+                # Validate it's a reasonable number
+                try:
+                    val = float(numeric)
+                    if val > 0:
+                        return numeric
+                except:
+                    pass
+        
+        # Check if field expects yes/no
+        if "yes" in answer.lower() or "no" in answer.lower():
+            # Check if this is actually a yes/no question
+            is_yes_no_question = any(kw in question_lower for kw in [
+                "would you", "are you", "do you", "can you", "will you",
+                "is this", "have you", "agree", "accept", "confirm"
+            ])
+            
+            if not is_yes_no_question and expects_number:
+                # This shouldn't be yes/no, extract number instead
+                # Default to 8 for ratings/confidence
+                if "proficiency" in question_lower or "confidence" in question_lower or "rate" in question_lower:
+                    return "8"
+        
+        return answer
 
     def _detect_platform(self) -> str:
         """Detect current platform from URL or context."""
@@ -2857,8 +2932,41 @@ class SentinelAgent:
 
 
     def _log_js_msg(self, msg):
-        """Helper to log JS console messages."""
-        print(f"   🖥️ JS: {msg.text}")
+        """Helper to log JS console messages with filtering for noisy errors."""
+        text = msg.text
+        
+        # Filter out noisy resource loading errors
+        noisy_patterns = [
+            'ERR_FAILED',
+            'Failed to load resource',
+            'the server responded with a status of',
+            'visitor.publishDestinations',
+            'destination publishing iframe',
+            'External tag load event',
+            'net::ERR_BLOCKED_BY_CLIENT',
+            'net::ERR_CONNECTION_REFUSED',
+        ]
+        
+        # Skip if message contains any noisy pattern
+        if any(pattern in text for pattern in noisy_patterns):
+            return
+        
+        # Skip tracking/analytics domains
+        noisy_domains = [
+            'ads.linkedin.com',
+            'analytics',
+            'tracking',
+            'pixel',
+            'google-analytics',
+            'doubleclick',
+            'facebook.com/tr',
+        ]
+        
+        if any(domain in text.lower() for domain in noisy_domains):
+            return
+        
+        # Print important messages
+        print(f"   🖥️ JS: {text[:200]}")  # Limit length to prevent spam
 
     def _get_max_steps(self) -> int:
         """Determine max steps based on task type - LinkedIn gets 120, others get 50."""
@@ -5118,6 +5226,115 @@ class SentinelAgent:
                                         bestRadio.click();
                                         bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                         formResults.push({{ question: legend, answer: answer, inputType: 'radio' }});
+                                    }}
+                                }}
+                            }}
+                        }}
+                        
+                        // 3.1b Handle standalone Radio buttons (not inside fieldsets)
+                        // Many forms have radio buttons directly in divs or other containers
+                        const allRadios = queryAllDeep('input[type="radio"]', modal);
+                        const radioGroups = {{}};
+                        
+                        // Group radios by name attribute
+                        for (const radio of allRadios) {{
+                            const name = radio.name;
+                            if (!name) continue;  // Skip radios without names
+                            if (!radioGroups[name]) {{
+                                radioGroups[name] = [];
+                            }}
+                            radioGroups[name].push(radio);
+                        }}
+                        
+                        // Process each radio group
+                        for (const [name, radios] of Object.entries(radioGroups)) {{
+                            // Skip if any radio in group is already checked
+                            if (radios.some(r => r.checked)) continue;
+                            
+                            // Find label/question text for this group
+                            let questionText = '';
+                            const firstRadio = radios[0];
+                            
+                            // Try to find label text
+                            const parentLabel = firstRadio.closest('label');
+                            if (parentLabel) {{
+                                questionText = parentLabel.innerText;
+                            }} else {{
+                                // Look for preceding text or parent container text
+                                const container = firstRadio.closest('div[class*="question"], div[class*="field"], .form-group');
+                                if (container) {{
+                                    // Get text from the container, excluding the radio labels
+                                    const textNodes = Array.from(container.childNodes)
+                                        .filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'INPUT' && n.tagName !== 'LABEL'))
+                                        .map(n => n.textContent || n.innerText)
+                                        .join(' ')
+                                        .trim();
+                                    questionText = textNodes;
+                                }}
+                            }}
+                            
+                            // Also try to get text from aria-label or aria-labelledby
+                            if (!questionText && firstRadio.getAttribute('aria-labelledby')) {{
+                                const labelEl = document.getElementById(firstRadio.getAttribute('aria-labelledby'));
+                                if (labelEl) questionText = labelEl.innerText;
+                            }}
+                            
+                            if (!questionText && firstRadio.getAttribute('aria-label')) {{
+                                questionText = firstRadio.getAttribute('aria-label');
+                            }}
+                            
+                            // Try to find answer for this question
+                            if (questionText) {{
+                                const answer = fuzzyMatch(questionText);
+                                if (answer) {{
+                                    const bestRadio = findBestRadioMatch(answer, radios);
+                                    if (bestRadio) {{
+                                        console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
+                                        bestRadio.click();
+                                        bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        formResults.push({{ question: questionText.substring(0, 100), answer: answer, inputType: 'radio' }});
+                                    }} else {{
+                                        // No match found - default to first option for Yes/No questions
+                                        const yesRadio = radios.find(r => {{
+                                            const label = r.closest('label')?.innerText || r.value || '';
+                                            return label.toLowerCase().includes('yes');
+                                        }});
+                                        if (yesRadio) {{
+                                            console.log('Defaulting to Yes for:', questionText.substring(0, 50));
+                                            yesRadio.click();
+                                            yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            formResults.push({{ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' }});
+                                        }}
+                                    }}
+                                }} else {{
+                                    // No fuzzy match - check if it's a Yes/No question and default to Yes
+                                    const isYesNo = radios.length === 2 && 
+                                        radios.some(r => (r.value || '').toLowerCase() === 'yes') &&
+                                        radios.some(r => (r.value || '').toLowerCase() === 'no');
+                                    
+                                    if (isYesNo) {{
+                                        const yesRadio = radios.find(r => (r.value || '').toLowerCase() === 'yes');
+                                        if (yesRadio) {{
+                                            console.log('Defaulting Yes/No question to Yes:', questionText.substring(0, 50) || 'Unknown question');
+                                            yesRadio.click();
+                                            yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            formResults.push({{ question: questionText.substring(0, 100) || 'Yes/No question', answer: 'Yes', inputType: 'radio' }});
+                                        }}
+                                    }}
+                                }}
+                            }} else {{
+                                // No question text found - check if it's a Yes/No and default to Yes
+                                const isYesNo = radios.length === 2 && 
+                                    radios.some(r => (r.value || '').toLowerCase() === 'yes') &&
+                                    radios.some(r => (r.value || '').toLowerCase() === 'no');
+                                
+                                if (isYesNo) {{
+                                    const yesRadio = radios.find(r => (r.value || '').toLowerCase() === 'yes');
+                                    if (yesRadio && !yesRadio.checked) {{
+                                        console.log('Selecting Yes for unlabeled Yes/No question');
+                                        yesRadio.click();
+                                        yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        formResults.push({{ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio' }});
                                     }}
                                 }}
                             }}

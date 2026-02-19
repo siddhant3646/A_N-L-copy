@@ -446,7 +446,7 @@ class QuestionClassifier:
         
         # Handle SKILLS
         if category == QuestionCategory.SKILLS:
-            return self._get_skills_answer(question_lower), cat_confidence
+            return self._get_skills_answer(question_lower, input_type), cat_confidence
         
         # Handle YES_NO
         if category == QuestionCategory.YES_NO:
@@ -467,21 +467,30 @@ class QuestionClassifier:
     
     def _get_experience_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get platform-appropriate experience answer."""
-        is_numeric_field = (
+        # Detect if field expects numeric-only input
+        is_numeric_only = (
             input_type == InputType.NUMBER or
-            "number" in question or
-            "whole number" in question or
-            "enter a number" in question or
-            "how many" in question or
+            "number" in question.lower() or
+            "whole number" in question.lower() or
+            "enter a number" in question.lower() or
+            "how many" in question.lower() or
+            "decimal" in question.lower() or
+            "larger than 0" in question.lower() or
             self.config.numeric_only_experience
         )
         
-        if "month" in question:
-            return self.config.experience_months
-        elif is_numeric_field or "years" not in question:
-            return self.config.experience_years.split()[0] if " " in self.config.experience_years else self.config.experience_years
+        # Extract numeric value from experience string (e.g., "3.8 Years" -> "3.8")
+        base_answer = self.config.experience_years
+        numeric_value = base_answer.split()[0] if " " in base_answer else base_answer
+        
+        if "month" in question.lower():
+            months = self.config.experience_months
+            return months if is_numeric_only else months
+        elif is_numeric_only:
+            # Return just the number for numeric fields
+            return numeric_value
         else:
-            return self.config.experience_years
+            return base_answer
     
     def _get_salary_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get appropriate salary answer."""
@@ -532,15 +541,39 @@ class QuestionClassifier:
         else:
             return CATEGORY_DEFAULTS[QuestionCategory.LOCATION]["current"]
     
-    def _get_skills_answer(self, question: str) -> str:
+    def _get_skills_answer(self, question: str, input_type: Optional[InputType] = None) -> str:
         """Get skills/proficiency answer."""
-        if "proficiency" in question or "rate yourself" in question or "scale" in question:
-            return "8"
-        elif "tech stack" in question or "technologies" in question:
+        question_lower = question.lower()
+        
+        # Detect if this is a rating/confidence scale question
+        is_rating_question = (
+            "proficiency" in question_lower or
+            "rate yourself" in question_lower or
+            "scale" in question_lower or
+            "rate your" in question_lower or
+            "confidence" in question_lower or
+            "how would you rate" in question_lower or
+            "on a scale" in question_lower or
+            "1-10" in question_lower or
+            "1 to 10" in question_lower
+        )
+        
+        # Detect if field expects numeric input
+        is_numeric_only = (
+            input_type == InputType.NUMBER or
+            "number" in question_lower or
+            "decimal" in question_lower or
+            "enter a" in question_lower
+        )
+        
+        if is_rating_question:
+            # Return numeric rating (8/10 or just 8)
+            return "8" if is_numeric_only else "8 out of 10"
+        elif "tech stack" in question_lower or "technologies" in question_lower:
             return CATEGORY_DEFAULTS[QuestionCategory.SKILLS]["tech_stack"]
-        elif "language" in question:
+        elif "language" in question_lower:
             return CATEGORY_DEFAULTS[QuestionCategory.SKILLS]["languages"]
-        elif "dsa" in question or "data structure" in question or "algorithm" in question:
+        elif "dsa" in question_lower or "data structure" in question_lower or "algorithm" in question_lower:
             return CATEGORY_DEFAULTS[QuestionCategory.SKILLS]["dsa"]
         else:
             return CATEGORY_DEFAULTS[QuestionCategory.SKILLS]["tech_stack"]

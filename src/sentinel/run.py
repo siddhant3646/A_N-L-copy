@@ -19,6 +19,38 @@ class Browser:
         self.context = None
         self.browser = None
 
+    # Resource types to block for noise reduction
+    BLOCKED_RESOURCE_TYPES = [
+        'image', 'stylesheet', 'font', 'media', 'other'
+    ]
+    
+    # URL patterns to block (tracking, analytics, ads)
+    BLOCKED_URL_PATTERNS = [
+        'ads.linkedin.com',
+        'analytics',
+        'tracking',
+        'doubleclick',
+        'google-analytics',
+        'facebook.com/tr',
+        'googleadservices',
+        'googletagmanager',
+        'hotjar',
+        'segment.io',
+        'mixpanel',
+        'amplitude',
+        'sentry.io',
+        '*.gif',
+        '*.png',
+        '*.jpg',
+        '*.jpeg',
+        '*.svg',
+        '*.woff',
+        '*.woff2',
+        '*.ttf',
+        '*.eot',
+        '*.css',
+    ]
+    
     async def start(self):
         # Fix EPERM/Socket issues by forcing a unique system-standard TMPDIR
         import os
@@ -146,8 +178,40 @@ class Browser:
         
     async def new_page(self):
         if self.context:
-            return await self.context.new_page()
+            page = await self.context.new_page()
+            # Apply resource blocking to reduce console noise
+            await self._setup_resource_blocking(page)
+            return page
         return None
+    
+    async def _setup_resource_blocking(self, page):
+        """Setup resource blocking to reduce console noise and improve performance."""
+        async def handle_route(route, request):
+            # Check if resource type should be blocked
+            if request.resource_type in self.BLOCKED_RESOURCE_TYPES:
+                await route.abort()
+                return
+            
+            # Check if URL matches blocked patterns
+            url = request.url.lower()
+            for pattern in self.BLOCKED_URL_PATTERNS:
+                pattern_lower = pattern.lower()
+                if pattern_lower.startswith('*.'):
+                    # Handle wildcard patterns like *.png
+                    suffix = pattern_lower[1:]  # Remove the *
+                    if url.endswith(suffix):
+                        await route.abort()
+                        return
+                elif pattern_lower in url:
+                    await route.abort()
+                    return
+            
+            # Allow the request
+            await route.continue_()
+        
+        # Apply the route handler to all requests
+        await page.route("**/*", handle_route)
+        print("   🔇 Resource blocking enabled (images, stylesheets, fonts, trackers)")
 
     async def stop(self):
         # 1. Close all pages first

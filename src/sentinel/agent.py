@@ -2208,6 +2208,8 @@ class SentinelAgent:
             return False
         
         for error in errors:
+            healed_value = None
+            
             # Try learned patterns for this field
             if error.field_label:
                 learned = self._get_learned_answer(error.field_label)
@@ -2217,10 +2219,10 @@ class SentinelAgent:
                     pattern = self._self_healing.learning_store.find_pattern_for_question(error.field_label)
                     if pattern:
                         self._self_healing.learning_store.record_success(pattern.pattern_id)
-                    return True
+                    healed_value = learned[0]
             
             # Try option matching if options available
-            if error.available_options and error.field_value:
+            if not healed_value and error.available_options and error.field_value:
                 matched, confidence = self._match_answer_to_options(
                     error.field_value,
                     error.available_options,
@@ -2228,8 +2230,83 @@ class SentinelAgent:
                 )
                 if confidence >= 0.7:
                     print(f"   🔧 Option matched: '{matched}' (conf: {confidence:.0%})")
-                    return True
-        
+                    healed_value = matched
+
+            if healed_value:
+                # Inject the healed value back into the DOM using the label text to find the input
+                try:
+                    js_inject = f"""() => {{
+                        const labels = Array.from(document.querySelectorAll('label'));
+                        const targetLabel = labels.find(l => l.innerText.trim().includes(`{error.field_label}`));
+                        if (!targetLabel) return false;
+                        
+                        const container = targetLabel.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question') || targetLabel.parentElement;
+                        
+                        // Handle Select Dropdowns
+                        const select = container.querySelector('select');
+                        if (select) {{
+                            const options = Array.from(select.options);
+                            const targetOpt = options.find(o => o.text.trim() === `{healed_value}`);
+                            if (targetOpt) {{
+                                select.value = targetOpt.value;
+                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                return true;
+                            }}
+                        }}
+                        
+                        // Handle Text/Number Inputs
+                        const input = container.querySelector('input:not([type="radio"]):not([type="checkbox"]), textarea');
+                        if (input) {{
+                            const prevVal = input.value;
+                            const fill = (val) => {{
+                                try {{
+                                    const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                    const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                                    if (nativeSetter) nativeSetter.call(input, val);
+                                    else input.value = val;
+                                }} catch(e) {{ input.value = val; }}
+                                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                            }};
+                            
+                            // Clear first, then set healed value
+                            fill('');
+                            fill(`{healed_value}`);
+                            
+                            // Fallback
+                            if (input.value !== `{healed_value}` && Reflect.has(input, 'value')) {{
+                                Reflect.set(input, 'value', `{healed_value}`);
+                                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            }}
+                            
+                            return true;
+                        }}
+                        
+                        // Handle Radio buttons (like Yes/No)
+                        const radios = container.querySelectorAll('input[type="radio"]');
+                        if (radios.length > 0) {{
+                            for (const r of radios) {{
+                                const rLabel = container.querySelector(`label[for="${{r.id}}"]`)?.innerText || r.value;
+                                if (rLabel.toLowerCase().includes(`{healed_value}`.toLowerCase())) {{
+                                    r.click();
+                                    r.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    return true;
+                                }}
+                            }}
+                        }}
+                        
+                        return false;
+                    }}"""
+                    success = await self._page.evaluate(js_inject)
+                    if success:
+                        print(f"   ✅ Successfully injected healed value '{healed_value}'")
+                        return True
+                    else:
+                        print(f"   ⚠️ Failed to inject healed value '{healed_value}' into DOM")
+                except Exception as e:
+                    print(f"   ⚠️ Error during DOM injection: {{e}}")
+                    
         return False
 
     def _log_unknown_question(self, question: str, context: str = "", 
@@ -3467,6 +3544,12 @@ class SentinelAgent:
                             print("☑️ Checked Terms/Privacy checkbox")
                             continue
                         elif 'NO_ACTION' in next_result or 'MODAL_OPEN_NO_ACTION' in next_result:
+                            print("⚠️ Autopilot stuck, checking for form errors...")
+                            recovered = await self._attempt_form_recovery()
+                            if recovered:
+                                print("🛠️ Self-healing resolved form errors, resuming...")
+                                continue
+                                
                             print("⚠️ Exiting Autopilot...")
                             break
                         elif 'LINKEDIN_JOB_SKIPPED' in next_result:
@@ -4578,10 +4661,13 @@ class SentinelAgent:
                     for (const [key, val] of sortedPatterns) {{
                         const keyLower = key.toLowerCase();
                         if (qLower === keyLower) return val;
-                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
+                        if (qLower.includes(keyLower)) {{
+                            // Anti-collision for generic words
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
-                            bestMatch = val;
-                            bestKeyLen = key.length;
+                            if (key.length > bestKeyLen) {{
+                                bestMatch = val;
+                                bestKeyLen = key.length;
+                            }}
                         }}
                     }}
                     
@@ -4819,21 +4905,65 @@ class SentinelAgent:
                         // Helper: Check if a field is already filled
                         const isFieldPreFilled = (element) => {{
                             if (!element) return false;
-                            if (element.disabled || element.readOnly) return true;
+                            if (element.disabled) return true;
+                            // For checkboxes/radios, readOnly is not an applicable check for filled state
 
                             const tagName = element.tagName.toLowerCase();
                             const value = element.value ? element.value.trim() : "";
 
                             if (tagName === 'input' || tagName === 'textarea') {{
+                                // if it's radio or checkbox, it's prefilled if checked
+                                if (element.type === 'radio' || element.type === 'checkbox') return element.checked;
                                 return value.length > 0;
                             }}
 
                             if (tagName === 'select') {{
                                 // LinkedIn uses "Select an option" as placeholder.
-                                const isPlaceholder = !value || value === "" || value.toLowerCase().includes("select an option");
+                                const isPlaceholder = !value || value === "" || value.toLowerCase().includes("select an option") || element.options[element.selectedIndex]?.text.toLowerCase().includes("select");
                                 return !isPlaceholder;
                             }}
+                            
+                            // Custom elements with aria-valuenow or aria-checked
+                            if (element.hasAttribute('aria-valuenow')) {{
+                                return element.getAttribute('aria-valuenow').trim().length > 0;
+                            }}
+                            if (element.hasAttribute('aria-checked')) {{
+                                return element.getAttribute('aria-checked') === 'true';
+                            }}
+                            
                             return false;
+                        }};
+                        
+                        // Helper: Safely fill React controlled inputs
+                        const fillReactInput = (element, value) => {{
+                            if (!element) return false;
+                            const previousValue = element.value;
+                            
+                            // 1. Try React native setter
+                            try {{
+                                const proto = element.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+                                if (nativeSetter) {{
+                                    nativeSetter.call(element, value);
+                                }} else {{
+                                    element.value = value;
+                                }}
+                            }} catch(e) {{
+                                element.value = value;
+                            }}
+                            
+                            // 2. Dispatch events
+                            element.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            element.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            element.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                            
+                            // 3. Fallback for stubborn frameworks
+                            if (element.value !== value && Reflect.has(element, 'value')) {{
+                                Reflect.set(element, 'value', value);
+                                element.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            }}
+                            
+                            return element.value !== previousValue || element.value === value;
                         }};
 
                         // 0. FIRST: Check for visible autocomplete/typeahead dropdown options
@@ -4878,18 +5008,9 @@ class SentinelAgent:
                                     const currentVal = input.value;
                                     
                                     // Clear and re-type to trigger autocomplete dropdown
-                                    try {{
-                                        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                                        nativeSetter.call(input, '');
-                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        nativeSetter.call(input, currentVal);
-                                    }} catch(e) {{
-                                        input.value = '';
-                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        input.value = currentVal;
-                                    }}
+                                    fillReactInput(input, '');
+                                    fillReactInput(input, currentVal);
+                                    
                                     input.focus();
                                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('change', {{ bubbles: true }}));
@@ -4907,7 +5028,8 @@ class SentinelAgent:
                                                   input.getAttribute('inputmode') === 'numeric' ||
                                                   input.getAttribute('pattern')?.includes('\\d') ||
                                                   input.className?.toLowerCase().includes('number') ||
-                                                  input.className?.toLowerCase().includes('decimal');
+                                                  input.className?.toLowerCase().includes('decimal') ||
+                                                  (labelText && /how many years|total years|relevant experience|experience with|decimal number|numeric/i.test(labelText));
                             
                             if (labelText) {{
                                 let answer = fuzzyMatch(labelText);
@@ -4924,16 +5046,8 @@ class SentinelAgent:
                                 if (answer) {{
                                     console.log('Filling text field:', labelText, 'with:', answer);
                                     
-                                    // Try native setter for React-controlled inputs, fallback to direct assignment
-                                    try {{
-                                        const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
-                                        const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
-                                        nativeSetter.call(input, answer);
-                                    }} catch(e) {{
-                                        input.value = answer;
-                                    }}
-                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    fillReactInput(input, answer);
+                                    
                                     formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});
                                     
                                     // If this is a location field, trigger autocomplete
@@ -5284,6 +5398,12 @@ class SentinelAgent:
                                 questionText = firstRadio.getAttribute('aria-label');
                             }}
                             
+                            // Try to get text from name attribute if all else fails
+                            if (!questionText && name && !name.match(/^[0-9]+$/)) {{
+                                questionText = name.replace(/[_-]/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+                                console.log('Inferred question text from radio name:', questionText);
+                            }}
+                            
                             // Try to find answer for this question
                             if (questionText) {{
                                 const answer = fuzzyMatch(questionText);
@@ -5422,13 +5542,33 @@ class SentinelAgent:
                                                      lowerLabel.includes('i consent') ||
                                                      lowerLabel.includes('read and agree');
                             
-                            if (isConsentCheckbox) {{
-                                console.log('Checking consent/privacy checkbox:', labelText.substring(0, 50));
+                            let shouldCheck = isConsentCheckbox;
+                            
+                            // If it's not a consent checkbox, try to fuzzy match to see if it's a skill/tech question
+                            // where the UI is a list of checkboxes for skills (e.g. POSTGRES, Spring Boot)
+                            if (!shouldCheck && labelText) {{
+                                const skillMatch = fuzzyMatch(labelText);
+                                // Check if user has experience or positive response
+                                if (skillMatch && (
+                                    skillMatch.toLowerCase() === 'yes' || 
+                                    /^\d+/.test(skillMatch) || 
+                                    skillMatch.toLowerCase().includes('year') ||
+                                    skillMatch.toLowerCase().includes('month') ||
+                                    // if it's a known tech stack response string
+                                    skillMatch.toLowerCase().includes(labelText.toLowerCase())
+                                )) {{
+                                    shouldCheck = true;
+                                    console.log('Skill found for checkbox:', labelText, 'matched as:', skillMatch);
+                                }}
+                            }}
+                            
+                            if (shouldCheck) {{
+                                console.log('Checking checkbox:', labelText.substring(0, 50));
                                 checkbox.click();
                                 checkbox.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                 formResults.push({{ question: labelText, answer: 'Checked', inputType: 'checkbox' }});
                             }} else {{
-                                console.log('Skipping checkbox - not consent/privacy related:', labelText.substring(0, 50));
+                                console.log('Skipping checkbox - not consent/privacy related or no matching skill:', labelText.substring(0, 50));
                             }}
                         }}
                         

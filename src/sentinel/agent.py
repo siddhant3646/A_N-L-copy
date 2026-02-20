@@ -1233,6 +1233,7 @@ KNOWN_QA_PATTERNS = {
     'how many years of work experience do you have with soap': '4',
     'how many years of work experience do you have with xml': '4',
     'how many years of work experience do you have with json': '4',
+    'how many years of work experience do you have with problem solving': '4',
     
     # Format: "How many years into {tech}"
     'how many years into angular': '4',

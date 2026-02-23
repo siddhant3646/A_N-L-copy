@@ -173,6 +173,16 @@
             return data.numeric_default; // Return plain numbers: 13.5 or 20
         }
         
+        // For notice period fields, on LinkedIn return numeric value (30) for text inputs to avoid validation errors
+        if (category === 'notice_period') {
+            // For text/number inputs, return numeric value only
+            if (fieldType === 'text' || fieldType === 'number') {
+                return data.numeric_default || '30';
+            }
+            // For dropdowns/radios, return text value
+            return data.default;
+        }
+        
         // For education documents question, return Yes for dropdown
         if (category === 'education_degree' && (fieldType === 'select' || fieldType === 'dropdown')) {
             return 'Yes';

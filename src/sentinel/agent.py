@@ -3235,33 +3235,70 @@ class SentinelAgent:
                     
                     print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/3)...")
                     try:
-                        # Use Playwright locators for robust, shadow-aware selection with auto-waiting
-                        selectors = [
-                            '[role="option"]',
-                            '.artdeco-typeahead__result',
-                            '.basic-typeahead__selectable',
-                            'li[class*="typeahead"]',
-                            '[data-test-typeahead-item]'
-                        ]
+                        # Use aggressive JS to click dropdown option - keeps input focused while looking
+                        click_result = await self._page.evaluate("""() => {
+                            // Step 1: Keep finding and re-focusing the location input (Noida)
+                            const inputs = document.querySelectorAll('input[type="text"], textarea, input:not([type="hidden"])');
+                            let locationInput = null;
+                            for (const inp of inputs) {
+                                const val = inp.value || '';
+                                if (val.toLowerCase().includes('noida')) {
+                                    locationInput = inp;
+                                    break;
+                                }
+                            }
+                            
+                            if (locationInput) {
+                                console.log('Found Noida input, keeping focused...');
+                                locationInput.focus();
+                                locationInput.dispatchEvent(new Event('focus', { bubbles: true }));
+                                locationInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            
+                            // Step 2: Try all dropdown selectors with aggressive clicking
+                            const dropdownSelectors = [
+                                '.typeahead-input__dropdown-item',
+                                '[role="option"]',
+                                '.artdeco-typeahead__result',
+                                'li[class*="typeahead"]'
+                            ];
+                            
+                            let clickedAny = false;
+                            for (const selector of dropdownSelectors) {
+                                const options = document.querySelectorAll(selector);
+                                for (const option of options) {
+                                    // Check if option is visible and has content
+                                    if (option.offsetParent !== null) {
+                                        const text = (option.innerText || option.textContent || '').trim();
+                                        if (text && text.length > 0) {
+                                            console.log('Clicking option:', text);
+                                            option.scrollIntoView({block: 'nearest'});
+                                            // Try multiple click methods
+                                            option.click();
+                                            option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                            option.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                            clickedAny = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (clickedAny) break;
+                            }
+                            
+                            return clickedAny ? 'CLICKED' : 'NOT_FOUND';
+                        }""")
                         
-                        clicked = False
-                        for selector in selectors:
-                            locator = self._page.locator(selector).first
-                            if await locator.is_visible(timeout=2000):
-                                text = await locator.inner_text()
-                                print(f"   ✅ Found and clicking: {text.strip()}")
-                                await locator.click()
-                                clicked = True
-                                break
-                        
-                        if clicked:
+                        if click_result == 'CLICKED':
+                            print(f"   ✅ Dropdown option clicked")
                             self._location_retrigger_count = 0
                             await asyncio.sleep(1)
                         else:
                             print("   ⏳ Dropdown option not found/visible, will retry...")
-                            await asyncio.sleep(1)
+                            # Only wait 1-2 seconds instead of 4-8, so we can retry faster
+                            await asyncio.sleep(0.5)
                     except Exception as e:
                         print(f"   ⚠️ Error during selection: {e}")
+                        await asyncio.sleep(0.5)
                         await asyncio.sleep(1)
                     continue
                 
@@ -4970,7 +5007,7 @@ class SentinelAgent:
                         // LinkedIn renders these in portals outside the modal, so search entire document
                         // This MUST run before anything else to select from already-open dropdowns
                         {{
-                            const dropdownSelectors = '[role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable';
+                            const dropdownSelectors = '.typeahead-input__dropdown-item, [role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable';
                             const allDropdownOpts = document.querySelectorAll(dropdownSelectors);
                             console.log('Pre-check: scanning for visible autocomplete options:', allDropdownOpts.length);
                             
@@ -5050,11 +5087,17 @@ class SentinelAgent:
                                     
                                     formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});
                                     
-                                    // If this is a location field, trigger autocomplete
+                                    // If this is a location field, trigger autocomplete dropdown
                                     if (isLocationField) {{
                                         console.log('Location field filled — triggering autocomplete dropdown...');
                                         input.focus();
+                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                         input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                        input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'ArrowDown', bubbles: true }}));
+                                        
+                                        // Keep the input visible and focused for dropdown to appear
+                                        input.scrollIntoView({{block: 'center', behavior: 'instant'}});
+                                        
                                         return 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN';
                                     }}
                                 }}
@@ -5575,7 +5618,7 @@ class SentinelAgent:
                         // 3.5 Check for any visible autocomplete dropdown options (post-fill catch)
                         // This handles cases where filling a field triggered a dropdown that needs selection
                         {{
-                            const dropdownSelectors = '[role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable, .artdeco-typeahead__results-list li';
+                            const dropdownSelectors = '.typeahead-input__dropdown-item, [role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable, .artdeco-typeahead__results-list li';
                             const postFillOptions = document.querySelectorAll(dropdownSelectors);
                             for (const option of postFillOptions) {{
                                 if (option.offsetParent !== null) {{

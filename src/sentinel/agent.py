@@ -3224,21 +3224,132 @@ class SentinelAgent:
                     retrigger_count = getattr(self, '_location_retrigger_count', 0) + 1
                     self._location_retrigger_count = retrigger_count
                     
-                    if retrigger_count > 3:
-                        print(f"⚠️ Location autocomplete failed after {retrigger_count} attempts, forcing Next...")
+                    if retrigger_count > 2:
+                        print(f"⚠️ Location dropdown not appearing after {retrigger_count} attempts. Trying fallback strategies...")
                         self._location_retrigger_count = 0
+                        
+                        # Strategy 1: Try clearing the location field entirely and see if that allows progress
+                        print("   📝 Strategy 1: Clearing location field...")
                         try:
-                            await self._page.locator('.artdeco-modal--is-open button:has-text("Next"), .jobs-easy-apply-modal button:has-text("Next")').first.click(timeout=2000)
-                        except Exception:
-                            pass
+                            clear_result = await self._page.evaluate("""() => {
+                                const inputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type="hidden"])');
+                                let locationInput = null;
+                                for (const inp of inputs) {
+                                    const val = inp.value || '';
+                                    if (val.toLowerCase().includes('noida')) {
+                                        locationInput = inp;
+                                        break;
+                                    }
+                                }
+                                
+                                if (locationInput) {
+                                    // Clear the field completely
+                                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                    nativeInputValueSetter.call(locationInput, '');
+                                    locationInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    locationInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    locationInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    console.log('Location field cleared');
+                                    return 'CLEARED';
+                                }
+                                return 'NOT_FOUND';
+                            }""")
+                            await asyncio.sleep(0.5)
+                        except Exception as e:
+                            print(f"   ⚠️ Clear failed: {e}")
+                        
+                        # Strategy 2: Force click the Next button even with empty/invalid location
+                        print("   🔘 Strategy 2: Force-clicking Next button...")
+                        try:
+                            # Use Playwright's click which is more reliable
+                            next_buttons = await self._page.locator('button:has-text("Next"), button:has-text("Continue"), button[aria-label*="Next"]').all()
+                            clicked = False
+                            for btn in next_buttons:
+                                try:
+                                    await btn.click(timeout=1000)
+                                    print("   ✅ Next button clicked via locator")
+                                    clicked = True
+                                    break
+                                except:
+                                    pass
+                            
+                            if not clicked:
+                                # Fallback to JavaScript click
+                                await self._page.evaluate("""() => {
+                                    const buttons = document.querySelectorAll('button');
+                                    for (const btn of buttons) {
+                                        const text = btn.innerText.toLowerCase();
+                                        if ((text.includes('next') || text.includes('continue')) && btn.offsetParent !== null) {
+                                            console.log('Force clicking button:', btn.innerText);
+                                            btn.click();
+                                            btn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                            btn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                            btn.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                                            return 'CLICKED';
+                                        }
+                                    }
+                                    return 'NOT_FOUND';
+                                }""")
+                                print("   ✅ Next button clicked via JavaScript")
+                            
+                            await asyncio.sleep(1)
+                        except Exception as e:
+                            print(f"   ⚠️ Force click failed: {e}")
+                        
                         continue
                     
                     print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/3)...")
                     try:
-                        # Use aggressive JS to click dropdown option - keeps input focused while looking
-                        click_result = await self._page.evaluate("""() => {
-                            // Step 1: Keep finding and re-focusing the location input (Noida)
-                            const inputs = document.querySelectorAll('input[type="text"], textarea, input:not([type="hidden"])');
+                        # Get diagnostic info about what's in the DOM
+                        diagnostics = await self._page.evaluate("""() => {
+                            const modal = document.querySelector('.jobs-easy-apply-modal, .artdeco-modal--is-open');
+                            if (!modal) return { error: 'No modal found' };
+                            
+                            // Find the Noida input
+                            const inputs = modal.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                            let noIdaInput = null;
+                            for (const inp of inputs) {
+                                if ((inp.value || '').includes('Noida')) {
+                                    noIdaInput = inp;
+                                    break;
+                                }
+                            }
+                            
+                            if (!noIdaInput) return { error: 'Noida input not found' };
+                            
+                            // Look for dropdown-related elements
+                            const dropdownLists = modal.querySelectorAll('[role="listbox"], .typeahead-input__dropdown-list, .artdeco-typeahead__results-list, [data-test-typeahead-results]');
+                            const dropdownItems = modal.querySelectorAll('[role="option"], .typeahead-input__dropdown-item, .artdeco-typeahead__result');
+                            
+                            // Look for any select elements
+                            const selects = modal.querySelectorAll('select');
+                            const selectOptions = selects.length > 0 ? Array.from(selects[0].querySelectorAll('option')).map(o => o.text) : [];
+                            
+                            // Look for buttons near the input
+                            const inputContainer = noIdaInput.closest('.fb-dash-form-element') || noIdaInput.parentElement;
+                            const buttonsNear = inputContainer ? inputContainer.querySelectorAll('button') : [];
+                            
+                            return {
+                                inputId: noIdaInput.id,
+                                inputValue: noIdaInput.value,
+                                dropdownListsFound: dropdownLists.length,
+                                dropdownItemsFound: dropdownItems.length,
+                                selectsFound: selects.length,
+                                selectOptions: selectOptions,
+                                buttonsNear: Array.from(buttonsNear).map(b => b.innerText),
+                                inputParentClass: inputContainer?.className
+                            };
+                        }""")
+                        
+                        print(f"   📋 Diagnostics: {diagnostics}")
+                        
+                        if diagnostics.get('error'):
+                            print(f"   ⚠️ {diagnostics['error']}")
+                        
+                        # Try strategy 1: Keyboard navigation (ArrowDown to select first option)
+                        print("   ↓ Trying keyboard navigation...")
+                        keyboard_result = await self._page.evaluate("""() => {
+                            const inputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type="hidden"])');
                             let locationInput = null;
                             for (const inp of inputs) {
                                 const val = inp.value || '';
@@ -3249,40 +3360,89 @@ class SentinelAgent:
                             }
                             
                             if (locationInput) {
-                                console.log('Found Noida input, keeping focused...');
                                 locationInput.focus();
-                                locationInput.dispatchEvent(new Event('focus', { bubbles: true }));
-                                locationInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                // Try ArrowDown to open dropdown
+                                locationInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
+                                locationInput.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
+                                // Wait briefly then try another ArrowDown to select first option
+                                return 'ARROW_DOWN_SENT';
                             }
+                            return 'NOT_FOUND';
+                        }""")
+                        
+                        # Wait for potential dropdown to open
+                        await asyncio.sleep(0.4)
+                        
+                        # Step 2: Try to find and click dropdown option
+                        click_result = await self._page.evaluate("""() => {
+                            // First check if there are ANY visible elements that might be dropdown items
+                            const allDivs = document.querySelectorAll('[role="option"], li, div[class*="dropdown"], div[class*="option"], span[class*="option"]');
+                            console.log('Total potential dropdown elements:', allDivs.length);
                             
-                            // Step 2: Try all dropdown selectors with aggressive clicking
+                            // Try all dropdown selectors with aggressive clicking
                             const dropdownSelectors = [
-                                '.typeahead-input__dropdown-item',
+                                // Pismo-specific selectors (what we see in your form)
+                                'div[class*="typeahead"] [role="option"]',
+                                'div[class*="search-vertical"] [role="option"]',
+                                '.gqueried-content [role="option"]',
                                 '[role="option"]',
+                                
+                                // LinkedIn-specific selectors
+                                '.typeahead-input__dropdown-item',
+                                '.typeahead-input__dropdown-list li',
+                                '[role="listbox"] [role="option"]',
                                 '.artdeco-typeahead__result',
-                                'li[class*="typeahead"]'
+                                'li[class*="typeahead"]',
+                                'div[class*="dropdown"] li',
+                                'div[class*="option"] li'
                             ];
                             
                             let clickedAny = false;
                             for (const selector of dropdownSelectors) {
                                 const options = document.querySelectorAll(selector);
+                                console.log('Checking selector:', selector, '- found:', options.length);
                                 for (const option of options) {
                                     // Check if option is visible and has content
                                     if (option.offsetParent !== null) {
                                         const text = (option.innerText || option.textContent || '').trim();
-                                        if (text && text.length > 0) {
-                                            console.log('Clicking option:', text);
+                                        if (text && text.toLowerCase().includes('noida')) {
+                                            console.log('Found Noida option, clicking:', text);
                                             option.scrollIntoView({block: 'nearest'});
-                                            // Try multiple click methods
                                             option.click();
                                             option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
                                             option.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                            option.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                            option.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
                                             clickedAny = true;
                                             break;
                                         }
                                     }
                                 }
                                 if (clickedAny) break;
+                            }
+                            
+                            if (!clickedAny) {
+                                // Try clicking any visible option as fallback
+                                for (const selector of dropdownSelectors) {
+                                    const options = document.querySelectorAll(selector);
+                                    for (const option of options) {
+                                        if (option.offsetParent !== null) {
+                                            const text = (option.innerText || option.textContent || '').trim();
+                                            if (text && text.length > 0 && !text.includes('select') && !text.includes('choose')) {
+                                                console.log('Fallback: clicking first visible option:', text);
+                                                option.scrollIntoView({block: 'nearest'});
+                                                option.click();
+                                                option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                                option.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                                option.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                                option.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                                clickedAny = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (clickedAny) break;
+                                }
                             }
                             
                             return clickedAny ? 'CLICKED' : 'NOT_FOUND';
@@ -3293,13 +3453,33 @@ class SentinelAgent:
                             self._location_retrigger_count = 0
                             await asyncio.sleep(1)
                         else:
-                            print("   ⏳ Dropdown option not found/visible, will retry...")
-                            # Only wait 1-2 seconds instead of 4-8, so we can retry faster
-                            await asyncio.sleep(0.5)
+                            # Fallback: Try using Playwright's locator to find and click the option
+                            print("   📍 JavaScript click didn't work, trying Playwright locator...")
+                            try:
+                                # Try to find and click any option containing "Noida"
+                                option_locator = self._page.locator('[role="option"]:has-text("Noida")')
+                                if await option_locator.count() > 0:
+                                    await option_locator.first.click(timeout=2000)
+                                    print("   ✅ Clicked option via Playwright locator")
+                                    self._location_retrigger_count = 0
+                                    await asyncio.sleep(1)
+                                else:
+                                    # Try clicking any visible option
+                                    any_option = self._page.locator('[role="option"]')
+                                    if await any_option.count() > 0:
+                                        await any_option.first.click(timeout=2000)
+                                        print("   ✅ Clicked first option via Playwright")
+                                        self._location_retrigger_count = 0
+                                        await asyncio.sleep(1)
+                                    else:
+                                        print("   ⏳ No options found via Playwright either, will retry...")
+                                        await asyncio.sleep(0.5)
+                            except Exception as e:
+                                print(f"   ⚠️ Playwright click failed: {e}")
+                                await asyncio.sleep(0.5)
                     except Exception as e:
                         print(f"   ⚠️ Error during selection: {e}")
                         await asyncio.sleep(0.5)
-                        await asyncio.sleep(1)
                     continue
                 
                 # LinkedIn: First job opened (when no currentJobId in URL)
@@ -5044,14 +5224,17 @@ class SentinelAgent:
                                     console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
                                     const currentVal = input.value;
                                     
-                                    // Clear and re-type to trigger autocomplete dropdown
-                                    fillReactInput(input, '');
-                                    fillReactInput(input, currentVal);
+                                    // Try a different strategy: click the input field multiple times to open dropdown
+                                    input.click();
                                     
+                                    // Dispatch multiple events to trigger dropdown
                                     input.focus();
+                                    input.dispatchEvent(new Event('click', {{ bubbles: true }}));
+                                    input.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                    input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }}));
+                                    input.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }}));
                                     
                                     return 'LINKEDIN_LOCATION_RETRIGGERED';
                                 }}

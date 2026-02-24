@@ -3,6 +3,7 @@ import json
 import random
 import os
 import hashlib
+import re
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from typing import Optional, Dict, List, Tuple, Any
@@ -201,6 +202,56 @@ KNOWN_QA_PATTERNS = {
     'university name': 'VIT Bhopal University',
     'institute': 'VIT Bhopal University',
     'institute name': 'VIT Bhopal University',
+    # Compliance - Employment History (All should be "No" unless explicitly true)
+    'worked with visa in the past 2 years': 'No',
+    'worked with visa in the last 2 years': 'No',
+    'worked for visa in the past 2 years': 'No',
+    'worked for visa in the last 2 years': 'No',
+    'employed by visa in the past 2 years': 'No',
+    'employed by visa in the last 2 years': 'No',
+    'have you worked with visa': 'No',
+    'have you worked for visa': 'No',
+    'have you been employed by visa': 'No',
+    'have you ever worked for visa': 'No',
+    'have you ever worked with visa': 'No',
+    'have you ever been employed by visa': 'No',
+    'worked at visa': 'No',
+    'employed at visa': 'No',
+    'previous employment with visa': 'No',
+    # Current employer (Fiserv) - should be "Yes"
+    'worked with fiserv': 'Yes',
+    'worked for fiserv': 'Yes',
+    'worked at fiserv': 'Yes',
+    'employed by fiserv': 'Yes',
+    'employed at fiserv': 'Yes',
+    'have you worked with fiserv': 'Yes',
+    'have you worked for fiserv': 'Yes',
+    'have you worked at fiserv': 'Yes',
+    'have you been employed by fiserv': 'Yes',
+    'have you ever worked for fiserv': 'Yes',
+    'have you ever worked with fiserv': 'Yes',
+    'are you currently employed by fiserv': 'Yes',
+    'currently employed by fiserv': 'Yes',
+    # General Compliance - All "No" by default for safety
+    'have you worked with any of the following companies in the past 2 years': 'No',
+    'have you worked with any of these companies': 'No',
+    'have you been employed by any of the listed companies': 'No',
+    'have you previously worked for': 'No',
+    'have you ever been employed by any of the': 'No',
+    'currently employed by any of the': 'No',
+    'currently an employee of any': 'No',
+    'do you have any relatives working': 'No',
+    'do you have any family members employed': 'No',
+    'do any of your relatives work': 'No',
+    'conflict of interest': 'No',
+    'any conflict of interest': 'No',
+    'affiliated with any competitor': 'No',
+    'associated with any competing firm': 'No',
+    # Third-party/Contractor compliance
+    'are you a third party': 'No',
+    'are you currently a third party': 'No',
+    'are you a temporary employee': 'No',
+    'are you currently a temporary employee': 'No',
     # Links
     'linkedin url': 'https://www.linkedin.com/in/siddhant3646',
     'github url': 'https://github.com/siddhant3646',
@@ -1807,6 +1858,71 @@ class SentinelAgent:
         # Country/State questions
         country_keywords = ['country you currently', 'which country', 'country currently', 'state you', 'which state']
         is_country_question = any(kw in question_lower for kw in country_keywords)
+        
+        # ==========================================
+        # COMPLIANCE & EMPLOYMENT HISTORY DETECTION
+        # These questions MUST return "No" for compliance safety
+        # ==========================================
+        
+        # Pattern 1: "Have you worked with/at/for [Company]" - Most common Workday pattern
+        worked_with_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)"
+        worked_with_match = re.search(worked_with_company_pattern, question_lower)
+        if worked_with_match:
+            company = worked_with_match.group(1).lower()
+            # Only answer "Yes" for current employer, "No" for all others
+            if company == 'fiserv':
+                return 'Yes', 0.98
+            return 'No', 0.98
+        
+        # Pattern 2: "Have you worked with [Company] in the past X years"
+        past_years_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)\s+(?:in\s+the\s+)?(?:past|last)\s+(\d+)"
+        past_years_match = re.search(past_years_pattern, question_lower)
+        if past_years_match:
+            company = past_years_match.group(1).lower()
+            if company == 'fiserv':
+                return 'Yes', 0.98
+            return 'No', 0.98
+        
+        # Pattern 3: "Have you worked with Visa" or similar specific company questions
+        specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+in\s+the\s+)?"
+        specific_company_match = re.search(specific_company_pattern, question_lower)
+        if specific_company_match:
+            company = specific_company_match.group(1).lower()
+            if company == 'fiserv':
+                return 'Yes', 0.98
+            # For Visa and other companies, return "No"
+            return 'No', 0.98
+        
+        # Pattern 4: "Currently employed by any of the" - blanket No
+        currently_employed_pattern = r"currently\s+(?:employed|an\s+employee)\s+(?:by|at|of)\s+(?:any|any\s+of\s+the)"
+        if re.search(currently_employed_pattern, question_lower):
+            return 'No', 0.98
+        
+        # Pattern 5: "Ever been employed by" or "Previously employed by"
+        ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed)\s+(?:by|at|with)"
+        if re.search(ever_employed_pattern, question_lower):
+            # Check if it's asking about Fiserv specifically
+            if 'fiserv' in question_lower:
+                return 'Yes', 0.98
+            return 'No', 0.98
+        
+        # Pattern 6: "Conflict of interest" or "Family member" questions
+        conflict_keywords = ['conflict of interest', 'close relative', 'family member', 
+                            'relative working', 'family in company', 'relatives in company']
+        is_conflict_question = any(kw in question_lower for kw in conflict_keywords)
+        if is_conflict_question:
+            return 'No', 0.98
+        
+        # Pattern 7: "Worked with" + any company name not in whitelist
+        # This catches variations like "worked with Navan", "worked for Reed", etc.
+        generic_worked_pattern = r"worked\s+(?:with|for|at)\s+(visa|navan|reed|nielsen|mastercard|amex|american\s+express|paypal|stripe)"
+        if re.search(generic_worked_pattern, question_lower):
+            return 'No', 0.98
+        
+        # Pattern 8: Company list questions like "Have you worked with any of the following"
+        company_list_pattern = r"(?:have\s+you|do\s+you)\s+(?:worked|been)\s+(?:with|for|at|employed)\s+(?:with|for|at)?\s+(?:any\s+of\s+the|any\s+of\s+these|any\s+of\s+the\s+following)"
+        if re.search(company_list_pattern, question_lower):
+            return 'No', 0.98
         
         # Notice period for current company in days - HIGH PRIORITY to avoid matching company name
         if 'notice period' in question_lower and 'company' in question_lower and ('days' in question_lower or 'in days' in question_lower):

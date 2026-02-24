@@ -580,14 +580,59 @@ class QuestionClassifier:
     
     def _get_yes_no_answer(self, question: str) -> str:
         """Get yes/no answer with context awareness."""
-        # Questions that should be "No"
+        question_lower = question.lower()
+        
+        # Questions that should be "No" - compliance and conflict of interest questions
         negative_indicators = [
+            # Visa/Sponsorship
             "sponsorship", "referral", "referred", "registered", 
-            "medical condition", "disability", "criminal"
+            "medical condition", "disability", "criminal",
+            # Employment history with specific companies (Workday compliance)
+            "worked with visa", "worked for visa", "employed by visa",
+            "worked with navan", "worked for navan", "employed by navan",
+            "worked with reed", "worked for reed", "employed by reed",
+            "worked with nielsen", "worked for nielsen", "employed by nielsen",
+            "worked at visa", "worked at navan", "worked at reed", "worked at nielsen",
+            "have you worked", "have you ever worked", "previously employed",
+            "currently employed by", "currently an employee of", 
+            "ever been employed", "employed by any of the",
+            # Conflict of interest
+            "conflict of interest", "close relative", "family member",
+            "relative working", "family in company", "relatives in",
+            # Affiliation
+            "affiliated", "associated with", "connected to",
+            # Third party / Contractor
+            "third party", "temporary employee", "contractor for",
+            # Competitor questions
+            "competitor", "competing firm",
         ]
         
+        # Check for company-specific compliance patterns
+        # Pattern: "worked with/at/for [Company]" or similar
+        company_compliance_patterns = [
+            r"worked\s+(?:with|for|at|in)\s+\w+",
+            r"employed\s+(?:by|at|with)\s+\w+",
+            r"have\s+you\s+ever\s+worked",
+            r"have\s+you\s+worked",
+            r"previously\s+employed",
+            r"currently\s+employed\s+(?:by|at)",
+            r"(?:relative|family)\s+(?:working|employed)",
+            r"(?:conflict|competing)"
+        ]
+        
+        # Check negative indicators first
         for indicator in negative_indicators:
-            if indicator in question:
+            if indicator in question_lower:
+                return "No"
+        
+        # Check for employment history compliance questions using regex
+        import re
+        for pattern in company_compliance_patterns:
+            if re.search(pattern, question_lower):
+                # Additional check: if it's asking about current company (Fiserv), answer truthfully
+                if "fiserv" in question_lower:
+                    return "Yes"
+                # For all other companies, default to "No" (compliance safe answer)
                 return "No"
         
         return "Yes"

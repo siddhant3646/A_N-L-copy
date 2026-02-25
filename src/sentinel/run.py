@@ -52,12 +52,13 @@ class Browser:
     ]
     
     async def start(self):
-        # Fix EPERM/Socket issues by forcing a unique system-standard TMPDIR
         import os
-        import tempfile
-        local_tmp = tempfile.mkdtemp(prefix="sentinel_")
+        local_tmp = "/tmp/sentinel"
+        os.makedirs(local_tmp, exist_ok=True)
         os.environ["TMPDIR"] = local_tmp
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.abspath(os.path.join(os.getcwd(), "pw_browsers"))
         print(f"🔧 Set TMPDIR to: {local_tmp}")
+
 
         self.playwright = await async_playwright().start()
         args = [
@@ -67,7 +68,9 @@ class Browser:
             '--disable-session-crashed-bubble',
             '--no-restore-session-state',
             '--ignore-certificate-errors',  # Fixes ERR_SSL_VERSION_OR_CIPHER_MISMATCH on some sites
-            '--ignore-ssl-errors'  # Additional SSL error suppression
+            '--ignore-ssl-errors',  # Additional SSL error suppression
+            '--disable-crash-reporter',
+            '--disable-crashpad-for-testing'
         ]
         
         final_user_data_dir = self.user_data_dir
@@ -81,7 +84,10 @@ class Browser:
             
             # Create a local profiles dir to minimize path length and avoid EPERM
             # Use a very short absolute path to avoid macOS socket length limits (104 chars)
-            temp_dir = os.path.abspath(os.path.join(os.getcwd(), "p"))
+            import random
+            import string
+            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+            temp_dir = os.path.abspath(os.path.join(os.getcwd(), f"p_{suffix}"))
             os.makedirs(temp_dir, exist_ok=True)
             
             # CLEANUP LOCKS in the destination to prevent ProcessSingleton errors
@@ -121,11 +127,11 @@ class Browser:
                     
                     shutil.copytree(src_default, dst_default, dirs_exist_ok=True, ignore=ignore_cache)
                     
-                    # Also copy 'Local State' from root
-                    local_state_src = os.path.join(self.user_data_dir, "Local State")
-                    if os.path.exists(local_state_src):
-                        shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
-                        print("  📁 Copied: Local State")
+                    # DO NOT copy 'Local State' from root - it contains hardcoded paths to original directory
+                    # local_state_src = os.path.join(self.user_data_dir, "Local State")
+                    # if os.path.exists(local_state_src):
+                    #    shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
+                    #    print("  📁 Copied: Local State")
                         
                     final_user_data_dir = temp_dir
                     print("✅ Profile refreshed successfully")
@@ -299,11 +305,8 @@ async def main():
             
             # Init Browser for THIS task (Fresh instance)
             browser = Browser(
-                executable_path=CHROME_EXECUTABLE_PATH,
                 headless=False,
-                disable_security=True,
                 user_data_dir=CHROME_USER_DATA,
-                keep_alive=True
             )
             
             # Create Agent for THIS task

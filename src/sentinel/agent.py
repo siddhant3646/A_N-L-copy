@@ -5211,8 +5211,8 @@ class SentinelAgent:
                     // Helper: Find Easy Apply button on job details page
                     const findEasyApplyButton = () => {{
                         console.log('Looking for Easy Apply button...');
-                        // 1. By class
-                        let btn = queryDeep('button.jobs-apply-button');
+                        // 1. By class and id
+                        let btn = queryDeep('button.jobs-apply-button') || queryDeep('#jobs-apply-button-id');
                         if (btn) return btn;
                         
                         // 2. By aria-label (found during inspection)
@@ -5220,7 +5220,7 @@ class SentinelAgent:
                         if (btn) return btn;
                         
                         // 3. By data-view-name
-                        btn = queryDeep('a[data-view-name="job-apply-button"], button[data-view-name="job-apply-button"]');
+                        btn = queryDeep('a[data-view-name="job-apply-button"], button[data-view-name="job-apply-button"], button.top-card-layout__cta--primary');
                         if (btn) return btn;
 
                         // 4. By text search
@@ -6082,10 +6082,12 @@ class SentinelAgent:
                     // Priority 1: .jobs-search-results-list (standard)
                     // Priority 2: div[scrollable="true"] on the left side
                     // Priority 3: Geometry-based fallback (widest scrollable div on the left half)
-                    let sidebar = document.querySelector('.jobs-search-results-list');
+                    let sidebar = queryDeep('.scaffold-layout__list') || 
+                                  queryDeep('.jobs-search-results-list') ||
+                                  queryDeep('div[scrollable="true"] > ul');
                     
                     if (!sidebar) {{
-                         const scrollables = Array.from(document.querySelectorAll('div[scrollable="true"]'));
+                         const scrollables = Array.from(queryAllDeep('div[scrollable="true"], .jobs-search-results-list, .scaffold-layout__list'));
                          // Find the one that is on the left side and has decent height
                          sidebar = scrollables.find(el => {{
                              const rect = el.getBoundingClientRect();
@@ -6096,7 +6098,7 @@ class SentinelAgent:
                     if (!sidebar) {{
                          console.log('Sidebar not found by selector, trying geometry...');
                          // Find any div that is scrollable and on the left
-                         const allDivs = document.querySelectorAll('div');
+                         const allDivs = queryAllDeep('div');
                          for (const div of allDivs) {{
                              const rect = div.getBoundingClientRect();
                              if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
@@ -6116,11 +6118,11 @@ class SentinelAgent:
 
                     // Find job cards within the sidebar
                     // Valid cards have data-occludable-job-id or data-job-id
-                    let jobCards = Array.from(sidebar.querySelectorAll('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item'));
+                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item, .scaffold-layout__list-item, .job-card-container', sidebar));
                     
                     // Fallback to role="button" logic
                     if (jobCards.length === 0) {{
-                        jobCards = Array.from(sidebar.querySelectorAll('div[role="button"]')).filter(el => 
+                        jobCards = Array.from(queryAllDeep('div[role="button"]', sidebar)).filter(el => 
                             el.innerText.includes('\\n') && el.innerText.length > 50 
                         );
                     }}

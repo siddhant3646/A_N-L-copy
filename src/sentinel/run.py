@@ -53,12 +53,10 @@ class Browser:
     
     async def start(self):
         import os
-        local_tmp = "/tmp/sentinel"
-        os.makedirs(local_tmp, exist_ok=True)
+        import tempfile
+        local_tmp = tempfile.mkdtemp(prefix="sentinel_")
         os.environ["TMPDIR"] = local_tmp
-        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.abspath(os.path.join(os.getcwd(), "pw_browsers"))
         print(f"🔧 Set TMPDIR to: {local_tmp}")
-
 
         self.playwright = await async_playwright().start()
         args = [
@@ -67,31 +65,19 @@ class Browser:
             '--start-maximized',
             '--disable-session-crashed-bubble',
             '--no-restore-session-state',
-            '--ignore-certificate-errors',  # Fixes ERR_SSL_VERSION_OR_CIPHER_MISMATCH on some sites
-            '--ignore-ssl-errors',  # Additional SSL error suppression
-            '--disable-crash-reporter',
-            '--disable-crashpad-for-testing'
+            '--ignore-certificate-errors',
+            '--ignore-ssl-errors'
         ]
         
         final_user_data_dir = self.user_data_dir
         
-        final_user_data_dir = self.user_data_dir
-        
-        # Profile Seeding (Copying) Logic
         if self.user_data_dir:
             import shutil
-            import os
+            import glob
             
-            # Create a local profiles dir to minimize path length and avoid EPERM
-            # Use a very short absolute path to avoid macOS socket length limits (104 chars)
-            import random
-            import string
-            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
-            temp_dir = os.path.abspath(os.path.join(os.getcwd(), f"p_{suffix}"))
+            temp_dir = os.path.abspath(os.path.join(os.getcwd(), "p"))
             os.makedirs(temp_dir, exist_ok=True)
             
-            # CLEANUP LOCKS in the destination to prevent ProcessSingleton errors
-            import glob
             for pattern in ["Singleton*", "lock", ".parentlock"]:
                 for stale_file in glob.glob(os.path.join(temp_dir, pattern)):
                     try:
@@ -100,38 +86,29 @@ class Browser:
                     except:
                         pass
             
-            # FORCE FRESH COPY FROM SOURCE EVERY TIME
-            # This ensures we pick up the latest login session from the seeded profile
             print(f"🔄 Refreshing profile copy at: {temp_dir}")
             
-            # Source paths
             src_default = os.path.join(self.user_data_dir, "Default")
             dst_default = os.path.join(temp_dir, "Default")
             
             if os.path.exists(src_default):
                 try:
-                    # Remove existing copy if present
                     if os.path.exists(dst_default):
-                         # Force delete, ignoring errors (like .DS_Store permissions)
-                         shutil.rmtree(dst_default, ignore_errors=True)
+                        shutil.rmtree(dst_default, ignore_errors=True)
                     
-                    # Create destination (if rmtree failed to fully delete, this might be no-op or partial)
                     os.makedirs(dst_default, exist_ok=True)
                     print(f"  ⚡ Mirroring full profile (excluding Cache)...")
                     
-                    # Use rsync-like logic or just shutil.copytree with ignore
                     def ignore_cache(path, names):
-                        # Cache files and locks often cause EPERM/IO issues.
                         ignored_patterns = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Singleton', 'lock', '.parentlock']
                         return [n for n in names if any(p in n for p in ignored_patterns)]
                     
                     shutil.copytree(src_default, dst_default, dirs_exist_ok=True, ignore=ignore_cache)
                     
-                    # DO NOT copy 'Local State' from root - it contains hardcoded paths to original directory
-                    # local_state_src = os.path.join(self.user_data_dir, "Local State")
-                    # if os.path.exists(local_state_src):
-                    #    shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
-                    #    print("  📁 Copied: Local State")
+                    local_state_src = os.path.join(self.user_data_dir, "Local State")
+                    if os.path.exists(local_state_src):
+                        shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
+                        print("  📁 Copied: Local State")
                         
                     final_user_data_dir = temp_dir
                     print("✅ Profile refreshed successfully")
@@ -139,16 +116,11 @@ class Browser:
                     print(f"❌ Profile Mirror Failure: {e}")
                     final_user_data_dir = self.user_data_dir
             else:
-                 print(f"⚠️ Source profile not found at {src_default}")
-                 final_user_data_dir = None
-
+                print(f"⚠️ Source profile not found at {src_default}")
+                final_user_data_dir = None
         else:
-             # Force fresh profile if copying is disabled
-             final_user_data_dir = None
-             
-        # FORCE CLEANUP OF crashpad settings if they exist in destination (fixes EPERM)
-        # Actually this is hard because EPERM was on SOURCE. But let's leave it.
-        
+            final_user_data_dir = None
+            
         if final_user_data_dir:
             print(f"🚀 Launching with User Data: {final_user_data_dir}")
             try:
@@ -170,12 +142,12 @@ class Browser:
                 )
                 self.context = await self.browser.new_context()
         else:
-             self.browser = await self.playwright.chromium.launch(
+            self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
                 headless=self.headless,
                 args=args
-             )
-             self.context = await self.browser.new_context()
+            )
+            self.context = await self.browser.new_context()
 
     async def get_current_page(self):
         if self.context and self.context.pages:
@@ -369,13 +341,16 @@ async def main():
                     
             except KeyboardInterrupt:
                 print("\n🛑 Stopped by User (Ctrl+C)")
-                await browser.stop()
+                # Keep browser open for debugging
+                await asyncio.sleep(999999)
                 return  # Exit the entire program
             except Exception as e:
                 print(f"\n❌ Fatal Error in '{task_name}': {e}")
+                # Keep browser open for debugging
+                await asyncio.sleep(999999)
             finally:
-                print(f"🔒 Closing Session for '{task_name}'...")
-                await browser.stop()
+                print(f"🔒 Leaving Session open for debugging '{task_name}'...")
+                # await browser.stop()
                 await asyncio.sleep(2)  # Cooldown between tasks
         
         # Cycle complete - run INTERSESSION task during wait period

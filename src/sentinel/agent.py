@@ -35,6 +35,7 @@ KNOWN_QA_PATTERNS = {
     'years of experience': '3.8 Years',
     'months of experience': '46',
     'total experience': '3.8 Years',
+    'total exp': '4 Years',
     'overall experience': '3.8 Years',
     'year of exp': '3.8 Years',
     # Experience Range Questions - map to appropriate radio button ranges
@@ -43,6 +44,9 @@ KNOWN_QA_PATTERNS = {
     'java experience': '3.8 Years',
     'react experience': '4 Years',
     'angular experience': '4 Years',
+    'exp in angular': '4 Years',
+    'exp in react': '4 Years',
+    'exp in angular or react': '4 Years',
     'nodejs experience': '3.8 Years',
     'javascript experience': '3.8 Years',
     'ci/cd experience': '3.8 Years',
@@ -4919,13 +4923,15 @@ class SentinelAgent:
                         'experience', 'years', 'java experience', 'react experience', 'angular experience',
                         'nodejs experience', 'javascript experience', 'ci/cd experience', 'full stack experience',
                         'backend experience', 'frontend experience', 'software experience', 'web experience',
-                        'python experience', 'programming experience'
+                        'python experience', 'programming experience', 'exp in angular', 'exp in react',
+                        'total exp in angular', 'total exp in react', 'total exp in angular or react',
+                        'total exp', 'exp in angular or react'
                     ];
                     expKeys.forEach(k => {{
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
+                        KNOWN_PATTERNS[k] = '4';
                     }});
                     
-                    // Override salary/CTC to numeric values for LinkedIn text inputs
+                    // Override salary/CTC to INR values for LinkedIn
                     const salaryKeys = [
                         'salary range', 'current salary range', 'expected salary range', 
                         'annual salary', 'ctc range', 'current ctc', 'expected ctc',
@@ -4939,11 +4945,11 @@ class SentinelAgent:
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
-                            // Use plain numeric values (13.5, 20) for LinkedIn text inputs - NOT full INR values
+                            // Use INR values for LinkedIn
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '13.5';
+                                KNOWN_PATTERNS[k] = '1350000';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '20';
+                                KNOWN_PATTERNS[k] = '2000000';
                             }}
                         }}
                     }});

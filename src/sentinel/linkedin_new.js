@@ -16,20 +16,20 @@
     // QA Patterns for question answering
     const QA_PATTERNS = {
         experience: {
-            patterns: ['years of experience', 'months of experience', 'total experience', 'overall experience', 'year of exp', 'total exp', 'your total exp', 'what is your total exp', 'experience in your chosen engineering field', 'years of work experience do you have', 'work experience'],
+            patterns: ['years of experience', 'months of experience', 'total experience', 'overall experience', 'year of exp', 'total exp', 'your total exp', 'what is your total exp', 'experience in your chosen engineering field', 'years of work experience do you have', 'work experience', 'exp in angular', 'exp in react', 'angular or react'],
             linkedin_default: '4',
-            default: '3.8 Years'
+            default: '4 Years'
         },
         current_salary: {
             patterns: ['current salary', 'what is your current salary', 'current ctc', 'current annual ctc', 'monthly salary', 'current ctc in lakhs', 'current ctc in lpa', 'current ctc [in lpa]', 'ctc in lacs per annum', 'cctc', 'what is your cctc', 'your cctc', 'your current ctc', 'what is your current ctc'],
             default: '13.5 LPA',
-            numeric_default: '13.5',
+            numeric_default: '1350000',
             inr_default: '1350000'
         },
         expected_salary: {
             patterns: ['expected salary', 'what is your expected salary', 'expected ctc', 'expected annual ctc', 'expected ctc in lakhs', 'expected ctc in lpa', 'expected ctc [in lpa]', 'ectc', 'what is your ectc', 'your ectc', 'what is your current expected ctc', 'current expected ctc'],
             default: '20 LPA',
-            numeric_default: '20',
+            numeric_default: '2000000',
             inr_default: '2000000'
         },
         notice_period: {
@@ -168,9 +168,9 @@
             return data.linkedin_default || '4';
         }
         
-        // For CTC/salary fields, on LinkedIn we should always return plain numeric value (13.5 or 20)
+        // For CTC/salary fields, on LinkedIn we should always return INR value (1350000 or 2000000)
         if (category === 'current_salary' || category === 'expected_salary') {
-            return data.numeric_default; // Return plain numbers: 13.5 or 20
+            return data.inr_default; // Return INR numbers: 1350000 or 2000000
         }
         
         // For notice period fields, on LinkedIn return numeric value (30) for text inputs to avoid validation errors

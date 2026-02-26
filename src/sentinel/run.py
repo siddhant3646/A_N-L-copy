@@ -59,6 +59,9 @@ class Browser:
         print(f"🔧 Set TMPDIR to: {local_tmp}")
 
         self.playwright = await async_playwright().start()
+        
+        self.executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        
         args = [
             '--no-sandbox',
             '--disable-blink-features=AutomationControlled',

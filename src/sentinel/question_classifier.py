@@ -504,11 +504,11 @@ class QuestionClassifier:
         # For LinkedIn, return plain numbers (13.5 or 20) without LPA suffix
         if self.platform == "linkedin":
             if "current" in question or "cctc" in question:
-                return "13.5"
+                return "1350000"
             elif "expected" in question or "ectc" in question:
-                return "20"
+                return "2000000"
             else:
-                return "20"
+                return "2000000"
         else:
             if "current" in question or "cctc" in question:
                 return "13.5" if is_numeric else "13.5 LPA"

@@ -467,15 +467,42 @@ class QuestionClassifier:
     
     def _get_experience_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get platform-appropriate experience answer."""
-        # Detect if field expects numeric-only input
+        question_lower = question.lower()
+        
+        # Detect tech stack experience questions (e.g., "experience with Java", "years into React")
+        tech_keywords = [
+            'java', 'python', 'javascript', 'react', 'angular', 'vue', 'node', 'nodejs',
+            'spring', 'springboot', 'spring boot', 'hibernate', 'docker', 'kubernetes',
+            'aws', 'azure', 'gcp', 'sql', 'postgresql', 'mysql', 'mongodb', 'redis',
+            'kafka', 'git', 'jenkins', 'terraform', 'microservices', 'rest api', 'graphql',
+            'html', 'css', 'typescript', 'angularjs', 'vuejs', 'reactjs', 'github',
+            'js', 'ts', 'html5', 'css3', 'postgres', 'mongo', 'web services',
+            'soap', 'xml', 'json', 'websockets', 'rabbitmq', 'elasticsearch', 'gitlab',
+            'github actions', 'prometheus', 'grafana', 'ansible', 'full stack'
+        ]
+        
+        # Check if question is asking about specific tech stack experience
+        has_tech_keyword = any(tech in question_lower for tech in tech_keywords)
+        is_tech_exp_question = has_tech_keyword and any(kw in question_lower for kw in [
+            'experience', 'years', 'worked with', 'exp in'
+        ])
+        
+        if is_tech_exp_question:
+            # Tech stack experience: Platform-specific answers
+            if self.platform == 'linkedin':
+                return '4'  # LinkedIn: numeric only, no "Years"
+            else:
+                return '3.8 Years'  # Naukri: with "Years" suffix
+        
+        # Original logic for generic experience questions
         is_numeric_only = (
             input_type == InputType.NUMBER or
-            "number" in question.lower() or
-            "whole number" in question.lower() or
-            "enter a number" in question.lower() or
-            "how many" in question.lower() or
-            "decimal" in question.lower() or
-            "larger than 0" in question.lower() or
+            "number" in question_lower or
+            "whole number" in question_lower or
+            "enter a number" in question_lower or
+            "how many" in question_lower or
+            "decimal" in question_lower or
+            "larger than 0" in question_lower or
             self.config.numeric_only_experience
         )
         
@@ -483,9 +510,8 @@ class QuestionClassifier:
         base_answer = self.config.experience_years
         numeric_value = base_answer.split()[0] if " " in base_answer else base_answer
         
-        if "month" in question.lower():
-            months = self.config.experience_months
-            return months if is_numeric_only else months
+        if "month" in question_lower:
+            return self.config.experience_months
         elif is_numeric_only:
             # Return just the number for numeric fields
             return numeric_value

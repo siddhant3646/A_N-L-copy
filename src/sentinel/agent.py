@@ -1235,72 +1235,72 @@ KNOWN_QA_PATTERNS = {
     'how many years of work experience do you have with microsoft azure': '4',
     'how many years of work experience do you have with gcp': '4',
     'how many years of work experience do you have with google cloud': '4',
-    'how many years of work experience do you have with react': '4',
-    'how many years of work experience do you have with reactjs': '4',
-    'how many years of work experience do you have with react.js': '4',
-    'how many years of work experience do you have with angular': '4',
-    'how many years of work experience do you have with angularjs': '4',
-    'how many years of work experience do you have with vue': '4',
-    'how many years of work experience do you have with vuejs': '4',
-    'how many years of work experience do you have with vue.js': '4',
-    'how many years of work experience do you have with node': '4',
-    'how many years of work experience do you have with nodejs': '4',
-    'how many years of work experience do you have with node.js': '4',
-    'how many years of work experience do you have with python': '4',
-    'how many years of work experience do you have with java': '4',
-    'how many years of work experience do you have with spring': '4',
-    'how many years of work experience do you have with spring boot': '4',
-    'how many years of work experience do you have with springboot': '4',
-    'how many years of work experience do you have with hibernate': '4',
-    'how many years of work experience do you have with javascript': '4',
-    'how many years of work experience do you have with js': '4',
-    'how many years of work experience do you have with typescript': '4',
-    'how many years of work experience do you have with ts': '4',
-    'how many years of work experience do you have with html': '4',
-    'how many years of work experience do you have with html5': '4',
-    'how many years of work experience do you have with css': '4',
-    'how many years of work experience do you have with css3': '4',
-    'how many years of work experience do you have with sql': '4',
-    'how many years of work experience do you have with postgresql': '4',
-    'how many years of work experience do you have with postgres': '4',
-    'how many years of work experience do you have with mysql': '4',
-    'how many years of work experience do you have with mongodb': '4',
-    'how many years of work experience do you have with mongo': '4',
-    'how many years of work experience do you have with redis': '4',
-    'how many years of work experience do you have with kafka': '4',
-    'how many years of work experience do you have with rabbitmq': '4',
-    'how many years of work experience do you have with elasticsearch': '4',
-    'how many years of work experience do you have with git': '4',
-    'how many years of work experience do you have with github': '4',
-    'how many years of work experience do you have with gitlab': '4',
-    'how many years of work experience do you have with jenkins': '4',
-    'how many years of work experience do you have with github actions': '4',
-    'how many years of work experience do you have with terraform': '4',
-    'how many years of work experience do you have with ansible': '4',
-    'how many years of work experience do you have with prometheus': '4',
-    'how many years of work experience do you have with grafana': '4',
-    'how many years of work experience do you have with microservices': '4',
-    'how many years of work experience do you have with rest api': '4',
-    'how many years of work experience do you have with restful api': '4',
-    'how many years of work experience do you have with graphql': '4',
-    'how many years of work experience do you have with websockets': '4',
-    'how many years of work experience do you have with web services': '4',
-    'how many years of work experience do you have with soap': '4',
-    'how many years of work experience do you have with xml': '4',
-    'how many years of work experience do you have with json': '4',
-    'how many years of work experience do you have with problem solving': '4',
+    'how many years of work experience do you have with react': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with reactjs': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with react.js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with angular': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with angularjs': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with vue': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with vuejs': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with vue.js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with node': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with nodejs': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with node.js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with python': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with java': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with spring': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with spring boot': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with springboot': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with hibernate': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with javascript': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with typescript': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with ts': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with html': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with html5': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with css': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with css3': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with sql': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with postgresql': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with postgres': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with mysql': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with mongodb': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with mongo': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with redis': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with kafka': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with rabbitmq': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with elasticsearch': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with git': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with github': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with gitlab': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with jenkins': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with github actions': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with terraform': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with ansible': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with prometheus': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with grafana': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with microservices': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with rest api': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with restful api': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with graphql': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with websockets': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with web services': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with soap': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with xml': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with json': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with problem solving': '{{TECH_EXP_YEARS}}',
     
     # Format: "How many years into {tech}"
-    'how many years into angular': '4',
-    'how many years into java': '4',
-    'how many years into spring boot': '4',
-    'how many years into react': '4',
-    'how many years into python': '4',
-    'how many years into docker': '4',
-    'how many years into aws': '4',
-    'how many years into javascript': '4',
-    'how many years into node': '4',
-    'how many years into full stack': '4',
+    'how many years into angular': '{{TECH_EXP_YEARS}}',
+    'how many years into java': '{{TECH_EXP_YEARS}}',
+    'how many years into spring boot': '{{TECH_EXP_YEARS}}',
+    'how many years into react': '{{TECH_EXP_YEARS}}',
+    'how many years into python': '{{TECH_EXP_YEARS}}',
+    'how many years into docker': '{{TECH_EXP_YEARS}}',
+    'how many years into aws': '{{TECH_EXP_YEARS}}',
+    'how many years into javascript': '{{TECH_EXP_YEARS}}',
+    'how many years into node': '{{TECH_EXP_YEARS}}',
+    'how many years into full stack': '{{TECH_EXP_YEARS}}',
     
     # SECTION 4: SCREENING & ASSESSMENT (35 patterns)
     'are you ready to take beribot assessment': 'Yes',
@@ -1464,16 +1464,16 @@ KNOWN_QA_PATTERNS = {
     'share compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
     
     # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
-    'years into java': '4',
-    'years into spring boot': '4',
-    'years into react': '4',
-    'years into angular': '4',
-    'years into python': '4',
-    'years into docker': '4',
-    'years into aws': '4',
-    'years into javascript': '4',
-    'years into node': '4',
-    'years into full stack': '4',
+    'years into java': '{{TECH_EXP_YEARS}}',
+    'years into spring boot': '{{TECH_EXP_YEARS}}',
+    'years into react': '{{TECH_EXP_YEARS}}',
+    'years into angular': '{{TECH_EXP_YEARS}}',
+    'years into python': '{{TECH_EXP_YEARS}}',
+    'years into docker': '{{TECH_EXP_YEARS}}',
+    'years into aws': '{{TECH_EXP_YEARS}}',
+    'years into javascript': '{{TECH_EXP_YEARS}}',
+    'years into node': '{{TECH_EXP_YEARS}}',
+    'years into full stack': '{{TECH_EXP_YEARS}}',
     
     'total years': '3.8 Years',
     'total years of experience': '3.8 Years',
@@ -1735,6 +1735,31 @@ class SentinelAgent:
             if q1_in_cat and q2_in_cat:
                 return True
         return False
+
+    def _adjust_answer_for_platform(self, answer: str, question: str = "") -> str:
+        """
+        Adjust answer based on platform, handling markers and tech stack experience.
+        
+        Args:
+            answer: The matched answer (may contain markers like {{TECH_EXP_YEARS}})
+            question: The question text (for context)
+            
+        Returns:
+            Platform-adjusted answer with markers replaced
+        """
+        if not answer:
+            return answer
+        
+        # Handle {{TECH_EXP_YEARS}} marker
+        if '{{TECH_EXP_YEARS}}' in answer:
+            if self._current_platform == 'linkedin':
+                # LinkedIn: numeric only, no "Years"
+                return answer.replace('{{TECH_EXP_YEARS}}', '4')
+            else:
+                # Naukri: with "Years" suffix
+                return answer.replace('{{TECH_EXP_YEARS}}', '3.8 Years')
+        
+        return answer
 
     def _fuzzy_match_question(self, question: str) -> Tuple[Optional[str], float]:
         """Find closest known question pattern using improved keyword + fuzzy matching."""
@@ -2047,6 +2072,61 @@ class SentinelAgent:
         if 'chosen engineering field' in question_lower:
             return '4', 0.98
 
+        # ==========================================
+        # Tech Stack Experience Questions (Platform-Specific)
+        # Handle "experience with {tech}" or "years into {tech}" questions
+        # LinkedIn: "4", Naukri: "3.8 Years"
+        # ==========================================
+        
+        # Define tech stack experience question patterns
+        tech_exp_patterns = [
+            r'how many years of work experience do you have with (\w+)',
+            r'how many years into (\w+)',
+            r'years into (\w+)',
+            r'years of experience with (\w+)',
+            r'experience with (\w+)',
+            r'how many years of experience in (\w+)',
+            r'exp in (\w+)',
+            r'experience in (\w+)',
+            r'how many years have you worked with (\w+)',
+            r'how long have you worked with (\w+)',
+        ]
+        
+        # Check if question matches any tech experience pattern
+        is_tech_experience = False
+        for pattern in tech_exp_patterns:
+            if re.search(pattern, question_lower):
+                is_tech_experience = True
+                break
+        
+        # Additional check: question contains both experience keywords AND tech keywords
+        tech_keywords = [
+            'java', 'python', 'javascript', 'react', 'angular', 'vue', 'node', 'nodejs',
+            'spring', 'springboot', 'spring boot', 'hibernate', 'docker', 'kubernetes',
+            'aws', 'azure', 'gcp', 'sql', 'postgresql', 'mysql', 'mongodb', 'redis',
+            'kafka', 'git', 'jenkins', 'terraform', 'microservices', 'rest api', 'graphql',
+            'html', 'css', 'typescript', 'angularjs', 'vuejs', 'reactjs', 'github',
+            'js', 'ts', 'html5', 'css3', 'postgres', 'mongo', 'web services',
+            'soap', 'xml', 'json', 'websockets', 'rabbitmq', 'elasticsearch', 'gitlab',
+            'github actions', 'prometheus', 'grafana', 'ansible', 'full stack'
+        ]
+        
+        experience_keywords_check = ['experience', 'years', 'exp', 'worked']
+        has_exp_keyword = any(kw in question_lower for kw in experience_keywords_check)
+        has_tech_keyword = any(tech in question_lower for tech in tech_keywords)
+        
+        # If it matches pattern OR has both experience + tech keywords (and asks for years)
+        is_years_question = any(kw in question_lower for kw in [
+            'how many', 'years', 'how much', 'duration', 'period', 'into'
+        ])
+        
+        if (is_tech_experience or (has_exp_keyword and has_tech_keyword)) and is_years_question:
+            # Platform-specific answers
+            if self._current_platform == 'linkedin':
+                return '4', 0.98  # LinkedIn: numeric only, no "Years"
+            else:
+                return '3.8 Years', 0.98  # Naukri: with "Years" suffix
+
         if is_experience_question:
             if 'month' in question_lower:
                 return KNOWN_QA_PATTERNS.get('months of experience', '46'), 0.95
@@ -2123,9 +2203,12 @@ class SentinelAgent:
         
         # Use higher threshold for direct fuzzy matches
         if best_score >= FUZZY_MATCH_THRESHOLD and best_match is not None:
+            # Apply platform-specific adjustments (handle markers like {{TECH_EXP_YEARS}})
+            adjusted_answer = self._adjust_answer_for_platform(best_match, question)
+            
             # Validate and potentially fix the answer
             validated_answer, final_confidence = self._validate_and_retry(
-                question, best_match, []
+                question, adjusted_answer, []
             )
             return validated_answer, final_confidence
         

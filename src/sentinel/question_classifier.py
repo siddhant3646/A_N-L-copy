@@ -103,8 +103,8 @@ CATEGORY_PATTERNS = {
     QuestionCategory.EXPERIENCE: {
         "keywords": [
             "experience", "years", "exp", "tenure", "worked", "yrs",
-            "work\s+experience", "professional\s+experience", "total\s+exp",
-            "how\s+long", "duration", "period"
+            r"work\s+experience", r"professional\s+experience", r"total\s+exp",
+            r"how\s+long", "duration", "period"
         ],
         "regex_patterns": [
             r"\d+\+?\s*years?\s*of\s*experience",
@@ -138,7 +138,7 @@ CATEGORY_PATTERNS = {
     QuestionCategory.LOCATION: {
         "keywords": [
             "location", "city", "relocate", "based", "stay", "place",
-            "where", "address", "reside", "live", "currently\s*in",
+            "where", "address", "reside", "live", r"currently\s*in",
             "currently located", "where are you"
         ],
         "regex_patterns": [
@@ -155,7 +155,7 @@ CATEGORY_PATTERNS = {
     },
     QuestionCategory.SKILLS: {
         "keywords": [
-            "skills", "proficiency", "expertise", "knowledge", "tech\s*stack",
+            "skills", "proficiency", "expertise", "knowledge", r"tech\s*stack",
             "technologies", "tools", "programming", "languages", "frameworks",
             "libraries", "competencies", "technologies"
         ],
@@ -215,7 +215,7 @@ CATEGORY_PATTERNS = {
     },
     QuestionCategory.PERSONAL_INFO: {
         "keywords": [
-            "phone", "mobile", "email", "dob", "date\s*of\s*birth",
+            "phone", "mobile", "email", "dob", r"date\s*of\s*birth",
             "pan", "aadhar", "name", "gender", "marital", "nationality"
         ],
         "regex_patterns": [
@@ -253,7 +253,7 @@ CATEGORY_PATTERNS = {
     QuestionCategory.AVAILABILITY: {
         "keywords": [
             "interview", "assessment", "schedule", "time", "slot",
-            "date", "when", "available\s*on"
+            "date", "when", r"available\s*on"
         ],
         "regex_patterns": [
             r"available\s*for\s*interview",

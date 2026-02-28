@@ -300,6 +300,181 @@ KNOWN_QA_PATTERNS = {
     'wfo': 'Yes',
     'full stack java developer': 'Yes',
     'java developer': 'Yes',
+
+    # --- NEW FUZZY LOGIC EXPANSION ---
+    # 1. Team / People Management
+    'team size': '5-8 members',
+    'how many people in your team': '5-8 members',
+    'how big is your team': '5-8 members',
+    'number of direct reports': '0',
+    'direct reports': '0',
+    'managed a team': 'No, but I have mentored junior developers and led feature deliveries',
+    'people management experience': 'No formal people management, but experienced in mentoring and leading small feature teams',
+    'leadership experience': 'Yes, led feature teams and architecture decisions as SDE-2',
+
+    # 2. Client-Facing / Communication
+    'client facing experience': 'Yes, 3+ years of direct interaction with US-based clients including demos, standups, and sprint reviews',
+    'client interaction': 'Yes, experienced with client-facing communication and presentations',
+    'stakeholder management': 'Yes, regular interaction with product owners, business analysts, and engineering leaders',
+    'presented to senior leadership': 'Yes, presented technical solutions and sprint demos to senior stakeholders',
+    'experience with client communication': 'Yes, 3+ years of daily client interaction with US-based teams',
+    'client facing role': 'Yes',
+    'cross functional team': 'Yes, worked with cross-functional teams including product, design, QA, and DevOps',
+    'cross-functional collaboration': 'Yes',
+
+    # 3. Agile / Methodology
+    'jira experience': 'Yes, 3+ years using JIRA for sprint planning, backlog management, and issue tracking',
+    'confluence experience': 'Yes, experienced with Confluence for documentation and knowledge sharing',
+    'sprint planning': 'Yes, actively participate in sprint planning, grooming, and retrospectives',
+    'scrum master': 'No, but experienced as a senior developer in Scrum teams',
+    'retrospective': 'Yes, regularly participate in sprint retrospectives',
+    'kanban': 'Yes, familiar with Kanban methodology',
+    'agile methodology': 'Yes, 3+ years working in Agile/Scrum environment',
+    'sprint velocity': 'Average 30-40 story points per sprint',
+
+    # 4. Domain-Specific
+    'healthcare domain': 'No direct healthcare experience, but strong in BFSI which shares similar compliance and security requirements',
+    'hipaa compliance': 'No',
+    'insurance domain': 'Yes, Fiserv operates in Banking, Financial Services, and Insurance (BFSI)',
+    'banking experience': 'Yes, currently working at Fiserv in the BFSI domain',
+    'payment gateway': 'Yes, experience integrating Stripe and Razorpay payment gateways',
+    'payment gateway experience': 'Yes, integrated Stripe and Razorpay in production applications',
+
+    # 5. Startup vs MNC
+    'startup experience': 'Open to startup environments. I thrive in fast-paced settings with ownership opportunities',
+    'product company experience': 'Yes, Fiserv is a product-based company in the BFSI domain',
+    'service based company': 'Open to both product and service-based companies',
+    'mnc experience': 'Yes, currently working at Fiserv, a Fortune 500 MNC',
+    'open to startups': 'Yes',
+    'startup or mnc': 'Open to both - currently at MNC (Fiserv), also thrive in startup environments',
+
+    # 6. Language Proficiency
+    'english proficiency': 'Fluent - Professional working proficiency',
+    'hindi proficiency': 'Native speaker',
+    'communication skills rating': '8',
+    'ielts score': 'Not applicable - native English proficiency through professional work experience',
+    'language skills': 'English (Fluent), Hindi (Native)',
+    'written communication': 'Excellent written communication skills with experience in technical documentation, client emails, and project reports',
+
+    # 7. Background / Clearance / NDA
+    'criminal record': 'No',
+    'criminal conviction': 'No',
+    'nda agreement': 'Yes, willing to sign NDA',
+    'non disclosure agreement': 'Yes, willing to sign',
+    'confidentiality agreement': 'Yes, willing to sign confidentiality agreement',
+    'clean background check': 'Yes',
+
+    # 8. Shift / Work Mode
+    'cab facility': 'Not required, can commute independently',
+    'transport facility': 'Not required, can commute independently',
+    'night shift allowance': 'Not required',
+    'rotational shift timing': 'Yes, comfortable with rotational shifts',
+    '9 to 6': 'Yes, comfortable with 9 to 6 work hours',
+    'general shift': 'Yes, comfortable with general shift timing',
+
+    # 9. ATS-Specific Consent
+    'lever data consent': 'Yes',
+    'workday privacy notice': 'Yes',
+    'talent pool consent': 'Yes',
+    'future openings consent': 'Yes',
+    'consider for future openings': 'Yes',
+    'consider me for other roles': 'Yes',
+    'retain my data': 'Yes',
+    'data retention consent': 'Yes',
+
+    # 10. Salary Format Variants
+    'salary in inr per month': '127500',
+    'ctc per annum in words': 'Fifteen Lakh Thirty Thousand',
+    'annual package': '15.3 LPA',
+    'cost to company per annum': '15.3 LPA',
+    'annual compensation': '15.3 LPA',
+    'hike percentage': '44',
+    'hike expected': '40-45%',
+    'percentage hike': '44',
+
+    # 11. Bond / Service Agreement
+    'bond period': 'No bond with current employer',
+    'service agreement': 'No active service agreement or bond',
+    'bond agreement': 'No active bond',
+    'employment bond': 'No bond with current employer',
+    'willing to sign bond': 'Yes, open to discussion',
+    'bond buyout': 'Not applicable - no active bond',
+
+    # 12. Gap in Career / Employment
+    'gap in employment': 'No gap in employment',
+    'career break': 'No career break',
+    'gap in career': 'No gap - continuous employment since graduation in 2022',
+    'employment gap': 'No gap in employment history',
+    'break in career': 'No career break',
+    'reason for gap': 'Not applicable - no employment gap',
+
+    # 13. Currently Employed Status
+    'are you currently employed': 'Yes, currently employed at Fiserv as SDE-2',
+    'currently working': 'Yes, at Fiserv',
+    'are you currently working': 'Yes, currently working at Fiserv',
+    'employment status': 'Currently employed',
+    'current employment status': 'Employed - serving notice period',
+    'are you employed': 'Yes',
+
+    # 14. Accommodation / Disability
+    'require accommodation': 'No',
+    'need accommodation': 'No accommodation required',
+    'special accommodation': 'No',
+    'disability accommodation': 'No',
+    'reasonable accommodation': 'No accommodation needed',
+    'assistive technology': 'No',
+
+    # 15. India-Specific Personal Fields (Naukri)
+    'father name': 'Mr. Singh',
+    'father\'s name': 'Mr. Singh',
+    'mother name': 'Mrs. Singh',
+    'mother\'s name': 'Mrs. Singh',
+    'passport number': 'Will provide upon request',
+    'passport details': 'Will provide upon request',
+    'blood group': 'Will provide upon request',
+    'age': '24',
+
+    # 16. Reason for Job Change
+    'reason for change': 'Looking for better career growth opportunities and technical challenges',
+    'reason for job change': 'Seeking career growth, new technical challenges, and better learning opportunities',
+    'why are you looking for a change': 'Looking for better career growth and new technical challenges',
+    'why do you want to leave': 'Seeking new challenges and career advancement opportunities',
+    'motivation for change': 'Career growth and exposure to new technologies',
+    'why are you leaving your current job': 'Looking for better growth opportunities and technical challenges',
+
+    # 17. Work Mode Preference
+    'work mode': 'Open to all - WFH, Hybrid, or WFO',
+    'work from home': 'Yes, comfortable with work from home',
+    'work from office': 'Yes, comfortable with work from office',
+    'hybrid model': 'Yes, comfortable with hybrid work model',
+    'weekend working': 'Yes, flexible with weekend work when required',
+    'saturday working': 'Yes, flexible with Saturday working when required',
+
+    # 18. CTC Breakup Details
+    'ctc breakup': 'Fixed: 15.3 LPA (100% fixed, no variable component)',
+    'variable component': '0 - entire CTC is fixed',
+    'annual bonus': 'Performance-based, typically 10-15% of fixed',
+    'esop': 'No ESOPs in current compensation',
+    'stock options': 'No stock options in current compensation',
+    'retention bonus': 'No retention bonus',
+    'salary negotiable': 'Yes, open to discussion based on role and growth',
+
+    # 19. Education / Qualification Deep
+    '10th percentage': '88%',
+    '12th percentage': '70%',
+    'certifications': 'AWS, Docker, Kubernetes certified',
+    'any certifications': 'Yes - AWS, Docker, Kubernetes',
+    'relevant certifications': 'AWS Solutions Architect, Docker, Kubernetes',
+
+    # 20. Naukri Chatbot Modal-Specific
+    'are you on a career break': 'No',
+    'companies value diversity': 'No',
+    'immediate joiner': 'Yes, can join within 30 days',
+    'notice period negotiable': 'Yes, notice period is negotiable',
+    'notice buyout': 'Yes, open to notice buyout discussion',
+    'can you join immediately': 'Can join within 30 days',
+    'when can you join': 'Within 30 days (serving notice, negotiable)',
+    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Remote',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
     'will you now or in the future require sponsorship': 'No',
@@ -326,7 +501,8 @@ KNOWN_QA_PATTERNS = {
     'walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
     # Employment/Relationship - Always "No"
     'employed by any of the': 'No',
-    'currently employed as a': 'No',
+    'currently employed as a contractor': 'No',
+    'currently employed as a temporary': 'No',
     'third party': 'No',
     'temporary employee': 'No',
     'have you ever worked for': 'No',
@@ -5173,7 +5349,7 @@ class SentinelAgent:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
             # NOTE: This function must NOT use async/await - Playwright's evaluate handles timing via Python asyncio
             # Using a function expression (wrapped in parens) - function statements require a name in JS
-            js_code = f"""(function() {{
+            js_code = rf"""(function() {{
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = {patterns_json};
                 const SYNONYMS = {synonyms_json};
@@ -5205,7 +5381,8 @@ class SentinelAgent:
                         'expected annual salary', 'what is your expected annual salary', 'what is your expected annual salary?',
                         'what is your current salary?', 'what is your expected salary?',
                         'what is your current ctc', 'what is your current ctc?',
-                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations'
+                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations',
+                        'salary in inr per month', 'annual package', 'annual compensation', 'cost to company per annum'
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
@@ -6559,15 +6736,36 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // Try dropdown
-                        const select = document.querySelector('select');
-                        if (select && select.offsetParent !== null && select.selectedIndex <= 0 && select.options.length > 1) {{
-                            select.selectedIndex = 1;
-                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                            if (saveBtn) {{ saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED'; }}
+                        // -----------------------------------------------------
+                        // 1. Try Select/Dropdowns
+                        // -----------------------------------------------------
+                        const select = document.querySelector('select') || document.querySelector('.chatbot_MessageContainer select');
+                        if (select) {{
+                            const options = Array.from(select.options);
+                            const optionsText = options.map(o => o.text);
+                            // Only answer if it's an actionable dropdown
+                            if (options.length > 1) {{
+                                const answer = fuzzyMatch(qText);
+                                let bestMatchIndex = 1; // Default to first valid option (0 is usually placeholder)
+                                
+                                if (answer) {{
+                                    // fuzzyMatch gave us an answer (e.g., '30', 'Yes', '22 LPA')
+                                    const bestMatch = findBestMatch(answer, optionsText.slice(1));
+                                    if (bestMatch) {{
+                                        bestMatchIndex = optionsText.indexOf(bestMatch);
+                                    }}
+                                }}
+                                
+                                select.selectedIndex = bestMatchIndex;
+                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                
+                                const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                if (saveBtn) {{
+                                    saveBtn.click();
+                                    return 'NAUKRI_CHAT_SELECT_SAVED: ' + options[bestMatchIndex].text;
+                                }}
+                            }}
                         }}
-                        
                         // Try radio buttons - enhanced logic with better matching
                         const radios = document.querySelectorAll('input[type="radio"]');
                         if (radios.length > 0) {{
@@ -6616,289 +6814,91 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // Try Checkboxes - Handle both standard checkboxes and Naukri's mcc__checkbox elements
-                        // First try the specific mcc__checkbox (used for city selection, etc.)
+                        // -----------------------------------------------------
+                        // 3. Try Checkboxes (Handle standard and Naukri mcc__checkbox)
+                        // -----------------------------------------------------
                         let allCheckboxes = Array.from(document.querySelectorAll('.mcc__checkbox'));
-                        
-                        // Fallback to standard checkbox selector if mcc not found
                         if (allCheckboxes.length === 0) {{
                             const cbContainer = document.querySelector('.chatbot_MessageContainer li:last-child') || document.body;
                             allCheckboxes = Array.from(cbContainer.querySelectorAll('input[type="checkbox"]'));
                         }}
 
-                        // Debug log 
                         const debugLog = [];
-
                         if (allCheckboxes.length > 0) {{
                             let clickedCount = 0;
-                            
-                            // City preference order (check qText to see if it's a city question)
-                            const qTextLower = qText.toLowerCase();
-                            const isCityQuestion = qTextLower.includes('city') || qTextLower.includes('relocate') || qTextLower.includes('location');
-                            const isNoticePeriodQuestion = qTextLower.includes('notice period');
-                            const isExperienceQuestion = qTextLower.includes('experience') || qTextLower.includes('years');
-                            const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
-                            
-                            // FIRST: Check if this is a binary Yes/No question
-                            // Build label map first for all checkboxes
                             const checkboxLabels = allCheckboxes.map(cb => {{
                                 let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
-                                if (!label && cb.id) {{
-                                    label = document.querySelector(`label[for="${{cb.id}}"]`);
-                                }}
-                                if (!label) {{
-                                    label = cb.parentElement; 
-                                }}
+                                if (!label && cb.id) {{ label = document.querySelector(`label[for="${{cb.id}}"]`); }}
+                                if (!label) {{ label = cb.parentElement; }}
                                 const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
                                 return {{ cb, labelText, lowerLabel: labelText.toLowerCase() }};
                             }});
-                            
-                            // Check if binary (exactly 2 checkboxes with Yes/No labels)
-                            const isBinaryYesNo = allCheckboxes.length === 2 && 
-                                checkboxLabels.every((item) => 
-                                    item.lowerLabel.includes('yes') || item.lowerLabel.includes('no')
-                                );
-                            
-                            if (isBinaryYesNo) {{
-                                // Find the Yes checkbox
-                                const yesCheckbox = checkboxLabels.find((item) => 
-                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('not')
-                                );
+
+                            // Get target answer using our global logic mapping
+                            const answer = fuzzyMatch(qText);
+                            if (answer) {{
+                                const answerLower = answer.toLowerCase();
                                 
-                                if (yesCheckbox && !yesCheckbox.cb.checked) {{
-                                    yesCheckbox.cb.click();
-                                    if (!yesCheckbox.cb.checked) {{
-                                        yesCheckbox.cb.checked = true;
-                                        yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                // Specific list checks based on the known answers
+                                if (answerLower.includes('noida') && typeof answerLower === 'string') {{
+                                    // It's a location list question
+                                    const preferredCities = ['noida', 'delhi', 'bangalore', 'bengaluru', 'hyderabad', 'mumbai', 'pune'];
+                                    const foundAny = checkboxLabels.some(item => preferredCities.some(city => item.lowerLabel.includes(city)));
+                                    if (foundAny) {{
+                                        for (const item of checkboxLabels) {{
+                                            if (item.lowerLabel.includes('skip')) continue;
+                                            const isCityMatch = preferredCities.some(city => item.lowerLabel.includes(city));
+                                            if (isCityMatch && !item.cb.checked) {{
+                                                item.cb.click();
+                                                if (!item.cb.checked) {{ item.cb.checked = true; item.cb.dispatchEvent(new Event('change', {{ bubbles: true }})); }}
+                                                clickedCount++;
+                                            }}
+                                        }}
                                     }}
-                                    clickedCount = 1;
-                                    debugLog.push("CB: " + yesCheckbox.labelText);
-                                }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
-                                    clickedCount = 1;
-                                    debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
-                                }}
-                            }} else if (isCityQuestion && allCheckboxes.length <= 3) {{
-                                // Check if these are actual city checkboxes (not Yes/No)
-                                const cityNames = ['pune', 'mumbai', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'ahmedabad'];
-                                const containsCities = checkboxLabels.some(item => 
-                                    cityNames.some(city => item.lowerLabel.includes(city))
-                                );
-                                
-                                if (containsCities) {{
-                                    // This is a city selection question - select ALL city options (skip "Skip")
+                                }} else {{
+                                    // Generic checkbox matcher against answer text
+                                    let bestCb = null;
+                                    let bestScore = -1;
+                                    
+                                    // Exact word matches give highest scores
                                     for (const item of checkboxLabels) {{
-                                        // Skip the "Skip this question" option
-                                        if (item.lowerLabel.includes('skip')) {{
-                                            debugLog.push("CITY_SKIP: " + item.labelText);
-                                            continue;
+                                        if (item.lowerLabel.includes(answerLower) || answerLower.includes(item.lowerLabel.trim())) {{
+                                            bestScore = 100;
+                                            bestCb = item;
+                                            break;
                                         }}
-                                        
-                                        // Check if this is a city option
-                                        const isCityOption = cityNames.some(city => item.lowerLabel.includes(city));
-                                        
-                                        if (isCityOption && !item.cb.checked) {{
-                                            item.cb.click();
-                                            if (!item.cb.checked) {{
-                                                item.cb.checked = true;
-                                                item.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        // Specific keyword scoring
+                                        if (answerLower === 'yes' && (item.lowerLabel.includes('yes') || item.lowerLabel.includes('agree') || item.lowerLabel.includes('willing'))) {{
+                                            if (bestScore < 90) {{ bestScore = 90; bestCb = item; }}
+                                        }}
+                                    }}
+                                    
+                                    if (!bestCb && answerLower.includes('serving notice')) {{
+                                        // Backup parsing for notice period
+                                        for (const item of checkboxLabels) {{
+                                            if (item.lowerLabel.includes('serving')) {{
+                                                bestCb = item; bestScore = 80;
                                             }}
-                                            clickedCount++;
-                                            debugLog.push("CITY_ALL: " + item.labelText);
-                                        }} else if (isCityOption && item.cb.checked) {{
-                                            clickedCount++;
-                                            debugLog.push("CITY_ALL: " + item.labelText + " (already checked)");
                                         }}
                                     }}
                                     
-                                    // Click save button after selecting all cities
-                                    if (clickedCount > 0) {{
-                                        const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                        if (saveBtn) {{ 
-                                            saveBtn.click(); 
-                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected all ' + clickedCount + ' cities | DBG: ' + debugLog.join(', '); 
-                                        }}
-                                    }}
-                                }} else {{
-                                    // For relocation questions with few checkboxes, select Yes if available
-                                    let yesCheckbox = checkboxLabels.find((item) => 
-                                        item.lowerLabel.includes('yes') && !item.lowerLabel.includes('no')
-                                    );
-                                    
-                                    // If no exact Yes found, look for positive indicators
-                                    if (!yesCheckbox) {{
-                                        yesCheckbox = checkboxLabels.find((item) => 
-                                            item.lowerLabel.includes('willing') || 
-                                            item.lowerLabel.includes('agree') ||
-                                            item.lowerLabel.includes('confirm')
-                                        );
-                                    }}
-                                    
-                                    if (yesCheckbox && !yesCheckbox.cb.checked) {{
-                                        yesCheckbox.cb.click();
-                                        if (!yesCheckbox.cb.checked) {{
-                                            yesCheckbox.cb.checked = true;
-                                            yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        }}
+                                    if (bestCb && !bestCb.cb.checked) {{
+                                        bestCb.cb.click();
+                                        if (!bestCb.cb.checked) {{ bestCb.cb.checked = true; bestCb.cb.dispatchEvent(new Event('change', {{ bubbles: true }})); }}
                                         clickedCount = 1;
-                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText);
-                                    }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
-                                        clickedCount = 1;
-                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText + " (already checked)");
                                     }}
                                 }}
-                            }} else if (isNoticePeriodQuestion) {{
-                                // For notice period questions, select "Serving Notice Period" option
-                                let bestCheckbox = null;
-                                let bestScore = -1;
-                                let allLabels = []; // Debug: store all found labels
-                                
-                                for (const item of checkboxLabels) {{
-                                    allLabels.push(item.labelText);
-                                    let score = 0;
-                                    const labelLower = item.lowerLabel;
-                                    
-                                    // Highest priority: "Serving Notice Period" option
-                                    if (labelLower.includes('serving notice period')) {{
-                                        score = 100;
-                                    }}
-                                    // Secondary: any option with "serving" in it
-                                    else if (labelLower.includes('serving')) {{
-                                        score = 90;
-                                    }}
-                                    // Third: "Serving Notice" (without "Period")
-                                    else if (labelLower.includes('serving notice')) {{
-                                        score = 85;
-                                    }}
-                                    
-                                    if (score > bestScore) {{
-                                        bestScore = score;
-                                        bestCheckbox = item;
-                                    }}
+                            }}
+                            
+                            // Always attempt to save if we clicked anything
+                            if (clickedCount > 0) {{
+                                const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                if (saveBtn) {{ 
+                                    saveBtn.click(); 
+                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED: Clicked ' + clickedCount; 
                                 }}
-                                
-                                // Click only the "Serving Notice Period" checkbox
-                                if (bestCheckbox && bestScore >= 85 && !bestCheckbox.cb.checked) {{
-                                    bestCheckbox.cb.click();
-                                    if (!bestCheckbox.cb.checked) {{
-                                        bestCheckbox.cb.checked = true;
-                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    }}
-                                    clickedCount = 1;
-                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
-                                }} else if (bestCheckbox && bestScore >= 85 && bestCheckbox.cb.checked) {{
-                                    clickedCount = 1;
-                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
-                                }} else {{
-                                    // Serving Notice Period not found - don't select anything and log for debugging
-                                    debugLog.push("NOTICE_CB_ERROR: Serving Notice Period not found. Available: " + allLabels.join(", "));
-                                }}
-                            }} else if (isExperienceQuestion) {{
-                                // For experience questions with checkboxes, select only the best matching range
-                                // Target: 3.8 years experience -> select "3 - 5 years"
-                                let bestCheckbox = null;
-                                let bestScore = -1;
-                                let allLabels = []; // Debug: store all found labels
-                                const targetExperience = 3.8; // Years of experience
-                                
-                                for (const item of checkboxLabels) {{
-                                    allLabels.push(item.labelText);
-                                    let score = 0;
-                                    const labelLower = item.lowerLabel;
-                                    
-                                    // Look for year ranges like "3 - 5 years", "1-2 years", etc.
-                                    const rangeMatch = labelLower.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
-                                    if (rangeMatch) {{
-                                        const min = parseFloat(rangeMatch[1]);
-                                        const max = parseFloat(rangeMatch[2]);
-                                        
-                                        // If target falls within range, high score
-                                        if (targetExperience >= min && targetExperience <= max) {{
-                                            score = 100;
-                                        }}
-                                        // If target is close to range, medium score
-                                        else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {{
-                                            score = 80;
-                                        }}
-                                    }}
-                                    // Look for single year values
-                                    else {{
-                                        const yearMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
-                                        if (yearMatch) {{
-                                            const year = parseFloat(yearMatch[1]);
-                                            const diff = Math.abs(targetExperience - year);
-                                            if (diff <= 0.5) score = 90;
-                                            else if (diff <= 1) score = 70;
-                                            else if (diff <= 2) score = 50;
-                                        }}
-                                    }}
-                                    
-                                    if (score > bestScore) {{
-                                        bestScore = score;
-                                        bestCheckbox = item;
-                                    }}
-                                }}
-                                
-                                // Click only the best matching checkbox
-                                if (bestCheckbox && bestScore >= 50 && !bestCheckbox.cb.checked) {{
-                                    bestCheckbox.cb.click();
-                                    if (!bestCheckbox.cb.checked) {{
-                                        bestCheckbox.cb.checked = true;
-                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    }}
-                                    clickedCount = 1;
-                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
-                                }} else if (bestCheckbox && bestScore >= 50 && bestCheckbox.cb.checked) {{
-                                    clickedCount = 1;
-                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (already checked)");
-                                }} else {{
-                                    // No good match found - log for debugging
-                                    debugLog.push("EXP_CB_ERROR: No matching experience range found. Available: " + allLabels.join(", "));
-                                }}
-                            }} else {{
-                                // Not binary - process normally
-                                for (const cb of allCheckboxes) {{
-                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
-                                    if (!label && cb.id) {{
-                                        label = document.querySelector(`label[for="${{cb.id}}"]`);
-                                    }}
-                                    if (!label) {{
-                                        label = cb.parentElement; 
-                                    }}
-                                    
-                                    const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
-                                    const lowerLabel = labelText.toLowerCase();
-
-                                    debugLog.push("CB: " + labelText);
-                                    
-                                    // Ignore job list checkboxes
-                                    if (cb.closest('.naukicon-ot-checkbox')) continue;
-
-                                    // ALWAYS ignore "Skip"
-                                    if (lowerLabel.includes('skip')) continue;
-                                    
-                                    // If already checked, count but don't re-click
-                                    if (cb.checked) {{
-                                        clickedCount++;
-                                        continue;
-                                    }}
-
-                                    // For city questions, prefer "Both" or "All" option first
-                                    if (isCityQuestion) {{
-                                        if (lowerLabel.includes('both') || lowerLabel.includes('all')) {{
-                                            cb.click();
-                                            if (!cb.checked) {{
-                                                cb.checked = true;
-                                                cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                            }}
-                                            // Click save and return immediately
-                                            const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                            if (saveBtn) {{ 
-                                                saveBtn.click(); 
-                                                return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected Both/All locations'; 
-                                            }}
-                                        }}
-                                        // Continue to select all cities
-                                    }}
+                            }}
+                        }}
 
                                     // ACTION: Click the checkbox (for non-binary questions)
                                     cb.click();

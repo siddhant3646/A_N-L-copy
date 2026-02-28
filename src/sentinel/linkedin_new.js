@@ -22,15 +22,15 @@
         },
         current_salary: {
             patterns: ['current salary', 'what is your current salary', 'current ctc', 'current annual ctc', 'monthly salary', 'current ctc in lakhs', 'current ctc in lpa', 'current ctc [in lpa]', 'ctc in lacs per annum', 'cctc', 'what is your cctc', 'your cctc', 'your current ctc', 'what is your current ctc'],
-            default: '13.5 LPA',
-            numeric_default: '1350000',
-            inr_default: '1350000'
+            default: '15.3 LPA',
+            numeric_default: '1530000',
+            inr_default: '1530000'
         },
         expected_salary: {
             patterns: ['expected salary', 'what is your expected salary', 'expected ctc', 'expected annual ctc', 'expected ctc in lakhs', 'expected ctc in lpa', 'expected ctc [in lpa]', 'ectc', 'what is your ectc', 'your ectc', 'what is your current expected ctc', 'current expected ctc'],
-            default: '20 LPA',
-            numeric_default: '2000000',
-            inr_default: '2000000'
+            default: '22 LPA',
+            numeric_default: '2200000',
+            inr_default: '2200000'
         },
         notice_period: {
             patterns: ['notice period', 'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice', 'your np', 'what is your np', 'mention np'],
@@ -168,9 +168,9 @@
             return data.linkedin_default || '4';
         }
         
-        // For CTC/salary fields, on LinkedIn we should always return INR value (1350000 or 2000000)
+        // For CTC/salary fields, on LinkedIn we should always return INR value (1530000 or 2200000)
         if (category === 'current_salary' || category === 'expected_salary') {
-            return data.inr_default; // Return INR numbers: 1350000 or 2000000
+            return data.inr_default; // Return INR numbers: 1530000 or 2200000
         }
         
         // For notice period fields, on LinkedIn return numeric value (30) for text inputs to avoid validation errors

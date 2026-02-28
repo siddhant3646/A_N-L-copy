@@ -58,43 +58,43 @@ KNOWN_QA_PATTERNS = {
     'python experience': '3.8 Years',
     'programming experience': '3.8 Years',
     # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
-    'current salary': '13.5 LPA',
-    'what is your current salary?': '13.5 LPA',
-    'expected salary': '20 LPA',
-    'what is your expected salary?': '20 LPA',
-    'gross salary': '13.5 LPA',
-    'gross current salary': '13.5 LPA',
-    'gross expected salary': '20 LPA',
-    'salary expectations': '20 LPA',
+    'current salary': '15.3 LPA',
+    'what is your current salary?': '15.3 LPA',
+    'expected salary': '22 LPA',
+    'what is your expected salary?': '22 LPA',
+    'gross salary': '15.3 LPA',
+    'gross current salary': '15.3 LPA',
+    'gross expected salary': '22 LPA',
+    'salary expectations': '22 LPA',
     # Current/Expected Annual Salary — common LinkedIn phrasing
-    'current annual salary': '1350000',
-    'what is your current annual salary': '1350000',
-    'what is your current annual salary?': '1350000',
-    'expected annual salary': '2000000',
-    'what is your expected annual salary': '2000000',
-    'what is your expected annual salary?': '2000000',
-    'what is your expected annual salary ?': '2000000',
-    'current ctc': '1350000',
-    'what is your current ctc': '1350000',
-    'what is your current ctc?': '1350000',
+    'current annual salary': '1530000',
+    'what is your current annual salary': '1530000',
+    'what is your current annual salary?': '1530000',
+    'expected annual salary': '2200000',
+    'what is your expected annual salary': '2200000',
+    'what is your expected annual salary?': '2200000',
+    'what is your expected annual salary ?': '2200000',
+    'current ctc': '1530000',
+    'what is your current ctc': '1530000',
+    'what is your current ctc?': '1530000',
     # Fixed CTC and Variable Pay - Numeric values
-    'fixed ctc': '1350000',
-    'fixed ctc numeric': '1350000',
-    'fixed ctc numeric input': '1350000',
+    'fixed ctc': '1530000',
+    'fixed ctc numeric': '1530000',
+    'fixed ctc numeric input': '1530000',
     'variable pay': '0',
     'variable pay numeric': '0',
     'variable pay numeric input': '0',
     # Expected Annual CTC in INR
-    'expected annual ctc in inr': '2000000',
-    'expected annual ctc': '2000000',
-    'expected ctc in inr': '2000000',
-    'expected ctc inr': '2000000',
-    # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
-    'salary range': '10-15 Lacs',
-    'current salary range': '10-15 Lacs',
-    'expected salary range': '15-20 Lacs',
-    'annual salary': '10-15 Lacs',
-    'ctc range': '10-15 Lacs',
+    'expected annual ctc in inr': '2200000',
+    'expected annual ctc': '2200000',
+    'expected ctc in inr': '2200000',
+    'expected ctc inr': '2200000',
+    # Salary Range Questions - Current: 15.3 LPA, Expected: 22 LPA
+    'salary range': '20-25 Lacs',
+    'current salary range': '20-25 Lacs',
+    'expected salary range': '20-25 Lacs',
+    'annual salary': '20-25 Lacs',
+    'ctc range': '20-25 Lacs',
     # Personal
     'phone number': '7905828880',
     'mobile number': '7905828880',
@@ -558,31 +558,31 @@ KNOWN_QA_PATTERNS = {
     'additional information': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'comments': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     # CTC in Lakhs (for questions specifically asking in lakhs/LPA)
-    'current ctc in lakhs': '13.5',
-    'current ctc in lpa': '13.5',
-    'current ctc [in lpa]': '13.5',
-    'current ctc(in lpa)': '13.5',
-    'current ctc (in lpa)': '13.5',
-    'ctc in lacs per annum': '13.5',
-    'current ctc in lacs per annum': '13.5',
-    'what is your current ctc in lacs per annum': '13.5',
-    'what is your current ctc in lacs per annum?': '13.5',
-    'ctc in lacs': '13.5',
-    'expected ctc in lakhs': '20',
-    'expected ctc in lpa': '20',
-    'expected ctc [in lpa]': '20',
-    'expected ctc in lacs per annum': '20',
-    'what is your expected ctc in lacs per annum': '20',
-    'what is your expected ctc in lacs per annum?': '20',
-    'ctc in lakhs': '20',
+    'current ctc in lakhs': '15.3',
+    'current ctc in lpa': '15.3',
+    'current ctc [in lpa]': '15.3',
+    'current ctc(in lpa)': '15.3',
+    'current ctc (in lpa)': '15.3',
+    'ctc in lacs per annum': '15.3',
+    'current ctc in lacs per annum': '15.3',
+    'what is your current ctc in lacs per annum': '15.3',
+    'what is your current ctc in lacs per annum?': '15.3',
+    'ctc in lacs': '15.3',
+    'expected ctc in lakhs': '22',
+    'expected ctc in lpa': '22',
+    'expected ctc [in lpa]': '22',
+    'expected ctc in lacs per annum': '22',
+    'what is your expected ctc in lacs per annum': '22',
+    'what is your expected ctc in lacs per annum?': '22',
+    'ctc in lakhs': '22',
     # CCTC = Current CTC (abbreviation)
-    'cctc': '13.5',
-    'what is your cctc': '13.5',
-    'your cctc': '13.5',
+    'cctc': '15.3',
+    'what is your cctc': '15.3',
+    'your cctc': '15.3',
     # ECTC = Expected CTC (abbreviation)
-    'ectc': '20',
-    'what is your ectc': '20',
-    'your ectc': '20',
+    'ectc': '22',
+    'what is your ectc': '22',
+    'your ectc': '22',
     # NP = Notice Period (abbreviation)
     'what is your np': '30',
     'your np': '30',
@@ -763,10 +763,10 @@ KNOWN_QA_PATTERNS = {
     'experience in e-commerce': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     'ecommerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     # Composite HR Questions (CTC + ECTC + NP)
-    'share your ctc': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc ectc np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc,ectc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
+    'share your ctc': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc ectc np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc and np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc,ectc and np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
     # Location-exclusive questions (Mumbai-only, etc.)
     'candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
     'need candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
@@ -814,14 +814,14 @@ KNOWN_QA_PATTERNS = {
     'last working day': '30 days from resignation date',
     
     # SALARY - Component Variations (15+ patterns)
-    'monthly salary': '112500',
-    'monthly ctc': '112500',
+    'monthly salary': '127500',
+    'monthly ctc': '127500',
     'monthly gross': '1.5',
-    'per month salary': '112500',
-    'take home': '95000',
-    'in hand salary': '95000',
-    'take home salary': '95000',
-    'fixed component': '1350000',
+    'per month salary': '127500',
+    'take home': '107500',
+    'in hand salary': '107500',
+    'take home salary': '107500',
+    'fixed component': '1530000',
     'variable component': '0',
     'variable pay': '0',
     'bonus': 'Open to discussion',
@@ -831,17 +831,17 @@ KNOWN_QA_PATTERNS = {
     'esops': 'Open to discussion',
     'equity': 'Open to discussion',
     'benefits': 'Standard benefits as per company policy',
-    'gross salary': '13.5 LPA',
+    'gross salary': '15.3 LPA',
     'net salary': '11.5 LPA',
-    'remuneration': '13.5 LPA',
-    'compensation expectations': '20 LPA',
-    'salary bracket': '15-20 LPA',
-    'pay range': '15-20 LPA',
-    'budget': '15-20 LPA range',
-    'ctc breakup': 'Fixed: 13.5 LPA, Variable: 0',
-    'salary structure': 'Fixed CTC: 13.5 LPA',
-    'currently drawing': '13.5 LPA',
-    'current drawn': '13.5 LPA',
+    'remuneration': '15.3 LPA',
+    'compensation expectations': '22 LPA',
+    'salary bracket': '20-25 LPA',
+    'pay range': '20-25 LPA',
+    'budget': '20-25 LPA range',
+    'ctc breakup': 'Fixed: 15.3 LPA, Variable: 0',
+    'salary structure': 'Fixed CTC: 15.3 LPA',
+    'currently drawing': '15.3 LPA',
+    'current drawn': '15.3 LPA',
     
     # EXPERIENCE - Relevant & Professional Variations (25+ patterns)
     'relevant experience': '3.8 Years',
@@ -1136,7 +1136,7 @@ KNOWN_QA_PATTERNS = {
     'negotiation': 'Yes, open to discussion',
     'discuss salary': 'Yes, willing to discuss',
     'salary discussion': 'Yes, open to discussion',
-    'range': '15-20 LPA',
+    'range': '20-25 LPA',
     'flexible on salary': 'Yes, flexible within reason',
     
     # MISCELLANEOUS - Yes/No Questions
@@ -1166,18 +1166,18 @@ KNOWN_QA_PATTERNS = {
     'please select your current location': 'Noida',
     'please select your notice period': '30 days',
     'please select your experience': '4',
-    'please select your salary expectation': '20 LPA',
+    'please select your salary expectation': '22 LPA',
     
-    'please enter your annual current ctc in inr': '1350000',
-    'please enter your annual expected ctc in inr': '2000000',
-    'please enter your current ctc in inr': '1350000',
-    'please enter your expected ctc in inr': '2000000',
+    'please enter your annual current ctc in inr': '1530000',
+    'please enter your annual expected ctc in inr': '2200000',
+    'please enter your current ctc in inr': '1530000',
+    'please enter your expected ctc in inr': '2200000',
     'please enter your online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
     'please enter your notice period in days': '30',
     'please enter your linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
     'please enter your github url': 'https://github.com/siddhant3646',
-    'please enter your current salary': '13.5 LPA',
-    'please enter your expected salary': '20 LPA',
+    'please enter your current salary': '15.3 LPA',
+    'please enter your expected salary': '22 LPA',
     'please enter your phone number': '7905828880',
     'please enter your email address': 'siddhant3646@gmail.com',
     'please enter your full name': 'Siddhant Singh',
@@ -1185,24 +1185,24 @@ KNOWN_QA_PATTERNS = {
     'please enter your current designation': 'SDE-2 Full Stack Developer',
     'please enter your total experience': '4',
     'please enter your years of experience': '4',
-    'please enter your ctc': '13.5 LPA',
-    'please enter your salary': '13.5 LPA',
+    'please enter your ctc': '15.3 LPA',
+    'please enter your salary': '15.3 LPA',
     
-    'please share your ctc ectc and notice period': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days',
-    'please provide your ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'please share your ctc ectc and notice period': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days',
+    'please provide your ctc details': 'Current: 15.3 LPA, Expected: 22 LPA',
     'please mention your notice period': '30 days',
     'please specify your experience': '4 years',
     
     # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
     # Concise variations for quick matching
-    'current ctc': '13.5 LPA',
-    'expected ctc': '20 LPA',
-    'current salary': '13.5 LPA',
-    'expected salary': '20 LPA',
-    'ctc': '13.5 LPA',
-    'salary': '13.5 LPA',
-    'pay': '13.5 LPA',
-    'compensation': '13.5 LPA',
+    'current ctc': '15.3 LPA',
+    'expected ctc': '22 LPA',
+    'current salary': '15.3 LPA',
+    'expected salary': '22 LPA',
+    'ctc': '15.3 LPA',
+    'salary': '15.3 LPA',
+    'pay': '15.3 LPA',
+    'compensation': '15.3 LPA',
     
     'total years of exp': '3.8 Years',
     'total exp': '3.8 Years',
@@ -1434,34 +1434,34 @@ KNOWN_QA_PATTERNS = {
     'additional comments': 'I am excited about this opportunity and believe my skills align well with the role requirements.',
     
     # SECTION 7: SALARY VARIATIONS (25 patterns)
-    'what is your current monthly salary': '112500',
-    'current monthly salary': '112500',
+    'what is your current monthly salary': '127500',
+    'current monthly salary': '127500',
     'expected monthly salary': '166667',
-    'monthly pay': '112500',
-    'monthly income': '112500',
-    'monthly compensation': '112500',
+    'monthly pay': '127500',
+    'monthly income': '127500',
+    'monthly compensation': '127500',
     
-    'what is your fixed ctc': '1350000',
+    'what is your fixed ctc': '1530000',
     'what is your variable pay': '0',
     'what is your bonus': '0',
-    'fixed pay': '1350000',
+    'fixed pay': '1530000',
     'variable component': '0',
     'bonus component': '0',
     
-    'please enter your salary': '13.5 LPA',
-    'please share your salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'salary requirements': '20 LPA',
-    'compensation requirements': '20 LPA',
-    'pay expectations': '20 LPA',
-    'expected remuneration': '20 LPA',
-    'salary expectation': '20 LPA',
-    'compensation expectation': '20 LPA',
+    'please enter your salary': '15.3 LPA',
+    'please share your salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'salary requirements': '22 LPA',
+    'compensation requirements': '22 LPA',
+    'pay expectations': '22 LPA',
+    'expected remuneration': '22 LPA',
+    'salary expectation': '22 LPA',
+    'compensation expectation': '22 LPA',
     
-    'ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'provide salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'share compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'ctc details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'compensation details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'provide salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'share compensation details': 'Current: 15.3 LPA, Expected: 22 LPA',
     
     # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
     'years into java': '{{TECH_EXP_YEARS}}',
@@ -1540,6 +1540,187 @@ KNOWN_QA_PATTERNS = {
     'mysql postgresql mongodb': '4',
     'jenkins github actions': '4',
     'terraform ansible': '4',
+
+    # ========== PHASE 2: WEB-RESEARCHED COVERAGE EXPANSION (20 Categories, ~130 Patterns) ==========
+
+    # --- Category 1: Team / People Management ---
+    'team size': '5-8 members',
+    'how many people in your team': '5-8 members',
+    'how big is your team': '5-8 members',
+    'number of direct reports': '0',
+    'direct reports': '0',
+    'managed a team': 'No, but I have mentored junior developers and led feature deliveries',
+    'people management experience': 'No formal people management, but experienced in mentoring and leading small feature teams',
+    'leadership experience': 'Yes, led feature teams and architecture decisions as SDE-2',
+
+    # --- Category 2: Client-Facing / Communication ---
+    'client facing experience': 'Yes, 3+ years of direct interaction with US-based clients including demos, standups, and sprint reviews',
+    'client interaction': 'Yes, experienced with client-facing communication and presentations',
+    'stakeholder management': 'Yes, regular interaction with product owners, business analysts, and engineering leaders',
+    'presented to senior leadership': 'Yes, presented technical solutions and sprint demos to senior stakeholders',
+    'experience with client communication': 'Yes, 3+ years of daily client interaction with US-based teams',
+    'client facing role': 'Yes',
+    'cross functional team': 'Yes, worked with cross-functional teams including product, design, QA, and DevOps',
+    'cross-functional collaboration': 'Yes',
+
+    # --- Category 3: Agile / Methodology ---
+    'jira experience': 'Yes, 3+ years using JIRA for sprint planning, backlog management, and issue tracking',
+    'confluence experience': 'Yes, experienced with Confluence for documentation and knowledge sharing',
+    'sprint planning': 'Yes, actively participate in sprint planning, grooming, and retrospectives',
+    'scrum master': 'No, but experienced as a senior developer in Scrum teams',
+    'retrospective': 'Yes, regularly participate in sprint retrospectives',
+    'kanban': 'Yes, familiar with Kanban methodology',
+    'agile methodology': 'Yes, 3+ years working in Agile/Scrum environment',
+    'sprint velocity': 'Average 30-40 story points per sprint',
+
+    # --- Category 4: Domain-Specific Screening ---
+    'healthcare domain': 'No direct healthcare experience, but strong in BFSI which shares similar compliance and security requirements',
+    'hipaa compliance': 'No',
+    'insurance domain': 'Yes, Fiserv operates in Banking, Financial Services, and Insurance (BFSI)',
+    'banking experience': 'Yes, currently working at Fiserv in the BFSI domain',
+    'payment gateway': 'Yes, experience integrating Stripe and Razorpay payment gateways',
+    'payment gateway experience': 'Yes, integrated Stripe and Razorpay in production applications',
+
+    # --- Category 5: Startup vs MNC ---
+    'startup experience': 'Open to startup environments. I thrive in fast-paced settings with ownership opportunities',
+    'product company experience': 'Yes, Fiserv is a product-based company in the BFSI domain',
+    'service based company': 'Open to both product and service-based companies',
+    'mnc experience': 'Yes, currently working at Fiserv, a Fortune 500 MNC',
+    'open to startups': 'Yes',
+    'startup or mnc': 'Open to both - currently at MNC (Fiserv), also thrive in startup environments',
+
+    # --- Category 6: Language Proficiency ---
+    'english proficiency': 'Fluent - Professional working proficiency',
+    'hindi proficiency': 'Native speaker',
+    'communication skills rating': '8',
+    'ielts score': 'Not applicable - native English proficiency through professional work experience',
+    'language skills': 'English (Fluent), Hindi (Native)',
+    'written communication': 'Excellent written communication skills with experience in technical documentation, client emails, and project reports',
+
+    # --- Category 7: Background / Clearance / NDA ---
+    'criminal record': 'No',
+    'criminal conviction': 'No',
+    'nda agreement': 'Yes, willing to sign NDA',
+    'non disclosure agreement': 'Yes, willing to sign',
+    'confidentiality agreement': 'Yes, willing to sign confidentiality agreement',
+    'clean background check': 'Yes',
+
+    # --- Category 8: Shift / Work Mode Specifics ---
+    'cab facility': 'Not required, can commute independently',
+    'transport facility': 'Not required, can commute independently',
+    'night shift allowance': 'Not required',
+    'rotational shift timing': 'Yes, comfortable with rotational shifts',
+    '9 to 6': 'Yes, comfortable with 9 to 6 work hours',
+    'general shift': 'Yes, comfortable with general shift timing',
+
+    # --- Category 9: ATS-Specific Consent ---
+    'lever data consent': 'Yes',
+    'workday privacy notice': 'Yes',
+    'talent pool consent': 'Yes',
+    'future openings consent': 'Yes',
+    'consider for future openings': 'Yes',
+    'consider me for other roles': 'Yes',
+    'retain my data': 'Yes',
+    'data retention consent': 'Yes',
+
+    # --- Category 10: Salary Format Variants ---
+    'salary in inr per month': '127500',
+    'ctc per annum in words': 'Fifteen Lakh Thirty Thousand',
+    'annual package': '15.3 LPA',
+    'cost to company per annum': '15.3 LPA',
+    'annual compensation': '15.3 LPA',
+    'hike percentage': '44',
+    'hike expected': '40-45%',
+    'percentage hike': '44',
+
+    # --- Category 11: Bond / Service Agreement ---
+    'bond period': 'No bond with current employer',
+    'service agreement': 'No active service agreement or bond',
+    'bond agreement': 'No active bond',
+    'employment bond': 'No bond with current employer',
+    'willing to sign bond': 'Yes, open to discussion',
+    'bond buyout': 'Not applicable - no active bond',
+
+    # --- Category 12: Gap in Career / Employment ---
+    'gap in employment': 'No gap in employment',
+    'career break': 'No career break',
+    'gap in career': 'No gap - continuous employment since graduation in 2022',
+    'employment gap': 'No gap in employment history',
+    'break in career': 'No career break',
+    'reason for gap': 'Not applicable - no employment gap',
+
+    # --- Category 13: Currently Employed Status ---
+    'are you currently employed': 'Yes, currently employed at Fiserv as SDE-2',
+    'currently working': 'Yes, at Fiserv',
+    'are you currently working': 'Yes, currently working at Fiserv',
+    'employment status': 'Currently employed',
+    'current employment status': 'Employed - serving notice period',
+    'are you employed': 'Yes',
+
+    # --- Category 14: Accommodation / Disability ---
+    'require accommodation': 'No',
+    'need accommodation': 'No accommodation required',
+    'special accommodation': 'No',
+    'disability accommodation': 'No',
+    'reasonable accommodation': 'No accommodation needed',
+    'assistive technology': 'No',
+
+    # --- Category 15: India-Specific Personal Fields ---
+    'father name': 'Mr. Singh',
+    "father's name": 'Mr. Singh',
+    'mother name': 'Mrs. Singh',
+    "mother's name": 'Mrs. Singh',
+    'passport number': 'Will provide upon request',
+    'passport details': 'Will provide upon request',
+    'blood group': 'Will provide upon request',
+
+    # --- Category 16: Reason for Job Change (Naukri-Specific) ---
+    'reason for change': 'Looking for better career growth opportunities and technical challenges',
+    'reason for job change': 'Seeking career growth, new technical challenges, and better learning opportunities',
+    'why are you looking for a change': 'Looking for better career growth and new technical challenges',
+    'why do you want to leave': 'Seeking new challenges and career advancement opportunities',
+    'motivation for change': 'Career growth and exposure to new technologies',
+    'why are you leaving your current job': 'Looking for better growth opportunities and technical challenges',
+
+    # --- Category 17: Work Mode Preference (Naukri-Specific) ---
+    'work mode': 'Open to all - WFH, Hybrid, or WFO',
+    'work from home': 'Yes, comfortable with work from home',
+    'work from office': 'Yes, comfortable with work from office',
+    'wfh': 'Yes, comfortable with WFH',
+    'wfo': 'Yes, comfortable with WFO',
+    'hybrid model': 'Yes, comfortable with hybrid work model',
+    'weekend working': 'Yes, flexible with weekend work when required',
+    'saturday working': 'Yes, flexible with Saturday working when required',
+
+    # --- Category 18: CTC Breakup Details (Naukri-Specific) ---
+    'ctc breakup': 'Fixed: 15.3 LPA (100% fixed, no variable component)',
+    'variable pay': 'No variable pay component in current CTC',
+    'variable component': '0 - entire CTC is fixed',
+    'annual bonus': 'Performance-based, typically 10-15% of fixed',
+    'esop': 'No ESOPs in current compensation',
+    'stock options': 'No stock options in current compensation',
+    'retention bonus': 'No retention bonus',
+    'salary negotiable': 'Yes, open to discussion based on role and growth',
+
+    # --- Category 19: Education / Qualification Deep (Naukri-Specific) ---
+    'highest qualification': 'B.Tech in Computer Science',
+    'graduation year': '2022',
+    'year of graduation': '2022',
+    '10th percentage': '88%',
+    '12th percentage': '70%',
+    'certifications': 'AWS, Docker, Kubernetes certified',
+    'any certifications': 'Yes - AWS, Docker, Kubernetes',
+    'relevant certifications': 'AWS Solutions Architect, Docker, Kubernetes',
+
+    # --- Category 20: Naukri Chatbot Modal-Specific ---
+    'are you on a career break': 'No',
+    'companies value diversity': 'No',
+    'immediate joiner': 'Yes, can join within 30 days',
+    'notice period negotiable': 'Yes, notice period is negotiable',
+    'notice buyout': 'Yes, open to notice buyout discussion',
+    'can you join immediately': 'Can join within 30 days',
+    'when can you join': 'Within 30 days (serving notice, negotiable)',
+    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Remote',
 }
 
 FUZZY_MATCH_THRESHOLD = 0.7  # Increased from 0.6 for better accuracy
@@ -1961,7 +2142,7 @@ class SentinelAgent:
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)', 0.98
+            return 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
@@ -2053,17 +2234,17 @@ class SentinelAgent:
         if is_salary_question:
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
-                return '13.5', 0.98
+                return '15.3', 0.98
             if 'ectc' in question_lower:
-                return '20', 0.98
+                return '22', 0.98
             
             # Check for expected vs current - use plain numbers
             if 'expected' in question_lower or 'expect' in question_lower:
-                return '20', 0.95
+                return '22', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
-                return '13.5', 0.95
+                return '15.3', 0.95
             # Default to expected if unclear
-            return '20', 0.90
+            return '22', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -5030,9 +5211,9 @@ class SentinelAgent:
                         if (KNOWN_PATTERNS[k]) {{
                             // Use INR values for LinkedIn
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '1350000';
+                                KNOWN_PATTERNS[k] = '1530000';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '2000000';
+                                KNOWN_PATTERNS[k] = '2200000';
                             }}
                         }}
                     }});
@@ -5118,7 +5299,7 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
-                            bestMatch = qLower.includes('current') ? '1350000' : '2000000';
+                            bestMatch = qLower.includes('current') ? '1530000' : '2200000';
                         }}
                     }}
                     
@@ -5216,7 +5397,7 @@ class SentinelAgent:
                 const findSalaryRangeMatch = (answer, options, isCurrentSalary) => {{
                     if (!answer || !options || options.length === 0) return null;
                     
-                    // Extract numeric salary from answer (e.g., "13.5 LPA" → 13.5)
+                    // Extract numeric salary from answer (e.g., "15.3 LPA" → 13.5)
                     const salaryMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     if (!salaryMatch) return null;
                     const salary = parseFloat(salaryMatch[1]);

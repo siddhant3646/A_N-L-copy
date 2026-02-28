@@ -68,8 +68,8 @@ CORE WORKFLOW (STRICT SEQUENCE):
        - IF Question is Yes/No -> **Click "Yes"**.
        - IF Question asks for Years/Number -> **Enter "3.5 Years"** (or just "3.5").
      - **Standard Fields:**
-       - "Current Salary" -> "13.5" (or "13.5 LPA")
-       - "Expected Salary" -> "20" (or "20 LPA")
+       - "Current Salary" -> "15.3" (or "15.3 LPA")
+       - "Expected Salary" -> "22" (or "22 LPA")
 
    - **COMPLETION (The "Submit" Step):**
      - **Goal:** Click the button to close the modal.
@@ -83,7 +83,7 @@ CORE WORKFLOW (STRICT SEQUENCE):
 
 DETAILS TO USE:
 - Resume: Use my uploaded resume.
-- Expected Salary: 20 LPA | Current Salary: 13.5 LPA
+- Expected Salary: 22 LPA | Current Salary: 15.3 LPA
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
 - Experience: 3.5 Years (42 months total). ALWAYS ENTER "3.5 Years" in experience fields.
@@ -107,8 +107,8 @@ DETAILS TO USE:
 - Mobile: 7905828880
 - Phone Code: India (+91)
 - Skills: Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes.
-- Expected Salary: 20,00,000
-- Current Salary: 13,50,000
+- Expected Salary: 22,00,000
+- Current Salary: 15,30,000
 - Notice Period: 30 days (Serving Notice). LWD: Feb 03, 2026.
 - Experience: 4 Years.
 - Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon.
@@ -160,8 +160,8 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
    - LWD -> Enter "03/02/2026"
    - Tech Experience (Yes/No) -> Click "Yes"
    - Tech Experience (Years) -> Enter "3.5 Years"
-   - Current Salary -> "13.5 LPA"
-   - Expected Salary -> "20 LPA"
+   - Current Salary -> "15.3 LPA"
+   - Expected Salary -> "22 LPA"
    - Location -> "Noida"
    - Relocation -> "Yes"
 5. DONE: When modal closes or "Application Submitted" appears, task complete.

@@ -33,7 +33,7 @@ class SemanticQuestionMatcher:
                 'compensation currently', 'salary now', 'current package',
                 'how much do you earn', 'what do you make', 'current remuneration'
             ],
-            'answer': '13.5 LPA',
+            'answer': '15.3 LPA',
             'category': 'salary'
         },
         'salary_expected': {
@@ -43,7 +43,7 @@ class SemanticQuestionMatcher:
                 'salary expected', 'compensation expected', 'expected package',
                 'how much do you want', 'salary you want', 'expecting salary'
             ],
-            'answer': '20 LPA',
+            'answer': '22 LPA',
             'category': 'salary'
         },
         'notice_period': {

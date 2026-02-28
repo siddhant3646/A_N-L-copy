@@ -25,7 +25,7 @@ STOP_WORDS = {
     'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above',
     'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here',
     'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more',
-    'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own',
+    'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own',
     'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if', 'or',
     'because', 'until', 'while', 'what', 'which', 'who', 'whom', 'this',
     'that', 'these', 'those', 'am', 'it', 'its', 'your', 'yours', 'we',

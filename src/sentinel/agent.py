@@ -1329,6 +1329,22 @@ KNOWN_QA_PATTERNS = {
     'accept travel': 'Yes',
     'willingness to travel': 'Yes',
     
+    # Leetcode / Coding Platforms
+    'how many questions you have solved in leetcode': '500+',
+    'leetcode questions solved': '500+',
+    'number of leetcode problems solved': '500+',
+    'how many leetcode': '500+',
+    
+    # SOW / Freelance time
+    'how much time are you prepared to allocate to do the sow': '18 hours',
+    'allocate give to do the sow': '18 hours',
+    'sow 5 hours 10 hours 15 hours 18 hours': '18 hours',
+    
+    # Bot detection / email sent time
+    'please send an email to show that you are interested': 'Just now',
+    'enter the time when you sent it': 'Just now',
+    'to show that you are a human and not a bot': 'Just now',
+    
     # ========== COMPREHENSIVE PATTERN EXPANSION - 200+ NEW PATTERNS ==========
     
     # SECTION 1: LINKEDIN "PLEASE SELECT/ENTER..." PATTERNS (30 patterns)
@@ -3671,6 +3687,36 @@ class SentinelAgent:
                 # Dismiss any browser dialogs (Restore pages?, etc.)
                 await self._dismiss_browser_dialogs()
                 
+                # GUARD: Never allow full-page job view — always stay on search results
+                if self._page:
+                    current_url = self._page.url
+                    # Save the ORIGINAL search URL on first detection (strip currentJobId to keep it clean)
+                    if not hasattr(self, '_linkedin_search_url') and ('/jobs/search' in current_url or '/jobs/collections' in current_url):
+                        import re
+                        clean_url = re.sub(r'[&?]currentJobId=[^&]*', '', current_url)
+                        self._linkedin_search_url = clean_url
+                        print(f"📌 Saved clean search URL: {clean_url[:80]}...")
+                    
+                    # If we somehow ended up on a full-page job view, redirect back immediately
+                    is_full_page_job = '/jobs/view/' in current_url and '/jobs/search' not in current_url and '/jobs/collections' not in current_url
+                    if is_full_page_job:
+                        print(f"🔙 Full-page job view detected! Navigating back to search results...")
+                        redirect_url = getattr(self, '_linkedin_search_url', None)
+                        if not redirect_url:
+                            # Extract base search URL from task description or use a default
+                            redirect_url = 'https://www.linkedin.com/jobs/search/?f_AL=true'
+                        try:
+                            await self._page.goto(redirect_url, wait_until='domcontentloaded', timeout=15000)
+                            await asyncio.sleep(random.uniform(3, 5))
+                        except Exception as e:
+                            print(f"   ⚠️ Redirect failed: {e}")
+                            try:
+                                await self._page.go_back(wait_until='domcontentloaded', timeout=10000)
+                                await asyncio.sleep(3)
+                            except Exception:
+                                pass
+                        continue
+                
                 # Occasional random human behaviors (simulate natural browsing)
                 if random.random() < 0.2:  # 20% chance of random mouse movement
                     await self._human_mouse_move()
@@ -4083,10 +4129,142 @@ class SentinelAgent:
                         await asyncio.sleep(random.uniform(4, 6))  # Wait for job details to load
                     continue
                 
-                # LinkedIn: Scrolled for more jobs
+                # LinkedIn: Scrolled for more jobs (or failed to find cards)
                 if 'LINKEDIN_SCROLLED' in result:
                     print(f"📜 {result}")
-                    await asyncio.sleep(random.uniform(4, 8))  # Wait for new jobs to load
+                    
+                    # Track consecutive scroll failures
+                    if not hasattr(self, '_linkedin_scroll_fail_count'):
+                        self._linkedin_scroll_fail_count = 0
+                    if not hasattr(self, '_linkedin_visited_job_urls'):
+                        self._linkedin_visited_job_urls = set()
+                    self._linkedin_scroll_fail_count += 1
+                    
+                    # After 1 scroll failure, use Playwright to click the next job card link directly
+                    if self._linkedin_scroll_fail_count >= 1:
+                        print("⚠️ JS can't find job cards, using Playwright link-based fallback...")
+                        self._linkedin_scroll_fail_count = 0
+                        try:
+                            # Check if we're on a full-page job view — redirect back first
+                            current_url = self._page.url
+                            is_search_page = '/jobs/search' in current_url or '/jobs/collections' in current_url
+                            
+                            if not is_search_page:
+                                # Redirect back to search results
+                                redirect_url = getattr(self, '_linkedin_search_url', 'https://www.linkedin.com/jobs/search/?f_AL=true')
+                                print(f"   🔙 Not on search page, redirecting...")
+                                await self._page.goto(redirect_url, wait_until='domcontentloaded', timeout=15000)
+                                await asyncio.sleep(random.uniform(3, 5))
+                            else:
+                                # On search results page — find and click next job card WITHOUT navigating away
+                                # Use JavaScript to find job cards and simulate a click via dispatchEvent
+                                clicked_job = await self._page.evaluate("""
+                                    (visitedUrls) => {
+                                        const links = document.querySelectorAll('a[href*="/jobs/view/"]');
+                                        for (const link of links) {
+                                            const rect = link.getBoundingClientRect();
+                                            // Only sidebar links (left side, visible)
+                                            if (rect.x > 600 || rect.width === 0 || rect.height === 0) continue;
+                                            
+                                            const href = link.getAttribute('href') || '';
+                                            const text = (link.innerText || '').trim();
+                                            if (text.length < 5) continue;
+                                            if (visitedUrls.includes(href)) continue;
+                                            
+                                            // Find the parent list item (job card container)
+                                            let card = link.closest('li') || link.closest('[data-occludable-job-id]') || link.parentElement;
+                                            if (card) {
+                                                // Scroll into view and click the CARD (not the link)
+                                                card.scrollIntoView({behavior: 'smooth', block: 'center'});
+                                                card.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                                                return {href: href, text: text.substring(0, 60)};
+                                            }
+                                        }
+                                        return null;
+                                    }
+                                """, list(self._linkedin_visited_job_urls))
+                                
+                                if clicked_job:
+                                    self._linkedin_visited_job_urls.add(clicked_job['href'])
+                                    print(f"   ✅ Clicked job card: {clicked_job['text']}...")
+                                else:
+                                    print("   ⚠️ No unvisited job links found. Scrolling...")
+                                    await self._page.evaluate("window.scrollBy(0, 500)")
+                        except Exception as e:
+                            print(f"   ⚠️ Playwright link fallback error: {e}")
+                    
+                    await asyncio.sleep(random.uniform(4, 8))
+                    continue
+                    
+                # LinkedIn: Paginated to next page
+                if 'LINKEDIN_PAGINATING' in result:
+                    print(f"📜 {result}")
+                    await asyncio.sleep(random.uniform(6, 10))  # Wait for new jobs to load on next page
+                    continue
+                
+                # LinkedIn: Job card selected from sidebar — wait for detail pane to load
+                if 'LINKEDIN_JOB_SELECTED' in result:
+                    print("✅ Selected next job card from sidebar")
+                    self._linkedin_scroll_fail_count = 0  # Reset scroll failures
+                    await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to load
+                    continue
+                
+                # LinkedIn: Clicked next unapplied job card (from linkedin_new.js flow)
+                if 'LINKEDIN_NEXT_JOB_CLICKED' in result:
+                    print("⏭️ Clicked next job card")
+                    await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to load
+                    continue
+                
+                # LinkedIn: First job clicked or no current card found
+                if 'LINKEDIN_FIRST_JOB_CLICKED' in result or 'LINKEDIN_NO_CURRENT_CARD' in result:
+                    print(f"📋 {result}")
+                    await asyncio.sleep(random.uniform(3, 5))
+                    continue
+                
+                # LinkedIn: Form stuck on validation (e.g. unfillable select dropdown)
+                if 'LINKEDIN_FORM_STUCK' in result:
+                    if not hasattr(self, '_linkedin_form_stuck_count'):
+                        self._linkedin_form_stuck_count = 0
+                    self._linkedin_form_stuck_count += 1
+                    print(f"   ⚠️ Form stuck ({self._linkedin_form_stuck_count}/3)")
+                    
+                    if self._linkedin_form_stuck_count >= 3:
+                        print("   ❌ Form stuck 3 times, dismissing modal and skipping this job...")
+                        self._linkedin_form_stuck_count = 0
+                        try:
+                            # Try to click dismiss/close/discard button
+                            await self._page.evaluate("""() => {
+                                const closeSelectors = [
+                                    'button[aria-label*="Dismiss"]',
+                                    'button[aria-label*="dismiss"]', 
+                                    'button[aria-label*="Close"]',
+                                    'button[aria-label*="close"]',
+                                    '.artdeco-modal__dismiss',
+                                    'button[data-test-modal-close-btn]'
+                                ];
+                                for (let sel of closeSelectors) {
+                                    const btn = document.querySelector(sel);
+                                    if (btn && btn.offsetParent !== null) {
+                                        btn.click();
+                                        return 'closed';
+                                    }
+                                }
+                                return 'no_button';
+                            }""")
+                            await asyncio.sleep(2)
+                            # After dismissing, a "Discard" confirmation may appear
+                            try:
+                                discard = self._page.locator('button:has-text("Discard")')
+                                if await discard.count() > 0 and await discard.first.is_visible():
+                                    await discard.first.click(timeout=3000)
+                                    print("   🗑️ Discarded draft application")
+                                    await asyncio.sleep(2)
+                            except:
+                                pass
+                        except Exception as e:
+                            print(f"   ⚠️ Error dismissing stuck modal: {e}")
+                    
+                    await asyncio.sleep(random.uniform(2, 4))
                     continue
                 
                 # LinkedIn: Skip non-Easy Apply jobs or already applied jobs
@@ -4105,8 +4283,9 @@ class SentinelAgent:
                         print("⏭️ Skipped job (already applied or not Easy Apply)")
                     continue
                 
-                # LinkedIn Autopilot
-                if 'APPLY_CLICKED_LINKEDIN' in result:
+                # LinkedIn Autopilot — enter when Easy Apply button is clicked
+                # JS returns LINKEDIN_EASY_APPLY_CLICKED (inline) or APPLY_CLICKED_LINKEDIN (legacy)
+                if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
                     # STRICT CHECK: If we've already submitted 5 applications, mark task complete
                     if self.linkedin_applications >= 5:
                         print(f"✅ LinkedIn limit reached ({self.linkedin_applications}/5). Task complete.")
@@ -4228,7 +4407,13 @@ class SentinelAgent:
                         # Prevent infinite loop if same result repeats
                         if next_result == last_result:
                             same_result_count += 1
-                            if same_result_count >= 5:
+                            
+                            # Easy Apply button clicked but modal not opening — likely click not registering
+                            if 'EASY_APPLY_CLICKED' in next_result and same_result_count >= 2:
+                                print("⚠️ Easy Apply clicked but modal not opening. Waiting longer...")
+                                await asyncio.sleep(random.uniform(3, 5))  # Extra wait for modal
+                            
+                            if same_result_count >= 4:
                                 print("⚠️ Stuck in loop, skipping this job...")
                                 break
                         else:
@@ -5767,7 +5952,7 @@ class SentinelAgent:
                         }}
 
                         // 1. Handle text/numeric inputs
-                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
+                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input:not([type]), textarea', modal);
                         for (const input of textInputs) {{
                             const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
                                             queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
@@ -5905,29 +6090,57 @@ class SentinelAgent:
                                     const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
                                     let bestOpt = findBestMatch(answer, options);
                                     
-                                    // Fallback: If answer is numeric (e.g. "3.8 Years") but options are Yes/No
-                                    if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {{
-                                        const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
-                                                      options.some(o => o.text.toLowerCase().includes('no'));
+                                    // Fallback: If answer is numeric (e.g. "4") and options contain ranges like "0-5 years"
+                                    if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year') || lowerLabel.includes('how many'))) {{
+                                        // Extract numeric years from answer
+                                        const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                        const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
                                         
-                                        if (isYesNo) {{
-                                            // Extract required years from question
-                                            // Matches "3+ years", "minimum 3 years", "at least 3 years"
-                                            const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
-                                            const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
+                                        // Check if options contain ranges (e.g. "0-5 years", "5-7 years")
+                                        const hasRanges = options.some(o => /\d+\s*[-–to]\s*\d+/.test(o.text));
+                                        
+                                        if (hasRanges && ansYears > 0) {{
+                                            console.log('Experience range dropdown detected. User years:', ansYears);
+                                            let bestRangeScore = -1;
                                             
-                                            // Extract users years from answer
-                                            const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
-                                            const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
+                                            for (const opt of options) {{
+                                                const rangeMatch = opt.text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                                if (rangeMatch) {{
+                                                    const min = parseFloat(rangeMatch[1]);
+                                                    const max = parseFloat(rangeMatch[2]);
+                                                    
+                                                    if (ansYears >= min && ansYears <= max) {{
+                                                        // Score based on how centered the value is in the range
+                                                        const rangeCenter = (min + max) / 2;
+                                                        const score = 1 - Math.abs(ansYears - rangeCenter) / (max - min || 1);
+                                                        console.log(`  Range "${{opt.text}}": min=${{min}}, max=${{max}}, score=${{score.toFixed(2)}}`);
+                                                        if (score > bestRangeScore) {{
+                                                            bestRangeScore = score;
+                                                            bestOpt = opt;
+                                                        }}
+                                                    }}
+                                                }}
+                                            }}
                                             
-                                            console.log(`Experience Logic: Required ${{reqYears}}, User ${{ansYears}}`);
+                                            if (bestOpt) {{
+                                                console.log('Selected experience range:', bestOpt.text, 'for', ansYears, 'years');
+                                            }}
+                                        }}
+                                        
+                                        // Fallback: If options are Yes/No instead of ranges
+                                        if (!bestOpt) {{
+                                            const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
+                                                          options.some(o => o.text.toLowerCase().includes('no'));
                                             
-                                            if (ansYears >= reqYears) {{
+                                            if (isYesNo) {{
+                                                // Extract required years from question
+                                                const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                                const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
+                                                
+                                                console.log(`Experience Logic: Required ${{reqYears}}, User ${{ansYears}}`);
+                                                
+                                                // Always select Yes (aggressive strategy)
                                                 bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
-                                            }} else {{
-                                                // If user has less experience, we might want to lie (aggressive) or be honest
-                                                // For now, let's be aggressive if it's close, or default Yes if parsing failed
-                                                bestOpt = options.find(o => o.text.toLowerCase().includes('yes')); 
                                             }}
                                         }}
                                     }}
@@ -5936,6 +6149,51 @@ class SentinelAgent:
                                     if (!bestOpt && !answer && isYesNoQuestion) {{
                                          bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
                                          if (bestOpt) console.log('Defaulting native select to Yes for:', labelText);
+                                    }}
+
+                                    // Fallback 3: Salary/CTC range matching for dropdowns with INR options
+                                    // Handles formats: "₹29,05,000 – ₹45,65,000", "15-22 LPA", "1500000 - 2200000"
+                                    if (!bestOpt && answer && (lowerLabel.includes('salary') || lowerLabel.includes('ctc') || lowerLabel.includes('compensation') || lowerLabel.includes('package') || lowerLabel.includes('expectation') || lowerLabel.includes('pay'))) {{
+                                        // Parse user's salary from answer (strip commas)
+                                        const salaryStr = answer.replace(/[,₹\s]/g, '');
+                                        const salaryMatch = salaryStr.match(/(\d+(?:\.\d+)?)/);
+                                        const userSalary = salaryMatch ? parseFloat(salaryMatch[1]) : 0;
+                                        
+                                        if (userSalary > 0) {{
+                                            console.log('Salary range dropdown detected. User salary:', userSalary);
+                                            let bestRangeScore = -1;
+                                            
+                                            for (const opt of options) {{
+                                                // Strip ₹, commas, spaces from option text to extract numbers
+                                                const cleanText = opt.text.replace(/[₹,\s]/g, '');
+                                                const rangeMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                                
+                                                if (rangeMatch) {{
+                                                    let min = parseFloat(rangeMatch[1]);
+                                                    let max = parseFloat(rangeMatch[2]);
+                                                    
+                                                    // Detect LPA format (e.g. "15-22 LPA" means 1500000-2200000)
+                                                    if (opt.text.toLowerCase().includes('lpa') || opt.text.toLowerCase().includes('lac') || opt.text.toLowerCase().includes('lakh')) {{
+                                                        min *= 100000;
+                                                        max *= 100000;
+                                                    }}
+                                                    
+                                                    if (userSalary >= min && userSalary <= max) {{
+                                                        const rangeCenter = (min + max) / 2;
+                                                        const score = 1 - Math.abs(userSalary - rangeCenter) / (max - min || 1);
+                                                        console.log(`  Salary range "${{opt.text}}": ${{min}}-${{max}}, score=${{score.toFixed(2)}}`);
+                                                        if (score > bestRangeScore) {{
+                                                            bestRangeScore = score;
+                                                            bestOpt = opt;
+                                                        }}
+                                                    }}
+                                                }}
+                                            }}
+                                            
+                                            if (bestOpt) {{
+                                                console.log('Selected salary range:', bestOpt.text, 'for salary', userSalary);
+                                            }}
+                                        }}
                                     }}
 
                                     if (bestOpt) {{
@@ -6380,7 +6638,8 @@ class SentinelAgent:
                         
                         // 4. Form Validation Check: Are we missing anything required?
                         const checkForErrors = () => {{
-                            const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
+                            const excludeTypes = ':not([type="hidden"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="radio"]):not([type="checkbox"])';
+                            const requiredInputs = queryAllDeep('input[required]' + excludeTypes + ', input[aria-required="true"]' + excludeTypes + ', textarea[required], textarea[aria-required="true"]', modal);
                             const requiredSelects = queryAllDeep('select[required], select[aria-required="true"]', modal);
                             const radioGroups = queryAllDeep('fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element', modal);
                             
@@ -6520,41 +6779,49 @@ class SentinelAgent:
                     }}
 
                     // Navigation logic if needed
-                    console.log('Looking for jobs in list...');
                     // 3. If no Easy Apply button and no modal, we might be on the search page
                     // We need to select the next job from the list
-                    console.log('Looking for jobs in list...');
                     
-                    // Find the sidebar with extreme robust fallbacks
-                    // Priority 1: .jobs-search-results-list (standard)
-                    // Priority 2: div[scrollable="true"] on the left side
-                    // Priority 3: Geometry-based fallback (widest scrollable div on the left half)
+                    // ====================================================
+                    // STEP 1: Find the sidebar container (left-side scroll)
+                    // ====================================================
+                    // Priority 1: Search by known stable selectors
                     let sidebar = queryDeep('.scaffold-layout__list') || 
                                   queryDeep('.jobs-search-results-list') ||
-                                  queryDeep('div[scrollable="true"] > ul');
+                                  queryDeep('.jobs-search__left-rail');
                     
+                    // Priority 2: Find by data attributes on a job card then walk UP
                     if (!sidebar) {{
-                         const scrollables = Array.from(queryAllDeep('div[scrollable="true"], .jobs-search-results-list, .scaffold-layout__list'));
-                         // Find the one that is on the left side and has decent height
-                         sidebar = scrollables.find(el => {{
-                             const rect = el.getBoundingClientRect();
-                             return rect.left < window.innerWidth / 2 && rect.height > 300;
-                         }});
+                        const anyCard = queryDeep('[data-occludable-job-id], [data-job-id]');
+                        if (anyCard) {{
+                            let el = anyCard.parentElement;
+                            while (el && el !== document.body) {{
+                                const style = window.getComputedStyle(el);
+                                if (el.scrollHeight > el.clientHeight + 20 &&
+                                    (style.overflowY === 'auto' || style.overflowY === 'scroll')) {{
+                                    sidebar = el;
+                                    break;
+                                }}
+                                el = el.parentElement;
+                            }}
+                        }}
                     }}
                     
+                    // Priority 3: Geometry - any tall left-side scrollable div
                     if (!sidebar) {{
-                         console.log('Sidebar not found by selector, trying geometry...');
-                         // Find any div that is scrollable and on the left
-                         const allDivs = queryAllDeep('div');
-                         for (const div of allDivs) {{
-                             const rect = div.getBoundingClientRect();
-                             if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
-                                 if (div.scrollHeight > div.clientHeight || div.style.overflowY === 'auto' || div.style.overflow === 'auto') {{
-                                     sidebar = div;
-                                     break;
-                                 }}
-                             }}
-                         }}
+                        console.log('Sidebar not found by selector, trying geometry...');
+                        const allDivs = Array.from(queryAllDeep('div'));
+                        for (const div of allDivs) {{
+                            const rect = div.getBoundingClientRect();
+                            const style = window.getComputedStyle(div);
+                            if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
+                                if (div.scrollHeight > div.clientHeight + 20 &&
+                                    (style.overflowY === 'auto' || style.overflowY === 'scroll')) {{
+                                    sidebar = div;
+                                    break;
+                                }}
+                            }}
+                        }}
                     }}
 
                     if (!sidebar) {{
@@ -6563,46 +6830,60 @@ class SentinelAgent:
                         return 'LINKEDIN_SCROLLED: No jobs found (Legacy)';
                     }}
 
-                    // Find job cards within the sidebar
-                    // Valid cards have data-occludable-job-id or data-job-id
-                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item, .scaffold-layout__list-item, .job-card-container', sidebar));
+                    // ====================================================
+                    // STEP 2: Find job cards inside the sidebar
+                    // NOTE: Sidebar cards do NOT contain "Easy Apply" text!
+                    //       That text only appears in the right-side detail pane.
+                    //       We use DATA attributes and natural size/type heuristics.
+                    // ====================================================
+                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id]', sidebar));
                     
-                    // Fallback to role="button" logic
+                    // Fallback: look for list items that are plausible job cards (contain a company-like name)
                     if (jobCards.length === 0) {{
-                        jobCards = Array.from(queryAllDeep('div[role="button"]', sidebar)).filter(el => 
-                            el.innerText.includes('\\n') && el.innerText.length > 50 
-                        );
+                        jobCards = Array.from(queryAllDeep('li', sidebar)).filter(el => {{
+                            const text = el.innerText || '';
+                            // Job card: has multiple lines, has reasonable text, NOT a nav item
+                            return text.includes('\\n') && text.length > 30 && text.length < 800;
+                        }});
                     }}
+                    
+                    // Fallback 2: Any div[role=button] inside sidebar
+                    if (jobCards.length === 0) {{
+                        jobCards = Array.from(queryAllDeep('div[role="listitem"], div[role="button"]', sidebar)).filter(el => {{
+                            const text = el.innerText || '';
+                            return text.includes('\\n') && text.length > 30 && text.length < 800;
+                        }});
+                    }}
+                    
+                    console.log('[DEBUG] Total final jobCards identified before filtering: ' + jobCards.length);
 
-                    // Filter valid candidates
-                    // 1. Must be visible
-                    // 2. Must NOT be "Applied"
-                    // 3. Must have "Easy Apply" text
-                    // 4. Must not be the currently active card
+                    // ====================================================
+                    // STEP 3: Filter for "next" eligible card
+                    // Skip: currently active card, already applied
+                    // ====================================================
                     const candidates = jobCards.filter(card => {{
                         const text = card.innerText.toLowerCase();
                         const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
-                                        (card.getAttribute('aria-current') === 'true'); // Enhanced active check
+                                        card.getAttribute('aria-current') === 'true' ||
+                                        card.getAttribute('aria-selected') === 'true';
                         
-                        if (isActive) return false;
-                        if (!isVisible(card)) return false;
-                        
-                        // Check explicit "Applied" status
-                        if (text.includes('applied')) {{
-                            // console.log('Skipping applied job:', text.split('\\n')[0]);
+                        if (isActive) {{
+                            console.log('[DEBUG] Rejected candidate: isActive');
                             return false;
                         }}
-                        
-                        // User requirement: Must be "Easy Apply"
-                        // Note: Some cards might say "Easy Apply" in hidden text, so strict check is good
-                        if (!text.includes('easy apply')) {{
-                            // console.log('Skipping non-Easy Apply job:', text.split('\\n')[0]);
+                        if (!isVisible(card)) {{
+                            console.log('[DEBUG] Rejected candidate: !isVisible');
                             return false;
                         }}
-                        
+                        if (text.includes('applied') && !text.includes('be an early applicant')) {{
+                            console.log('[DEBUG] Rejected candidate: already applied');
+                            return false;
+                        }}
                         return true;
                     }});
-
+                    
+                    console.log('[DEBUG] Total candidates valid for selection: ' + candidates.length);
+                    
                     if (candidates.length > 0) {{
                         const nextJob = candidates[0];
                         console.log('Clicking next job:', nextJob.innerText.split('\\n')[0]);
@@ -6612,6 +6893,19 @@ class SentinelAgent:
                     }}
 
                     console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
+                    
+                    // Check if we hit the bottom of the scroll container
+                    const isAtBottom = Math.abs(sidebar.scrollHeight - sidebar.scrollTop - sidebar.clientHeight) < 20;
+                    if (isAtBottom) {{
+                        console.log('Reached bottom of sidebar, looking for pagination Next button...');
+                        const nextBtn = queryDeep('.artdeco-pagination__button--next, button[aria-label="Next"]');
+                        if (nextBtn && !nextBtn.disabled && !nextBtn.hasAttribute('disabled')) {{
+                            console.log('Clicking Next page...');
+                            nextBtn.click();
+                            return 'LINKEDIN_PAGINATING: Clicked next page';
+                        }}
+                    }}
+                    
                     sidebar.scrollBy(0, 800);
                     return 'LINKEDIN_SCROLLED: No jobs found';
                 }}
@@ -6900,39 +7194,17 @@ class SentinelAgent:
                             }}
                         }}
 
-                                    // ACTION: Click the checkbox (for non-binary questions)
-                                    cb.click();
-                                    
-                                    // Verification & Fallback
-                                    if (!cb.checked) {{
-                                         cb.checked = true;
-                                         cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    }}
-                                    
-                                    clickedCount++;
-                                }}
-                            }}
-                            
-                            if (clickedCount > 0) {{
-                                const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                if (saveBtn) {{ 
-                                    saveBtn.click(); 
-                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED: ' + clickedCount + ' | DBG: ' + debugLog.join(', '); 
-                                }}
-                            }}
+                        // Try option buttons (wrap in block to avoid const redeclaration collisions)
+                        {{
+                            const optBtns = document.querySelectorAll('.chatbot_OptionContainer button');
+                            if (optBtns.length > 0) {{ optBtns[0].click(); return 'NAUKRI_CHAT_OPT_CLICKED'; }}
                         }}
-
-                        // Try option buttons
-                        const optionBtns = document.querySelectorAll('.chatbot_OptionContainer button');
-                        if (optionBtns.length > 0) {{ optionBtns[0].click(); return 'NAUKRI_CHAT_OPT_CLICKED'; }}
                         
                         // DOM INSPECTION on Wait
                         const activeMsg = document.querySelector('.chatbot_MessageContainer li:last-child') || document.querySelector('.chatbot_MessageContainer');
                         const dump = activeMsg ? activeMsg.innerHTML.slice(0, 800) : 'No active msg';
                         
-                        return 'NAUKRI_CHAT_WAITING | DOM: ' + dump + ' | CBs: ' + debugLog.join(', ');
-                        
-                        return 'NAUKRI_CHAT_WAITING';
+                        return 'NAUKRI_CHAT_WAITING | DOM: ' + dump;
                     }}
                     
                     // 2. Check if we're on the recommended jobs page

@@ -45,5 +45,17 @@ class TestQAUpdates(unittest.TestCase):
             self.assertEqual(ans, 'Full-stack', f"Failed for question: {q}")
             self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
 
+    def test_leetcode_questions(self):
+        questions = [
+            "How many questions you have solved in Leetcode?*",
+            "Number of Leetcode problems solved"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, '500+', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+
 if __name__ == '__main__':
     unittest.main()

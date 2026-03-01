@@ -78,7 +78,7 @@ class Browser:
             import shutil
             import glob
             
-            temp_dir = os.path.abspath(os.path.join(os.getcwd(), "p"))
+            temp_dir = os.path.join(tempfile.gettempdir(), f"sentinel_profile_{os.getpid()}")
             os.makedirs(temp_dir, exist_ok=True)
             
             for pattern in ["Singleton*", "lock", ".parentlock"]:
@@ -96,17 +96,20 @@ class Browser:
             
             if os.path.exists(src_default):
                 try:
-                    if os.path.exists(dst_default):
-                        shutil.rmtree(dst_default, ignore_errors=True)
-                    
-                    os.makedirs(dst_default, exist_ok=True)
+                    # Don't try to delete — macOS locks some files. Just overwrite with dirs_exist_ok
+                    if not os.path.exists(dst_default):
+                        os.makedirs(dst_default, exist_ok=True)
                     print(f"  ⚡ Mirroring full profile (excluding Cache)...")
                     
                     def ignore_cache(path, names):
                         ignored_patterns = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Singleton', 'lock', '.parentlock']
                         return [n for n in names if any(p in n for p in ignored_patterns)]
                     
-                    shutil.copytree(src_default, dst_default, dirs_exist_ok=True, ignore=ignore_cache)
+                    try:
+                        shutil.copytree(src_default, dst_default, dirs_exist_ok=True, ignore=ignore_cache)
+                    except Exception as copy_err:
+                        print(f"  ⚠️ Copytree error (using existing profile): {copy_err}")
+                        # Profile copy dir exists with prior data — reuse it as-is
                     
                     local_state_src = os.path.join(self.user_data_dir, "Local State")
                     if os.path.exists(local_state_src):
@@ -136,14 +139,35 @@ class Browser:
                     viewport=None 
                 )
             except Exception as e:
-                print(f"⚠️ Failed to launch persistent context: {e}")
-                print("🔄 Falling back to standard launch (WITHOUT profile)...")
-                self.browser = await self.playwright.chromium.launch(
-                    executable_path=self.executable_path,
-                    headless=self.headless,
-                    args=args
-                )
-                self.context = await self.browser.new_context()
+                print(f"⚠️ Failed to launch persistent context with Chrome: {e}")
+                print("🔄 Falling back to Playwright Chromium WITH profile...")
+                try:
+                    # Use Playwright's bundled Chromium WITH the seeded profile
+                    self.context = await self.playwright.chromium.launch_persistent_context(
+                        user_data_dir=final_user_data_dir,
+                        headless=self.headless,
+                        args=args,
+                        viewport=None
+                    )
+                    print("✅ Launched Playwright Chromium with seeded profile!")
+                except Exception as e2:
+                    print(f"⚠️ Playwright Chromium persistent also failed: {e2}")
+                    print("🔄 Last resort: Playwright Chromium without profile...")
+                    try:
+                        self.browser = await self.playwright.chromium.launch(
+                            headless=self.headless,
+                            args=args
+                        )
+                        self.context = await self.browser.new_context()
+                    except Exception as e3:
+                        print(f"⚠️ All Chromium options failed: {e3}")
+                        # Absolute last resort: Chrome without profile
+                        self.browser = await self.playwright.chromium.launch(
+                            executable_path=self.executable_path,
+                            headless=self.headless,
+                            args=args
+                        )
+                        self.context = await self.browser.new_context()
         else:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,

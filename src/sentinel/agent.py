@@ -1494,6 +1494,17 @@ KNOWN_QA_PATTERNS = {
     'how many years into node': '{{TECH_EXP_YEARS}}',
     'how many years into full stack': '{{TECH_EXP_YEARS}}',
     
+    # Format: Combined tech questions (LinkedIn "X or Y" patterns)
+    'how many years of work experience do you have with react.js or angular.js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with react or angular': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with node.js or python': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with java or python': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with react.js or vue.js': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with javascript or typescript': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with spring boot or spring': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with aws or azure': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with docker or kubernetes': '{{TECH_EXP_YEARS}}',
+    
     # SECTION 4: SCREENING & ASSESSMENT (35 patterns)
     'are you ready to take beribot assessment': 'Yes',
     'are you ready to take assessment': 'Yes',
@@ -2159,6 +2170,8 @@ class SentinelAgent:
             fp_match = self._fingerprint_matcher.match(question)
             if fp_match:
                 answer, confidence = fp_match
+                # Resolve template markers BEFORE validation/return
+                answer = self._adjust_answer_for_platform(answer, question)
                 # Validate answer format
                 format_type = detect_expected_format(question)
                 if format_type:
@@ -2178,8 +2191,9 @@ class SentinelAgent:
         # ==========================================
         learned = self._get_learned_answer(question)
         if learned and learned[1] >= 0.5:
-            print(f"   📚 Learned pattern match (conf: {learned[1]:.2f}): {learned[0][:50]}...")
-            return learned
+            learned_answer = self._adjust_answer_for_platform(learned[0], question)
+            print(f"   📚 Learned pattern match (conf: {learned[1]:.2f}): {learned_answer[:50]}...")
+            return learned_answer, learned[1]
         
         # ==========================================
         # PHASE 1: Keyword-based Priority Matching
@@ -4156,44 +4170,88 @@ class SentinelAgent:
                                 await self._page.goto(redirect_url, wait_until='domcontentloaded', timeout=15000)
                                 await asyncio.sleep(random.uniform(3, 5))
                             else:
-                                # On search results page — find and click next job card WITHOUT navigating away
-                                # Use JavaScript to find job cards and simulate a click via dispatchEvent
-                                clicked_job = await self._page.evaluate("""
-                                    (visitedUrls) => {
-                                        const links = document.querySelectorAll('a[href*="/jobs/view/"]');
-                                        for (const link of links) {
-                                            const rect = link.getBoundingClientRect();
-                                            // Only sidebar links (left side, visible)
-                                            if (rect.x > 600 || rect.width === 0 || rect.height === 0) continue;
-                                            
-                                            const href = link.getAttribute('href') || '';
-                                            const text = (link.innerText || '').trim();
-                                            if (text.length < 5) continue;
-                                            if (visitedUrls.includes(href)) continue;
-                                            
-                                            // Find the parent list item (job card container)
-                                            let card = link.closest('li') || link.closest('[data-occludable-job-id]') || link.parentElement;
-                                            if (card) {
-                                                // Scroll into view and click the CARD (not the link)
-                                                card.scrollIntoView({behavior: 'smooth', block: 'center'});
-                                                card.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-                                                return {href: href, text: text.substring(0, 60)};
-                                            }
-                                        }
-                                        return null;
-                                    }
-                                """, list(self._linkedin_visited_job_urls))
+                                # On search results page — native Playwright fallback
+                                print("   🔍 Scanning job cards natively with Playwright...")
+                                locators = self._page.locator('.job-card-container, [data-occludable-job-id], [data-view-name="job-search-job-card"]')
+                                count = await locators.count()
+                                clicked = False
                                 
-                                if clicked_job:
-                                    self._linkedin_visited_job_urls.add(clicked_job['href'])
-                                    print(f"   ✅ Clicked job card: {clicked_job['text']}...")
-                                else:
-                                    print("   ⚠️ No unvisited job links found. Scrolling...")
-                                    await self._page.evaluate("window.scrollBy(0, 500)")
+                                for i in range(count):
+                                    card = locators.nth(i)
+                                    if not await card.is_visible(): continue
+                                    
+                                    # Extract Job ID securely
+                                    job_id = await card.get_attribute('data-occludable-job-id') or await card.get_attribute('data-job-id')
+                                    if not job_id:
+                                        try:
+                                            # Try finding href
+                                            link = card.locator('a[href*="/jobs/"]').first
+                                            if await link.count() > 0:
+                                                href = await link.get_attribute('href')
+                                                import re
+                                                match = re.search(r'/jobs/(?:view/)?(\d+)|currentJobId=(\d+)', href or '')
+                                                if match: job_id = match.group(1) or match.group(2)
+                                        except Exception:
+                                            pass
+                                            
+                                    if not job_id:
+                                        text = await card.text_content()
+                                        job_id = text.strip()[:30] if text else f"Unknown_{i}"
+                                        
+                                    if job_id in self._linkedin_visited_job_urls:
+                                        continue
+                                        
+                                    print(f"   ✅ Playwright found unvisited job: {job_id}")
+                                    self._linkedin_visited_job_urls.add(job_id)
+                                    await card.scroll_into_view_if_needed()
+                                    
+                                    try:
+                                        await card.click(force=True, position={"x": 25, "y": 25})
+                                        clicked = True
+                                        self._linkedin_scroll_fail_count = 0
+                                        print(f"   ✅ Successfully clicked via Playwright native!")
+                                        break
+                                    except Exception as e:
+                                        print(f"   ⚠️ Native click failed: {e}")
+                                        
+                                if not clicked:
+                                    print("   ⚠️ No unvisited jobs found by Playwright. Scrolling...")
+                                    await self._page.mouse.wheel(0, 800)
+                                    
                         except Exception as e:
-                            print(f"   ⚠️ Playwright link fallback error: {e}")
+                            print(f"   ⚠️ Playwright fallback error: {e}")
                     
                     await asyncio.sleep(random.uniform(4, 8))
+                    continue
+                    
+                # LinkedIn: Playwright direct native click requested by JS
+                if 'LINKEDIN_USE_PLAYWRIGHT_CLICK' in result:
+                    job_id = result.split(':', 1)[1] if ':' in result else None
+                    print(f"✅ JS requested Playwright click for job: {job_id[:40] if job_id else 'None'}...")
+                    if job_id:
+                        try:
+                            # 1. Try bulletproof dynamic tag first (injected by JS)
+                            card = self._page.locator('[data-sentinel-target="true"]')
+                            
+                            # 2. Fallbacks if tag was stripped by React
+                            if await card.count() == 0:
+                                card = self._page.locator(f'[data-occludable-job-id="{job_id}"], [data-job-id="{job_id}"]').first
+                                
+                            if await card.count() > 0:
+                                await card.first.scroll_into_view_if_needed()
+                                await card.first.click(force=True, position={"x": 5, "y": 5})
+                                # Clean up the tag
+                                await self._page.evaluate('() => { const el = document.querySelector(\'[data-sentinel-target="true"]\'); if(el) el.removeAttribute("data-sentinel-target"); }')
+                                print("   🎯 Clicked exact job card natively with Playwright!")
+                            else:
+                                print(f"   ⚠️ Could not locate tagged element in DOM, triggering fallback sweep")
+                                self._linkedin_scroll_fail_count = 1  # Force fallback next tick
+                        except Exception as e:
+                            print(f"   ⚠️ Playwright click error: {e}")
+                            self._linkedin_scroll_fail_count = 1
+                    
+                    self._linkedin_scroll_fail_count = 0
+                    await asyncio.sleep(random.uniform(3, 5))
                     continue
                     
                 # LinkedIn: Paginated to next page
@@ -6786,13 +6844,14 @@ class SentinelAgent:
                     // STEP 1: Find the sidebar container (left-side scroll)
                     // ====================================================
                     // Priority 1: Search by known stable selectors
-                    let sidebar = queryDeep('.scaffold-layout__list') || 
-                                  queryDeep('.jobs-search-results-list') ||
+                    let sidebar = queryDeep('.jobs-search-results-list') || 
+                                  queryDeep('.scaffold-layout__list') ||
                                   queryDeep('.jobs-search__left-rail');
                     
                     // Priority 2: Find by data attributes on a job card then walk UP
+                    // UPDATED: Support modern LinkedIn selectors
                     if (!sidebar) {{
-                        const anyCard = queryDeep('[data-occludable-job-id], [data-job-id]');
+                        const anyCard = queryDeep('[data-view-name="job-search-job-card"], [data-testid="job-card"], [data-occludable-job-id], [data-job-id]');
                         if (anyCard) {{
                             let el = anyCard.parentElement;
                             while (el && el !== document.body) {{
@@ -6830,63 +6889,49 @@ class SentinelAgent:
                         return 'LINKEDIN_SCROLLED: No jobs found (Legacy)';
                     }}
 
-                    // ====================================================
-                    // STEP 2: Find job cards inside the sidebar
-                    // NOTE: Sidebar cards do NOT contain "Easy Apply" text!
-                    //       That text only appears in the right-side detail pane.
-                    //       We use DATA attributes and natural size/type heuristics.
-                    // ====================================================
-                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id]', sidebar));
+                    // Find job cards within the sidebar
+                    // Valid cards have data-occludable-job-id or data-job-id
+                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item, .scaffold-layout__list-item, .job-card-container', sidebar));
                     
-                    // Fallback: look for list items that are plausible job cards (contain a company-like name)
+                    // Fallback to role="button" logic
                     if (jobCards.length === 0) {{
-                        jobCards = Array.from(queryAllDeep('li', sidebar)).filter(el => {{
-                            const text = el.innerText || '';
-                            // Job card: has multiple lines, has reasonable text, NOT a nav item
-                            return text.includes('\\n') && text.length > 30 && text.length < 800;
-                        }});
+                        jobCards = Array.from(queryAllDeep('div[role="button"]', sidebar)).filter(el => 
+                            el.innerText.includes('\n') && el.innerText.length > 50 
+                        );
                     }}
-                    
-                    // Fallback 2: Any div[role=button] inside sidebar
-                    if (jobCards.length === 0) {{
-                        jobCards = Array.from(queryAllDeep('div[role="listitem"], div[role="button"]', sidebar)).filter(el => {{
-                            const text = el.innerText || '';
-                            return text.includes('\\n') && text.length > 30 && text.length < 800;
-                        }});
-                    }}
-                    
-                    console.log('[DEBUG] Total final jobCards identified before filtering: ' + jobCards.length);
 
-                    // ====================================================
-                    // STEP 3: Filter for "next" eligible card
-                    // Skip: currently active card, already applied
-                    // ====================================================
+                    // Filter valid candidates
+                    // 1. Must be visible
+                    // 2. Must NOT be "Applied"
+                    // 3. Must have "Easy Apply" text
+                    // 4. Must not be the currently active card
                     const candidates = jobCards.filter(card => {{
                         const text = card.innerText.toLowerCase();
                         const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
-                                        card.getAttribute('aria-current') === 'true' ||
-                                        card.getAttribute('aria-selected') === 'true';
+                                        (card.getAttribute('aria-current') === 'true'); // Enhanced active check
                         
-                        if (isActive) {{
-                            console.log('[DEBUG] Rejected candidate: isActive');
+                        if (isActive) return false;
+                        if (!isVisible(card)) return false;
+                        
+                        // Check explicit "Applied" status
+                        if (text.includes('applied')) {{
+                            // console.log('Skipping applied job:', text.split('\n')[0]);
                             return false;
                         }}
-                        if (!isVisible(card)) {{
-                            console.log('[DEBUG] Rejected candidate: !isVisible');
+                        
+                        // User requirement: Must be "Easy Apply"
+                        // Note: Some cards might say "Easy Apply" in hidden text, so strict check is good
+                        if (!text.includes('easy apply')) {{
+                            // console.log('Skipping non-Easy Apply job:', text.split('\n')[0]);
                             return false;
                         }}
-                        if (text.includes('applied') && !text.includes('be an early applicant')) {{
-                            console.log('[DEBUG] Rejected candidate: already applied');
-                            return false;
-                        }}
+                        
                         return true;
                     }});
-                    
-                    console.log('[DEBUG] Total candidates valid for selection: ' + candidates.length);
-                    
+
                     if (candidates.length > 0) {{
                         const nextJob = candidates[0];
-                        console.log('Clicking next job:', nextJob.innerText.split('\\n')[0]);
+                        console.log('Clicking next job:', nextJob.innerText.split('\n')[0]);
                         nextJob.click();
                         nextJob.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
                         return 'LINKEDIN_JOB_SELECTED';
@@ -6898,16 +6943,37 @@ class SentinelAgent:
                     const isAtBottom = Math.abs(sidebar.scrollHeight - sidebar.scrollTop - sidebar.clientHeight) < 20;
                     if (isAtBottom) {{
                         console.log('Reached bottom of sidebar, looking for pagination Next button...');
-                        const nextBtn = queryDeep('.artdeco-pagination__button--next, button[aria-label="Next"]');
+                        const nextBtnSelectors = [
+                            'button.jobs-search-pagination__button--next',
+                            '.artdeco-pagination__button--next',
+                            'button[aria-label="View next page"]',
+                            'button[aria-label="Next"]',
+                            'button.artdeco-button[aria-label*="Page "]' // Sometimes next is just the next numbered block
+                        ];
+                        
+                        let nextBtn = null;
+                        for (const sel of nextBtnSelectors) {{
+                            nextBtn = queryDeep(sel);
+                            if (nextBtn) break;
+                        }}
+                        
                         if (nextBtn && !nextBtn.disabled && !nextBtn.hasAttribute('disabled')) {{
-                            console.log('Clicking Next page...');
+                            console.log('Clicking Next page pagination...');
                             nextBtn.click();
                             return 'LINKEDIN_PAGINATING: Clicked next page';
+                        }} else {{
+                            // No Next button. It might be infinite scroll loading.
+                            console.log('No Next button found. Triggering infinite scroll loaders...');
+                            // Wiggle the scroll to trigger intersection observers
+                            sidebar.scrollBy(0, -50);
+                            setTimeout(() => sidebar.scrollBy(0, 100), 50);
+                            return 'LINKEDIN_PAGINATING: Triggering infinite load wiggle';
                         }}
                     }}
                     
-                    sidebar.scrollBy(0, 800);
-                    return 'LINKEDIN_SCROLLED: No jobs found';
+                    // Not at bottom yet, just regular scroll
+                    sidebar.scrollBy(0, sidebar.clientHeight * 0.8 || 800);
+                    return 'LINKEDIN_SCROLLED: Scrolling down list';
                 }}
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================

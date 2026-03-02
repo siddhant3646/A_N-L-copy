@@ -227,49 +227,273 @@
         return null;
     }
     
-    // Helper: Find job cards
-    function findJobCards() {
-        const cards = [];
+    // Helper: Query deep into shadow DOM and iframes
+    function queryDeep(selector, root = document) {
+        // First try normal query
+        let result = root.querySelector(selector);
+        if (result) return result;
         
-        // Method 1: Look for links with currentJobId
-        const jobLinks = document.querySelectorAll('a[href*="currentJobId"]');
-        for (const link of jobLinks) {
-            const card = link.closest('li') || link.closest('div');
-            if (card && !cards.includes(card)) {
-                cards.push(card);
+        // Search in shadow DOM
+        const allElements = root.querySelectorAll('*');
+        for (const el of allElements) {
+            if (el.shadowRoot) {
+                result = queryDeep(selector, el.shadowRoot);
+                if (result) return result;
             }
         }
         
-        // Method 2: Look for list items with job-related content
-        if (cards.length === 0) {
-            const allLis = document.querySelectorAll('li');
-            for (const li of allLis) {
-                const text = li.innerText.toLowerCase();
-                const hasJobLink = li.querySelector('a[href*="jobs"]') !== null;
-                const hasCompany = text.includes('company') || text.includes('inc') || text.includes('corp');
-                const hasLocation = text.includes('india') || text.includes('bangalore') || text.includes('mumbai') || text.includes('delhi');
-                
-                if (hasJobLink && (hasCompany || hasLocation) && li.innerText.length > 50) {
-                    cards.push(li);
+        // Search in iframes
+        const iframes = root.querySelectorAll('iframe');
+        for (const iframe of iframes) {
+            try {
+                if (iframe.contentDocument) {
+                    result = queryDeep(selector, iframe.contentDocument);
+                    if (result) return result;
+                }
+            } catch (e) {
+                // Cross-origin iframe, skip
+            }
+        }
+        
+        return null;
+    }
+    
+    // Helper: Query all matching elements deep
+    function queryAllDeep(selector, root = document) {
+        const results = [];
+        
+        // Normal query
+        results.push(...root.querySelectorAll(selector));
+        
+        // Shadow DOM
+        const allElements = root.querySelectorAll('*');
+        for (const el of allElements) {
+            if (el.shadowRoot) {
+                results.push(...queryAllDeep(selector, el.shadowRoot));
+            }
+        }
+        
+        // Iframes
+        const iframes = root.querySelectorAll('iframe');
+        for (const iframe of iframes) {
+            try {
+                if (iframe.contentDocument) {
+                    results.push(...queryAllDeep(selector, iframe.contentDocument));
+                }
+            } catch (e) {
+                // Cross-origin iframe, skip
+            }
+        }
+        
+        return results;
+    }
+    
+    // Helper: Check if element is visible
+    function isVisible(element) {
+        if (!element) return false;
+        // Relaxed visibility check - focus on basic display/visibility only
+        const style = window.getComputedStyle(element);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            return false;
+        }
+        // Check dimensions
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+    }
+    
+    // Helper: Find the sidebar container (job list container)
+    function findSidebar() {
+        // Priority 1: Known stable selectors
+        let sidebar = queryDeep('.scaffold-layout__list') || 
+                      queryDeep('.jobs-search-results-list') ||
+                      queryDeep('.jobs-search__left-rail');
+        
+        // Priority 2: Find by data attributes on a job card then walk UP
+        // UPDATED: Use new LinkedIn selectors
+        if (!sidebar) {
+            const anyCard = queryDeep('[data-view-name="job-search-job-card"], [data-testid="job-card"], [data-occludable-job-id], [data-job-id]');
+            if (anyCard) {
+                let el = anyCard.parentElement;
+                while (el && el !== document.body) {
+                    const style = window.getComputedStyle(el);
+                    if (el.scrollHeight > el.clientHeight + 20 &&
+                        (style.overflowY === 'auto' || style.overflowY === 'scroll')) {
+                        sidebar = el;
+                        break;
+                    }
+                    el = el.parentElement;
                 }
             }
         }
         
-        return cards;
+        // Priority 3: Geometry - any tall left-side scrollable div
+        if (!sidebar) {
+            const allDivs = Array.from(queryAllDeep('div'));
+            for (const div of allDivs) {
+                const rect = div.getBoundingClientRect();
+                const style = window.getComputedStyle(div);
+                if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {
+                    if (div.scrollHeight > div.clientHeight + 20 &&
+                        (style.overflowY === 'auto' || style.overflowY === 'scroll')) {
+                        sidebar = div;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return sidebar;
+    }
+    
+    // Helper: Find job cards with multiple fallback strategies
+    function findJobCards() {
+        const sidebar = findSidebar();
+        let jobCards = [];
+        
+        // STRATEGY 1: Data attributes (most reliable)
+        // UPDATED: Primary selector is now data-view-name for modern LinkedIn UI
+        const cardSelectors = [
+            '[data-view-name="job-search-job-card"]',
+            '[data-testid="job-card"]',
+            '[data-occludable-job-id]',
+            '[data-job-id]'
+        ];
+        
+        for (const selector of cardSelectors) {
+            if (sidebar) {
+                const cards = Array.from(queryAllDeep(selector, sidebar));
+                jobCards.push(...cards);
+            } else {
+                const cards = Array.from(queryAllDeep(selector));
+                jobCards.push(...cards);
+            }
+        }
+        
+        // Remove duplicates
+        jobCards = [...new Set(jobCards)];
+        
+        // STRATEGY 2: Find cards by searching for divs with role="button" that contain job links
+        // This is common in the current LinkedIn UI
+        if (jobCards.length === 0) {
+            const container = sidebar || document;
+            const allDivs = Array.from(container.querySelectorAll('div'));
+            for (const div of allDivs) {
+                // Check if it looks like a job card
+                const hasJobLink = div.querySelector('a[href*="/jobs/view/"]') !== null ||
+                                  div.querySelector('a[href*="currentJobId"]') !== null;
+                const hasRoleButton = div.getAttribute('role') === 'button' || div.getAttribute('tabindex') === '0';
+                const text = div.innerText || '';
+                const hasContent = text.length > 50 && text.length < 800 && text.includes('\n');
+                
+                if (hasJobLink && hasContent) {
+                    jobCards.push(div);
+                }
+            }
+        }
+        
+        // STRATEGY 3: Link-based detection (backup)
+        // Job cards contain links to /jobs/view/ URLs
+        if (jobCards.length === 0) {
+            const container = sidebar || document;
+            const jobLinks = container.querySelectorAll('a[href*="/jobs/view/"]');
+            for (const link of jobLinks) {
+                // Find the parent container (could be li, div, or article)
+                const card = link.closest('[data-view-name="job-search-job-card"]') ||
+                            link.closest('[data-testid="job-card"]') ||
+                            link.closest('[data-occludable-job-id]') || 
+                            link.closest('[data-job-id]') ||
+                            link.closest('li') ||
+                            link.closest('div[class*="job-card"]') ||
+                            link.closest('div[class*="search-result"]') ||
+                            link.closest('div');
+                if (card && !jobCards.includes(card)) {
+                    jobCards.push(card);
+                }
+            }
+        }
+        
+        // STRATEGY 4: List items with content heuristics
+        // Look for list items in sidebar that have job-like content
+        if (jobCards.length === 0) {
+            const container = sidebar || document;
+            const allLis = Array.from(container.querySelectorAll('li'));
+            jobCards = allLis.filter(li => {
+                const text = li.innerText || '';
+                // Job cards typically have:
+                // - Multiple lines (title, company, location)
+                // - Reasonable text length (not too short, not too long)
+                // - A job link
+                const hasJobLink = li.querySelector('a[href*="/jobs/view/"]') !== null ||
+                                  li.querySelector('a[href*="currentJobId"]') !== null;
+                const hasMultipleLines = text.includes('\n');
+                const reasonableLength = text.length > 30 && text.length < 800;
+                
+                return hasJobLink && hasMultipleLines && reasonableLength;
+            });
+        }
+        
+        // STRATEGY 5: Role-based detection
+        // Look for div[role="listitem"] or div[role="button"] in sidebar
+        if (jobCards.length === 0) {
+            const container = sidebar || document;
+            const roleElements = Array.from(container.querySelectorAll('div[role="listitem"], div[role="button"], article'));
+            jobCards = roleElements.filter(el => {
+                const text = el.innerText || '';
+                // Must have multiple lines and reasonable length
+                return text.includes('\n') && text.length > 30 && text.length < 800;
+            });
+        }
+        
+        // STRATEGY 6: Geometry-based detection (last resort)
+        // Find clickable elements in the left sidebar that look like job cards
+        if (jobCards.length === 0 && sidebar) {
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const allClickables = Array.from(document.querySelectorAll('a, div[role="button"], li'));
+            jobCards = allClickables.filter(el => {
+                const rect = el.getBoundingClientRect();
+                const text = el.innerText || '';
+                // Must be inside sidebar, visible, and have job-like content
+                const inSidebar = rect.left >= sidebarRect.left && rect.right <= sidebarRect.right;
+                const hasContent = text.length > 30 && text.length < 800 && text.includes('\n');
+                return inSidebar && isVisible(el) && hasContent;
+            });
+        }
+        
+        // Filter cards to ensure they're valid and visible
+        return jobCards.filter(card => {
+            // Must not be the currently active/selected card
+            const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
+                            card.getAttribute('aria-current') === 'true' ||
+                            card.getAttribute('aria-selected') === 'true' ||
+                            card.getAttribute('data-view-name') === 'job-search-job-card-active';
+            if (isActive) return false;
+            
+            // Must have some meaningful content
+            const text = card.innerText || '';
+            if (text.length < 20) return false;
+            
+            return true;
+        });
     }
     
     // Helper: Get job ID from card
     function getJobIdFromCard(card) {
-        // Try data attributes
-        let jobId = card.getAttribute('data-job-id') || card.getAttribute('data-occludable-job-id');
+        // Try data attributes - UPDATED for modern LinkedIn UI
+        let jobId = card.getAttribute('data-job-id') || 
+                    card.getAttribute('data-occludable-job-id') ||
+                    card.getAttribute('data-view-name');
         if (jobId) return jobId;
         
         // Try from link href
-        const link = card.querySelector('a[href*="currentJobId"]');
+        const link = card.querySelector('a[href*="/jobs/view/"]') || 
+                     card.querySelector('a[href*="currentJobId"]');
         if (link) {
-            const href = link.getAttribute('href');
-            const match = href.match(/currentJobId=(\d+)/);
-            if (match) return match[1];
+            const href = link.getAttribute('href') || '';
+            // Try multiple patterns
+            const match1 = href.match(/currentJobId=(\d+)/);
+            if (match1) return match1[1];
+            const match2 = href.match(/\/view\/(\d+)/);
+            if (match2) return match2[1];
         }
         
         return null;

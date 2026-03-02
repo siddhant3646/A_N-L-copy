@@ -1,11 +1,20 @@
 # Lessons Learned
 
-## Modern UI DOM Handling (LinkedIn)
-- **Pattern:** Using standard `document.querySelector` or `.querySelectorAll()` can cause script logic to mysteriously fail and "not find" elements that are clearly visible on the screen.
-- **Root Cause:** Modern websites like LinkedIn heavily utilize component-based architectures where elements are encapsulated within Shadow DOM structures.
-- **Rule:** For high-robustness scraping or UI automation, replace native selection methods with deep querying patterns (`queryDeep` / `queryAllDeep`) that recursively explore and piece together the `shadowRoot` elements of the web page.
+## 2026-03-02: LinkedIn Selector Debugging
 
-## Mac Terminal Browsing (CDP)
-- **Pattern:** Attempting to spawn Chrome with Playwright's persistent context triggers deep macOS restriction blocks (`Operation not permitted` / `SingletonLock` issues) resulting in instant script failure or ECONNREFUSED when binding to `9222`.
-- **Root Cause:** App Gatekeeper sandbox limits Playwright's ability to seamlessly hijack an existing user profile's session variables natively.
-- **Rule:** Rather than mirroring profiles or launching Chrome binaries directly, the most bulletproof way to hook Playwright into a session profile natively on macOS is using `subprocess.Popen` with the `open -n -a "Google Chrome"` command combined with CDP connection, and systematically removing hanging `SingletonLock` artifacts before boot.
+### Lesson 1: Template resolution must happen at EVERY return path
+- `{{TECH_EXP_YEARS}}` leaked into form fields because fingerprint matching (Phase 0.5) returned early before `_adjust_answer_for_platform()` ran
+- **Rule:** When adding early-return optimizations (caches, fingerprint matches), always apply the same post-processing that the main path does
+
+### Lesson 2: Never use `data-view-name` as a unique identifier
+- `data-view-name="job-search-job-card"` is identical for ALL cards → marking one as visited marks ALL as visited
+- **Rule:** Only use truly unique attributes (numeric IDs, href paths) for tracking. Validate uniqueness before using any attribute as an ID
+
+### Lesson 3: Adding parent elements as card selectors creates hidden duplicates
+- `li.scaffold-layout__list-item` + `[data-occludable-job-id]` = 50 elements (25 `li` + 25 inner `div`)
+- `[...new Set()]` deduplication doesn't help because they're different DOM nodes representing the same logical card
+- **Rule:** Card selectors should target the element that carries the data attributes, not its parent wrapper
+
+### Lesson 4: `querySelector` on `queryAllDeep` results may not find nested elements
+- If a card is returned from shadow DOM traversal, regular `querySelector` from it may miss children
+- **Rule:** Use `.closest('li')?.querySelector(...)` as fallback when the primary querySelector fails

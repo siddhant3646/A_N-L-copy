@@ -35,7 +35,6 @@ KNOWN_QA_PATTERNS = {
     'years of experience': '3.8 Years',
     'months of experience': '46',
     'total experience': '3.8 Years',
-    'total exp': '4 Years',
     'overall experience': '3.8 Years',
     'year of exp': '3.8 Years',
     # Experience Range Questions - map to appropriate radio button ranges
@@ -44,9 +43,6 @@ KNOWN_QA_PATTERNS = {
     'java experience': '3.8 Years',
     'react experience': '4 Years',
     'angular experience': '4 Years',
-    'exp in angular': '4 Years',
-    'exp in react': '4 Years',
-    'exp in angular or react': '4 Years',
     'nodejs experience': '3.8 Years',
     'javascript experience': '3.8 Years',
     'ci/cd experience': '3.8 Years',
@@ -58,43 +54,43 @@ KNOWN_QA_PATTERNS = {
     'python experience': '3.8 Years',
     'programming experience': '3.8 Years',
     # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
-    'current salary': '15.3 LPA',
-    'what is your current salary?': '15.3 LPA',
-    'expected salary': '22 LPA',
-    'what is your expected salary?': '22 LPA',
-    'gross salary': '15.3 LPA',
-    'gross current salary': '15.3 LPA',
-    'gross expected salary': '22 LPA',
-    'salary expectations': '22 LPA',
+    'current salary': '13.5 LPA',
+    'what is your current salary?': '13.5 LPA',
+    'expected salary': '20 LPA',
+    'what is your expected salary?': '20 LPA',
+    'gross salary': '13.5 LPA',
+    'gross current salary': '13.5 LPA',
+    'gross expected salary': '20 LPA',
+    'salary expectations': '20 LPA',
     # Current/Expected Annual Salary — common LinkedIn phrasing
-    'current annual salary': '1530000',
-    'what is your current annual salary': '1530000',
-    'what is your current annual salary?': '1530000',
-    'expected annual salary': '2200000',
-    'what is your expected annual salary': '2200000',
-    'what is your expected annual salary?': '2200000',
-    'what is your expected annual salary ?': '2200000',
-    'current ctc': '1530000',
-    'what is your current ctc': '1530000',
-    'what is your current ctc?': '1530000',
+    'current annual salary': '1350000',
+    'what is your current annual salary': '1350000',
+    'what is your current annual salary?': '1350000',
+    'expected annual salary': '2000000',
+    'what is your expected annual salary': '2000000',
+    'what is your expected annual salary?': '2000000',
+    'what is your expected annual salary ?': '2000000',
+    'current ctc': '1350000',
+    'what is your current ctc': '1350000',
+    'what is your current ctc?': '1350000',
     # Fixed CTC and Variable Pay - Numeric values
-    'fixed ctc': '1530000',
-    'fixed ctc numeric': '1530000',
-    'fixed ctc numeric input': '1530000',
+    'fixed ctc': '1350000',
+    'fixed ctc numeric': '1350000',
+    'fixed ctc numeric input': '1350000',
     'variable pay': '0',
     'variable pay numeric': '0',
     'variable pay numeric input': '0',
     # Expected Annual CTC in INR
-    'expected annual ctc in inr': '2200000',
-    'expected annual ctc': '2200000',
-    'expected ctc in inr': '2200000',
-    'expected ctc inr': '2200000',
-    # Salary Range Questions - Current: 15.3 LPA, Expected: 22 LPA
-    'salary range': '20-25 Lacs',
-    'current salary range': '20-25 Lacs',
-    'expected salary range': '20-25 Lacs',
-    'annual salary': '20-25 Lacs',
-    'ctc range': '20-25 Lacs',
+    'expected annual ctc in inr': '2000000',
+    'expected annual ctc': '2000000',
+    'expected ctc in inr': '2000000',
+    'expected ctc inr': '2000000',
+    # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
+    'salary range': '10-15 Lacs',
+    'current salary range': '10-15 Lacs',
+    'expected salary range': '15-20 Lacs',
+    'annual salary': '10-15 Lacs',
+    'ctc range': '10-15 Lacs',
     # Personal
     'phone number': '7905828880',
     'mobile number': '7905828880',
@@ -300,181 +296,6 @@ KNOWN_QA_PATTERNS = {
     'wfo': 'Yes',
     'full stack java developer': 'Yes',
     'java developer': 'Yes',
-
-    # --- NEW FUZZY LOGIC EXPANSION ---
-    # 1. Team / People Management
-    'team size': '5-8 members',
-    'how many people in your team': '5-8 members',
-    'how big is your team': '5-8 members',
-    'number of direct reports': '0',
-    'direct reports': '0',
-    'managed a team': 'No, but I have mentored junior developers and led feature deliveries',
-    'people management experience': 'No formal people management, but experienced in mentoring and leading small feature teams',
-    'leadership experience': 'Yes, led feature teams and architecture decisions as SDE-2',
-
-    # 2. Client-Facing / Communication
-    'client facing experience': 'Yes, 3+ years of direct interaction with US-based clients including demos, standups, and sprint reviews',
-    'client interaction': 'Yes, experienced with client-facing communication and presentations',
-    'stakeholder management': 'Yes, regular interaction with product owners, business analysts, and engineering leaders',
-    'presented to senior leadership': 'Yes, presented technical solutions and sprint demos to senior stakeholders',
-    'experience with client communication': 'Yes, 3+ years of daily client interaction with US-based teams',
-    'client facing role': 'Yes',
-    'cross functional team': 'Yes, worked with cross-functional teams including product, design, QA, and DevOps',
-    'cross-functional collaboration': 'Yes',
-
-    # 3. Agile / Methodology
-    'jira experience': 'Yes, 3+ years using JIRA for sprint planning, backlog management, and issue tracking',
-    'confluence experience': 'Yes, experienced with Confluence for documentation and knowledge sharing',
-    'sprint planning': 'Yes, actively participate in sprint planning, grooming, and retrospectives',
-    'scrum master': 'No, but experienced as a senior developer in Scrum teams',
-    'retrospective': 'Yes, regularly participate in sprint retrospectives',
-    'kanban': 'Yes, familiar with Kanban methodology',
-    'agile methodology': 'Yes, 3+ years working in Agile/Scrum environment',
-    'sprint velocity': 'Average 30-40 story points per sprint',
-
-    # 4. Domain-Specific
-    'healthcare domain': 'No direct healthcare experience, but strong in BFSI which shares similar compliance and security requirements',
-    'hipaa compliance': 'No',
-    'insurance domain': 'Yes, Fiserv operates in Banking, Financial Services, and Insurance (BFSI)',
-    'banking experience': 'Yes, currently working at Fiserv in the BFSI domain',
-    'payment gateway': 'Yes, experience integrating Stripe and Razorpay payment gateways',
-    'payment gateway experience': 'Yes, integrated Stripe and Razorpay in production applications',
-
-    # 5. Startup vs MNC
-    'startup experience': 'Open to startup environments. I thrive in fast-paced settings with ownership opportunities',
-    'product company experience': 'Yes, Fiserv is a product-based company in the BFSI domain',
-    'service based company': 'Open to both product and service-based companies',
-    'mnc experience': 'Yes, currently working at Fiserv, a Fortune 500 MNC',
-    'open to startups': 'Yes',
-    'startup or mnc': 'Open to both - currently at MNC (Fiserv), also thrive in startup environments',
-
-    # 6. Language Proficiency
-    'english proficiency': 'Fluent - Professional working proficiency',
-    'hindi proficiency': 'Native speaker',
-    'communication skills rating': '8',
-    'ielts score': 'Not applicable - native English proficiency through professional work experience',
-    'language skills': 'English (Fluent), Hindi (Native)',
-    'written communication': 'Excellent written communication skills with experience in technical documentation, client emails, and project reports',
-
-    # 7. Background / Clearance / NDA
-    'criminal record': 'No',
-    'criminal conviction': 'No',
-    'nda agreement': 'Yes, willing to sign NDA',
-    'non disclosure agreement': 'Yes, willing to sign',
-    'confidentiality agreement': 'Yes, willing to sign confidentiality agreement',
-    'clean background check': 'Yes',
-
-    # 8. Shift / Work Mode
-    'cab facility': 'Not required, can commute independently',
-    'transport facility': 'Not required, can commute independently',
-    'night shift allowance': 'Not required',
-    'rotational shift timing': 'Yes, comfortable with rotational shifts',
-    '9 to 6': 'Yes, comfortable with 9 to 6 work hours',
-    'general shift': 'Yes, comfortable with general shift timing',
-
-    # 9. ATS-Specific Consent
-    'lever data consent': 'Yes',
-    'workday privacy notice': 'Yes',
-    'talent pool consent': 'Yes',
-    'future openings consent': 'Yes',
-    'consider for future openings': 'Yes',
-    'consider me for other roles': 'Yes',
-    'retain my data': 'Yes',
-    'data retention consent': 'Yes',
-
-    # 10. Salary Format Variants
-    'salary in inr per month': '127500',
-    'ctc per annum in words': 'Fifteen Lakh Thirty Thousand',
-    'annual package': '15.3 LPA',
-    'cost to company per annum': '15.3 LPA',
-    'annual compensation': '15.3 LPA',
-    'hike percentage': '44',
-    'hike expected': '40-45%',
-    'percentage hike': '44',
-
-    # 11. Bond / Service Agreement
-    'bond period': 'No bond with current employer',
-    'service agreement': 'No active service agreement or bond',
-    'bond agreement': 'No active bond',
-    'employment bond': 'No bond with current employer',
-    'willing to sign bond': 'Yes, open to discussion',
-    'bond buyout': 'Not applicable - no active bond',
-
-    # 12. Gap in Career / Employment
-    'gap in employment': 'No gap in employment',
-    'career break': 'No career break',
-    'gap in career': 'No gap - continuous employment since graduation in 2022',
-    'employment gap': 'No gap in employment history',
-    'break in career': 'No career break',
-    'reason for gap': 'Not applicable - no employment gap',
-
-    # 13. Currently Employed Status
-    'are you currently employed': 'Yes, currently employed at Fiserv as SDE-2',
-    'currently working': 'Yes, at Fiserv',
-    'are you currently working': 'Yes, currently working at Fiserv',
-    'employment status': 'Currently employed',
-    'current employment status': 'Employed - serving notice period',
-    'are you employed': 'Yes',
-
-    # 14. Accommodation / Disability
-    'require accommodation': 'No',
-    'need accommodation': 'No accommodation required',
-    'special accommodation': 'No',
-    'disability accommodation': 'No',
-    'reasonable accommodation': 'No accommodation needed',
-    'assistive technology': 'No',
-
-    # 15. India-Specific Personal Fields (Naukri)
-    'father name': 'Mr. Singh',
-    'father\'s name': 'Mr. Singh',
-    'mother name': 'Mrs. Singh',
-    'mother\'s name': 'Mrs. Singh',
-    'passport number': 'Will provide upon request',
-    'passport details': 'Will provide upon request',
-    'blood group': 'Will provide upon request',
-    'age': '24',
-
-    # 16. Reason for Job Change
-    'reason for change': 'Looking for better career growth opportunities and technical challenges',
-    'reason for job change': 'Seeking career growth, new technical challenges, and better learning opportunities',
-    'why are you looking for a change': 'Looking for better career growth and new technical challenges',
-    'why do you want to leave': 'Seeking new challenges and career advancement opportunities',
-    'motivation for change': 'Career growth and exposure to new technologies',
-    'why are you leaving your current job': 'Looking for better growth opportunities and technical challenges',
-
-    # 17. Work Mode Preference
-    'work mode': 'Open to all - WFH, Hybrid, or WFO',
-    'work from home': 'Yes, comfortable with work from home',
-    'work from office': 'Yes, comfortable with work from office',
-    'hybrid model': 'Yes, comfortable with hybrid work model',
-    'weekend working': 'Yes, flexible with weekend work when required',
-    'saturday working': 'Yes, flexible with Saturday working when required',
-
-    # 18. CTC Breakup Details
-    'ctc breakup': 'Fixed: 15.3 LPA (100% fixed, no variable component)',
-    'variable component': '0 - entire CTC is fixed',
-    'annual bonus': 'Performance-based, typically 10-15% of fixed',
-    'esop': 'No ESOPs in current compensation',
-    'stock options': 'No stock options in current compensation',
-    'retention bonus': 'No retention bonus',
-    'salary negotiable': 'Yes, open to discussion based on role and growth',
-
-    # 19. Education / Qualification Deep
-    '10th percentage': '88%',
-    '12th percentage': '70%',
-    'certifications': 'AWS, Docker, Kubernetes certified',
-    'any certifications': 'Yes - AWS, Docker, Kubernetes',
-    'relevant certifications': 'AWS Solutions Architect, Docker, Kubernetes',
-
-    # 20. Naukri Chatbot Modal-Specific
-    'are you on a career break': 'No',
-    'companies value diversity': 'No',
-    'immediate joiner': 'Yes, can join within 30 days',
-    'notice period negotiable': 'Yes, notice period is negotiable',
-    'notice buyout': 'Yes, open to notice buyout discussion',
-    'can you join immediately': 'Can join within 30 days',
-    'when can you join': 'Within 30 days (serving notice, negotiable)',
-    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Remote',
     'visa sponsorship': 'No',
     'require sponsorship': 'No',
     'will you now or in the future require sponsorship': 'No',
@@ -501,8 +322,7 @@ KNOWN_QA_PATTERNS = {
     'walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
     # Employment/Relationship - Always "No"
     'employed by any of the': 'No',
-    'currently employed as a contractor': 'No',
-    'currently employed as a temporary': 'No',
+    'currently employed as a': 'No',
     'third party': 'No',
     'temporary employee': 'No',
     'have you ever worked for': 'No',
@@ -734,31 +554,31 @@ KNOWN_QA_PATTERNS = {
     'additional information': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'comments': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     # CTC in Lakhs (for questions specifically asking in lakhs/LPA)
-    'current ctc in lakhs': '15.3',
-    'current ctc in lpa': '15.3',
-    'current ctc [in lpa]': '15.3',
-    'current ctc(in lpa)': '15.3',
-    'current ctc (in lpa)': '15.3',
-    'ctc in lacs per annum': '15.3',
-    'current ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum?': '15.3',
-    'ctc in lacs': '15.3',
-    'expected ctc in lakhs': '22',
-    'expected ctc in lpa': '22',
-    'expected ctc [in lpa]': '22',
-    'expected ctc in lacs per annum': '22',
-    'what is your expected ctc in lacs per annum': '22',
-    'what is your expected ctc in lacs per annum?': '22',
-    'ctc in lakhs': '22',
+    'current ctc in lakhs': '13.5',
+    'current ctc in lpa': '13.5',
+    'current ctc [in lpa]': '13.5',
+    'current ctc(in lpa)': '13.5',
+    'current ctc (in lpa)': '13.5',
+    'ctc in lacs per annum': '13.5',
+    'current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum?': '13.5',
+    'ctc in lacs': '13.5',
+    'expected ctc in lakhs': '20',
+    'expected ctc in lpa': '20',
+    'expected ctc [in lpa]': '20',
+    'expected ctc in lacs per annum': '20',
+    'what is your expected ctc in lacs per annum': '20',
+    'what is your expected ctc in lacs per annum?': '20',
+    'ctc in lakhs': '20',
     # CCTC = Current CTC (abbreviation)
-    'cctc': '15.3',
-    'what is your cctc': '15.3',
-    'your cctc': '15.3',
+    'cctc': '13.5',
+    'what is your cctc': '13.5',
+    'your cctc': '13.5',
     # ECTC = Expected CTC (abbreviation)
-    'ectc': '22',
-    'what is your ectc': '22',
-    'your ectc': '22',
+    'ectc': '20',
+    'what is your ectc': '20',
+    'your ectc': '20',
     # NP = Notice Period (abbreviation)
     'what is your np': '30',
     'your np': '30',
@@ -939,10 +759,10 @@ KNOWN_QA_PATTERNS = {
     'experience in e-commerce': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     'ecommerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     # Composite HR Questions (CTC + ECTC + NP)
-    'share your ctc': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc ectc np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc and np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc,ectc and np': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)',
+    'share your ctc': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc ectc np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc,ectc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
     # Location-exclusive questions (Mumbai-only, etc.)
     'candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
     'need candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
@@ -990,14 +810,14 @@ KNOWN_QA_PATTERNS = {
     'last working day': '30 days from resignation date',
     
     # SALARY - Component Variations (15+ patterns)
-    'monthly salary': '127500',
-    'monthly ctc': '127500',
+    'monthly salary': '112500',
+    'monthly ctc': '112500',
     'monthly gross': '1.5',
-    'per month salary': '127500',
-    'take home': '107500',
-    'in hand salary': '107500',
-    'take home salary': '107500',
-    'fixed component': '1530000',
+    'per month salary': '112500',
+    'take home': '95000',
+    'in hand salary': '95000',
+    'take home salary': '95000',
+    'fixed component': '1350000',
     'variable component': '0',
     'variable pay': '0',
     'bonus': 'Open to discussion',
@@ -1007,17 +827,17 @@ KNOWN_QA_PATTERNS = {
     'esops': 'Open to discussion',
     'equity': 'Open to discussion',
     'benefits': 'Standard benefits as per company policy',
-    'gross salary': '15.3 LPA',
+    'gross salary': '13.5 LPA',
     'net salary': '11.5 LPA',
-    'remuneration': '15.3 LPA',
-    'compensation expectations': '22 LPA',
-    'salary bracket': '20-25 LPA',
-    'pay range': '20-25 LPA',
-    'budget': '20-25 LPA range',
-    'ctc breakup': 'Fixed: 15.3 LPA, Variable: 0',
-    'salary structure': 'Fixed CTC: 15.3 LPA',
-    'currently drawing': '15.3 LPA',
-    'current drawn': '15.3 LPA',
+    'remuneration': '13.5 LPA',
+    'compensation expectations': '20 LPA',
+    'salary bracket': '15-20 LPA',
+    'pay range': '15-20 LPA',
+    'budget': '15-20 LPA range',
+    'ctc breakup': 'Fixed: 13.5 LPA, Variable: 0',
+    'salary structure': 'Fixed CTC: 13.5 LPA',
+    'currently drawing': '13.5 LPA',
+    'current drawn': '13.5 LPA',
     
     # EXPERIENCE - Relevant & Professional Variations (25+ patterns)
     'relevant experience': '3.8 Years',
@@ -1312,7 +1132,7 @@ KNOWN_QA_PATTERNS = {
     'negotiation': 'Yes, open to discussion',
     'discuss salary': 'Yes, willing to discuss',
     'salary discussion': 'Yes, open to discussion',
-    'range': '20-25 LPA',
+    'range': '15-20 LPA',
     'flexible on salary': 'Yes, flexible within reason',
     
     # MISCELLANEOUS - Yes/No Questions
@@ -1329,22 +1149,6 @@ KNOWN_QA_PATTERNS = {
     'accept travel': 'Yes',
     'willingness to travel': 'Yes',
     
-    # Leetcode / Coding Platforms
-    'how many questions you have solved in leetcode': '500+',
-    'leetcode questions solved': '500+',
-    'number of leetcode problems solved': '500+',
-    'how many leetcode': '500+',
-    
-    # SOW / Freelance time
-    'how much time are you prepared to allocate to do the sow': '18 hours',
-    'allocate give to do the sow': '18 hours',
-    'sow 5 hours 10 hours 15 hours 18 hours': '18 hours',
-    
-    # Bot detection / email sent time
-    'please send an email to show that you are interested': 'Just now',
-    'enter the time when you sent it': 'Just now',
-    'to show that you are a human and not a bot': 'Just now',
-    
     # ========== COMPREHENSIVE PATTERN EXPANSION - 200+ NEW PATTERNS ==========
     
     # SECTION 1: LINKEDIN "PLEASE SELECT/ENTER..." PATTERNS (30 patterns)
@@ -1358,18 +1162,18 @@ KNOWN_QA_PATTERNS = {
     'please select your current location': 'Noida',
     'please select your notice period': '30 days',
     'please select your experience': '4',
-    'please select your salary expectation': '22 LPA',
+    'please select your salary expectation': '20 LPA',
     
-    'please enter your annual current ctc in inr': '1530000',
-    'please enter your annual expected ctc in inr': '2200000',
-    'please enter your current ctc in inr': '1530000',
-    'please enter your expected ctc in inr': '2200000',
+    'please enter your annual current ctc in inr': '1350000',
+    'please enter your annual expected ctc in inr': '2000000',
+    'please enter your current ctc in inr': '1350000',
+    'please enter your expected ctc in inr': '2000000',
     'please enter your online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
     'please enter your notice period in days': '30',
     'please enter your linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
     'please enter your github url': 'https://github.com/siddhant3646',
-    'please enter your current salary': '15.3 LPA',
-    'please enter your expected salary': '22 LPA',
+    'please enter your current salary': '13.5 LPA',
+    'please enter your expected salary': '20 LPA',
     'please enter your phone number': '7905828880',
     'please enter your email address': 'siddhant3646@gmail.com',
     'please enter your full name': 'Siddhant Singh',
@@ -1377,24 +1181,24 @@ KNOWN_QA_PATTERNS = {
     'please enter your current designation': 'SDE-2 Full Stack Developer',
     'please enter your total experience': '4',
     'please enter your years of experience': '4',
-    'please enter your ctc': '15.3 LPA',
-    'please enter your salary': '15.3 LPA',
+    'please enter your ctc': '13.5 LPA',
+    'please enter your salary': '13.5 LPA',
     
-    'please share your ctc ectc and notice period': 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days',
-    'please provide your ctc details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'please share your ctc ectc and notice period': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days',
+    'please provide your ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
     'please mention your notice period': '30 days',
     'please specify your experience': '4 years',
     
     # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
     # Concise variations for quick matching
-    'current ctc': '15.3 LPA',
-    'expected ctc': '22 LPA',
-    'current salary': '15.3 LPA',
-    'expected salary': '22 LPA',
-    'ctc': '15.3 LPA',
-    'salary': '15.3 LPA',
-    'pay': '15.3 LPA',
-    'compensation': '15.3 LPA',
+    'current ctc': '13.5 LPA',
+    'expected ctc': '20 LPA',
+    'current salary': '13.5 LPA',
+    'expected salary': '20 LPA',
+    'ctc': '13.5 LPA',
+    'salary': '13.5 LPA',
+    'pay': '13.5 LPA',
+    'compensation': '13.5 LPA',
     
     'total years of exp': '3.8 Years',
     'total exp': '3.8 Years',
@@ -1427,83 +1231,72 @@ KNOWN_QA_PATTERNS = {
     'how many years of work experience do you have with microsoft azure': '4',
     'how many years of work experience do you have with gcp': '4',
     'how many years of work experience do you have with google cloud': '4',
-    'how many years of work experience do you have with react': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with reactjs': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with react.js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with angular': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with angularjs': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with vue': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with vuejs': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with vue.js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with node': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with nodejs': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with node.js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with python': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with java': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with spring': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with spring boot': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with springboot': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with hibernate': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with javascript': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with typescript': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with ts': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with html': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with html5': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with css': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with css3': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with sql': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with postgresql': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with postgres': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with mysql': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with mongodb': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with mongo': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with redis': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with kafka': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with rabbitmq': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with elasticsearch': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with git': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with github': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with gitlab': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with jenkins': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with github actions': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with terraform': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with ansible': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with prometheus': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with grafana': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with microservices': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with rest api': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with restful api': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with graphql': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with websockets': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with web services': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with soap': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with xml': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with json': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with problem solving': '{{TECH_EXP_YEARS}}',
+    'how many years of work experience do you have with react': '4',
+    'how many years of work experience do you have with reactjs': '4',
+    'how many years of work experience do you have with react.js': '4',
+    'how many years of work experience do you have with angular': '4',
+    'how many years of work experience do you have with angularjs': '4',
+    'how many years of work experience do you have with vue': '4',
+    'how many years of work experience do you have with vuejs': '4',
+    'how many years of work experience do you have with vue.js': '4',
+    'how many years of work experience do you have with node': '4',
+    'how many years of work experience do you have with nodejs': '4',
+    'how many years of work experience do you have with node.js': '4',
+    'how many years of work experience do you have with python': '4',
+    'how many years of work experience do you have with java': '4',
+    'how many years of work experience do you have with spring': '4',
+    'how many years of work experience do you have with spring boot': '4',
+    'how many years of work experience do you have with springboot': '4',
+    'how many years of work experience do you have with hibernate': '4',
+    'how many years of work experience do you have with javascript': '4',
+    'how many years of work experience do you have with js': '4',
+    'how many years of work experience do you have with typescript': '4',
+    'how many years of work experience do you have with ts': '4',
+    'how many years of work experience do you have with html': '4',
+    'how many years of work experience do you have with html5': '4',
+    'how many years of work experience do you have with css': '4',
+    'how many years of work experience do you have with css3': '4',
+    'how many years of work experience do you have with sql': '4',
+    'how many years of work experience do you have with postgresql': '4',
+    'how many years of work experience do you have with postgres': '4',
+    'how many years of work experience do you have with mysql': '4',
+    'how many years of work experience do you have with mongodb': '4',
+    'how many years of work experience do you have with mongo': '4',
+    'how many years of work experience do you have with redis': '4',
+    'how many years of work experience do you have with kafka': '4',
+    'how many years of work experience do you have with rabbitmq': '4',
+    'how many years of work experience do you have with elasticsearch': '4',
+    'how many years of work experience do you have with git': '4',
+    'how many years of work experience do you have with github': '4',
+    'how many years of work experience do you have with gitlab': '4',
+    'how many years of work experience do you have with jenkins': '4',
+    'how many years of work experience do you have with github actions': '4',
+    'how many years of work experience do you have with terraform': '4',
+    'how many years of work experience do you have with ansible': '4',
+    'how many years of work experience do you have with prometheus': '4',
+    'how many years of work experience do you have with grafana': '4',
+    'how many years of work experience do you have with microservices': '4',
+    'how many years of work experience do you have with rest api': '4',
+    'how many years of work experience do you have with restful api': '4',
+    'how many years of work experience do you have with graphql': '4',
+    'how many years of work experience do you have with websockets': '4',
+    'how many years of work experience do you have with web services': '4',
+    'how many years of work experience do you have with soap': '4',
+    'how many years of work experience do you have with xml': '4',
+    'how many years of work experience do you have with json': '4',
+    'how many years of work experience do you have with problem solving': '4',
     
     # Format: "How many years into {tech}"
-    'how many years into angular': '{{TECH_EXP_YEARS}}',
-    'how many years into java': '{{TECH_EXP_YEARS}}',
-    'how many years into spring boot': '{{TECH_EXP_YEARS}}',
-    'how many years into react': '{{TECH_EXP_YEARS}}',
-    'how many years into python': '{{TECH_EXP_YEARS}}',
-    'how many years into docker': '{{TECH_EXP_YEARS}}',
-    'how many years into aws': '{{TECH_EXP_YEARS}}',
-    'how many years into javascript': '{{TECH_EXP_YEARS}}',
-    'how many years into node': '{{TECH_EXP_YEARS}}',
-    'how many years into full stack': '{{TECH_EXP_YEARS}}',
-    
-    # Format: Combined tech questions (LinkedIn "X or Y" patterns)
-    'how many years of work experience do you have with react.js or angular.js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with react or angular': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with node.js or python': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with java or python': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with react.js or vue.js': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with javascript or typescript': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with spring boot or spring': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with aws or azure': '{{TECH_EXP_YEARS}}',
-    'how many years of work experience do you have with docker or kubernetes': '{{TECH_EXP_YEARS}}',
+    'how many years into angular': '4',
+    'how many years into java': '4',
+    'how many years into spring boot': '4',
+    'how many years into react': '4',
+    'how many years into python': '4',
+    'how many years into docker': '4',
+    'how many years into aws': '4',
+    'how many years into javascript': '4',
+    'how many years into node': '4',
+    'how many years into full stack': '4',
     
     # SECTION 4: SCREENING & ASSESSMENT (35 patterns)
     'are you ready to take beribot assessment': 'Yes',
@@ -1637,46 +1430,46 @@ KNOWN_QA_PATTERNS = {
     'additional comments': 'I am excited about this opportunity and believe my skills align well with the role requirements.',
     
     # SECTION 7: SALARY VARIATIONS (25 patterns)
-    'what is your current monthly salary': '127500',
-    'current monthly salary': '127500',
+    'what is your current monthly salary': '112500',
+    'current monthly salary': '112500',
     'expected monthly salary': '166667',
-    'monthly pay': '127500',
-    'monthly income': '127500',
-    'monthly compensation': '127500',
+    'monthly pay': '112500',
+    'monthly income': '112500',
+    'monthly compensation': '112500',
     
-    'what is your fixed ctc': '1530000',
+    'what is your fixed ctc': '1350000',
     'what is your variable pay': '0',
     'what is your bonus': '0',
-    'fixed pay': '1530000',
+    'fixed pay': '1350000',
     'variable component': '0',
     'bonus component': '0',
     
-    'please enter your salary': '15.3 LPA',
-    'please share your salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
-    'salary requirements': '22 LPA',
-    'compensation requirements': '22 LPA',
-    'pay expectations': '22 LPA',
-    'expected remuneration': '22 LPA',
-    'salary expectation': '22 LPA',
-    'compensation expectation': '22 LPA',
+    'please enter your salary': '13.5 LPA',
+    'please share your salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'salary requirements': '20 LPA',
+    'compensation requirements': '20 LPA',
+    'pay expectations': '20 LPA',
+    'expected remuneration': '20 LPA',
+    'salary expectation': '20 LPA',
+    'compensation expectation': '20 LPA',
     
-    'ctc details': 'Current: 15.3 LPA, Expected: 22 LPA',
-    'salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
-    'compensation details': 'Current: 15.3 LPA, Expected: 22 LPA',
-    'provide salary details': 'Current: 15.3 LPA, Expected: 22 LPA',
-    'share compensation details': 'Current: 15.3 LPA, Expected: 22 LPA',
+    'ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'provide salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'share compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
     
     # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
-    'years into java': '{{TECH_EXP_YEARS}}',
-    'years into spring boot': '{{TECH_EXP_YEARS}}',
-    'years into react': '{{TECH_EXP_YEARS}}',
-    'years into angular': '{{TECH_EXP_YEARS}}',
-    'years into python': '{{TECH_EXP_YEARS}}',
-    'years into docker': '{{TECH_EXP_YEARS}}',
-    'years into aws': '{{TECH_EXP_YEARS}}',
-    'years into javascript': '{{TECH_EXP_YEARS}}',
-    'years into node': '{{TECH_EXP_YEARS}}',
-    'years into full stack': '{{TECH_EXP_YEARS}}',
+    'years into java': '4',
+    'years into spring boot': '4',
+    'years into react': '4',
+    'years into angular': '4',
+    'years into python': '4',
+    'years into docker': '4',
+    'years into aws': '4',
+    'years into javascript': '4',
+    'years into node': '4',
+    'years into full stack': '4',
     
     'total years': '3.8 Years',
     'total years of experience': '3.8 Years',
@@ -1743,187 +1536,6 @@ KNOWN_QA_PATTERNS = {
     'mysql postgresql mongodb': '4',
     'jenkins github actions': '4',
     'terraform ansible': '4',
-
-    # ========== PHASE 2: WEB-RESEARCHED COVERAGE EXPANSION (20 Categories, ~130 Patterns) ==========
-
-    # --- Category 1: Team / People Management ---
-    'team size': '5-8 members',
-    'how many people in your team': '5-8 members',
-    'how big is your team': '5-8 members',
-    'number of direct reports': '0',
-    'direct reports': '0',
-    'managed a team': 'No, but I have mentored junior developers and led feature deliveries',
-    'people management experience': 'No formal people management, but experienced in mentoring and leading small feature teams',
-    'leadership experience': 'Yes, led feature teams and architecture decisions as SDE-2',
-
-    # --- Category 2: Client-Facing / Communication ---
-    'client facing experience': 'Yes, 3+ years of direct interaction with US-based clients including demos, standups, and sprint reviews',
-    'client interaction': 'Yes, experienced with client-facing communication and presentations',
-    'stakeholder management': 'Yes, regular interaction with product owners, business analysts, and engineering leaders',
-    'presented to senior leadership': 'Yes, presented technical solutions and sprint demos to senior stakeholders',
-    'experience with client communication': 'Yes, 3+ years of daily client interaction with US-based teams',
-    'client facing role': 'Yes',
-    'cross functional team': 'Yes, worked with cross-functional teams including product, design, QA, and DevOps',
-    'cross-functional collaboration': 'Yes',
-
-    # --- Category 3: Agile / Methodology ---
-    'jira experience': 'Yes, 3+ years using JIRA for sprint planning, backlog management, and issue tracking',
-    'confluence experience': 'Yes, experienced with Confluence for documentation and knowledge sharing',
-    'sprint planning': 'Yes, actively participate in sprint planning, grooming, and retrospectives',
-    'scrum master': 'No, but experienced as a senior developer in Scrum teams',
-    'retrospective': 'Yes, regularly participate in sprint retrospectives',
-    'kanban': 'Yes, familiar with Kanban methodology',
-    'agile methodology': 'Yes, 3+ years working in Agile/Scrum environment',
-    'sprint velocity': 'Average 30-40 story points per sprint',
-
-    # --- Category 4: Domain-Specific Screening ---
-    'healthcare domain': 'No direct healthcare experience, but strong in BFSI which shares similar compliance and security requirements',
-    'hipaa compliance': 'No',
-    'insurance domain': 'Yes, Fiserv operates in Banking, Financial Services, and Insurance (BFSI)',
-    'banking experience': 'Yes, currently working at Fiserv in the BFSI domain',
-    'payment gateway': 'Yes, experience integrating Stripe and Razorpay payment gateways',
-    'payment gateway experience': 'Yes, integrated Stripe and Razorpay in production applications',
-
-    # --- Category 5: Startup vs MNC ---
-    'startup experience': 'Open to startup environments. I thrive in fast-paced settings with ownership opportunities',
-    'product company experience': 'Yes, Fiserv is a product-based company in the BFSI domain',
-    'service based company': 'Open to both product and service-based companies',
-    'mnc experience': 'Yes, currently working at Fiserv, a Fortune 500 MNC',
-    'open to startups': 'Yes',
-    'startup or mnc': 'Open to both - currently at MNC (Fiserv), also thrive in startup environments',
-
-    # --- Category 6: Language Proficiency ---
-    'english proficiency': 'Fluent - Professional working proficiency',
-    'hindi proficiency': 'Native speaker',
-    'communication skills rating': '8',
-    'ielts score': 'Not applicable - native English proficiency through professional work experience',
-    'language skills': 'English (Fluent), Hindi (Native)',
-    'written communication': 'Excellent written communication skills with experience in technical documentation, client emails, and project reports',
-
-    # --- Category 7: Background / Clearance / NDA ---
-    'criminal record': 'No',
-    'criminal conviction': 'No',
-    'nda agreement': 'Yes, willing to sign NDA',
-    'non disclosure agreement': 'Yes, willing to sign',
-    'confidentiality agreement': 'Yes, willing to sign confidentiality agreement',
-    'clean background check': 'Yes',
-
-    # --- Category 8: Shift / Work Mode Specifics ---
-    'cab facility': 'Not required, can commute independently',
-    'transport facility': 'Not required, can commute independently',
-    'night shift allowance': 'Not required',
-    'rotational shift timing': 'Yes, comfortable with rotational shifts',
-    '9 to 6': 'Yes, comfortable with 9 to 6 work hours',
-    'general shift': 'Yes, comfortable with general shift timing',
-
-    # --- Category 9: ATS-Specific Consent ---
-    'lever data consent': 'Yes',
-    'workday privacy notice': 'Yes',
-    'talent pool consent': 'Yes',
-    'future openings consent': 'Yes',
-    'consider for future openings': 'Yes',
-    'consider me for other roles': 'Yes',
-    'retain my data': 'Yes',
-    'data retention consent': 'Yes',
-
-    # --- Category 10: Salary Format Variants ---
-    'salary in inr per month': '127500',
-    'ctc per annum in words': 'Fifteen Lakh Thirty Thousand',
-    'annual package': '15.3 LPA',
-    'cost to company per annum': '15.3 LPA',
-    'annual compensation': '15.3 LPA',
-    'hike percentage': '44',
-    'hike expected': '40-45%',
-    'percentage hike': '44',
-
-    # --- Category 11: Bond / Service Agreement ---
-    'bond period': 'No bond with current employer',
-    'service agreement': 'No active service agreement or bond',
-    'bond agreement': 'No active bond',
-    'employment bond': 'No bond with current employer',
-    'willing to sign bond': 'Yes, open to discussion',
-    'bond buyout': 'Not applicable - no active bond',
-
-    # --- Category 12: Gap in Career / Employment ---
-    'gap in employment': 'No gap in employment',
-    'career break': 'No career break',
-    'gap in career': 'No gap - continuous employment since graduation in 2022',
-    'employment gap': 'No gap in employment history',
-    'break in career': 'No career break',
-    'reason for gap': 'Not applicable - no employment gap',
-
-    # --- Category 13: Currently Employed Status ---
-    'are you currently employed': 'Yes, currently employed at Fiserv as SDE-2',
-    'currently working': 'Yes, at Fiserv',
-    'are you currently working': 'Yes, currently working at Fiserv',
-    'employment status': 'Currently employed',
-    'current employment status': 'Employed - serving notice period',
-    'are you employed': 'Yes',
-
-    # --- Category 14: Accommodation / Disability ---
-    'require accommodation': 'No',
-    'need accommodation': 'No accommodation required',
-    'special accommodation': 'No',
-    'disability accommodation': 'No',
-    'reasonable accommodation': 'No accommodation needed',
-    'assistive technology': 'No',
-
-    # --- Category 15: India-Specific Personal Fields ---
-    'father name': 'Mr. Singh',
-    "father's name": 'Mr. Singh',
-    'mother name': 'Mrs. Singh',
-    "mother's name": 'Mrs. Singh',
-    'passport number': 'Will provide upon request',
-    'passport details': 'Will provide upon request',
-    'blood group': 'Will provide upon request',
-
-    # --- Category 16: Reason for Job Change (Naukri-Specific) ---
-    'reason for change': 'Looking for better career growth opportunities and technical challenges',
-    'reason for job change': 'Seeking career growth, new technical challenges, and better learning opportunities',
-    'why are you looking for a change': 'Looking for better career growth and new technical challenges',
-    'why do you want to leave': 'Seeking new challenges and career advancement opportunities',
-    'motivation for change': 'Career growth and exposure to new technologies',
-    'why are you leaving your current job': 'Looking for better growth opportunities and technical challenges',
-
-    # --- Category 17: Work Mode Preference (Naukri-Specific) ---
-    'work mode': 'Open to all - WFH, Hybrid, or WFO',
-    'work from home': 'Yes, comfortable with work from home',
-    'work from office': 'Yes, comfortable with work from office',
-    'wfh': 'Yes, comfortable with WFH',
-    'wfo': 'Yes, comfortable with WFO',
-    'hybrid model': 'Yes, comfortable with hybrid work model',
-    'weekend working': 'Yes, flexible with weekend work when required',
-    'saturday working': 'Yes, flexible with Saturday working when required',
-
-    # --- Category 18: CTC Breakup Details (Naukri-Specific) ---
-    'ctc breakup': 'Fixed: 15.3 LPA (100% fixed, no variable component)',
-    'variable pay': 'No variable pay component in current CTC',
-    'variable component': '0 - entire CTC is fixed',
-    'annual bonus': 'Performance-based, typically 10-15% of fixed',
-    'esop': 'No ESOPs in current compensation',
-    'stock options': 'No stock options in current compensation',
-    'retention bonus': 'No retention bonus',
-    'salary negotiable': 'Yes, open to discussion based on role and growth',
-
-    # --- Category 19: Education / Qualification Deep (Naukri-Specific) ---
-    'highest qualification': 'B.Tech in Computer Science',
-    'graduation year': '2022',
-    'year of graduation': '2022',
-    '10th percentage': '88%',
-    '12th percentage': '70%',
-    'certifications': 'AWS, Docker, Kubernetes certified',
-    'any certifications': 'Yes - AWS, Docker, Kubernetes',
-    'relevant certifications': 'AWS Solutions Architect, Docker, Kubernetes',
-
-    # --- Category 20: Naukri Chatbot Modal-Specific ---
-    'are you on a career break': 'No',
-    'companies value diversity': 'No',
-    'immediate joiner': 'Yes, can join within 30 days',
-    'notice period negotiable': 'Yes, notice period is negotiable',
-    'notice buyout': 'Yes, open to notice buyout discussion',
-    'can you join immediately': 'Can join within 30 days',
-    'when can you join': 'Within 30 days (serving notice, negotiable)',
-    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Remote',
 }
 
 FUZZY_MATCH_THRESHOLD = 0.7  # Increased from 0.6 for better accuracy
@@ -2120,31 +1732,6 @@ class SentinelAgent:
                 return True
         return False
 
-    def _adjust_answer_for_platform(self, answer: str, question: str = "") -> str:
-        """
-        Adjust answer based on platform, handling markers and tech stack experience.
-        
-        Args:
-            answer: The matched answer (may contain markers like {{TECH_EXP_YEARS}})
-            question: The question text (for context)
-            
-        Returns:
-            Platform-adjusted answer with markers replaced
-        """
-        if not answer:
-            return answer
-        
-        # Handle {{TECH_EXP_YEARS}} marker
-        if '{{TECH_EXP_YEARS}}' in answer:
-            if self._current_platform == 'linkedin':
-                # LinkedIn: numeric only, no "Years"
-                return answer.replace('{{TECH_EXP_YEARS}}', '4')
-            else:
-                # Naukri: with "Years" suffix
-                return answer.replace('{{TECH_EXP_YEARS}}', '3.8 Years')
-        
-        return answer
-
     def _fuzzy_match_question(self, question: str) -> Tuple[Optional[str], float]:
         """Find closest known question pattern using improved keyword + fuzzy matching."""
         # Update platform detection before processing
@@ -2170,8 +1757,6 @@ class SentinelAgent:
             fp_match = self._fingerprint_matcher.match(question)
             if fp_match:
                 answer, confidence = fp_match
-                # Resolve template markers BEFORE validation/return
-                answer = self._adjust_answer_for_platform(answer, question)
                 # Validate answer format
                 format_type = detect_expected_format(question)
                 if format_type:
@@ -2191,9 +1776,8 @@ class SentinelAgent:
         # ==========================================
         learned = self._get_learned_answer(question)
         if learned and learned[1] >= 0.5:
-            learned_answer = self._adjust_answer_for_platform(learned[0], question)
-            print(f"   📚 Learned pattern match (conf: {learned[1]:.2f}): {learned_answer[:50]}...")
-            return learned_answer, learned[1]
+            print(f"   📚 Learned pattern match (conf: {learned[1]:.2f}): {learned[0][:50]}...")
+            return learned
         
         # ==========================================
         # PHASE 1: Keyword-based Priority Matching
@@ -2348,7 +1932,7 @@ class SentinelAgent:
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 15.3 LPA, Expected CTC: 22 LPA, Notice Period: 30 Days (Negotiable)', 0.98
+            return 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
@@ -2440,17 +2024,17 @@ class SentinelAgent:
         if is_salary_question:
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
-                return '15.3', 0.98
+                return '13.5', 0.98
             if 'ectc' in question_lower:
-                return '22', 0.98
+                return '20', 0.98
             
             # Check for expected vs current - use plain numbers
             if 'expected' in question_lower or 'expect' in question_lower:
-                return '22', 0.95
+                return '20', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
-                return '15.3', 0.95
+                return '13.5', 0.95
             # Default to expected if unclear
-            return '22', 0.90
+            return '20', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -2458,61 +2042,6 @@ class SentinelAgent:
             
         if 'chosen engineering field' in question_lower:
             return '4', 0.98
-
-        # ==========================================
-        # Tech Stack Experience Questions (Platform-Specific)
-        # Handle "experience with {tech}" or "years into {tech}" questions
-        # LinkedIn: "4", Naukri: "3.8 Years"
-        # ==========================================
-        
-        # Define tech stack experience question patterns
-        tech_exp_patterns = [
-            r'how many years of work experience do you have with (\w+)',
-            r'how many years into (\w+)',
-            r'years into (\w+)',
-            r'years of experience with (\w+)',
-            r'experience with (\w+)',
-            r'how many years of experience in (\w+)',
-            r'exp in (\w+)',
-            r'experience in (\w+)',
-            r'how many years have you worked with (\w+)',
-            r'how long have you worked with (\w+)',
-        ]
-        
-        # Check if question matches any tech experience pattern
-        is_tech_experience = False
-        for pattern in tech_exp_patterns:
-            if re.search(pattern, question_lower):
-                is_tech_experience = True
-                break
-        
-        # Additional check: question contains both experience keywords AND tech keywords
-        tech_keywords = [
-            'java', 'python', 'javascript', 'react', 'angular', 'vue', 'node', 'nodejs',
-            'spring', 'springboot', 'spring boot', 'hibernate', 'docker', 'kubernetes',
-            'aws', 'azure', 'gcp', 'sql', 'postgresql', 'mysql', 'mongodb', 'redis',
-            'kafka', 'git', 'jenkins', 'terraform', 'microservices', 'rest api', 'graphql',
-            'html', 'css', 'typescript', 'angularjs', 'vuejs', 'reactjs', 'github',
-            'js', 'ts', 'html5', 'css3', 'postgres', 'mongo', 'web services',
-            'soap', 'xml', 'json', 'websockets', 'rabbitmq', 'elasticsearch', 'gitlab',
-            'github actions', 'prometheus', 'grafana', 'ansible', 'full stack'
-        ]
-        
-        experience_keywords_check = ['experience', 'years', 'exp', 'worked']
-        has_exp_keyword = any(kw in question_lower for kw in experience_keywords_check)
-        has_tech_keyword = any(tech in question_lower for tech in tech_keywords)
-        
-        # If it matches pattern OR has both experience + tech keywords (and asks for years)
-        is_years_question = any(kw in question_lower for kw in [
-            'how many', 'years', 'how much', 'duration', 'period', 'into'
-        ])
-        
-        if (is_tech_experience or (has_exp_keyword and has_tech_keyword)) and is_years_question:
-            # Platform-specific answers
-            if self._current_platform == 'linkedin':
-                return '4', 0.98  # LinkedIn: numeric only, no "Years"
-            else:
-                return '3.8 Years', 0.98  # Naukri: with "Years" suffix
 
         if is_experience_question:
             if 'month' in question_lower:
@@ -2590,12 +2119,9 @@ class SentinelAgent:
         
         # Use higher threshold for direct fuzzy matches
         if best_score >= FUZZY_MATCH_THRESHOLD and best_match is not None:
-            # Apply platform-specific adjustments (handle markers like {{TECH_EXP_YEARS}})
-            adjusted_answer = self._adjust_answer_for_platform(best_match, question)
-            
             # Validate and potentially fix the answer
             validated_answer, final_confidence = self._validate_and_retry(
-                question, adjusted_answer, []
+                question, best_match, []
             )
             return validated_answer, final_confidence
         
@@ -3701,36 +3227,6 @@ class SentinelAgent:
                 # Dismiss any browser dialogs (Restore pages?, etc.)
                 await self._dismiss_browser_dialogs()
                 
-                # GUARD: Never allow full-page job view — always stay on search results
-                if self._page:
-                    current_url = self._page.url
-                    # Save the ORIGINAL search URL on first detection (strip currentJobId to keep it clean)
-                    if not hasattr(self, '_linkedin_search_url') and ('/jobs/search' in current_url or '/jobs/collections' in current_url):
-                        import re
-                        clean_url = re.sub(r'[&?]currentJobId=[^&]*', '', current_url)
-                        self._linkedin_search_url = clean_url
-                        print(f"📌 Saved clean search URL: {clean_url[:80]}...")
-                    
-                    # If we somehow ended up on a full-page job view, redirect back immediately
-                    is_full_page_job = '/jobs/view/' in current_url and '/jobs/search' not in current_url and '/jobs/collections' not in current_url
-                    if is_full_page_job:
-                        print(f"🔙 Full-page job view detected! Navigating back to search results...")
-                        redirect_url = getattr(self, '_linkedin_search_url', None)
-                        if not redirect_url:
-                            # Extract base search URL from task description or use a default
-                            redirect_url = 'https://www.linkedin.com/jobs/search/?f_AL=true'
-                        try:
-                            await self._page.goto(redirect_url, wait_until='domcontentloaded', timeout=15000)
-                            await asyncio.sleep(random.uniform(3, 5))
-                        except Exception as e:
-                            print(f"   ⚠️ Redirect failed: {e}")
-                            try:
-                                await self._page.go_back(wait_until='domcontentloaded', timeout=10000)
-                                await asyncio.sleep(3)
-                            except Exception:
-                                pass
-                        continue
-                
                 # Occasional random human behaviors (simulate natural browsing)
                 if random.random() < 0.2:  # 20% chance of random mouse movement
                     await self._human_mouse_move()
@@ -4143,186 +3639,10 @@ class SentinelAgent:
                         await asyncio.sleep(random.uniform(4, 6))  # Wait for job details to load
                     continue
                 
-                # LinkedIn: Scrolled for more jobs (or failed to find cards)
+                # LinkedIn: Scrolled for more jobs
                 if 'LINKEDIN_SCROLLED' in result:
                     print(f"📜 {result}")
-                    
-                    # Track consecutive scroll failures
-                    if not hasattr(self, '_linkedin_scroll_fail_count'):
-                        self._linkedin_scroll_fail_count = 0
-                    if not hasattr(self, '_linkedin_visited_job_urls'):
-                        self._linkedin_visited_job_urls = set()
-                    self._linkedin_scroll_fail_count += 1
-                    
-                    # After 1 scroll failure, use Playwright to click the next job card link directly
-                    if self._linkedin_scroll_fail_count >= 1:
-                        print("⚠️ JS can't find job cards, using Playwright link-based fallback...")
-                        self._linkedin_scroll_fail_count = 0
-                        try:
-                            # Check if we're on a full-page job view — redirect back first
-                            current_url = self._page.url
-                            is_search_page = '/jobs/search' in current_url or '/jobs/collections' in current_url
-                            
-                            if not is_search_page:
-                                # Redirect back to search results
-                                redirect_url = getattr(self, '_linkedin_search_url', 'https://www.linkedin.com/jobs/search/?f_AL=true')
-                                print(f"   🔙 Not on search page, redirecting...")
-                                await self._page.goto(redirect_url, wait_until='domcontentloaded', timeout=15000)
-                                await asyncio.sleep(random.uniform(3, 5))
-                            else:
-                                # On search results page — native Playwright fallback
-                                print("   🔍 Scanning job cards natively with Playwright...")
-                                locators = self._page.locator('.job-card-container, [data-occludable-job-id], [data-view-name="job-search-job-card"]')
-                                count = await locators.count()
-                                clicked = False
-                                
-                                for i in range(count):
-                                    card = locators.nth(i)
-                                    if not await card.is_visible(): continue
-                                    
-                                    # Extract Job ID securely
-                                    job_id = await card.get_attribute('data-occludable-job-id') or await card.get_attribute('data-job-id')
-                                    if not job_id:
-                                        try:
-                                            # Try finding href
-                                            link = card.locator('a[href*="/jobs/"]').first
-                                            if await link.count() > 0:
-                                                href = await link.get_attribute('href')
-                                                import re
-                                                match = re.search(r'/jobs/(?:view/)?(\d+)|currentJobId=(\d+)', href or '')
-                                                if match: job_id = match.group(1) or match.group(2)
-                                        except Exception:
-                                            pass
-                                            
-                                    if not job_id:
-                                        text = await card.text_content()
-                                        job_id = text.strip()[:30] if text else f"Unknown_{i}"
-                                        
-                                    if job_id in self._linkedin_visited_job_urls:
-                                        continue
-                                        
-                                    print(f"   ✅ Playwright found unvisited job: {job_id}")
-                                    self._linkedin_visited_job_urls.add(job_id)
-                                    await card.scroll_into_view_if_needed()
-                                    
-                                    try:
-                                        await card.click(force=True, position={"x": 25, "y": 25})
-                                        clicked = True
-                                        self._linkedin_scroll_fail_count = 0
-                                        print(f"   ✅ Successfully clicked via Playwright native!")
-                                        break
-                                    except Exception as e:
-                                        print(f"   ⚠️ Native click failed: {e}")
-                                        
-                                if not clicked:
-                                    print("   ⚠️ No unvisited jobs found by Playwright. Scrolling...")
-                                    await self._page.mouse.wheel(0, 800)
-                                    
-                        except Exception as e:
-                            print(f"   ⚠️ Playwright fallback error: {e}")
-                    
-                    await asyncio.sleep(random.uniform(4, 8))
-                    continue
-                    
-                # LinkedIn: Playwright direct native click requested by JS
-                if 'LINKEDIN_USE_PLAYWRIGHT_CLICK' in result:
-                    job_id = result.split(':', 1)[1] if ':' in result else None
-                    print(f"✅ JS requested Playwright click for job: {job_id[:40] if job_id else 'None'}...")
-                    if job_id:
-                        try:
-                            # 1. Try bulletproof dynamic tag first (injected by JS)
-                            card = self._page.locator('[data-sentinel-target="true"]')
-                            
-                            # 2. Fallbacks if tag was stripped by React
-                            if await card.count() == 0:
-                                card = self._page.locator(f'[data-occludable-job-id="{job_id}"], [data-job-id="{job_id}"]').first
-                                
-                            if await card.count() > 0:
-                                await card.first.scroll_into_view_if_needed()
-                                await card.first.click(force=True, position={"x": 5, "y": 5})
-                                # Clean up the tag
-                                await self._page.evaluate('() => { const el = document.querySelector(\'[data-sentinel-target="true"]\'); if(el) el.removeAttribute("data-sentinel-target"); }')
-                                print("   🎯 Clicked exact job card natively with Playwright!")
-                            else:
-                                print(f"   ⚠️ Could not locate tagged element in DOM, triggering fallback sweep")
-                                self._linkedin_scroll_fail_count = 1  # Force fallback next tick
-                        except Exception as e:
-                            print(f"   ⚠️ Playwright click error: {e}")
-                            self._linkedin_scroll_fail_count = 1
-                    
-                    self._linkedin_scroll_fail_count = 0
-                    await asyncio.sleep(random.uniform(3, 5))
-                    continue
-                    
-                # LinkedIn: Paginated to next page
-                if 'LINKEDIN_PAGINATING' in result:
-                    print(f"📜 {result}")
-                    await asyncio.sleep(random.uniform(6, 10))  # Wait for new jobs to load on next page
-                    continue
-                
-                # LinkedIn: Job card selected from sidebar — wait for detail pane to load
-                if 'LINKEDIN_JOB_SELECTED' in result:
-                    print("✅ Selected next job card from sidebar")
-                    self._linkedin_scroll_fail_count = 0  # Reset scroll failures
-                    await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to load
-                    continue
-                
-                # LinkedIn: Clicked next unapplied job card (from linkedin_new.js flow)
-                if 'LINKEDIN_NEXT_JOB_CLICKED' in result:
-                    print("⏭️ Clicked next job card")
-                    await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to load
-                    continue
-                
-                # LinkedIn: First job clicked or no current card found
-                if 'LINKEDIN_FIRST_JOB_CLICKED' in result or 'LINKEDIN_NO_CURRENT_CARD' in result:
-                    print(f"📋 {result}")
-                    await asyncio.sleep(random.uniform(3, 5))
-                    continue
-                
-                # LinkedIn: Form stuck on validation (e.g. unfillable select dropdown)
-                if 'LINKEDIN_FORM_STUCK' in result:
-                    if not hasattr(self, '_linkedin_form_stuck_count'):
-                        self._linkedin_form_stuck_count = 0
-                    self._linkedin_form_stuck_count += 1
-                    print(f"   ⚠️ Form stuck ({self._linkedin_form_stuck_count}/3)")
-                    
-                    if self._linkedin_form_stuck_count >= 3:
-                        print("   ❌ Form stuck 3 times, dismissing modal and skipping this job...")
-                        self._linkedin_form_stuck_count = 0
-                        try:
-                            # Try to click dismiss/close/discard button
-                            await self._page.evaluate("""() => {
-                                const closeSelectors = [
-                                    'button[aria-label*="Dismiss"]',
-                                    'button[aria-label*="dismiss"]', 
-                                    'button[aria-label*="Close"]',
-                                    'button[aria-label*="close"]',
-                                    '.artdeco-modal__dismiss',
-                                    'button[data-test-modal-close-btn]'
-                                ];
-                                for (let sel of closeSelectors) {
-                                    const btn = document.querySelector(sel);
-                                    if (btn && btn.offsetParent !== null) {
-                                        btn.click();
-                                        return 'closed';
-                                    }
-                                }
-                                return 'no_button';
-                            }""")
-                            await asyncio.sleep(2)
-                            # After dismissing, a "Discard" confirmation may appear
-                            try:
-                                discard = self._page.locator('button:has-text("Discard")')
-                                if await discard.count() > 0 and await discard.first.is_visible():
-                                    await discard.first.click(timeout=3000)
-                                    print("   🗑️ Discarded draft application")
-                                    await asyncio.sleep(2)
-                            except:
-                                pass
-                        except Exception as e:
-                            print(f"   ⚠️ Error dismissing stuck modal: {e}")
-                    
-                    await asyncio.sleep(random.uniform(2, 4))
+                    await asyncio.sleep(random.uniform(4, 8))  # Wait for new jobs to load
                     continue
                 
                 # LinkedIn: Skip non-Easy Apply jobs or already applied jobs
@@ -4341,9 +3661,8 @@ class SentinelAgent:
                         print("⏭️ Skipped job (already applied or not Easy Apply)")
                     continue
                 
-                # LinkedIn Autopilot — enter when Easy Apply button is clicked
-                # JS returns LINKEDIN_EASY_APPLY_CLICKED (inline) or APPLY_CLICKED_LINKEDIN (legacy)
-                if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
+                # LinkedIn Autopilot
+                if 'APPLY_CLICKED_LINKEDIN' in result:
                     # STRICT CHECK: If we've already submitted 5 applications, mark task complete
                     if self.linkedin_applications >= 5:
                         print(f"✅ LinkedIn limit reached ({self.linkedin_applications}/5). Task complete.")
@@ -4465,13 +3784,7 @@ class SentinelAgent:
                         # Prevent infinite loop if same result repeats
                         if next_result == last_result:
                             same_result_count += 1
-                            
-                            # Easy Apply button clicked but modal not opening — likely click not registering
-                            if 'EASY_APPLY_CLICKED' in next_result and same_result_count >= 2:
-                                print("⚠️ Easy Apply clicked but modal not opening. Waiting longer...")
-                                await asyncio.sleep(random.uniform(3, 5))  # Extra wait for modal
-                            
-                            if same_result_count >= 4:
+                            if same_result_count >= 5:
                                 print("⚠️ Stuck in loop, skipping this job...")
                                 break
                         else:
@@ -5592,7 +4905,7 @@ class SentinelAgent:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
             # NOTE: This function must NOT use async/await - Playwright's evaluate handles timing via Python asyncio
             # Using a function expression (wrapped in parens) - function statements require a name in JS
-            js_code = rf"""(function() {{
+            js_code = f"""(function() {{
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = {patterns_json};
                 const SYNONYMS = {synonyms_json};
@@ -5606,15 +4919,13 @@ class SentinelAgent:
                         'experience', 'years', 'java experience', 'react experience', 'angular experience',
                         'nodejs experience', 'javascript experience', 'ci/cd experience', 'full stack experience',
                         'backend experience', 'frontend experience', 'software experience', 'web experience',
-                        'python experience', 'programming experience', 'exp in angular', 'exp in react',
-                        'total exp in angular', 'total exp in react', 'total exp in angular or react',
-                        'total exp', 'exp in angular or react'
+                        'python experience', 'programming experience'
                     ];
                     expKeys.forEach(k => {{
-                        KNOWN_PATTERNS[k] = '4';
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
                     }});
                     
-                    // Override salary/CTC to INR values for LinkedIn
+                    // Override salary/CTC to numeric values for LinkedIn text inputs
                     const salaryKeys = [
                         'salary range', 'current salary range', 'expected salary range', 
                         'annual salary', 'ctc range', 'current ctc', 'expected ctc',
@@ -5624,16 +4935,15 @@ class SentinelAgent:
                         'expected annual salary', 'what is your expected annual salary', 'what is your expected annual salary?',
                         'what is your current salary?', 'what is your expected salary?',
                         'what is your current ctc', 'what is your current ctc?',
-                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations',
-                        'salary in inr per month', 'annual package', 'annual compensation', 'cost to company per annum'
+                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations'
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
-                            // Use INR values for LinkedIn
+                            // Use plain numeric values (13.5, 20) for LinkedIn text inputs - NOT full INR values
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '1530000';
+                                KNOWN_PATTERNS[k] = '13.5';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '2200000';
+                                KNOWN_PATTERNS[k] = '20';
                             }}
                         }}
                     }});
@@ -5719,7 +5029,7 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
-                            bestMatch = qLower.includes('current') ? '1530000' : '2200000';
+                            bestMatch = qLower.includes('current') ? '1350000' : '2000000';
                         }}
                     }}
                     
@@ -5817,7 +5127,7 @@ class SentinelAgent:
                 const findSalaryRangeMatch = (answer, options, isCurrentSalary) => {{
                     if (!answer || !options || options.length === 0) return null;
                     
-                    // Extract numeric salary from answer (e.g., "15.3 LPA" → 13.5)
+                    // Extract numeric salary from answer (e.g., "13.5 LPA" → 13.5)
                     const salaryMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     if (!salaryMatch) return null;
                     const salary = parseFloat(salaryMatch[1]);
@@ -6010,7 +5320,7 @@ class SentinelAgent:
                         }}
 
                         // 1. Handle text/numeric inputs
-                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input:not([type]), textarea', modal);
+                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
                         for (const input of textInputs) {{
                             const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
                                             queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
@@ -6148,57 +5458,29 @@ class SentinelAgent:
                                     const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
                                     let bestOpt = findBestMatch(answer, options);
                                     
-                                    // Fallback: If answer is numeric (e.g. "4") and options contain ranges like "0-5 years"
-                                    if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year') || lowerLabel.includes('how many'))) {{
-                                        // Extract numeric years from answer
-                                        const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
-                                        const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
+                                    // Fallback: If answer is numeric (e.g. "3.8 Years") but options are Yes/No
+                                    if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {{
+                                        const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
+                                                      options.some(o => o.text.toLowerCase().includes('no'));
                                         
-                                        // Check if options contain ranges (e.g. "0-5 years", "5-7 years")
-                                        const hasRanges = options.some(o => /\d+\s*[-–to]\s*\d+/.test(o.text));
-                                        
-                                        if (hasRanges && ansYears > 0) {{
-                                            console.log('Experience range dropdown detected. User years:', ansYears);
-                                            let bestRangeScore = -1;
+                                        if (isYesNo) {{
+                                            // Extract required years from question
+                                            // Matches "3+ years", "minimum 3 years", "at least 3 years"
+                                            const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                            const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
                                             
-                                            for (const opt of options) {{
-                                                const rangeMatch = opt.text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
-                                                if (rangeMatch) {{
-                                                    const min = parseFloat(rangeMatch[1]);
-                                                    const max = parseFloat(rangeMatch[2]);
-                                                    
-                                                    if (ansYears >= min && ansYears <= max) {{
-                                                        // Score based on how centered the value is in the range
-                                                        const rangeCenter = (min + max) / 2;
-                                                        const score = 1 - Math.abs(ansYears - rangeCenter) / (max - min || 1);
-                                                        console.log(`  Range "${{opt.text}}": min=${{min}}, max=${{max}}, score=${{score.toFixed(2)}}`);
-                                                        if (score > bestRangeScore) {{
-                                                            bestRangeScore = score;
-                                                            bestOpt = opt;
-                                                        }}
-                                                    }}
-                                                }}
-                                            }}
+                                            // Extract users years from answer
+                                            const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                            const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
                                             
-                                            if (bestOpt) {{
-                                                console.log('Selected experience range:', bestOpt.text, 'for', ansYears, 'years');
-                                            }}
-                                        }}
-                                        
-                                        // Fallback: If options are Yes/No instead of ranges
-                                        if (!bestOpt) {{
-                                            const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
-                                                          options.some(o => o.text.toLowerCase().includes('no'));
+                                            console.log(`Experience Logic: Required ${{reqYears}}, User ${{ansYears}}`);
                                             
-                                            if (isYesNo) {{
-                                                // Extract required years from question
-                                                const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
-                                                const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
-                                                
-                                                console.log(`Experience Logic: Required ${{reqYears}}, User ${{ansYears}}`);
-                                                
-                                                // Always select Yes (aggressive strategy)
+                                            if (ansYears >= reqYears) {{
                                                 bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
+                                            }} else {{
+                                                // If user has less experience, we might want to lie (aggressive) or be honest
+                                                // For now, let's be aggressive if it's close, or default Yes if parsing failed
+                                                bestOpt = options.find(o => o.text.toLowerCase().includes('yes')); 
                                             }}
                                         }}
                                     }}
@@ -6207,51 +5489,6 @@ class SentinelAgent:
                                     if (!bestOpt && !answer && isYesNoQuestion) {{
                                          bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
                                          if (bestOpt) console.log('Defaulting native select to Yes for:', labelText);
-                                    }}
-
-                                    // Fallback 3: Salary/CTC range matching for dropdowns with INR options
-                                    // Handles formats: "₹29,05,000 – ₹45,65,000", "15-22 LPA", "1500000 - 2200000"
-                                    if (!bestOpt && answer && (lowerLabel.includes('salary') || lowerLabel.includes('ctc') || lowerLabel.includes('compensation') || lowerLabel.includes('package') || lowerLabel.includes('expectation') || lowerLabel.includes('pay'))) {{
-                                        // Parse user's salary from answer (strip commas)
-                                        const salaryStr = answer.replace(/[,₹\s]/g, '');
-                                        const salaryMatch = salaryStr.match(/(\d+(?:\.\d+)?)/);
-                                        const userSalary = salaryMatch ? parseFloat(salaryMatch[1]) : 0;
-                                        
-                                        if (userSalary > 0) {{
-                                            console.log('Salary range dropdown detected. User salary:', userSalary);
-                                            let bestRangeScore = -1;
-                                            
-                                            for (const opt of options) {{
-                                                // Strip ₹, commas, spaces from option text to extract numbers
-                                                const cleanText = opt.text.replace(/[₹,\s]/g, '');
-                                                const rangeMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
-                                                
-                                                if (rangeMatch) {{
-                                                    let min = parseFloat(rangeMatch[1]);
-                                                    let max = parseFloat(rangeMatch[2]);
-                                                    
-                                                    // Detect LPA format (e.g. "15-22 LPA" means 1500000-2200000)
-                                                    if (opt.text.toLowerCase().includes('lpa') || opt.text.toLowerCase().includes('lac') || opt.text.toLowerCase().includes('lakh')) {{
-                                                        min *= 100000;
-                                                        max *= 100000;
-                                                    }}
-                                                    
-                                                    if (userSalary >= min && userSalary <= max) {{
-                                                        const rangeCenter = (min + max) / 2;
-                                                        const score = 1 - Math.abs(userSalary - rangeCenter) / (max - min || 1);
-                                                        console.log(`  Salary range "${{opt.text}}": ${{min}}-${{max}}, score=${{score.toFixed(2)}}`);
-                                                        if (score > bestRangeScore) {{
-                                                            bestRangeScore = score;
-                                                            bestOpt = opt;
-                                                        }}
-                                                    }}
-                                                }}
-                                            }}
-                                            
-                                            if (bestOpt) {{
-                                                console.log('Selected salary range:', bestOpt.text, 'for salary', userSalary);
-                                            }}
-                                        }}
                                     }}
 
                                     if (bestOpt) {{
@@ -6696,8 +5933,7 @@ class SentinelAgent:
                         
                         // 4. Form Validation Check: Are we missing anything required?
                         const checkForErrors = () => {{
-                            const excludeTypes = ':not([type="hidden"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="radio"]):not([type="checkbox"])';
-                            const requiredInputs = queryAllDeep('input[required]' + excludeTypes + ', input[aria-required="true"]' + excludeTypes + ', textarea[required], textarea[aria-required="true"]', modal);
+                            const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
                             const requiredSelects = queryAllDeep('select[required], select[aria-required="true"]', modal);
                             const radioGroups = queryAllDeep('fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element', modal);
                             
@@ -6837,50 +6073,41 @@ class SentinelAgent:
                     }}
 
                     // Navigation logic if needed
+                    console.log('Looking for jobs in list...');
                     // 3. If no Easy Apply button and no modal, we might be on the search page
                     // We need to select the next job from the list
+                    console.log('Looking for jobs in list...');
                     
-                    // ====================================================
-                    // STEP 1: Find the sidebar container (left-side scroll)
-                    // ====================================================
-                    // Priority 1: Search by known stable selectors
-                    let sidebar = queryDeep('.jobs-search-results-list') || 
-                                  queryDeep('.scaffold-layout__list') ||
-                                  queryDeep('.jobs-search__left-rail');
+                    // Find the sidebar with extreme robust fallbacks
+                    // Priority 1: .jobs-search-results-list (standard)
+                    // Priority 2: div[scrollable="true"] on the left side
+                    // Priority 3: Geometry-based fallback (widest scrollable div on the left half)
+                    let sidebar = queryDeep('.scaffold-layout__list') || 
+                                  queryDeep('.jobs-search-results-list') ||
+                                  queryDeep('div[scrollable="true"] > ul');
                     
-                    // Priority 2: Find by data attributes on a job card then walk UP
-                    // UPDATED: Support modern LinkedIn selectors
                     if (!sidebar) {{
-                        const anyCard = queryDeep('[data-view-name="job-search-job-card"], [data-testid="job-card"], [data-occludable-job-id], [data-job-id]');
-                        if (anyCard) {{
-                            let el = anyCard.parentElement;
-                            while (el && el !== document.body) {{
-                                const style = window.getComputedStyle(el);
-                                if (el.scrollHeight > el.clientHeight + 20 &&
-                                    (style.overflowY === 'auto' || style.overflowY === 'scroll')) {{
-                                    sidebar = el;
-                                    break;
-                                }}
-                                el = el.parentElement;
-                            }}
-                        }}
+                         const scrollables = Array.from(queryAllDeep('div[scrollable="true"], .jobs-search-results-list, .scaffold-layout__list'));
+                         // Find the one that is on the left side and has decent height
+                         sidebar = scrollables.find(el => {{
+                             const rect = el.getBoundingClientRect();
+                             return rect.left < window.innerWidth / 2 && rect.height > 300;
+                         }});
                     }}
                     
-                    // Priority 3: Geometry - any tall left-side scrollable div
                     if (!sidebar) {{
-                        console.log('Sidebar not found by selector, trying geometry...');
-                        const allDivs = Array.from(queryAllDeep('div'));
-                        for (const div of allDivs) {{
-                            const rect = div.getBoundingClientRect();
-                            const style = window.getComputedStyle(div);
-                            if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
-                                if (div.scrollHeight > div.clientHeight + 20 &&
-                                    (style.overflowY === 'auto' || style.overflowY === 'scroll')) {{
-                                    sidebar = div;
-                                    break;
-                                }}
-                            }}
-                        }}
+                         console.log('Sidebar not found by selector, trying geometry...');
+                         // Find any div that is scrollable and on the left
+                         const allDivs = queryAllDeep('div');
+                         for (const div of allDivs) {{
+                             const rect = div.getBoundingClientRect();
+                             if (rect.left < window.innerWidth / 2 && rect.width > 200 && rect.height > 400) {{
+                                 if (div.scrollHeight > div.clientHeight || div.style.overflowY === 'auto' || div.style.overflow === 'auto') {{
+                                     sidebar = div;
+                                     break;
+                                 }}
+                             }}
+                         }}
                     }}
 
                     if (!sidebar) {{
@@ -6896,7 +6123,7 @@ class SentinelAgent:
                     // Fallback to role="button" logic
                     if (jobCards.length === 0) {{
                         jobCards = Array.from(queryAllDeep('div[role="button"]', sidebar)).filter(el => 
-                            el.innerText.includes('\n') && el.innerText.length > 50 
+                            el.innerText.includes('\\n') && el.innerText.length > 50 
                         );
                     }}
 
@@ -6915,14 +6142,14 @@ class SentinelAgent:
                         
                         // Check explicit "Applied" status
                         if (text.includes('applied')) {{
-                            // console.log('Skipping applied job:', text.split('\n')[0]);
+                            // console.log('Skipping applied job:', text.split('\\n')[0]);
                             return false;
                         }}
                         
                         // User requirement: Must be "Easy Apply"
                         // Note: Some cards might say "Easy Apply" in hidden text, so strict check is good
                         if (!text.includes('easy apply')) {{
-                            // console.log('Skipping non-Easy Apply job:', text.split('\n')[0]);
+                            // console.log('Skipping non-Easy Apply job:', text.split('\\n')[0]);
                             return false;
                         }}
                         
@@ -6931,49 +6158,15 @@ class SentinelAgent:
 
                     if (candidates.length > 0) {{
                         const nextJob = candidates[0];
-                        console.log('Clicking next job:', nextJob.innerText.split('\n')[0]);
+                        console.log('Clicking next job:', nextJob.innerText.split('\\n')[0]);
                         nextJob.click();
                         nextJob.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
                         return 'LINKEDIN_JOB_SELECTED';
                     }}
 
                     console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
-                    
-                    // Check if we hit the bottom of the scroll container
-                    const isAtBottom = Math.abs(sidebar.scrollHeight - sidebar.scrollTop - sidebar.clientHeight) < 20;
-                    if (isAtBottom) {{
-                        console.log('Reached bottom of sidebar, looking for pagination Next button...');
-                        const nextBtnSelectors = [
-                            'button.jobs-search-pagination__button--next',
-                            '.artdeco-pagination__button--next',
-                            'button[aria-label="View next page"]',
-                            'button[aria-label="Next"]',
-                            'button.artdeco-button[aria-label*="Page "]' // Sometimes next is just the next numbered block
-                        ];
-                        
-                        let nextBtn = null;
-                        for (const sel of nextBtnSelectors) {{
-                            nextBtn = queryDeep(sel);
-                            if (nextBtn) break;
-                        }}
-                        
-                        if (nextBtn && !nextBtn.disabled && !nextBtn.hasAttribute('disabled')) {{
-                            console.log('Clicking Next page pagination...');
-                            nextBtn.click();
-                            return 'LINKEDIN_PAGINATING: Clicked next page';
-                        }} else {{
-                            // No Next button. It might be infinite scroll loading.
-                            console.log('No Next button found. Triggering infinite scroll loaders...');
-                            // Wiggle the scroll to trigger intersection observers
-                            sidebar.scrollBy(0, -50);
-                            setTimeout(() => sidebar.scrollBy(0, 100), 50);
-                            return 'LINKEDIN_PAGINATING: Triggering infinite load wiggle';
-                        }}
-                    }}
-                    
-                    // Not at bottom yet, just regular scroll
-                    sidebar.scrollBy(0, sidebar.clientHeight * 0.8 || 800);
-                    return 'LINKEDIN_SCROLLED: Scrolling down list';
+                    sidebar.scrollBy(0, 800);
+                    return 'LINKEDIN_SCROLLED: No jobs found';
                 }}
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================
@@ -7096,36 +6289,15 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // -----------------------------------------------------
-                        // 1. Try Select/Dropdowns
-                        // -----------------------------------------------------
-                        const select = document.querySelector('select') || document.querySelector('.chatbot_MessageContainer select');
-                        if (select) {{
-                            const options = Array.from(select.options);
-                            const optionsText = options.map(o => o.text);
-                            // Only answer if it's an actionable dropdown
-                            if (options.length > 1) {{
-                                const answer = fuzzyMatch(qText);
-                                let bestMatchIndex = 1; // Default to first valid option (0 is usually placeholder)
-                                
-                                if (answer) {{
-                                    // fuzzyMatch gave us an answer (e.g., '30', 'Yes', '22 LPA')
-                                    const bestMatch = findBestMatch(answer, optionsText.slice(1));
-                                    if (bestMatch) {{
-                                        bestMatchIndex = optionsText.indexOf(bestMatch);
-                                    }}
-                                }}
-                                
-                                select.selectedIndex = bestMatchIndex;
-                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                
-                                const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                if (saveBtn) {{
-                                    saveBtn.click();
-                                    return 'NAUKRI_CHAT_SELECT_SAVED: ' + options[bestMatchIndex].text;
-                                }}
-                            }}
+                        // Try dropdown
+                        const select = document.querySelector('select');
+                        if (select && select.offsetParent !== null && select.selectedIndex <= 0 && select.options.length > 1) {{
+                            select.selectedIndex = 1;
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                            if (saveBtn) {{ saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED'; }}
                         }}
+                        
                         // Try radio buttons - enhanced logic with better matching
                         const radios = document.querySelectorAll('input[type="radio"]');
                         if (radios.length > 0) {{
@@ -7174,103 +6346,323 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // -----------------------------------------------------
-                        // 3. Try Checkboxes (Handle standard and Naukri mcc__checkbox)
-                        // -----------------------------------------------------
+                        // Try Checkboxes - Handle both standard checkboxes and Naukri's mcc__checkbox elements
+                        // First try the specific mcc__checkbox (used for city selection, etc.)
                         let allCheckboxes = Array.from(document.querySelectorAll('.mcc__checkbox'));
+                        
+                        // Fallback to standard checkbox selector if mcc not found
                         if (allCheckboxes.length === 0) {{
                             const cbContainer = document.querySelector('.chatbot_MessageContainer li:last-child') || document.body;
                             allCheckboxes = Array.from(cbContainer.querySelectorAll('input[type="checkbox"]'));
                         }}
 
+                        // Debug log 
                         const debugLog = [];
+
                         if (allCheckboxes.length > 0) {{
                             let clickedCount = 0;
+                            
+                            // City preference order (check qText to see if it's a city question)
+                            const qTextLower = qText.toLowerCase();
+                            const isCityQuestion = qTextLower.includes('city') || qTextLower.includes('relocate') || qTextLower.includes('location');
+                            const isNoticePeriodQuestion = qTextLower.includes('notice period');
+                            const isExperienceQuestion = qTextLower.includes('experience') || qTextLower.includes('years');
+                            const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
+                            
+                            // FIRST: Check if this is a binary Yes/No question
+                            // Build label map first for all checkboxes
                             const checkboxLabels = allCheckboxes.map(cb => {{
                                 let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
-                                if (!label && cb.id) {{ label = document.querySelector(`label[for="${{cb.id}}"]`); }}
-                                if (!label) {{ label = cb.parentElement; }}
+                                if (!label && cb.id) {{
+                                    label = document.querySelector(`label[for="${{cb.id}}"]`);
+                                }}
+                                if (!label) {{
+                                    label = cb.parentElement; 
+                                }}
                                 const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
                                 return {{ cb, labelText, lowerLabel: labelText.toLowerCase() }};
                             }});
-
-                            // Get target answer using our global logic mapping
-                            const answer = fuzzyMatch(qText);
-                            if (answer) {{
-                                const answerLower = answer.toLowerCase();
+                            
+                            // Check if binary (exactly 2 checkboxes with Yes/No labels)
+                            const isBinaryYesNo = allCheckboxes.length === 2 && 
+                                checkboxLabels.every((item) => 
+                                    item.lowerLabel.includes('yes') || item.lowerLabel.includes('no')
+                                );
+                            
+                            if (isBinaryYesNo) {{
+                                // Find the Yes checkbox
+                                const yesCheckbox = checkboxLabels.find((item) => 
+                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('not')
+                                );
                                 
-                                // Specific list checks based on the known answers
-                                if (answerLower.includes('noida') && typeof answerLower === 'string') {{
-                                    // It's a location list question
-                                    const preferredCities = ['noida', 'delhi', 'bangalore', 'bengaluru', 'hyderabad', 'mumbai', 'pune'];
-                                    const foundAny = checkboxLabels.some(item => preferredCities.some(city => item.lowerLabel.includes(city)));
-                                    if (foundAny) {{
-                                        for (const item of checkboxLabels) {{
-                                            if (item.lowerLabel.includes('skip')) continue;
-                                            const isCityMatch = preferredCities.some(city => item.lowerLabel.includes(city));
-                                            if (isCityMatch && !item.cb.checked) {{
-                                                item.cb.click();
-                                                if (!item.cb.checked) {{ item.cb.checked = true; item.cb.dispatchEvent(new Event('change', {{ bubbles: true }})); }}
-                                                clickedCount++;
+                                if (yesCheckbox && !yesCheckbox.cb.checked) {{
+                                    yesCheckbox.cb.click();
+                                    if (!yesCheckbox.cb.checked) {{
+                                        yesCheckbox.cb.checked = true;
+                                        yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("CB: " + yesCheckbox.labelText);
+                                }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
+                                }}
+                            }} else if (isCityQuestion && allCheckboxes.length <= 3) {{
+                                // Check if these are actual city checkboxes (not Yes/No)
+                                const cityNames = ['pune', 'mumbai', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'ahmedabad'];
+                                const containsCities = checkboxLabels.some(item => 
+                                    cityNames.some(city => item.lowerLabel.includes(city))
+                                );
+                                
+                                if (containsCities) {{
+                                    // This is a city selection question - select ALL city options (skip "Skip")
+                                    for (const item of checkboxLabels) {{
+                                        // Skip the "Skip this question" option
+                                        if (item.lowerLabel.includes('skip')) {{
+                                            debugLog.push("CITY_SKIP: " + item.labelText);
+                                            continue;
+                                        }}
+                                        
+                                        // Check if this is a city option
+                                        const isCityOption = cityNames.some(city => item.lowerLabel.includes(city));
+                                        
+                                        if (isCityOption && !item.cb.checked) {{
+                                            item.cb.click();
+                                            if (!item.cb.checked) {{
+                                                item.cb.checked = true;
+                                                item.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                             }}
+                                            clickedCount++;
+                                            debugLog.push("CITY_ALL: " + item.labelText);
+                                        }} else if (isCityOption && item.cb.checked) {{
+                                            clickedCount++;
+                                            debugLog.push("CITY_ALL: " + item.labelText + " (already checked)");
+                                        }}
+                                    }}
+                                    
+                                    // Click save button after selecting all cities
+                                    if (clickedCount > 0) {{
+                                        const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                        if (saveBtn) {{ 
+                                            saveBtn.click(); 
+                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected all ' + clickedCount + ' cities | DBG: ' + debugLog.join(', '); 
                                         }}
                                     }}
                                 }} else {{
-                                    // Generic checkbox matcher against answer text
-                                    let bestCb = null;
-                                    let bestScore = -1;
+                                    // For relocation questions with few checkboxes, select Yes if available
+                                    let yesCheckbox = checkboxLabels.find((item) => 
+                                        item.lowerLabel.includes('yes') && !item.lowerLabel.includes('no')
+                                    );
                                     
-                                    // Exact word matches give highest scores
-                                    for (const item of checkboxLabels) {{
-                                        if (item.lowerLabel.includes(answerLower) || answerLower.includes(item.lowerLabel.trim())) {{
-                                            bestScore = 100;
-                                            bestCb = item;
-                                            break;
+                                    // If no exact Yes found, look for positive indicators
+                                    if (!yesCheckbox) {{
+                                        yesCheckbox = checkboxLabels.find((item) => 
+                                            item.lowerLabel.includes('willing') || 
+                                            item.lowerLabel.includes('agree') ||
+                                            item.lowerLabel.includes('confirm')
+                                        );
+                                    }}
+                                    
+                                    if (yesCheckbox && !yesCheckbox.cb.checked) {{
+                                        yesCheckbox.cb.click();
+                                        if (!yesCheckbox.cb.checked) {{
+                                            yesCheckbox.cb.checked = true;
+                                            yesCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                         }}
-                                        // Specific keyword scoring
-                                        if (answerLower === 'yes' && (item.lowerLabel.includes('yes') || item.lowerLabel.includes('agree') || item.lowerLabel.includes('willing'))) {{
-                                            if (bestScore < 90) {{ bestScore = 90; bestCb = item; }}
+                                        clickedCount = 1;
+                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText);
+                                    }} else if (yesCheckbox && yesCheckbox.cb.checked) {{
+                                        clickedCount = 1;
+                                        debugLog.push("RELOC_CB: " + yesCheckbox.labelText + " (already checked)");
+                                    }}
+                                }}
+                            }} else if (isNoticePeriodQuestion) {{
+                                // For notice period questions, select "Serving Notice Period" option
+                                let bestCheckbox = null;
+                                let bestScore = -1;
+                                let allLabels = []; // Debug: store all found labels
+                                
+                                for (const item of checkboxLabels) {{
+                                    allLabels.push(item.labelText);
+                                    let score = 0;
+                                    const labelLower = item.lowerLabel;
+                                    
+                                    // Highest priority: "Serving Notice Period" option
+                                    if (labelLower.includes('serving notice period')) {{
+                                        score = 100;
+                                    }}
+                                    // Secondary: any option with "serving" in it
+                                    else if (labelLower.includes('serving')) {{
+                                        score = 90;
+                                    }}
+                                    // Third: "Serving Notice" (without "Period")
+                                    else if (labelLower.includes('serving notice')) {{
+                                        score = 85;
+                                    }}
+                                    
+                                    if (score > bestScore) {{
+                                        bestScore = score;
+                                        bestCheckbox = item;
+                                    }}
+                                }}
+                                
+                                // Click only the "Serving Notice Period" checkbox
+                                if (bestCheckbox && bestScore >= 85 && !bestCheckbox.cb.checked) {{
+                                    bestCheckbox.cb.click();
+                                    if (!bestCheckbox.cb.checked) {{
+                                        bestCheckbox.cb.checked = true;
+                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
+                                }} else if (bestCheckbox && bestScore >= 85 && bestCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
+                                }} else {{
+                                    // Serving Notice Period not found - don't select anything and log for debugging
+                                    debugLog.push("NOTICE_CB_ERROR: Serving Notice Period not found. Available: " + allLabels.join(", "));
+                                }}
+                            }} else if (isExperienceQuestion) {{
+                                // For experience questions with checkboxes, select only the best matching range
+                                // Target: 3.8 years experience -> select "3 - 5 years"
+                                let bestCheckbox = null;
+                                let bestScore = -1;
+                                let allLabels = []; // Debug: store all found labels
+                                const targetExperience = 3.8; // Years of experience
+                                
+                                for (const item of checkboxLabels) {{
+                                    allLabels.push(item.labelText);
+                                    let score = 0;
+                                    const labelLower = item.lowerLabel;
+                                    
+                                    // Look for year ranges like "3 - 5 years", "1-2 years", etc.
+                                    const rangeMatch = labelLower.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                    if (rangeMatch) {{
+                                        const min = parseFloat(rangeMatch[1]);
+                                        const max = parseFloat(rangeMatch[2]);
+                                        
+                                        // If target falls within range, high score
+                                        if (targetExperience >= min && targetExperience <= max) {{
+                                            score = 100;
+                                        }}
+                                        // If target is close to range, medium score
+                                        else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {{
+                                            score = 80;
+                                        }}
+                                    }}
+                                    // Look for single year values
+                                    else {{
+                                        const yearMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
+                                        if (yearMatch) {{
+                                            const year = parseFloat(yearMatch[1]);
+                                            const diff = Math.abs(targetExperience - year);
+                                            if (diff <= 0.5) score = 90;
+                                            else if (diff <= 1) score = 70;
+                                            else if (diff <= 2) score = 50;
                                         }}
                                     }}
                                     
-                                    if (!bestCb && answerLower.includes('serving notice')) {{
-                                        // Backup parsing for notice period
-                                        for (const item of checkboxLabels) {{
-                                            if (item.lowerLabel.includes('serving')) {{
-                                                bestCb = item; bestScore = 80;
+                                    if (score > bestScore) {{
+                                        bestScore = score;
+                                        bestCheckbox = item;
+                                    }}
+                                }}
+                                
+                                // Click only the best matching checkbox
+                                if (bestCheckbox && bestScore >= 50 && !bestCheckbox.cb.checked) {{
+                                    bestCheckbox.cb.click();
+                                    if (!bestCheckbox.cb.checked) {{
+                                        bestCheckbox.cb.checked = true;
+                                        bestCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    }}
+                                    clickedCount = 1;
+                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
+                                }} else if (bestCheckbox && bestScore >= 50 && bestCheckbox.cb.checked) {{
+                                    clickedCount = 1;
+                                    debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (already checked)");
+                                }} else {{
+                                    // No good match found - log for debugging
+                                    debugLog.push("EXP_CB_ERROR: No matching experience range found. Available: " + allLabels.join(", "));
+                                }}
+                            }} else {{
+                                // Not binary - process normally
+                                for (const cb of allCheckboxes) {{
+                                    let label = cb.closest('label') || document.querySelector(`label.mcc__label[for="${{cb.id}}"]`);
+                                    if (!label && cb.id) {{
+                                        label = document.querySelector(`label[for="${{cb.id}}"]`);
+                                    }}
+                                    if (!label) {{
+                                        label = cb.parentElement; 
+                                    }}
+                                    
+                                    const labelText = label ? (label.innerText || cb.id || '') : (cb.id || '');
+                                    const lowerLabel = labelText.toLowerCase();
+
+                                    debugLog.push("CB: " + labelText);
+                                    
+                                    // Ignore job list checkboxes
+                                    if (cb.closest('.naukicon-ot-checkbox')) continue;
+
+                                    // ALWAYS ignore "Skip"
+                                    if (lowerLabel.includes('skip')) continue;
+                                    
+                                    // If already checked, count but don't re-click
+                                    if (cb.checked) {{
+                                        clickedCount++;
+                                        continue;
+                                    }}
+
+                                    // For city questions, prefer "Both" or "All" option first
+                                    if (isCityQuestion) {{
+                                        if (lowerLabel.includes('both') || lowerLabel.includes('all')) {{
+                                            cb.click();
+                                            if (!cb.checked) {{
+                                                cb.checked = true;
+                                                cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            }}
+                                            // Click save and return immediately
+                                            const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                            if (saveBtn) {{ 
+                                                saveBtn.click(); 
+                                                return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected Both/All locations'; 
                                             }}
                                         }}
+                                        // Continue to select all cities
+                                    }}
+
+                                    // ACTION: Click the checkbox (for non-binary questions)
+                                    cb.click();
+                                    
+                                    // Verification & Fallback
+                                    if (!cb.checked) {{
+                                         cb.checked = true;
+                                         cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     }}
                                     
-                                    if (bestCb && !bestCb.cb.checked) {{
-                                        bestCb.cb.click();
-                                        if (!bestCb.cb.checked) {{ bestCb.cb.checked = true; bestCb.cb.dispatchEvent(new Event('change', {{ bubbles: true }})); }}
-                                        clickedCount = 1;
-                                    }}
+                                    clickedCount++;
                                 }}
                             }}
                             
-                            // Always attempt to save if we clicked anything
                             if (clickedCount > 0) {{
                                 const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
                                 if (saveBtn) {{ 
                                     saveBtn.click(); 
-                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED: Clicked ' + clickedCount; 
+                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED: ' + clickedCount + ' | DBG: ' + debugLog.join(', '); 
                                 }}
                             }}
                         }}
 
-                        // Try option buttons (wrap in block to avoid const redeclaration collisions)
-                        {{
-                            const optBtns = document.querySelectorAll('.chatbot_OptionContainer button');
-                            if (optBtns.length > 0) {{ optBtns[0].click(); return 'NAUKRI_CHAT_OPT_CLICKED'; }}
-                        }}
+                        // Try option buttons
+                        const optionBtns = document.querySelectorAll('.chatbot_OptionContainer button');
+                        if (optionBtns.length > 0) {{ optionBtns[0].click(); return 'NAUKRI_CHAT_OPT_CLICKED'; }}
                         
                         // DOM INSPECTION on Wait
                         const activeMsg = document.querySelector('.chatbot_MessageContainer li:last-child') || document.querySelector('.chatbot_MessageContainer');
                         const dump = activeMsg ? activeMsg.innerHTML.slice(0, 800) : 'No active msg';
                         
-                        return 'NAUKRI_CHAT_WAITING | DOM: ' + dump;
+                        return 'NAUKRI_CHAT_WAITING | DOM: ' + dump + ' | CBs: ' + debugLog.join(', ');
+                        
+                        return 'NAUKRI_CHAT_WAITING';
                     }}
                     
                     // 2. Check if we're on the recommended jobs page

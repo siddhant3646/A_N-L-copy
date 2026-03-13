@@ -4913,16 +4913,14 @@ class SentinelAgent:
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {{
-                    // Override experience to 4 years for LinkedIn
-                    const expKeys = [
-                        'years of experience', 'total experience', 'overall experience', 'year of exp',
-                        'experience', 'years', 'java experience', 'react experience', 'angular experience',
-                        'nodejs experience', 'javascript experience', 'ci/cd experience', 'full stack experience',
-                        'backend experience', 'frontend experience', 'software experience', 'web experience',
-                        'python experience', 'programming experience'
-                    ];
-                    expKeys.forEach(k => {{
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
+                    // Override ALL experience values for LinkedIn (numeric-only fields)
+                    // Instead of maintaining a list, scan all values generically
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {{
+                        const v = KNOWN_PATTERNS[k];
+                        if (v === '3.8 Years') KNOWN_PATTERNS[k] = '4';
+                        else if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
+                        else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
+                        else if (typeof v === 'string' && v.startsWith('3.8 Years')) KNOWN_PATTERNS[k] = '4';
                     }});
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs

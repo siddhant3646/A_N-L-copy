@@ -148,11 +148,12 @@ TASK_PLATFORM_MAP = {
 
 # These are placeholders - actual selectors will be in platform handler files
 LINKEDIN_SELECTORS = {
-    "easy_apply_button": ".jobs-apply-button",
-    "job_card": ".job-card-container",
-    "next_button": "button[aria-label='Continue']",
+    "easy_apply_button": "button.jobs-apply-button, #jobs-apply-button-id",
+    "job_card": ".job-card-container, [data-job-id]",
+    "next_button": "button[aria-label='Continue to next step']",
     "submit_button": "button[aria-label='Submit application']",
-    "modal_close": "button[aria-label='Dismiss']"
+    "modal_close": "button[aria-label='Dismiss']",
+    "sidebar": ".scaffold-layout__list",
 }
 
 NAUKRI_SELECTORS = {

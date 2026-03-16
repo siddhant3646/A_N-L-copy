@@ -5209,21 +5209,21 @@ class SentinelAgent:
                     // Helper: Find Easy Apply button on job details page
                     const findEasyApplyButton = () => {{
                         console.log('Looking for Easy Apply button...');
-                        // 1. By class and id
+                        // 1. By class and id (most reliable - verified 2026)
                         let btn = queryDeep('button.jobs-apply-button') || queryDeep('#jobs-apply-button-id');
-                        if (btn) return btn;
+                        if (btn && isVisible(btn)) return btn;
                         
                         // 2. By aria-label (found during inspection)
                         btn = queryDeep('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]');
-                        if (btn) return btn;
+                        if (btn && isVisible(btn)) return btn;
                         
-                        // 3. By data-view-name
-                        btn = queryDeep('a[data-view-name="job-apply-button"], button[data-view-name="job-apply-button"], button.top-card-layout__cta--primary');
-                        if (btn) return btn;
+                        // 3. By data-view-name (LinkedIn uses <button> not <a> as of 2026)
+                        btn = queryDeep('button[data-view-name="job-apply-button"], button.top-card-layout__cta--primary');
+                        if (btn && isVisible(btn)) return btn;
 
-                        // 4. By text search
+                        // 4. By text search (broadest fallback)
                         btn = findByText('button', 'easy apply') || findByText('a', 'easy apply');
-                        if (btn) return btn;
+                        if (btn && isVisible(btn)) return btn;
 
                         return null;
                     }};
@@ -5987,6 +5987,14 @@ class SentinelAgent:
                         return 'LINKEDIN_FORM_STUCK: No button found';
                     }};
 
+                    // Helper: Check if element is a messaging overlay (NOT an Easy Apply modal)
+                    const isMessagingOverlay = (el) => {{
+                        const cls = (el.className || '').toLowerCase();
+                        return cls.includes('msg-overlay') || cls.includes('msg-convo') || 
+                               cls.includes('msg-form') || cls.includes('messaging') ||
+                               cls.includes('msg-s-message-list') || cls.includes('msg-thread');
+                    }};
+
                     // Check for modals (SHADOW DOM AWARE)
                     const checkModals = () => {{
                         console.log('Checking for active modals (Shadow DOM aware)...');
@@ -5996,6 +6004,13 @@ class SentinelAgent:
                         for (const dialog of dialogs) {{
                             if (!isVisible(dialog)) {{
                                 console.log('Found dialog but it is not visible:', dialog.className);
+                                continue;
+                            }}
+                            
+                            // CRITICAL: Skip LinkedIn messaging overlays — they match [role="dialog"]
+                            // but are NOT Easy Apply modals
+                            if (isMessagingOverlay(dialog)) {{
+                                console.log('Skipping messaging overlay:', dialog.className?.substring(0, 80));
                                 continue;
                             }}
                             
@@ -6054,9 +6069,10 @@ class SentinelAgent:
                         }}
                     }}
 
-                    // CRITICAL: If a modal is visible but not matched above, do NOT click Easy Apply
+                    // CRITICAL: If a REAL modal is visible but not matched above, do NOT click Easy Apply
+                    // Must exclude messaging overlays which also match [role="dialog"]
                     const anyModal = queryDeep('.artdeco-modal, [role="dialog"]');
-                    if (anyModal) {{
+                    if (anyModal && isVisible(anyModal) && !isMessagingOverlay(anyModal)) {{
                         console.log('Unknown modal detected via deep query. Handling as generic form...');
                         return handleLinkedInForm(anyModal);
                     }}
@@ -6115,8 +6131,19 @@ class SentinelAgent:
                     }}
 
                     // Find job cards within the sidebar
-                    // Valid cards have data-occludable-job-id or data-job-id
-                    let jobCards = Array.from(queryAllDeep('[data-occludable-job-id], [data-job-id], .jobs-search-results-list__list-item, .scaffold-layout__list-item, .job-card-container', sidebar));
+                    // Priority: .job-card-container (verified 2026), [data-job-id], .scaffold-layout__list-item
+                    // NOTE: .jobs-search-results-list__list-item is DEAD as of 2026 LinkedIn update
+                    let jobCards = Array.from(queryAllDeep('.job-card-container, [data-job-id], [data-occludable-job-id], .scaffold-layout__list-item', sidebar));
+                    
+                    // Deduplicate: a .job-card-container inside a .scaffold-layout__list-item would match twice
+                    // Keep the most specific (deepest) element for each job
+                    const seen = new Set();
+                    jobCards = jobCards.filter(card => {{
+                        const jobId = card.getAttribute('data-job-id') || card.querySelector('[data-job-id]')?.getAttribute('data-job-id') || card.innerText.substring(0, 60);
+                        if (seen.has(jobId)) return false;
+                        seen.add(jobId);
+                        return true;
+                    }});
                     
                     // Fallback to role="button" logic
                     if (jobCards.length === 0) {{
@@ -6132,8 +6159,12 @@ class SentinelAgent:
                     // 4. Must not be the currently active card
                     const candidates = jobCards.filter(card => {{
                         const text = card.innerText.toLowerCase();
+                        // Active class may be on card itself OR on a parent <li> element
+                        // LinkedIn puts --active on the <li> wrapper, not on .job-card-container
                         const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
-                                        (card.getAttribute('aria-current') === 'true'); // Enhanced active check
+                                        card.closest('.jobs-search-results-list__list-item--active') !== null ||
+                                        card.closest('[aria-current="true"]') !== null ||
+                                        card.getAttribute('aria-current') === 'true';
                         
                         if (isActive) return false;
                         if (!isVisible(card)) return false;

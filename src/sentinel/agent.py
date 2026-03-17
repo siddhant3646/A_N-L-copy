@@ -53,6 +53,9 @@ KNOWN_QA_PATTERNS = {
     'web experience': '3.8 Years',
     'python experience': '3.8 Years',
     'programming experience': '3.8 Years',
+    'which programming language': 'Python, Node.js / TypeScript, Both',
+    'programming language most experienced': 'Python, Node.js / TypeScript, Both',
+    'programming language are you most experienced': 'Python, Node.js / TypeScript, Both',
     # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
     'current salary': '13.5 LPA',
     'what is your current salary?': '13.5 LPA',
@@ -6395,7 +6398,8 @@ class SentinelAgent:
                             const qTextLower = qText.toLowerCase();
                             const isCityQuestion = qTextLower.includes('city') || qTextLower.includes('relocate') || qTextLower.includes('location');
                             const isNoticePeriodQuestion = qTextLower.includes('notice period');
-                            const isExperienceQuestion = qTextLower.includes('experience') || qTextLower.includes('years');
+                            const isProgrammingLanguageQuestion = qTextLower.includes('programming language') || qTextLower.includes('programming lang') || qTextLower.includes('coding language') || (qTextLower.includes('language') && (qTextLower.includes('experienced') || qTextLower.includes('proficient') || qTextLower.includes('skilled')));
+                            const isExperienceQuestion = !isProgrammingLanguageQuestion && (qTextLower.includes('experience') || qTextLower.includes('years'));
                             const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
                             
                             // FIRST: Check if this is a binary Yes/No question
@@ -6612,6 +6616,30 @@ class SentinelAgent:
                                 }} else {{
                                     // No good match found - log for debugging
                                     debugLog.push("EXP_CB_ERROR: No matching experience range found. Available: " + allLabels.join(", "));
+                                }}
+                            }} else if (isProgrammingLanguageQuestion) {{
+                                // For programming language questions, select ALL options except "Other" and "Skip"
+                                for (const item of checkboxLabels) {{
+                                    const labelLower = item.lowerLabel.trim();
+                                    
+                                    // Skip "Other" and "Skip" options
+                                    if (labelLower === 'other' || labelLower.includes('skip') || labelLower === 'others' || labelLower.startsWith('other ')) {{
+                                        debugLog.push("LANG_SKIP: " + item.labelText);
+                                        continue;
+                                    }}
+                                    
+                                    if (!item.cb.checked) {{
+                                        item.cb.click();
+                                        if (!item.cb.checked) {{
+                                            item.cb.checked = true;
+                                            item.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        }}
+                                        clickedCount++;
+                                        debugLog.push("LANG_CB: " + item.labelText);
+                                    }} else {{
+                                        clickedCount++;
+                                        debugLog.push("LANG_CB: " + item.labelText + " (already checked)");
+                                    }}
                                 }}
                             }} else {{
                                 // Not binary - process normally

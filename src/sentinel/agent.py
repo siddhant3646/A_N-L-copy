@@ -1552,7 +1552,7 @@ class SentinelAgent:
     """
     
     MAX_STEPS_LINKEDIN = 120  # LinkedIn tasks get more steps
-    MAX_STEPS_DEFAULT = 50    # All other tasks
+    MAX_STEPS_DEFAULT = 120   # All other tasks (Naukri, etc.)
     MEMORY_CLEANUP_INTERVAL = 50  # Refresh context every N steps
     SCREENSHOT_DIR = os.path.expanduser("~/Desktop/sentinel_errors")
     UNKNOWN_QUESTIONS_LOG = os.path.expanduser("~/Desktop/sentinel_errors/unknown_questions.log")
@@ -2682,12 +2682,31 @@ class SentinelAgent:
             # Naukri login detection
             elif 'naukri' in current_url:
                 login_required = await self._page.evaluate("""() => {
-                    const loginBtn = document.querySelector('a[href*="login"], .login-btn');
+                    // 1. Check for explicit login forms/containers
                     const loginForm = document.querySelector('#login-form, .login-container');
-                    const bodyText = document.body?.innerText || '';
+                    if (loginForm) return true;
+
+                    // 2. Check for "Login" button specifically in the main header (avoiding footers/hidden menus)
+                    // Naukri's top bar usually has 'naukri-header' or similar structure
+                    const header = document.querySelector('.naukri-header, #naukri-header, .naukri-header-container');
+                    const loginBtnInHeader = header ? header.querySelector('a[href*="login"], .login-btn') : null;
                     
-                    return !!(loginForm || 
-                             (loginBtn && bodyText.includes('Login')));
+                    // 3. Verify if we see profile-specific elements (e.g., 'My Naukri', 'Profile', or logout link)
+                    const profileIcon = document.querySelector('.icon-profile, .nC_user-img, a[href*="logout"]');
+                    const myNaukriText = document.body.innerText.includes('My Naukri') || 
+                                       document.body.innerText.includes('View Profile');
+
+                    // If profile elements exist, we are definitely logged in
+                    if (profileIcon || myNaukriText) return false;
+
+                    // If we find a login button in the header and NO profile elements, we might be logged out
+                    // But common "ghost" login buttons can still exist. 
+                    // Let's only trigger if we are on a page that actually REQUIRES login but shows a login prompt.
+                    const bodyText = document.body.innerText;
+                    const restrictedPage = bodyText.includes('Login to continue') || 
+                                         bodyText.includes('Please login');
+
+                    return !!(loginBtnInHeader && restrictedPage);
                 }""")
                 
                 if login_required:
@@ -3167,10 +3186,18 @@ class SentinelAgent:
 
     def _get_max_steps(self) -> int:
         """Determine max steps based on task type - LinkedIn gets 120, others get 50."""
-        task_desc = getattr(self, '_task_description', '').lower()
+        # Use a more specific check for LinkedIn to avoid false positives from common context
+        task_desc = getattr(self, '_task_description', '')
         current_url = self._page.url.lower() if self._page else ''
         
-        if 'linkedin' in task_desc or 'linkedin' in current_url:
+        # Check if the task is explicitly for LinkedIn based on URL or specific LinkedIn keywords
+        is_linkedin_task = (
+            'linkedin.com/jobs' in current_url or 
+            'linkedin.com/search' in current_url or
+            ('LINKEDIN_JOB_APPLY_TASK' in task_desc and 'linkedin' in current_url)
+        )
+        
+        if is_linkedin_task:
             return self.MAX_STEPS_LINKEDIN
         return self.MAX_STEPS_DEFAULT
 
@@ -4592,9 +4619,11 @@ class SentinelAgent:
         """Handle Naukri chatbot questionnaire. Returns True if done, 'CONTINUE' for MCC popup, False on failure."""
         patterns_json = json.dumps(KNOWN_QA_PATTERNS)
         max_iterations = 20
+        previous_questions = []
+        same_question_count = 0
         
         for iteration in range(max_iterations):
-            await asyncio.sleep(random.uniform(1.5, 3))
+            await asyncio.sleep(random.uniform(2, 3.5))
             
             result = await self._page.evaluate(f"""async () => {{
                 const KNOWN_PATTERNS = {patterns_json};
@@ -4605,18 +4634,14 @@ class SentinelAgent:
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     
-                    // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
                     
                     for (const [key, val] of sortedPatterns) {{
                         const keyLower = key.toLowerCase();
-                        // Check for exact match first
                         if (qLower === keyLower) {{
                             return val;
                         }}
-                        // Check if question includes the key
                         if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
-                            // Skip generic 'years' pattern if question contains salary/ctc/pay keywords
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
                                 continue;
                             }}
@@ -4627,7 +4652,6 @@ class SentinelAgent:
                     return bestMatch;
                 }};
                 
-                // PRIORITY 0: Check for error snackbar immediately
                 const snackBody = document.querySelector('.ss-snackbar-body');
                 if (snackBody && snackBody.offsetParent !== null) {{
                     const snackText = snackBody.innerText.toLowerCase();
@@ -4637,19 +4661,12 @@ class SentinelAgent:
                         return 'NAUKRI_RATE_LIMITED: Error popup detected at loop start';
                     }}
                 }}
-                // Generic fallback
-                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"]');
-                if (genericSnack && genericSnack.innerText.toLowerCase().includes('error')) {{
-                    return 'NAUKRI_RATE_LIMITED: Generic error at loop start';
-                }}
                 
-                // Check for MCC/update popup (needs main loop handling)
                 const mccPopup = document.querySelector('.mcc-popup, [class*="update-popup"], [class*="confirmation-modal"]');
                 if (mccPopup && mccPopup.offsetParent !== null) {{
                     return 'MCC_POPUP_DETECTED';
                 }}
                 
-                // Check for success/completion
                 const successIndicators = [
                     document.querySelector('.chatbot_SuccessMsg'),
                     document.querySelector('[class*="success"]'),
@@ -4660,191 +4677,471 @@ class SentinelAgent:
                     return 'CHATBOT_COMPLETE';
                 }}
                 
-                // Check if chatbot is visible (try multiple selectors)
                 let chatLayer = document.querySelector('.chatbot_DrawerContentWrapper');
                 if (!chatLayer) {{
-                    // Try alternative selectors for Naukri questionnaire modals
                     chatLayer = document.querySelector('[class*="drawer"], [class*="modal"], [role="dialog"]');
                 }}
-                // Check if element is actually visible (not just in DOM)
                 const isVisible = (el) => {{
                     if (!el) return false;
                     const rect = el.getBoundingClientRect();
                     return rect.width > 0 && rect.height > 0 && rect.top >= 0;
                 }};
                 if (!chatLayer || !isVisible(chatLayer)) {{
-                    // Chatbot not visible - check if already done
                     if (document.body.innerText.includes('applied')) {{
                         return 'CHATBOT_COMPLETE';
                     }}
                     return 'NO_CHATBOT';
                 }}
                 
-                // Handle question input - search more broadly in chatLayer OR globally
                 let questionEl = chatLayer.querySelector('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
                 let qText = '';
                 if (questionEl) {{
                     qText = questionEl.innerText || '';
                 }} else {{
-                    // Fallback: get any text content from the modal that looks like a question
                     qText = chatLayer.innerText || '';
                 }}
                 
-                const answer = fuzzyMatch(qText) || '3.8';
+                let answer = fuzzyMatch(qText) || '3.8';
                 
-                // Try text input - GLOBAL SEARCH FIRST for Naukri's specific input
-                let input = document.querySelector('input[placeholder*="Type message"], input[placeholder*="type message"], input[placeholder*="message here"]');
-                if (!input) {{
-                    // Try chatLayer if available
-                    if (chatLayer) {{
-                        input = chatLayer.querySelector('input[type="text"], textarea, input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])');
+                // Special handling for Naukri salary questions - extract numeric value
+                const isNaukri = window.location.hostname.includes('naukri');
+                const isSalaryQuestion = qText.toLowerCase().includes('salary') || 
+                    qText.toLowerCase().includes('ctc') || 
+                    qText.toLowerCase().includes('compensation') ||
+                    qText.toLowerCase().includes('pay');
+                
+                if (isNaukri && isSalaryQuestion && answer) {{
+                    const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
+                    if (numericMatch) {{
+                        answer = numericMatch[1];
                     }}
                 }}
-                if (!input) {{
-                    // Global fallback for any visible input
-                    input = document.querySelector('[role="dialog"] input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), [class*="modal"] input:not([type="hidden"]), textarea');
+                
+                // DEBUG: Log what we detected
+                console.log('Chatbot Debug - Question:', qText.substring(0, 100), '| Answer:', answer);
+                
+                // DEBUG: Log all inputs found in chatLayer
+                if (chatLayer) {{
+                    const debugInputs = chatLayer.querySelectorAll('input:not([type="hidden"]), textarea');
+                    console.log('Chatbot Debug - Inputs in chatLayer:', debugInputs.length);
+                    debugInputs.forEach((inp, i) => {{
+                        console.log('  Input[' + i + ']:', inp.type, inp.placeholder || inp.name || inp.id, 'visible:', inp.offsetParent !== null);
+                    }});
                 }}
-                if (!input) {{
-                    // Try finding input inside form within chatLayer
-                    if (chatLayer) {{
-                        const form = chatLayer.querySelector('form');
-                        if (form) {{
-                            input = form.querySelector('input[type="text"], input:not([type="hidden"]), textarea');
+                
+                // STEP 1: DETECT all available input types on the page
+                const hasSelect = chatLayer.querySelector('select') !== null;
+                const hasRadio = chatLayer.querySelectorAll('input[type="radio"]').length > 0;
+                const hasCheckbox = chatLayer.querySelectorAll('input[type="checkbox"]').length > 0;
+                let textInput = chatLayer.querySelector('input[type="text"]:not([type="hidden"]):not([type="file"]), textarea');
+                let contentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
+                                     document.querySelector('div[contenteditable="true"]');
+                
+                console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditable}});
+                
+                // STEP 2: USE the first available input type (sequential detection)
+                // Order: Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
+                
+                // HANDLE DROPDOWN
+                if (hasSelect) {{
+                    const select = chatLayer.querySelector('select');
+                    if (select && select.offsetParent !== null) {{
+                        const selectOptions = Array.from(select.options);
+                        console.log('Chatbot Debug - Found dropdown with', selectOptions.length, 'options');
+                        
+                        // For salary questions, look for option containing the number
+                        for (const opt of selectOptions) {{
+                            const optText = opt.text.toLowerCase();
+                            if (isSalaryQuestion) {{
+                                // Match if option contains our numeric answer
+                                if (optText.includes(answer) || 
+                                    (answer === '20' && (optText.includes('20') || optText.includes('20-25') || optText.includes('15-20')))) {{
+                                    select.value = opt.value;
+                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                                    if (saveDiv && saveDiv.offsetParent !== null) {{
+                                        saveDiv.click();
+                                    }}
+                                    return 'CHATBOT_DROPDOWN_SELECTED: ' + opt.text;
+                                }}
+                            }} else {{
+                                // Non-salary: try to match by answer text
+                                if (optText.includes(answer.toLowerCase())) {{
+                                    select.value = opt.value;
+                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                                    if (saveDiv && saveDiv.offsetParent !== null) {{
+                                        saveDiv.click();
+                                    }}
+                                    return 'CHATBOT_SELECTED: ' + opt.text;
+                                }}
+                            }}
+                        }}
+                        
+                        // Default: select second option if available
+                        if (selectOptions.length > 1) {{
+                            select.selectedIndex = 1;
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                            if (saveDiv && saveDiv.offsetParent !== null) {{
+                                saveDiv.click();
+                                return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ' + selectOptions[1].text;
+                            }}
+                            return 'CHATBOT_SELECTED_DEFAULT: ' + selectOptions[1].text;
                         }}
                     }}
                 }}
-                // Final fallback: any input element that's visible
-                if (!input) {{
-                    const allInputs = document.querySelectorAll('input[type="text"]:not([type="hidden"]), textarea');
-                    for (const inp of allInputs) {{
-                        const rect = inp.getBoundingClientRect();
-                        if (rect.width > 0 && rect.height > 0) {{
-                            input = inp;
+                
+                // HANDLE RADIO BUTTONS
+                if (hasRadio) {{
+                    const radios = chatLayer.querySelectorAll('input[type="radio"]');
+                    console.log('Chatbot Debug - Processing radio buttons:', radios.length);
+                    
+                    let clickedRadio = false;
+                    const answerLower = answer.toLowerCase();
+                    
+                    // Try to match answer to radio label
+                    for (const radio of radios) {{
+                        const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
+                        const labelLower = label.toLowerCase();
+                        
+                        // Match Yes/Serving for positive answers
+                        if ((answerLower.includes('yes') || answerLower.includes('true')) && 
+                            (labelLower.includes('yes') || labelLower.includes('serving'))) {{
+                            if (!radio.checked) {{
+                                radio.click();
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked Yes radio:', label);
+                            }}
+                            break;
+                        }}
+                        // Match No for negative answers
+                        if ((answerLower.includes('no') || answerLower.includes('false')) && 
+                            labelLower.includes('no')) {{
+                            if (!radio.checked) {{
+                                radio.click();
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked No radio:', label);
+                            }}
                             break;
                         }}
                     }}
+                    
+                    // If no match found, click first unchecked radio
+                    if (!clickedRadio) {{
+                        for (const radio of radios) {{
+                            if (!radio.checked) {{
+                                radio.click();
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked default radio');
+                                break;
+                            }}
+                        }}
+                    }}
+                    
+                    // After selecting radio, click Save/Submit button
+                    if (clickedRadio) {{
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        const naukSaveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, #sendMsg__vjhkrpzhhInputBox .sendMsg');
+                        if (naukSaveDiv && naukSaveDiv.offsetParent !== null) {{
+                            naukSaveDiv.click();
+                            console.log('Chatbot Debug - Save clicked after radio');
+                            return 'CHATBOT_RADIO_AND_SAVE: ' + qText.slice(0, 50);
+                        }}
+                        
+                        const allButtons = chatLayer ? 
+                            Array.from(chatLayer.querySelectorAll('button, div[tabindex], span[tabindex]')) : 
+                            Array.from(document.querySelectorAll('[role="dialog"] button, [class*="modal"] button'));
+                        
+                        for (const btn of allButtons) {{
+                            const btnText = btn.innerText.toLowerCase().trim();
+                            if ((btnText === 'save' || btnText === 'submit' || btnText === 'next') 
+                                && btn.offsetParent !== null) {{
+                                btn.click();
+                                console.log('Chatbot Debug - Save clicked after radio (fallback)');
+                                return 'CHATBOT_RADIO_AND_SAVE: ' + qText.slice(0, 50);
+                            }}
+                        }}
+                        
+                        return 'CHATBOT_RADIO_CLICKED: ' + qText.slice(0, 50);
+                    }}
                 }}
                 
-                if (input) {{
-                    // Always fill the input (overwrite any existing value)
-                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                    if (setter) setter.call(input, answer);
-                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                // HANDLE CHECKBOXES
+                if (hasCheckbox) {{
+                    const checkboxes = chatLayer.querySelectorAll('input[type="checkbox"]');
+                    console.log('Chatbot Debug - Processing checkboxes:', checkboxes.length);
                     
-                    // Click Save button - search for button with Save text first
+                    let clickedCheckbox = false;
+                    const answerLower = answer.toLowerCase();
+                    
+                    // Try to match answer to checkbox label
+                    for (const checkbox of checkboxes) {{
+                        const label = checkbox.parentElement?.innerText || checkbox.nextSibling?.textContent || '';
+                        const labelLower = label.toLowerCase();
+                        
+                        // Check if answer matches this option
+                        if (answerLower.includes(labelLower) || labelLower.includes(answerLower)) {{
+                            if (!checkbox.checked) {{
+                                checkbox.click();
+                                clickedCheckbox = true;
+                                console.log('Chatbot Debug - Clicked checkbox:', label);
+                            }}
+                        }}
+                    }}
+                    
+                    // If no specific match but answer is "Yes" or positive, check first option
+                    if (!clickedCheckbox && (answerLower.includes('yes') || answerLower.includes('true'))) {{
+                        for (const checkbox of checkboxes) {{
+                            if (!checkbox.checked) {{
+                                checkbox.click();
+                                clickedCheckbox = true;
+                                console.log('Chatbot Debug - Clicked default checkbox');
+                                break;
+                            }}
+                        }}
+                    }}
+                    
+                    // After selecting checkbox(es), click Save/Submit button
+                    if (clickedCheckbox) {{
+                        // Wait for UI to update
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        // Find and click Save button
+                        const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
+                                       Array.from(document.querySelectorAll('button')).find(el => 
+                                           el.innerText.toLowerCase().includes('save'));
+                        
+                        if (saveBtn && saveBtn.offsetParent !== null) {{
+                            saveBtn.click();
+                            console.log('Chatbot Debug - Save clicked after checkbox');
+                            return 'CHATBOT_CHECKBOX_AND_SAVE: ' + qText.slice(0, 50);
+                        }}
+                        
+                        return 'CHATBOT_CHECKBOX_CLICKED: ' + qText.slice(0, 50);
+                    }}
+                }}
+                
+                // HANDLE TRADITIONAL TEXT INPUTS
+                let input = null;
+                if (chatLayer) {{
+                    input = chatLayer.querySelector('input[type="text"][placeholder*="Type"], input[placeholder*="type"], input[placeholder*="Enter"]');
+                    if (!input) {{
+                        input = chatLayer.querySelector('input[type="text"]:not([type="hidden"]):not([type="file"])');
+                    }}
+                    if (!input) {{
+                        input = chatLayer.querySelector('textarea');
+                    }}
+                    if (!input) {{
+                        const chatInputs = chatLayer.querySelectorAll('input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), textarea');
+                        for (const inp of chatInputs) {{
+                            const rect = inp.getBoundingClientRect();
+                            if (rect.width > 0 && rect.height > 0 && chatLayer.contains(inp)) {{
+                                input = inp;
+                                break;
+                            }}
+                        }}
+                    }}
+                }}
+                
+                if (!input) {{
+                    input = document.querySelector('[role="dialog"] input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), [class*="modal"] input:not([type="hidden"]):not([type="file"]), textarea');
+                }}
+                
+                // HANDLE CONTENTEDITABLE (Naukri chat-style inputs)
+                let contentEditable = null;
+                if (!input) {{
+                    contentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
+                                     document.querySelector('div[contenteditable="true"]');
+                }}
+                
+                if (contentEditable) {{
+                    console.log('Chatbot Debug - Found contenteditable div:', contentEditable.className);
+                    
+                    // Clear existing content
+                    contentEditable.innerHTML = '';
+                    
+                    // Insert text as text node
+                    const textNode = document.createTextNode(answer);
+                    contentEditable.appendChild(textNode);
+                    
+                    // Trigger input event
+                    contentEditable.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    contentEditable.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    
+                    // Focus the element
+                    contentEditable.focus();
+                    
+                    // Place cursor at end
+                    const range = document.createRange();
+                    range.selectNodeContents(contentEditable);
+                    range.collapse(false);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    
+                    console.log('Chatbot Debug - Contenteditable set to:', contentEditable.innerText);
+                    
+                    // Wait for UI to update
+                    await new Promise(r => setTimeout(r, 500));
+                    
                     let saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
                         el.innerText.toLowerCase().trim() === 'save');
                     if (!saveBtn) {{
                         saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
                     }}
-                    // Handle dynamic ID for send button container (e.g., sendMsgbtn_container__xxxInputBox)
                     if (!saveBtn) {{
                         saveBtn = document.querySelector('[id^="sendMsgbtn_container"]');
                     }}
-                    // Additional fallback: look for any button in the modal/dialog
                     if (!saveBtn && chatLayer) {{
                         saveBtn = chatLayer.querySelector('button');
                     }}
-                    // Final fallback: any button with "save" in text
                     if (!saveBtn) {{
                         saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
                             el.innerText.toLowerCase().includes('save'));
                     }}
+                    
+                    console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    
                     if (saveBtn) {{
+                        if (saveBtn.disabled) {{
+                            console.log('Chatbot Debug - Save button is disabled');
+                            return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
+                        }}
+                        
+                        // ROBUST CLICK: Dispatch multiple events
+                        saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
+                        
+                        console.log('Chatbot Debug - Save button clicked');
+                        
+                        // Wait for UI to process
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        // Check for error text after click (validation error)
+                        const errorSelectors = [
+                            '.error', '.err', '[class*="error"]',
+                            '.chatbot_error', '.errorMsg', '.validation-error',
+                            '[class*="invalid"]', '.red-text', '.warning'
+                        ];
+                        for (const sel of errorSelectors) {{
+                            const errorMsg = document.querySelector(sel);
+                            if (errorMsg && errorMsg.offsetParent !== null && errorMsg.innerText.trim()) {{
+                                const errText = errorMsg.innerText.trim();
+                                if (errText.length > 0 && errText.length < 200) {{
+                                    console.log('Chatbot Debug - Error found:', errText);
+                                    return 'CHATBOT_SUBMISSION_ERROR: ' + errText;
+                                }}
+                            }}
+                        }}
+                        
                         return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
                     }}
                     return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
                 }}
                 
-                // Try dropdown (INDEPENDENT block - not nested inside input)
-                const select = chatLayer.querySelector('select');
-                if (select && select.offsetParent !== null) {{
-                    const selectOptions = Array.from(select.options);
-                    // Try to find matching option
-                    for (const opt of selectOptions) {{
-                        if (opt.text.toLowerCase().includes(answer.toLowerCase())) {{
-                            select.value = opt.value;
-                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            // Click Save after selecting dropdown
-                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
-                            if (saveDiv && saveDiv.offsetParent !== null) {{
-                                saveDiv.click();
-                                return 'CHATBOT_DROPDOWN_AND_SAVE: ' + opt.text;
+                if (input && input.type !== 'file') {{
+                    const isNumericInput = input.type === 'number' || 
+                        input.getAttribute('inputmode') === 'numeric' ||
+                        input.getAttribute('inputmode') === 'decimal' ||
+                        (input.className && (
+                            input.className.toLowerCase().includes('number') ||
+                            input.className.toLowerCase().includes('decimal') ||
+                            input.className.toLowerCase().includes('numeric')
+                        )) ||
+                        qText.toLowerCase().includes('in lakhs') ||
+                        qText.toLowerCase().includes('in lacs');
+                    
+                    console.log('Chatbot Debug - Found input:', input.type, input.placeholder, 'Numeric:', isNumericInput);
+                    
+                    if (isNumericInput && answer) {{
+                        const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
+                        if (numericMatch) {{
+                            answer = numericMatch[1];
+                            console.log('Chatbot Debug - Extracted numeric:', answer);
+                        }}
+                    }}
+                    
+                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    if (setter) setter.call(input, answer);
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    
+                    console.log('Chatbot Debug - Input value set to:', input.value);
+                    
+                    // Verify the value was set correctly
+                    if (input.value !== answer) {{
+                        // Try again with focus and blur
+                        input.focus();
+                        if (setter) setter.call(input, answer);
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        input.blur();
+                    }}
+                    
+                    // FALLBACK: Try hitting Enter on the input
+                    input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }}));
+                    input.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }}));
+                    
+                    // Wait a moment for UI to respond
+                    await new Promise(r => setTimeout(r, 500));
+                    
+                    let saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
+                        el.innerText.toLowerCase().trim() === 'save');
+                    if (!saveBtn) {{
+                        saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                    }}
+                    if (!saveBtn) {{
+                        saveBtn = document.querySelector('[id^="sendMsgbtn_container"]');
+                    }}
+                    if (!saveBtn && chatLayer) {{
+                        saveBtn = chatLayer.querySelector('button');
+                    }}
+                    if (!saveBtn) {{
+                        saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
+                            el.innerText.toLowerCase().includes('save'));
+                    }}
+                    
+                    console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    
+                    if (saveBtn) {{
+                        if (saveBtn.disabled) {{
+                            console.log('Chatbot Debug - Save button is disabled');
+                            return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
+                        }}
+                        
+                        // ROBUST CLICK: Dispatch multiple events
+                        saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.click();
+                        
+                        console.log('Chatbot Debug - Save button clicked');
+                        
+                        // Wait for UI to process
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        // Check for error text after click (validation error)
+                        const errorSelectors = [
+                            '.error', '.err', '[class*="error"]',
+                            '.chatbot_error', '.errorMsg', '.validation-error',
+                            '[class*="invalid"]', '.red-text', '.warning'
+                        ];
+                        for (const sel of errorSelectors) {{
+                            const errorMsg = document.querySelector(sel);
+                            if (errorMsg && errorMsg.offsetParent !== null && errorMsg.innerText.trim()) {{
+                                const errText = errorMsg.innerText.trim();
+                                if (errText.length > 0 && errText.length < 200) {{
+                                    console.log('Chatbot Debug - Error found:', errText);
+                                    return 'CHATBOT_SUBMISSION_ERROR: ' + errText;
+                                }}
                             }}
-                            return 'CHATBOT_SELECTED: ' + opt.text;
                         }}
+                        
+                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
                     }}
-                    // Default to first non-empty option
-                    if (selectOptions.length > 1) {{
-                        select.selectedIndex = 1;
-                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
-                        if (saveDiv && saveDiv.offsetParent !== null) {{
-                            saveDiv.click();
-                            return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE';
-                        }}
-                        return 'CHATBOT_SELECTED_DEFAULT';
-                    }}
-                }}
-                
-                // Try radio buttons (INDEPENDENT block - prefer Yes/Serving Notice)
-                const radios = chatLayer.querySelectorAll('input[type="radio"]');
-                let clickedRadio = false;
-                for (const radio of radios) {{
-                    const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
-                    if (label.toLowerCase().includes('yes') || label.toLowerCase().includes('serving')) {{
-                        if (!radio.checked) {{
-                            radio.click();
-                            clickedRadio = true;
-                        }}
-                        break;
-                    }}
-                }}
-                // If no preferred radio found but radios exist, click first unchecked one
-                if (!clickedRadio && radios.length > 0) {{
-                    for (const radio of radios) {{
-                        if (!radio.checked) {{
-                            radio.click();
-                            clickedRadio = true;
-                            break;
-                        }}
-                    }}
-                }}
-                
-                // After selecting radio, click Save/Submit button
-                if (clickedRadio) {{
-                    // PRIORITY 1: Naukri's Save button is div.sendMsg (not a button element!)
-                    const naukSaveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, #sendMsg__vjhkrpzhhInputBox .sendMsg');
-                    if (naukSaveDiv && naukSaveDiv.offsetParent !== null) {{
-                        naukSaveDiv.click();
-                        return 'CHATBOT_RADIO_AND_SAVE';
-                    }}
-                    
-                    // PRIORITY 2: Find Save button by text content in modal
-                    const allButtons = chatLayer ? 
-                        Array.from(chatLayer.querySelectorAll('button, div[tabindex], span[tabindex]')) : 
-                        Array.from(document.querySelectorAll('[role="dialog"] button, [class*="modal"] button'));
-                    
-                    for (const btn of allButtons) {{
-                        const btnText = btn.innerText.toLowerCase().trim();
-                        if ((btnText === 'save' || btnText === 'submit' || btnText === 'next' || btnText === 'continue') 
-                            && btn.offsetParent !== null) {{
-                            btn.click();
-                            return 'CHATBOT_RADIO_AND_SAVE';
-                        }}
-                    }}
-                    
-                    // PRIORITY 3: Global search for any visible Save element
-                    const globalSave = Array.from(document.querySelectorAll('button, div[tabindex], [role="button"]')).find(el => 
-                        el.innerText.toLowerCase().trim() === 'save' && el.offsetParent !== null);
-                    if (globalSave) {{
-                        globalSave.click();
-                        return 'CHATBOT_GLOBAL_SAVE';
-                    }}
-                    
-                    return 'CHATBOT_RADIO_CLICKED';
+                    return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
                 }}
                 
                 // Try option buttons (INDEPENDENT block)
@@ -4873,6 +5170,45 @@ class SentinelAgent:
                 return 'CHATBOT_WAITING';
             }}""")
             
+            # Extract question text from result for tracking
+            current_question = None
+            if 'CHATBOT_ANSWERED_AND_SAVE:' in result:
+                current_question = result.split('CHATBOT_ANSWERED_AND_SAVE: ')[1] if 'CHATBOT_ANSWERED_AND_SAVE: ' in result else None
+            elif 'CHATBOT_ANSWERED:' in result:
+                current_question = result.split('CHATBOT_ANSWERED: ')[1] if 'CHATBOT_ANSWERED: ' in result else None
+            elif 'CHATBOT_SUBMISSION_ERROR:' in result:
+                current_question = result.split('CHATBOT_SUBMISSION_ERROR: ')[1] if 'CHATBOT_SUBMISSION_ERROR: ' in result else None
+            elif 'CHATBOT_DROPDOWN_SELECTED:' in result:
+                current_question = result.split('CHATBOT_DROPDOWN_SELECTED: ')[1] if 'CHATBOT_DROPDOWN_SELECTED: ' in result else None
+            elif 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE:' in result:
+                current_question = result.split('CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ')[1] if 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ' in result else None
+            elif 'CHATBOT_SAVE_DISABLED:' in result:
+                current_question = result.split('CHATBOT_SAVE_DISABLED: ')[1] if 'CHATBOT_SAVE_DISABLED: ' in result else None
+            elif 'CHATBOT_RADIO_AND_SAVE:' in result:
+                current_question = result.split('CHATBOT_RADIO_AND_SAVE: ')[1] if 'CHATBOT_RADIO_AND_SAVE: ' in result else None
+            elif 'CHATBOT_RADIO_CLICKED:' in result:
+                current_question = result.split('CHATBOT_RADIO_CLICKED: ')[1] if 'CHATBOT_RADIO_CLICKED: ' in result else None
+            elif 'CHATBOT_CHECKBOX_AND_SAVE:' in result:
+                current_question = result.split('CHATBOT_CHECKBOX_AND_SAVE: ')[1] if 'CHATBOT_CHECKBOX_AND_SAVE: ' in result else None
+            elif 'CHATBOT_CHECKBOX_CLICKED:' in result:
+                current_question = result.split('CHATBOT_CHECKBOX_CLICKED: ')[1] if 'CHATBOT_CHECKBOX_CLICKED: ' in result else None
+            
+            # Check if stuck on same question
+            if current_question:
+                if previous_questions and previous_questions[-1] == current_question:
+                    same_question_count += 1
+                    if same_question_count >= 3:
+                        print(f"⚠️ Stuck on same question ({same_question_count}x): {current_question}")
+                        # Take screenshot for debugging
+                        try:
+                            await self._screenshot_on_error("chatbot_stuck")
+                        except:
+                            pass
+                        return False
+                else:
+                    same_question_count = 0
+                previous_questions.append(current_question)
+            
             # Only log CHATBOT_WAITING every 5th iteration to reduce noise
             if result != 'CHATBOT_WAITING' or iteration % 5 == 0:
                 print(f"   📜 Chatbot[{iteration}]: {result}")
@@ -4885,10 +5221,34 @@ class SentinelAgent:
             elif 'NAUKRI_RATE_LIMITED' in result:
                 # Error popup detected - return to main loop for rate limiting
                 return result
+            elif 'CHATBOT_SUBMISSION_ERROR' in result:
+                # Validation error - wait longer and try again
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
+            elif 'CHATBOT_SAVE_DISABLED' in result:
+                # Button not ready yet - wait
+                await asyncio.sleep(random.uniform(1, 2))
+                continue
             elif result == 'NO_CHATBOT':
                 # Check if maybe we're done
                 if iteration > 3:
                     return True
+                continue
+            elif 'CHATBOT_ANSWERED_AND_SAVE' in result:
+                # Wait longer after successful save to let UI update
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
+            elif 'CHATBOT_RADIO_AND_SAVE' in result:
+                # Wait longer after successful radio selection
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
+            elif 'CHATBOT_CHECKBOX_AND_SAVE' in result:
+                # Wait longer after successful checkbox selection
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
+            elif 'CHATBOT_DROPDOWN_SELECTED' in result or 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE' in result:
+                # Wait longer after dropdown selection
+                await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_WAITING' in result:
                 # Nothing to do, wait

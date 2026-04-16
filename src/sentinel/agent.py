@@ -59,20 +59,20 @@ KNOWN_QA_PATTERNS = {
     # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
     'current salary': '13.5 LPA',
     'what is your current salary?': '13.5 LPA',
-    'expected salary': '20 LPA',
-    'what is your expected salary?': '20 LPA',
+    'expected salary': '24 LPA',
+    'what is your expected salary?': '24 LPA',
     'gross salary': '13.5 LPA',
     'gross current salary': '13.5 LPA',
-    'gross expected salary': '20 LPA',
-    'salary expectations': '20 LPA',
+    'gross expected salary': '24 LPA',
+    'salary expectations': '24 LPA',
     # Current/Expected Annual Salary — common LinkedIn phrasing
     'current annual salary': '1350000',
     'what is your current annual salary': '1350000',
     'what is your current annual salary?': '1350000',
-    'expected annual salary': '2000000',
-    'what is your expected annual salary': '2000000',
-    'what is your expected annual salary?': '2000000',
-    'what is your expected annual salary ?': '2000000',
+    'expected annual salary': '2400000',
+    'what is your expected annual salary': '2400000',
+    'what is your expected annual salary?': '2400000',
+    'what is your expected annual salary ?': '2400000',
     'current ctc': '1350000',
     'what is your current ctc': '1350000',
     'what is your current ctc?': '1350000',
@@ -84,14 +84,14 @@ KNOWN_QA_PATTERNS = {
     'variable pay numeric': '0',
     'variable pay numeric input': '0',
     # Expected Annual CTC in INR
-    'expected annual ctc in inr': '2000000',
-    'expected annual ctc': '2000000',
-    'expected ctc in inr': '2000000',
-    'expected ctc inr': '2000000',
-    # Salary Range Questions - Current: 13.5 LPA, Expected: 20 LPA
+    'expected annual ctc in inr': '2400000',
+    'expected annual ctc': '2400000',
+    'expected ctc in inr': '2400000',
+    'expected ctc inr': '2400000',
+    # Salary Range Questions - Current: 13.5 LPA, Expected: 24 LPA
     'salary range': '10-15 Lacs',
     'current salary range': '10-15 Lacs',
-    'expected salary range': '15-20 Lacs',
+    'expected salary range': '20-25 Lacs',
     'annual salary': '10-15 Lacs',
     'ctc range': '10-15 Lacs',
     # Personal
@@ -567,21 +567,21 @@ KNOWN_QA_PATTERNS = {
     'what is your current ctc in lacs per annum': '13.5',
     'what is your current ctc in lacs per annum?': '13.5',
     'ctc in lacs': '13.5',
-    'expected ctc in lakhs': '20',
-    'expected ctc in lpa': '20',
-    'expected ctc [in lpa]': '20',
-    'expected ctc in lacs per annum': '20',
-    'what is your expected ctc in lacs per annum': '20',
-    'what is your expected ctc in lacs per annum?': '20',
-    'ctc in lakhs': '20',
+    'expected ctc in lakhs': '24',
+    'expected ctc in lpa': '24',
+    'expected ctc [in lpa]': '24',
+    'expected ctc in lacs per annum': '24',
+    'what is your expected ctc in lacs per annum': '24',
+    'what is your expected ctc in lacs per annum?': '24',
+    'ctc in lakhs': '24',
     # CCTC = Current CTC (abbreviation)
     'cctc': '13.5',
     'what is your cctc': '13.5',
     'your cctc': '13.5',
     # ECTC = Expected CTC (abbreviation)
-    'ectc': '20',
-    'what is your ectc': '20',
-    'your ectc': '20',
+    'ectc': '24',
+    'what is your ectc': '24',
+    'your ectc': '24',
     # NP = Notice Period (abbreviation)
     'what is your np': '30',
     'your np': '30',
@@ -762,10 +762,10 @@ KNOWN_QA_PATTERNS = {
     'experience in e-commerce': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     'ecommerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     # Composite HR Questions (CTC + ECTC + NP)
-    'share your ctc': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc ectc np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc,ectc and np': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)',
+    'share your ctc': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc ectc np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc and np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc,ectc and np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
     # Location-exclusive questions (Mumbai-only, etc.)
     'candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
     'need candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
@@ -833,10 +833,10 @@ KNOWN_QA_PATTERNS = {
     'gross salary': '13.5 LPA',
     'net salary': '11.5 LPA',
     'remuneration': '13.5 LPA',
-    'compensation expectations': '20 LPA',
-    'salary bracket': '15-20 LPA',
-    'pay range': '15-20 LPA',
-    'budget': '15-20 LPA range',
+    'compensation expectations': '24 LPA',
+    'salary bracket': '20-24 LPA',
+    'pay range': '20-24 LPA',
+    'budget': '20-24 LPA range',
     'ctc breakup': 'Fixed: 13.5 LPA, Variable: 0',
     'salary structure': 'Fixed CTC: 13.5 LPA',
     'currently drawing': '13.5 LPA',
@@ -1135,7 +1135,7 @@ KNOWN_QA_PATTERNS = {
     'negotiation': 'Yes, open to discussion',
     'discuss salary': 'Yes, willing to discuss',
     'salary discussion': 'Yes, open to discussion',
-    'range': '15-20 LPA',
+    'range': '20-24 LPA',
     'flexible on salary': 'Yes, flexible within reason',
     
     # MISCELLANEOUS - Yes/No Questions
@@ -1165,18 +1165,18 @@ KNOWN_QA_PATTERNS = {
     'please select your current location': 'Noida',
     'please select your notice period': '30 days',
     'please select your experience': '4',
-    'please select your salary expectation': '20 LPA',
+    'please select your salary expectation': '24 LPA',
     
     'please enter your annual current ctc in inr': '1350000',
-    'please enter your annual expected ctc in inr': '2000000',
+    'please enter your annual expected ctc in inr': '2400000',
     'please enter your current ctc in inr': '1350000',
-    'please enter your expected ctc in inr': '2000000',
+    'please enter your expected ctc in inr': '2400000',
     'please enter your online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
     'please enter your notice period in days': '30',
     'please enter your linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
     'please enter your github url': 'https://github.com/siddhant3646',
     'please enter your current salary': '13.5 LPA',
-    'please enter your expected salary': '20 LPA',
+    'please enter your expected salary': '24 LPA',
     'please enter your phone number': '7905828880',
     'please enter your email address': 'siddhant3646@gmail.com',
     'please enter your full name': 'Siddhant Singh',
@@ -1187,17 +1187,17 @@ KNOWN_QA_PATTERNS = {
     'please enter your ctc': '13.5 LPA',
     'please enter your salary': '13.5 LPA',
     
-    'please share your ctc ectc and notice period': 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days',
-    'please provide your ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'please share your ctc ectc and notice period': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days',
+    'please provide your ctc details': 'Current: 13.5 LPA, Expected: 24 LPA',
     'please mention your notice period': '30 days',
     'please specify your experience': '4 years',
     
     # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
     # Concise variations for quick matching
     'current ctc': '13.5 LPA',
-    'expected ctc': '20 LPA',
+    'expected ctc': '24 LPA',
     'current salary': '13.5 LPA',
-    'expected salary': '20 LPA',
+    'expected salary': '24 LPA',
     'ctc': '13.5 LPA',
     'salary': '13.5 LPA',
     'pay': '13.5 LPA',
@@ -1378,6 +1378,42 @@ KNOWN_QA_PATTERNS = {
     'read privacy policy': 'Yes',
     'accept privacy policy': 'Yes',
     
+    # Job Applicant Data Privacy Notice (dropdown selection - "Acknowledge")
+    'job applicant data privacy notice': 'Acknowledge',
+    'data privacy notice': 'Acknowledge',
+    'applicant data privacy notice': 'Acknowledge',
+    'applicant privacy notice': 'Acknowledge',
+    
+    # Client/Partner/Competitor employment questions → always "No"
+    'are you currently employed by a client, partner, or competitor': 'No',
+    'currently employed by a client, partner, or competitor': 'No',
+    'employed by a client, partner, or competitor': 'No',
+    'client, partner, or competitor': 'No',
+    'client partner or competitor': 'No',
+    'employed by a client or competitor': 'No',
+    'work for a competitor': 'No',
+    'employed by a competitor': 'No',
+    
+    # Open to relocate to [city] → always "Yes"
+    'are you currently in pune or open to relocate to pune': 'Yes',
+    'open to relocate to pune': 'Yes',
+    'are you currently in bangalore or open to relocate to bangalore': 'Yes',
+    'open to relocate to bangalore': 'Yes',
+    'are you currently in mumbai or open to relocate to mumbai': 'Yes',
+    'open to relocate to mumbai': 'Yes',
+    'are you currently in delhi or open to relocate to delhi': 'Yes',
+    'open to relocate to delhi': 'Yes',
+    'are you currently in hyderabad or open to relocate to hyderabad': 'Yes',
+    'open to relocate to hyderabad': 'Yes',
+    'are you currently in noida or open to relocate to noida': 'Yes',
+    'open to relocate to noida': 'Yes',
+    'are you currently in gurgaon or open to relocate to gurgaon': 'Yes',
+    'open to relocate to gurgaon': 'Yes',
+    'are you currently in chennai or open to relocate to chennai': 'Yes',
+    'open to relocate to chennai': 'Yes',
+    'open to relocate': 'Yes',
+    'are you open to relocate': 'Yes',
+    'willing to relocate for this role': 'Yes',
     'i certify that to the best of my knowledge the information contained in this application is correct': 'Yes',
     'i certify that all information provided is correct': 'Yes',
     'i confirm that all details are accurate': 'Yes',
@@ -1448,19 +1484,19 @@ KNOWN_QA_PATTERNS = {
     'bonus component': '0',
     
     'please enter your salary': '13.5 LPA',
-    'please share your salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'salary requirements': '20 LPA',
-    'compensation requirements': '20 LPA',
-    'pay expectations': '20 LPA',
-    'expected remuneration': '20 LPA',
-    'salary expectation': '20 LPA',
-    'compensation expectation': '20 LPA',
+    'please share your salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'salary requirements': '24 LPA',
+    'compensation requirements': '24 LPA',
+    'pay expectations': '24 LPA',
+    'expected remuneration': '24 LPA',
+    'salary expectation': '24 LPA',
+    'compensation expectation': '24 LPA',
     
-    'ctc details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'provide salary details': 'Current: 13.5 LPA, Expected: 20 LPA',
-    'share compensation details': 'Current: 13.5 LPA, Expected: 20 LPA',
+    'ctc details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'provide salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'share compensation details': 'Current: 13.5 LPA, Expected: 24 LPA',
     
     # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
     'years into java': '4',
@@ -1935,7 +1971,7 @@ class SentinelAgent:
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 13.5 LPA, Expected CTC: 20 LPA, Notice Period: 30 Days (Negotiable)', 0.98
+            return 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
@@ -2029,15 +2065,15 @@ class SentinelAgent:
             if 'cctc' in question_lower:
                 return '13.5', 0.98
             if 'ectc' in question_lower:
-                return '20', 0.98
+                return '24', 0.98
             
             # Check for expected vs current - use plain numbers
             if 'expected' in question_lower or 'expect' in question_lower:
-                return '20', 0.95
+                return '24', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
                 return '13.5', 0.95
             # Default to expected if unclear
-            return '20', 0.90
+            return '24', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -4755,7 +4791,7 @@ class SentinelAgent:
                             if (isSalaryQuestion) {{
                                 // Match if option contains our numeric answer
                                 if (optText.includes(answer) || 
-                                    (answer === '20' && (optText.includes('20') || optText.includes('20-25') || optText.includes('15-20')))) {{
+                                    (answer === '24' && (optText.includes('24') || optText.includes('20-25') || optText.includes('20-24')))) {{
                                     select.value = opt.value;
                                     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
@@ -5300,11 +5336,11 @@ class SentinelAgent:
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
-                            // Use plain numeric values (13.5, 20) for LinkedIn text inputs - NOT full INR values
+                            // Use plain numeric values (13.5, 24) for LinkedIn text inputs - NOT full INR values
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
                                 KNOWN_PATTERNS[k] = '13.5';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '20';
+                                KNOWN_PATTERNS[k] = '24';
                             }}
                         }}
                     }});
@@ -5390,7 +5426,7 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
-                            bestMatch = qLower.includes('current') ? '1350000' : '2000000';
+                            bestMatch = qLower.includes('current') ? '1350000' : '2400000';
                         }}
                     }}
                     
@@ -7542,7 +7578,8 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // C. Location - Use Selectize API (THIRD)
+                        // C. Location - Add all locations one by one (same logic as skills)
+                        const locationsToAdd = ['Anywhere in India', 'Work from home / Remote', 'Bangalore', 'Noida', 'Gurgaon', 'Pune', 'Delhi', 'Delhi / NCR', 'Mumbai', 'Hyderabad'];
                         const locationSelectize = getSelectize('locations');
                         const locationInput = document.querySelector('input#locations-selectized');
                         if (locationInput) {{
@@ -7550,56 +7587,57 @@ class SentinelAgent:
                             const locationContainer = locControl ? locControl.querySelector('.selectize-input') : null;
                             if (locationContainer) {{
                                 // Check existing locations using Selectize API
-                                let hasAnywhereIndia = false;
+                                let existingLocations = [];
                                 if (locationSelectize) {{
-                                    hasAnywhereIndia = locationSelectize.items.some(key => {{
+                                    existingLocations = locationSelectize.items.map(key => {{
                                         const opt = locationSelectize.options[key];
-                                        const text = opt ? (opt.text || opt.name || key) : key;
-                                        return text.toLowerCase().includes('anywhere');
+                                        return opt ? (opt.text || opt.name || key).toLowerCase() : key.toLowerCase();
                                     }});
                                 }} else {{
                                     // Fallback: DOM parsing with × removal
-                                    hasAnywhereIndia = Array.from(locationContainer.querySelectorAll('.item')).some(
-                                        item => (item.textContent || '').replace(/×/g, '').toLowerCase().includes('anywhere')
-                                    );
+                                    existingLocations = Array.from(locationContainer.querySelectorAll('.item'))
+                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
                                 }}
-                                if (!hasAnywhereIndia) {{
-                                    // Try Selectize API first
-                                    if (locationSelectize) {{
-                                        const options = locationSelectize.options;
-                                        let foundKey = null;
-                                        for (const key in options) {{
-                                            const optText = (options[key].text || options[key].name || '').toLowerCase();
-                                            if (optText.includes('anywhere')) {{
-                                                foundKey = key;
-                                                break;
+                                
+                                for (const location of locationsToAdd) {{
+                                    // Use a keyword from each location for matching
+                                    const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
+                                    if (!existingLocations.some(l => l.includes(locKeyword))) {{
+                                        // Try Selectize API first
+                                        if (locationSelectize) {{
+                                            const options = locationSelectize.options;
+                                            let foundKey = null;
+                                            for (const key in options) {{
+                                                const optText = (options[key].text || options[key].name || '').toLowerCase();
+                                                if (optText.includes(location.toLowerCase()) || optText.includes(locKeyword)) {{
+                                                    foundKey = key;
+                                                    break;
+                                                }}
+                                            }}
+                                            if (foundKey) {{
+                                                locationSelectize.addItem(foundKey);
+                                                return 'INSTAHYRE_ADDED_LOCATION: ' + location;
                                             }}
                                         }}
-                                        if (foundKey) {{
-                                            locationSelectize.addItem(foundKey);
-                                            return 'INSTAHYRE_ADDED_LOCATION: Anywhere in India';
-                                        }}
+                                        // Fallback: Set pending state, trigger input, schedule click
+                                        sessionStorage.setItem('instahyre_pending', 'location_' + location + '|' + Date.now());
+                                        locationInput.focus();
+                                        locationInput.click();
+                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                        if (setter) setter.call(locationInput, location);
+                                        locationInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                        setTimeout(() => {{
+                                            const dropdown = locControl.querySelector('.selectize-dropdown-content');
+                                            if (dropdown) {{
+                                                const option = dropdown.querySelector('.option.active, .option:first-child');
+                                                if (option) {{
+                                                    option.click();
+                                                    sessionStorage.removeItem('instahyre_pending');
+                                                }}
+                                            }}
+                                        }}, 500);
+                                        return 'INSTAHYRE_ADDING_LOCATION: ' + location;
                                     }}
-                                    // Fallback: Set pending state, trigger input, schedule click
-                                    sessionStorage.setItem('instahyre_pending', 'location|' + Date.now());
-                                    locationInput.focus();
-                                    locationInput.click();
-                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                    if (setter) setter.call(locationInput, 'Anywhere');
-                                    locationInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                    setTimeout(() => {{
-                                        const dropdown = locControl.querySelector('.selectize-dropdown-content');
-                                        if (dropdown) {{
-                                            const option = Array.from(dropdown.querySelectorAll('.option')).find(
-                                                opt => opt.textContent.toLowerCase().includes('anywhere')
-                                            );
-                                            if (option) {{
-                                                option.click();
-                                                sessionStorage.removeItem('instahyre_pending');
-                                            }}
-                                        }}
-                                    }}, 500);
-                                    return 'INSTAHYRE_ADDING_LOCATION';
                                 }}
                             }}
                         }}
@@ -7625,7 +7663,7 @@ class SentinelAgent:
                             const locInput = document.querySelector('input#locations-selectized');
                             const locCtrl = locInput ? locInput.closest('.selectize-control') : null;
                             const locContainer = locCtrl ? locCtrl.querySelector('.selectize-input') : null;
-                            const hasLocation = locContainer && locContainer.querySelectorAll('.item').length > 0;
+                            const hasLocation = locContainer && locContainer.querySelectorAll('.item').length >= 3;
                             
                             // Check skills (need at least 3 skills)
                             const skillsInp = document.querySelector('input#skills-selectized');

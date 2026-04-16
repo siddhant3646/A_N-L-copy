@@ -43,7 +43,7 @@ class SemanticQuestionMatcher:
                 'salary expected', 'compensation expected', 'expected package',
                 'how much do you want', 'salary you want', 'expecting salary'
             ],
-            'answer': '22 LPA',
+            'answer': '24 LPA',
             'category': 'salary'
         },
         'notice_period': {

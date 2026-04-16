@@ -287,8 +287,8 @@ CATEGORY_PATTERNS = {
 CATEGORY_DEFAULTS = {
     QuestionCategory.SALARY: {
         "current": "15.3 LPA",
-        "expected": "22 LPA",
-        "numeric": "22"  # For fields requiring just numbers
+        "expected": "24 LPA",
+        "numeric": "24"  # For fields requiring just numbers
     },
     QuestionCategory.EXPERIENCE: {
         "years": "3.8 Years",  # Will be overridden by platform config
@@ -527,21 +527,21 @@ class QuestionClassifier:
             "number" in question
         )
         
-        # For LinkedIn, return plain numbers (15.3 or 22) without LPA suffix
+        # For LinkedIn, return plain numbers (15.3 or 24) without LPA suffix
         if self.platform == "linkedin":
             if "current" in question or "cctc" in question:
                 return "1530000"
             elif "expected" in question or "ectc" in question:
-                return "2200000"
+                return "2400000"
             else:
-                return "2200000"
+                return "2400000"
         else:
             if "current" in question or "cctc" in question:
                 return "15.3" if is_numeric else "15.3 LPA"
             elif "expected" in question or "ectc" in question:
-                return "22" if is_numeric else "22 LPA"
+                return "24" if is_numeric else "24 LPA"
             else:
-                return "22" if is_numeric else "22 LPA"
+                return "24" if is_numeric else "24 LPA"
     
     def _get_notice_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get notice period answer."""

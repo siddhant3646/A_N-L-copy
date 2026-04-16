@@ -69,7 +69,7 @@ CORE WORKFLOW (STRICT SEQUENCE):
        - IF Question asks for Years/Number -> **Enter "3.5 Years"** (or just "3.5").
      - **Standard Fields:**
        - "Current Salary" -> "15.3" (or "15.3 LPA")
-       - "Expected Salary" -> "22" (or "22 LPA")
+       - "Expected Salary" -> "24" (or "24 LPA")
 
    - **COMPLETION (The "Submit" Step):**
      - **Goal:** Click the button to close the modal.
@@ -83,7 +83,7 @@ CORE WORKFLOW (STRICT SEQUENCE):
 
 DETAILS TO USE:
 - Resume: Use my uploaded resume.
-- Expected Salary: 22 LPA | Current Salary: 15.3 LPA
+- Expected Salary: 24 LPA | Current Salary: 15.3 LPA
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
 - Experience: 3.5 Years (42 months total). ALWAYS ENTER "3.5 Years" in experience fields.
@@ -107,7 +107,7 @@ DETAILS TO USE:
 - Mobile: 7905828880
 - Phone Code: India (+91)
 - Skills: Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes.
-- Expected Salary: 22,00,000
+- Expected Salary: 24,00,000
 - Current Salary: 15,30,000
 - Notice Period: 30 days (Serving Notice). LWD: Feb 03, 2026.
 - Experience: 4 Years.
@@ -161,7 +161,7 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
    - Tech Experience (Yes/No) -> Click "Yes"
    - Tech Experience (Years) -> Enter "3.5 Years"
    - Current Salary -> "15.3 LPA"
-   - Expected Salary -> "22 LPA"
+   - Expected Salary -> "24 LPA"
    - Location -> "Noida"
    - Relocation -> "Yes"
 5. DONE: When modal closes or "Application Submitted" appears, task complete.
@@ -256,7 +256,7 @@ GOAL: Configure job search filters on Instahyre and apply to 5 jobs.
 PHASE 1 - CONFIGURE SEARCH:
 1. Click "Search other jobs" dropdown to expand the filter panel
 2. Set Experience: 4 years
-3. Set Location: Anywhere in India
+3. Add Locations (one by one, same as skills entry): Anywhere in India, Work from home / Remote, Bangalore, Noida, Gurgaon, Pune, Delhi, Delhi / NCR, Mumbai, Hyderabad
 4. Add Skills (one by one): Java, JavaScript, HTML, CSS, SpringBoot, ReactJS, AWS
 5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
 6. Click "Show results" button after all configuration is complete
@@ -289,10 +289,11 @@ GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 
 PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 1. If filters are already set, skip to Phase 2
-2. Otherwise: Set Experience: 4 years, Location: Anywhere in India
-3. Add Skills: Java, JavaScript, SpringBoot, ReactJS
-4. Add Job Functions: Backend Development, Frontend Development
-5. Click "Show results"
+2. Otherwise: Set Experience: 4 years
+3. Add Locations (one by one): Anywhere in India, Work from home / Remote, Bangalore, Noida, Gurgaon, Pune, Delhi, Delhi / NCR, Mumbai, Hyderabad
+4. Add Skills: Java, JavaScript, SpringBoot, ReactJS
+5. Add Job Functions: Backend Development, Frontend Development
+6. Click "Show results"
 
 PHASE 2 - APPLY TO 20 JOBS (High Volume Session):
 1. On results page, click "View »" button on a job card

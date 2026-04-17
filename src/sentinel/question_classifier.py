@@ -178,7 +178,7 @@ CATEGORY_PATTERNS = {
             "agree", "accept", "confirm", "authorized", "eligible",
             "open\\s*to", "fine\\s*with", "okay\\s*with", "do you have", 
             "have all", "educational and professional", "lawfully authorized",
-            "consent", "collect", "process", "data", "1825 days",
+            "consent", "collect", "process", "data", "1825 days", "730 days", "highradius",
             "ai apis", "openai", "anthropic", "ci/cd", "cicd", "cloud servers",
             "database architecture", "leading architecture"
         ],

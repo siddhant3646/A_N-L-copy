@@ -10,8 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from playwright.async_api import async_playwright
 
+_browser_counter = 0
+
 class Browser:
     def __init__(self, executable_path=None, headless=False, user_data_dir=None, **kwargs):
+        global _browser_counter
+        _browser_counter += 1
+        self._task_id = _browser_counter
         self.executable_path = executable_path
         self.headless = headless
         self.user_data_dir = user_data_dir
@@ -54,6 +59,7 @@ class Browser:
     async def start(self):
         import os
         import tempfile
+        
         local_tmp = tempfile.mkdtemp(prefix="sentinel_")
         os.environ["TMPDIR"] = local_tmp
         print(f"🔧 Set TMPDIR to: {local_tmp}")
@@ -78,16 +84,22 @@ class Browser:
             import shutil
             import glob
             
-            temp_dir = os.path.join(tempfile.gettempdir(), f"sentinel_profile_{os.getpid()}")
+            temp_dir = os.path.join(tempfile.gettempdir(), f"sentinel_profile_{os.getpid()}_{self._task_id}")
+            self._temp_dir = temp_dir
             os.makedirs(temp_dir, exist_ok=True)
             
-            for pattern in ["Singleton*", "lock", ".parentlock"]:
-                for stale_file in glob.glob(os.path.join(temp_dir, pattern)):
-                    try:
-                        if os.path.exists(stale_file):
-                            os.unlink(stale_file)
-                    except:
-                        pass
+            def clean_lock_files(base_dir):
+                for sub in ["", "Default"]:
+                    target = os.path.join(base_dir, sub)
+                    for pattern in ["Singleton*", "lock", ".parentlock"]:
+                        for stale_file in glob.glob(os.path.join(target, pattern)):
+                            try:
+                                if os.path.exists(stale_file):
+                                    os.unlink(stale_file)
+                            except:
+                                pass
+            
+            clean_lock_files(temp_dir)
             
             print(f"🔄 Refreshing profile copy at: {temp_dir}")
             
@@ -115,7 +127,9 @@ class Browser:
                     if os.path.exists(local_state_src):
                         shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
                         print("  📁 Copied: Local State")
-                        
+                    
+                    clean_lock_files(temp_dir)
+                    
                     final_user_data_dir = temp_dir
                     print("✅ Profile refreshed successfully")
                 except Exception as e:
@@ -140,34 +154,32 @@ class Browser:
                 )
             except Exception as e:
                 print(f"⚠️ Failed to launch persistent context with Chrome: {e}")
-                print("🔄 Falling back to Playwright Chromium WITH profile...")
+                print("🔄 Retry: cleaning locks and retrying Chrome persistent context...")
+                await asyncio.sleep(5)
+                clean_lock_files(final_user_data_dir)
                 try:
-                    # Use Playwright's bundled Chromium WITH the seeded profile
                     self.context = await self.playwright.chromium.launch_persistent_context(
                         user_data_dir=final_user_data_dir,
+                        executable_path=self.executable_path,
                         headless=self.headless,
                         args=args,
-                        viewport=None
+                        ignore_default_args=["--use-mock-keychain", "--password-store=basic"],
+                        viewport=None 
                     )
-                    print("✅ Launched Playwright Chromium with seeded profile!")
+                    print("✅ Retry succeeded with Chrome persistent context!")
                 except Exception as e2:
-                    print(f"⚠️ Playwright Chromium persistent also failed: {e2}")
-                    print("🔄 Last resort: Playwright Chromium without profile...")
+                    print(f"⚠️ Retry also failed: {e2}")
+                    print("🔄 Last resort: Chrome without profile (fresh session)...")
                     try:
-                        self.browser = await self.playwright.chromium.launch(
-                            headless=self.headless,
-                            args=args
-                        )
-                        self.context = await self.browser.new_context()
-                    except Exception as e3:
-                        print(f"⚠️ All Chromium options failed: {e3}")
-                        # Absolute last resort: Chrome without profile
                         self.browser = await self.playwright.chromium.launch(
                             executable_path=self.executable_path,
                             headless=self.headless,
                             args=args
                         )
                         self.context = await self.browser.new_context()
+                        print("✅ Launched Chrome without profile (fresh session)")
+                    except Exception as e3:
+                        raise RuntimeError(f"All Chrome launch attempts failed. Final error: {e3}")
         else:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
@@ -247,6 +259,26 @@ class Browser:
                 await self.playwright.stop()
             except Exception as e:
                 print(f"⚠️ Error stopping Playwright: {e}")
+        
+        # 5. Wait for Chrome processes with our temp profile to fully exit
+        import subprocess
+        profile_marker = f"sentinel_profile_{os.getpid()}"
+        for attempt in range(20):
+            try:
+                result = subprocess.run(
+                    ['pgrep', '-f', profile_marker],
+                    capture_output=True, text=True
+                )
+                if not result.stdout.strip():
+                    if attempt > 0:
+                        print(f"   ⏳ Chrome fully exited after {attempt * 0.5:.1f}s")
+                    break
+                await asyncio.sleep(0.5)
+            except:
+                await asyncio.sleep(0.5)
+                break
+        else:
+            print(f"⚠️ Chrome processes still running after 10s")
 from src.core.config import CHROME_USER_DATA, CHROME_EXECUTABLE_PATH
 from src.sentinel.agent import create_agent
 from src.sentinel import prompts
@@ -376,9 +408,9 @@ async def main():
                 # Keep browser open for debugging
                 await asyncio.sleep(999999)
             finally:
-                print(f"🔒 Leaving Session open for debugging '{task_name}'...")
-                # await browser.stop()
-                await asyncio.sleep(2)  # Cooldown between tasks
+                print(f"🔒 Closing browser for '{task_name}'...")
+                await browser.stop()
+                await asyncio.sleep(5)  # Cooldown between tasks - wait for Chrome to fully exit
         
         # Cycle complete - run INTERSESSION task during wait period
         wait_mins = random.uniform(15, 20)  # Random 15-20 minutes total wait

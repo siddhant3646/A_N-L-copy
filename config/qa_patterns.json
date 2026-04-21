@@ -47,7 +47,7 @@
         "current ctc [in lpa]",
         "ctc in lacs per annum",
         "cctc",
-        "what is your cctc",
+        "what is my cctc",
         "your cctc"
       ],
       "category": "salary",
@@ -322,6 +322,46 @@
         "referred by",
         "employee referral",
         "encouraged to apply"
+      ],
+      "category": "yes_no",
+      "default": "No"
+    },
+    "highradius_consent": {
+      "patterns": [
+        "highradius has my consent",
+        "highradius consent",
+        "highradius data consent",
+        "730 days",
+        "730 days thereafter",
+        "up to 730 days",
+        "considering me for employment",
+        "employment consideration"
+      ],
+      "category": "yes_no",
+      "default": "Yes"
+    },
+    "pune_relocation": {
+      "patterns": [
+        "currently in pune or open to relocate to pune",
+        "are you currently in pune or open to relocate to pune",
+        "open to relocate to pune",
+        "pune for this role",
+        "relocate to pune"
+      ],
+      "category": "location",
+      "default": "Yes"
+    },
+    "non_compete_agreement": {
+      "patterns": [
+        "non-compete",
+        "non compete",
+        "noncompete",
+        "non-competition",
+        "do you have a non-compete",
+        "non-compete agreement",
+        "agreement that would prevent you from working",
+        "prevent you from working with onit",
+        "prevent you from working with simplelegal"
       ],
       "category": "yes_no",
       "default": "No"

@@ -290,6 +290,7 @@ KNOWN_QA_PATTERNS = {
     '730 days': 'Yes',
     '730 days thereafter': 'Yes',
     'up to 730 days': 'Yes',
+    'for up to 730 days': 'Yes',
     'highradius has my consent': 'Yes',
     'highradius consent': 'Yes',
     'highradius data consent': 'Yes',

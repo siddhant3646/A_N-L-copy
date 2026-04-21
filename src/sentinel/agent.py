@@ -829,8 +829,8 @@ KNOWN_QA_PATTERNS = {
     'can you join within': 'Yes, can join within 30 days',
     'expected joining date': '30 days from offer acceptance',
     'tentative joining date': '30 days from offer',
-    'relieving date': '30 days from resignation',
-    'last working day': '30 days from resignation date',
+    'relieving date': '30',
+    'last working day': '30',
     
     # SALARY - Component Variations (15+ patterns)
     'monthly salary': '112500',
@@ -2000,8 +2000,9 @@ class SentinelAgent:
         
         # LWD (Last Working Day) questions - calculate date 30 days from now
         if is_lwd_question:
-            lwd_date = datetime.now() + timedelta(days=30)
-            return lwd_date.strftime('%d %B %Y'), 0.98  # e.g., "01 March 2026"
+            # Try numeric "30" first (for fields expecting days count)
+            # Fallback to date format "03 February 2026" for date pickers
+            return '30', 0.98
         
         # Project count questions
         if is_project_count:
@@ -6622,6 +6623,11 @@ class SentinelAgent:
             if (isNaukri) {{
                     const TARGET_JOBS = 5;
                     
+                    // Reset tab cycle tracker on first visit
+                    if (!sessionStorage.getItem('naukri_tab_idx')) {{
+                        sessionStorage.setItem('naukri_tab_idx', '-1');
+                    }}
+                    
                     // 0. Dismiss any feedback modals (non-blocking)
                     const feedbackSection = Array.from(document.querySelectorAll('div, section')).find(
                         el => el.innerText && el.innerText.includes('Are these jobs relevant') && 
@@ -7154,59 +7160,46 @@ class SentinelAgent:
                         
                         // If no unchecked boxes in current section, navigate to next tab
                         if (uncheckedBoxes.length === 0) {{
-                            // Navigate to next tab in order
                             // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
                             const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                             
-                            // Find current active tab using CORRECT class: tab-list-active
-                            const activeTab = document.querySelector('.tab-list-active');
-                            let currentTabId = '';
-                            if (activeTab) {{
-                                const wrapper = activeTab.closest('.tab-wrapper');
-                                currentTabId = wrapper?.id || '';
+                            // Use sessionStorage tracker to follow the fixed cycle order
+                            let nextIdx = parseInt(sessionStorage.getItem('naukri_tab_idx') || '-1');
+                            nextIdx = (nextIdx + 1) % tabOrder.length;
+                            sessionStorage.setItem('naukri_tab_idx', nextIdx);
+                            
+                            // If we've cycled all the way back to index 0, we've checked all tabs
+                            if (nextIdx === 0) {{
+                                return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
                             }}
                             
-                            // Get current index (default to 0/profile if not detected)
-                            let currentIdx = tabOrder.indexOf(currentTabId);
-                            if (currentIdx === -1) {{
-                                // Tab not detected - assume first tab (profile) is active
-                                currentIdx = 0;
-                            }}
+                            const nextTabId = tabOrder[nextIdx];
+                            console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId);
                             
-                            const nextIdx = currentIdx + 1;
-                            if (nextIdx < tabOrder.length) {{
-                                const nextTabId = tabOrder[nextIdx];
-                                
-                                // DEBUG: Log what we're looking for
-                                console.log('NAUKRI DEBUG: Looking for next tab:', nextTabId);
-                                console.log('NAUKRI DEBUG: Current tab:', currentTabId, 'index:', currentIdx);
-                                
-                                // Try multiple selectors to find the tab
-                                let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
-                                
-                                if (!nextTab) {{
-                                    // Fallback: try finding by data-tab attribute or other means
-                                    const allTabs = document.querySelectorAll('.tab-list-item');
-                                    for (const tab of allTabs) {{
-                                        const tabText = tab.innerText.toLowerCase();
-                                        if (tabText.includes(nextTabId.replace('_', ' ')) || 
-                                            tabText.includes(nextTabId.replace('_', ''))) {{
-                                            nextTab = tab;
-                                            console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
-                                            break;
-                                        }}
+                            // Try multiple selectors to find the tab
+                            let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
+                            
+                            if (!nextTab) {{
+                                const allTabs = document.querySelectorAll('.tab-list-item');
+                                for (const tab of allTabs) {{
+                                    const tabText = tab.innerText.toLowerCase();
+                                    if (tabText.includes(nextTabId.replace('_', ' ')) || 
+                                        tabText.includes(nextTabId.replace('_', ''))) {{
+                                        nextTab = tab;
+                                        console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                        break;
                                     }}
                                 }}
-                                
-                                if (nextTab) {{
-                                    console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
-                                    nextTab.click();
-                                    return 'NAUKRI_NAVIGATING_TO_TAB (0 jobs): ' + nextTabId + ' (from: ' + (currentTabId || 'unknown') + ')';
-                                }} else {{
-                                    console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
-                                }}
                             }}
-                            return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
+                            
+                            if (nextTab) {{
+                                console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
+                                nextTab.click();
+                                return 'NAUKRI_NAVIGATING_TO_TAB (0 jobs): ' + nextTabId;
+                            }} else {{
+                                console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
+                                return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
+                            }}
                         }}
                         
                         // Apply to WHATEVER jobs are available (even if < 5)
@@ -7309,55 +7302,43 @@ class SentinelAgent:
                         // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
                         const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                         
-                        // Find current active tab using CORRECT class: tab-list-active
-                        const activeTab = document.querySelector('.tab-list-active');
-                        let currentTabId = '';
-                        if (activeTab) {{
-                            const wrapper = activeTab.closest('.tab-wrapper');
-                            currentTabId = wrapper?.id || '';
+                        // Use sessionStorage tracker to follow the fixed cycle order
+                        let nextIdx = parseInt(sessionStorage.getItem('naukri_tab_idx') || '-1');
+                        nextIdx = (nextIdx + 1) % tabOrder.length;
+                        sessionStorage.setItem('naukri_tab_idx', nextIdx);
+                        
+                        // If we've cycled all the way back to index 0, we've checked all tabs
+                        if (nextIdx === 0) {{
+                            return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
                         }}
                         
-                        // Get current index (default to 0/profile if not detected)
-                        let currentIdx = tabOrder.indexOf(currentTabId);
-                        if (currentIdx === -1) {{
-                            currentIdx = 0;  // Assume profile is active
-                        }}
+                        const nextTabId = tabOrder[nextIdx];
+                        console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId);
                         
-                        const nextIdx = currentIdx + 1;
-                        if (nextIdx < tabOrder.length) {{
-                            const nextTabId = tabOrder[nextIdx];
-                            
-                            // DEBUG: Log what we're looking for
-                            console.log('NAUKRI DEBUG: Looking for next tab:', nextTabId);
-                            console.log('NAUKRI DEBUG: Current tab:', currentTabId, 'index:', currentIdx);
-                            
-                            // Try multiple selectors to find the tab
-                            let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
-                            
-                            if (!nextTab) {{
-                                // Fallback: try finding by data-tab attribute or other means
-                                const allTabs = document.querySelectorAll('.tab-list-item');
-                                for (const tab of allTabs) {{
-                                    const tabText = tab.innerText.toLowerCase();
-                                    if (tabText.includes(nextTabId.replace('_', ' ')) || 
-                                        tabText.includes(nextTabId.replace('_', ''))) {{
-                                        nextTab = tab;
-                                        console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
-                                        break;
-                                    }}
+                        // Try multiple selectors to find the tab
+                        let nextTab = document.querySelector(`#${{nextTabId}} .tab-list-item`);
+                        
+                        if (!nextTab) {{
+                            const allTabs = document.querySelectorAll('.tab-list-item');
+                            for (const tab of allTabs) {{
+                                const tabText = tab.innerText.toLowerCase();
+                                if (tabText.includes(nextTabId.replace('_', ' ')) || 
+                                    tabText.includes(nextTabId.replace('_', ''))) {{
+                                    nextTab = tab;
+                                    console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                    break;
                                 }}
                             }}
-                            
-                            if (nextTab) {{
-                                console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
-                                nextTab.click();
-                                return 'NAUKRI_NAVIGATING_TO_TAB: ' + nextTabId;
-                            }} else {{
-                                console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
-                            }}
                         }}
                         
-                        return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
+                        if (nextTab) {{
+                            console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
+                            nextTab.click();
+                            return 'NAUKRI_NAVIGATING_TO_TAB: ' + nextTabId;
+                        }} else {{
+                            console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
+                            return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
+                        }}
                     }}
                 }}
 

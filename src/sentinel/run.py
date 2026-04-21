@@ -167,7 +167,7 @@ class Browser:
                     executable_path=self.executable_path,
                     headless=self.headless,
                     args=args,
-                    ignore_default_args=["--use-mock-keychain", "--password-store=basic"],
+                    ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
                     viewport=None 
                 )
             except Exception as e:
@@ -181,7 +181,7 @@ class Browser:
                         executable_path=self.executable_path,
                         headless=self.headless,
                         args=args,
-                        ignore_default_args=["--use-mock-keychain", "--password-store=basic"],
+                        ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
                         viewport=None 
                     )
                     print("✅ Retry succeeded with Chrome persistent context!")
@@ -192,7 +192,8 @@ class Browser:
                         self.browser = await self.playwright.chromium.launch(
                             executable_path=self.executable_path,
                             headless=self.headless,
-                            args=args
+                            args=args,
+                            ignore_default_args=["--enable-unsafe-swiftshader"]
                         )
                         self.context = await self.browser.new_context()
                         print("✅ Launched Chrome without profile (fresh session)")
@@ -202,7 +203,8 @@ class Browser:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
                 headless=self.headless,
-                args=args
+                args=args,
+                ignore_default_args=["--enable-unsafe-swiftshader"]
             )
             self.context = await self.browser.new_context()
 

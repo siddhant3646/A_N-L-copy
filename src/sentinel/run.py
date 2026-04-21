@@ -11,6 +11,24 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from playwright.async_api import async_playwright
 
 _browser_counter = 0
+_shared_playwright = None
+
+async def get_shared_playwright():
+    global _shared_playwright
+    if _shared_playwright is None:
+        _shared_playwright = await async_playwright().start()
+        print("🔧 Shared Playwright instance started")
+    return _shared_playwright
+
+async def stop_shared_playwright():
+    global _shared_playwright
+    if _shared_playwright is not None:
+        try:
+            await _shared_playwright.stop()
+        except Exception as e:
+            print(f"⚠️ Error stopping shared Playwright: {e}")
+        _shared_playwright = None
+        print("🔧 Shared Playwright instance stopped")
 
 class Browser:
     def __init__(self, executable_path=None, headless=False, user_data_dir=None, **kwargs):
@@ -64,7 +82,7 @@ class Browser:
         os.environ["TMPDIR"] = local_tmp
         print(f"🔧 Set TMPDIR to: {local_tmp}")
 
-        self.playwright = await async_playwright().start()
+        self.playwright = await get_shared_playwright()
         
         self.executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         
@@ -253,12 +271,7 @@ class Browser:
             except Exception as e:
                 print(f"⚠️ Error closing browser: {e}")
 
-        # 4. Stop Playwright
-        if self.playwright: 
-            try:
-                await self.playwright.stop()
-            except Exception as e:
-                print(f"⚠️ Error stopping Playwright: {e}")
+        # 4. Do NOT stop Playwright here — it's a shared singleton managed separately
         
         # 5. Wait for Chrome processes with our temp profile to fully exit
         import subprocess
@@ -400,12 +413,11 @@ async def main():
                     
             except KeyboardInterrupt:
                 print("\n🛑 Stopped by User (Ctrl+C)")
-                # Keep browser open for debugging
-                await asyncio.sleep(999999)
+                await stop_shared_playwright()
                 return  # Exit the entire program
             except Exception as e:
                 print(f"\n❌ Fatal Error in '{task_name}': {e}")
-                # Keep browser open for debugging
+                await stop_shared_playwright()
                 await asyncio.sleep(999999)
             finally:
                 print(f"🔒 Closing browser for '{task_name}'...")
@@ -456,6 +468,7 @@ async def main():
         except KeyboardInterrupt:
             print("\n🛑 Stopped by User (Ctrl+C)")
             await intersession_browser.stop()
+            await stop_shared_playwright()
             return
         except Exception as e:
             print(f"⚠️  [INTERSESSION] Error: {e}")

@@ -7155,8 +7155,8 @@ class SentinelAgent:
                         // If no unchecked boxes in current section, navigate to next tab
                         if (uncheckedBoxes.length === 0) {{
                             // Navigate to next tab in order
-                            // Actual tab IDs from DOM: profile, top_candidate, similar_jobs, preference
-                            const tabOrder = ['profile', 'top_candidate', 'similar_jobs', 'preference'];
+                            // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
+                            const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                             
                             // Find current active tab using CORRECT class: tab-list-active
                             const activeTab = document.querySelector('.tab-list-active');
@@ -7306,8 +7306,8 @@ class SentinelAgent:
                         }}
                         
                         // No checkboxes in current section - navigate to next tab in order
-                        // Actual tab IDs from DOM: profile, top_candidate, similar_jobs, preference
-                        const tabOrder = ['profile', 'top_candidate', 'similar_jobs', 'preference'];
+                        // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
+                        const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                         
                         // Find current active tab using CORRECT class: tab-list-active
                         const activeTab = document.querySelector('.tab-list-active');

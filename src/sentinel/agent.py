@@ -1596,6 +1596,46 @@ KNOWN_QA_PATTERNS = {
     'mysql postgresql mongodb': '4',
     'jenkins github actions': '4',
     'terraform ansible': '4',
+
+    # Hybrid Mode / Location-Specific Availability (Pune)
+    # NOTE: Must be broad enough to catch fuzzy matches on "Are you ready work in Hybrid mode (Pune)?"
+    'are you ready work in hybrid mode (pune)': 'Yes',
+    'are you ready to work in hybrid mode (pune)': 'Yes',
+    'ready work in hybrid mode (pune)': 'Yes',
+    'ready to work in hybrid mode (pune)': 'Yes',
+    'ready work in hybrid mode': 'Yes',
+    'hybrid mode (pune)': 'Yes',
+    'hybrid mode pune': 'Yes',
+    'ready for hybrid mode pune': 'Yes',
+    'work in hybrid mode pune': 'Yes',
+    'hybrid mode': 'Yes',
+
+    # Compensation Current + Expected (composite) — e.g. "Compensation Current, Expected?"
+    # Correct values: Current CTC = 13.5 LPA (1350000), Expected = 24 LPA (2400000)
+    'compensation current, expected': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation current expected': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current, expected compensation': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected compensation': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation current': '13.5 LPA',
+    'compensation expected': '24 LPA',
+    'compensation (current, expected)': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current expected ctc': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected ctc': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current expected salary': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected salary': 'Current: 13.5 LPA, Expected: 24 LPA',
+
+    # In-person Interview Availability (Pune and other cities)
+    'are you available for in-person interview in pune': 'Yes, available for in-person interview in Pune - any weekday works',
+    'available for in-person interview in pune': 'Yes',
+    'in-person interview in pune': 'Yes',
+    'in person interview in pune': 'Yes',
+    'available for in-person interview': 'Yes',
+    'in-person interview': 'Yes',
+    'in person interview': 'Yes',
+    'available for face to face interview in pune': 'Yes',
+    'face to face interview in pune': 'Yes',
+    'f2f interview in pune': 'Yes',
+    'are you available for in person interview': 'Yes',
 }
 
 FUZZY_MATCH_THRESHOLD = 0.7  # Increased from 0.6 for better accuracy

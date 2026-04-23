@@ -20,6 +20,23 @@ async def get_shared_playwright():
         print("🔧 Shared Playwright instance started")
     return _shared_playwright
 
+async def reset_shared_playwright():
+    """Tear down and recreate the Playwright singleton.
+    
+    Called before a launch retry when the shared pipe may have gone stale
+    (symptom: Chrome exits immediately with exitCode=0).
+    """
+    global _shared_playwright
+    if _shared_playwright is not None:
+        try:
+            await _shared_playwright.stop()
+        except Exception:
+            pass
+        _shared_playwright = None
+    _shared_playwright = await async_playwright().start()
+    print("🔧 Playwright singleton reset (fresh pipe)")
+    return _shared_playwright
+
 async def stop_shared_playwright():
     global _shared_playwright
     if _shared_playwright is not None:
@@ -172,9 +189,12 @@ class Browser:
                 )
             except Exception as e:
                 print(f"⚠️ Failed to launch persistent context with Chrome: {e}")
-                print("🔄 Retry: cleaning locks and retrying Chrome persistent context...")
+                print("🔄 Retry: resetting Playwright pipe and cleaning locks...")
                 await asyncio.sleep(5)
                 clean_lock_files(final_user_data_dir)
+                # Reset the shared Playwright instance — a stale pipe is the most
+                # common cause of the 'Browser window not found' / exitCode=0 error.
+                self.playwright = await reset_shared_playwright()
                 try:
                     self.context = await self.playwright.chromium.launch_persistent_context(
                         user_data_dir=final_user_data_dir,
@@ -182,23 +202,17 @@ class Browser:
                         headless=self.headless,
                         args=args,
                         ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
-                        viewport=None 
+                        viewport=None
                     )
                     print("✅ Retry succeeded with Chrome persistent context!")
                 except Exception as e2:
-                    print(f"⚠️ Retry also failed: {e2}")
-                    print("🔄 Last resort: Chrome without profile (fresh session)...")
-                    try:
-                        self.browser = await self.playwright.chromium.launch(
-                            executable_path=self.executable_path,
-                            headless=self.headless,
-                            args=args,
-                            ignore_default_args=["--enable-unsafe-swiftshader"]
-                        )
-                        self.context = await self.browser.new_context()
-                        print("✅ Launched Chrome without profile (fresh session)")
-                    except Exception as e3:
-                        raise RuntimeError(f"All Chrome launch attempts failed. Final error: {e3}")
+                    # Do NOT fall back to a cookie-less session for tasks that require
+                    # authentication (LinkedIn, Instahyre, Naukri). A profile-less
+                    # launch will always hit the login page and waste the task slot.
+                    raise RuntimeError(
+                        f"Chrome persistent context failed after Playwright reset. "
+                        f"Check that no other Chrome instance is using the profile. Error: {e2}"
+                    )
         else:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
@@ -417,10 +431,19 @@ async def main():
                 print("\n🛑 Stopped by User (Ctrl+C)")
                 await stop_shared_playwright()
                 return  # Exit the entire program
+            except RuntimeError as e:
+                # Browser launch failures (profile locked, Playwright pipe stale, etc.)
+                # are recoverable — just skip this task and move on to the next one.
+                print(f"\n⚠️  Browser launch failed for '{task_name}': {e}")
+                print("   ⏭️  Skipping task and continuing to next...")
             except Exception as e:
-                print(f"\n❌ Fatal Error in '{task_name}': {e}")
-                await stop_shared_playwright()
-                await asyncio.sleep(999999)
+                print(f"\n❌ Unexpected error in '{task_name}': {e}")
+                import traceback
+                traceback.print_exc()
+                # Don't stop Playwright — let subsequent tasks attempt with the same instance.
+                # Only pause briefly so we don't spin-loop on a persistent error.
+                print("   ⏳ Pausing 60s before next task...")
+                await asyncio.sleep(60)
             finally:
                 print(f"🔒 Closing browser for '{task_name}'...")
                 await browser.stop()

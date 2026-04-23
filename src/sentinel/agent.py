@@ -6483,8 +6483,10 @@ class SentinelAgent:
                                 return {{ type: 'success', element: dialog }};
                             }}
                             
-                            // 2. Safety/Reminder Modal
-                            if (text.includes('safety reminder') || text.includes('legal reminder')) {{
+                            // 2. Safety/Reminder Modal ("Job search safety reminder" popup)
+                            if (text.includes('safety reminder') || text.includes('legal reminder') ||
+                                text.includes('job search safety') || text.includes('continue applying') ||
+                                text.includes('research the company') || text.includes('report suspicious')) {{
                                 return {{ type: 'safety', element: dialog }};
                             }}
                             
@@ -6517,9 +6519,14 @@ class SentinelAgent:
                         }}
                         
                         if (modal.type === 'safety') {{
-                            const continueBtn = findByText('button', 'continue') || modal.element.querySelector('button:last-child');
+                            // Look for "Continue applying" button — try by text first, then last button
+                            const continueBtn = findByText('button', 'continue applying', true) ||
+                                               findByText('button', 'continue applying') ||
+                                               findByText('button', 'continue') ||
+                                               modal.element.querySelector('button:last-child') ||
+                                               modal.element.querySelector('.artdeco-button--primary');
                             if (continueBtn) {{
-                                console.log('Continuing from safety modal...');
+                                console.log('LINKEDIN: Clicking "Continue applying" on safety reminder popup');
                                 continueBtn.click();
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }}
@@ -6527,6 +6534,28 @@ class SentinelAgent:
                         
                         if (modal.type === 'form') {{
                             return handleLinkedInForm(modal.element);
+                        }}
+                    }}
+
+                    // SAFETY POPUP INTERCEPT: Check for "Job search safety reminder" popup
+                    // even if checkModals() failed to classify it (e.g., different DOM structure)
+                    const allVisibleDialogs = queryAllDeep('.artdeco-modal, [role="dialog"], [class*="modal"]');
+                    for (const d of allVisibleDialogs) {{
+                        if (!isVisible(d) || isMessagingOverlay(d)) continue;
+                        const dText = (d.innerText || '').toLowerCase();
+                        if (dText.includes('safety reminder') || dText.includes('job search safety') ||
+                            dText.includes('research the company') || dText.includes('report suspicious')) {{
+                            console.log('LINKEDIN: Safety reminder popup detected via intercept.');
+                            // Find "Continue applying" button inside this element
+                            const btns = Array.from(d.querySelectorAll('button'));
+                            const continueBtn = btns.find(b => b.innerText.toLowerCase().includes('continue applying')) ||
+                                               btns.find(b => b.innerText.toLowerCase().includes('continue')) ||
+                                               btns[btns.length - 1];  // fallback: last button
+                            if (continueBtn) {{
+                                console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', continueBtn.innerText);
+                                continueBtn.click();
+                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                            }}
                         }}
                     }}
 

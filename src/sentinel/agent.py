@@ -4086,7 +4086,7 @@ class SentinelAgent:
                                 await asyncio.sleep(1)
                                 break
                             continue
-                        elif 'LINKEDIN_SAFETY_CONTINUE_CLICKED' in next_result:
+                        elif 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED' in next_result:
                             print("🛡️ Acknowledged Safety Reminder")
                             continue
                         elif 'LINKEDIN_NEXT_CLICKED' in next_result or 'LINKEDIN_REVIEW_CLICKED' in next_result:
@@ -6593,6 +6593,11 @@ class SentinelAgent:
                             const txt = (btn.innerText || '').toLowerCase().trim();
                             if (txt.includes('continue applying') && btn.offsetParent !== null) {{
                                 console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
+                                btn.scrollIntoView({{block: 'center'}});
+                                btn.dispatchEvent(new PointerEvent('pointerdown', {{bubbles: true}}));
+                                btn.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                btn.dispatchEvent(new PointerEvent('pointerup', {{bubbles: true}}));
+                                btn.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
                                 btn.click();
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }}
@@ -6670,6 +6675,11 @@ class SentinelAgent:
                                                modal.element.querySelector('.artdeco-button--primary');
                             if (continueBtn) {{
                                 console.log('LINKEDIN: Clicking "Continue applying" on safety reminder popup');
+                                continueBtn.scrollIntoView({{block: 'center'}});
+                                continueBtn.dispatchEvent(new PointerEvent('pointerdown', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new PointerEvent('pointerup', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
                                 continueBtn.click();
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }}
@@ -6696,6 +6706,11 @@ class SentinelAgent:
                                                btns[btns.length - 1];  // fallback: last button
                             if (continueBtn) {{
                                 console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', continueBtn.innerText);
+                                continueBtn.scrollIntoView({{block: 'center'}});
+                                continueBtn.dispatchEvent(new PointerEvent('pointerdown', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new PointerEvent('pointerup', {{bubbles: true}}));
+                                continueBtn.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
                                 continueBtn.click();
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }}

@@ -133,6 +133,30 @@
         privacy_consent: {
             patterns: ['i consent', 'privacy notice', 'declare that you have read', 'agree to the privacy', 'read and agree', 'privacy policy agreement', 'consent to'],
             default: 'Yes'
+        },
+        english_level: {
+            patterns: ['level of english', 'english level', 'english proficiency', 'proficiency in english', 'fluency in english', 'how fluent'],
+            default: 'Professional proficiency'
+        },
+        experience_years_dropdown: {
+            patterns: ['how many years of experience do you have', 'how many years of experience', 'years of experience do you have'],
+            default: '3 to 6 years'
+        },
+        last_professional_experience: {
+            patterns: ['what did you do during your last professional', 'last professional experience', 'during your last professional experience', 'last professinnal experience'],
+            default: 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.'
+        },
+        previous_relevant_experience: {
+            patterns: ['specify previous experiences relevant', 'previous experiences relevant', 'relevant experiences for the position'],
+            default: '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.'
+        },
+        why_join: {
+            patterns: ['why would you like to join', 'why do you want to join', 'what makes you interested in joining'],
+            default: 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.'
+        },
+        what_bring: {
+            patterns: ['what could you bring', 'what can you bring', 'what value can you add', 'what do you bring'],
+            default: 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.'
         }
     };
     
@@ -556,6 +580,20 @@
         const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
         console.log('Current Job ID:', currentJobId);
         
+        // FIRST-PASS: Safety reminder modal intercept
+        // Catches "Continue applying" button regardless of modal class structure
+        {
+            const allBtns = document.querySelectorAll('button, span[role="button"]');
+            for (const btn of allBtns) {
+                const txt = (btn.innerText || '').toLowerCase().trim();
+                if (txt.includes('continue applying') && btn.offsetParent !== null) {
+                    console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
+                    btn.click();
+                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                }
+            }
+        }
+
         // Step 1: Handle modals (reuse modal variable)
         modal = checkModals();
         if (modal) {

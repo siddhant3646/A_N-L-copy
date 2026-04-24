@@ -57,29 +57,29 @@ KNOWN_QA_PATTERNS = {
     'programming language most experienced': 'Python, Node.js / TypeScript, Both',
     'programming language are you most experienced': 'Python, Node.js / TypeScript, Both',
     # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
-    'current salary': '15.3 LPA',
-    'what is your current salary?': '15.3 LPA',
+    'current salary': '13.5 LPA',
+    'what is your current salary?': '13.5 LPA',
     'expected salary': '24 LPA',
     'what is your expected salary?': '24 LPA',
-    'gross salary': '15.3 LPA',
-    'gross current salary': '15.3 LPA',
+    'gross salary': '13.5 LPA',
+    'gross current salary': '13.5 LPA',
     'gross expected salary': '24 LPA',
     'salary expectations': '24 LPA',
     # Current/Expected Annual Salary — common LinkedIn phrasing
-    'current annual salary': '1530000',
-    'what is your current annual salary': '1530000',
-    'what is your current annual salary?': '1530000',
+    'current annual salary': '1350000',
+    'what is your current annual salary': '1350000',
+    'what is your current annual salary?': '1350000',
     'expected annual salary': '2400000',
     'what is your expected annual salary': '2400000',
     'what is your expected annual salary?': '2400000',
     'what is your expected annual salary ?': '2400000',
-    'current ctc': '1530000',
-    'what is your current ctc': '1530000',
-    'what is your current ctc?': '1530000',
+    'current ctc': '1350000',
+    'what is your current ctc': '1350000',
+    'what is your current ctc?': '1350000',
     # Fixed CTC and Variable Pay - Numeric values
-    'fixed ctc': '1530000',
-    'fixed ctc numeric': '1530000',
-    'fixed ctc numeric input': '1530000',
+    'fixed ctc': '1350000',
+    'fixed ctc numeric': '1350000',
+    'fixed ctc numeric input': '1350000',
     'variable pay': '0',
     'variable pay numeric': '0',
     'variable pay numeric input': '0',
@@ -88,12 +88,12 @@ KNOWN_QA_PATTERNS = {
     'expected annual ctc': '2400000',
     'expected ctc in inr': '2400000',
     'expected ctc inr': '2400000',
-    # Salary Range Questions - Current: 15.3 LPA, Expected: 24 LPA
-    'salary range': '15-20 Lacs',
-    'current salary range': '15-20 Lacs',
+    # Salary Range Questions - Current: 13.5 LPA, Expected: 24 LPA
+    'salary range': '10-15 Lacs',
+    'current salary range': '10-15 Lacs',
     'expected salary range': '20-25 Lacs',
-    'annual salary': '15-20 Lacs',
-    'ctc range': '15-20 Lacs',
+    'annual salary': '10-15 Lacs',
+    'ctc range': '10-15 Lacs',
     # CTC in Lacs per annum - specific pattern for HighRadius
     'ctc in lacs per annum': '15.3',
     'what is your current ctc in lacs per annum': '15.3',
@@ -445,29 +445,6 @@ KNOWN_QA_PATTERNS = {
     'telephonic interview': 'Yes',
     'interested for f2f interview': 'Yes',
     'available on': 'Yes',
-    # Previously attended interview — always No
-    'previously attended an interview with us': 'No',
-    'previously attended interview': 'No',
-    'have you previously attended': 'No',
-    'attended an interview with us': 'No',
-    'interviewed with us before': 'No',
-    'interviewed with us previously': 'No',
-    'applied to us before': 'No',
-    'applied before': 'No',
-    'applied previously': 'No',
-    'previous interview with us': 'No',
-    'appeared for interview with us': 'No',
-    # Online test / first round evaluation — always Yes
-    'comfortable taking an online test': 'Yes',
-    'online test as the first round': 'Yes',
-    'comfortable with online test': 'Yes',
-    'first round of evaluation': 'Yes',
-    'online test first round': 'Yes',
-    'comfortable taking online': 'Yes',
-    'take an online test': 'Yes',
-    'online evaluation': 'Yes',
-    'written test': 'Yes',
-    'aptitude test': 'Yes',
     # Contract to Hire
     'contract to hire': 'Yes',
     'c2h position': 'Yes',
@@ -599,57 +576,17 @@ KNOWN_QA_PATTERNS = {
     'why do you want': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'additional information': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     'comments': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    
-    # English / Language Proficiency (dropdown — select "Professional proficiency" or "Native")
-    'level of english': 'Professional proficiency',
-    'english level': 'Professional proficiency',
-    'english proficiency': 'Professional proficiency',
-    'what is your level of english': 'Professional proficiency',
-    'proficiency in english': 'Professional proficiency',
-    'language proficiency': 'Professional proficiency',
-    'communication skills': 'Professional proficiency',
-    'how fluent are you in english': 'Professional proficiency',
-    'fluency in english': 'Professional proficiency',
-    
-    # How many years of experience (dropdown — "3 to 6 years" / "More than 6 years")
-    'how many years of experience do you have': '3 to 6 years',
-    'how many years of experience': '3 to 6 years',
-    'years of experience do you have': '3 to 6 years',
-    
-    # "What did you do during your last professional experience" — descriptive text (NOT a number)
-    'what did you do during your last professional': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'last professional experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'during your last professional experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'last professinnal experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    
-    # "Specify previous experiences relevant for the position" — descriptive text (NOT a number)
-    'specify previous experiences relevant': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'previous experiences relevant for the position': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'previous experiences relevant': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'relevant experiences for the position': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    
-    # "Why would you like to join <Company>?" — motivation text
-    'why would you like to join': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    'why do you want to join': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    'what makes you interested in joining': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    
-    # "What could you bring to <Company>?" — value proposition text
-    'what could you bring': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what can you bring': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what value can you add': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what do you bring to the team': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    
     # CTC in Lakhs (for questions specifically asking in lakhs/LPA)
-    'current ctc in lakhs': '15.3',
-    'current ctc in lpa': '15.3',
-    'current ctc [in lpa]': '15.3',
-    'current ctc(in lpa)': '15.3',
-    'current ctc (in lpa)': '15.3',
-    'ctc in lacs per annum': '15.3',
-    'current ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum?': '15.3',
-    'ctc in lacs': '15.3',
+    'current ctc in lakhs': '13.5',
+    'current ctc in lpa': '13.5',
+    'current ctc [in lpa]': '13.5',
+    'current ctc(in lpa)': '13.5',
+    'current ctc (in lpa)': '13.5',
+    'ctc in lacs per annum': '13.5',
+    'current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum': '13.5',
+    'what is your current ctc in lacs per annum?': '13.5',
+    'ctc in lacs': '13.5',
     'expected ctc in lakhs': '24',
     'expected ctc in lpa': '24',
     'expected ctc [in lpa]': '24',
@@ -658,9 +595,9 @@ KNOWN_QA_PATTERNS = {
     'what is your expected ctc in lacs per annum?': '24',
     'ctc in lakhs': '24',
     # CCTC = Current CTC (abbreviation)
-    'cctc': '15.3',
-    'what is your cctc': '15.3',
-    'your cctc': '15.3',
+    'cctc': '13.5',
+    'what is your cctc': '13.5',
+    'your cctc': '13.5',
     # ECTC = Expected CTC (abbreviation)
     'ectc': '24',
     'what is your ectc': '24',
@@ -845,10 +782,10 @@ KNOWN_QA_PATTERNS = {
     'experience in e-commerce': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     'ecommerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
     # Composite HR Questions (CTC + ECTC + NP)
-    'share your ctc': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc ectc np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc and np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc,ectc and np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'share your ctc': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc ectc np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc and np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
+    'ctc,ectc and np': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
     # Location-exclusive questions (Mumbai-only, etc.)
     'candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
     'need candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
@@ -896,14 +833,14 @@ KNOWN_QA_PATTERNS = {
     'last working day': '30',
     
     # SALARY - Component Variations (15+ patterns)
-    'monthly salary': '127500',
-    'monthly ctc': '127500',
+    'monthly salary': '112500',
+    'monthly ctc': '112500',
     'monthly gross': '1.5',
-    'per month salary': '127500',
+    'per month salary': '112500',
     'take home': '95000',
     'in hand salary': '95000',
     'take home salary': '95000',
-    'fixed component': '1530000',
+    'fixed component': '1350000',
     'variable component': '0',
     'variable pay': '0',
     'bonus': 'Open to discussion',
@@ -913,17 +850,17 @@ KNOWN_QA_PATTERNS = {
     'esops': 'Open to discussion',
     'equity': 'Open to discussion',
     'benefits': 'Standard benefits as per company policy',
-    'gross salary': '15.3 LPA',
+    'gross salary': '13.5 LPA',
     'net salary': '11.5 LPA',
-    'remuneration': '15.3 LPA',
+    'remuneration': '13.5 LPA',
     'compensation expectations': '24 LPA',
     'salary bracket': '20-24 LPA',
     'pay range': '20-24 LPA',
     'budget': '20-24 LPA range',
-    'ctc breakup': 'Fixed: 15.3 LPA, Variable: 0',
-    'salary structure': 'Fixed CTC: 15.3 LPA',
-    'currently drawing': '15.3 LPA',
-    'current drawn': '15.3 LPA',
+    'ctc breakup': 'Fixed: 13.5 LPA, Variable: 0',
+    'salary structure': 'Fixed CTC: 13.5 LPA',
+    'currently drawing': '13.5 LPA',
+    'current drawn': '13.5 LPA',
     
     # EXPERIENCE - Relevant & Professional Variations (25+ patterns)
     'relevant experience': '3.8 Years',
@@ -952,50 +889,21 @@ KNOWN_QA_PATTERNS = {
     'sector experience': '3.8 Years',
     
     # Technical Experience - Specific Technologies
-    'spring boot experience': '3.8',
-    'microservices experience': '3.8',
-    'aws experience': '3.8',
-    'docker experience': '3.8',
-    'kubernetes experience': '3.8',
-    'devops experience': '3.8',
-    'cloud experience': '3.8',
-    'react experience': '4',
-    'angular experience': '4',
-    'vue experience': '2',
-    'node experience': '3.8',
-    'python experience': '3.8',
-    'java experience': '3.8',
-    'javascript experience': '3.8',
-    'typescript experience': '3.8',
-    # Relevant Experience as <Technology> — decimal number fields (e.g. "Rel Exp as Java Developer*")
-    'rel exp as java': '3.8',
-    'rel exp as java developer': '3.8',
-    'rel exp java': '3.8',
-    'relevant exp as java': '3.8',
-    'relevant exp java developer': '3.8',
-    'relevant experience as java': '3.8',
-    'relevant experience as java developer': '3.8',
-    'relevant experience in java': '3.8',
-    'rel exp as react': '4',
-    'rel exp as react developer': '4',
-    'relevant exp as react': '4',
-    'relevant experience as react': '4',
-    'rel exp as angular': '4',
-    'rel exp as angular developer': '4',
-    'relevant experience as angular': '4',
-    'rel exp as spring boot': '3.8',
-    'relevant experience as spring boot': '3.8',
-    'rel exp as node': '3.8',
-    'rel exp as nodejs': '3.8',
-    'relevant experience as node': '3.8',
-    'rel exp as python': '3.8',
-    'relevant experience as python': '3.8',
-    'rel exp as full stack': '3.8',
-    'relevant experience as full stack': '3.8',
-    'rel exp as software developer': '3.8',
-    'rel exp as software engineer': '3.8',
-    'relevant experience as software developer': '3.8',
-    'relevant experience as software engineer': '3.8',
+    'spring boot experience': '3.8 Years',
+    'microservices experience': '3.8 Years',
+    'aws experience': '3.8 Years',
+    'docker experience': '3.8 Years',
+    'kubernetes experience': '3.8 Years',
+    'devops experience': '3.8 Years',
+    'cloud experience': '3.8 Years',
+    'react experience': '4 Years',
+    'angular experience': '4 Years',
+    'vue experience': '2 Years',
+    'node experience': '3.8 Years',
+    'python experience': '3.8 Years',
+    'java experience': '3.8 Years',
+    'javascript experience': '3.8 Years',
+    'typescript experience': '3.8 Years',
     
     # LOCATION - Address & Travel Variations (15+ patterns)
     'current address': 'Noida, Uttar Pradesh',
@@ -1158,32 +1066,6 @@ KNOWN_QA_PATTERNS = {
     'asap': '30',
     'as soon as possible': '30',
     
-    # Team Leadership Experience (numeric input — years leading a team)
-    'leading a team of developers': '1',
-    'experience leading a team': '1',
-    'experience do you have leading a team': '1',
-    'how many years of experience do you have leading': '1',
-    'team management experience': '1',
-    'people management experience': '1',
-    'managed a team': 'Yes',
-    'led a team': 'Yes',
-    
-    # Full-Stack Project Ownership (end-to-end)
-    'led a full-stack project end-to-end': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'led a full-stack project': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'full-stack project end-to-end': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'architecture to deployment': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'end-to-end project': 'Yes, I have owned end-to-end delivery of multiple full-stack projects at Fiserv.',
-    'owned a project': 'Yes',
-    
-    # Coding Comfort / Problem Solving
-    'how comfortable are you contributing to coding': 'Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.',
-    'comfortable are you contributing to coding and solving': 'Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.',
-    'solving complex technical problems': 'Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development.',
-    'complex technical problems': 'Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development.',
-    'comfortable with coding': 'Very comfortable — coding is my core strength.',
-    'coding and problem solving': 'Very comfortable with both. I actively code in Java, React, and Python daily and enjoy solving complex technical problems.',
-    
     # REFERRAL & SOURCE - Extended (12+ patterns)
     'how did you hear': 'LinkedIn',
     'source of application': 'LinkedIn Job Portal',
@@ -1305,15 +1187,15 @@ KNOWN_QA_PATTERNS = {
     'please select your experience': '4',
     'please select your salary expectation': '24 LPA',
     
-    'please enter your annual current ctc in inr': '1530000',
+    'please enter your annual current ctc in inr': '1350000',
     'please enter your annual expected ctc in inr': '2400000',
-    'please enter your current ctc in inr': '1530000',
+    'please enter your current ctc in inr': '1350000',
     'please enter your expected ctc in inr': '2400000',
     'please enter your online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
     'please enter your notice period in days': '30',
     'please enter your linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
     'please enter your github url': 'https://github.com/siddhant3646',
-    'please enter your current salary': '15.3 LPA',
+    'please enter your current salary': '13.5 LPA',
     'please enter your expected salary': '24 LPA',
     'please enter your phone number': '7905828880',
     'please enter your email address': 'siddhant3646@gmail.com',
@@ -1322,24 +1204,24 @@ KNOWN_QA_PATTERNS = {
     'please enter your current designation': 'SDE-2 Full Stack Developer',
     'please enter your total experience': '4',
     'please enter your years of experience': '4',
-    'please enter your ctc': '15.3 LPA',
-    'please enter your salary': '15.3 LPA',
+    'please enter your ctc': '13.5 LPA',
+    'please enter your salary': '13.5 LPA',
     
-    'please share your ctc ectc and notice period': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days',
-    'please provide your ctc details': 'Current: 15.3 LPA, Expected: 24 LPA',
+    'please share your ctc ectc and notice period': 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days',
+    'please provide your ctc details': 'Current: 13.5 LPA, Expected: 24 LPA',
     'please mention your notice period': '30 days',
     'please specify your experience': '4 years',
     
     # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
     # Concise variations for quick matching
-    'current ctc': '15.3 LPA',
+    'current ctc': '13.5 LPA',
     'expected ctc': '24 LPA',
-    'current salary': '15.3 LPA',
+    'current salary': '13.5 LPA',
     'expected salary': '24 LPA',
-    'ctc': '15.3 LPA',
-    'salary': '15.3 LPA',
-    'pay': '15.3 LPA',
-    'compensation': '15.3 LPA',
+    'ctc': '13.5 LPA',
+    'salary': '13.5 LPA',
+    'pay': '13.5 LPA',
+    'compensation': '13.5 LPA',
     
     'total years of exp': '3.8 Years',
     'total exp': '3.8 Years',
@@ -1576,13 +1458,8 @@ KNOWN_QA_PATTERNS = {
     'i consent to equal opportunity monitoring': 'Yes',
     'equal opportunity consent': 'Yes',
     
-    # SECTION 6: OPEN-ENDED / COVER LETTER (15+ patterns)
+    # SECTION 6: OPEN-ENDED / COVER LETTER (15 patterns)
     'what about this role makes it a good fit for you': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team. I am particularly interested in working on challenging projects and contributing to innovative solutions.',
-    
-    'why would you like to join us': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience, I am confident I can contribute meaningfully to the team.',
-    'why do you want to join us': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience, I am confident I can contribute meaningfully to the team.',
-    'what could you bring to us': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures and delivering high-quality code.',
-    'what can you contribute': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures and delivering high-quality code.',
     
     'why do you want to work here': 'I am excited about this opportunity and believe my skills align well with the role requirements. I am looking for a challenging environment where I can grow professionally.',
     
@@ -1613,22 +1490,22 @@ KNOWN_QA_PATTERNS = {
     'additional comments': 'I am excited about this opportunity and believe my skills align well with the role requirements.',
     
     # SECTION 7: SALARY VARIATIONS (25 patterns)
-    'what is your current monthly salary': '127500',
-    'current monthly salary': '127500',
+    'what is your current monthly salary': '112500',
+    'current monthly salary': '112500',
     'expected monthly salary': '166667',
-    'monthly pay': '127500',
-    'monthly income': '127500',
-    'monthly compensation': '127500',
+    'monthly pay': '112500',
+    'monthly income': '112500',
+    'monthly compensation': '112500',
     
-    'what is your fixed ctc': '1530000',
+    'what is your fixed ctc': '1350000',
     'what is your variable pay': '0',
     'what is your bonus': '0',
-    'fixed pay': '1530000',
+    'fixed pay': '1350000',
     'variable component': '0',
     'bonus component': '0',
     
-    'please enter your salary': '15.3 LPA',
-    'please share your salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
+    'please enter your salary': '13.5 LPA',
+    'please share your salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
     'salary requirements': '24 LPA',
     'compensation requirements': '24 LPA',
     'pay expectations': '24 LPA',
@@ -1636,11 +1513,11 @@ KNOWN_QA_PATTERNS = {
     'salary expectation': '24 LPA',
     'compensation expectation': '24 LPA',
     
-    'ctc details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'provide salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'share compensation details': 'Current: 15.3 LPA, Expected: 24 LPA',
+    'ctc details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'provide salary details': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'share compensation details': 'Current: 13.5 LPA, Expected: 24 LPA',
     
     # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
     'years into java': '4',
@@ -1734,18 +1611,18 @@ KNOWN_QA_PATTERNS = {
     'hybrid mode': 'Yes',
 
     # Compensation Current + Expected (composite) — e.g. "Compensation Current, Expected?"
-    # Correct values: Current CTC = 15.3 LPA (1530000), Expected = 24 LPA (2400000)  ← updated Apr 2026
-    'compensation current, expected': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation current expected': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current, expected compensation': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected compensation': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation current': '15.3 LPA',
+    # Correct values: Current CTC = 13.5 LPA (1350000), Expected = 24 LPA (2400000)
+    'compensation current, expected': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation current expected': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current, expected compensation': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected compensation': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'compensation current': '13.5 LPA',
     'compensation expected': '24 LPA',
-    'compensation (current, expected)': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current expected ctc': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected ctc': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current expected salary': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected salary': 'Current: 15.3 LPA, Expected: 24 LPA',
+    'compensation (current, expected)': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current expected ctc': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected ctc': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current expected salary': 'Current: 13.5 LPA, Expected: 24 LPA',
+    'current and expected salary': 'Current: 13.5 LPA, Expected: 24 LPA',
 
     # In-person Interview Availability (Pune and other cities)
     'are you available for in-person interview in pune': 'Yes, available for in-person interview in Pune - any weekday works',
@@ -2155,7 +2032,7 @@ class SentinelAgent:
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)', 0.98
+            return 'Current CTC: 13.5 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
@@ -2248,7 +2125,7 @@ class SentinelAgent:
         if is_salary_question:
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
-                return '15.3', 0.98
+                return '13.5', 0.98
             if 'ectc' in question_lower:
                 return '24', 0.98
             
@@ -2256,7 +2133,7 @@ class SentinelAgent:
             if 'expected' in question_lower or 'expect' in question_lower:
                 return '24', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
-                return '15.3', 0.95
+                return '13.5', 0.95
             # Default to expected if unclear
             return '24', 0.90
         
@@ -5523,7 +5400,7 @@ class SentinelAgent:
                         if (KNOWN_PATTERNS[k]) {{
                             // Use plain numeric values (13.5, 24) for LinkedIn text inputs - NOT full INR values
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '15.3';
+                                KNOWN_PATTERNS[k] = '13.5';
                             }} else {{
                                 KNOWN_PATTERNS[k] = '24';
                             }}
@@ -5611,7 +5488,7 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
-                            bestMatch = qLower.includes('current') ? '1530000' : '2400000';
+                            bestMatch = qLower.includes('current') ? '1350000' : '2400000';
                         }}
                     }}
                     
@@ -5709,7 +5586,7 @@ class SentinelAgent:
                 const findSalaryRangeMatch = (answer, options, isCurrentSalary) => {{
                     if (!answer || !options || options.length === 0) return null;
                     
-                    // Extract numeric salary from answer (e.g., "15.3 LPA" → 15.3)
+                    // Extract numeric salary from answer (e.g., "13.5 LPA" → 13.5)
                     const salaryMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     if (!salaryMatch) return null;
                     const salary = parseFloat(salaryMatch[1]);
@@ -6578,26 +6455,6 @@ class SentinelAgent:
                                cls.includes('msg-form') || cls.includes('messaging') ||
                                cls.includes('msg-s-message-list') || cls.includes('msg-thread');
                     }};
-
-                    // ──────────────────────────────────────────────────
-                    // FIRST-PASS: Safety reminder modal intercept
-                    // This runs BEFORE checkModals() because LinkedIn
-                    // sometimes renders the popup with non-standard
-                    // modal classes that the deep query misses.
-                    // We look for a visible "Continue applying" button
-                    // anywhere on the page — very robust.
-                    // ──────────────────────────────────────────────────
-                    {{
-                        const allBtns = document.querySelectorAll('button, span[role="button"]');
-                        for (const btn of allBtns) {{
-                            const txt = (btn.innerText || '').toLowerCase().trim();
-                            if (txt.includes('continue applying') && btn.offsetParent !== null) {{
-                                console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
-                                btn.click();
-                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                            }}
-                        }}
-                    }}
 
                     // Check for modals (SHADOW DOM AWARE)
                     const checkModals = () => {{

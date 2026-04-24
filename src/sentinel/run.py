@@ -110,7 +110,8 @@ class Browser:
             '--disable-session-crashed-bubble',
             '--no-restore-session-state',
             '--ignore-certificate-errors',
-            '--ignore-ssl-errors'
+            '--ignore-ssl-errors',
+            '--disable-gpu',
         ]
         
         final_user_data_dir = self.user_data_dir
@@ -178,41 +179,54 @@ class Browser:
             
         if final_user_data_dir:
             print(f"🚀 Launching with User Data: {final_user_data_dir}")
-            try:
-                self.context = await self.playwright.chromium.launch_persistent_context(
+
+            async def _attempt_launch():
+                """Single launch attempt: kill ALL sentinel Chrome procs, clean locks, then launch."""
+                # Kill any Chrome still running from a PREVIOUS task (different temp dir
+                # but same PID marker) — macOS holds GPU/display handles even after
+                # context.close(), causing 'Browser window not found' for the next launch.
+                self._kill_all_sentinel_chrome()
+                await asyncio.sleep(2)  # Let macOS release GPU/display resources
+                clean_lock_files(final_user_data_dir)
+                return await self.playwright.chromium.launch_persistent_context(
                     user_data_dir=final_user_data_dir,
                     executable_path=self.executable_path,
                     headless=self.headless,
                     args=args,
                     ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
-                    viewport=None 
+                    viewport=None
                 )
+
+            try:
+                self.context = await _attempt_launch()
             except Exception as e:
                 print(f"⚠️ Failed to launch persistent context with Chrome: {e}")
-                print("🔄 Retry: resetting Playwright pipe and cleaning locks...")
+                print("🔄 Retry 1/2: killing stale Chrome, resetting Playwright pipe...")
                 await asyncio.sleep(5)
-                clean_lock_files(final_user_data_dir)
                 # Reset the shared Playwright instance — a stale pipe is the most
                 # common cause of the 'Browser window not found' / exitCode=0 error.
                 self.playwright = await reset_shared_playwright()
                 try:
-                    self.context = await self.playwright.chromium.launch_persistent_context(
-                        user_data_dir=final_user_data_dir,
-                        executable_path=self.executable_path,
-                        headless=self.headless,
-                        args=args,
-                        ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
-                        viewport=None
-                    )
-                    print("✅ Retry succeeded with Chrome persistent context!")
+                    self.context = await _attempt_launch()
+                    print("✅ Retry 1 succeeded with Chrome persistent context!")
                 except Exception as e2:
-                    # Do NOT fall back to a cookie-less session for tasks that require
-                    # authentication (LinkedIn, Instahyre, Naukri). A profile-less
-                    # launch will always hit the login page and waste the task slot.
-                    raise RuntimeError(
-                        f"Chrome persistent context failed after Playwright reset. "
-                        f"Check that no other Chrome instance is using the profile. Error: {e2}"
-                    )
+                    # Second retry: longer sleep + full Playwright reset to let macOS
+                    # release any lingering profile locks from the previous task.
+                    print(f"⚠️ Retry 1 failed: {e2}")
+                    print("🔄 Retry 2/2: waiting 15s, force-killing Chrome, full Playwright reset...")
+                    await asyncio.sleep(15)
+                    self.playwright = await reset_shared_playwright()
+                    try:
+                        self.context = await _attempt_launch()
+                        print("✅ Retry 2 succeeded with Chrome persistent context!")
+                    except Exception as e3:
+                        # Do NOT fall back to a cookie-less session for tasks that require
+                        # authentication (LinkedIn, Instahyre, Naukri). A profile-less
+                        # launch will always hit the login page and waste the task slot.
+                        raise RuntimeError(
+                            f"Chrome persistent context failed after 2 retries + Playwright resets. "
+                            f"Check that no other Chrome instance is using the profile. Error: {e3}"
+                        )
         else:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
@@ -264,6 +278,70 @@ class Browser:
         await page.route("**/*", handle_route)
         print("   🔇 Resource blocking enabled (images, stylesheets, fonts, trackers)")
 
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _kill_pids(pids: list, label: str, timeout: float = 5.0) -> None:
+        """SIGTERM then SIGKILL a list of PIDs."""
+        import signal, time, subprocess as sp
+        if not pids:
+            return
+        print(f"   🔪 Killing {len(pids)} Chrome process(es): {label}")
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        deadline = time.monotonic() + timeout / 2
+        while time.monotonic() < deadline:
+            time.sleep(0.2)
+            still = [p for p in pids if sp.run(
+                ['kill', '-0', str(p)], capture_output=True
+            ).returncode == 0]
+            if not still:
+                return
+            pids = still
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGKILL)
+                print(f"   💀 SIGKILL sent to pid {pid}")
+            except ProcessLookupError:
+                pass
+
+    @staticmethod
+    def _kill_chrome_holding_dir(path: str, timeout: float = 5.0) -> None:
+        """Forcibly terminate any Chrome process whose cmdline contains *path*."""
+        import subprocess
+        if not path:
+            return
+        try:
+            result = subprocess.run(['pgrep', '-f', path], capture_output=True, text=True)
+            pids = [int(p) for p in result.stdout.split() if p.strip().isdigit()]
+            if pids:
+                Browser._kill_pids(pids, path, timeout)
+        except Exception as e:
+            print(f"   ⚠️ _kill_chrome_holding_dir error: {e}")
+
+    @staticmethod
+    def _kill_all_sentinel_chrome(timeout: float = 5.0) -> None:
+        """Kill ALL Chrome processes spawned by this Python process.
+
+        Searches for any Chrome whose cmdline contains 'sentinel_profile_<our_pid>'.
+        This catches Chrome from ANY task (not just the current temp dir), which is
+        critical because macOS holds GPU/display handles across profile directories.
+        """
+        import subprocess
+        marker = f"sentinel_profile_{os.getpid()}"
+        try:
+            result = subprocess.run(['pgrep', '-f', marker], capture_output=True, text=True)
+            pids = [int(p) for p in result.stdout.split() if p.strip().isdigit()]
+            if pids:
+                Browser._kill_pids(pids, f"all sentinel ({marker})", timeout)
+        except Exception as e:
+            print(f"   ⚠️ _kill_all_sentinel_chrome error: {e}")
+
     async def stop(self):
         # 1. Close all pages first
         if self.context:
@@ -307,7 +385,14 @@ class Browser:
                 await asyncio.sleep(0.5)
                 break
         else:
-            print(f"⚠️ Chrome processes still running after 10s")
+            # Processes didn't exit cleanly — forcibly kill them so the next
+            # task's launch_persistent_context is not blocked by a profile lock.
+            print(f"⚠️ Chrome still alive after 10s — force-killing...")
+            temp_dir = getattr(self, '_temp_dir', None)
+            if temp_dir:
+                self._kill_chrome_holding_dir(temp_dir)
+            else:
+                self._kill_chrome_holding_dir(profile_marker)
 from src.core.config import CHROME_USER_DATA, CHROME_EXECUTABLE_PATH
 from src.sentinel.agent import create_agent
 from src.sentinel import prompts
@@ -447,7 +532,11 @@ async def main():
             finally:
                 print(f"🔒 Closing browser for '{task_name}'...")
                 await browser.stop()
-                await asyncio.sleep(5)  # Cooldown between tasks - wait for Chrome to fully exit
+                # Reset the Playwright pipe after every task — a stale pipe is the
+                # primary cause of 'Browser window not found' on the NEXT launch.
+                self_pw = await reset_shared_playwright()  # noqa: F841 — side-effect only
+                print("   🔄 Playwright pipe refreshed for next task")
+                await asyncio.sleep(10)  # Cooldown — let macOS release GPU/display handles
         
         # Cycle complete - run INTERSESSION task during wait period
         wait_mins = random.uniform(15, 20)  # Random 15-20 minutes total wait
@@ -460,13 +549,16 @@ async def main():
         import time
         intersession_start = time.time()
         
+        # Give Chrome time to fully exit from the last task before starting a fresh
+        # persistent context — macOS can hold profile locks for several seconds after
+        # context.close(), causing 'Browser window not found' / exitCode=0 crashes.
+        print("⏳ [INTERSESSION] Waiting 15s for Chrome processes to fully exit...")
+        await asyncio.sleep(15)
+        
         # Run Instahyre INTERSESSION task
         intersession_browser = Browser(
-            executable_path=CHROME_EXECUTABLE_PATH,
             headless=False,
-            disable_security=True,
             user_data_dir=CHROME_USER_DATA,
-            keep_alive=True
         )
         intersession_agent = create_agent()
         

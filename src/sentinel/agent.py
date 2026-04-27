@@ -611,10 +611,10 @@ KNOWN_QA_PATTERNS = {
     'how fluent are you in english': 'Professional proficiency',
     'fluency in english': 'Professional proficiency',
     
-    # How many years of experience (dropdown — "3 to 6 years" / "More than 6 years")
-    'how many years of experience do you have': '3 to 6 years',
-    'how many years of experience': '3 to 6 years',
-    'years of experience do you have': '3 to 6 years',
+    # How many years of experience (precise value — resolver maps to correct dropdown/radio option)
+    'how many years of experience do you have': '3.8 Years',
+    'how many years of experience': '3.8 Years',
+    'years of experience do you have': '3.8 Years',
     
     # "What did you do during your last professional experience" — descriptive text (NOT a number)
     'what did you do during your last professional': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
@@ -1793,6 +1793,7 @@ class SentinelAgent:
         self._all_logged_questions = set()  # Track questions logged to all_questions.log
         self._last_result = ""  # Track last result for loop detection
         self._same_result_count = 0  # Counter for repeated results
+        self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
         
         # Metrics tracking
         self.metrics = {
@@ -1823,9 +1824,6 @@ class SentinelAgent:
         self._pattern_learner = PatternLearner()
         self._error_detector = None  # Initialized when page is available
         self._error_recovery = None
-        
-        # Ensure screenshot directory exists
-        os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
     
     def _init_error_detection(self):
         """Initialize error detection components when page is available."""
@@ -2820,18 +2818,6 @@ class SentinelAgent:
         except Exception as e:
             print(f"   ⚠️ Failed to save metrics: {e}")
 
-    async def _screenshot_on_error(self, error_context: str = "unknown"):
-        """Save screenshot when error occurs for debugging."""
-        try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{self.SCREENSHOT_DIR}/error_{error_context}_{timestamp}.png"
-            await self._page.screenshot(path=filename, full_page=False)
-            print(f"   📸 Screenshot saved: {filename}")
-            return filename
-        except Exception as e:
-            print(f"   ⚠️ Screenshot failed: {e}")
-            return None
-
     async def _check_page_health(self) -> bool:
         """Verify page is responsive before actions."""
         try:
@@ -2847,7 +2833,6 @@ class SentinelAgent:
             return True
         except asyncio.TimeoutError:
             print("   ⚠️ Page health check timeout - page may be unresponsive")
-            await self._screenshot_on_error("page_unresponsive")
             return False
         except Exception as e:
             print(f"   ⚠️ Page health check failed: {e}")
@@ -2895,7 +2880,6 @@ class SentinelAgent:
                 
                 if login_required:
                     print("⚠️ LinkedIn session expired - waiting 60s for re-login...")
-                    await self._screenshot_on_error("linkedin_session_expired")
                     self.metrics['login_prompts'] += 1
                     await asyncio.sleep(60)
                     return False
@@ -2932,7 +2916,6 @@ class SentinelAgent:
                 
                 if login_required:
                     print("⚠️ Naukri session expired - waiting 60s for re-login...")
-                    await self._screenshot_on_error("naukri_session_expired")
                     self.metrics['login_prompts'] += 1
                     await asyncio.sleep(60)
                     return False
@@ -2951,7 +2934,6 @@ class SentinelAgent:
                 
                 if login_required:
                     print("⚠️ Instahyre session expired - waiting 60s for re-login...")
-                    await self._screenshot_on_error("instahyre_session_expired")
                     self.metrics['login_prompts'] += 1
                     await asyncio.sleep(60)
                     return False
@@ -4189,20 +4171,45 @@ class SentinelAgent:
                             
                             print(f"   📜 Step 2 - Remove fullstop: {remove_result}")
                             
-                            await asyncio.sleep(random.uniform(4, 8))  # Wait before clicking Save
-                            
-                            # Step 3: Click Save button
+                            await asyncio.sleep(random.uniform(4, 8))
+
+                            # Step 3: Click Save button and verify
                             try:
-                                save_btn = self._page.locator('.form-actions button.btn-dark-ot, .action.s12 button.btn-dark-ot, button.btn-dark-ot[type="submit"]').first
-                                await save_btn.wait_for(state='visible', timeout=5000)
-                                await save_btn.scroll_into_view_if_needed()
-                                # Try double click which can be more reliable for React buttons
-                                await save_btn.dblclick()
-                                save_result = 'SAVE_CLICKED'
+                                save_result = await self._page.evaluate("""() => {
+                                    const selectors = [
+                                        '.form-actions button.btn-dark-ot',
+                                        '.action.s12 button.btn-dark-ot',
+                                        'button.btn-dark-ot[type="submit"]',
+                                        'button[type="submit"]'
+                                    ];
+                                    for (let sel of selectors) {
+                                        const btn = document.querySelector(sel);
+                                        if (btn && btn.offsetParent !== null) {
+                                            btn.scrollIntoView({block: 'center'});
+                                            btn.click();
+                                            return 'SAVE_CLICKED';
+                                        }
+                                    }
+                                    const allBtns = document.querySelectorAll('button');
+                                    for (let btn of allBtns) {
+                                        if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
+                                            btn.scrollIntoView({block: 'center'});
+                                            btn.click();
+                                            return 'SAVE_CLICKED: text-match';
+                                        }
+                                    }
+                                    return 'NO_SAVE_BUTTON';
+                                }""")
                             except Exception as e:
                                 print(f"      ⚠️ Save error: {e}")
                                 save_result = 'NO_SAVE_BUTTON'
                             print(f"   📜 Step 3 - First save: {save_result}")
+                            
+                            await asyncio.sleep(2)
+                            if save_result == 'NO_SAVE_BUTTON':
+                                print(f"      ⚠️ No Save button found, retrying edit...")
+                                self.state.task_complete = True
+                                break
                             
                             await asyncio.sleep(random.uniform(4, 8))  # Wait for save to complete
                             
@@ -4254,18 +4261,39 @@ class SentinelAgent:
                             
                             await asyncio.sleep(random.uniform(4, 8))  # Wait before second Save
                             
-                            # Step 6: Click Save button
+                            # Step 6: Click Save button and verify
                             try:
-                                save_btn2 = self._page.locator('.form-actions button.btn-dark-ot, .action.s12 button.btn-dark-ot, button.btn-dark-ot[type="submit"]').first
-                                await save_btn2.wait_for(state='visible', timeout=5000)
-                                await save_btn2.scroll_into_view_if_needed()
-                                await save_btn2.dblclick()
-                                save2_result = 'SAVE_CLICKED_2'
+                                save2_result = await self._page.evaluate("""() => {
+                                    const selectors = [
+                                        '.form-actions button.btn-dark-ot',
+                                        '.action.s12 button.btn-dark-ot',
+                                        'button.btn-dark-ot[type="submit"]',
+                                        'button[type="submit"]'
+                                    ];
+                                    for (let sel of selectors) {
+                                        const btn = document.querySelector(sel);
+                                        if (btn && btn.offsetParent !== null) {
+                                            btn.scrollIntoView({block: 'center'});
+                                            btn.click();
+                                            return 'SAVE_CLICKED_2';
+                                        }
+                                    }
+                                    const allBtns = document.querySelectorAll('button');
+                                    for (let btn of allBtns) {
+                                        if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
+                                            btn.scrollIntoView({block: 'center'});
+                                            btn.click();
+                                            return 'SAVE_CLICKED_2: text-match';
+                                        }
+                                    }
+                                    return 'NO_SAVE_BUTTON';
+                                }""")
                             except Exception as e:
                                 print(f"      ⚠️ Save error: {e}")
                                 save2_result = 'NO_SAVE_BUTTON'
                             print(f"   📜 Step 6 - Second save: {save2_result}")
                             
+                            await asyncio.sleep(1)
                             print("🎉 Profile headline updated successfully!")
                             self.state.task_complete = True
                             break
@@ -4452,22 +4480,58 @@ class SentinelAgent:
                             
                             print(f"   📜 Step 3 - Save: {save_result}")
                             
-                            # Wait for page to reload to profile URL (success indicator) - shorter timeout
-                            try:
-                                await self._page.wait_for_url('**/mnjuser/profile**', timeout=8000)
-                                print(f"🎉 Employment LWD updated to {day_val} {month_display} {year_val}!")
-                                self.state.task_complete = True
-                                break
-                            except Exception:
-                                # Check if modal closed anyway (alternative success indicator)
-                                modal_gone = await self._page.evaluate("""() => {
-                                    return !document.querySelector('.modal-content, .edit-container');
-                                }""")
-                                if modal_gone:
-                                    print(f"🎉 Employment LWD updated (modal closed)!")
+                            if 'SAVE_CLICKED' in save_result:
+                                await asyncio.sleep(3)
+                                
+                                for verify_attempt in range(3):
+                                    modal_gone = await self._page.evaluate("""() => {
+                                        return !document.querySelector('.modal-content, .edit-container, [class*="modal"]');
+                                    }""")
+                                    on_profile = 'mnjuser/profile' in (self._page.url or '')
+                                    
+                                    if modal_gone or on_profile:
+                                        print(f"🎉 Employment LWD updated to {day_val} {month_display} {year_val}!")
+                                        await asyncio.sleep(1)
+                                        self.state.task_complete = True
+                                        break
+                                    
+                                    print(f"      ⚠️ Save verify {verify_attempt + 1}/3: modal still open, clicking Save again...")
+                                    await asyncio.sleep(1)
+                                    save_retry = await self._page.evaluate("""() => {
+                                        const selectors = [
+                                            '#submitEmployment',
+                                            'button[type="submit"]',
+                                            'button.btn-dark-ot',
+                                            'button.waves-effect'
+                                        ];
+                                        for (let sel of selectors) {
+                                            const btn = document.querySelector(sel);
+                                            if (btn && btn.offsetParent !== null) {
+                                                btn.scrollIntoView({block: 'center'});
+                                                btn.click();
+                                                return 'SAVE_RECLICKED: ' + sel;
+                                            }
+                                        }
+                                        const allBtns = document.querySelectorAll('button');
+                                        for (let btn of allBtns) {
+                                            if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
+                                                btn.scrollIntoView({block: 'center'});
+                                                btn.click();
+                                                return 'SAVE_RECLICKED: text-match';
+                                            }
+                                        }
+                                        return 'NO_SAVE_BUTTON';
+                                    }""")
+                                    print(f"      📜 Save retry: {save_retry}")
+                                    await asyncio.sleep(3)
+                                else:
+                                    print("      ⚠️ Save may not have taken effect after 3 retries")
                                     self.state.task_complete = True
                                     break
-                                print("      ⚠️ Page didn't reload to profile. Will retry...")
+                            else:
+                                print(f"      ⚠️ Could not find Save button: {save_result}")
+                            
+                            break
                             
                     except Exception as e:
                         print(f"⚠️ Employment LWD update error: {e}")
@@ -4801,6 +4865,12 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(2, 3))  # Wait for modal to open
                     continue
                 
+                # Instahyre: Modal closed (post-apply or blocked modal)
+                if 'INSTAHYRE_MODAL_CLOSED' in result:
+                    print("   📜 Instahyre: Modal closed, continuing...")
+                    await asyncio.sleep(random.uniform(1, 2))
+                    continue
+                
                 # Instahyre: Modal closed after success
                 if 'INSTAHYRE_MODAL_CLOSED_SUCCESS' in result:
                     print("✅ Application confirmed, looking for next job...")
@@ -4815,15 +4885,33 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
+                # Instahyre: All visible jobs already applied — scrolling for more
+                if 'INSTAHYRE_ALL_APPLIED_SCROLLING' in result:
+                    print("   📜 All visible jobs already applied — scrolling for more...")
+                    await asyncio.sleep(random.uniform(2, 3))
+                    continue
+                
                 # Instahyre: Other actions (scrolling, etc.)
                 if 'INSTAHYRE_' in result and 'instahyre.com' in current_url:
                     print(f"   📜 Instahyre: {result}")
+                    self._instahyre_no_action_count = 0  # Reset on any action
                     await asyncio.sleep(random.uniform(1, 2))
+                    continue
+                
+                # Instahyre: NO_ACTION loop detection — stop task if no jobs found
+                if result == 'NO_ACTION' and 'instahyre.com' in current_url:
+                    self._instahyre_no_action_count += 1
+                    print(f"   ⚠️ Instahyre NO_ACTION ({self._instahyre_no_action_count}/8)")
+                    if self._instahyre_no_action_count >= 8:
+                        applied = getattr(self, '_instahyre_apply_count', 0)
+                        print(f"📭 Instahyre: No jobs available after 8 attempts. Applied to {applied} jobs. Ending task.")
+                        self._instahyre_apply_count = 0
+                        self.state.task_complete = True
+                        break
                     continue
                     
             except Exception as e:
                 print(f"❌ Error: {e}")
-                await self._screenshot_on_error("main_loop_error")
                 self.state.errors.append(str(e))
                 self.metrics['errors_encountered'] += 1
                 if len(self.state.errors) > 5:
@@ -5421,10 +5509,6 @@ class SentinelAgent:
                     if same_question_count >= 3:
                         print(f"⚠️ Stuck on same question ({same_question_count}x): {current_question}")
                         # Take screenshot for debugging
-                        try:
-                            await self._screenshot_on_error("chatbot_stuck")
-                        except:
-                            pass
                         return False
                 else:
                     same_question_count = 0
@@ -5622,11 +5706,48 @@ class SentinelAgent:
                 const findBestMatch = (answer, options) => {{
                     if (!answer || !options) return null;
                     const ans = answer.toLowerCase();
+                    
+                    // Extract numeric value from answer for range matching
+                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    
+                    let bestOpt = null;
+                    let bestScore = -1;
+                    
                     for (const opt of options) {{
                         const text = (opt.text || opt.label || '').toLowerCase();
-                        if (text.includes(ans) || ans.includes(text)) return opt;
+                        let score = 0;
+                        
+                        // Exact text match (highest priority)
+                        if (text.includes(ans) || ans.includes(text)) {{
+                            score = 100;
+                        }}
+                        // Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
+                        else if (answerNum > 0) {{
+                            const rangeMatch = text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                            if (rangeMatch) {{
+                                const min = parseFloat(rangeMatch[1]);
+                                const max = parseFloat(rangeMatch[2]);
+                                if (answerNum >= min && answerNum <= max) {{
+                                    score = 80;
+                                }}
+                            }}
+                            // Match "X+" patterns (e.g., answer='4' matches option='3+ years')
+                            else {{
+                                const plusMatch = text.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                if (plusMatch && answerNum >= parseFloat(plusMatch[1])) {{
+                                    score = 75;
+                                }}
+                            }}
+                        }}
+                        
+                        if (score > bestScore) {{
+                            bestScore = score;
+                            bestOpt = opt;
+                        }}
                     }}
-                    return null;
+                    
+                    return bestOpt;
                 }};
                 
                 // Helper: Find best matching radio button for experience ranges
@@ -7934,11 +8055,38 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // B. Close success modals
-                    const successIndicators = document.querySelectorAll('.alert-success, .success-message, [class*="success"]');
+                    // A2. Close ANY visible modal/overlay that blocks interaction
+                    // This handles post-apply confirmation dialogs, "already applied" modals, etc.
+                    const allModals = document.querySelectorAll('.modal[style*="display: block"], .modal.show, .modal.fade.in, [class*="modal"].show, .modal-backdrop, [class*="overlay"][class*="show"]');
+                    for (const modal of allModals) {{
+                        if (modal.offsetParent !== null || modal.classList.contains('modal-backdrop')) {{
+                            // Try close button first
+                            const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"]');
+                            if (closeBtn) {{
+                                closeBtn.click();
+                                return 'INSTAHYRE_MODAL_CLOSED';
+                            }}
+                        }}
+                    }}
+                    // Also try closing via Bootstrap jQuery if available
+                    const openModal = document.querySelector('.modal.show, .modal.in');
+                    if (openModal && openModal.offsetParent !== null) {{
+                        // Click the modal backdrop to dismiss
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {{
+                            backdrop.click();
+                            return 'INSTAHYRE_MODAL_CLOSED';
+                        }}
+                        // Last resort: press Escape
+                        document.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Escape', keyCode: 27, bubbles: true }}));
+                        return 'INSTAHYRE_MODAL_CLOSED';
+                    }}
+                    
+                    // B. Close success modals / alerts
+                    const successIndicators = document.querySelectorAll('.alert-success, .success-message, [class*="success"], .alert-info');
                     for (const indicator of successIndicators) {{
                         if (indicator && indicator.offsetParent !== null) {{
-                            const closeBtn = indicator.querySelector('button.close, .close, [data-dismiss="modal"]') ||
+                            const closeBtn = indicator.querySelector('button.close, .close, [data-dismiss="modal"], [data-dismiss="alert"]') ||
                                             document.querySelector('.modal button.close, .modal .close');
                             if (closeBtn) {{
                                 closeBtn.click();
@@ -7948,12 +8096,15 @@ class SentinelAgent:
                     }}
                     
                     // C. Click "View" on Job Cards - prioritized selector patterns from DOM inspection
-                    // Primary: Exact selector from user's DOM screenshot
+                    // Skip buttons that say "Applied" or "Already Applied"
                     const primaryViewBtn = document.querySelector('button#interested-btn.btn-success:not([disabled])');
                     if (primaryViewBtn && primaryViewBtn.offsetParent !== null) {{
-                        primaryViewBtn.scrollIntoView({{ block: 'center' }});
-                        primaryViewBtn.click();
-                        return 'INSTAHYRE_VIEW_CLICKED';
+                        const pText = (primaryViewBtn.innerText || '').toLowerCase();
+                        if (!pText.includes('applied') && !pText.includes('saved')) {{
+                            primaryViewBtn.scrollIntoView({{ block: 'center' }});
+                            primaryViewBtn.click();
+                            return 'INSTAHYRE_VIEW_CLICKED';
+                        }}
                     }}
                     
                     // Secondary: Multiple fallback patterns
@@ -7971,7 +8122,7 @@ class SentinelAgent:
                         const btns = document.querySelectorAll(sel);
                         for (const btn of btns) {{
                             const btnText = (btn.innerText || '').toLowerCase();
-                            if ((btnText.includes('view') || btnText.includes('interested')) && !btn.disabled && btn.offsetParent !== null) {{
+                            if ((btnText.includes('view') || btnText.includes('interested')) && !btn.disabled && btn.offsetParent !== null && !btnText.includes('applied')) {{
                                 btn.scrollIntoView({{ block: 'center' }});
                                 btn.click();
                                 return 'INSTAHYRE_VIEW_CLICKED';
@@ -7979,18 +8130,48 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // D. Check if no more jobs available
+                    // C2. All visible view buttons say "Applied" — scroll down for fresh jobs
+                    const allViewBtns = document.querySelectorAll('button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success');
+                    let allApplied = true;
+                    let visibleCount = 0;
+                    for (const btn of allViewBtns) {{
+                        if (btn.offsetParent !== null) {{
+                            visibleCount++;
+                            const t = (btn.innerText || '').toLowerCase();
+                            if (!t.includes('applied') && !t.includes('saved') && !btn.disabled) {{
+                                allApplied = false;
+                                break;
+                            }}
+                        }}
+                    }}
+                    if (visibleCount > 0 && allApplied) {{
+                        window.scrollBy(0, 800);
+                        return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
+                    }}
+                    
+                    // D. Check if no more jobs available — broad detection
+                    const bodyText = document.body.innerText || '';
                     const noJobsIndicators = [
                         document.querySelector('.no-jobs, .no-results, [class*="empty-state"]'),
-                        document.body.innerText.includes('No matching jobs'),
-                        document.body.innerText.includes('No jobs found')
+                        bodyText.includes('No matching jobs'),
+                        bodyText.includes('No jobs found'),
+                        bodyText.includes('No opportunities'),
+                        bodyText.includes('No results found'),
+                        bodyText.includes('0 opportunities'),
                     ];
                     if (noJobsIndicators.some(Boolean)) {{
                         return 'INSTAHYRE_NO_MORE_JOBS';
                     }}
                     
+                    // D2. Check if results page has zero actual job cards (not generic .card elements)
+                    const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card');
+                    const viewBtnsExist = document.querySelectorAll('button#interested-btn, button.button-interested').length > 0;
+                    if (jobCards.length === 0 && !viewBtnsExist) {{
+                        // On the results page but no job cards at all — no jobs match
+                        return 'INSTAHYRE_NO_MORE_JOBS';
+                    }}
+                    
                     // E. Scroll to load more jobs if needed
-                    const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], .card');
                     if (jobCards.length > 0) {{
                         const lastCard = jobCards[jobCards.length - 1];
                         lastCard.scrollIntoView({{ block: 'end' }});

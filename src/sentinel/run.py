@@ -112,6 +112,8 @@ class Browser:
             '--ignore-certificate-errors',
             '--ignore-ssl-errors',
             '--disable-gpu',
+            '--disable-extensions',
+            '--no-first-run',
         ]
         
         final_user_data_dir = self.user_data_dir
@@ -186,7 +188,7 @@ class Browser:
                 # but same PID marker) — macOS holds GPU/display handles even after
                 # context.close(), causing 'Browser window not found' for the next launch.
                 self._kill_all_sentinel_chrome()
-                await asyncio.sleep(2)  # Let macOS release GPU/display resources
+                await asyncio.sleep(4)  # Let macOS release GPU/display resources
                 clean_lock_files(final_user_data_dir)
                 return await self.playwright.chromium.launch_persistent_context(
                     user_data_dir=final_user_data_dir,
@@ -194,39 +196,41 @@ class Browser:
                     headless=self.headless,
                     args=args,
                     ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
-                    viewport=None
+                    viewport=None,
+                    handle_sigterm=False,
+                    handle_sigint=False,
                 )
 
             try:
                 self.context = await _attempt_launch()
             except Exception as e:
                 print(f"⚠️ Failed to launch persistent context with Chrome: {e}")
-                print("🔄 Retry 1/2: killing stale Chrome, resetting Playwright pipe...")
-                await asyncio.sleep(5)
-                # Reset the shared Playwright instance — a stale pipe is the most
-                # common cause of the 'Browser window not found' / exitCode=0 error.
+                print("🔄 Retry 1/3: killing stale Chrome, resetting Playwright pipe...")
+                await asyncio.sleep(8)
                 self.playwright = await reset_shared_playwright()
                 try:
                     self.context = await _attempt_launch()
                     print("✅ Retry 1 succeeded with Chrome persistent context!")
                 except Exception as e2:
-                    # Second retry: longer sleep + full Playwright reset to let macOS
-                    # release any lingering profile locks from the previous task.
                     print(f"⚠️ Retry 1 failed: {e2}")
-                    print("🔄 Retry 2/2: waiting 15s, force-killing Chrome, full Playwright reset...")
+                    print("🔄 Retry 2/3: waiting 15s, force-killing Chrome, full Playwright reset...")
                     await asyncio.sleep(15)
                     self.playwright = await reset_shared_playwright()
                     try:
                         self.context = await _attempt_launch()
                         print("✅ Retry 2 succeeded with Chrome persistent context!")
                     except Exception as e3:
-                        # Do NOT fall back to a cookie-less session for tasks that require
-                        # authentication (LinkedIn, Instahyre, Naukri). A profile-less
-                        # launch will always hit the login page and waste the task slot.
-                        raise RuntimeError(
-                            f"Chrome persistent context failed after 2 retries + Playwright resets. "
-                            f"Check that no other Chrome instance is using the profile. Error: {e3}"
-                        )
+                        print(f"⚠️ Retry 2 failed: {e3}")
+                        print("🔄 Retry 3/3: waiting 25s, full reset...")
+                        await asyncio.sleep(25)
+                        self.playwright = await reset_shared_playwright()
+                        try:
+                            self.context = await _attempt_launch()
+                            print("✅ Retry 3 succeeded with Chrome persistent context!")
+                        except Exception as e4:
+                            raise RuntimeError(
+                                f"Chrome persistent context failed after 3 retries. Error: {e4}"
+                            )
         else:
             self.browser = await self.playwright.chromium.launch(
                 executable_path=self.executable_path,
@@ -342,6 +346,19 @@ class Browser:
         except Exception as e:
             print(f"   ⚠️ _kill_all_sentinel_chrome error: {e}")
 
+        # Also kill any lingering Chrome automation processes from previous runs
+        # that may hold GPU/display handles even though they don't match our marker.
+        try:
+            result = subprocess.run(
+                ['pgrep', '-f', 'Google Chrome.*--enable-automation'],
+                capture_output=True, text=True
+            )
+            pids = [int(p) for p in result.stdout.split() if p.strip().isdigit()]
+            if pids:
+                Browser._kill_pids(pids, "stale automation Chrome", timeout)
+        except Exception:
+            pass
+
     async def stop(self):
         # 1. Close all pages first
         if self.context:
@@ -416,6 +433,40 @@ async def main():
     cycle_count = 0
     linkedin_rate_limit_until = None  # Track rate limit at runner level
     naukri_rate_limit_until = None  # Track Naukri rate limit
+    
+    async def _warmup_playwright_pipe():
+        """Launch and immediately close a disposable NON-persistent Chrome to
+        warm up the Playwright→Chrome connection on macOS. Using browser.launch()
+        (not launch_persistent_context) exercises a different internal code path
+        that is immune to the --remote-debugging-pipe race condition."""
+        import subprocess
+        pw = await get_shared_playwright()
+        args = [
+            '--no-sandbox', '--disable-blink-features=AutomationControlled',
+            '--disable-gpu', '--disable-extensions', '--no-first-run',
+            '--start-maximized', '--ignore-certificate-errors',
+        ]
+        try:
+            br = await pw.chromium.launch(
+                executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                headless=False, args=args,
+                ignore_default_args=["--enable-unsafe-swiftshader"],
+            )
+            await br.close()
+            print("🔥 Playwright warm-up complete (non-persistent)")
+        except Exception:
+            await reset_shared_playwright()
+            print("🔥 Playwright warm-up done (reset)")
+        # Kill any Chrome that may linger after warm-up
+        try:
+            subprocess.run(['pkill', '-f', 'Google Chrome.*--enable-automation'],
+                           capture_output=True, timeout=5)
+        except Exception:
+            pass
+        await asyncio.sleep(3)
+    
+    print("🔥 Warming up Playwright pipe...")
+    await _warmup_playwright_pipe()
     
     while True:  # INFINITE LOOP
         cycle_count += 1

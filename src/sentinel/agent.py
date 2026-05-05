@@ -7456,8 +7456,37 @@ class SentinelAgent:
                                     clickedCount = 1;
                                     debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
                                 }} else {{
-                                    // Serving Notice Period not found - don't select anything and log for debugging
-                                    debugLog.push("NOTICE_CB_ERROR: Serving Notice Period not found. Available: " + allLabels.join(", "));
+                                    // Serving Notice Period not found - select next best option
+                                    // Priority: 1 month > 15 days or less > 2 month > 3 month > first available
+                                    const fallbackPriority = [
+                                        (l) => l.includes('1 month') || l === '1month',
+                                        (l) => l.includes('15 day') || l.includes('15days') || l.includes('less'),
+                                        (l) => l.includes('2 month') || l === '2month',
+                                        (l) => l.includes('3 month') || l === '3month',
+                                    ];
+                                    let fallbackCheckbox = null;
+                                    for (const matcher of fallbackPriority) {{
+                                        fallbackCheckbox = checkboxLabels.find(item => matcher(item.lowerLabel));
+                                        if (fallbackCheckbox) break;
+                                    }}
+                                    // Last resort: first available option
+                                    if (!fallbackCheckbox && checkboxLabels.length > 0) {{
+                                        fallbackCheckbox = checkboxLabels[0];
+                                    }}
+                                    if (fallbackCheckbox && !fallbackCheckbox.cb.checked) {{
+                                        fallbackCheckbox.cb.click();
+                                        if (!fallbackCheckbox.cb.checked) {{
+                                            fallbackCheckbox.cb.checked = true;
+                                            fallbackCheckbox.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        }}
+                                        clickedCount = 1;
+                                        debugLog.push("NOTICE_CB_FALLBACK: " + fallbackCheckbox.labelText + " (Serving Notice Period not found)");
+                                    }} else if (fallbackCheckbox && fallbackCheckbox.cb.checked) {{
+                                        clickedCount = 1;
+                                        debugLog.push("NOTICE_CB_FALLBACK: " + fallbackCheckbox.labelText + " (already checked)");
+                                    }} else {{
+                                        debugLog.push("NOTICE_CB_ERROR: No options found. Available: " + allLabels.join(", "));
+                                    }}
                                 }}
                             }} else if (isExperienceQuestion) {{
                                 // For experience questions with checkboxes, select only the best matching range
@@ -7472,22 +7501,49 @@ class SentinelAgent:
                                     let score = 0;
                                     const labelLower = item.lowerLabel;
                                     
-                                    // Look for year ranges like "3 - 5 years", "1-2 years", etc.
+                                    // Look for year ranges like "3 - 5 years", "1-2 years", "5-6 years", etc.
                                     const rangeMatch = labelLower.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
                                     if (rangeMatch) {{
                                         const min = parseFloat(rangeMatch[1]);
                                         const max = parseFloat(rangeMatch[2]);
                                         
-                                        // If target falls within range, high score
+                                        // If target falls within range, highest score
                                         if (targetExperience >= min && targetExperience <= max) {{
                                             score = 100;
                                         }}
-                                        // If target is close to range, medium score
+                                        // Within 1 year of either bound
                                         else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {{
                                             score = 80;
                                         }}
+                                        // Within 2 years of either bound (catches "5-6 years" when target=3.8)
+                                        else if (Math.abs(targetExperience - max) <= 2 || Math.abs(targetExperience - min) <= 2) {{
+                                            score = 60;
+                                        }}
+                                        // Further away — score inversely proportional to distance from lower bound
+                                        else {{
+                                            score = Math.max(1, 40 - Math.floor(Math.abs(targetExperience - min)));
+                                        }}
                                     }}
-                                    // Look for single year values
+                                    // Handle open-ended formats: ">7 years", "7+ years", "more than 7", "above 7"
+                                    else if (labelLower.match(/[>+]|more than|above|over/)) {{
+                                        const numMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
+                                        if (numMatch) {{
+                                            const threshold = parseFloat(numMatch[1]);
+                                            // Target exceeds threshold — exact match
+                                            if (targetExperience > threshold) {{
+                                                score = 100;
+                                            }}
+                                            // Target close below threshold — decent fallback
+                                            else if (threshold - targetExperience <= 2) {{
+                                                score = 45;
+                                            }}
+                                            // Further below — low but non-zero so it can still win
+                                            else {{
+                                                score = Math.max(1, 20 - Math.floor(threshold - targetExperience));
+                                            }}
+                                        }}
+                                    }}
+                                    // Look for single year values like "3 years", "5 years"
                                     else {{
                                         const yearMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
                                         if (yearMatch) {{
@@ -7496,6 +7552,7 @@ class SentinelAgent:
                                             if (diff <= 0.5) score = 90;
                                             else if (diff <= 1) score = 70;
                                             else if (diff <= 2) score = 50;
+                                            else score = Math.max(1, 30 - Math.floor(diff));
                                         }}
                                     }}
                                     
@@ -7505,7 +7562,7 @@ class SentinelAgent:
                                     }}
                                 }}
                                 
-                                // Click only the best matching checkbox
+                                // Click the best matching checkbox (threshold lowered — always pick closest)
                                 if (bestCheckbox && bestScore >= 50 && !bestCheckbox.cb.checked) {{
                                     bestCheckbox.cb.click();
                                     if (!bestCheckbox.cb.checked) {{
@@ -7518,8 +7575,22 @@ class SentinelAgent:
                                     clickedCount = 1;
                                     debugLog.push("EXP_CB: " + bestCheckbox.labelText + " (already checked)");
                                 }} else {{
-                                    // No good match found - log for debugging
-                                    debugLog.push("EXP_CB_ERROR: No matching experience range found. Available: " + allLabels.join(", "));
+                                    // No option met threshold — fall back to closest available (never loop)
+                                    const fallbackCb = bestCheckbox || (checkboxLabels.length > 0 ? checkboxLabels[0] : null);
+                                    if (fallbackCb && !fallbackCb.cb.checked) {{
+                                        fallbackCb.cb.click();
+                                        if (!fallbackCb.cb.checked) {{
+                                            fallbackCb.cb.checked = true;
+                                            fallbackCb.cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        }}
+                                        clickedCount = 1;
+                                        debugLog.push("EXP_CB_FALLBACK: " + fallbackCb.labelText + " (best available, score: " + bestScore + ")");
+                                    }} else if (fallbackCb && fallbackCb.cb.checked) {{
+                                        clickedCount = 1;
+                                        debugLog.push("EXP_CB_FALLBACK: " + fallbackCb.labelText + " (already checked)");
+                                    }} else {{
+                                        debugLog.push("EXP_CB_ERROR: No options found. Available: " + allLabels.join(", "));
+                                    }}
                                 }}
                             }} else if (isProgrammingLanguageQuestion) {{
                                 // For programming language questions, select ALL options except "Other" and "Skip"

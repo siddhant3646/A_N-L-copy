@@ -291,6 +291,14 @@ KNOWN_QA_PATTERNS = {
     '730 days thereafter': 'Yes',
     'up to 730 days': 'Yes',
     'for up to 730 days': 'Yes',
+    '365 days': 'Yes',
+    '365 days thereafter': 'Yes',
+    'up to 365 days': 'Yes',
+    'for up to 365 days': 'Yes',
+    'black duck has my consent': 'Yes',
+    'black duck consent': 'Yes',
+    'has my consent to collect': 'Yes',
+    'has my consent to collect store': 'Yes',
     'highradius has my consent': 'Yes',
     'highradius consent': 'Yes',
     'highradius data consent': 'Yes',
@@ -1479,10 +1487,35 @@ KNOWN_QA_PATTERNS = {
     'accept privacy policy': 'Yes',
     
     # Job Applicant Data Privacy Notice (dropdown selection - "Acknowledge")
+    # Also covers checkbox variants where the label IS the acknowledgement text
     'job applicant data privacy notice': 'Acknowledge',
     'data privacy notice': 'Acknowledge',
     'applicant data privacy notice': 'Acknowledge',
     'applicant privacy notice': 'Acknowledge',
+    # Generic "I Acknowledge" / "I certify" checkbox/radio patterns
+    'i acknowledge': 'Yes',
+    'i acknowledge that': 'Yes',
+    'i acknowledge and agree': 'Yes',
+    'acknowledge and agree': 'Yes',
+    'i hereby acknowledge': 'Yes',
+    'hereby acknowledge': 'Yes',
+    'acknowledge the above': 'Yes',
+    'acknowledge receipt': 'Yes',
+    'acknowledge that i have read': 'Yes',
+    'i have read and acknowledge': 'Yes',
+    'read and acknowledge': 'Yes',
+    'i certify': 'Yes',
+    'i certify that': 'Yes',
+    'i hereby certify': 'Yes',
+    'hereby certify': 'Yes',
+    'i understand and agree': 'Yes',
+    'understand and agree': 'Yes',
+    'i confirm and agree': 'Yes',
+    'confirm and agree': 'Yes',
+    'i have read and understood': 'Yes',
+    'read and understood': 'Yes',
+    'i have reviewed and agree': 'Yes',
+    'reviewed and agree': 'Yes',
     
     # Client/Partner/Competitor employment questions → always "No"
     'are you currently employed by a client, partner, or competitor': 'No',
@@ -6654,13 +6687,38 @@ class SentinelAgent:
                             console.log('Checkbox label text found:', labelText.substring(0, 100));
                             const lowerLabel = labelText.toLowerCase();
                             
-                            // Check if this is a privacy/consent checkbox
+                            // Check if this is a privacy/consent/acknowledge checkbox
                             const isConsentCheckbox = lowerLabel.includes('consent') || 
                                                      lowerLabel.includes('privacy') || 
                                                      lowerLabel.includes('agree') ||
                                                      lowerLabel.includes('declare') ||
                                                      lowerLabel.includes('i consent') ||
-                                                     lowerLabel.includes('read and agree');
+                                                     lowerLabel.includes('has my consent') ||
+                                                     lowerLabel.includes('read and agree') ||
+                                                     lowerLabel.includes('collect, store') ||
+                                                     lowerLabel.includes('collect store and process') ||
+                                                     lowerLabel.includes('for employment') ||
+                                                     lowerLabel.includes('days thereafter') ||
+                                                     lowerLabel.includes('365 days') ||
+                                                     lowerLabel.includes('730 days') ||
+                                                     lowerLabel.includes('1825 days') ||
+                                                     lowerLabel.includes('considering me for employment') ||
+                                                     // Acknowledge / Certify variants
+                                                     lowerLabel.includes('acknowledge') ||
+                                                     lowerLabel.includes('i acknowledge') ||
+                                                     lowerLabel.includes('hereby acknowledge') ||
+                                                     lowerLabel.includes('i certify') ||
+                                                     lowerLabel.includes('hereby certify') ||
+                                                     lowerLabel.includes('i confirm') ||
+                                                     lowerLabel.includes('i understand and agree') ||
+                                                     lowerLabel.includes('i have read and') ||
+                                                     lowerLabel.includes('read and understood') ||
+                                                     lowerLabel.includes('read and acknowledge') ||
+                                                     // Data privacy notice labels
+                                                     lowerLabel.includes('data privacy notice') ||
+                                                     lowerLabel.includes('privacy notice') ||
+                                                     lowerLabel.includes('applicant data privacy') ||
+                                                     lowerLabel.includes('job applicant data');
                             
                             let shouldCheck = isConsentCheckbox;
                             

@@ -123,8 +123,19 @@
             default: 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals'
         },
         preferred_role: {
-            patterns: ['preferred position', 'frontend/backend', 'frontend or backend', 'preferred role', 'which role'],
+            // NOTE: 'role' is intentionally NOT listed here as a bare pattern to
+            // avoid substring-matching e.g. "current roles", "AI tools in your current roles".
+            // Only specific full-phrase variants are listed.
+            patterns: ['preferred position', 'frontend/backend', 'frontend or backend', 'preferred role', 'which role', 'preferred domain'],
             default: 'Backend'
+        },
+        django_skill: {
+            patterns: ['django is a must have skill', 'have you built and deployed applications using same', 'have you built and deployed applications using django', 'django applications', 'django deployment', 'django experience', 'built with django', 'django skill'],
+            default: 'Yes, I have built and deployed Django-based web applications. While my primary stack is Java/Spring Boot and Node.js, I have hands-on experience with Django for RESTful API development, ORM-based database management, and deploying applications on cloud platforms like AWS.'
+        },
+        ai_tools_usage: {
+            patterns: ['how and what ai tools are you using in your current roles', 'how and what ai tools are you using', 'what ai tools are you using in your current role', 'ai tools in current role', 'what ai tools do you use', 'which ai tools do you use', 'ai tools you are using', 'ai tools currently using', 'how and what ai tools', 'ai tools are you using in your current'],
+            default: 'I actively use GitHub Copilot for AI-assisted code completion, refactoring suggestions, and boilerplate generation. I also use ChatGPT and Claude for debugging complex issues, generating unit tests, writing technical documentation, and researching architectural patterns. Additionally, I use AWS CodeWhisperer for cloud-specific code suggestions.'
         },
         referral: {
             patterns: ['referred for this position', 'referred by', 'employee referral', 'encouraged to apply'],
@@ -161,16 +172,31 @@
     };
     
     // Helper: Match question text against QA patterns
+    // Uses longest-match-first to avoid short patterns shadowing more specific ones
     function matchQuestionToPattern(questionText) {
         const lowerText = questionText.toLowerCase();
         
+        let bestMatch = null;
+        let bestPatternLength = 0;
+        
         for (const [category, data] of Object.entries(QA_PATTERNS)) {
             for (const pattern of data.patterns) {
-                if (lowerText.includes(pattern.toLowerCase())) {
-                    console.log('Matched question to pattern:', category, '- Pattern:', pattern);
-                    return { category, data };
+                const lowerPattern = pattern.toLowerCase();
+                if (lowerText.includes(lowerPattern)) {
+                    // Prefer the longest (most specific) pattern match to avoid
+                    // short patterns like 'role' matching 'current roles'
+                    if (lowerPattern.length > bestPatternLength) {
+                        bestPatternLength = lowerPattern.length;
+                        bestMatch = { category, data };
+                        console.log('Pattern candidate:', category, '- Pattern:', pattern, '(len:', lowerPattern.length, ')');
+                    }
                 }
             }
+        }
+        
+        if (bestMatch) {
+            console.log('Best match chosen:', bestMatch.category, '(pattern len:', bestPatternLength, ')');
+            return bestMatch;
         }
         
         return null;

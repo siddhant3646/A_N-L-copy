@@ -1759,6 +1759,35 @@ KNOWN_QA_PATTERNS = {
     'face to face interview in pune': 'Yes',
     'f2f interview in pune': 'Yes',
     'are you available for in person interview': 'Yes',
+
+    # Django Skill Question
+    'django is a must have skill, have you built and deployed applications using same': 'Yes, I have built and deployed Django-based web applications. While my primary stack is Java/Spring Boot and Node.js, I have hands-on experience with Django for RESTful API development, ORM-based database management, and deploying applications on cloud platforms like AWS.',
+    'have you built and deployed applications using django': 'Yes, I have built and deployed Django-based web applications with RESTful APIs, ORM integration, and AWS cloud deployment.',
+    'django applications': 'Yes, I have experience building and deploying Django applications.',
+    'django deployment': 'Yes, deployed Django applications on AWS with Docker containers.',
+    'django experience': 'Yes',
+    'built with django': 'Yes',
+    'django skill': 'Yes',
+    'django': 'Yes',
+
+    # Pune Local Candidate Questions
+    'we are only looking for local candidate in pune, are you based in pune': 'No',
+    'only looking for local candidate in pune': 'No',
+    'local candidate in pune': 'No',
+    'are you a local candidate in pune': 'No',
+    'are you based in pune': 'No',
+    'candidate in pune': 'No',
+    'local pune candidate': 'No',
+
+    # AI Tools Currently in Use
+    'how and what ai tools are you using in your current roles': 'I actively use GitHub Copilot for AI-assisted code completion, refactoring suggestions, and boilerplate generation. I also use ChatGPT and Claude for debugging complex issues, generating unit tests, writing technical documentation, and researching architectural patterns. Additionally, I use AWS CodeWhisperer for cloud-specific code suggestions.',
+    'how and what ai tools are you using': 'I use GitHub Copilot for code completion, ChatGPT and Claude for debugging and documentation, and AWS CodeWhisperer for cloud-specific suggestions.',
+    'what ai tools are you using in your current role': 'GitHub Copilot, ChatGPT, Claude, and AWS CodeWhisperer for code generation, debugging, and documentation.',
+    'ai tools in current role': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
+    'what ai tools do you use': 'GitHub Copilot for code completion and ChatGPT/Claude for problem-solving, debugging, and documentation.',
+    'which ai tools do you use': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
+    'ai tools you are using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
+    'ai tools currently using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
 }
 
 FUZZY_MATCH_THRESHOLD = 0.7  # Increased from 0.6 for better accuracy

@@ -51,8 +51,8 @@
         "your cctc"
       ],
       "category": "salary",
-      "default": "13.5 LPA",
-      "numeric_default": "13.5"
+      "default": "15.3 LPA",
+      "numeric_default": "15.3"
     },
     "expected_salary": {
       "patterns": [
@@ -68,8 +68,8 @@
         "your ectc"
       ],
       "category": "salary",
-      "default": "20 LPA",
-      "numeric_default": "20"
+      "default": "24 LPA",
+      "numeric_default": "24"
     },
     "notice_period": {
       "patterns": [

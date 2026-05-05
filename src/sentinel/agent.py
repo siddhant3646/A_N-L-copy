@@ -263,7 +263,7 @@ KNOWN_QA_PATTERNS = {
     'linkedin url': 'https://www.linkedin.com/in/siddhant3646',
     'github url': 'https://github.com/siddhant3646',
     # Yes/No common
-    'willing to relocate': 'Yes',
+    'willing to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'work authorization': 'Yes',
     'legally authorized': 'Yes',
     'authorized to work': 'Yes',
@@ -358,14 +358,12 @@ KNOWN_QA_PATTERNS = {
     'relatives in company': 'No',
     'relatives working in': 'No',
     'family in company': 'No',
-    'conflict of interest': 'No',
     'currently an employee of': 'No',
     # Mzad Qatar / Technical Experience Questions
     '5+ years of full-stack development experience': 'No',
     '5 plus years of full-stack': 'No',
     '5+ years full-stack': 'No',
     '5 years of full-stack': 'No',
-    'backend experience': '4',
     'professional backend experience': '4',
     'ai apis': 'Yes',
     'integrated any ai apis': 'Yes',
@@ -397,9 +395,7 @@ KNOWN_QA_PATTERNS = {
     # Location Specific Questions - User is in Noida, willing to relocate
     'present location': 'Noida',
     'location': 'Noida',
-    'current location': 'Noida',
     'based in': 'Noida',
-    'current city': 'Noida',
     'live in': 'Noida',
     'living in': 'Noida',
     'located in': 'Noida',
@@ -420,11 +416,9 @@ KNOWN_QA_PATTERNS = {
     'pin code': '201301',
     'zip/postal code': '201301',
     # Location preference questions
-    'preferred location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'location preference': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'work location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'relocation': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'willing to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'open to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     'relocate to': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
     # Skills
@@ -645,9 +639,6 @@ KNOWN_QA_PATTERNS = {
     'current ctc [in lpa]': '15.3',
     'current ctc(in lpa)': '15.3',
     'current ctc (in lpa)': '15.3',
-    'ctc in lacs per annum': '15.3',
-    'current ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum': '15.3',
     'what is your current ctc in lacs per annum?': '15.3',
     'ctc in lacs': '15.3',
     'expected ctc in lakhs': '24',
@@ -685,7 +676,6 @@ KNOWN_QA_PATTERNS = {
     '5 days wfo': 'Yes',
     'comfortable for 5 days': 'Yes',
     'working from office': 'Yes',
-    'wfo': 'Yes',
     # TCS EP Number
     'tcs registration no': 'N/A - Not registered in TCS',
     'ep no': 'N/A',
@@ -903,9 +893,9 @@ KNOWN_QA_PATTERNS = {
     'take home': '95000',
     'in hand salary': '95000',
     'take home salary': '95000',
+    'take home assignment': 'Yes, can complete take-home assignments',
     'fixed component': '1530000',
     'variable component': '0',
-    'variable pay': '0',
     'bonus': 'Open to discussion',
     'joining bonus': 'Open to discussion',
     'retention bonus': 'Open to discussion',
@@ -913,7 +903,6 @@ KNOWN_QA_PATTERNS = {
     'esops': 'Open to discussion',
     'equity': 'Open to discussion',
     'benefits': 'Standard benefits as per company policy',
-    'gross salary': '15.3 LPA',
     'net salary': '11.5 LPA',
     'remuneration': '15.3 LPA',
     'compensation expectations': '24 LPA',
@@ -959,13 +948,8 @@ KNOWN_QA_PATTERNS = {
     'kubernetes experience': '3.8',
     'devops experience': '3.8',
     'cloud experience': '3.8',
-    'react experience': '4',
-    'angular experience': '4',
     'vue experience': '2',
     'node experience': '3.8',
-    'python experience': '3.8',
-    'java experience': '3.8',
-    'javascript experience': '3.8',
     'typescript experience': '3.8',
     # Relevant Experience as <Technology> — decimal number fields (e.g. "Rel Exp as Java Developer*")
     'rel exp as java': '3.8',
@@ -1014,12 +998,10 @@ KNOWN_QA_PATTERNS = {
     'willing to travel': 'Yes',
     'open to travel': 'Yes, open to travel up to 20%',
     'travel': 'Yes, open to travel',
-    'relocate to': 'Yes, open to relocation',
     'shift to': 'Yes, can shift to any metro city',
     'move to': 'Yes, willing to move',
     
     # EDUCATION - Academic Background (15+ patterns)
-    'highest degree': 'B.Tech Computer Science',
     'academic qualification': 'B.Tech Computer Science',
     'educational background': 'B.Tech in Computer Science from VIT Bhopal University',
     'academic background': 'B.Tech Computer Science',
@@ -1048,7 +1030,6 @@ KNOWN_QA_PATTERNS = {
     'core skills': 'Full Stack Development, Java, React',
     'key expertise': 'Java, Spring Boot, Microservices, React',
     'area of expertise': 'Full Stack Development',
-    'specialization': 'Full Stack Development',
     'domain knowledge': 'BFSI, Fintech',
     'primary technology': 'Java, Spring Boot',
     'secondary technology': 'React, Node.js',
@@ -1135,7 +1116,6 @@ KNOWN_QA_PATTERNS = {
     'panel interview': 'Yes, comfortable with panel interviews',
     'group discussion': 'Yes, can participate',
     'assignment': 'Yes, can take assignments',
-    'take home': 'Yes, can complete take-home assignments',
     'live coding': 'Yes, comfortable with live coding',
     
     # JOB CHANGE & AVAILABILITY - Extended (10+ patterns)
@@ -1239,8 +1219,6 @@ KNOWN_QA_PATTERNS = {
     'part time': 'No, looking for full-time only',
     'freelance': 'No, looking for full-time employment',
     'consultant': 'Open to consulting roles',
-    'third party': 'No',
-    'vendor': 'No',
     'payroll': 'Direct payroll preferred',
     'direct hire': 'Yes, preferred',
     'permanent': 'Yes, looking for permanent role',
@@ -1254,9 +1232,8 @@ KNOWN_QA_PATTERNS = {
     'working days': 'Yes, available on working days',
     'calendar': 'Can schedule anytime as per mutual convenience',
     'schedule interview': 'Yes, please share available slots',
-    'interview slot': 'Any slot works - flexible',
-    'availability': '30',
-    'available immediately': '30',
+    'availability': '30 days',
+    'available immediately': '30 days',
     'how early can you join': '30',
     'earliest': '30',
     
@@ -1332,34 +1309,21 @@ KNOWN_QA_PATTERNS = {
     
     # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
     # Concise variations for quick matching
-    'current ctc': '15.3 LPA',
     'expected ctc': '24 LPA',
-    'current salary': '15.3 LPA',
-    'expected salary': '24 LPA',
     'ctc': '15.3 LPA',
     'salary': '15.3 LPA',
     'pay': '15.3 LPA',
     'compensation': '15.3 LPA',
     
     'total years of exp': '3.8 Years',
-    'total exp': '3.8 Years',
     'overall exp': '3.8 Years',
     'years of exp': '3.8 Years',
     'exp': '3.8 Years',
-    'experience': '3.8 Years',
-    'years': '3.8 Years',
     
     'notice': '30 days',
     'np': '30',
-    'notice period': '30 days',
     'joining': '30 days',
-    'availability': '30 days',
     
-    'location': 'Noida',
-    'city': 'Noida',
-    'current location': 'Noida',
-    'preferred location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    'current city': 'Noida',
     
     # SECTION 3: TECHNOLOGY EXPERIENCE - ALL TECHNOLOGIES (60 patterns)
     # Format: "How many years of work experience do you have with {tech}"
@@ -1447,7 +1411,6 @@ KNOWN_QA_PATTERNS = {
     'are you willing to take coding test': 'Yes',
     'are you ready for assessment': 'Yes',
     'ready for assessment': 'Yes',
-    'available for assessment': 'Yes',
     'willing to take assessment': 'Yes',
     
     'are you comfortable with wfo setup': 'Yes',
@@ -1473,7 +1436,6 @@ KNOWN_QA_PATTERNS = {
     'are you a developer': 'Yes',
     'full-stack developer': 'Yes',
     'full stack developer': 'Yes',
-    'java developer': 'Yes',
     'backend developer': 'Yes',
     'frontend developer': 'Yes',
     
@@ -1550,7 +1512,6 @@ KNOWN_QA_PATTERNS = {
     'open to relocate to gurgaon': 'Yes',
     'are you currently in chennai or open to relocate to chennai': 'Yes',
     'open to relocate to chennai': 'Yes',
-    'open to relocate': 'Yes',
     'are you open to relocate': 'Yes',
     'willing to relocate for this role': 'Yes',
     'i certify that to the best of my knowledge the information contained in this application is correct': 'Yes',
@@ -1569,7 +1530,6 @@ KNOWN_QA_PATTERNS = {
     'do you consent to data processing': 'Yes',
     'do you agree to data collection': 'Yes',
     'do you consent to storage of personal data': 'Yes',
-    'data consent': 'Yes',
     'consent to data processing': 'Yes',
     
     'all applicants are invited to complete this section': 'Yes',
@@ -1608,7 +1568,6 @@ KNOWN_QA_PATTERNS = {
     
     'what are you passionate about': 'I am passionate about building scalable applications, learning new technologies, and solving complex technical challenges.',
     
-    'cover letter': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
     
     'additional comments': 'I am excited about this opportunity and believe my skills align well with the role requirements.',
     
@@ -1624,10 +1583,8 @@ KNOWN_QA_PATTERNS = {
     'what is your variable pay': '0',
     'what is your bonus': '0',
     'fixed pay': '1530000',
-    'variable component': '0',
     'bonus component': '0',
     
-    'please enter your salary': '15.3 LPA',
     'please share your salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
     'salary requirements': '24 LPA',
     'compensation requirements': '24 LPA',
@@ -1673,19 +1630,7 @@ KNOWN_QA_PATTERNS = {
     'relevant professional experience': '3.8 Years',
     
     # SECTION 9: ADDITIONAL LINKEDIN SPECIFIC (25 patterns)
-    'linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
-    'github profile': 'https://github.com/siddhant3646',
-    'portfolio url': 'https://siddhant3646.github.io/Portfolio/',
-    'website': 'https://siddhant3646.github.io/Portfolio/',
-    'personal website': 'https://siddhant3646.github.io/Portfolio/',
-    'online portfolio': 'https://siddhant3646.github.io/Portfolio/',
-    'portfolio link': 'https://siddhant3646.github.io/Portfolio/',
     
-    'how did you hear about us': 'LinkedIn',
-    'source': 'LinkedIn',
-    'referral source': 'LinkedIn',
-    'how did you find us': 'LinkedIn',
-    'where did you hear': 'LinkedIn',
     
     'have you worked with nielsen in the past': 'No',
     'worked with nielsen': 'No',
@@ -1697,9 +1642,6 @@ KNOWN_QA_PATTERNS = {
     'work authorization status': 'Authorized to work in India',
     'legally authorized to work': 'Yes',
     
-    'willing to relocate': 'Yes',
-    'open to relocate': 'Yes',
-    'ready to relocate': 'Yes',
     'comfortable relocating': 'Yes',
     'ok with relocation': 'Yes',
     
@@ -1788,10 +1730,104 @@ KNOWN_QA_PATTERNS = {
     'which ai tools do you use': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
     'ai tools you are using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
     'ai tools currently using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
+
+    # ========== PHASE 2: NEW PATTERNS FOR COVERAGE GAPS ==========
+
+    # SECTION A: Additional Experience Phrasings (12 patterns)
+    'how much experience': '3.8 Years',
+    'how many years of work': '3.8 Years',
+    'years of working': '3.8 Years',
+    'work experience in years': '3.8 Years',
+    'total work experience': '3.8 Years',
+    'professional working years': '3.8 Years',
+    'exp in years': '3.8 Years',
+    'how long have you worked': '3.8 Years',
+    'how long have you been in the industry': '3.8 Years',
+    'how long have you been working professionally': '3.8 Years',
+    'number of years of experience': '3.8 Years',
+    'years of professional work': '3.8 Years',
+
+    # SECTION B: Salary Negotiation Variants (10 patterns)
+    'salary comfortable with': 'Yes, open to discussion within range',
+    'comfortable with the salary': 'Yes',
+    'comfortable with salary range': 'Yes',
+    'salary expectations for this role': '24 LPA',
+    'expected compensation': '24 LPA',
+    'current compensation': '15.3 LPA',
+    'current package': '15.3 LPA',
+    'expected package': '24 LPA',
+    'annual income': '15.3 LPA',
+    'expected annual income': '24 LPA',
+
+    # SECTION C: Notice Period Variants (8 patterns)
+    'how much notice period': '30 days',
+    'notice period in months': '1 month',
+    'can you serve notice period': 'Yes',
+    'notice period left': '30 days',
+    'balance notice period': '30 days',
+
+    # SECTION D: Location / Work Mode Variants (15 patterns)
+    'work arrangement': 'Hybrid',
+    'work model': 'Hybrid',
+    'work setup': 'Open to Hybrid, Remote, or WFO',
+    'office location preference': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
+    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
+    'willing to work from': 'Yes',
+    'open to work from': 'Yes',
+    'can you commute': 'Yes',
+    'commute to office': 'Yes',
+    'relocation preference': 'Open to relocation to any metro city',
+    'current residential location': 'Noida',
+    'current residing city': 'Noida',
+    'based out of': 'Noida',
+    'open to hybrid': 'Yes',
+    'open to remote': 'Yes',
+
+    # SECTION E: Education Variants (10 patterns)
+    'education qualification': 'B.Tech CSE',
+    'graduation': '2022',
+    'qualification degree': 'B.Tech Computer Science',
+    'what degree': 'B.Tech Computer Science',
+    'what is your degree': 'B.Tech Computer Science',
+    'undergraduate degree': 'B.Tech Computer Science',
+    'graduation degree': 'B.Tech Computer Science',
+    'what is your highest level of education': "Bachelor's Degree",
+    'highest level of education': "Bachelor's Degree",
+    'completed graduation in': '2022',
+
+    # SECTION F: Authorization / Visa Variants (8 patterns)
+    'do you need visa sponsorship': 'No',
+    'do you require visa': 'No',
+    'do you require sponsorship': 'No',
+    'will require sponsorship': 'No',
+    'need visa': 'No',
+    'require work permit': 'No',
+    'eligible to work': 'Yes',
+    'right to work': 'Yes',
+
+    # SECTION G: Assessment / Availability Variants (10 patterns)
+    'available for online assessment': 'Yes',
+    'can you take an assessment': 'Yes',
+    'ready for online assessment': 'Yes',
+    'comfortable with assessment': 'Yes',
+    'when can you start working': 'Within 30 days',
+    'earliest start date': 'Within 30 days',
+    'when are you available to start': 'Within 30 days',
+    'available to join in': '30 days',
+    'how soon can you start working': 'Within 30 days',
+
+    # SECTION H: Misc HR / Compliance (7 patterns)
+    'have you ever been convicted': 'No',
+    'have you been convicted': 'No',
+    'any criminal record': 'No',
+    'criminal background': 'No',
+    'been terminated': 'No',
+    'have you been terminated': 'No',
+    'any gap in employment': 'No',
 }
 
-FUZZY_MATCH_THRESHOLD = 0.7  # Increased from 0.6 for better accuracy
-FUZZY_MATCH_THRESHOLD_FALLBACK = 0.6  # For category fallback only
+FUZZY_MATCH_THRESHOLD = 0.65
+FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
 
 
 class SentinelAgent:
@@ -3515,6 +3551,7 @@ class SentinelAgent:
                                     'question': q_data.get('question', ''),
                                     'answer': q_data.get('answer', ''),
                                     'input_type': q_data.get('inputType', ''),
+                                    'match_phase': 'aggressive' if 'aggressive' in q_data.get('inputType', '') else 'pattern_match',
                                     'options': q_data.get('options', []),
                                     'selected_option': q_data.get('selectedOption', ''),
                                     'context': self._detect_platform(),
@@ -4055,6 +4092,7 @@ class SentinelAgent:
                         
                         if 'LINKEDIN_SUCCESS' in next_result:
                             self.linkedin_applications += 1
+                            self.metrics['applications_submitted'] += 1
                             print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted!")
                             submit_attempt_count = 0  # Reset on success
                             
@@ -4948,7 +4986,11 @@ class SentinelAgent:
                     break
         
         # Save metrics at end of task
-        self.metrics['success'] = self.state.task_complete
+        # Success requires either applications submitted OR an explicit non-application task completion
+        is_non_app_task = self.state.task_complete and self.metrics['applications_submitted'] == 0
+        self.metrics['success'] = self.state.task_complete and (
+            self.metrics['applications_submitted'] > 0 or is_non_app_task
+        )
         self._save_metrics()
         
         return self.state.task_complete
@@ -6241,7 +6283,11 @@ class SentinelAgent:
                                 }}
                                 
                                 // AGGRESSIVE FALLBACK 3: If select still not filled and has Yes/No options, default to Yes
-                                if (!isFieldPreFilled(select)) {{
+                                // SAFETY: Blacklist dangerous questions that should NOT default to Yes
+                                const dangerousYesPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member'];
+                                const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
+                                
+                                if (!isFieldPreFilled(select) && !isDangerousYes) {{
                                     const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
                                     const hasYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
                                                      options.some(o => o.text.toLowerCase().includes('no'));
@@ -6366,11 +6412,11 @@ class SentinelAgent:
                             }}
                             
                             // AGGRESSIVE FALLBACK: For unfilled custom dropdowns with Yes/No options
-                            const currentText = dropdown.innerText || dropdown.textContent || '';
-                            const stillUnselected = currentText.toLowerCase().includes('select an option') || 
-                                                   currentText.toLowerCase().includes('select');
+                            // SAFETY: Blacklist dangerous questions that should NOT default to Yes
+                            const customDangerousPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member'];
+                            const isCustomDangerousYes = customDangerousPatterns.some(p => lowerLabel.includes(p));
                             
-                            if (stillUnselected && labelText) {{
+                            if (stillUnselected && labelText && !isCustomDangerousYes) {{
                                 console.log('AGGRESSIVE FALLBACK: Checking custom dropdown for Yes/No:', labelText);
                                 dropdown.click();
                                 

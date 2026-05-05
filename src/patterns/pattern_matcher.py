@@ -20,7 +20,7 @@ class PatternMatcher:
     to find the best answer for a question.
     """
     
-    DEFAULT_THRESHOLD = 0.6
+    DEFAULT_THRESHOLD = 0.65
     
     def __init__(self, patterns: Dict[str, Any], threshold: float = DEFAULT_THRESHOLD):
         """

@@ -66,10 +66,10 @@ CORE WORKFLOW (STRICT SEQUENCE):
    - **SCENARIO C (Tech & Experience):**
      - **Universal Rule:** If asked about specific experience in [Tech Name] (e.g., "Experience in Java?", "Years in React?"):
        - IF Question is Yes/No -> **Click "Yes"**.
-       - IF Question asks for Years/Number -> **Enter "3.5 Years"** (or just "3.5").
-     - **Standard Fields:**
-       - "Current Salary" -> "15.3" (or "15.3 LPA")
-       - "Expected Salary" -> "24" (or "24 LPA")
+      - IF Question asks for Years/Number -> **Enter "3.8 Years"** (or just "3.8").
+      - **Standard Fields:**
+        - "Current Salary" -> "15.3" (or "15.3 LPA")
+        - "Expected Salary" -> "24" (or "24 LPA")
 
    - **COMPLETION (The "Submit" Step):**
      - **Goal:** Click the button to close the modal.
@@ -86,12 +86,12 @@ DETAILS TO USE:
 - Expected Salary: 24 LPA | Current Salary: 15.3 LPA
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
-- Experience: 3.5 Years (42 months total). ALWAYS ENTER "3.5 Years" in experience fields.
+- Experience: 3.8 Years (46 months total). ALWAYS ENTER "3.8 Years" in experience fields.
 - Location: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon.
 - Relocation: Yes. | Immediate Joiner: Yes.
-- Completed B.Tech in CSE from VIT Bhopal in year 2018, CGPA: 8.5 and if asked in percentage then it is 85%
-- Completed HSC/10th in year 2016, CGPA: 8.8 and if asked in percentage then it is 88%
-- Completed SSC/12th in year 2018, Percentage was 70%.
+- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.5 and if asked in percentage then it is 85%
+- Completed HSC/10th in year 2018, CGPA: 8.8 and if asked in percentage then it is 88%
+- Completed SSC/12th in year 2016, Percentage was 70%.
 - Resident/Citizen of India.
 - I am not interested in any visa or sponsorship.
 - I am interested in any relocation.
@@ -114,9 +114,9 @@ DETAILS TO USE:
 - Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon.
 - Relocation: Yes.
 - Immediate Joiner: Yes. Can join by Feb 03, 2026.
-- Completed B.Tech in CSE from VIT Bhopal in year 2018, CGPA: 8.5 and if asked in percentage then it is 85%
-- Completed HSC/10th in year 2016, CGPA: 8.8 and if asked in percentage then it is 88%
-- Completed SSC/12th in year 2018, Percentage was 70%.
+- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.5 and if asked in percentage then it is 85%
+- Completed HSC/10th in year 2018, CGPA: 8.8 and if asked in percentage then it is 88%
+- Completed SSC/12th in year 2016, Percentage was 70%.
 - Resident/Citizen of India
 - I am not interested in any visa or sponsorship.
 - I am interested in any relocation.
@@ -159,7 +159,7 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
    - Notice Period -> Select "Serving Notice Period" or "Yes"
    - LWD -> Enter "03/02/2026"
    - Tech Experience (Yes/No) -> Click "Yes"
-   - Tech Experience (Years) -> Enter "3.5 Years"
+   - Tech Experience (Years) -> Enter "3.8 Years"
    - Current Salary -> "15.3 LPA"
    - Expected Salary -> "24 LPA"
    - Location -> "Noida"

@@ -3,11 +3,22 @@ import os
 sys.path.insert(0, os.path.abspath('.'))
 
 from src.sentinel.question_fingerprint import QuestionFingerprinter
-from src.sentinel.agent import KNOWN_QA_PATTERNS
+from src.patterns.pattern_matcher import create_matcher
 import json
 
+# Load patterns from JSON (single source of truth)
+matcher = create_matcher()
+json_patterns = matcher.patterns.get('patterns', {})
+
+# Convert JSON patterns to flat dict for QuestionFingerprinter
+flat_patterns = {}
+for pattern_id, pattern_data in json_patterns.items():
+    answer = pattern_data.get('default', '')
+    for pattern_str in pattern_data.get('patterns', []):
+        flat_patterns[pattern_str.lower()] = answer
+
 fp = QuestionFingerprinter()
-fp.build_index(KNOWN_QA_PATTERNS)
+fp.build_index(flat_patterns)
 
 q = 'are you currently employed'
 fingerprint = fp.get_fingerprint(q)

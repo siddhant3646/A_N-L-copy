@@ -841,10 +841,25 @@ class FingerprintMatcher:
         
         return None
     
-    def build_from_patterns(self, patterns: Dict[str, str]):
-        """Build fingerprint cache from existing patterns."""
-        for question, answer in patterns.items():
-            self.add_pattern(question, answer)
+    def build_from_patterns(self, patterns: Dict):
+        """
+        Build fingerprint cache from existing patterns.
+        
+        Supports both formats:
+        1. Flat dict: {question: answer}
+        2. JSON structure: {pattern_id: {patterns: [], category: "", default: ""}}
+        """
+        # Check if this is the JSON structure with nested patterns
+        if patterns and isinstance(next(iter(patterns.values())), dict):
+            # JSON structure format
+            for pattern_id, pattern_data in patterns.items():
+                answer = pattern_data.get('default', '')
+                for question in pattern_data.get('patterns', []):
+                    self.add_pattern(question, answer)
+        else:
+            # Flat dict format {question: answer}
+            for question, answer in patterns.items():
+                self.add_pattern(question, answer)
 
 
 # Convenience functions

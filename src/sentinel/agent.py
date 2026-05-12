@@ -27,1837 +27,11 @@ from src.patterns.input_aware_resolver import (
 )
 from src.sentinel.self_healing import SelfHealingMatcher
 from src.patterns.pattern_learner import PatternLearner
+from src.patterns.pattern_matcher import create_matcher
 
 
-# Known question patterns and their answers for fuzzy matching
-KNOWN_QA_PATTERNS = {
-    # Experience
-    'years of experience': '3.8 Years',
-    'months of experience': '46',
-    'total experience': '3.8 Years',
-    'overall experience': '3.8 Years',
-    'year of exp': '3.8 Years',
-    # Experience Range Questions - map to appropriate radio button ranges
-    'experience': '3.8 Years',
-    'years': '3.8 Years',
-    'java experience': '3.8 Years',
-    'react experience': '4 Years',
-    'angular experience': '4 Years',
-    'nodejs experience': '3.8 Years',
-    'javascript experience': '3.8 Years',
-    'ci/cd experience': '3.8 Years',
-    'full stack experience': '3.8 Years',
-    'backend experience': '3.8 Years',
-    'frontend experience': '3.8 Years',
-    'software experience': '3.8 Years',
-    'web experience': '3.8 Years',
-    'python experience': '3.8 Years',
-    'programming experience': '3.8 Years',
-    'which programming language': 'Python, Node.js / TypeScript, Both',
-    'programming language most experienced': 'Python, Node.js / TypeScript, Both',
-    'programming language are you most experienced': 'Python, Node.js / TypeScript, Both',
-    # Salary (LPA format for Naukri - LinkedIn gets plain numbers via JS override)
-    'current salary': '15.3 LPA',
-    'what is your current salary?': '15.3 LPA',
-    'expected salary': '24 LPA',
-    'what is your expected salary?': '24 LPA',
-    'gross salary': '15.3 LPA',
-    'gross current salary': '15.3 LPA',
-    'gross expected salary': '24 LPA',
-    'salary expectations': '24 LPA',
-    # Current/Expected Annual Salary — common LinkedIn phrasing
-    'current annual salary': '1530000',
-    'what is your current annual salary': '1530000',
-    'what is your current annual salary?': '1530000',
-    'expected annual salary': '2400000',
-    'what is your expected annual salary': '2400000',
-    'what is your expected annual salary?': '2400000',
-    'what is your expected annual salary ?': '2400000',
-    'current ctc': '1530000',
-    'what is your current ctc': '1530000',
-    'what is your current ctc?': '1530000',
-    # Fixed CTC and Variable Pay - Numeric values
-    'fixed ctc': '1530000',
-    'fixed ctc numeric': '1530000',
-    'fixed ctc numeric input': '1530000',
-    'variable pay': '0',
-    'variable pay numeric': '0',
-    'variable pay numeric input': '0',
-    # Expected Annual CTC in INR
-    'expected annual ctc in inr': '2400000',
-    'expected annual ctc': '2400000',
-    'expected ctc in inr': '2400000',
-    'expected ctc inr': '2400000',
-    # Salary Range Questions - Current: 15.3 LPA, Expected: 24 LPA
-    'salary range': '15-20 Lacs',
-    'current salary range': '15-20 Lacs',
-    'expected salary range': '20-25 Lacs',
-    'annual salary': '15-20 Lacs',
-    'ctc range': '15-20 Lacs',
-    # CTC in Lacs per annum - specific pattern for HighRadius
-    'ctc in lacs per annum': '15.3',
-    'what is your current ctc in lacs per annum': '15.3',
-    'current ctc in lacs per annum': '15.3',
-    # Personal
-    'phone number': '7905828880',
-    'mobile number': '7905828880',
-    'email address': 'siddhant3646@gmail.com',
-    'current location': 'Noida',
-    'current city': 'Noida',
-    'preferred location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    # Role / Designation
-    'current role': 'SDE-2 Full Stack Developer',
-    'what is your current role': 'SDE-2 Full Stack Developer',
-    'current designation': 'SDE-2 Full Stack Developer',
-    'current position': 'SDE-2 Full Stack Developer',
-    'current job title': 'SDE-2 Full Stack Developer',
-    'job title': 'SDE-2 Full Stack Developer',
-    'designation': 'SDE-2 Full Stack Developer',
-    'role': 'SDE-2 Full Stack Developer',
-    'position': 'SDE-2 Full Stack Developer',
-    # Company / Organization
-    'current employer': 'Fiserv',
-    'current company': 'Fiserv',
-    'current company name': 'Fiserv',
-    'company name': 'Fiserv',
-    'current organization': 'Fiserv',
-    'current organization name': 'Fiserv',
-    'organization name': 'Fiserv',
-    'current organisation': 'Fiserv',
-    'current organisation name': 'Fiserv',
-    'organisation name': 'Fiserv',
-    'what is your current organization': 'Fiserv',
-    'what is your current organisation': 'Fiserv',
-    'previous company': 'Fiserv',
-    # Notice
-    'notice period': 'Serving Notice Period',
-    'what is your notice period': 'Serving Notice Period',
-    'what is your notice period?': 'Serving Notice Period',
-    'what is your notice period ?': 'Serving Notice Period',
-    'notice period in days': '30',
-    'notice period days': '30',
-    'notice period for your current company in days': '30',
-    'notice period for your current company': '30',
-    'current company notice period': '30',
-    'notice period of your current company': '30',
-    'what is the notice period for your current company': '30',
-    'serving notice': 'Serving Notice Period',
-    'serving notice period': 'Serving Notice Period',
-    'are you serving notice': 'Serving Notice Period',
-    'are you serving notice period': 'Yes',
-    'are you currently serving notice period': 'Yes',
-    'are you currently serving notice': 'Yes',
-    'currently serving notice': 'Serving Notice Period',
-    'currently serving notice period': 'Yes',
-    # LinkedIn specific - "Are You Currently Serving/Served Notice Period?" dropdown
-    'are you currently serving/served notice period': 'Yes',
-    'currently serving/served notice period': 'Yes',
-    'serving/served notice period': 'Yes',
-    'are you currently serving or served notice': 'Yes',
-    'currently serving or served notice': 'Yes',
-    # LinkedIn specific - "Manager wants someone who can join Immediately or within 15-30 days"
-    'manager wants someone who can join immediately or within 15-30 days': 'Yes',
-    'join immediately or within 15-30 days': 'Yes',
-    'can you join immediately or within 15-30 days': 'Yes',
-    'join within 15-30 days': 'Yes',
-    'can join within 15-30 days': 'Yes',
-    'immediately or within 15-30 days': 'Yes',
-    # Radio button questions (Yes/No)
-    'any offer in hand': 'No',
-    'do you have any offer': 'No',
-    'offer in hand': 'No',
-    'any offers': 'No',
-    'currently holding offer': 'No',
-    'are you comfortable working during overlapping us hours': 'Yes',
-    'comfortable working us hours': 'Yes',
-    'overlapping us hours': 'Yes',
-    'us hours weekly calls': 'Yes',
-    'have you ever been employed by': 'No',
-    'previously employed': 'No',
-    'worked for navan': 'No',
-    'worked for reed': 'No',
-    'applied to navan': 'No',
-    'affiliated companies': 'No',
-    # Education
-    'graduation year': '2022',
-    'year of graduation': '2022',
-    'passing year': '2022',
-    'year of passing': '2022',
-    'batch': '2022',
-    'cgpa': '8.51',
-    'percentage': '85',
-    'degree': 'B.Tech Computer Science',
-    'highest qualification': 'B.Tech CSE',
-    'highest degree': 'B.Tech CSE',
-    'educational qualification': 'B.Tech CSE',
-    'qualification': 'B.Tech CSE',
-    'what is your highest qualification': 'B.Tech CSE',
-    'what is your educational qualification': 'B.Tech CSE',
-    'highest education': 'B.Tech CSE',
-    'education': 'B.Tech CSE',
-    'specialization': 'Computer Science and Engineering',
-    'stream': 'Computer Science and Engineering',
-    'branch': 'Computer Science and Engineering',
-    'field of study': 'Computer Science and Engineering',
-    'course': 'B.Tech',
-    'additional months': '0',
-    'additional years': '0',
-    'additional months of experience': '0',
-    'additional years of experience': '0',
-    'college name': 'VIT Bhopal University',
-    'university': 'VIT Bhopal University',
-    'university name': 'VIT Bhopal University',
-    'institute': 'VIT Bhopal University',
-    'institute name': 'VIT Bhopal University',
-    # Compliance - Employment History (All should be "No" unless explicitly true)
-    'worked with visa in the past 2 years': 'No',
-    'worked with visa in the last 2 years': 'No',
-    'worked for visa in the past 2 years': 'No',
-    'worked for visa in the last 2 years': 'No',
-    'employed by visa in the past 2 years': 'No',
-    'employed by visa in the last 2 years': 'No',
-    'have you worked with visa': 'No',
-    'have you worked for visa': 'No',
-    'have you been employed by visa': 'No',
-    'have you ever worked for visa': 'No',
-    'have you ever worked with visa': 'No',
-    'have you ever been employed by visa': 'No',
-    'worked at visa': 'No',
-    'employed at visa': 'No',
-    'previous employment with visa': 'No',
-    # Current employer (Fiserv) - should be "Yes"
-    'worked with fiserv': 'Yes',
-    'worked for fiserv': 'Yes',
-    'worked at fiserv': 'Yes',
-    'employed by fiserv': 'Yes',
-    'employed at fiserv': 'Yes',
-    'have you worked with fiserv': 'Yes',
-    'have you worked for fiserv': 'Yes',
-    'have you worked at fiserv': 'Yes',
-    'have you been employed by fiserv': 'Yes',
-    'have you ever worked for fiserv': 'Yes',
-    'have you ever worked with fiserv': 'Yes',
-    'are you currently employed by fiserv': 'Yes',
-    'currently employed by fiserv': 'Yes',
-    # General Compliance - All "No" by default for safety
-    'have you worked with any of the following companies in the past 2 years': 'No',
-    'have you worked with any of these companies': 'No',
-    'have you been employed by any of the listed companies': 'No',
-    'have you previously worked for': 'No',
-    'have you ever been employed by any of the': 'No',
-    'currently employed by any of the': 'No',
-    'currently an employee of any': 'No',
-    'do you have any relatives working': 'No',
-    'do you have any family members employed': 'No',
-    'do any of your relatives work': 'No',
-    'conflict of interest': 'No',
-    'any conflict of interest': 'No',
-    'affiliated with any competitor': 'No',
-    'associated with any competing firm': 'No',
-    # Third-party/Contractor compliance
-    'are you a third party': 'No',
-    'are you currently a third party': 'No',
-    'are you a temporary employee': 'No',
-    'are you currently a temporary employee': 'No',
-    # Links
-    'linkedin url': 'https://www.linkedin.com/in/siddhant3646',
-    'github url': 'https://github.com/siddhant3646',
-    # Yes/No common
-    'willing to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'work authorization': 'Yes',
-    'legally authorized': 'Yes',
-    'authorized to work': 'Yes',
-    'authorized to lawfully work': 'Yes',
-    'authorized to lawfully work for': 'Yes',
-    'lawfully authorized to work': 'Yes',
-    'authorized to work in': 'Yes',
-    'are you legally authorized to work in india': 'Yes',
-    'are you legally authorized to work': 'Yes',
-    'are you authorized to lawfully work': 'Yes',
-    'do you have the right to work': 'Yes',
-    'eligible to work in india': 'Yes',
-    'background check': 'Yes',
-    'drug test': 'Yes',
-    # Consent / Data Collection Questions (Greenhouse, SmartBear, etc.)
-    'consent to collect': 'Yes',
-    'consent to collect store and process': 'Yes',
-    'collect store and process': 'Yes',
-    'data consent': 'Yes',
-    'consent to process data': 'Yes',
-    'employment consent': 'Yes',
-    '1825 days': 'Yes',
-    '1825 days thereafter': 'Yes',
-    '730 days': 'Yes',
-    '730 days thereafter': 'Yes',
-    'up to 730 days': 'Yes',
-    'for up to 730 days': 'Yes',
-    '365 days': 'Yes',
-    '365 days thereafter': 'Yes',
-    'up to 365 days': 'Yes',
-    'for up to 365 days': 'Yes',
-    'black duck has my consent': 'Yes',
-    'black duck consent': 'Yes',
-    'has my consent to collect': 'Yes',
-    'has my consent to collect store': 'Yes',
-    'highradius has my consent': 'Yes',
-    'highradius consent': 'Yes',
-    'highradius data consent': 'Yes',
-    'smartbear has my consent': 'Yes',
-    'greenhouse consent': 'Yes',
-    'data collection consent': 'Yes',
-    'non-compete': 'No',
-    'non compete': 'No',
-    'noncompete': 'No',
-    'non-competition': 'No',
-    'do you have a non-compete': 'No',
-    'non-compete agreement': 'No',
-    'agreement that would prevent you from working': 'No',
-    'prevent you from working with onit': 'No',
-    'prevent you from working with simplelegal': 'No',
-    'process my data': 'Yes',
-    'store and process': 'Yes',
-    'considering me for employment': 'Yes',
-    'employment consideration': 'Yes',
-    'remote work': 'Yes',
-    'hybrid work': 'Yes',
-    'work from office': 'Yes',
-    'comfortable to work from office': 'Yes',
-    'work from office 6 days': 'Yes',
-    'work from office 5 days': 'Yes',
-    'wfo': 'Yes',
-    'full stack java developer': 'Yes',
-    'java developer': 'Yes',
-    'visa sponsorship': 'No',
-    'require sponsorship': 'No',
-    'will you now or in the future require sponsorship': 'No',
-    'require visa sponsorship': 'No',
-    'need sponsorship': 'No',
-    # Gender / Disability / Veteran (LinkedIn EEO questions)
-    'gender': 'Male',
-    'what is your gender': 'Male',
-    'race': 'Decline to self-identify',
-    'ethnicity': 'Decline to self-identify',
-    'disability': 'No, I don\'t have a disability',
-    'disability status': 'No, I don\'t have a disability',
-    'veteran': 'I am not a protected veteran',
-    'veteran status': 'I am not a protected veteran',
-    # Self-identification form fields
-    'your name': 'Siddhant Singh',
-    'today\'s date': '02/15/2026',
-    'todays date': '02/15/2026',
-    'sexual orientation': 'Decline to self-identify',
-    # Walk-in Interview - Always "No" since user is based in Noida
-    'available for walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
-    'walk in on': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
-    'walk-in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
-    'walk in': 'No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice.',
-    # Employment/Relationship - Always "No"
-    'employed by any of the': 'No',
-    'currently employed as a': 'No',
-    'third party': 'No',
-    'temporary employee': 'No',
-    'have you ever worked for': 'No',
-    'previously employed by': 'No',
-    'close relative working': 'No',
-    'relative working': 'No',
-    'family member working': 'No',
-    'family members working': 'No',
-    'family members in company': 'No',
-    'relatives in company': 'No',
-    'relatives working in': 'No',
-    'family in company': 'No',
-    'currently an employee of': 'No',
-    # Mzad Qatar / Technical Experience Questions
-    '5+ years of full-stack development experience': 'No',
-    '5 plus years of full-stack': 'No',
-    '5+ years full-stack': 'No',
-    '5 years of full-stack': 'No',
-    'professional backend experience': '4',
-    'ai apis': 'Yes',
-    'integrated any ai apis': 'Yes',
-    'openai anthropic': 'Yes',
-    'ai-based features': '3',
-    'ai based features': '3',
-    'ai features': '3',
-    'artificial intelligence features': '3',
-    'designed database architecture': 'Yes',
-    'database architecture from scratch': 'Yes',
-    'deployed applications to cloud': 'Yes',
-    'cloud servers aws': 'Yes',
-    'aws vps independently': 'Yes',
-    'production applications end-to-end': '5',
-    'production applications end to end': '5',
-    'built end-to-end': '5',
-    'end-to-end full stack projects': 'Yes',
-    'end to end full stack': 'Yes',
-    'worked on any end-to-end': 'Yes',
-    'full stack projects': 'Yes',
-    'interested in joining this 6 months contract role': 'Yes',
-    'contract role': 'Yes',
-    '6 months contract': 'Yes',
-    'interested in joining': 'Yes',
-    'ci/cd pipelines': 'Yes',
-    'cicd pipelines': 'Yes',
-    'ci cd pipelines': 'Yes',
-    'leading architecture decisions': 'Yes',
-    # Location Specific Questions - User is in Noida, willing to relocate
-    'present location': 'Noida',
-    'location': 'Noida',
-    'based in': 'Noida',
-    'live in': 'Noida',
-    'living in': 'Noida',
-    'located in': 'Noida',
-    'residing in': 'Noida',
-    'residence': 'Noida',
-    # Address fields
-    'street': 'Sector 137',
-    'street address': 'Sector 137',
-    'address line 1': 'Sector 137',
-    'address line1': 'Sector 137',
-    'state': 'Uttar Pradesh',
-    'state/province': 'Uttar Pradesh',
-    'province': 'Uttar Pradesh',
-    'zip': '201301',
-    'zip code': '201301',
-    'postal code': '201301',
-    'pincode': '201301',
-    'pin code': '201301',
-    'zip/postal code': '201301',
-    # Location preference questions
-    'location preference': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'work location': 'Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'relocation': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'open to relocate': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    'relocate to': 'Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR',
-    # Skills
-    'programming languages': 'Java, Python, JavaScript',
-    'technical skills': 'Java, Spring Boot, React, AWS, Docker',
-    # Competencies
-    'primary competencies': 'Full Stack Development, Cloud Architecture, System Design',
-    'top competencies': 'Full Stack Development, Cloud Architecture, System Design',
-    'core competencies': 'Full Stack Development, Cloud Architecture, System Design',
-    'key skills': 'Java, Spring Boot, React, AWS, Microservices',
-    'top 3 primary competencies': 'Full Stack Development, Cloud Architecture, System Design',
-    # Interview
-    'face to face interview': 'Yes',
-    'f2f interview': 'Yes',
-    'available for interview': 'Yes',
-    'interested for interview': 'Yes',
-    'virtual interview': 'Yes',
-    'telephonic interview': 'Yes',
-    'interested for f2f interview': 'Yes',
-    'available on': 'Yes',
-    # Previously attended interview — always No
-    'previously attended an interview with us': 'No',
-    'previously attended interview': 'No',
-    'have you previously attended': 'No',
-    'attended an interview with us': 'No',
-    'interviewed with us before': 'No',
-    'interviewed with us previously': 'No',
-    'applied to us before': 'No',
-    'applied before': 'No',
-    'applied previously': 'No',
-    'previous interview with us': 'No',
-    'appeared for interview with us': 'No',
-    # Online test / first round evaluation — always Yes
-    'comfortable taking an online test': 'Yes',
-    'online test as the first round': 'Yes',
-    'comfortable with online test': 'Yes',
-    'first round of evaluation': 'Yes',
-    'online test first round': 'Yes',
-    'comfortable taking online': 'Yes',
-    'take an online test': 'Yes',
-    'online evaluation': 'Yes',
-    'written test': 'Yes',
-    'aptitude test': 'Yes',
-    # Contract to Hire
-    'contract to hire': 'Yes',
-    'c2h position': 'Yes',
-    'interested in c2h': 'Yes',
-    'contract to hire position': 'Yes',
-    # Date of Birth
-    'date of birth': '17/12/2000',
-    'dob': '17/12/2000',
-    # DevOps / Tools
-    'tools used': 'Docker, Kubernetes, Jenkins, GitHub Actions, AWS CloudFormation, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python',
-    'configuration tools': 'Ansible, Terraform, AWS CloudFormation',
-    'deployment tools': 'Docker, Kubernetes, Jenkins, GitHub Actions',
-    'monitoring tools': 'Prometheus, Grafana, CloudWatch, ELK Stack',
-    'automation tools': 'Jenkins, GitHub Actions, Ansible, Terraform',
-    'tools used on extensive basis': 'Docker, Kubernetes, Jenkins, GitHub Actions, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python',
-    # CI/CD
-    'ci/cd setup': 'Yes, deployed React and Angular applications using Jenkins, GitHub Actions, and AWS CodePipeline with automated testing and deployment to S3/CloudFront',
-    'frontend ci/cd': 'Yes, implemented CI/CD pipelines for React applications using GitHub Actions with automated builds, tests, and deployments to AWS S3 and CloudFront',
-    'deployed frontend': 'Yes, deployed multiple React and Angular frontend applications using CI/CD pipelines with automated testing and CDN deployment',
-    'deployed frontend applications': 'Yes',
-    # Security
-    'frontend security': 'Implemented CSP headers, XSS prevention, CSRF tokens, secure cookie handling, input sanitization, HTTPS enforcement, and OAuth2/JWT authentication',
-    'security practices': 'CSP headers, XSS prevention, CSRF protection, input sanitization, secure authentication with OAuth2/JWT, HTTPS enforcement',
-    'frontend security practices': 'CSP headers, XSS prevention, CSRF protection, input sanitization, OAuth2/JWT authentication',
-    # Trading / Blockchain
-    'trading platform': 'Built high-performance microservices handling real-time data processing with event-driven architecture using Kafka, Redis caching, and WebSocket for live updates - similar patterns used in trading systems for low-latency data flow',
-    'blockchain platform': 'Developed distributed systems with event sourcing patterns, immutable audit logs, and cryptographic verification - architectural patterns aligned with blockchain fundamentals',
-    'real-time system': 'Implemented real-time notification systems and live dashboards using WebSocket, Redis Pub/Sub, and event-driven microservices with sub-second latency',
-    'real-time trading': 'Built event-driven microservices with Kafka and Redis for low-latency real-time data processing, similar to trading platform patterns',
-    # Enterprise Platforms
-    'enterprise platforms': 'Yes, worked with Google Cloud Platform, Microsoft Azure, AWS, and integrated with enterprise systems including Salesforce and ServiceNow APIs',
-    'diverse platforms': 'Yes, have experience with Google Cloud, Microsoft Azure, AWS, Salesforce integration, and ServiceNow API development',
-    'diverse enterprise platforms': 'Yes',
-    'exposure to diverse enterprise platforms': 'Yes',
-    # Shift Timings
-    'comfortable working in shift': 'Yes',
-    'shift timing': 'Yes',
-    'night shift': 'Yes',
-    'rotational shift': 'Yes',
-    # TCS Registration & PAN
-    'pan number': 'MTKPS1941P',
-    'pan card number': 'MTKPS1941P',
-    'pan card': 'MTKPS1941P',
-    'mention your pan card number': 'MTKPS1941P',
-    'mention your pan number': 'MTKPS1941P',
-    'your pan card number': 'MTKPS1941P',
-    'your pan number': 'MTKPS1941P',
-    'name as per pan': 'Siddhant Singh',
-    'name as per pan card': 'Siddhant Singh',
-    'mention your name as per pan': 'Siddhant Singh',
-    'your name as per pan card': 'Siddhant Singh',
-    'date of birth as per pan': '17/12/2000',
-    # Aadhar Details
-    'name as per aadhar': 'Siddhant Singh',
-    'first name as per aadhar': 'Siddhant',
-    'last name as per aadhar': 'Singh',
-    'first name:last name': 'Siddhant Singh',
-    'aadhar first name': 'Siddhant',
-    'aadhar last name': 'Singh',
-    'current payroll company': 'Fiserv, First Name: Siddhant, Last Name: Singh',
-    'payroll company': 'Fiserv',
-    'registered in tcs': 'No',
-    'tcs registration': 'N/A',
-    'registered in tata consultancy': 'No',
-    # REST APIs
-    'restful apis': 'Yes',
-    'designed and developed restful apis': 'Yes',
-    'rest api': 'Yes',
-    'production systems': 'Yes',
-    # Docker/Kubernetes
-    'docker or kubernetes': 'Yes',
-    'docker': 'Yes',
-    'kubernetes': 'Yes',
-    'hands-on exposure to docker': 'Yes',
-    'exposure to docker or kubernetes': 'Yes',
-    # Kafka
-    'kafka': 'Yes',
-    'exp in kafka': 'Yes',
-    'experience in kafka': 'Yes',
-    # Location
-    'city': 'Noida',
-    'home address': 'Noida',
-    'currently located': 'Noida',
-    'where are you located': 'Noida',
-    # On-site / Availability
-    'available to work full-time on-site': 'Yes',
-    'full-time on-site': 'Yes',
-    # Experience Details
-    'years of work experience do you have in your chosen engineering field': '4',
-    'experience in your chosen engineering field': '4',
-    'area have you most experience in': 'Full-stack',
-    'area of most experience': 'Full-stack',
-    # Interview Scheduling & Preferences
-    'prefer gurgaon': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer bangalore': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer mumbai': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer pune': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer hyderabad': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer chennai': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'prefer kolkata': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'preferred city': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'city preference': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'interview city': 'All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata',
-    'tentative dates': 'Any slot available - flexible with dates and times on weekdays',
-    'time slots': 'Any slot available - flexible with dates and times on weekdays',
-    'video interview': 'Yes, available for video interview - any slot works',
-    'interview slot': 'Any slot available - flexible with dates and times on weekdays',
-    'interview availability': 'Any slot available - flexible with dates and times on weekdays',
-    'weekday interview': 'Yes, available on any weekday - flexible with timing',
-    '2 tentative dates': 'Any slot available - flexible with dates and times on weekdays',
-    'dates and time slots': 'Any slot available - flexible with dates and times on weekdays',
-    # Reason for Job Change
-    'reason for job change': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    'why job change': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    'why are you looking': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    'why switching': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    'reason for leaving': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    # Gen AI / AI Tools
-    'gen ai tool': 'Yes, I use GitHub Copilot and ChatGPT for code generation, debugging, documentation, and learning new technologies',
-    'ai tool you used': 'GitHub Copilot for code completion and ChatGPT for problem-solving, debugging, and documentation',
-    'generative ai tool': 'GitHub Copilot and ChatGPT for code generation, debugging, and improving productivity',
-    # Hiring Manager Message
-    'message to the hiring manager': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'message to hiring manager': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'your message': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'cover letter': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'message': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'why are you interested': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'why do you want': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'additional information': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    'comments': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.',
-    
-    # English / Language Proficiency (dropdown — select "Professional proficiency" or "Native")
-    'level of english': 'Professional proficiency',
-    'english level': 'Professional proficiency',
-    'english proficiency': 'Professional proficiency',
-    'what is your level of english': 'Professional proficiency',
-    'proficiency in english': 'Professional proficiency',
-    'language proficiency': 'Professional proficiency',
-    'communication skills': 'Professional proficiency',
-    'how fluent are you in english': 'Professional proficiency',
-    'fluency in english': 'Professional proficiency',
-    
-    # How many years of experience (precise value — resolver maps to correct dropdown/radio option)
-    'how many years of experience do you have': '3.8 Years',
-    'how many years of experience': '3.8 Years',
-    'years of experience do you have': '3.8 Years',
-    
-    # "What did you do during your last professional experience" — descriptive text (NOT a number)
-    'what did you do during your last professional': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'last professional experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'during your last professional experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    'last professinnal experience': 'Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.',
-    
-    # "Specify previous experiences relevant for the position" — descriptive text (NOT a number)
-    'specify previous experiences relevant': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'previous experiences relevant for the position': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'previous experiences relevant': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    'relevant experiences for the position': '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.',
-    
-    # "Why would you like to join <Company>?" — motivation text
-    'why would you like to join': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    'why do you want to join': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    'what makes you interested in joining': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.',
-    
-    # "What could you bring to <Company>?" — value proposition text
-    'what could you bring': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what can you bring': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what value can you add': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    'what do you bring to the team': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.',
-    
-    # CTC in Lakhs (for questions specifically asking in lakhs/LPA)
-    'current ctc in lakhs': '15.3',
-    'current ctc in lpa': '15.3',
-    'current ctc [in lpa]': '15.3',
-    'current ctc(in lpa)': '15.3',
-    'current ctc (in lpa)': '15.3',
-    'what is your current ctc in lacs per annum?': '15.3',
-    'ctc in lacs': '15.3',
-    'expected ctc in lakhs': '24',
-    'expected ctc in lpa': '24',
-    'expected ctc [in lpa]': '24',
-    'expected ctc in lacs per annum': '24',
-    'what is your expected ctc in lacs per annum': '24',
-    'what is your expected ctc in lacs per annum?': '24',
-    'ctc in lakhs': '24',
-    # CCTC = Current CTC (abbreviation)
-    'cctc': '15.3',
-    'what is your cctc': '15.3',
-    'your cctc': '15.3',
-    # ECTC = Expected CTC (abbreviation)
-    'ectc': '24',
-    'what is your ectc': '24',
-    'your ectc': '24',
-    # NP = Notice Period (abbreviation)
-    'what is your np': '30',
-    'your np': '30',
-    'mention np': '30',
-    # US Customer Communication / English Fluency
-    'talking to us customers': 'Yes, I have 3.8+ years of experience working with US-based clients, conducting daily standups and demos. I am fluent in English with clear communication skills.',
-    'flawless english': 'Yes, I have excellent English communication skills with experience in client-facing roles with US-based teams.',
-    'neutral accent english': 'Yes, I am fluent in English with clear communication. I regularly interact with US-based clients and stakeholders.',
-    'confidence in talking': 'Yes, I have 3.8+ years of experience working with international clients, comfortable with daily video calls and presentations.',
-    # Product Based / BFSI Domain
-    'product based': 'Yes, I have experience working at Fiserv which is a product-based company in the BFSI domain.',
-    'bfsi domain': 'Yes, I am currently working at Fiserv in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience.',
-    'bfsi': 'Yes',
-    'fintech': 'Yes',
-    'banking domain': 'Yes',
-    # WFO / 5 Days Office
-    '5 days working from office': 'Yes',
-    '5 days wfo': 'Yes',
-    'comfortable for 5 days': 'Yes',
-    'working from office': 'Yes',
-    # TCS EP Number
-    'tcs registration no': 'N/A - Not registered in TCS',
-    'ep no': 'N/A',
-    'ep number': 'N/A',
-    # Portfolio URL
-    'portfolio url': 'https://siddhant3646.github.io/Portfolio/',
-    'online portfolio': 'https://siddhant3646.github.io/Portfolio/',
-    'portfolio link': 'https://siddhant3646.github.io/Portfolio/',
-    'online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
-    'website': 'https://siddhant3646.github.io/Portfolio/',
-    'personal website': 'https://siddhant3646.github.io/Portfolio/',
-    'website url': 'https://siddhant3646.github.io/Portfolio/',
-    # How did you hear about us - LinkedIn Easy Apply
-    'how did you hear about us': 'LinkedIn Ad (India)',
-    'how did you hear about this job': 'LinkedIn Ad (India)',
-    'how did you learn about us': 'LinkedIn Ad (India)',
-    'where did you learn about miratech': 'LinkedIn Ad (India)',
-    'where did you learn about us': 'LinkedIn Ad (India)',
-    'source': 'LinkedIn Ad (India)',
-    'referral source': 'LinkedIn Ad (India)',
-    'where did you hear': 'LinkedIn Ad (India)',
-    'how did you find us': 'LinkedIn Ad (India)',
-    'how did you come across': 'LinkedIn Ad (India)',
-    'heard about': 'LinkedIn Ad (India)',
-    # Angular + Microservices Experience
-    'exp in angular and microservices': '4 years experience in both Angular and Microservices architecture',
-    'exp. in angular': '4 years',
-    # Notice Period Negotiation
-    'notice period negotiated': 'Yes',
-    'notice period that must be served': 'Yes',
-    'can it be negotiated': 'Yes',
-    'negotiated with your current employer': 'Yes',
-    'negotiate notice period': 'Yes',
-    # Salary Acceptance
-    'willing to accept': 'Yes',
-    'accept an annual salary': 'Yes',
-    'salary of between': 'Yes',
-    'based upon your experience': 'Yes',
-    'accept salary': 'Yes',
-    'accept the compensation': 'Yes',
-    # Technical Assessment
-    'technical assessment': 'Yes',
-    'available to take a technical assessment': 'Yes',
-    'take a technical assessment': 'Yes',
-    'coding assessment': 'Yes',
-    'online assessment': 'Yes',
-    'available for assessment': 'Yes',
-    # Assessment Date / When can we send
-    'what date can we send': 'Any weekday works - I am flexible with the date and time',
-    'when can we send you the assessment': 'Any weekday works - I am flexible with the date and time',
-    'send you the technical assessment': 'Any weekday works - I am flexible with the date and time',
-    'date for technical assessment': 'Any weekday works - I am flexible with the date and time',
-    'preferred date': 'Any weekday works - I am flexible with the date and time',
-    'what date': 'Any weekday works - I am flexible with the date and time',
-    # Additional Skip Patterns
-    'no worries': '',
-    'you can change your input': '',
-    'change your input': '',
-    # Skip patterns (return empty to trigger skip)
-    'skip this question': '',
-    'try again': '',
-    'restart conversation': '',
-    # Proficiency/Rating Questions (1-10 scale)
-    'rate proficiency': '8',
-    'rate your proficiency': '8',
-    'proficiency in typescript': '8',
-    'proficiency in javascript': '9',
-    'proficiency in react': '8',
-    'proficiency in java': '9',
-    'proficiency in python': '8',
-    'proficiency in angular': '7',
-    'proficiency in node': '8',
-    'proficiency in aws': '7',
-    'proficiency in sql': '8',
-    'rate yourself': '8',
-    'rate on a scale': '8',
-    'on a scale of 1-10': '8',
-    'on a scale of 1 to 10': '8',
-    '1-10': '8',
-    '1 to 10': '8',
-    # Preferred Position / Role
-    'preferred position': 'Backend',
-    'frontend/backend': 'Backend',
-    'frontend or backend': 'Backend',
-    'frontend backend': 'Backend',
-    'preferred role': 'Backend',
-    'which role': 'Backend Developer',
-    'preferred domain': 'Backend Development',
-    # Database Knowledge
-    'strong knowledge in db': 'Yes',
-    'knowledge in db': 'Yes',
-    'database knowledge': 'Yes',
-    'db knowledge': 'Yes',
-    'database experience': 'Yes',
-    'sql knowledge': 'Yes',
-    'must have strong knowledge': 'Yes',
-    # DSA / Data Structures
-    'how good are you in dsa': '8 - Strong understanding of data structures and algorithms with hands-on problem solving experience',
-    'dsa': '8',
-    'dsa skills': '8',
-    'data structures and algorithms': '8',
-    'data structures': '8',
-    'algorithms': '8',
-    'problem solving': 'Strong - regularly practice on LeetCode and HackerRank',
-    'competitive programming': '8',
-    'coding skills': '8',
-    # Tech Stacks / Python Libraries
-    'tech stack': 'Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis',
-    'major tech stack': 'Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis',
-    'tech-stack': 'Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis',
-    'worked upon': 'Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis',
-    'python libraries': 'NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI',
-    'which python libraries': 'NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI',
-    'python packages': 'NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI',
-    # Location-Specific Questions
-    'based in bangalore': 'No, I am currently based in Noida. However, I am willing to relocate to Bangalore.',
-    'based in mumbai': 'No, I am currently based in Noida. However, I am willing to relocate to Mumbai.',
-    'based in pune': 'No, I am currently based in Noida. However, I am willing to relocate to Pune.',
-    'based in hyderabad': 'No, I am currently based in Noida. However, I am willing to relocate to Hyderabad.',
-    'based in chennai': 'No, I am currently based in Noida. However, I am willing to relocate to Chennai.',
-    'from mumbai': 'No, I am currently based in Noida. However, I am willing to relocate.',
-    'where do you stay': 'Noida, Delhi NCR',
-    'stay currently': 'Noida, Delhi NCR',
-    # Referral / Encouraged to Apply
-    'referred for this position': 'No',
-    'referred by': 'No',
-    'employee referral': 'No',
-    'encouraged to apply': 'No',
-    'digicert employee': 'No',
-    # Job Change Reasons
-    'reasons for your job change': 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals',
-    # Total Experience (short forms)
-    'total exp': '3.8 Years',
-    'your total exp': '3.8 Years',
-    'what is your total exp': '3.8 Years',
-    # Database Names (not experience years)
-    'which database': 'PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB',
-    'what database': 'PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB',
-    'database do you have experience': 'PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB',
-    'database experience working': 'PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB',
-    'databases have you worked': 'PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB',
-    # Project Count
-    'how many projects': '5',
-    'number of projects': '5',
-    'projects you have worked': '5',
-    'projects worked on': '5',
-    'projects as fullstack': '5',
-    # Yes/No Proficiency (not rating)
-    'strong proficiency': 'Yes',
-    'good grasp': 'Yes',
-    'do you have proficiency': 'Yes',
-    'do you have experience in etl': 'Yes',
-    'good grasp of etl': 'Yes',
-    'etl concepts': 'Yes',
-    # E-commerce Domain Experience
-    'e-commerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
-    'experience in e-commerce': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
-    'ecommerce experience': 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.',
-    # Composite HR Questions (CTC + ECTC + NP)
-    'share your ctc': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc ectc np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc and np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    'ctc,ectc and np': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)',
-    # Location-exclusive questions (Mumbai-only, etc.)
-    'candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
-    'need candidates from mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
-    'from mumbai itself': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
-    'stay currently in mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
-    'andheri mumbai': 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.',
-    
-    # ========== PHASE 1: MISSING PATTERNS ADDED FOR ROBUSTNESS ==========
-    
-    # NOTICE PERIOD - Joining Date Variations (20+ patterns)
-    'how soon can you join': '30',
-    'when can you start': '30',
-    'earliest joining date': '30',
-    'available from': '30',
-    'immediate joining': '30',
-    'join by': '30',
-    'joining availability': '30',
-    'joining date': '30',
-    'when are you available': '30',
-    'how many days notice': '30',
-    'how soon you can join us': '30',
-    'how soon can you join us': '30',
-    'when can you join': '30',
-    'join us': '30',
-    'if offered the role, within how many days will you be able to join': '30',
-    'within how many days will you be able to join': '30',
-    'how many days will you be able to join': '30',
-    'able to join': '30',
-    'offered the role': '30',
-    'how immediate can you join if gets selected': '30',
-    'how immediate can you join': '30',
-    'immediate can you join': '30',
-    'if gets selected': '30',
-    'days required for notice': '30 days',
-    'notice period buyout': 'Yes, open to buyout discussion',
-    'buyout option': 'Yes, can discuss buyout with current employer',
-    'negotiable notice': 'Yes, notice period is negotiable',
-    'short notice': 'Yes, can negotiate for shorter notice',
-    'is your notice period negotiable': 'Yes',
-    'can you join earlier': 'Yes, with buyout option',
-    'can you join within': 'Yes, can join within 30 days',
-    'expected joining date': '30 days from offer acceptance',
-    'tentative joining date': '30 days from offer',
-    'relieving date': '30',
-    'last working day': '30',
-    
-    # SALARY - Component Variations (15+ patterns)
-    'monthly salary': '127500',
-    'monthly ctc': '127500',
-    'monthly gross': '1.5',
-    'per month salary': '127500',
-    'take home': '95000',
-    'in hand salary': '95000',
-    'take home salary': '95000',
-    'take home assignment': 'Yes, can complete take-home assignments',
-    'fixed component': '1530000',
-    'variable component': '0',
-    'bonus': 'Open to discussion',
-    'joining bonus': 'Open to discussion',
-    'retention bonus': 'Open to discussion',
-    'stock options': 'Open to discussion',
-    'esops': 'Open to discussion',
-    'equity': 'Open to discussion',
-    'benefits': 'Standard benefits as per company policy',
-    'net salary': '11.5 LPA',
-    'remuneration': '15.3 LPA',
-    'compensation expectations': '24 LPA',
-    'salary bracket': '20-24 LPA',
-    'pay range': '20-24 LPA',
-    'budget': '20-24 LPA range',
-    'ctc breakup': 'Fixed: 15.3 LPA, Variable: 0',
-    'salary structure': 'Fixed CTC: 15.3 LPA',
-    'currently drawing': '15.3 LPA',
-    'current drawn': '15.3 LPA',
-    
-    # EXPERIENCE - Relevant & Professional Variations (25+ patterns)
-    'relevant experience': '3.8 Years',
-    'professional experience': '3.8 Years',
-    'industry experience': '3.8 Years',
-    'corporate experience': '3.8 Years',
-    'it experience': '3.8 Years',
-    'software development experience': '3.8 Years',
-    'hands on experience': '3.8 Years',
-    'hands-on experience': '3.8 Years',
-    'practical experience': '3.8 Years',
-    'exposure': '3.8 Years of hands-on exposure',
-    'familiarity': '3.8 Years of familiarity',
-    'competency': '3.8 Years of competency',
-    'expertise': '3.8 Years of expertise',
-    'how long have you been working': '3.8 Years',
-    'career span': '3.8 Years',
-    'work history': '3.8 Years',
-    'employment history': '3.8 Years',
-    'total it experience': '3.8 Years',
-    'overall it experience': '3.8 Years',
-    'relevant years': '3.8 Years',
-    'pertinent experience': '3.8 Years',
-    'domain experience': '3.8 Years in BFSI domain',
-    'field experience': '3.8 Years',
-    'sector experience': '3.8 Years',
-    
-    # Technical Experience - Specific Technologies
-    'spring boot experience': '3.8',
-    'microservices experience': '3.8',
-    'aws experience': '3.8',
-    'docker experience': '3.8',
-    'kubernetes experience': '3.8',
-    'devops experience': '3.8',
-    'cloud experience': '3.8',
-    'vue experience': '2',
-    'node experience': '3.8',
-    'typescript experience': '3.8',
-    # Relevant Experience as <Technology> — decimal number fields (e.g. "Rel Exp as Java Developer*")
-    'rel exp as java': '3.8',
-    'rel exp as java developer': '3.8',
-    'rel exp java': '3.8',
-    'relevant exp as java': '3.8',
-    'relevant exp java developer': '3.8',
-    'relevant experience as java': '3.8',
-    'relevant experience as java developer': '3.8',
-    'relevant experience in java': '3.8',
-    'rel exp as react': '4',
-    'rel exp as react developer': '4',
-    'relevant exp as react': '4',
-    'relevant experience as react': '4',
-    'rel exp as angular': '4',
-    'rel exp as angular developer': '4',
-    'relevant experience as angular': '4',
-    'rel exp as spring boot': '3.8',
-    'relevant experience as spring boot': '3.8',
-    'rel exp as node': '3.8',
-    'rel exp as nodejs': '3.8',
-    'relevant experience as node': '3.8',
-    'rel exp as python': '3.8',
-    'relevant experience as python': '3.8',
-    'rel exp as full stack': '3.8',
-    'relevant experience as full stack': '3.8',
-    'rel exp as software developer': '3.8',
-    'rel exp as software engineer': '3.8',
-    'relevant experience as software developer': '3.8',
-    'relevant experience as software engineer': '3.8',
-    
-    # LOCATION - Address & Travel Variations (15+ patterns)
-    'current address': 'Noida, Uttar Pradesh',
-    'permanent address': 'Noida, Uttar Pradesh',
-    'residential address': 'Noida, Uttar Pradesh',
-    'home town': 'Noida',
-    'native place': 'Noida',
-    'place of residence': 'Noida',
-    'where do you live': 'Noida',
-    'base location': 'Noida',
-    'onsite': 'Open to onsite opportunities',
-    'offshore': 'Yes, can work offshore',
-    'client location': 'Open to client location',
-    'project location': 'Flexible with project location',
-    'site location': 'Flexible',
-    'willing to travel': 'Yes',
-    'open to travel': 'Yes, open to travel up to 20%',
-    'travel': 'Yes, open to travel',
-    'shift to': 'Yes, can shift to any metro city',
-    'move to': 'Yes, willing to move',
-    
-    # EDUCATION - Academic Background (15+ patterns)
-    'academic qualification': 'B.Tech Computer Science',
-    'educational background': 'B.Tech in Computer Science from VIT Bhopal University',
-    'academic background': 'B.Tech Computer Science',
-    'where did you study': 'VIT Bhopal University',
-    'institution': 'VIT Bhopal University',
-    'completion year': '2022',
-    'year of completion': '2022',
-    'graduated in': '2022',
-    'post graduation': 'Not applicable',
-    'pg degree': 'Not applicable',
-    'masters': 'Not applicable',
-    'bachelors': 'B.Tech Computer Science',
-    'undergraduate': 'B.Tech Computer Science',
-    '12th percentage': '85',
-    '10th percentage': '90',
-    'diploma': 'Not applicable',
-    'certification': 'AWS Certified, Java Certified',
-    'certified in': 'AWS, Java, Spring Boot',
-    'course completed': 'B.Tech Computer Science',
-    'training': 'Corporate training in Java, React, AWS',
-    'internship': 'Completed internships during college',
-    
-    # SKILLS & PROFICIENCY - Extended (20+ patterns)
-    'primary skills': 'Java, Spring Boot, React, AWS',
-    'secondary skills': 'Python, Docker, Kubernetes, Node.js',
-    'core skills': 'Full Stack Development, Java, React',
-    'key expertise': 'Java, Spring Boot, Microservices, React',
-    'area of expertise': 'Full Stack Development',
-    'domain knowledge': 'BFSI, Fintech',
-    'primary technology': 'Java, Spring Boot',
-    'secondary technology': 'React, Node.js',
-    'frameworks known': 'Spring Boot, React, Angular, Express',
-    'databases known': 'PostgreSQL, MySQL, MongoDB, Redis',
-    'tools familiar': 'Docker, Kubernetes, Jenkins, GitHub Actions',
-    'methodologies': 'Agile, Scrum, DevOps',
-    'agile experience': 'Yes, 3+ years in Agile environment',
-    'scrum experience': 'Yes, experienced with Scrum ceremonies',
-    'version control': 'Git, GitHub, GitLab',
-    'github experience': 'Yes, 3+ years',
-    'git experience': 'Yes, proficient in Git',
-    'code review': 'Yes, experienced in code reviews',
-    'unit testing': 'Yes, JUnit, Jest, PyTest',
-    'integration testing': 'Yes, experienced with integration testing',
-    
-    # PROFICIENCY RATING - Extended Scales
-    'how would you rate yourself': '8 out of 10',
-    'self rating': '8',
-    'expertise level': 'Advanced',
-    'skill level': 'Advanced',
-    'competency level': 'Advanced',
-    'proficiency level': 'Advanced',
-    'mastery': 'Advanced level with 3.8 years experience',
-    'comfort level': 'Very comfortable - 8/10',
-    'on scale of 1-5': '4',
-    'on scale of 1-100': '85',
-    'percentage expertise': '85%',
-    
-    # PERSONAL INFO - Extended (15+ patterns)
-    'full name': 'Siddhant Singh',
-    'first name': 'Siddhant',
-    'last name': 'Singh',
-    'middle name': 'Not applicable',
-    'emergency contact': '7905828880',
-    'alternate number': '7905828880',
-    'alternative email': 'siddhant3646@gmail.com',
-    'secondary email': 'siddhant3646@gmail.com',
-    'personal email': 'siddhant3646@gmail.com',
-    'linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
-    'github profile': 'https://github.com/siddhant3646',
-    'blog': 'https://siddhant3646.github.io/Portfolio/',
-    'nationality': 'Indian',
-    'country of origin': 'India',
-    'visa status': 'Indian citizen - no visa required for India',
-    'work permit': 'Not required - Indian citizen',
-    'marital status': 'Single',
-    'languages known': 'English, Hindi',
-    'native language': 'Hindi',
-    
-    # COMPANY & EMPLOYMENT - Extended (15+ patterns)
-    'where do you work': 'Fiserv',
-    'where are you working': 'Fiserv',
-    'which company': 'Fiserv',
-    'present organization': 'Fiserv',
-    'reporting to': 'Senior Engineering Manager',
-    'reporting manager': 'Senior Engineering Manager',
-    'hr contact': 'Will provide upon request',
-    'hr name': 'Will provide upon request',
-    'manager name': 'Will provide upon request',
-    'supervisor': 'Senior Engineering Manager',
-    'department': 'Engineering',
-    'team': 'Full Stack Development Team',
-    'division': 'Technology',
-    'business unit': 'Banking Solutions',
-    'vertical': 'Banking and Financial Services',
-    
-    # INTERVIEW & ASSESSMENT - Extended (15+ patterns)
-    'available for': 'Any weekday - flexible timing',
-    'free for': 'Any weekday - flexible',
-    'convenient time': 'Any slot available',
-    'suitable time': 'Flexible with timing',
-    'good time': 'Any weekday works',
-    'when are you free': 'Any weekday - flexible',
-    'book slot': 'Any slot available',
-    'fix appointment': 'Any weekday works',
-    'interview mode': 'Video call or in-person',
-    'video call': 'Yes, comfortable with video interviews',
-    'phone call': 'Yes, available for phone screening',
-    'in person': 'Yes, available for in-person interviews',
-    'technical round': 'Yes, available',
-    'hr round': 'Yes, available',
-    'manager round': 'Yes, available',
-    'panel interview': 'Yes, comfortable with panel interviews',
-    'group discussion': 'Yes, can participate',
-    'assignment': 'Yes, can take assignments',
-    'live coding': 'Yes, comfortable with live coding',
-    
-    # JOB CHANGE & AVAILABILITY - Extended (10+ patterns)
-    'why leaving': 'Seeking new challenges and growth opportunities',
-    'why change': 'Career growth and new challenges',
-    'motivation': 'Professional growth and skill development',
-    'career goal': 'To become a Technical Lead in 2-3 years',
-    'aspiration': 'To work on challenging full-stack projects',
-    'objective': 'To contribute to innovative products',
-    'where do you see yourself': 'Technical Lead/Architect in 3-5 years',
-    '5 year plan': 'Grow into Technical Lead/Architect role',
-    'short term goal': 'Contribute effectively to the team',
-    'long term goal': 'Technical leadership and architecture',
-    'immediate joiner': '30',
-    'can join immediately': '30',
-    'how soon': '30',
-    'urgent requirement': '30',
-    'immediate opening': '30',
-    'immediate requirement': '30',
-    'asap': '30',
-    'as soon as possible': '30',
-    
-    # Team Leadership Experience (numeric input — years leading a team)
-    'leading a team of developers': '1',
-    'experience leading a team': '1',
-    'experience do you have leading a team': '1',
-    'how many years of experience do you have leading': '1',
-    'team management experience': '1',
-    'people management experience': '1',
-    'managed a team': 'Yes',
-    'led a team': 'Yes',
-    
-    # Full-Stack Project Ownership (end-to-end)
-    'led a full-stack project end-to-end': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'led a full-stack project': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'full-stack project end-to-end': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'architecture to deployment': 'Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines.',
-    'end-to-end project': 'Yes, I have owned end-to-end delivery of multiple full-stack projects at Fiserv.',
-    'owned a project': 'Yes',
-    
-    # Coding Comfort / Problem Solving
-    'how comfortable are you contributing to coding': 'Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.',
-    'comfortable are you contributing to coding and solving': 'Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.',
-    'solving complex technical problems': 'Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development.',
-    'complex technical problems': 'Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development.',
-    'comfortable with coding': 'Very comfortable — coding is my core strength.',
-    'coding and problem solving': 'Very comfortable with both. I actively code in Java, React, and Python daily and enjoy solving complex technical problems.',
-    
-    # REFERRAL & SOURCE - Extended (12+ patterns)
-    'how did you hear': 'LinkedIn',
-    'source of application': 'LinkedIn Job Portal',
-    'where did you find': 'LinkedIn',
-    'who referred you': 'Self-applied via LinkedIn',
-    'referral name': 'Self-applied',
-    'referral code': 'Not applicable - self applied',
-    'reference': 'Will provide upon request',
-    'recommended by': 'Self-applied',
-    'suggested by': 'Self-applied via LinkedIn',
-    'internal referral': 'No',
-    'friend referral': 'No',
-    'colleague referral': 'No',
-    'job portal': 'LinkedIn',
-    'consultancy': 'Direct application',
-    'recruiter': 'Direct application',
-    'agency': 'Direct application',
-    'vendor': 'Direct application',
-    
-    # DIVERSITY & EEO - Extended (10+ patterns)
-    'disability accommodation': 'Not required',
-    'special needs': 'Not applicable',
-    'lgbtq': 'Decline to self-identify',
-    'pronouns': 'Decline to self-identify',
-    'gender identity': 'Male',
-    'ethnic background': 'Decline to self-identify',
-    'racial identity': 'Decline to self-identify',
-    'minority status': 'Decline to self-identify',
-    'protected class': 'Decline to self-identify',
-    'equal opportunity': 'Decline to self-identify',
-    'affirmative action': 'Decline to self-identify',
-    'military service': 'No military service',
-    'reserve': 'Not applicable',
-    'national guard': 'Not applicable',
-    'spouse': 'Not applicable',
-    'dependent': 'Not applicable',
-    'family status': 'Decline to self-identify',
-    
-    # CONTRACT & DURATION - Extended (15+ patterns)
-    'contract duration': 'Open to both permanent and contract',
-    'project duration': 'Flexible with project duration',
-    'engagement length': 'Open to long-term engagements',
-    'tenure': 'Looking for long-term opportunity',
-    'assignment length': 'Flexible',
-    'period': 'Open to any period',
-    'timeframe': 'Flexible with timeframe',
-    '6 months': 'Open to 6 month contracts',
-    '1 year': 'Open to 1 year contracts',
-    '2 years': 'Open to 2 year contracts',
-    'contract type': 'Open to both C2H and permanent',
-    'employment type': 'Full-time preferred',
-    'full time': 'Yes, looking for full-time',
-    'part time': 'No, looking for full-time only',
-    'freelance': 'No, looking for full-time employment',
-    'consultant': 'Open to consulting roles',
-    'payroll': 'Direct payroll preferred',
-    'direct hire': 'Yes, preferred',
-    'permanent': 'Yes, looking for permanent role',
-    'temporary': 'Open to temporary assignments',
-    
-    # AVAILABILITY & SCHEDULING - Additional
-    'flexible with dates': 'Yes, flexible with dates and times',
-    'flexible with timing': 'Yes, flexible with timing',
-    'weekdays': 'Yes, available on weekdays',
-    'weekends': 'If necessary, available on weekends',
-    'working days': 'Yes, available on working days',
-    'calendar': 'Can schedule anytime as per mutual convenience',
-    'schedule interview': 'Yes, please share available slots',
-    'availability': '30 days',
-    'available immediately': '30 days',
-    'how early can you join': '30',
-    'earliest': '30',
-    
-    # ADDITIONAL LINKEDIN SPECIFIC
-    'linkedin specific': 'Applying via LinkedIn Easy Apply',
-    'easy apply': 'Yes, via LinkedIn Easy Apply',
-    'linkedin job': 'Found on LinkedIn',
-    'job id': 'Found via LinkedIn',
-    
-    # SALARY NEGOTIATION - Only used when explicitly asked about negotiation/flexibility
-    'negotiable': 'Yes, open to negotiation within range',
-    'open to negotiation': 'Yes, can discuss compensation',
-    'salary negotiable': 'Yes, within reasonable range',
-    'negotiation': 'Yes, open to discussion',
-    'discuss salary': 'Yes, willing to discuss',
-    'salary discussion': 'Yes, open to discussion',
-    'range': '20-24 LPA',
-    'flexible on salary': 'Yes, flexible within reason',
-    
-    # MISCELLANEOUS - Yes/No Questions
-    'ready to relocate': 'Yes',
-    'comfortable to relocate': 'Yes',
-    'ok to relocate': 'Yes',
-    'fine with relocation': 'Yes',
-    'accept relocation': 'Yes',
-    'willingness to relocate': 'Yes',
-    'ready to travel': 'Yes',
-    'comfortable to travel': 'Yes',
-    'ok to travel': 'Yes',
-    'fine with travel': 'Yes',
-    'accept travel': 'Yes',
-    'willingness to travel': 'Yes',
-    
-    # ========== COMPREHENSIVE PATTERN EXPANSION - 200+ NEW PATTERNS ==========
-    
-    # SECTION 1: LINKEDIN "PLEASE SELECT/ENTER..." PATTERNS (30 patterns)
-    # LinkedIn Easy Apply specific dropdown and text input patterns
-    'please select your notice period with your current employer': '30 days',
-    'please select your highest education qualification': 'Bachelor\'s Degree',
-    'please select your total years of professional experience': '4',
-    'please select your total additional months of experience': '0',
-    'please select your current work authorization status': 'Authorized to work in India',
-    'please select your preferred location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    'please select your current location': 'Noida',
-    'please select your notice period': '30 days',
-    'please select your experience': '4',
-    'please select your salary expectation': '24 LPA',
-    
-    'please enter your annual current ctc in inr': '1530000',
-    'please enter your annual expected ctc in inr': '2400000',
-    'please enter your current ctc in inr': '1530000',
-    'please enter your expected ctc in inr': '2400000',
-    'please enter your online portfolio url': 'https://siddhant3646.github.io/Portfolio/',
-    'please enter your notice period in days': '30',
-    'please enter your linkedin profile': 'https://www.linkedin.com/in/siddhant3646',
-    'please enter your github url': 'https://github.com/siddhant3646',
-    'please enter your current salary': '15.3 LPA',
-    'please enter your expected salary': '24 LPA',
-    'please enter your phone number': '7905828880',
-    'please enter your email address': 'siddhant3646@gmail.com',
-    'please enter your full name': 'Siddhant Singh',
-    'please enter your current company': 'Fiserv',
-    'please enter your current designation': 'SDE-2 Full Stack Developer',
-    'please enter your total experience': '4',
-    'please enter your years of experience': '4',
-    'please enter your ctc': '15.3 LPA',
-    'please enter your salary': '15.3 LPA',
-    
-    'please share your ctc ectc and notice period': 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days',
-    'please provide your ctc details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'please mention your notice period': '30 days',
-    'please specify your experience': '4 years',
-    
-    # SECTION 2: SHORT FORM QUESTIONS (25 patterns)
-    # Concise variations for quick matching
-    'expected ctc': '24 LPA',
-    'ctc': '15.3 LPA',
-    'salary': '15.3 LPA',
-    'pay': '15.3 LPA',
-    'compensation': '15.3 LPA',
-    
-    'total years of exp': '3.8 Years',
-    'overall exp': '3.8 Years',
-    'years of exp': '3.8 Years',
-    'exp': '3.8 Years',
-    
-    'notice': '30 days',
-    'np': '30',
-    'joining': '30 days',
-    
-    
-    # SECTION 3: TECHNOLOGY EXPERIENCE - ALL TECHNOLOGIES (60 patterns)
-    # Format: "How many years of work experience do you have with {tech}"
-    # LinkedIn: 4, Naukri: 3.8 Years (handled by platform detection in code)
-    'how many years of work experience do you have with docker': '4',
-    'how many years of work experience do you have with kubernetes': '4',
-    'how many years of work experience do you have with aws': '4',
-    'how many years of work experience do you have with amazon web services': '4',
-    'how many years of work experience do you have with azure': '4',
-    'how many years of work experience do you have with microsoft azure': '4',
-    'how many years of work experience do you have with gcp': '4',
-    'how many years of work experience do you have with google cloud': '4',
-    'how many years of work experience do you have with react': '4',
-    'how many years of work experience do you have with reactjs': '4',
-    'how many years of work experience do you have with react.js': '4',
-    'how many years of work experience do you have with angular': '4',
-    'how many years of work experience do you have with angularjs': '4',
-    'how many years of work experience do you have with vue': '4',
-    'how many years of work experience do you have with vuejs': '4',
-    'how many years of work experience do you have with vue.js': '4',
-    'how many years of work experience do you have with node': '4',
-    'how many years of work experience do you have with nodejs': '4',
-    'how many years of work experience do you have with node.js': '4',
-    'how many years of work experience do you have with python': '4',
-    'how many years of work experience do you have with java': '4',
-    'how many years of work experience do you have with spring': '4',
-    'how many years of work experience do you have with spring boot': '4',
-    'how many years of work experience do you have with springboot': '4',
-    'how many years of work experience do you have with hibernate': '4',
-    'how many years of work experience do you have with javascript': '4',
-    'how many years of work experience do you have with js': '4',
-    'how many years of work experience do you have with typescript': '4',
-    'how many years of work experience do you have with ts': '4',
-    'how many years of work experience do you have with html': '4',
-    'how many years of work experience do you have with html5': '4',
-    'how many years of work experience do you have with css': '4',
-    'how many years of work experience do you have with css3': '4',
-    'how many years of work experience do you have with sql': '4',
-    'how many years of work experience do you have with postgresql': '4',
-    'how many years of work experience do you have with postgres': '4',
-    'how many years of work experience do you have with mysql': '4',
-    'how many years of work experience do you have with mongodb': '4',
-    'how many years of work experience do you have with mongo': '4',
-    'how many years of work experience do you have with redis': '4',
-    'how many years of work experience do you have with kafka': '4',
-    'how many years of work experience do you have with rabbitmq': '4',
-    'how many years of work experience do you have with elasticsearch': '4',
-    'how many years of work experience do you have with git': '4',
-    'how many years of work experience do you have with github': '4',
-    'how many years of work experience do you have with gitlab': '4',
-    'how many years of work experience do you have with jenkins': '4',
-    'how many years of work experience do you have with github actions': '4',
-    'how many years of work experience do you have with terraform': '4',
-    'how many years of work experience do you have with ansible': '4',
-    'how many years of work experience do you have with prometheus': '4',
-    'how many years of work experience do you have with grafana': '4',
-    'how many years of work experience do you have with microservices': '4',
-    'how many years of work experience do you have with rest api': '4',
-    'how many years of work experience do you have with restful api': '4',
-    'how many years of work experience do you have with graphql': '4',
-    'how many years of work experience do you have with websockets': '4',
-    'how many years of work experience do you have with web services': '4',
-    'how many years of work experience do you have with soap': '4',
-    'how many years of work experience do you have with xml': '4',
-    'how many years of work experience do you have with json': '4',
-    'how many years of work experience do you have with problem solving': '4',
-    
-    # Format: "How many years into {tech}"
-    'how many years into angular': '4',
-    'how many years into java': '4',
-    'how many years into spring boot': '4',
-    'how many years into react': '4',
-    'how many years into python': '4',
-    'how many years into docker': '4',
-    'how many years into aws': '4',
-    'how many years into javascript': '4',
-    'how many years into node': '4',
-    'how many years into full stack': '4',
-    
-    # SECTION 4: SCREENING & ASSESSMENT (35 patterns)
-    'are you ready to take beribot assessment': 'Yes',
-    'are you ready to take assessment': 'Yes',
-    'are you available for assessment': 'Yes',
-    'can you take technical assessment': 'Yes',
-    'are you willing to take coding test': 'Yes',
-    'are you ready for assessment': 'Yes',
-    'ready for assessment': 'Yes',
-    'willing to take assessment': 'Yes',
-    
-    'are you comfortable with wfo setup': 'Yes',
-    'are you comfortable working from office': 'Yes',
-    'are you comfortable with work from office': 'Yes',
-    'are you comfortable commuting to this job location': 'Yes',
-    'are you comfortable with hybrid work': 'Yes',
-    'are you comfortable with remote work': 'Yes',
-    'comfortable with wfo': 'Yes',
-    'comfortable with work from office': 'Yes',
-    'comfortable commuting': 'Yes',
-    'comfortable with hybrid': 'Yes',
-    'comfortable with remote': 'Yes',
-    
-    'are you a full-stack java developer': 'Yes',
-    'are you a full stack developer': 'Yes',
-    'are you a fullstack developer': 'Yes',
-    'are you a java developer': 'Yes',
-    'are you a backend developer': 'Yes',
-    'are you a frontend developer': 'Yes',
-    'are you a software engineer': 'Yes',
-    'are you a sde': 'Yes',
-    'are you a developer': 'Yes',
-    'full-stack developer': 'Yes',
-    'full stack developer': 'Yes',
-    'backend developer': 'Yes',
-    'frontend developer': 'Yes',
-    
-    'do you have minimum 3+ years of experience as full stack engineer': 'Yes',
-    'do you have minimum 3 years of experience': 'Yes',
-    'do you have 3+ years of experience': 'Yes',
-    'do you have 3 years of experience': 'Yes',
-    'do you have 4 years of experience': 'Yes',
-    'do you have experience with the above-mentioned tech stack': 'Yes',
-    'do you have experience with the mentioned tech stack': 'Yes',
-    'do you have 3+ years of experience in dsa and system design': 'Yes',
-    'do you have experience with dsa': 'Yes',
-    'do you have experience with system design': 'Yes',
-    'do you have experience with data structures': 'Yes',
-    'do you have experience with algorithms': 'Yes',
-    'minimum 3 years experience': 'Yes',
-    'minimum 4 years experience': 'Yes',
-    
-    'do you have experience with spring boot': 'Yes',
-    'do you have experience with microservices': 'Yes',
-    'do you have experience with react': 'Yes',
-    'do you have experience with angular': 'Yes',
-    'do you have experience with aws': 'Yes',
-    'do you have experience with docker': 'Yes',
-    'do you have experience with kubernetes': 'Yes',
-    'do you have experience with java': 'Yes',
-    'do you have experience with python': 'Yes',
-    'do you have experience with javascript': 'Yes',
-    
-    # SECTION 5: PRIVACY & LEGAL (20 patterns)
-    'you declare that you read and agree to the privacy policy': 'Yes',
-    'you declare that you have read and agree to the privacy notice': 'Yes',
-    'you declare that you have read and agree to the privacy notice of miratech': 'Yes',
-    'privacy notice consent': 'Yes',
-    'i have read and agree to the privacy policy': 'Yes',
-    'i agree to the privacy policy': 'Yes',
-    'do you agree to the privacy policy': 'Yes',
-    'privacy policy agreement': 'Yes',
-    'agree to privacy policy': 'Yes',
-    'read privacy policy': 'Yes',
-    'accept privacy policy': 'Yes',
-    
-    # Job Applicant Data Privacy Notice (dropdown selection - "Acknowledge")
-    # Also covers checkbox variants where the label IS the acknowledgement text
-    'job applicant data privacy notice': 'Acknowledge',
-    'data privacy notice': 'Acknowledge',
-    'applicant data privacy notice': 'Acknowledge',
-    'applicant privacy notice': 'Acknowledge',
-    # Generic "I Acknowledge" / "I certify" checkbox/radio patterns
-    'i acknowledge': 'Yes',
-    'i acknowledge that': 'Yes',
-    'i acknowledge and agree': 'Yes',
-    'acknowledge and agree': 'Yes',
-    'i hereby acknowledge': 'Yes',
-    'hereby acknowledge': 'Yes',
-    'acknowledge the above': 'Yes',
-    'acknowledge receipt': 'Yes',
-    'acknowledge that i have read': 'Yes',
-    'i have read and acknowledge': 'Yes',
-    'read and acknowledge': 'Yes',
-    'i certify': 'Yes',
-    'i certify that': 'Yes',
-    'i hereby certify': 'Yes',
-    'hereby certify': 'Yes',
-    'i understand and agree': 'Yes',
-    'understand and agree': 'Yes',
-    'i confirm and agree': 'Yes',
-    'confirm and agree': 'Yes',
-    'i have read and understood': 'Yes',
-    'read and understood': 'Yes',
-    'i have reviewed and agree': 'Yes',
-    'reviewed and agree': 'Yes',
-    
-    # Client/Partner/Competitor employment questions → always "No"
-    'are you currently employed by a client, partner, or competitor': 'No',
-    'currently employed by a client, partner, or competitor': 'No',
-    'employed by a client, partner, or competitor': 'No',
-    'client, partner, or competitor': 'No',
-    'client partner or competitor': 'No',
-    'employed by a client or competitor': 'No',
-    'work for a competitor': 'No',
-    'employed by a competitor': 'No',
-    
-    # Open to relocate to [city] → always "Yes"
-    'are you currently in pune or open to relocate to pune': 'Yes',
-    'open to relocate to pune': 'Yes',
-    'pune for this role': 'Yes',
-    'are you currently in bangalore or open to relocate to bangalore': 'Yes',
-    'open to relocate to bangalore': 'Yes',
-    'are you currently in mumbai or open to relocate to mumbai': 'Yes',
-    'open to relocate to mumbai': 'Yes',
-    'are you currently in delhi or open to relocate to delhi': 'Yes',
-    'open to relocate to delhi': 'Yes',
-    'are you currently in hyderabad or open to relocate to hyderabad': 'Yes',
-    'open to relocate to hyderabad': 'Yes',
-    'are you currently in noida or open to relocate to noida': 'Yes',
-    'open to relocate to noida': 'Yes',
-    'are you currently in gurgaon or open to relocate to gurgaon': 'Yes',
-    'open to relocate to gurgaon': 'Yes',
-    'are you currently in chennai or open to relocate to chennai': 'Yes',
-    'open to relocate to chennai': 'Yes',
-    'are you open to relocate': 'Yes',
-    'willing to relocate for this role': 'Yes',
-    'i certify that to the best of my knowledge the information contained in this application is correct': 'Yes',
-    'i certify that all information provided is correct': 'Yes',
-    'i confirm that all details are accurate': 'Yes',
-    'information is correct': 'Yes',
-    'all information correct': 'Yes',
-    'certify information correct': 'Yes',
-    
-    'are you willing to undergo background verification': 'Yes',
-    'do you consent to background check': 'Yes',
-    'are you ok with background verification': 'Yes',
-    'background check consent': 'Yes',
-    'willing for background check': 'Yes',
-    
-    'do you consent to data processing': 'Yes',
-    'do you agree to data collection': 'Yes',
-    'do you consent to storage of personal data': 'Yes',
-    'consent to data processing': 'Yes',
-    
-    'all applicants are invited to complete this section': 'Yes',
-    'i consent to equal opportunity monitoring': 'Yes',
-    'equal opportunity consent': 'Yes',
-    
-    # SECTION 6: OPEN-ENDED / COVER LETTER (15+ patterns)
-    'what about this role makes it a good fit for you': 'I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team. I am particularly interested in working on challenging projects and contributing to innovative solutions.',
-    
-    'why would you like to join us': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience, I am confident I can contribute meaningfully to the team.',
-    'why do you want to join us': 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience, I am confident I can contribute meaningfully to the team.',
-    'what could you bring to us': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures and delivering high-quality code.',
-    'what can you contribute': 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures and delivering high-quality code.',
-    
-    'why do you want to work here': 'I am excited about this opportunity and believe my skills align well with the role requirements. I am looking for a challenging environment where I can grow professionally.',
-    
-    'why do you want to join our company': 'I am impressed by your company\'s innovative work and believe my skills would be a great fit. I am looking for opportunities to contribute to meaningful projects.',
-    
-    'why are you interested in this position': 'This position aligns perfectly with my skills and career goals. I am excited about the opportunity to contribute to your team.',
-    
-    'what interests you about this role': 'The opportunity to work on challenging full-stack projects and contribute to innovative solutions interests me greatly.',
-    
-    'why should we hire you': 'With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I bring strong technical skills and a track record of delivering quality solutions.',
-    
-    'tell us about yourself': 'I am a Full Stack Developer with 3.8+ years of experience in Java, Spring Boot, React, and AWS. I am passionate about building scalable applications and continuously improving my skills.',
-    
-    'describe your experience': 'I have 3.8+ years of experience as a Full Stack Developer, working with Java, Spring Boot, React, and AWS. I have built scalable applications and microservices architectures.',
-    
-    'what are your strengths': 'My strengths include strong problem-solving abilities, proficiency in full-stack development, and experience with modern technologies like Java, React, and AWS.',
-    
-    'what are your career goals': 'My career goal is to grow into a Technical Lead role where I can mentor junior developers and architect scalable solutions.',
-    
-    'where do you see yourself in 5 years': 'In 5 years, I see myself as a Technical Lead, architecting solutions and mentoring a team of developers.',
-    
-    'what motivates you': 'I am motivated by challenging problems, continuous learning, and the opportunity to build products that make a difference.',
-    
-    'what are you passionate about': 'I am passionate about building scalable applications, learning new technologies, and solving complex technical challenges.',
-    
-    
-    'additional comments': 'I am excited about this opportunity and believe my skills align well with the role requirements.',
-    
-    # SECTION 7: SALARY VARIATIONS (25 patterns)
-    'what is your current monthly salary': '127500',
-    'current monthly salary': '127500',
-    'expected monthly salary': '166667',
-    'monthly pay': '127500',
-    'monthly income': '127500',
-    'monthly compensation': '127500',
-    
-    'what is your fixed ctc': '1530000',
-    'what is your variable pay': '0',
-    'what is your bonus': '0',
-    'fixed pay': '1530000',
-    'bonus component': '0',
-    
-    'please share your salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'salary requirements': '24 LPA',
-    'compensation requirements': '24 LPA',
-    'pay expectations': '24 LPA',
-    'expected remuneration': '24 LPA',
-    'salary expectation': '24 LPA',
-    'compensation expectation': '24 LPA',
-    
-    'ctc details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'provide salary details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'share compensation details': 'Current: 15.3 LPA, Expected: 24 LPA',
-    
-    # SECTION 8: EXPERIENCE VARIATIONS (20 patterns)
-    'years into java': '4',
-    'years into spring boot': '4',
-    'years into react': '4',
-    'years into angular': '4',
-    'years into python': '4',
-    'years into docker': '4',
-    'years into aws': '4',
-    'years into javascript': '4',
-    'years into node': '4',
-    'years into full stack': '4',
-    
-    'total years': '3.8 Years',
-    'total years of experience': '3.8 Years',
-    'total professional experience': '3.8 Years',
-    'overall years of experience': '3.8 Years',
-    'overall professional experience': '3.8 Years',
-    
-    'overall how many years of working experience do you have': '3.8 Years',
-    'how many years of working experience do you have': '3.8 Years',
-    'years of working experience': '3.8 Years',
-    'working experience': '3.8 Years',
-    'professional working experience': '3.8 Years',
-    
-    'relevant years of experience': '3.8 Years',
-    'professional years of experience': '3.8 Years',
-    'years of professional experience': '3.8 Years',
-    'years of relevant experience': '3.8 Years',
-    'relevant professional experience': '3.8 Years',
-    
-    # SECTION 9: ADDITIONAL LINKEDIN SPECIFIC (25 patterns)
-    
-    
-    'have you worked with nielsen in the past': 'No',
-    'worked with nielsen': 'No',
-    'previous nielsen employee': 'No',
-    'nielsen experience': 'No',
-    
-    'are you legally authorized to work in the country': 'Yes',
-    'authorized to work in country': 'Yes',
-    'work authorization status': 'Authorized to work in India',
-    'legally authorized to work': 'Yes',
-    
-    'comfortable relocating': 'Yes',
-    'ok with relocation': 'Yes',
-    
-    # SECTION 10: MISSING TECH STACK PATTERNS (15 patterns)
-    'java spring boot angular sql rest git maven': '4',
-    'spring boot angular sql rest git': '4',
-    'java spring boot react': '4',
-    'full stack java react': '4',
-    'java python javascript': '4',
-    'spring boot microservices': '4',
-    'react angular vue': '4',
-    'docker kubernetes aws': '4',
-    'frontend backend database': '4',
-    'html css javascript': '4',
-    'rest api graphql': '4',
-    'sql nosql': '4',
-    'mysql postgresql mongodb': '4',
-    'jenkins github actions': '4',
-    'terraform ansible': '4',
-
-    # Hybrid Mode / Location-Specific Availability (Pune)
-    # NOTE: Must be broad enough to catch fuzzy matches on "Are you ready work in Hybrid mode (Pune)?"
-    'are you ready work in hybrid mode (pune)': 'Yes',
-    'are you ready to work in hybrid mode (pune)': 'Yes',
-    'ready work in hybrid mode (pune)': 'Yes',
-    'ready to work in hybrid mode (pune)': 'Yes',
-    'ready work in hybrid mode': 'Yes',
-    'hybrid mode (pune)': 'Yes',
-    'hybrid mode pune': 'Yes',
-    'ready for hybrid mode pune': 'Yes',
-    'work in hybrid mode pune': 'Yes',
-    'hybrid mode': 'Yes',
-
-    # Compensation Current + Expected (composite) — e.g. "Compensation Current, Expected?"
-    # Correct values: Current CTC = 15.3 LPA (1530000), Expected = 24 LPA (2400000)  ← updated Apr 2026
-    'compensation current, expected': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation current expected': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current, expected compensation': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected compensation': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'compensation current': '15.3 LPA',
-    'compensation expected': '24 LPA',
-    'compensation (current, expected)': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current expected ctc': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected ctc': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current expected salary': 'Current: 15.3 LPA, Expected: 24 LPA',
-    'current and expected salary': 'Current: 15.3 LPA, Expected: 24 LPA',
-
-    # In-person Interview Availability (Pune and other cities)
-    'are you available for in-person interview in pune': 'Yes, available for in-person interview in Pune - any weekday works',
-    'available for in-person interview in pune': 'Yes',
-    'in-person interview in pune': 'Yes',
-    'in person interview in pune': 'Yes',
-    'available for in-person interview': 'Yes',
-    'in-person interview': 'Yes',
-    'in person interview': 'Yes',
-    'available for face to face interview in pune': 'Yes',
-    'face to face interview in pune': 'Yes',
-    'f2f interview in pune': 'Yes',
-    'are you available for in person interview': 'Yes',
-
-    # Django Skill Question
-    'django is a must have skill, have you built and deployed applications using same': 'Yes, I have built and deployed Django-based web applications. While my primary stack is Java/Spring Boot and Node.js, I have hands-on experience with Django for RESTful API development, ORM-based database management, and deploying applications on cloud platforms like AWS.',
-    'have you built and deployed applications using django': 'Yes, I have built and deployed Django-based web applications with RESTful APIs, ORM integration, and AWS cloud deployment.',
-    'django applications': 'Yes, I have experience building and deploying Django applications.',
-    'django deployment': 'Yes, deployed Django applications on AWS with Docker containers.',
-    'django experience': 'Yes',
-    'built with django': 'Yes',
-    'django skill': 'Yes',
-    'django': 'Yes',
-
-    # Pune Local Candidate Questions
-    'we are only looking for local candidate in pune, are you based in pune': 'No',
-    'only looking for local candidate in pune': 'No',
-    'local candidate in pune': 'No',
-    'are you a local candidate in pune': 'No',
-    'are you based in pune': 'No',
-    'candidate in pune': 'No',
-    'local pune candidate': 'No',
-
-    # AI Tools Currently in Use
-    'how and what ai tools are you using in your current roles': 'I actively use GitHub Copilot for AI-assisted code completion, refactoring suggestions, and boilerplate generation. I also use ChatGPT and Claude for debugging complex issues, generating unit tests, writing technical documentation, and researching architectural patterns. Additionally, I use AWS CodeWhisperer for cloud-specific code suggestions.',
-    'how and what ai tools are you using': 'I use GitHub Copilot for code completion, ChatGPT and Claude for debugging and documentation, and AWS CodeWhisperer for cloud-specific suggestions.',
-    'what ai tools are you using in your current role': 'GitHub Copilot, ChatGPT, Claude, and AWS CodeWhisperer for code generation, debugging, and documentation.',
-    'ai tools in current role': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
-    'what ai tools do you use': 'GitHub Copilot for code completion and ChatGPT/Claude for problem-solving, debugging, and documentation.',
-    'which ai tools do you use': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
-    'ai tools you are using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
-    'ai tools currently using': 'GitHub Copilot, ChatGPT, Claude, AWS CodeWhisperer',
-
-    # ========== PHASE 2: NEW PATTERNS FOR COVERAGE GAPS ==========
-
-    # SECTION A: Additional Experience Phrasings (12 patterns)
-    'how much experience': '3.8 Years',
-    'how many years of work': '3.8 Years',
-    'years of working': '3.8 Years',
-    'work experience in years': '3.8 Years',
-    'total work experience': '3.8 Years',
-    'professional working years': '3.8 Years',
-    'exp in years': '3.8 Years',
-    'how long have you worked': '3.8 Years',
-    'how long have you been in the industry': '3.8 Years',
-    'how long have you been working professionally': '3.8 Years',
-    'number of years of experience': '3.8 Years',
-    'years of professional work': '3.8 Years',
-
-    # SECTION B: Salary Negotiation Variants (10 patterns)
-    'salary comfortable with': 'Yes, open to discussion within range',
-    'comfortable with the salary': 'Yes',
-    'comfortable with salary range': 'Yes',
-    'salary expectations for this role': '24 LPA',
-    'expected compensation': '24 LPA',
-    'current compensation': '15.3 LPA',
-    'current package': '15.3 LPA',
-    'expected package': '24 LPA',
-    'annual income': '15.3 LPA',
-    'expected annual income': '24 LPA',
-
-    # SECTION C: Notice Period Variants (8 patterns)
-    'how much notice period': '30 days',
-    'notice period in months': '1 month',
-    'can you serve notice period': 'Yes',
-    'notice period left': '30 days',
-    'balance notice period': '30 days',
-
-    # SECTION D: Location / Work Mode Variants (15 patterns)
-    'work arrangement': 'Hybrid',
-    'work model': 'Hybrid',
-    'work setup': 'Open to Hybrid, Remote, or WFO',
-    'office location preference': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    'preferred work location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    'willing to work from': 'Yes',
-    'open to work from': 'Yes',
-    'can you commute': 'Yes',
-    'commute to office': 'Yes',
-    'relocation preference': 'Open to relocation to any metro city',
-    'current residential location': 'Noida',
-    'current residing city': 'Noida',
-    'based out of': 'Noida',
-    'open to hybrid': 'Yes',
-    'open to remote': 'Yes',
-
-    # SECTION E: Education Variants (10 patterns)
-    'education qualification': 'B.Tech CSE',
-    'graduation': '2022',
-    'qualification degree': 'B.Tech Computer Science',
-    'what degree': 'B.Tech Computer Science',
-    'what is your degree': 'B.Tech Computer Science',
-    'undergraduate degree': 'B.Tech Computer Science',
-    'graduation degree': 'B.Tech Computer Science',
-    'what is your highest level of education': "Bachelor's Degree",
-    'highest level of education': "Bachelor's Degree",
-    'completed graduation in': '2022',
-
-    # SECTION F: Authorization / Visa Variants (8 patterns)
-    'do you need visa sponsorship': 'No',
-    'do you require visa': 'No',
-    'do you require sponsorship': 'No',
-    'will require sponsorship': 'No',
-    'need visa': 'No',
-    'require work permit': 'No',
-    'eligible to work': 'Yes',
-    'right to work': 'Yes',
-
-    # SECTION G: Assessment / Availability Variants (10 patterns)
-    'available for online assessment': 'Yes',
-    'can you take an assessment': 'Yes',
-    'ready for online assessment': 'Yes',
-    'comfortable with assessment': 'Yes',
-    'when can you start working': 'Within 30 days',
-    'earliest start date': 'Within 30 days',
-    'when are you available to start': 'Within 30 days',
-    'available to join in': '30 days',
-    'how soon can you start working': 'Within 30 days',
-
-    # SECTION H: Misc HR / Compliance (7 patterns)
-    'have you ever been convicted': 'No',
-    'have you been convicted': 'No',
-    'any criminal record': 'No',
-    'criminal background': 'No',
-    'been terminated': 'No',
-    'have you been terminated': 'No',
-    'any gap in employment': 'No',
-}
+# Patterns are now loaded from config/qa_patterns.json (single source of truth)
+# The SentinelAgent uses PatternMatcher which reads from the JSON config file.
 
 FUZZY_MATCH_THRESHOLD = 0.65
 FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
@@ -1911,9 +85,14 @@ class SentinelAgent:
         self._question_classifier: Optional[QuestionClassifier] = None
         self._current_platform: str = "default"
         
+        # Pattern matcher for JSON-based patterns (preferred - reads from config/qa_patterns.json)
+        self._pattern_matcher = create_matcher()
+        
         # Fingerprint matcher and success tracker
         self._fingerprint_matcher = FingerprintMatcher()
-        self._fingerprint_matcher.build_from_patterns(KNOWN_QA_PATTERNS)
+        # Build from JSON patterns (single source of truth)
+        json_patterns = self._pattern_matcher.patterns.get('patterns', {})
+        self._fingerprint_matcher.build_from_patterns(json_patterns)
         self._success_tracker = SuccessTracker()
         
         # NEW: Input-aware resolver and self-healing components
@@ -1936,6 +115,33 @@ class SentinelAgent:
                 self_healing_matcher=self._self_healing,
                 input_resolver=self._input_resolver
             )
+    
+    def _get_patterns_for_js(self) -> Dict[str, str]:
+        """
+        Get all patterns as a flat dictionary for JavaScript injection.
+        
+        Uses JSON config (config/qa_patterns.json) as single source of truth.
+        
+        Returns:
+            Flat dictionary mapping pattern strings to answers
+        """
+        patterns_dict = {}
+        
+        # Load patterns from JSON config (single source of truth)
+        try:
+            json_patterns = self._pattern_matcher.patterns.get('patterns', {})
+            for pattern_id, pattern_data in json_patterns.items():
+                answer = pattern_data.get('default', '')
+                if not answer:
+                    continue
+                
+                # Add each pattern string as a key
+                for pattern_str in pattern_data.get('patterns', []):
+                    patterns_dict[pattern_str.lower()] = answer
+        except Exception as e:
+            print(f"Warning: Could not load JSON patterns for JS: {e}")
+        
+        return patterns_dict
     
     def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
         """
@@ -2365,7 +571,9 @@ class SentinelAgent:
 
         if is_experience_question:
             if 'month' in question_lower:
-                return KNOWN_QA_PATTERNS.get('months of experience', '46'), 0.95
+                # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+                answer, confidence = self._pattern_matcher.fuzzy_match("months of experience")
+                return answer or '46', max(confidence, 0.95)
             # LinkedIn requires whole numbers - return '4' for those cases
             if 'whole number' in question_lower or 'enter a number' in question_lower:
                 return '4', 0.98
@@ -2373,7 +581,9 @@ class SentinelAgent:
             if self._current_platform == 'linkedin':
                 return '4', 0.95
             else:
-                return KNOWN_QA_PATTERNS.get('years of experience', '3.8 Years'), 0.95
+                # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+                answer, confidence = self._pattern_matcher.fuzzy_match("years of experience")
+                return answer or '3.8 Years', max(confidence, 0.95)
         
         if is_notice_question:
             # Check if question asks for LWD (Last Working Day) specifically
@@ -2383,7 +593,9 @@ class SentinelAgent:
                 lwd_formatted = lwd_date.strftime('%d %B %Y')  # e.g., "07 February 2026"
                 return f'Serving 30 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
-                return KNOWN_QA_PATTERNS.get('serving notice', 'Yes'), 0.95
+                # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+                answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
+                return answer or 'Yes', max(confidence, 0.95)
             elif 'in days' in question_lower:
                 return '30', 0.98
             else:
@@ -2400,48 +612,25 @@ class SentinelAgent:
         
         if is_location_question:
             if 'preferred' in question_lower:
-                return KNOWN_QA_PATTERNS.get('preferred location', 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune'), 0.95
-            return KNOWN_QA_PATTERNS.get('current location', 'Noida'), 0.95
+                # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+                answer, confidence = self._pattern_matcher.fuzzy_match("preferred location")
+                return answer or 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune', max(confidence, 0.95)
+            # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+            answer, confidence = self._pattern_matcher.fuzzy_match("current location")
+            return answer or 'Noida', max(confidence, 0.95)
         
         # ==========================================
         # PHASE 2: Fuzzy Matching for Other Questions
         # Enhanced with negation detection, word-set similarity, and position-aware scoring
+        # Now uses PatternMatcher which reads from config/qa_patterns.json
         # ==========================================
-        for pattern, answer in KNOWN_QA_PATTERNS.items():
-            pattern_lower = pattern.lower()
-            
-            # Check for negation mismatch - penalize if one is negated and other is not
-            pattern_negated = self._detect_negation(pattern_lower)
-            negation_penalty = 0.2 if (question_negated != pattern_negated) else 0.0
-            
-            # Calculate position-aware similarity (combines sequence and word-set matching)
-            score = self._position_similarity(question_lower, pattern_lower)
-            
-            # Boost score if pattern is contained in question (strong signal)
-            if pattern_lower in question_lower:
-                score = max(score, 0.95)
-            
-            # Boost if all words in pattern are found in question (order-independent)
-            pattern_words = pattern_lower.split()
-            if len(pattern_words) > 1 and all(word in question_lower for word in pattern_words):
-                score = max(score, 0.90)
-            
-            # Boost for same keyword category (salary, experience, etc.)
-            if self._same_keyword_category(question_lower, pattern_lower):
-                score = min(score + 0.05, 1.0)
-            
-            # Apply negation penalty
-            score = max(score - negation_penalty, 0.0)
-            
-            if score > best_score:
-                best_score = score
-                best_match = answer
         
-        # Use higher threshold for direct fuzzy matches
-        if best_score >= FUZZY_MATCH_THRESHOLD and best_match is not None:
+        # First try the PatternMatcher (JSON-based patterns)
+        json_answer, json_confidence = self._pattern_matcher.fuzzy_match(question)
+        if json_answer and json_confidence >= FUZZY_MATCH_THRESHOLD:
             # Validate and potentially fix the answer
             validated_answer, final_confidence = self._validate_and_retry(
-                question, best_match, []
+                question, json_answer, []
             )
             return validated_answer, final_confidence
         
@@ -5030,7 +3219,9 @@ class SentinelAgent:
 
     async def _handle_chatbot_loop(self) -> "bool | str":
         """Handle Naukri chatbot questionnaire. Returns True if done, 'CONTINUE' for MCC popup, False on failure."""
-        patterns_json = json.dumps(KNOWN_QA_PATTERNS)
+        # Use merged patterns from JSON config + legacy dict
+        patterns_for_js = self._get_patterns_for_js()
+        patterns_json = json.dumps(patterns_for_js)
         max_iterations = 20
         previous_questions = []
         same_question_count = 0
@@ -5106,7 +3297,8 @@ class SentinelAgent:
                     return 'NO_CHATBOT';
                 }}
                 
-                let questionEl = chatLayer.querySelector('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
+                const qEls = chatLayer.querySelectorAll('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
+                let questionEl = qEls.length > 0 ? qEls[qEls.length - 1] : null;
                 let qText = '';
                 if (questionEl) {{
                     qText = questionEl.innerText || '';
@@ -5152,8 +3344,65 @@ class SentinelAgent:
                 
                 console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditable}});
                 
+                // STEP 1.5: DETECT option buttons EARLY (must be checked before text inputs)
+                const hasOptionBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button').length > 0;
+                
                 // STEP 2: USE the first available input type (sequential detection)
-                // Order: Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
+                // Order: Option Buttons -> Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
+                
+                // HANDLE OPTION BUTTONS (highest priority — before text inputs to prevent typing button labels)
+                if (hasOptionBtns) {{
+                    const optBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button');
+                    console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
+                    
+                    const answerLower = answer.toLowerCase();
+                    let clickedBtn = null;
+                    
+                    // Try to match answer to button text
+                    for (const btn of optBtns) {{
+                        const btnText = btn.innerText.trim().toLowerCase();
+                        console.log('Chatbot Debug - Option button:', btnText);
+                        
+                        // Exact match
+                        if (btnText === answerLower) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked exact match option:', btn.innerText.trim());
+                            break;
+                        }}
+                        // Partial match (answer contains button text or vice versa)
+                        if (btnText.includes(answerLower) || answerLower.includes(btnText)) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked partial match option:', btn.innerText.trim());
+                            break;
+                        }}
+                        // Yes/No matching
+                        if ((answerLower === 'yes' || answerLower.includes('yes')) && btnText === 'yes') {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked Yes option');
+                            break;
+                        }}
+                        if ((answerLower === 'no' || answerLower.startsWith('no')) && btnText === 'no') {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked No option');
+                            break;
+                        }}
+                    }}
+                    
+                    // If no match found, click first option as fallback
+                    if (!clickedBtn && optBtns.length > 0) {{
+                        optBtns[0].click();
+                        clickedBtn = optBtns[0];
+                        console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
+                    }}
+                    
+                    if (clickedBtn) {{
+                        return 'CHATBOT_OPT_CLICKED: ' + clickedBtn.innerText.trim() + ' | Q: ' + qText.slice(0, 50);
+                    }}
+                }}
                 
                 // HANDLE DROPDOWN
                 if (hasSelect) {{
@@ -5557,11 +3806,12 @@ class SentinelAgent:
                     return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
                 }}
                 
-                // Try option buttons (INDEPENDENT block)
-                const optionBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button');
-                if (optionBtns.length > 0) {{
-                    optionBtns[0].click();
-                    return 'CHATBOT_OPT_CLICKED';
+                // Option buttons are now handled at the top of STEP 2 (before dropdowns/radios)
+                // This fallback only runs if the early handler somehow missed them
+                const lateOptionBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button');
+                if (lateOptionBtns.length > 0) {{
+                    lateOptionBtns[0].click();
+                    return 'CHATBOT_OPT_CLICKED_FALLBACK';
                 }}
                 
                 // Try to click Send/Submit/Next button
@@ -5659,6 +3909,10 @@ class SentinelAgent:
                 # Wait longer after dropdown selection
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
+            elif 'CHATBOT_OPT_CLICKED' in result:
+                # Option button clicked - wait for chatbot to process and show next question
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
             elif 'CHATBOT_WAITING' in result:
                 # Nothing to do, wait
                 continue
@@ -5669,7 +3923,9 @@ class SentinelAgent:
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
         # Serialize patterns, synonyms, and stop words for JS injection
-        patterns_json = json.dumps(KNOWN_QA_PATTERNS)
+        # Use merged patterns from JSON config + legacy dict
+        patterns_for_js = self._get_patterns_for_js()
+        patterns_json = json.dumps(patterns_for_js)
         synonyms_json = json.dumps(SYNONYM_MAP)
         stopwords_json = json.dumps(list(STOP_WORDS))
         
@@ -7684,17 +5940,40 @@ class SentinelAgent:
                             }}
                         }}
 
-                        // Try option buttons
+                        // Try option buttons (with answer-aware matching)
                         const optionBtns = document.querySelectorAll('.chatbot_OptionContainer button');
-                        if (optionBtns.length > 0) {{ optionBtns[0].click(); return 'NAUKRI_CHAT_OPT_CLICKED'; }}
+                        if (optionBtns.length > 0) {{
+                            // Get question text for answer matching
+                            const optQEl = document.querySelector('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
+                            const optQText = optQEl ? optQEl.innerText || '' : '';
+                            const optAnswer = fuzzyMatch(optQText) || '';
+                            const optAnsLower = optAnswer.toLowerCase();
+                            
+                            let clickedOpt = false;
+                            for (const btn of optionBtns) {{
+                                const btnText = btn.innerText.trim().toLowerCase();
+                                if (btnText === optAnsLower || 
+                                    btnText.includes(optAnsLower) || 
+                                    optAnsLower.includes(btnText) ||
+                                    ((optAnsLower === 'yes' || optAnsLower.includes('yes')) && btnText === 'yes') ||
+                                    ((optAnsLower === 'no' || optAnsLower.startsWith('no')) && btnText === 'no')) {{
+                                    btn.click();
+                                    clickedOpt = true;
+                                    return 'NAUKRI_CHAT_OPT_CLICKED: ' + btn.innerText.trim();
+                                }}
+                            }}
+                            // Fallback: click first option if no match
+                            if (!clickedOpt) {{
+                                optionBtns[0].click();
+                                return 'NAUKRI_CHAT_OPT_CLICKED: ' + optionBtns[0].innerText.trim() + ' (fallback)';
+                            }}
+                        }}
                         
                         // DOM INSPECTION on Wait
                         const activeMsg = document.querySelector('.chatbot_MessageContainer li:last-child') || document.querySelector('.chatbot_MessageContainer');
                         const dump = activeMsg ? activeMsg.innerHTML.slice(0, 800) : 'No active msg';
                         
                         return 'NAUKRI_CHAT_WAITING | DOM: ' + dump + ' | CBs: ' + debugLog.join(', ');
-                        
-                        return 'NAUKRI_CHAT_WAITING';
                     }}
                     
                     // 2. Check if we're on the recommended jobs page

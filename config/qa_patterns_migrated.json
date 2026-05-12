@@ -1,0 +1,3144 @@
+{
+  "version": "2.0",
+  "description": "Question-Answer patterns for job application automation - MIGRATED",
+  "patterns": {
+    "experience_4815": {
+      "patterns": [
+        "years of experience",
+        "total experience",
+        "overall experience",
+        "year of exp",
+        "experience",
+        "years",
+        "java experience",
+        "nodejs experience",
+        "javascript experience",
+        "ci/cd experience",
+        "full stack experience",
+        "backend experience",
+        "frontend experience",
+        "software experience",
+        "web experience",
+        "python experience",
+        "rel exp as react",
+        "programming experience",
+        "how many years of experience do you have",
+        "how many years of experience",
+        "years of experience do you have",
+        "total exp",
+        "your total exp",
+        "what is your total exp",
+        "relevant experience",
+        "professional experience",
+        "industry experience",
+        "corporate experience",
+        "it experience",
+        "software development experience",
+        "hands on experience",
+        "hands-on experience",
+        "practical experience",
+        "total it experience",
+        "overall it experience",
+        "relevant years",
+        "pertinent experience",
+        "sector experience",
+        "total years of exp",
+        "years of exp",
+        "exp"
+      ],
+      "category": "experience",
+      "default": "3.8 Years"
+    },
+    "experience_6353": {
+      "patterns": [
+        "months of experience"
+      ],
+      "category": "experience",
+      "default": "46"
+    },
+    "experience_4127": {
+      "patterns": [
+        "react experience",
+        "angular experience"
+      ],
+      "category": "experience",
+      "default": "4 Years"
+    },
+    "skills_1857": {
+      "patterns": [
+        "which programming language"
+      ],
+      "category": "skills",
+      "default": "Python, Node.js / TypeScript, Both"
+    },
+    "experience_1857": {
+      "patterns": [
+        "programming language most experienced",
+        "programming language are you most experienced"
+      ],
+      "category": "experience",
+      "default": "Python, Node.js / TypeScript, Both"
+    },
+    "salary_1686": {
+      "patterns": [
+        "current salary",
+        "what is your current salary?",
+        "gross salary",
+        "gross current salary",
+        "please enter your current salary",
+        "please enter your ctc",
+        "please enter your salary",
+        "ctc",
+        "salary",
+        "pay",
+        "compensation"
+      ],
+      "category": "salary",
+      "default": "15.3 LPA"
+    },
+    "salary_5211": {
+      "patterns": [
+        "expected salary",
+        "what is your expected salary?",
+        "gross expected salary",
+        "salary expectations",
+        "compensation expectations",
+        "please select your salary expectation",
+        "please enter your expected salary",
+        "expected ctc"
+      ],
+      "category": "salary",
+      "default": "24 LPA"
+    },
+    "salary_1359": {
+      "patterns": [
+        "current annual salary",
+        "what is your current annual salary",
+        "what is your current annual salary?",
+        "current ctc",
+        "what is your current ctc",
+        "what is your current ctc?",
+        "fixed ctc",
+        "fixed ctc numeric",
+        "fixed ctc numeric input",
+        "please enter your annual current ctc in inr",
+        "please enter your current ctc in inr"
+      ],
+      "category": "salary",
+      "default": "1530000"
+    },
+    "salary_5206": {
+      "patterns": [
+        "expected annual salary",
+        "what is your expected annual salary",
+        "what is your expected annual salary?",
+        "what is your expected annual salary ?",
+        "expected annual ctc in inr",
+        "expected annual ctc",
+        "expected ctc in inr",
+        "expected ctc inr",
+        "please enter your annual expected ctc in inr",
+        "please enter your expected ctc in inr"
+      ],
+      "category": "salary",
+      "default": "2400000"
+    },
+    "salary_1381": {
+      "patterns": [
+        "variable pay",
+        "variable pay numeric",
+        "variable pay numeric input"
+      ],
+      "category": "salary",
+      "default": "0"
+    },
+    "salary_7532": {
+      "patterns": [
+        "salary range",
+        "current salary range",
+        "annual salary",
+        "ctc range"
+      ],
+      "category": "salary",
+      "default": "15-20 Lacs"
+    },
+    "salary_1810": {
+      "patterns": [
+        "expected salary range"
+      ],
+      "category": "salary",
+      "default": "20-25 Lacs"
+    },
+    "salary_9493": {
+      "patterns": [
+        "ctc in lacs per annum",
+        "what is your current ctc in lacs per annum",
+        "current ctc in lacs per annum",
+        "current ctc in lakhs",
+        "current ctc in lpa",
+        "current ctc [in lpa]",
+        "current ctc(in lpa)",
+        "current ctc (in lpa)",
+        "what is your current ctc in lacs per annum?",
+        "ctc in lacs",
+        "cctc",
+        "what is your cctc",
+        "your cctc"
+      ],
+      "category": "salary",
+      "default": "15.3"
+    },
+    "personal_info_3544": {
+      "patterns": [
+        "phone number",
+        "mobile number",
+        "please enter your phone number"
+      ],
+      "category": "personal_info",
+      "default": "7905828880"
+    },
+    "personal_info_6159": {
+      "patterns": [
+        "email address",
+        "alternative email",
+        "secondary email",
+        "personal email",
+        "please enter your email address"
+      ],
+      "category": "personal_info",
+      "default": "siddhant3646@gmail.com"
+    },
+    "location_3550": {
+      "patterns": [
+        "current location",
+        "current city",
+        "present location",
+        "location",
+        "based in",
+        "live in",
+        "city",
+        "base location",
+        "please select your current location"
+      ],
+      "category": "location",
+      "default": "Noida"
+    },
+    "location_3643": {
+      "patterns": [
+        "preferred location",
+        "please select your preferred location"
+      ],
+      "category": "location",
+      "default": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune"
+    },
+    "preference_6249": {
+      "patterns": [
+        "current role",
+        "what is your current role",
+        "current designation",
+        "current position",
+        "current job title",
+        "job title",
+        "designation",
+        "role",
+        "position",
+        "please enter your current designation"
+      ],
+      "category": "preference",
+      "default": "SDE-2 Full Stack Developer"
+    },
+    "employment_3311": {
+      "patterns": [
+        "current employer",
+        "current organization",
+        "current organization name",
+        "organization name",
+        "what is your current organization",
+        "present organization"
+      ],
+      "category": "employment",
+      "default": "Fiserv"
+    },
+    "personal_info_3311": {
+      "patterns": [
+        "current company",
+        "current company name",
+        "company name",
+        "previous company",
+        "which company",
+        "please enter your current company"
+      ],
+      "category": "personal_info",
+      "default": "Fiserv"
+    },
+    "preference_3311": {
+      "patterns": [
+        "current organisation",
+        "current organisation name",
+        "organisation name",
+        "what is your current organisation",
+        "where do you work",
+        "where are you working"
+      ],
+      "category": "preference",
+      "default": "Fiserv"
+    },
+    "notice_period_201": {
+      "patterns": [
+        "notice period",
+        "what is your notice period",
+        "what is your notice period?",
+        "what is your notice period ?",
+        "serving notice",
+        "serving notice period",
+        "are you serving notice",
+        "currently serving notice"
+      ],
+      "category": "notice_period",
+      "default": "Serving Notice Period"
+    },
+    "notice_period_5339": {
+      "patterns": [
+        "notice period in days",
+        "notice period days",
+        "notice period for your current company in days",
+        "notice period for your current company",
+        "current company notice period",
+        "notice period of your current company",
+        "what is the notice period for your current company",
+        "earliest joining date",
+        "immediate joining",
+        "join by",
+        "joining availability",
+        "joining date",
+        "how many days notice",
+        "how soon you can join us",
+        "how soon can you join us",
+        "when can you join",
+        "join us",
+        "if offered the role, within how many days will you be able to join",
+        "within how many days will you be able to join",
+        "how many days will you be able to join",
+        "able to join",
+        "how immediate can you join if gets selected",
+        "how immediate can you join",
+        "immediate can you join",
+        "how early can you join",
+        "please enter your notice period in days"
+      ],
+      "category": "notice_period",
+      "default": "30"
+    },
+    "notice_period_9029": {
+      "patterns": [
+        "are you serving notice period",
+        "are you currently serving notice period",
+        "are you currently serving notice",
+        "currently serving notice period",
+        "are you currently serving/served notice period",
+        "currently serving/served notice period",
+        "serving/served notice period",
+        "are you currently serving or served notice",
+        "currently serving or served notice",
+        "manager wants someone who can join immediately or within 15-30 days",
+        "join immediately or within 15-30 days",
+        "can you join immediately or within 15-30 days",
+        "join within 15-30 days",
+        "can join within 15-30 days",
+        "interested in joining",
+        "notice period negotiated",
+        "notice period that must be served",
+        "negotiate notice period",
+        "is your notice period negotiable",
+        "are you a immediate joiner",
+        "are you an immediate joiner",
+        "immediate joiner",
+        "can join immediately"
+      ],
+      "category": "notice_period",
+      "default": "Yes"
+    },
+    "yes_no_9029": {
+      "patterns": [
+        "immediately or within 15-30 days",
+        "are you comfortable working during overlapping us hours",
+        "comfortable working us hours",
+        "overlapping us hours",
+        "us hours weekly calls",
+        "employed by fiserv",
+        "employed at fiserv",
+        "have you been employed by fiserv",
+        "are you currently employed by fiserv",
+        "currently employed by fiserv",
+        "work authorization",
+        "legally authorized",
+        "authorized to work",
+        "authorized to lawfully work",
+        "authorized to lawfully work for",
+        "lawfully authorized to work",
+        "authorized to work in",
+        "are you legally authorized to work in india",
+        "are you legally authorized to work",
+        "are you authorized to lawfully work",
+        "do you have the right to work",
+        "eligible to work in india",
+        "background check",
+        "drug test",
+        "consent to collect",
+        "consent to collect store and process",
+        "collect store and process",
+        "data consent",
+        "consent to process data",
+        "employment consent",
+        "1825 days",
+        "1825 days thereafter",
+        "730 days",
+        "730 days thereafter",
+        "up to 730 days",
+        "for up to 730 days",
+        "365 days",
+        "temporary employee",
+        "365 days thereafter",
+        "up to 365 days",
+        "for up to 365 days",
+        "black duck has my consent",
+        "black duck consent",
+        "has my consent to collect",
+        "has my consent to collect store",
+        "highradius has my consent",
+        "highradius consent",
+        "highradius data consent",
+        "smartbear has my consent",
+        "greenhouse consent",
+        "data collection consent",
+        "process my data",
+        "store and process",
+        "considering me for employment",
+        "employment consideration",
+        "remote work",
+        "hybrid work",
+        "work from office",
+        "comfortable to work from office",
+        "work from office 6 days",
+        "work from office 5 days",
+        "wfo",
+        "full stack java developer",
+        "java developer",
+        "ai apis",
+        "integrated any ai apis",
+        "openai anthropic",
+        "designed database architecture",
+        "database architecture from scratch",
+        "deployed applications to cloud",
+        "cloud servers aws",
+        "aws vps independently",
+        "end-to-end full stack projects",
+        "end to end full stack",
+        "full stack projects",
+        "contract role",
+        "ci/cd pipelines",
+        "cicd pipelines",
+        "ci cd pipelines",
+        "leading architecture decisions",
+        "face to face interview",
+        "f2f interview",
+        "available for interview",
+        "interested for interview",
+        "virtual interview",
+        "telephonic interview",
+        "interested for f2f interview",
+        "available on",
+        "comfortable taking an online test",
+        "online test as the first round",
+        "comfortable with online test",
+        "first round of evaluation",
+        "online test first round",
+        "comfortable taking online",
+        "take an online test",
+        "online evaluation",
+        "written test",
+        "aptitude test",
+        "contract to hire",
+        "c2h position",
+        "interested in c2h",
+        "contract to hire position",
+        "deployed frontend applications",
+        "diverse enterprise platforms",
+        "comfortable working in shift",
+        "shift timing",
+        "night shift",
+        "rotational shift",
+        "restful apis",
+        "designed and developed restful apis",
+        "rest api",
+        "production systems",
+        "docker or kubernetes",
+        "docker",
+        "kubernetes",
+        "kafka",
+        "available to work full-time on-site",
+        "full-time on-site",
+        "bfsi",
+        "fintech",
+        "banking domain",
+        "5 days working from office",
+        "5 days wfo",
+        "comfortable for 5 days",
+        "working from office",
+        "can it be negotiated",
+        "negotiated with your current employer",
+        "willing to accept",
+        "technical assessment",
+        "available to take a technical assessment",
+        "take a technical assessment",
+        "coding assessment",
+        "online assessment",
+        "available for assessment",
+        "strong knowledge in db",
+        "knowledge in db",
+        "database knowledge",
+        "db knowledge",
+        "sql knowledge",
+        "must have strong knowledge",
+        "strong proficiency",
+        "good grasp",
+        "do you have proficiency",
+        "good grasp of etl",
+        "etl concepts",
+        "willing to travel",
+        "urgent requirement",
+        "immediate opening",
+        "immediate requirement",
+        "asap",
+        "as soon as possible",
+        "will you be okay with that",
+        "okay with that",
+        "managed a team",
+        "led a team",
+        "owned a project",
+        "ready to travel",
+        "comfortable to travel",
+        "ok to travel",
+        "fine with travel",
+        "accept travel",
+        "willingness to travel"
+      ],
+      "category": "yes_no",
+      "default": "Yes"
+    },
+    "yes_no_2607": {
+      "patterns": [
+        "any offer in hand",
+        "do you have any offer",
+        "offer in hand",
+        "any offers",
+        "currently holding offer",
+        "have you ever been employed by",
+        "previously employed",
+        "applied to navan",
+        "have you been employed by visa",
+        "have you ever been employed by visa",
+        "employed at visa",
+        "previous employment with visa",
+        "have you ever been employed by any of the",
+        "currently employed by any of the",
+        "currently an employee of any",
+        "do you have any relatives working",
+        "do you have any family members employed",
+        "do any of your relatives work",
+        "conflict of interest",
+        "any conflict of interest",
+        "affiliated with any competitor",
+        "associated with any competing firm",
+        "are you a third party",
+        "are you currently a third party",
+        "are you a temporary employee",
+        "are you currently a temporary employee",
+        "non-compete",
+        "non compete",
+        "noncompete",
+        "non-competition",
+        "do you have a non-compete",
+        "non-compete agreement",
+        "agreement that would prevent you from working",
+        "prevent you from working with onit",
+        "prevent you from working with simplelegal",
+        "visa sponsorship",
+        "require sponsorship",
+        "will you now or in the future require sponsorship",
+        "require visa sponsorship",
+        "need sponsorship",
+        "employed by any of the",
+        "currently employed as a",
+        "third party",
+        "previously employed by",
+        "close relative working",
+        "relative working",
+        "family member working",
+        "family members working",
+        "relatives working in",
+        "currently an employee of",
+        "previously attended an interview with us",
+        "previously attended interview",
+        "have you previously attended",
+        "attended an interview with us",
+        "interviewed with us before",
+        "interviewed with us previously",
+        "applied to us before",
+        "applied before",
+        "applied previously",
+        "previous interview with us",
+        "appeared for interview with us",
+        "registered in tcs",
+        "registered in tata consultancy",
+        "referred for this position",
+        "referred by",
+        "employee referral",
+        "encouraged to apply",
+        "digicert employee",
+        "internal referral",
+        "friend referral",
+        "colleague referral"
+      ],
+      "category": "yes_no",
+      "default": "No"
+    },
+    "experience_2607": {
+      "patterns": [
+        "worked for navan",
+        "worked for reed",
+        "worked with visa in the past 2 years",
+        "worked with visa in the last 2 years",
+        "worked for visa in the past 2 years",
+        "worked for visa in the last 2 years",
+        "employed by visa in the past 2 years",
+        "employed by visa in the last 2 years",
+        "have you worked with visa",
+        "overall exp",
+        "have you worked for visa",
+        "have you ever worked for visa",
+        "have you ever worked with visa",
+        "worked at visa",
+        "have you worked with any of the following companies in the past 2 years",
+        "have you worked with any of these companies",
+        "have you previously worked for",
+        "have you ever worked for",
+        "5+ years of full-stack development experience",
+        "5 plus years of full-stack",
+        "5+ years full-stack",
+        "5 years of full-stack"
+      ],
+      "category": "experience",
+      "default": "No"
+    },
+    "personal_info_2607": {
+      "patterns": [
+        "affiliated companies",
+        "have you been employed by any of the listed companies",
+        "family members in company",
+        "relatives in company",
+        "family in company"
+      ],
+      "category": "personal_info",
+      "default": "No"
+    },
+    "education_1317": {
+      "patterns": [
+        "graduation year",
+        "year of graduation"
+      ],
+      "category": "education",
+      "default": "2022"
+    },
+    "preference_1317": {
+      "patterns": [
+        "passing year",
+        "year of passing",
+        "batch",
+        "completion year",
+        "year of completion",
+        "graduated in"
+      ],
+      "category": "preference",
+      "default": "2022"
+    },
+    "education_6142": {
+      "patterns": [
+        "cgpa"
+      ],
+      "category": "education",
+      "default": "8.51"
+    },
+    "education_6302": {
+      "patterns": [
+        "percentage",
+        "12th percentage"
+      ],
+      "category": "education",
+      "default": "85"
+    },
+    "education_6061": {
+      "patterns": [
+        "degree",
+        "academic qualification"
+      ],
+      "category": "education",
+      "default": "B.Tech Computer Science"
+    },
+    "education_7861": {
+      "patterns": [
+        "highest qualification",
+        "highest degree",
+        "educational qualification",
+        "qualification",
+        "what is your highest qualification",
+        "what is your educational qualification",
+        "highest education",
+        "education"
+      ],
+      "category": "education",
+      "default": "B.Tech CSE"
+    },
+    "preference_7966": {
+      "patterns": [
+        "specialization",
+        "stream",
+        "branch",
+        "field of study"
+      ],
+      "category": "preference",
+      "default": "Computer Science and Engineering"
+    },
+    "preference_3089": {
+      "patterns": [
+        "course"
+      ],
+      "category": "preference",
+      "default": "B.Tech"
+    },
+    "experience_1381": {
+      "patterns": [
+        "additional months",
+        "additional years",
+        "additional months of experience",
+        "additional years of experience",
+        "please select your total additional months of experience"
+      ],
+      "category": "experience",
+      "default": "0"
+    },
+    "education_9062": {
+      "patterns": [
+        "college name",
+        "university",
+        "university name"
+      ],
+      "category": "education",
+      "default": "VIT Bhopal University"
+    },
+    "preference_9062": {
+      "patterns": [
+        "institute",
+        "institute name",
+        "where did you study",
+        "institution"
+      ],
+      "category": "preference",
+      "default": "VIT Bhopal University"
+    },
+    "experience_9029": {
+      "patterns": [
+        "worked with fiserv",
+        "field experience",
+        "worked for fiserv",
+        "worked at fiserv",
+        "have you worked with fiserv",
+        "have you worked for fiserv",
+        "have you worked at fiserv",
+        "have you ever worked for fiserv",
+        "have you ever worked with fiserv",
+        "worked on any end-to-end",
+        "interested in joining this 6 months contract role",
+        "6 months contract",
+        "exposure to diverse enterprise platforms",
+        "hands-on exposure to docker",
+        "exposure to docker or kubernetes",
+        "exp in kafka",
+        "experience in kafka",
+        "based upon your experience",
+        "database experience",
+        "do you have experience in etl"
+      ],
+      "category": "experience",
+      "default": "Yes"
+    },
+    "preference_3754": {
+      "patterns": [
+        "linkedin url",
+        "linkedin profile"
+      ],
+      "category": "preference",
+      "default": "https://www.linkedin.com/in/siddhant3646"
+    },
+    "preference_1877": {
+      "patterns": [
+        "github url",
+        "github profile",
+        "please enter your github url"
+      ],
+      "category": "preference",
+      "default": "https://github.com/siddhant3646"
+    },
+    "location_3810": {
+      "patterns": [
+        "willing to relocate",
+        "relocation",
+        "open to relocate",
+        "relocate to"
+      ],
+      "category": "location",
+      "default": "Yes, open to relocation to any metro city including Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR"
+    },
+    "preference_5302": {
+      "patterns": [
+        "gender",
+        "what is your gender",
+        "gender identity"
+      ],
+      "category": "preference",
+      "default": "Male"
+    },
+    "preference_9507": {
+      "patterns": [
+        "race",
+        "sexual orientation",
+        "lgbtq",
+        "pronouns",
+        "ethnic background",
+        "racial identity",
+        "minority status",
+        "protected class",
+        "equal opportunity",
+        "affirmative action",
+        "family status"
+      ],
+      "category": "preference",
+      "default": "Decline to self-identify"
+    },
+    "location_9507": {
+      "patterns": [
+        "ethnicity"
+      ],
+      "category": "location",
+      "default": "Decline to self-identify"
+    },
+    "preference_5373": {
+      "patterns": [
+        "disability",
+        "disability status"
+      ],
+      "category": "preference",
+      "default": "No, I don\\"
+    },
+    "preference_9994": {
+      "patterns": [
+        "veteran",
+        "veteran status"
+      ],
+      "category": "preference",
+      "default": "I am not a protected veteran"
+    },
+    "preference_7967": {
+      "patterns": [
+        "your name",
+        "first name:last name",
+        "full name",
+        "please enter your full name"
+      ],
+      "category": "preference",
+      "default": "Siddhant Singh"
+    },
+    "preference_5224": {
+      "patterns": [
+        "s date",
+        "todays date",
+        "methodologies"
+      ],
+      "category": "preference",
+      "default": "02/15/2026"
+    },
+    "preference_2580": {
+      "patterns": [
+        "available for walk in",
+        "walk in on",
+        "walk-in",
+        "walk in"
+      ],
+      "category": "preference",
+      "default": "No, I am currently based in Noida and cannot attend walk-in interviews in other cities on short notice."
+    },
+    "experience_2539": {
+      "patterns": [
+        "professional backend experience",
+        "years of work experience do you have in your chosen engineering field",
+        "experience in your chosen engineering field",
+        "rel exp as react developer",
+        "relevant exp as react",
+        "relevant experience as react",
+        "rel exp as angular",
+        "rel exp as angular developer",
+        "relevant experience as angular",
+        "please select your total years of professional experience",
+        "please select your experience",
+        "please enter your total experience",
+        "please enter your years of experience"
+      ],
+      "category": "experience",
+      "default": "4"
+    },
+    "preference_4278": {
+      "patterns": [
+        "ai-based features",
+        "ai based features",
+        "ai features",
+        "artificial intelligence features",
+        "first name"
+      ],
+      "category": "preference",
+      "default": "3"
+    },
+    "preference_235": {
+      "patterns": [
+        "production applications end-to-end",
+        "production applications end to end",
+        "built end-to-end",
+        "how many projects",
+        "number of projects",
+        "projects as fullstack"
+      ],
+      "category": "preference",
+      "default": "5"
+    },
+    "preference_3550": {
+      "patterns": [
+        "living in",
+        "located in",
+        "residing in",
+        "residence",
+        "where are you located",
+        "home town",
+        "native place",
+        "place of residence",
+        "where do you live"
+      ],
+      "category": "preference",
+      "default": "Noida"
+    },
+    "preference_6767": {
+      "patterns": [
+        "street"
+      ],
+      "category": "preference",
+      "default": "Sector 137"
+    },
+    "personal_info_6767": {
+      "patterns": [
+        "street address",
+        "address line 1",
+        "address line1"
+      ],
+      "category": "personal_info",
+      "default": "Sector 137"
+    },
+    "preference_4629": {
+      "patterns": [
+        "state",
+        "state/province",
+        "province"
+      ],
+      "category": "preference",
+      "default": "Uttar Pradesh"
+    },
+    "preference_9719": {
+      "patterns": [
+        "zip",
+        "zip code",
+        "postal code",
+        "pincode",
+        "pin code",
+        "zip/postal code"
+      ],
+      "category": "preference",
+      "default": "201301"
+    },
+    "location_6664": {
+      "patterns": [
+        "location preference",
+        "work location"
+      ],
+      "category": "location",
+      "default": "Bangalore, Hyderabad, Mumbai, Pune, Delhi NCR"
+    },
+    "skills_5017": {
+      "patterns": [
+        "programming languages"
+      ],
+      "category": "skills",
+      "default": "Java, Python, JavaScript"
+    },
+    "skills_3460": {
+      "patterns": [
+        "technical skills"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, AWS, Docker"
+    },
+    "preference_6764": {
+      "patterns": [
+        "primary competencies",
+        "top competencies",
+        "core competencies",
+        "top 3 primary competencies"
+      ],
+      "category": "preference",
+      "default": "Full Stack Development, Cloud Architecture, System Design"
+    },
+    "skills_8469": {
+      "patterns": [
+        "key skills"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, AWS, Microservices"
+    },
+    "personal_info_3849": {
+      "patterns": [
+        "date of birth",
+        "dob",
+        "date of birth as per pan"
+      ],
+      "category": "personal_info",
+      "default": "17/12/2000"
+    },
+    "preference_1172": {
+      "patterns": [
+        "tools used"
+      ],
+      "category": "preference",
+      "default": "Docker, Kubernetes, Jenkins, GitHub Actions, AWS CloudFormation, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python"
+    },
+    "preference_2904": {
+      "patterns": [
+        "configuration tools"
+      ],
+      "category": "preference",
+      "default": "Ansible, Terraform, AWS CloudFormation"
+    },
+    "preference_1871": {
+      "patterns": [
+        "deployment tools",
+        "tools familiar"
+      ],
+      "category": "preference",
+      "default": "Docker, Kubernetes, Jenkins, GitHub Actions"
+    },
+    "preference_6413": {
+      "patterns": [
+        "monitoring tools"
+      ],
+      "category": "preference",
+      "default": "Prometheus, Grafana, CloudWatch, ELK Stack"
+    },
+    "preference_963": {
+      "patterns": [
+        "automation tools",
+        "currently located"
+      ],
+      "category": "preference",
+      "default": "Jenkins, GitHub Actions, Ansible, Terraform"
+    },
+    "preference_7785": {
+      "patterns": [
+        "tools used on extensive basis"
+      ],
+      "category": "preference",
+      "default": "Docker, Kubernetes, Jenkins, GitHub Actions, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python"
+    },
+    "preference_7550": {
+      "patterns": [
+        "ci/cd setup"
+      ],
+      "category": "preference",
+      "default": "Yes, deployed React and Angular applications using Jenkins, GitHub Actions, and AWS CodePipeline with automated testing and deployment to S3/CloudFront"
+    },
+    "preference_6177": {
+      "patterns": [
+        "frontend ci/cd"
+      ],
+      "category": "preference",
+      "default": "Yes, implemented CI/CD pipelines for React applications using GitHub Actions with automated builds, tests, and deployments to AWS S3 and CloudFront"
+    },
+    "preference_9807": {
+      "patterns": [
+        "deployed frontend"
+      ],
+      "category": "preference",
+      "default": "Yes, deployed multiple React and Angular frontend applications using CI/CD pipelines with automated testing and CDN deployment"
+    },
+    "preference_5613": {
+      "patterns": [
+        "frontend security"
+      ],
+      "category": "preference",
+      "default": "Implemented CSP headers, XSS prevention, CSRF tokens, secure cookie handling, input sanitization, HTTPS enforcement, and OAuth2/JWT authentication"
+    },
+    "preference_1117": {
+      "patterns": [
+        "security practices"
+      ],
+      "category": "preference",
+      "default": "CSP headers, XSS prevention, CSRF protection, input sanitization, secure authentication with OAuth2/JWT, HTTPS enforcement"
+    },
+    "preference_4505": {
+      "patterns": [
+        "frontend security practices"
+      ],
+      "category": "preference",
+      "default": "CSP headers, XSS prevention, CSRF protection, input sanitization, OAuth2/JWT authentication"
+    },
+    "preference_6496": {
+      "patterns": [
+        "trading platform",
+        "product based"
+      ],
+      "category": "preference",
+      "default": "Built high-performance microservices handling real-time data processing with event-driven architecture using Kafka, Redis caching, and WebSocket for live updates - similar patterns used in trading systems for low-latency data flow"
+    },
+    "preference_7943": {
+      "patterns": [
+        "blockchain platform"
+      ],
+      "category": "preference",
+      "default": "Developed distributed systems with event sourcing patterns, immutable audit logs, and cryptographic verification - architectural patterns aligned with blockchain fundamentals"
+    },
+    "preference_3919": {
+      "patterns": [
+        "real-time system"
+      ],
+      "category": "preference",
+      "default": "Implemented real-time notification systems and live dashboards using WebSocket, Redis Pub/Sub, and event-driven microservices with sub-second latency"
+    },
+    "preference_7845": {
+      "patterns": [
+        "real-time trading"
+      ],
+      "category": "preference",
+      "default": "Built event-driven microservices with Kafka and Redis for low-latency real-time data processing, similar to trading platform patterns"
+    },
+    "preference_6004": {
+      "patterns": [
+        "enterprise platforms"
+      ],
+      "category": "preference",
+      "default": "Yes, worked with Google Cloud Platform, Microsoft Azure, AWS, and integrated with enterprise systems including Salesforce and ServiceNow APIs"
+    },
+    "preference_7782": {
+      "patterns": [
+        "diverse platforms"
+      ],
+      "category": "preference",
+      "default": "Yes, have experience with Google Cloud, Microsoft Azure, AWS, Salesforce integration, and ServiceNow API development"
+    },
+    "personal_info_1449": {
+      "patterns": [
+        "pan number",
+        "pan card number",
+        "pan card",
+        "mention your pan card number",
+        "mention your pan number",
+        "your pan card number",
+        "your pan number"
+      ],
+      "category": "personal_info",
+      "default": "MTKPS1941P"
+    },
+    "personal_info_7967": {
+      "patterns": [
+        "name as per pan",
+        "name as per pan card",
+        "mention your name as per pan",
+        "your name as per pan card",
+        "name as per aadhar"
+      ],
+      "category": "personal_info",
+      "default": "Siddhant Singh"
+    },
+    "personal_info_1748": {
+      "patterns": [
+        "first name as per aadhar",
+        "aadhar first name"
+      ],
+      "category": "personal_info",
+      "default": "Siddhant"
+    },
+    "personal_info_2307": {
+      "patterns": [
+        "last name as per aadhar",
+        "aadhar last name"
+      ],
+      "category": "personal_info",
+      "default": "Singh"
+    },
+    "salary_2847": {
+      "patterns": [
+        "current payroll company"
+      ],
+      "category": "salary",
+      "default": "Fiserv, First Name: Siddhant, Last Name: Singh"
+    },
+    "salary_3311": {
+      "patterns": [
+        "payroll company"
+      ],
+      "category": "salary",
+      "default": "Fiserv"
+    },
+    "preference_8216": {
+      "patterns": [
+        "tcs registration",
+        "ep no"
+      ],
+      "category": "preference",
+      "default": "N/A"
+    },
+    "personal_info_3550": {
+      "patterns": [
+        "home address"
+      ],
+      "category": "personal_info",
+      "default": "Noida"
+    },
+    "experience_9031": {
+      "patterns": [
+        "area have you most experience in",
+        "area of most experience"
+      ],
+      "category": "experience",
+      "default": "Full-stack"
+    },
+    "preference_767": {
+      "patterns": [
+        "prefer gurgaon",
+        "prefer bangalore",
+        "prefer mumbai",
+        "prefer pune",
+        "prefer hyderabad",
+        "prefer chennai",
+        "ep number",
+        "prefer kolkata"
+      ],
+      "category": "preference",
+      "default": "All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata"
+    },
+    "location_767": {
+      "patterns": [
+        "preferred city",
+        "city preference",
+        "interview city"
+      ],
+      "category": "location",
+      "default": "All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata"
+    },
+    "preference_4955": {
+      "patterns": [
+        "tentative dates",
+        "time slots",
+        "interview slot",
+        "2 tentative dates",
+        "dates and time slots"
+      ],
+      "category": "preference",
+      "default": "Any slot available - flexible with dates and times on weekdays"
+    },
+    "preference_769": {
+      "patterns": [
+        "video interview"
+      ],
+      "category": "preference",
+      "default": "Yes, available for video interview - any slot works"
+    },
+    "notice_period_4955": {
+      "patterns": [
+        "interview availability"
+      ],
+      "category": "notice_period",
+      "default": "Any slot available - flexible with dates and times on weekdays"
+    },
+    "preference_8332": {
+      "patterns": [
+        "weekday interview"
+      ],
+      "category": "preference",
+      "default": "Yes, available on any weekday - flexible with timing"
+    },
+    "preference_7794": {
+      "patterns": [
+        "reason for job change",
+        "why job change",
+        "why are you looking",
+        "why switching",
+        "reason for leaving",
+        "reasons for your job change"
+      ],
+      "category": "preference",
+      "default": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals"
+    },
+    "preference_6669": {
+      "patterns": [
+        "gen ai tool"
+      ],
+      "category": "preference",
+      "default": "Yes, I use GitHub Copilot and ChatGPT for code generation, debugging, documentation, and learning new technologies"
+    },
+    "preference_2159": {
+      "patterns": [
+        "ai tool you used"
+      ],
+      "category": "preference",
+      "default": "GitHub Copilot for code completion and ChatGPT for problem-solving, debugging, and documentation"
+    },
+    "preference_2402": {
+      "patterns": [
+        "generative ai tool"
+      ],
+      "category": "preference",
+      "default": "GitHub Copilot and ChatGPT for code generation, debugging, and improving productivity"
+    },
+    "preference_8186": {
+      "patterns": [
+        "message to the hiring manager",
+        "message to hiring manager",
+        "your message",
+        "cover letter",
+        "message",
+        "why are you interested",
+        "why do you want",
+        "additional information",
+        "comments"
+      ],
+      "category": "preference",
+      "default": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team."
+    },
+    "preference_2933": {
+      "patterns": [
+        "level of english",
+        "english level",
+        "english proficiency",
+        "what is your level of english",
+        "proficiency in english",
+        "linkedin job",
+        "how fluent are you in english",
+        "fluency in english"
+      ],
+      "category": "preference",
+      "default": "Professional proficiency"
+    },
+    "skills_2933": {
+      "patterns": [
+        "language proficiency",
+        "communication skills"
+      ],
+      "category": "skills",
+      "default": "Professional proficiency"
+    },
+    "preference_528": {
+      "patterns": [
+        "what did you do during your last professional"
+      ],
+      "category": "preference",
+      "default": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines."
+    },
+    "experience_528": {
+      "patterns": [
+        "last professional experience",
+        "during your last professional experience",
+        "last professinnal experience"
+      ],
+      "category": "experience",
+      "default": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines."
+    },
+    "experience_3430": {
+      "patterns": [
+        "specify previous experiences relevant",
+        "previous experiences relevant for the position",
+        "previous experiences relevant",
+        "relevant experiences for the position"
+      ],
+      "category": "experience",
+      "default": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases."
+    },
+    "notice_period_6584": {
+      "patterns": [
+        "why would you like to join",
+        "why do you want to join",
+        "what makes you interested in joining"
+      ],
+      "category": "notice_period",
+      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
+    },
+    "preference_1732": {
+      "patterns": [
+        "what could you bring",
+        "what can you bring",
+        "what value can you add",
+        "what do you bring to the team",
+        "familiarity"
+      ],
+      "category": "preference",
+      "default": "I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews."
+    },
+    "salary_3707": {
+      "patterns": [
+        "expected ctc in lakhs",
+        "expected ctc in lpa",
+        "expected ctc [in lpa]",
+        "expected ctc in lacs per annum",
+        "what is your expected ctc in lacs per annum",
+        "what is your expected ctc in lacs per annum?",
+        "ctc in lakhs",
+        "ectc",
+        "what is your ectc",
+        "your ectc"
+      ],
+      "category": "salary",
+      "default": "24"
+    },
+    "preference_5339": {
+      "patterns": [
+        "what is your np",
+        "your np",
+        "mention np",
+        "when can you start",
+        "available from",
+        "when are you available",
+        "offered the role",
+        "if gets selected",
+        "relieving date",
+        "last working day",
+        "earliest",
+        "np"
+      ],
+      "category": "preference",
+      "default": "30"
+    },
+    "preference_5233": {
+      "patterns": [
+        "talking to us customers"
+      ],
+      "category": "preference",
+      "default": "Yes, I have 3.8+ years of experience working with US-based clients, conducting daily standups and demos. I am fluent in English with clear communication skills."
+    },
+    "preference_2467": {
+      "patterns": [
+        "flawless english"
+      ],
+      "category": "preference",
+      "default": "Yes, I have excellent English communication skills with experience in client-facing roles with US-based teams."
+    },
+    "preference_4536": {
+      "patterns": [
+        "neutral accent english",
+        "benefits"
+      ],
+      "category": "preference",
+      "default": "Yes, I am fluent in English with clear communication. I regularly interact with US-based clients and stakeholders."
+    },
+    "preference_9485": {
+      "patterns": [
+        "confidence in talking"
+      ],
+      "category": "preference",
+      "default": "Yes, I have 3.8+ years of experience working with international clients, comfortable with daily video calls and presentations."
+    },
+    "preference_3828": {
+      "patterns": [
+        "bfsi domain"
+      ],
+      "category": "preference",
+      "default": "Yes, I am currently working at Fiserv in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience."
+    },
+    "preference_1135": {
+      "patterns": [
+        "tcs registration no"
+      ],
+      "category": "preference",
+      "default": "N/A - Not registered in TCS"
+    },
+    "preference_6605": {
+      "patterns": [
+        "portfolio url",
+        "online portfolio",
+        "portfolio link",
+        "online portfolio url",
+        "website",
+        "personal website",
+        "website url",
+        "blog",
+        "please enter your online portfolio url"
+      ],
+      "category": "preference",
+      "default": "https://siddhant3646.github.io/Portfolio/"
+    },
+    "preference_9870": {
+      "patterns": [
+        "how did you hear about us",
+        "how did you hear about this job",
+        "how did you learn about us",
+        "where did you learn about miratech",
+        "where did you learn about us",
+        "source",
+        "referral source",
+        "where did you hear",
+        "how did you find us",
+        "how did you come across",
+        "heard about"
+      ],
+      "category": "preference",
+      "default": "LinkedIn Ad (India)"
+    },
+    "experience_4715": {
+      "patterns": [
+        "exp in angular and microservices"
+      ],
+      "category": "experience",
+      "default": "4 years experience in both Angular and Microservices architecture"
+    },
+    "experience_3255": {
+      "patterns": [
+        "exp. in angular",
+        "please specify your experience"
+      ],
+      "category": "experience",
+      "default": "4 years"
+    },
+    "salary_9029": {
+      "patterns": [
+        "accept an annual salary",
+        "salary of between",
+        "accept salary",
+        "accept the compensation"
+      ],
+      "category": "salary",
+      "default": "Yes"
+    },
+    "preference_2374": {
+      "patterns": [
+        "what date can we send",
+        "when can we send you the assessment",
+        "send you the technical assessment",
+        "date for technical assessment",
+        "preferred date",
+        "what date"
+      ],
+      "category": "preference",
+      "default": "Any weekday works - I am flexible with the date and time"
+    },
+    "preference_1289": {
+      "patterns": [
+        "rate proficiency",
+        "rate your proficiency",
+        "proficiency in typescript",
+        "proficiency in react",
+        "proficiency in python",
+        "proficiency in node",
+        "proficiency in sql",
+        "rate yourself",
+        "rate on a scale",
+        "on a scale of 1-10",
+        "on a scale of 1 to 10",
+        "1-10",
+        "1 to 10",
+        "dsa",
+        "data structures and algorithms",
+        "data structures",
+        "algorithms",
+        "self rating"
+      ],
+      "category": "preference",
+      "default": "8"
+    },
+    "preference_4580": {
+      "patterns": [
+        "proficiency in javascript",
+        "proficiency in java"
+      ],
+      "category": "preference",
+      "default": "9"
+    },
+    "preference_6708": {
+      "patterns": [
+        "proficiency in angular",
+        "proficiency in aws"
+      ],
+      "category": "preference",
+      "default": "7"
+    },
+    "preference_4471": {
+      "patterns": [
+        "preferred position",
+        "frontend/backend",
+        "frontend or backend",
+        "frontend backend",
+        "preferred role"
+      ],
+      "category": "preference",
+      "default": "Backend"
+    },
+    "preference_9282": {
+      "patterns": [
+        "which role"
+      ],
+      "category": "preference",
+      "default": "Backend Developer"
+    },
+    "preference_4956": {
+      "patterns": [
+        "preferred domain"
+      ],
+      "category": "preference",
+      "default": "Backend Development"
+    },
+    "preference_2266": {
+      "patterns": [
+        "how good are you in dsa"
+      ],
+      "category": "preference",
+      "default": "8 - Strong understanding of data structures and algorithms with hands-on problem solving experience"
+    },
+    "skills_1289": {
+      "patterns": [
+        "dsa skills",
+        "competitive programming",
+        "coding skills"
+      ],
+      "category": "skills",
+      "default": "8"
+    },
+    "preference_696": {
+      "patterns": [
+        "problem solving"
+      ],
+      "category": "preference",
+      "default": "Strong - regularly practice on LeetCode and HackerRank"
+    },
+    "skills_8566": {
+      "patterns": [
+        "tech stack",
+        "major tech stack"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis"
+    },
+    "preference_8566": {
+      "patterns": [
+        "tech-stack"
+      ],
+      "category": "preference",
+      "default": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis"
+    },
+    "experience_8566": {
+      "patterns": [
+        "worked upon"
+      ],
+      "category": "experience",
+      "default": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis"
+    },
+    "preference_3215": {
+      "patterns": [
+        "python libraries",
+        "which python libraries"
+      ],
+      "category": "preference",
+      "default": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI"
+    },
+    "salary_3215": {
+      "patterns": [
+        "python packages"
+      ],
+      "category": "salary",
+      "default": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI"
+    },
+    "location_5864": {
+      "patterns": [
+        "based in bangalore"
+      ],
+      "category": "location",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate to Bangalore."
+    },
+    "location_1393": {
+      "patterns": [
+        "based in mumbai"
+      ],
+      "category": "location",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate to Mumbai."
+    },
+    "location_4369": {
+      "patterns": [
+        "based in pune"
+      ],
+      "category": "location",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate to Pune."
+    },
+    "location_8084": {
+      "patterns": [
+        "based in hyderabad"
+      ],
+      "category": "location",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate to Hyderabad."
+    },
+    "location_5589": {
+      "patterns": [
+        "based in chennai"
+      ],
+      "category": "location",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate to Chennai."
+    },
+    "preference_1450": {
+      "patterns": [
+        "from mumbai"
+      ],
+      "category": "preference",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate."
+    },
+    "preference_7091": {
+      "patterns": [
+        "where do you stay",
+        "stay currently"
+      ],
+      "category": "preference",
+      "default": "Noida, Delhi NCR"
+    },
+    "preference_8025": {
+      "patterns": [
+        "which database",
+        "what database"
+      ],
+      "category": "preference",
+      "default": "PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB"
+    },
+    "experience_8025": {
+      "patterns": [
+        "database do you have experience",
+        "database experience working",
+        "databases have you worked"
+      ],
+      "category": "experience",
+      "default": "PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, DynamoDB"
+    },
+    "experience_235": {
+      "patterns": [
+        "projects you have worked",
+        "projects worked on"
+      ],
+      "category": "experience",
+      "default": "5"
+    },
+    "experience_1809": {
+      "patterns": [
+        "e-commerce experience",
+        "experience in e-commerce",
+        "ecommerce experience"
+      ],
+      "category": "experience",
+      "default": "Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems."
+    },
+    "salary_888": {
+      "patterns": [
+        "share your ctc",
+        "ctc ectc np",
+        "ctc and np",
+        "ctc,ectc and np"
+      ],
+      "category": "salary",
+      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)"
+    },
+    "preference_7138": {
+      "patterns": [
+        "candidates from mumbai",
+        "need candidates from mumbai",
+        "from mumbai itself",
+        "stay currently in mumbai",
+        "andheri mumbai"
+      ],
+      "category": "preference",
+      "default": "No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required."
+    },
+    "notice_period_8336": {
+      "patterns": [
+        "how soon can you join",
+        "days required for notice",
+        "availability",
+        "please select your notice period with your current employer",
+        "please select your notice period",
+        "please mention your notice period",
+        "notice",
+        "joining"
+      ],
+      "category": "notice_period",
+      "default": "30 days"
+    },
+    "notice_period_7391": {
+      "patterns": [
+        "notice period buyout"
+      ],
+      "category": "notice_period",
+      "default": "Yes, open to buyout discussion"
+    },
+    "preference_3177": {
+      "patterns": [
+        "buyout option"
+      ],
+      "category": "preference",
+      "default": "Yes, can discuss buyout with current employer"
+    },
+    "notice_period_8219": {
+      "patterns": [
+        "negotiable notice"
+      ],
+      "category": "notice_period",
+      "default": "Yes, notice period is negotiable"
+    },
+    "notice_period_5950": {
+      "patterns": [
+        "short notice"
+      ],
+      "category": "notice_period",
+      "default": "Yes, can negotiate for shorter notice"
+    },
+    "notice_period_3855": {
+      "patterns": [
+        "can you join earlier"
+      ],
+      "category": "notice_period",
+      "default": "Yes, with buyout option"
+    },
+    "notice_period_647": {
+      "patterns": [
+        "can you join within"
+      ],
+      "category": "notice_period",
+      "default": "Yes, can join within 30 days"
+    },
+    "experience_1235": {
+      "patterns": [
+        "expected joining date"
+      ],
+      "category": "experience",
+      "default": "30 days from offer acceptance"
+    },
+    "notice_period_4363": {
+      "patterns": [
+        "tentative joining date"
+      ],
+      "category": "notice_period",
+      "default": "30 days from offer"
+    },
+    "salary_3709": {
+      "patterns": [
+        "monthly salary",
+        "monthly ctc",
+        "per month salary"
+      ],
+      "category": "salary",
+      "default": "127500"
+    },
+    "preference_8139": {
+      "patterns": [
+        "monthly gross"
+      ],
+      "category": "preference",
+      "default": "1.5"
+    },
+    "salary_7841": {
+      "patterns": [
+        "take home",
+        "in hand salary",
+        "take home salary"
+      ],
+      "category": "salary",
+      "default": "95000"
+    },
+    "salary_8846": {
+      "patterns": [
+        "take home assignment"
+      ],
+      "category": "salary",
+      "default": "Yes, can complete take-home assignments"
+    },
+    "preference_1359": {
+      "patterns": [
+        "fixed component",
+        "onsite"
+      ],
+      "category": "preference",
+      "default": "1530000"
+    },
+    "preference_1381": {
+      "patterns": [
+        "variable component"
+      ],
+      "category": "preference",
+      "default": "0"
+    },
+    "preference_9007": {
+      "patterns": [
+        "bonus",
+        "retention bonus",
+        "stock options",
+        "esops",
+        "equity"
+      ],
+      "category": "preference",
+      "default": "Open to discussion"
+    },
+    "notice_period_9007": {
+      "patterns": [
+        "joining bonus"
+      ],
+      "category": "notice_period",
+      "default": "Open to discussion"
+    },
+    "salary_9482": {
+      "patterns": [
+        "net salary"
+      ],
+      "category": "salary",
+      "default": "11.5 LPA"
+    },
+    "preference_1686": {
+      "patterns": [
+        "remuneration",
+        "currently drawing",
+        "current drawn"
+      ],
+      "category": "preference",
+      "default": "15.3 LPA"
+    },
+    "salary_5297": {
+      "patterns": [
+        "salary bracket",
+        "pay range"
+      ],
+      "category": "salary",
+      "default": "20-24 LPA"
+    },
+    "preference_6142": {
+      "patterns": [
+        "budget"
+      ],
+      "category": "preference",
+      "default": "20-24 LPA range"
+    },
+    "salary_763": {
+      "patterns": [
+        "ctc breakup"
+      ],
+      "category": "salary",
+      "default": "Fixed: 15.3 LPA, Variable: 0"
+    },
+    "salary_8415": {
+      "patterns": [
+        "salary structure"
+      ],
+      "category": "salary",
+      "default": "Fixed CTC: 15.3 LPA"
+    },
+    "experience_6817": {
+      "patterns": [
+        "exposure"
+      ],
+      "category": "experience",
+      "default": "3.8 Years of hands-on exposure"
+    },
+    "preference_1222": {
+      "patterns": [
+        "competency"
+      ],
+      "category": "preference",
+      "default": "3.8 Years of competency"
+    },
+    "experience_6564": {
+      "patterns": [
+        "expertise"
+      ],
+      "category": "experience",
+      "default": "3.8 Years of expertise"
+    },
+    "preference_4815": {
+      "patterns": [
+        "how long have you been working",
+        "work history",
+        "employment history"
+      ],
+      "category": "preference",
+      "default": "3.8 Years"
+    },
+    "personal_info_4815": {
+      "patterns": [
+        "career span"
+      ],
+      "category": "personal_info",
+      "default": "3.8 Years"
+    },
+    "experience_4241": {
+      "patterns": [
+        "domain experience"
+      ],
+      "category": "experience",
+      "default": "3.8 Years in BFSI domain"
+    },
+    "experience_5469": {
+      "patterns": [
+        "spring boot experience",
+        "microservices experience",
+        "aws experience",
+        "docker experience",
+        "kubernetes experience",
+        "devops experience",
+        "cloud experience",
+        "node experience",
+        "typescript experience",
+        "rel exp as java",
+        "rel exp as java developer",
+        "rel exp java",
+        "relevant exp as java",
+        "relevant exp java developer",
+        "relevant experience as java",
+        "relevant experience as java developer",
+        "relevant experience in java",
+        "rel exp as spring boot",
+        "relevant experience as spring boot",
+        "rel exp as node",
+        "rel exp as nodejs",
+        "relevant experience as node",
+        "rel exp as python",
+        "relevant experience as python",
+        "rel exp as full stack",
+        "relevant experience as full stack",
+        "rel exp as software developer",
+        "rel exp as software engineer",
+        "relevant experience as software developer",
+        "relevant experience as software engineer"
+      ],
+      "category": "experience",
+      "default": "3.8"
+    },
+    "experience_9246": {
+      "patterns": [
+        "vue experience"
+      ],
+      "category": "experience",
+      "default": "2"
+    },
+    "personal_info_5023": {
+      "patterns": [
+        "current address",
+        "permanent address",
+        "residential address"
+      ],
+      "category": "personal_info",
+      "default": "Noida, Uttar Pradesh"
+    },
+    "preference_8880": {
+      "patterns": [
+        "offshore"
+      ],
+      "category": "preference",
+      "default": "Yes, can work offshore"
+    },
+    "location_521": {
+      "patterns": [
+        "client location"
+      ],
+      "category": "location",
+      "default": "Open to client location"
+    },
+    "location_3022": {
+      "patterns": [
+        "project location"
+      ],
+      "category": "location",
+      "default": "Flexible with project location"
+    },
+    "location_9037": {
+      "patterns": [
+        "site location"
+      ],
+      "category": "location",
+      "default": "Flexible"
+    },
+    "preference_159": {
+      "patterns": [
+        "open to travel"
+      ],
+      "category": "preference",
+      "default": "Yes, open to travel up to 20%"
+    },
+    "preference_7929": {
+      "patterns": [
+        "travel"
+      ],
+      "category": "preference",
+      "default": "Yes, open to travel"
+    },
+    "preference_6082": {
+      "patterns": [
+        "shift to"
+      ],
+      "category": "preference",
+      "default": "Yes, can shift to any metro city"
+    },
+    "preference_552": {
+      "patterns": [
+        "move to"
+      ],
+      "category": "preference",
+      "default": "Yes, willing to move"
+    },
+    "education_373": {
+      "patterns": [
+        "educational background"
+      ],
+      "category": "education",
+      "default": "B.Tech in Computer Science from VIT Bhopal University"
+    },
+    "preference_6061": {
+      "patterns": [
+        "academic background",
+        "bachelors",
+        "undergraduate",
+        "course completed"
+      ],
+      "category": "preference",
+      "default": "B.Tech Computer Science"
+    },
+    "education_999": {
+      "patterns": [
+        "post graduation",
+        "pg degree"
+      ],
+      "category": "education",
+      "default": "Not applicable"
+    },
+    "preference_999": {
+      "patterns": [
+        "masters",
+        "diploma",
+        "middle name",
+        "special needs",
+        "reserve",
+        "national guard",
+        "spouse",
+        "dependent"
+      ],
+      "category": "preference",
+      "default": "Not applicable"
+    },
+    "education_3569": {
+      "patterns": [
+        "10th percentage"
+      ],
+      "category": "education",
+      "default": "90"
+    },
+    "preference_2803": {
+      "patterns": [
+        "certification"
+      ],
+      "category": "preference",
+      "default": "AWS Certified, Java Certified"
+    },
+    "preference_8447": {
+      "patterns": [
+        "certified in"
+      ],
+      "category": "preference",
+      "default": "AWS, Java, Spring Boot"
+    },
+    "preference_6485": {
+      "patterns": [
+        "training"
+      ],
+      "category": "preference",
+      "default": "Corporate training in Java, React, AWS"
+    },
+    "preference_1230": {
+      "patterns": [
+        "internship"
+      ],
+      "category": "preference",
+      "default": "Completed internships during college"
+    },
+    "skills_8867": {
+      "patterns": [
+        "primary skills"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, AWS"
+    },
+    "skills_2950": {
+      "patterns": [
+        "secondary skills"
+      ],
+      "category": "skills",
+      "default": "Python, Docker, Kubernetes, Node.js"
+    },
+    "skills_1282": {
+      "patterns": [
+        "core skills"
+      ],
+      "category": "skills",
+      "default": "Full Stack Development, Java, React"
+    },
+    "experience_8683": {
+      "patterns": [
+        "key expertise"
+      ],
+      "category": "experience",
+      "default": "Java, Spring Boot, Microservices, React"
+    },
+    "experience_7883": {
+      "patterns": [
+        "area of expertise"
+      ],
+      "category": "experience",
+      "default": "Full Stack Development"
+    },
+    "preference_5990": {
+      "patterns": [
+        "domain knowledge"
+      ],
+      "category": "preference",
+      "default": "BFSI, Fintech"
+    },
+    "preference_2710": {
+      "patterns": [
+        "primary technology"
+      ],
+      "category": "preference",
+      "default": "Java, Spring Boot"
+    },
+    "preference_9661": {
+      "patterns": [
+        "secondary technology"
+      ],
+      "category": "preference",
+      "default": "React, Node.js"
+    },
+    "skills_1847": {
+      "patterns": [
+        "frameworks known"
+      ],
+      "category": "skills",
+      "default": "Spring Boot, React, Angular, Express"
+    },
+    "preference_2189": {
+      "patterns": [
+        "databases known"
+      ],
+      "category": "preference",
+      "default": "PostgreSQL, MySQL, MongoDB, Redis"
+    },
+    "experience_4399": {
+      "patterns": [
+        "agile experience"
+      ],
+      "category": "experience",
+      "default": "Yes, 3+ years in Agile environment"
+    },
+    "experience_9109": {
+      "patterns": [
+        "scrum experience"
+      ],
+      "category": "experience",
+      "default": "Yes, experienced with Scrum ceremonies"
+    },
+    "preference_5678": {
+      "patterns": [
+        "version control"
+      ],
+      "category": "preference",
+      "default": "Git, GitHub, GitLab"
+    },
+    "experience_7930": {
+      "patterns": [
+        "github experience"
+      ],
+      "category": "experience",
+      "default": "Yes, 3+ years"
+    },
+    "experience_7113": {
+      "patterns": [
+        "git experience"
+      ],
+      "category": "experience",
+      "default": "Yes, proficient in Git"
+    },
+    "preference_5816": {
+      "patterns": [
+        "code review"
+      ],
+      "category": "preference",
+      "default": "Yes, experienced in code reviews"
+    },
+    "preference_8600": {
+      "patterns": [
+        "unit testing"
+      ],
+      "category": "preference",
+      "default": "Yes, JUnit, Jest, PyTest"
+    },
+    "preference_329": {
+      "patterns": [
+        "integration testing"
+      ],
+      "category": "preference",
+      "default": "Yes, experienced with integration testing"
+    },
+    "preference_264": {
+      "patterns": [
+        "how would you rate yourself"
+      ],
+      "category": "preference",
+      "default": "8 out of 10"
+    },
+    "experience_8863": {
+      "patterns": [
+        "expertise level"
+      ],
+      "category": "experience",
+      "default": "Advanced"
+    },
+    "skills_8863": {
+      "patterns": [
+        "skill level"
+      ],
+      "category": "skills",
+      "default": "Advanced"
+    },
+    "preference_8863": {
+      "patterns": [
+        "competency level",
+        "proficiency level"
+      ],
+      "category": "preference",
+      "default": "Advanced"
+    },
+    "preference_4537": {
+      "patterns": [
+        "mastery"
+      ],
+      "category": "preference",
+      "default": "Advanced level with 3.8 years experience"
+    },
+    "preference_8440": {
+      "patterns": [
+        "comfort level"
+      ],
+      "category": "preference",
+      "default": "Very comfortable - 8/10"
+    },
+    "preference_2539": {
+      "patterns": [
+        "on scale of 1-5"
+      ],
+      "category": "preference",
+      "default": "4"
+    },
+    "preference_6302": {
+      "patterns": [
+        "on scale of 1-100"
+      ],
+      "category": "preference",
+      "default": "85"
+    },
+    "experience_3416": {
+      "patterns": [
+        "percentage expertise"
+      ],
+      "category": "experience",
+      "default": "85%"
+    },
+    "preference_2307": {
+      "patterns": [
+        "last name"
+      ],
+      "category": "preference",
+      "default": "Singh"
+    },
+    "preference_3544": {
+      "patterns": [
+        "emergency contact",
+        "alternate number"
+      ],
+      "category": "preference",
+      "default": "7905828880"
+    },
+    "preference_3908": {
+      "patterns": [
+        "nationality"
+      ],
+      "category": "preference",
+      "default": "Indian"
+    },
+    "preference_8627": {
+      "patterns": [
+        "country of origin"
+      ],
+      "category": "preference",
+      "default": "India"
+    },
+    "yes_no_672": {
+      "patterns": [
+        "visa status"
+      ],
+      "category": "yes_no",
+      "default": "Indian citizen - no visa required for India"
+    },
+    "preference_651": {
+      "patterns": [
+        "work permit"
+      ],
+      "category": "preference",
+      "default": "Not required - Indian citizen"
+    },
+    "preference_6250": {
+      "patterns": [
+        "marital status"
+      ],
+      "category": "preference",
+      "default": "Single"
+    },
+    "skills_7023": {
+      "patterns": [
+        "languages known"
+      ],
+      "category": "skills",
+      "default": "English, Hindi"
+    },
+    "skills_2051": {
+      "patterns": [
+        "native language"
+      ],
+      "category": "skills",
+      "default": "Hindi"
+    },
+    "preference_1727": {
+      "patterns": [
+        "reporting to",
+        "reporting manager",
+        "supervisor"
+      ],
+      "category": "preference",
+      "default": "Senior Engineering Manager"
+    },
+    "preference_1348": {
+      "patterns": [
+        "hr contact",
+        "hr name",
+        "manager name",
+        "reference"
+      ],
+      "category": "preference",
+      "default": "Will provide upon request"
+    },
+    "preference_5451": {
+      "patterns": [
+        "department",
+        "employment type"
+      ],
+      "category": "preference",
+      "default": "Engineering"
+    },
+    "preference_7802": {
+      "patterns": [
+        "team"
+      ],
+      "category": "preference",
+      "default": "Full Stack Development Team"
+    },
+    "preference_4561": {
+      "patterns": [
+        "division"
+      ],
+      "category": "preference",
+      "default": "Technology"
+    },
+    "preference_574": {
+      "patterns": [
+        "business unit"
+      ],
+      "category": "preference",
+      "default": "Banking Solutions"
+    },
+    "preference_9315": {
+      "patterns": [
+        "vertical"
+      ],
+      "category": "preference",
+      "default": "Banking and Financial Services"
+    },
+    "preference_9273": {
+      "patterns": [
+        "available for"
+      ],
+      "category": "preference",
+      "default": "Any weekday - flexible timing"
+    },
+    "preference_9733": {
+      "patterns": [
+        "free for",
+        "when are you free"
+      ],
+      "category": "preference",
+      "default": "Any weekday - flexible"
+    },
+    "preference_9799": {
+      "patterns": [
+        "convenient time",
+        "book slot"
+      ],
+      "category": "preference",
+      "default": "Any slot available"
+    },
+    "preference_753": {
+      "patterns": [
+        "suitable time"
+      ],
+      "category": "preference",
+      "default": "Flexible with timing"
+    },
+    "preference_8401": {
+      "patterns": [
+        "good time",
+        "fix appointment"
+      ],
+      "category": "preference",
+      "default": "Any weekday works"
+    },
+    "preference_1201": {
+      "patterns": [
+        "interview mode"
+      ],
+      "category": "preference",
+      "default": "Video call or in-person"
+    },
+    "preference_41": {
+      "patterns": [
+        "video call"
+      ],
+      "category": "preference",
+      "default": "Yes, comfortable with video interviews"
+    },
+    "personal_info_9627": {
+      "patterns": [
+        "phone call"
+      ],
+      "category": "personal_info",
+      "default": "Yes, available for phone screening"
+    },
+    "preference_6736": {
+      "patterns": [
+        "in person",
+        "referral name",
+        "recommended by"
+      ],
+      "category": "preference",
+      "default": "Yes, available for in-person interviews"
+    },
+    "preference_1227": {
+      "patterns": [
+        "technical round",
+        "hr round",
+        "manager round"
+      ],
+      "category": "preference",
+      "default": "Yes, available"
+    },
+    "personal_info_9573": {
+      "patterns": [
+        "panel interview"
+      ],
+      "category": "personal_info",
+      "default": "Yes, comfortable with panel interviews"
+    },
+    "preference_8269": {
+      "patterns": [
+        "group discussion"
+      ],
+      "category": "preference",
+      "default": "Yes, can participate"
+    },
+    "preference_8521": {
+      "patterns": [
+        "assignment"
+      ],
+      "category": "preference",
+      "default": "Yes, can take assignments"
+    },
+    "preference_8145": {
+      "patterns": [
+        "live coding"
+      ],
+      "category": "preference",
+      "default": "Yes, comfortable with live coding"
+    },
+    "preference_9619": {
+      "patterns": [
+        "why leaving"
+      ],
+      "category": "preference",
+      "default": "Seeking new challenges and growth opportunities"
+    },
+    "preference_8518": {
+      "patterns": [
+        "why change"
+      ],
+      "category": "preference",
+      "default": "Career growth and new challenges"
+    },
+    "preference_1351": {
+      "patterns": [
+        "motivation"
+      ],
+      "category": "preference",
+      "default": "Professional growth and skill development"
+    },
+    "preference_3114": {
+      "patterns": [
+        "career goal"
+      ],
+      "category": "preference",
+      "default": "To become a Technical Lead in 2-3 years"
+    },
+    "preference_7771": {
+      "patterns": [
+        "aspiration"
+      ],
+      "category": "preference",
+      "default": "To work on challenging full-stack projects"
+    },
+    "preference_5199": {
+      "patterns": [
+        "objective"
+      ],
+      "category": "preference",
+      "default": "To contribute to innovative products"
+    },
+    "preference_2173": {
+      "patterns": [
+        "where do you see yourself"
+      ],
+      "category": "preference",
+      "default": "Technical Lead/Architect in 3-5 years"
+    },
+    "preference_3404": {
+      "patterns": [
+        "5 year plan"
+      ],
+      "category": "preference",
+      "default": "Grow into Technical Lead/Architect role"
+    },
+    "preference_1458": {
+      "patterns": [
+        "short term goal"
+      ],
+      "category": "preference",
+      "default": "Contribute effectively to the team"
+    },
+    "preference_9738": {
+      "patterns": [
+        "long term goal"
+      ],
+      "category": "preference",
+      "default": "Technical leadership and architecture"
+    },
+    "preference_8336": {
+      "patterns": [
+        "how soon",
+        "available immediately"
+      ],
+      "category": "preference",
+      "default": "30 days"
+    },
+    "notice_period_4843": {
+      "patterns": [
+        "mention your lwd"
+      ],
+      "category": "notice_period",
+      "default": "Serving 30 days notice"
+    },
+    "preference_6838": {
+      "patterns": [
+        "leading a team of developers"
+      ],
+      "category": "preference",
+      "default": "1"
+    },
+    "experience_6838": {
+      "patterns": [
+        "experience leading a team",
+        "experience do you have leading a team",
+        "how many years of experience do you have leading",
+        "team management experience",
+        "people management experience"
+      ],
+      "category": "experience",
+      "default": "1"
+    },
+    "preference_2887": {
+      "patterns": [
+        "led a full-stack project end-to-end",
+        "led a full-stack project",
+        "full-stack project end-to-end",
+        "architecture to deployment"
+      ],
+      "category": "preference",
+      "default": "Yes, I have led full-stack projects from architecture design through deployment, including microservices with Java/Spring Boot, React frontends, AWS infrastructure, and CI/CD pipelines."
+    },
+    "preference_1392": {
+      "patterns": [
+        "end-to-end project"
+      ],
+      "category": "preference",
+      "default": "Yes, I have owned end-to-end delivery of multiple full-stack projects at Fiserv."
+    },
+    "preference_9364": {
+      "patterns": [
+        "how comfortable are you contributing to coding",
+        "comfortable are you contributing to coding and solving"
+      ],
+      "category": "preference",
+      "default": "Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset."
+    },
+    "preference_735": {
+      "patterns": [
+        "solving complex technical problems",
+        "complex technical problems"
+      ],
+      "category": "preference",
+      "default": "Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development."
+    },
+    "preference_5946": {
+      "patterns": [
+        "comfortable with coding"
+      ],
+      "category": "preference",
+      "default": "Very comfortable — coding is my core strength."
+    },
+    "preference_1623": {
+      "patterns": [
+        "coding and problem solving"
+      ],
+      "category": "preference",
+      "default": "Very comfortable with both. I actively code in Java, React, and Python daily and enjoy solving complex technical problems."
+    },
+    "preference_281": {
+      "patterns": [
+        "how did you hear",
+        "where did you find",
+        "job portal"
+      ],
+      "category": "preference",
+      "default": "LinkedIn"
+    },
+    "preference_1684": {
+      "patterns": [
+        "source of application"
+      ],
+      "category": "preference",
+      "default": "LinkedIn Job Portal"
+    },
+    "preference_6056": {
+      "patterns": [
+        "who referred you",
+        "suggested by"
+      ],
+      "category": "preference",
+      "default": "Self-applied via LinkedIn"
+    },
+    "preference_1645": {
+      "patterns": [
+        "referral code"
+      ],
+      "category": "preference",
+      "default": "Not applicable - self applied"
+    },
+    "preference_2518": {
+      "patterns": [
+        "consultancy",
+        "recruiter",
+        "agency",
+        "vendor"
+      ],
+      "category": "preference",
+      "default": "Direct application"
+    },
+    "preference_7350": {
+      "patterns": [
+        "disability accommodation"
+      ],
+      "category": "preference",
+      "default": "Not required"
+    },
+    "preference_9721": {
+      "patterns": [
+        "military service"
+      ],
+      "category": "preference",
+      "default": "No military service"
+    },
+    "preference_2792": {
+      "patterns": [
+        "contract duration"
+      ],
+      "category": "preference",
+      "default": "Open to both permanent and contract"
+    },
+    "preference_6342": {
+      "patterns": [
+        "project duration"
+      ],
+      "category": "preference",
+      "default": "Flexible with project duration"
+    },
+    "preference_5937": {
+      "patterns": [
+        "engagement length"
+      ],
+      "category": "preference",
+      "default": "Open to long-term engagements"
+    },
+    "experience_9015": {
+      "patterns": [
+        "tenure"
+      ],
+      "category": "experience",
+      "default": "Looking for long-term opportunity"
+    },
+    "preference_9037": {
+      "patterns": [
+        "assignment length"
+      ],
+      "category": "preference",
+      "default": "Flexible"
+    },
+    "preference_8594": {
+      "patterns": [
+        "period"
+      ],
+      "category": "preference",
+      "default": "Open to any period"
+    },
+    "preference_2804": {
+      "patterns": [
+        "timeframe"
+      ],
+      "category": "preference",
+      "default": "Flexible with timeframe"
+    },
+    "experience_20": {
+      "patterns": [
+        "6 months"
+      ],
+      "category": "experience",
+      "default": "Open to 6 month contracts"
+    },
+    "preference_6654": {
+      "patterns": [
+        "1 year",
+        "please enter your linkedin profile"
+      ],
+      "category": "preference",
+      "default": "Open to 1 year contracts"
+    },
+    "experience_8555": {
+      "patterns": [
+        "2 years"
+      ],
+      "category": "experience",
+      "default": "Open to 2 year contracts"
+    },
+    "preference_4430": {
+      "patterns": [
+        "contract type"
+      ],
+      "category": "preference",
+      "default": "Open to both C2H and permanent"
+    },
+    "preference_8454": {
+      "patterns": [
+        "full time"
+      ],
+      "category": "preference",
+      "default": "Yes, looking for full-time"
+    },
+    "preference_470": {
+      "patterns": [
+        "part time"
+      ],
+      "category": "preference",
+      "default": "No, looking for full-time only"
+    },
+    "preference_4327": {
+      "patterns": [
+        "freelance"
+      ],
+      "category": "preference",
+      "default": "No, looking for full-time employment"
+    },
+    "preference_6629": {
+      "patterns": [
+        "consultant"
+      ],
+      "category": "preference",
+      "default": "Open to consulting roles"
+    },
+    "salary_5466": {
+      "patterns": [
+        "payroll"
+      ],
+      "category": "salary",
+      "default": "Direct payroll preferred"
+    },
+    "preference_3075": {
+      "patterns": [
+        "direct hire"
+      ],
+      "category": "preference",
+      "default": "Yes, preferred"
+    },
+    "preference_311": {
+      "patterns": [
+        "permanent"
+      ],
+      "category": "preference",
+      "default": "Yes, looking for permanent role"
+    },
+    "preference_2170": {
+      "patterns": [
+        "temporary"
+      ],
+      "category": "preference",
+      "default": "Open to temporary assignments"
+    },
+    "preference_7134": {
+      "patterns": [
+        "flexible with dates"
+      ],
+      "category": "preference",
+      "default": "Yes, flexible with dates and times"
+    },
+    "preference_5106": {
+      "patterns": [
+        "flexible with timing"
+      ],
+      "category": "preference",
+      "default": "Yes, flexible with timing"
+    },
+    "preference_8703": {
+      "patterns": [
+        "weekdays"
+      ],
+      "category": "preference",
+      "default": "Yes, available on weekdays"
+    },
+    "preference_4113": {
+      "patterns": [
+        "weekends"
+      ],
+      "category": "preference",
+      "default": "If necessary, available on weekends"
+    },
+    "preference_9504": {
+      "patterns": [
+        "working days"
+      ],
+      "category": "preference",
+      "default": "Yes, available on working days"
+    },
+    "preference_9150": {
+      "patterns": [
+        "calendar"
+      ],
+      "category": "preference",
+      "default": "Can schedule anytime as per mutual convenience"
+    },
+    "preference_5186": {
+      "patterns": [
+        "schedule interview"
+      ],
+      "category": "preference",
+      "default": "Yes, please share available slots"
+    },
+    "preference_891": {
+      "patterns": [
+        "linkedin specific"
+      ],
+      "category": "preference",
+      "default": "Applying via LinkedIn Easy Apply"
+    },
+    "preference_5268": {
+      "patterns": [
+        "easy apply"
+      ],
+      "category": "preference",
+      "default": "Yes, via LinkedIn Easy Apply"
+    },
+    "preference_2958": {
+      "patterns": [
+        "job id"
+      ],
+      "category": "preference",
+      "default": "Found via LinkedIn"
+    },
+    "preference_1555": {
+      "patterns": [
+        "negotiable"
+      ],
+      "category": "preference",
+      "default": "Yes, open to negotiation within range"
+    },
+    "preference_4179": {
+      "patterns": [
+        "open to negotiation"
+      ],
+      "category": "preference",
+      "default": "Yes, can discuss compensation"
+    },
+    "salary_2880": {
+      "patterns": [
+        "salary negotiable"
+      ],
+      "category": "salary",
+      "default": "Yes, within reasonable range"
+    },
+    "preference_8796": {
+      "patterns": [
+        "negotiation"
+      ],
+      "category": "preference",
+      "default": "Yes, open to discussion"
+    },
+    "salary_8328": {
+      "patterns": [
+        "discuss salary"
+      ],
+      "category": "salary",
+      "default": "Yes, willing to discuss"
+    },
+    "salary_8796": {
+      "patterns": [
+        "salary discussion"
+      ],
+      "category": "salary",
+      "default": "Yes, open to discussion"
+    },
+    "preference_5297": {
+      "patterns": [
+        "range"
+      ],
+      "category": "preference",
+      "default": "20-24 LPA"
+    },
+    "salary_8914": {
+      "patterns": [
+        "flexible on salary"
+      ],
+      "category": "salary",
+      "default": "Yes, flexible within reason"
+    },
+    "location_9029": {
+      "patterns": [
+        "ready to relocate",
+        "comfortable to relocate",
+        "ok to relocate",
+        "fine with relocation",
+        "accept relocation",
+        "willingness to relocate"
+      ],
+      "category": "location",
+      "default": "Yes"
+    },
+    "education_9326": {
+      "patterns": [
+        "please select your highest education qualification"
+      ],
+      "category": "education",
+      "default": "Bachelor\\"
+    },
+    "yes_no_3731": {
+      "patterns": [
+        "please select your current work authorization status"
+      ],
+      "category": "yes_no",
+      "default": "Authorized to work in India"
+    },
+    "salary_3657": {
+      "patterns": [
+        "please share your ctc ectc and notice period"
+      ],
+      "category": "salary",
+      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days"
+    },
+    "salary_6123": {
+      "patterns": [
+        "please provide your ctc details"
+      ],
+      "category": "salary",
+      "default": "Current: 15.3 LPA, Expected: 24 LPA"
+    }
+  },
+  "categories": {
+    "experience": {
+      "description": "Work experience",
+      "smart_fallback": true
+    },
+    "salary": {
+      "description": "Compensation",
+      "smart_fallback": true
+    },
+    "notice_period": {
+      "description": "Availability",
+      "smart_fallback": true
+    },
+    "location": {
+      "description": "Location",
+      "smart_fallback": true
+    },
+    "personal_info": {
+      "description": "Personal details",
+      "smart_fallback": false
+    },
+    "education": {
+      "description": "Education",
+      "smart_fallback": true
+    },
+    "skills": {
+      "description": "Technical skills",
+      "smart_fallback": true
+    },
+    "yes_no": {
+      "description": "Binary questions",
+      "smart_fallback": true,
+      "default": "Yes"
+    },
+    "employment": {
+      "description": "Employment history",
+      "smart_fallback": true
+    },
+    "preference": {
+      "description": "Preferences",
+      "smart_fallback": true
+    }
+  }
+}

@@ -8,7 +8,7 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.sentinel.agent import SentinelAgent, KNOWN_QA_PATTERNS
+from src.sentinel.agent import SentinelAgent
 
 
 class TestNewPatternsCoverage(unittest.TestCase):
@@ -252,25 +252,33 @@ class TestExistingPatternsRegression(unittest.TestCase):
         self.assertGreater(score, 0.6)
 
 
-class TestKnownQAPatternsIntegrity(unittest.TestCase):
-    """Verify KNOWN_QA_PATTERNS dict is well-formed."""
+class TestPatternMatcherIntegrity(unittest.TestCase):
+    """Verify PatternMatcher loads patterns correctly from JSON."""
+
+    def setUp(self):
+        self.agent = SentinelAgent()
 
     def test_pattern_count_increased(self):
-        """Pattern count should be > 1300 after adding Phase 2 patterns."""
-        self.assertGreater(len(KNOWN_QA_PATTERNS), 1300)
+        """Pattern count should be > 400 pattern groups in JSON config."""
+        json_patterns = self.agent._pattern_matcher.patterns.get('patterns', {})
+        self.assertGreater(len(json_patterns), 400, 
+                          f"Expected >400 pattern groups, got {len(json_patterns)}")
 
-    def test_no_empty_values(self):
-        """Intentional skip patterns may be empty; limit excessive empties."""
-        skip_keys = {'no worries', 'you can change your input', 'change your input',
-                     'skip this question', 'try again', 'restart conversation'}
-        empty_keys = [k for k, v in KNOWN_QA_PATTERNS.items()
-                      if v == '' and k not in skip_keys]
-        self.assertEqual(len(empty_keys), 0, f"Unexpected empty values: {empty_keys[:10]}")
+    def test_no_empty_defaults(self):
+        """Pattern groups should have non-empty default answers."""
+        json_patterns = self.agent._pattern_matcher.patterns.get('patterns', {})
+        empty_defaults = [k for k, v in json_patterns.items()
+                         if not v.get('default', '').strip()]
+        self.assertEqual(len(empty_defaults), 0, 
+                        f"Unexpected empty defaults: {empty_defaults[:10]}")
 
-    def test_all_keys_lowercase(self):
-        """All keys should be lowercase (our matching normalizes to lowercase)."""
-        non_lower = [k for k in KNOWN_QA_PATTERNS.keys() if k != k.lower()]
-        self.assertEqual(len(non_lower), 0, f"Non-lowercase keys: {non_lower[:5]}")
+    def test_all_patterns_have_category(self):
+        """All pattern groups should have a category."""
+        json_patterns = self.agent._pattern_matcher.patterns.get('patterns', {})
+        no_category = [k for k, v in json_patterns.items()
+                      if not v.get('category', '').strip()]
+        self.assertEqual(len(no_category), 0, 
+                        f"Pattern groups without category: {no_category[:5]}")
 
 
 if __name__ == '__main__':

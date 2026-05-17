@@ -1272,10 +1272,13 @@
         "prefer chennai",
         "prefer gurgaon",
         "prefer mumbai",
-        "preferred city"
+        "preferred city",
+        "preferred cities to work",
+        "choose preferred cities",
+        "preferred cities"
       ],
       "category": "location",
-      "default": "All cities are fine - Gurgaon, Bangalore, Mumbai, Pune, Hyderabad, Chennai, Kolkata"
+      "default": "Bengaluru"
     },
     "career_break": {
       "patterns": [
@@ -1327,10 +1330,16 @@
         "relevant experience in java",
         "relevant experience as java developer",
         "rel exp as nodejs",
-        "rel exp as java developer"
+        "rel exp as java developer",
+        "how many years of experience do you have as java developer",
+        "years of experience do you have as java developer",
+        "experience do you have as java developer",
+        "how many years of experience do you have in java",
+        "years of experience do you have in java",
+        "java developer experience"
       ],
       "category": "experience",
-      "default": "3.8"
+      "default": "3.8 Years"
     },
     "rel_exp_react": {
       "patterns": [
@@ -1385,10 +1394,15 @@
     "rel_exp_spring_boot": {
       "patterns": [
         "rel exp as spring boot",
-        "relevant experience as spring boot"
+        "relevant experience as spring boot",
+        "how many years of experience do you have in spring boot",
+        "years of experience do you have in spring boot",
+        "experience do you have in spring boot",
+        "spring boot experience",
+        "experience in spring boot"
       ],
       "category": "experience",
-      "default": "3.8"
+      "default": "3.8 Years"
     },
     "tech_specific_experience": {
       "patterns": [

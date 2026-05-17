@@ -193,14 +193,14 @@ WORKFLOW:
 NAUKRI_EMPLOYMENT_LWD_30_TASK = COMMON_CONTEXT + """
 NAVIGATE to https://www.naukri.com/mnjuser/profile?id=&altresid immediately.
 
-GOAL: Update 'Expected Last Working Day' in the Employment section to System Date + 30 days.
+GOAL: Update 'Expected Last Working Day' in the Employment section to June 5, 2026.
 
 WORKFLOW:
 1. Locate Employment section on the profile page
 2. Click the pencil/edit icon next to your current employment (Software Engineer 2 at Fiserv)
 3. Wait for the Employment modal to open
 4. Scroll down to find "Expected last working day" dropdowns
-5. Set the Year, Month, and Day dropdowns to: System Date + 30 days
+5. Set the Year, Month, and Day dropdowns to: June 5, 2026 (Year=2026, Month=6, Day=5)
 6. Click Save button
 7. Task Complete
 
@@ -214,14 +214,14 @@ DOM Selectors:
 NAUKRI_EMPLOYMENT_LWD_31_TASK = COMMON_CONTEXT + """
 NAVIGATE to https://www.naukri.com/mnjuser/profile?id=&altresid immediately.
 
-GOAL: Update 'Expected Last Working Day' in the Employment section to System Date + 31 days.
+GOAL: Update 'Expected Last Working Day' in the Employment section to June 5, 2026.
 
 WORKFLOW:
 1. Locate Employment section on the profile page
 2. Click the pencil/edit icon next to your current employment (Software Engineer 2 at Fiserv)
 3. Wait for the Employment modal to open
 4. Scroll down to find "Expected last working day" dropdowns
-5. Set the Year, Month, and Day dropdowns to: System Date + 31 days
+5. Set the Year, Month, and Day dropdowns to: June 5, 2026 (Year=2026, Month=6, Day=5)
 6. Click Save button
 7. Task Complete
 

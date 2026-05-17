@@ -876,6 +876,7 @@
                 
                 // Use QA patterns to determine the answer
                 let selectValue = getAnswerForQuestion(labelText, 'select');
+                let isCityDropdown = lowerLabel.includes('city') || lowerLabel.includes('cities') || lowerLabel.includes('location');
                 
                 // If no pattern match, use smart defaults based on keywords
                 if (!selectValue) {
@@ -884,6 +885,10 @@
                         continue;
                     } else if (lowerLabel.includes('document') || lowerLabel.includes('certificate') || lowerLabel.includes('education')) {
                         selectValue = 'Yes';
+                    } else if (isCityDropdown) {
+                        // For city/location dropdowns without pattern match, use Bangalore as default
+                        console.log('City/location dropdown detected - using Bangalore as default');
+                        selectValue = 'Bengaluru';
                     } else {
                         // Default to Yes for unknown dropdowns
                         selectValue = 'Yes';
@@ -891,16 +896,37 @@
                 }
                 
                 // For native select elements, set value directly
-                if (dropdown.tagName.toLowerCase() === 'select' && selectValue) {
+                if (dropdown.tagName.toLowerCase() === 'select') {
                     const options = dropdown.querySelectorAll('option');
-                    for (const option of options) {
-                        if (option.innerText.toLowerCase().includes(selectValue)) {
-                            option.selected = true;
-                            dropdown.value = option.value;
-                            dropdown.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Directly selected', selectValue, 'for native select');
-                            filledAny = true;
-                            break;
+                    let selected = false;
+                    
+                    if (selectValue) {
+                        // Try to match the selectValue
+                        for (const option of options) {
+                            if (option.innerText.toLowerCase().includes(selectValue)) {
+                                option.selected = true;
+                                dropdown.value = option.value;
+                                dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+                                console.log('Directly selected', selectValue, 'for native select');
+                                filledAny = true;
+                                selected = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If no match found or no selectValue, select first non-placeholder option
+                    if (!selected) {
+                        for (const option of options) {
+                            const text = option.innerText.toLowerCase().trim();
+                            if (text && !text.includes('select') && !text.includes('choose') && text.length > 2) {
+                                option.selected = true;
+                                dropdown.value = option.value;
+                                dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+                                console.log('Selected first non-placeholder option:', option.innerText);
+                                filledAny = true;
+                                break;
+                            }
                         }
                     }
                 } else {

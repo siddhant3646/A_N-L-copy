@@ -169,7 +169,8 @@ class SentinelAgent:
             "proficiency" in question_lower or
             "confidence" in question_lower or
             "years of" in question_lower or
-            "experience" in question_lower
+            "experience" in question_lower or
+            "exp" in question_lower
         )
         
         if expects_number:
@@ -606,8 +607,8 @@ class SentinelAgent:
                 if self._current_platform == 'linkedin' and 'serving' in question_lower:
                     return '30', 0.98
                 # Calculate LWD as 30 days from today
-                lwd_date = datetime.now() + timedelta(days=30)
-                lwd_formatted = lwd_date.strftime('%d %B %Y')  # e.g., "07 February 2026"
+                lwd_date = datetime(2026, 6, 5)
+                lwd_formatted = lwd_date.strftime('%d %B %Y')  # "05 June 2026"
                 return f'Serving 30 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
                 # For LinkedIn with immediate joiner questions, return numeric 30
@@ -624,7 +625,7 @@ class SentinelAgent:
                 if self._current_platform == 'linkedin':
                     return '30', 0.95
                 elif self._current_platform == 'naukri':
-                    lwd_date = datetime.now() + timedelta(days=30)
+                    lwd_date = datetime(2026, 6, 5)
                     lwd_formatted = lwd_date.strftime('%d %B %Y')
                     return f'30 days (LWD: {lwd_formatted})', 0.95
                 else:
@@ -2677,15 +2678,13 @@ class SentinelAgent:
                         if edit_result == 'EDIT_CLICKED':
                             await asyncio.sleep(random.uniform(3, 5))  # Wait for modal to open
                             
-                            # Step 2: Calculate system date + days (31 or 30 based on task description)
-                            days_offset = 31 if ('31 days' in self._task_description or '+31' in self._task_description) else 30
-                            future_date = datetime.now() + timedelta(days=days_offset)
-                            year_val = str(future_date.year)
-                            month_num = str(future_date.month)  # Month NUMBER for data-id
+                            # Step 2: Hardcoded LWD date: June 5, 2026
+                            year_val = '2026'
+                            month_num = '6'
                             month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                            month_display = month_names[future_date.month - 1]  # For logging
-                            day_val = str(future_date.day)
+                            month_display = month_names[int(month_num) - 1]
+                            day_val = '5'
                             
                             print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
                             
@@ -3551,6 +3550,11 @@ class SentinelAgent:
                     let clickedRadio = false;
                     const answerLower = answer.toLowerCase();
                     
+                    // Extract numeric value from answer (e.g., "3.8 Years" -> 3.8)
+                    const answerNumericMatch = answer.match(/(\d+\.?\d*)/);
+                    const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
+                    console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
+                    
                     // Try to match answer to radio label
                     for (const radio of radios) {{
                         const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
@@ -3576,15 +3580,62 @@ class SentinelAgent:
                             }}
                             break;
                         }}
+                        
+                        // Match numeric answers to experience ranges
+                        if (answerNumeric !== null) {{
+                            // Extract numbers from label (e.g., "3-5 years" -> [3, 5])
+                            const labelNumbers = labelLower.match(/(\d+\.?\d*)/g);
+                            if (labelNumbers) {{
+                                const nums = labelNumbers.map(n => parseFloat(n));
+                                // Check if answer falls within range
+                                if (nums.length >= 2) {{
+                                    if (answerNumeric >= nums[0] && answerNumeric <= nums[1]) {{
+                                        if (!radio.checked) {{
+                                            radio.click();
+                                            clickedRadio = true;
+                                            console.log('Chatbot Debug - Clicked numeric range radio:', label);
+                                        }}
+                                        break;
+                                    }}
+                                }} else if (nums.length === 1) {{
+                                    // Single number match (e.g., "5+ years")
+                                    if (answerNumeric >= nums[0]) {{
+                                        if (!radio.checked) {{
+                                            radio.click();
+                                            clickedRadio = true;
+                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
+                                        }}
+                                        break;
+                                    }}
+                                }}
+                            }}
+                            
+                            // Also try to match by looking for the number in the label
+                            if (labelLower.includes(String(answerNumeric))) {{
+                                if (!radio.checked) {{
+                                    radio.click();
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked exact numeric match radio:', label);
+                                }}
+                                break;
+                            }}
+                        }}
                     }}
                     
-                    // If no match found, click first unchecked radio
+                    // If no match found, click first non-"No experience" radio
                     if (!clickedRadio) {{
                         for (const radio of radios) {{
                             if (!radio.checked) {{
+                                const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
+                                const labelLower = label.toLowerCase();
+                                // Skip "No experience" option
+                                if (labelLower.includes('no experience') || labelLower.includes('0 years')) {{
+                                    console.log('Chatbot Debug - Skipping "No experience" option');
+                                    continue;
+                                }}
                                 radio.click();
                                 clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked default radio');
+                                console.log('Chatbot Debug - Clicked default radio:', label);
                                 break;
                             }}
                         }}

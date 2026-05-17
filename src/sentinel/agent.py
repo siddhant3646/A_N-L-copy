@@ -318,6 +318,10 @@ class SentinelAgent:
         # LWD (Last Working Day) detection - BEFORE experience keywords
         lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working']
         is_lwd_question = any(kw in question_lower for kw in lwd_keywords)
+
+        # Immediate joiners only - LinkedIn specific pattern
+        immediate_joiners_keywords = ['looking for immediate joiners only', 'immediate joiners only']
+        is_immediate_joiners_only = any(kw in question_lower for kw in immediate_joiners_keywords)
         
         # NP abbreviation detection (Notice Period) - special handling
         np_keywords = ['your np', 'what is your np', 'mention np', 'np?']
@@ -469,6 +473,18 @@ class SentinelAgent:
             # Fallback to date format "03 February 2026" for date pickers
             return '30', 0.98
         
+        # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 30 days)
+        start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
+                               'when would you like to start', 'when can you start working',
+                               'proposed start date']
+        is_start_date_question = any(kw in question_lower for kw in start_date_keywords)
+        # "start date" alone (without other noise) also qualifies
+        if not is_start_date_question and 'start date' in question_lower:
+            is_start_date_question = True
+        if is_start_date_question:
+            start_date = datetime.now() + timedelta(days=30)
+            return start_date.strftime('%d/%m/%Y'), 0.99
+        
         # Project count questions
         if is_project_count:
             return '5', 0.98
@@ -585,14 +601,18 @@ class SentinelAgent:
                 answer, confidence = self._pattern_matcher.fuzzy_match("years of experience")
                 return answer or '3.8 Years', max(confidence, 0.95)
         
-        if is_notice_question:
-            # Check if question asks for LWD (Last Working Day) specifically
+        if is_notice_question or is_immediate_joiners_only:
             if 'last working day' in question_lower or 'lwd' in question_lower:
+                if self._current_platform == 'linkedin' and 'serving' in question_lower:
+                    return '30', 0.98
                 # Calculate LWD as 30 days from today
                 lwd_date = datetime.now() + timedelta(days=30)
                 lwd_formatted = lwd_date.strftime('%d %B %Y')  # e.g., "07 February 2026"
                 return f'Serving 30 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
+                # For LinkedIn with immediate joiner questions, return numeric 30
+                if self._current_platform == 'linkedin' and 'immediate' in question_lower:
+                    return '30', 0.98
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
                 return answer or 'Yes', max(confidence, 0.95)
@@ -3225,12 +3245,45 @@ class SentinelAgent:
         max_iterations = 20
         previous_questions = []
         same_question_count = 0
+        consecutive_waiting_count = 0  # Track consecutive CHATBOT_WAITING states
+        last_action_was_answer = False  # Track if we just answered a question
         
         for iteration in range(max_iterations):
             await asyncio.sleep(random.uniform(2, 3.5))
             
             result = await self._page.evaluate(f"""async () => {{
                 const KNOWN_PATTERNS = {patterns_json};
+                
+                // LinkedIn-specific overrides for the chatbot loop
+                if (window.location.hostname.includes('linkedin')) {{
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {{
+                        const v = KNOWN_PATTERNS[k];
+                        if (v === '3.8 Years') KNOWN_PATTERNS[k] = '4';
+                        else if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
+                        else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
+                        else if (typeof v === 'string' && v.startsWith('3.8 Years')) KNOWN_PATTERNS[k] = '4';
+                    }});
+                    
+                    const noticeKeys = [
+                        'notice period', 'what is your notice period', 'notice period in days', 'notice period days',
+                        'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice',
+                        'if serving lwd', 'if serving lwd. looking for immediate joiners only',
+                        'if serving lwd, looking for immediate joiners only', 'serving lwd',
+                        'if serving notice period immediate joiner'
+                    ];
+                    noticeKeys.forEach(k => {{
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
+                    }});
+                    
+                    // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {{
+                        const kLower = k.toLowerCase();
+                        if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
+                            KNOWN_PATTERNS[k] === 'Yes') {{
+                            KNOWN_PATTERNS[k] = '30';
+                        }}
+                    }});
+                }}
                 
                 const fuzzyMatch = (question) => {{
                     if (!question) return null;
@@ -3339,20 +3392,56 @@ class SentinelAgent:
                 const hasRadio = chatLayer.querySelectorAll('input[type="radio"]').length > 0;
                 const hasCheckbox = chatLayer.querySelectorAll('input[type="checkbox"]').length > 0;
                 let textInput = chatLayer.querySelector('input[type="text"]:not([type="hidden"]):not([type="file"]), textarea');
-                let contentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
-                                     document.querySelector('div[contenteditable="true"]');
+                let contentEditableEarly = chatLayer.querySelector('div[contenteditable="true"]') || 
+                                          document.querySelector('div[contenteditable="true"]');
                 
-                console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditable}});
+                console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditableEarly}});
+                
+                // CHECK FOR COMPLETION: If chatLayer is visible but has no inputs and no real question,
+                // the application was likely submitted successfully
+                const hasAnyInput = hasSelect || hasRadio || hasCheckbox || !!textInput || !!contentEditableEarly;
+                const isShortQuestion = qText && qText.trim().length <= 3; // "2", "3.8" etc are not real questions
+                const hasRealQuestion = qText && qText.trim().length > 10 && qText.includes('?');
+                
+                if (!hasAnyInput && chatLayer && isVisible(chatLayer)) {{
+                    // Check for success indicators first
+                    const hasSuccessMsg = document.querySelector('.chatbot_SuccessMsg') !== null ||
+                                         document.querySelector('[class*="success"]') !== null ||
+                                         document.body.innerText.includes('Application submitted') ||
+                                         document.body.innerText.includes('Successfully applied') ||
+                                         document.body.innerText.includes('applied successfully');
+                    
+                    // If no inputs and either success message OR no real question, consider it complete
+                    if (hasSuccessMsg || !hasRealQuestion || isShortQuestion) {{
+                        console.log('Chatbot Debug - Completion detected: No inputs, success indicators or short question');
+                        return 'CHATBOT_COMPLETE';
+                    }}
+                }}
                 
                 // STEP 1.5: DETECT option buttons EARLY (must be checked before text inputs)
-                const hasOptionBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button').length > 0;
+                // Broad selector: chatbot option containers + any visible standalone buttons
+                // in the chat drawer (excluding Save/Send/Upload controls)
+                const optBtnSelector = '.chatbot_OptionContainer button, [class*="option"] button, ' +
+                    '.chatbot_DrawerContentWrapper button, .chatbot_Drawer button, ' +
+                    'li.botItem button, [class*="chatbot"] button, ' +
+                    '.chatbot_Chip, .chatbot_Chips div.chipItem, [class*="Chip"] div';
+                let optBtns = chatLayer ? Array.from(chatLayer.querySelectorAll(optBtnSelector)) : [];
+                // Filter out Save/Send/Upload buttons
+                optBtns = optBtns.filter(function(btn) {{
+                    const t = (btn.innerText || '').trim().toLowerCase();
+                    const cls = (btn.className || '').toLowerCase();
+                    if (t === 'save' || t === 'send' || t === 'submit' || t === 'next') return false;
+                    if (cls.includes('sendmsg') || cls.includes('upload') || cls.includes('file')) return false;
+                    if (btn.offsetParent === null) return false;
+                    return true;
+                }});
+                const hasOptionBtns = optBtns.length > 0;
                 
                 // STEP 2: USE the first available input type (sequential detection)
                 // Order: Option Buttons -> Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
                 
                 // HANDLE OPTION BUTTONS (highest priority — before text inputs to prevent typing button labels)
                 if (hasOptionBtns) {{
-                    const optBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button');
                     console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
                     
                     const answerLower = answer.toLowerCase();
@@ -3553,23 +3642,23 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // If no specific match but answer is "Yes" or positive, check first option
+                    // If no specific match but answer is "Yes" or positive, check ALL options
+                    // except "Skip this question" (user wants to select all available locations)
                     if (!clickedCheckbox && (answerLower.includes('yes') || answerLower.includes('true'))) {{
                         for (const checkbox of checkboxes) {{
+                            const lbl = (checkbox.parentElement?.innerText || checkbox.nextSibling?.textContent || '').toLowerCase();
+                            // Skip the "skip" option
+                            if (lbl.includes('skip')) continue;
                             if (!checkbox.checked) {{
                                 checkbox.click();
                                 clickedCheckbox = true;
-                                console.log('Chatbot Debug - Clicked default checkbox');
-                                break;
+                                console.log('Chatbot Debug - Clicked checkbox:', lbl.trim());
                             }}
                         }}
                     }}
                     
                     // After selecting checkbox(es), click Save/Submit button
                     if (clickedCheckbox) {{
-                        // Wait for UI to update
-                        await new Promise(r => setTimeout(r, 300));
-                        
                         // Find and click Save button
                         const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
                                        Array.from(document.querySelectorAll('button')).find(el => 
@@ -3583,9 +3672,105 @@ class SentinelAgent:
                         
                         return 'CHATBOT_CHECKBOX_CLICKED: ' + qText.slice(0, 50);
                     }}
+                    
+                    // Naukri fallback: hidden input[type="checkbox"] exist inside .mcc__checkbox divs
+                    // but parentElement.innerText doesn't expose the visible label.
+                    // The inputs have name="Pune" etc but are NOT inside .mcc__checkbox.
+                    // Dump full DOM structure to understand relationship.
+                    const mccCheckboxes = chatLayer.querySelectorAll('.mcc__checkbox');
+                    const namedInputs = chatLayer.querySelectorAll('input[type="checkbox"][name]');
+                    console.log('Chatbot Debug - Naukri .mcc__checkbox fallback:', mccCheckboxes.length, '| named inputs:', namedInputs.length);
+                    
+                    // Dump structure of first mcc and first input
+                    if (mccCheckboxes.length > 0) {{
+                        console.log('Chatbot Debug - MCC[0] tag:', mccCheckboxes[0].tagName, 'class:', mccCheckboxes[0].className, 'children:', mccCheckboxes[0].children.length, 'innerHTML[:200]:', mccCheckboxes[0].innerHTML.substring(0, 200));
+                        console.log('Chatbot Debug - MCC[0] parent tag:', mccCheckboxes[0].parentElement?.tagName, 'class:', mccCheckboxes[0].parentElement?.className);
+                        console.log('Chatbot Debug - MCC[0] outerHTML[:300]:', mccCheckboxes[0].outerHTML.substring(0, 300));
+                    }}
+                    if (namedInputs.length > 0) {{
+                        console.log('Chatbot Debug - Input[0] name:', namedInputs[0].name, 'parent:', namedInputs[0].parentElement?.tagName, 'class:', namedInputs[0].parentElement?.className);
+                        console.log('Chatbot Debug - Input[0] grandparent:', namedInputs[0].parentElement?.parentElement?.tagName, 'class:', namedInputs[0].parentElement?.parentElement?.className);
+                        // Check if input is inside or next to any .mcc__checkbox
+                        const closestMcc = namedInputs[0].closest('.mcc__checkbox');
+                        console.log('Chatbot Debug - Input[0] closest .mcc__checkbox:', closestMcc ? 'FOUND' : 'NOT FOUND');
+                        // Check siblings
+                        const siblings = namedInputs[0].parentElement?.children;
+                        if (siblings) {{
+                            console.log('Chatbot Debug - Input[0] sibling tags:', Array.from(siblings).map(s => s.tagName + '.' + s.className.substring(0, 30)).join(', '));
+                        }}
+                    }}
+                    
+                    // Strategy: use the named inputs to get labels, click corresponding .mcc__checkbox by index
+                    let mccClicked = 0;
+                    const skipNames = [];
+                    for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
+                        const inputName = (namedInputs[i].name || '').toLowerCase().trim();
+                        const isSkip = inputName.includes('skip') || inputName.includes('skip this');
+                        console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip);
+                        if (isSkip) {{
+                            skipNames.push(inputName);
+                            continue;
+                        }}
+                        mccCheckboxes[i].click();
+                        mccClicked++;
+                        console.log('Chatbot Debug - MCC clicked index:', i, 'name:', inputName);
+                    }}
+                    
+                    if (mccClicked > 0) {{
+                        await new Promise(r => setTimeout(r, 300));
+                        const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg:not(.disabled)') ||
+                                       document.querySelector('.sendMsgbtn_container .sendMsg');
+                        if (saveBtn) {{
+                            saveBtn.click();
+                            console.log('Chatbot Debug - Save clicked after MCC checkboxes');
+                        }}
+                        return 'CHATBOT_MCC_CHECKBOX_SAVED: Selected ' + mccClicked + ' options';
+                    }}
                 }}
                 
+                // ─── THREE-FIELD DATE PICKER (DD / MM / YYYY) ──────────────────────
+                // Naukri's date picker uses three separate input[type="number"] fields.
+                // The generic handler below would only fill DD with "30" and break.
+                // Detect this pattern first and fill all three fields correctly.
+                const ddInput = chatLayer ? chatLayer.querySelector('input[placeholder="DD"]') : null;
+                const mmInput = chatLayer ? chatLayer.querySelector('input[placeholder="MM"]') : null;
+                const yyInput = chatLayer ? chatLayer.querySelector('input[placeholder="YYYY"]') : null;
+                if (ddInput && mmInput && yyInput) {{
+                    const targetDate = new Date();
+                    targetDate.setDate(targetDate.getDate() + 30);
+                    const dd   = String(targetDate.getDate()).padStart(2, '0');
+                    const mm   = String(targetDate.getMonth() + 1).padStart(2, '0');
+                    const yyyy = String(targetDate.getFullYear());
+                    
+                    const nativeSetter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value'
+                    ).set;
+                    
+                    [[ddInput, dd], [mmInput, mm], [yyInput, yyyy]].forEach(function(pair) {{
+                        const el = pair[0], val = pair[1];
+                        if (nativeSetter) nativeSetter.call(el, val);
+                        el.dispatchEvent(new Event('input',  {{ bubbles: true }}));
+                        el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        el.dispatchEvent(new KeyboardEvent('keyup', {{ bubbles: true }}));
+                    }});
+                    
+                    console.log('Chatbot Debug - Date filled: ' + dd + '/' + mm + '/' + yyyy);
+                    
+                    const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
+                                   chatLayer.querySelector('button');
+                    if (saveBtn && !saveBtn.disabled) {{
+                        saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new MouseEvent('mouseup',   {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.click();
+                        console.log('Chatbot Debug - Save clicked after date fill');
+                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
+                    }}
+                    return 'CHATBOT_DATE_FILLED: ' + dd + '/' + mm + '/' + yyyy;
+                }}
+                // ───────────────────────────────────────────────────────────────────
+                
                 // HANDLE TRADITIONAL TEXT INPUTS
+
                 let input = null;
                 if (chatLayer) {{
                     input = chatLayer.querySelector('input[type="text"][placeholder*="Type"], input[placeholder*="type"], input[placeholder*="Enter"]');
@@ -3895,29 +4080,51 @@ class SentinelAgent:
                 continue
             elif 'CHATBOT_ANSWERED_AND_SAVE' in result:
                 # Wait longer after successful save to let UI update
+                last_action_was_answer = True
+                consecutive_waiting_count = 0  # Reset waiting counter after successful action
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_RADIO_AND_SAVE' in result:
                 # Wait longer after successful radio selection
+                last_action_was_answer = True
+                consecutive_waiting_count = 0
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_CHECKBOX_AND_SAVE' in result:
                 # Wait longer after successful checkbox selection
+                last_action_was_answer = True
+                consecutive_waiting_count = 0
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_DROPDOWN_SELECTED' in result or 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE' in result:
                 # Wait longer after dropdown selection
+                last_action_was_answer = True
+                consecutive_waiting_count = 0
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_OPT_CLICKED' in result:
                 # Option button clicked - wait for chatbot to process and show next question
+                last_action_was_answer = True
+                consecutive_waiting_count = 0
                 await asyncio.sleep(random.uniform(2, 3))
                 continue
             elif 'CHATBOT_WAITING' in result:
                 # Nothing to do, wait
+                consecutive_waiting_count += 1
+                # If we've been waiting for several iterations after answering questions,
+                # the chatbot is likely done but just hasn't closed yet
+                if consecutive_waiting_count >= 3 and last_action_was_answer:
+                    print(f"   📜 Chatbot completed after {consecutive_waiting_count} waiting iterations post-answer")
+                    self.metrics['applications_submitted'] += 1
+                    return True
                 continue
         
         print("⚠️ Chatbot loop exhausted")
+        # If we answered questions but loop exhausted while waiting, consider it a success
+        if last_action_was_answer and consecutive_waiting_count > 0:
+            print("   📜 Chatbot likely completed - was waiting after answering questions")
+            self.metrics['applications_submitted'] += 1
+            return True
         return False
 
     async def _handle_scripted_fallback(self) -> str:
@@ -3978,10 +4185,23 @@ class SentinelAgent:
                     const noticeKeys = [
                         'notice period', 'what is your notice period', 'what is your notice period?',
                         'what is your notice period ?', 'notice period in days', 'notice period days',
-                        'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice'
+                        'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice',
+                        'if serving lwd', 'if serving lwd. looking for immediate joiners only',
+                        'if serving lwd, looking for immediate joiners only', 'serving lwd',
+                        'if serving notice period immediate joiner'
                     ];
                     noticeKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
+                    }});
+                    
+                    // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
+                    // This catches patterns not explicitly in noticeKeys (e.g. "immediate joiner" → "Yes")
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {{
+                        const kLower = k.toLowerCase();
+                        if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
+                            KNOWN_PATTERNS[k] === 'Yes') {{
+                            KNOWN_PATTERNS[k] = '30';
+                        }}
                     }});
                 }}
 
@@ -5048,6 +5268,30 @@ class SentinelAgent:
                             
                             const hasVisibleError = !!queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
                             
+                            // DEBUG: Log error details and all filled field values
+                            if (hasVisibleError) {{
+                                const errorEls = queryAllDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                                errorEls.forEach((el, i) => {{
+                                    console.log('ERROR[' + i + '] text:', el.innerText, '| id:', el.id, '| class:', el.className);
+                                    const errorParent = el.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question');
+                                    if (errorParent) {{
+                                        const label = errorParent.querySelector('label, legend');
+                                        const input = errorParent.querySelector('input, select, textarea');
+                                        console.log('ERROR[' + i + '] field label:', label?.innerText?.substring(0, 100));
+                                        console.log('ERROR[' + i + '] field value:', input?.value, input?.type);
+                                    }}
+                                }});
+                            }}
+                            
+                            // DEBUG: Log ALL filled fields and their values
+                            const allInputs = queryAllDeep('input[type="text"], input[type="number"], textarea, select', modal);
+                            allInputs.forEach((inp, i) => {{
+                                if (isVisible(inp) && inp.value) {{
+                                    const lbl = inp.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || inp.getAttribute('aria-label') || '';
+                                    console.log('FIELD[' + i + ']:', inp.type, '| label:', lbl.substring(0, 60), '| value:', inp.value);
+                                }}
+                            }});
+                            
                             if (hasEmptyInput || hasEmptySelect || hasEmptyRadio || hasUncheckedCheckbox || hasVisibleError) {{
                                 console.log('Validation Error detected:', {{ hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasUncheckedCheckbox, hasVisibleError }});
                                 return true;
@@ -5447,8 +5691,45 @@ class SentinelAgent:
                                         document.querySelector('div[contenteditable="true"][data-placeholder*="Type message"]');
                         
                         const qText = questionEl?.innerText || 'Unknown question';
-                        const answer = fuzzyMatch(qText) || "3.8 Years"; 
-                        
+                        const answer = fuzzyMatch(qText) || "3.8 Years";
+
+                        // ─── THREE-FIELD DATE PICKER (DD / MM / YYYY) ─────────────────────
+                        // Naukri's date picker uses 3 separate input[type="number"] fields.
+                        // Detect by placeholder and fill each with computed today+30.
+                        const nkDD = document.querySelector('input[placeholder="DD"]');
+                        const nkMM = document.querySelector('input[placeholder="MM"]');
+                        const nkYY = document.querySelector('input[placeholder="YYYY"]');
+                        if (nkDD && nkMM && nkYY && nkDD.offsetParent !== null) {{
+                            const tgt = new Date();
+                            tgt.setDate(tgt.getDate() + 30);
+                            const dv = String(tgt.getDate()).padStart(2, '0');
+                            const mv = String(tgt.getMonth() + 1).padStart(2, '0');
+                            const yv = String(tgt.getFullYear());
+                            const setter = Object.getOwnPropertyDescriptor(
+                                window.HTMLInputElement.prototype, 'value'
+                            ).set;
+                            [[nkDD, dv], [nkMM, mv], [nkYY, yv]].forEach(function(pair) {{
+                                const el = pair[0], val = pair[1];
+                                if (setter) setter.call(el, val);
+                                el.dispatchEvent(new Event('input',  {{ bubbles: true }}));
+                                el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                el.dispatchEvent(new KeyboardEvent('keyup', {{ bubbles: true }}));
+                            }});
+                            console.log('NAUKRI DEBUG: date filled', dv + '/' + mv + '/' + yv);
+                            const sendBtn = document.querySelector('div.sendMsg') ||
+                                           document.querySelector('.sendMsgbtn_container .sendMsg') ||
+                                           document.querySelector('[class*="sendMsg"]');
+                            console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 80));
+                            if (sendBtn && !sendBtn.disabled) {{
+                                sendBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
+                                sendBtn.dispatchEvent(new MouseEvent('mouseup',   {{ bubbles: true, cancelable: true }}));
+                                sendBtn.click();
+                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED: ' + qText.slice(0, 40);
+                            }}
+                            return 'NAUKRI_CHAT_DATE_FILLED: ' + dv + '/' + mv + '/' + yv;
+                        }}
+                        // ─────────────────────────────────────────────────────────────────────
+
                         // Try contenteditable div (Naukri's actual implementation)
                         if (inputDiv) {{
                             const currentText = inputDiv.textContent || inputDiv.innerText || '';
@@ -5600,7 +5881,7 @@ class SentinelAgent:
                                     clickedCount = 1;
                                     debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
                                 }}
-                            }} else if (isCityQuestion && allCheckboxes.length <= 3) {{
+                            }} else if (isCityQuestion) {{
                                 // Check if these are actual city checkboxes (not Yes/No)
                                 const cityNames = ['pune', 'mumbai', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'ahmedabad'];
                                 const containsCities = checkboxLabels.some(item => 
@@ -5608,7 +5889,7 @@ class SentinelAgent:
                                 );
                                 
                                 if (containsCities) {{
-                                    // This is a city selection question - select ALL city options (skip "Skip")
+                                    // This is a city selection question - select ALL options except "Skip"
                                     for (const item of checkboxLabels) {{
                                         // Skip the "Skip this question" option
                                         if (item.lowerLabel.includes('skip')) {{
@@ -5616,10 +5897,8 @@ class SentinelAgent:
                                             continue;
                                         }}
                                         
-                                        // Check if this is a city option
-                                        const isCityOption = cityNames.some(city => item.lowerLabel.includes(city));
-                                        
-                                        if (isCityOption && !item.cb.checked) {{
+                                        // Select any non-skip option (city names, locations, etc.)
+                                        if (!item.cb.checked) {{
                                             item.cb.click();
                                             if (!item.cb.checked) {{
                                                 item.cb.checked = true;
@@ -5627,7 +5906,7 @@ class SentinelAgent:
                                             }}
                                             clickedCount++;
                                             debugLog.push("CITY_ALL: " + item.labelText);
-                                        }} else if (isCityOption && item.cb.checked) {{
+                                        }} else if (item.cb.checked) {{
                                             clickedCount++;
                                             debugLog.push("CITY_ALL: " + item.labelText + " (already checked)");
                                         }}

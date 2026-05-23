@@ -2393,7 +2393,13 @@
         "if serving lwd looking for immediate joiners only",
         "serving lwd",
         "lwd immediate joiner",
-        "if serving notice period immediate joiner"
+        "if serving notice period immediate joiner",
+        "official notice period",
+        "what is your official notice period",
+        "official notice period if serving lwd",
+        "notice period if serving lwd",
+        "official notice period lwd",
+        "official notice"
       ],
       "category": "notice_period",
       "default": "30"
@@ -4125,10 +4131,15 @@
     },
     "notice_period_4843": {
       "patterns": [
-        "mention your lwd"
+        "mention your lwd",
+        "when is your lwd",
+        "what is your lwd",
+        "your lwd date",
+        "lwd date",
+        "your lwd"
       ],
       "category": "notice_period",
-      "default": "Serving 30 days notice"
+      "default": "01 Jun 2025"
     },
     "experience_6838": {
       "patterns": [
@@ -4950,7 +4961,11 @@
         "which cloud",
         "cloud experience",
         "cloud provider",
-        "cloud infrastructure"
+        "cloud infrastructure",
+        "what cloud experience",
+        "cloud experience you are having",
+        "aws azure or gcp",
+        "aws gcp azure"
       ],
       "category": "skills",
       "default": "AWS (primary), Azure (secondary)"

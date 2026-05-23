@@ -1747,6 +1747,13 @@ class SentinelAgent:
             print(f"\n📍 Step {self.state.step_count}/{max_steps}")
             
             try:
+                # Guard: stop immediately if LinkedIn rate limit is still active
+                if self.linkedin_rate_limit_until and datetime.now() < self.linkedin_rate_limit_until:
+                    remaining = (self.linkedin_rate_limit_until - datetime.now()).seconds // 60
+                    print(f"⏳ LinkedIn rate limited. {remaining} min remaining. Stopping task.")
+                    self.state.task_complete = True
+                    break
+
                 current_url = self._page.url if self._page else ""
                 
                 # Periodic memory cleanup
@@ -1822,6 +1829,13 @@ class SentinelAgent:
                 if 'NAUKRI_RATE_LIMITED' in result:
                     self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
                     print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
+                    self.state.task_complete = True
+                    break
+                
+                # LinkedIn: Easy Apply daily limit detected in outer loop (before/after autopilot)
+                if 'LINKEDIN_RATE_LIMITED' in result:
+                    self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
+                    print(f"⚠️ LinkedIn Easy Apply Limit! Pausing for 3 hours until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                     self.state.task_complete = True
                     break
                 
@@ -2203,8 +2217,8 @@ class SentinelAgent:
                         print("⏭️ Skipped job (already applied or not Easy Apply)")
                     continue
                 
-                # LinkedIn Autopilot
-                if 'APPLY_CLICKED_LINKEDIN' in result:
+                # LinkedIn Autopilot — triggered by APPLY_CLICKED_LINKEDIN (legacy) or LINKEDIN_EASY_APPLY_CLICKED (JS)
+                if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
                     # STRICT CHECK: If we've already submitted 5 applications, mark task complete
                     if self.linkedin_applications >= 5:
                         print(f"✅ LinkedIn limit reached ({self.linkedin_applications}/5). Task complete.")
@@ -2251,17 +2265,58 @@ class SentinelAgent:
                         
                         await asyncio.sleep(random.uniform(4, 8))
                         
-                        # Check for rate limit message before proceeding
+                        # Check for Easy Apply daily limit dialog or generic rate limit message
                         rate_limited = await self._page.evaluate("""() => {
+                            // Primary: check for the specific Easy Apply fuse limit dialog
+                            const limitDialog = (
+                                document.querySelector('[data-testid="dialog-content"]') ||
+                                document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.EasyApplyFuseLimitDialogModal"]')
+                            );
+                            if (limitDialog) {
+                                const dlgText = (limitDialog.innerText || '').toLowerCase();
+                                if (dlgText.includes('easy apply limit') || dlgText.includes('apply tomorrow') || dlgText.includes('continue applying tomorrow')) {
+                                    return true;
+                                }
+                            }
+                            // Fallback: body-text heuristics
                             const bodyText = document.body.innerText.toLowerCase();
-                            return bodyText.includes('we limit daily submissions') || 
+                            return bodyText.includes('you reached today') ||
+                                   bodyText.includes('easy apply limit') ||
+                                   bodyText.includes('we limit daily submissions') || 
                                    bodyText.includes('prevent bots') ||
                                    bodyText.includes('apply tomorrow');
                         }""")
                         
                         if rate_limited:
-                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=9)
-                            print(f"⚠️ LinkedIn Rate Limit Detected! Pausing until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
+                            # Click "Got it" to dismiss the dialog before pausing
+                            try:
+                                await self._page.evaluate("""() => {
+                                    // Try the specific Got it button inside the limit dialog
+                                    const selectors = [
+                                        '[data-testid="dialog-content"] button',
+                                        '[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.EasyApplyFuseLimitDialogModal"] button'
+                                    ];
+                                    for (const sel of selectors) {
+                                        const btn = document.querySelector(sel);
+                                        if (btn && btn.offsetParent !== null) {
+                                            btn.click();
+                                            return 'GOT_IT_CLICKED';
+                                        }
+                                    }
+                                    // Fallback: any visible button whose text is "Got it"
+                                    const allBtns = document.querySelectorAll('button');
+                                    for (const btn of allBtns) {
+                                        if ((btn.innerText || '').trim().toLowerCase() === 'got it' && btn.offsetParent !== null) {
+                                            btn.click();
+                                            return 'GOT_IT_CLICKED_FALLBACK';
+                                        }
+                                    }
+                                    return 'NO_GOT_IT_BTN';
+                                }""")
+                            except Exception:
+                                pass
+                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
+                            print(f"⚠️ LinkedIn Easy Apply Limit Detected! Pausing for 3 hours until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                             self.state.task_complete = True
                             break
                         
@@ -2309,8 +2364,8 @@ class SentinelAgent:
                         
                         # Check for rate limit in result
                         if 'LINKEDIN_RATE_LIMITED' in next_result:
-                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=9)
-                            print(f"⚠️ LinkedIn Rate Limit! Pausing until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
+                            self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
+                            print(f"⚠️ LinkedIn Easy Apply Limit! Pausing for 3 hours until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                             self.state.task_complete = True
                             break
                         
@@ -3358,7 +3413,20 @@ class SentinelAgent:
                     qText = chatLayer.innerText || '';
                 }}
                 
-                let answer = fuzzyMatch(qText) || '3.8';
+                const qLower = qText.toLowerCase();
+                
+                // Special pre-match: LWD date questions — must answer with a date, not years
+                const isLwdDateQ = qLower.includes('when is your lwd') ||
+                                   qLower.includes('what is your lwd') ||
+                                   qLower.includes('lwd date') ||
+                                   (qLower.includes('lwd') && !qLower.includes('serving lwd') && !qLower.includes('if serving'));
+                let answer;
+                if (isLwdDateQ) {{
+                    answer = '05 Jun 2026';
+                    console.log('Chatbot Debug - LWD date question detected, answering:', answer);
+                }} else {{
+                    answer = fuzzyMatch(qText) || '1';
+                }}
                 
                 // Special handling for Naukri salary questions - extract numeric value
                 const isNaukri = window.location.hostname.includes('naukri');
@@ -4239,7 +4307,10 @@ class SentinelAgent:
                         'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice',
                         'if serving lwd', 'if serving lwd. looking for immediate joiners only',
                         'if serving lwd, looking for immediate joiners only', 'serving lwd',
-                        'if serving notice period immediate joiner'
+                        'if serving notice period immediate joiner',
+                        'official notice period', 'what is your official notice period',
+                        'official notice period if serving lwd', 'notice period if serving lwd',
+                        'official notice period lwd', 'official notice'
                     ];
                     noticeKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
@@ -4250,9 +4321,23 @@ class SentinelAgent:
                     Object.keys(KNOWN_PATTERNS).forEach(k => {{
                         const kLower = k.toLowerCase();
                         if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
-                            KNOWN_PATTERNS[k] === 'Yes') {{
+                            (KNOWN_PATTERNS[k] === 'Yes' || KNOWN_PATTERNS[k] === 'No')) {{
                             KNOWN_PATTERNS[k] = '30';
                         }}
+                    }});
+                    
+                    // Override cloud/AWS/GCP experience keys to numeric years for LinkedIn number inputs
+                    // These fields ask for years (decimal), not platform names
+                    const cloudKeys = [
+                        'cloud experience', 'what cloud experience', 'cloud experience you are having',
+                        'aws azure gcp', 'aws azure or gcp', 'aws gcp azure',
+                        'cloud platform', 'cloud computing', 'cloud services',
+                        'which cloud', 'cloud provider', 'cloud infrastructure',
+                        'aws experience', 'devops experience', 'kubernetes experience',
+                        'docker experience'
+                    ];
+                    cloudKeys.forEach(k => {{
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
                     }});
                 }}
 
@@ -4699,7 +4784,7 @@ class SentinelAgent:
                                                   input.getAttribute('pattern')?.includes('\\d') ||
                                                   input.className?.toLowerCase().includes('number') ||
                                                   input.className?.toLowerCase().includes('decimal') ||
-                                                  (labelText && /how many years|total years|relevant experience|experience with|decimal number|numeric/i.test(labelText));
+                                                  (labelText && /how many years|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
                             
                             if (labelText) {{
                                 let answer = fuzzyMatch(labelText);
@@ -5436,14 +5521,25 @@ class SentinelAgent:
                                 return {{ type: 'success', element: dialog }};
                             }}
                             
-                            // 2. Safety/Reminder Modal ("Job search safety reminder" popup)
+                            // 2. Easy Apply Daily Limit Modal — "You reached today's Easy Apply limit"
+                            // Detected via data-testid, data-sdui-screen, or text content
+                            if (dialog.querySelector('[data-testid="dialog-content"]') ||
+                                dialog.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.EasyApplyFuseLimitDialogModal"]') ||
+                                dialog.getAttribute('data-testid') === 'dialog-content' ||
+                                text.includes('easy apply limit') ||
+                                text.includes("you reached today") ||
+                                (text.includes('apply tomorrow') && text.includes('limit'))) {{
+                                return {{ type: 'easy_apply_limit', element: dialog }};
+                            }}
+                            
+                            // 3. Safety/Reminder Modal ("Job search safety reminder" popup)
                             if (text.includes('safety reminder') || text.includes('legal reminder') ||
                                 text.includes('job search safety') || text.includes('continue applying') ||
                                 text.includes('research the company') || text.includes('report suspicious')) {{
                                 return {{ type: 'safety', element: dialog }};
                             }}
                             
-                            // 3. Easy Apply Form Modal
+                            // 4. Easy Apply Form Modal
                             if (text.includes('apply to') || 
                                 dialog.querySelector('.jobs-easy-apply-content') || 
                                 dialog.querySelector('[class*="easy-apply"]') ||
@@ -5471,6 +5567,25 @@ class SentinelAgent:
                             }}
                         }}
                         
+                        // Easy Apply Daily Limit — click "Got it" and signal rate limit
+                        if (modal.type === 'easy_apply_limit') {{
+                            console.log('LINKEDIN: Easy Apply daily limit dialog detected. Clicking Got it...');
+                            const gotItBtn = findByText('button', 'got it', true) ||
+                                            findByText('button', 'got it') ||
+                                            modal.element.querySelector('[data-testid="dialog-content"] button') ||
+                                            modal.element.querySelector('[data-sdui-screen*="EasyApplyFuse"] button') ||
+                                            modal.element.querySelector('button');
+                            if (gotItBtn) {{
+                                gotItBtn.scrollIntoView({{block: 'center'}});
+                                gotItBtn.dispatchEvent(new PointerEvent('pointerdown', {{bubbles: true}}));
+                                gotItBtn.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                gotItBtn.dispatchEvent(new PointerEvent('pointerup', {{bubbles: true}}));
+                                gotItBtn.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
+                                gotItBtn.click();
+                            }}
+                            return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached';
+                        }}
+                        
                         if (modal.type === 'safety') {{
                             // Look for "Continue applying" button — try by text first, then last button
                             const continueBtn = findByText('button', 'continue applying', true) ||
@@ -5495,12 +5610,46 @@ class SentinelAgent:
                         }}
                     }}
 
-                    // SAFETY POPUP INTERCEPT: Check for "Job search safety reminder" popup
+                    // INTERCEPT 1: Easy Apply daily limit dialog (catches cases checkModals() may miss)
+                    // Matches both the data-testid selector and the SDUI screen attribute
+                    const easyApplyLimitDlg = (
+                        document.querySelector('[data-testid="dialog-content"]') ||
+                        document.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.EasyApplyFuseLimitDialogModal"]')
+                    );
+                    if (easyApplyLimitDlg && isVisible(easyApplyLimitDlg)) {{
+                        const dlgText = (easyApplyLimitDlg.innerText || '').toLowerCase();
+                        if (dlgText.includes('easy apply limit') || dlgText.includes('you reached today') || dlgText.includes('apply tomorrow')) {{
+                            console.log('LINKEDIN: Easy Apply limit dialog detected via intercept. Clicking Got it...');
+                            const btns = Array.from(easyApplyLimitDlg.querySelectorAll('button'));
+                            const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
+                            if (gotItBtn) {{
+                                gotItBtn.scrollIntoView({{block: 'center'}});
+                                gotItBtn.click();
+                            }}
+                            return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached (intercept)';
+                        }}
+                    }}
+
+                    // INTERCEPT 2: Safety/Reminder popup ("Job search safety reminder")
                     // even if checkModals() failed to classify it (e.g., different DOM structure)
                     const allVisibleDialogs = queryAllDeep('.artdeco-modal, [role="dialog"], [class*="modal"]');
                     for (const d of allVisibleDialogs) {{
                         if (!isVisible(d) || isMessagingOverlay(d)) continue;
                         const dText = (d.innerText || '').toLowerCase();
+
+                        // Easy Apply limit check on any visible dialog
+                        if (dText.includes('easy apply limit') || dText.includes('you reached today') ||
+                            (dText.includes('apply tomorrow') && dText.includes('limit'))) {{
+                            console.log('LINKEDIN: Easy Apply limit popup detected via dialog scan. Clicking Got it...');
+                            const btns = Array.from(d.querySelectorAll('button'));
+                            const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
+                            if (gotItBtn) {{
+                                gotItBtn.scrollIntoView({{block: 'center'}});
+                                gotItBtn.click();
+                            }}
+                            return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached (scan)';
+                        }}
+
                         if (dText.includes('safety reminder') || dText.includes('job search safety') ||
                             dText.includes('research the company') || dText.includes('report suspicious')) {{
                             console.log('LINKEDIN: Safety reminder popup detected via intercept.');

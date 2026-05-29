@@ -184,6 +184,51 @@ def get_pattern_numeric_answer(patterns: Dict[str, Any], pattern_id: str) -> Opt
     return None
 
 
+def get_pattern_answer_for_input_type(
+    patterns: Dict[str, Any],
+    pattern_id: str,
+    input_type: str
+) -> Optional[str]:
+    """
+    Get the default answer for a pattern based on input type.
+    
+    This function returns input-type-specific answers when available,
+    falling back to the default answer if no specific mapping exists.
+    
+    Args:
+        patterns: Dictionary containing all patterns
+        pattern_id: ID of the pattern
+        input_type: Type of input (text, radio, checkbox, select, number, etc.)
+        
+    Returns:
+        Answer string appropriate for the input type, or None if pattern not found
+        
+    Example:
+        >>> get_pattern_answer_for_input_type(patterns, 'notice_period', 'radio')
+        'Yes'
+        >>> get_pattern_answer_for_input_type(patterns, 'notice_period', 'text')
+        'Serving Notice Period'
+    """
+    pattern = get_pattern(patterns, pattern_id)
+    if not pattern:
+        return None
+    
+    # Normalize input type
+    input_type = input_type.lower().strip()
+    
+    # Check for input_type_defaults
+    input_type_defaults = pattern.get('input_type_defaults', {})
+    if input_type_defaults and input_type in input_type_defaults:
+        return input_type_defaults[input_type]
+    
+    # Fallback to numeric_default for number inputs
+    if input_type == 'number':
+        return pattern.get('numeric_default') or pattern.get('default')
+    
+    # Fallback to default
+    return pattern.get('default')
+
+
 class PatternLoader:
     """
     High-level pattern loader with caching support.
@@ -251,6 +296,21 @@ class PatternLoader:
         if self._patterns is None:
             self.load()
         return get_pattern_answer(self._patterns, pattern_id)
+    
+    def get_answer_for_input_type(self, pattern_id: str, input_type: str) -> Optional[str]:
+        """
+        Get the answer for a pattern based on input type.
+        
+        Args:
+            pattern_id: ID of the pattern
+            input_type: Type of input (text, radio, checkbox, select, number, etc.)
+            
+        Returns:
+            Answer string appropriate for the input type
+        """
+        if self._patterns is None:
+            self.load()
+        return get_pattern_answer_for_input_type(self._patterns, pattern_id, input_type)
     
     def get_all_pattern_strings(self) -> List[str]:
         """Get all pattern strings."""

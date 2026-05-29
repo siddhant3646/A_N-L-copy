@@ -78,7 +78,7 @@ class PatternMatcher:
         """
         return SequenceMatcher(None, str1, str2).ratio()
     
-    def _keyword_priority_match(self, question: str) -> Tuple[Optional[str], float]:
+    def _keyword_priority_match(self, question: str, input_type: str = None) -> Tuple[Optional[str], float]:
         """
         Check for keyword-based priority matches.
         
@@ -86,6 +86,7 @@ class PatternMatcher:
         
         Args:
             question: The question to match
+            input_type: Optional input type for specific answer
             
         Returns:
             Tuple of (answer, confidence) or (None, 0.0)
@@ -127,6 +128,7 @@ class PatternMatcher:
             category_data = keyword_categories[best_category]
             best_match = None
             best_match_score = 0.0
+            best_pattern_id = None
             
             for pattern_id in category_data['patterns']:
                 pattern = self.patterns['patterns'].get(pattern_id)
@@ -142,18 +144,23 @@ class PatternMatcher:
                     if similarity > best_match_score:
                         best_match_score = similarity
                         best_match = pattern
+                        best_pattern_id = pattern_id
             
             if best_match and best_match_score >= self.threshold:
-                return best_match.get('default'), best_match_score
+                # Get input-type-specific answer if available
+                answer = self._get_answer_for_pattern(best_pattern_id, input_type)
+                return answer, best_match_score
         
         return None, 0.0
     
-    def fuzzy_match(self, question: str) -> Tuple[Optional[str], float]:
+    def fuzzy_match(self, question: str, input_type: str = None) -> Tuple[Optional[str], float]:
         """
         Find the best matching answer for a question using fuzzy matching.
         
         Args:
             question: The question to match
+            input_type: Optional input type (text, radio, checkbox, select, number)
+                       If provided, returns input-type-specific answer
             
         Returns:
             Tuple of (answer, confidence_score)
@@ -165,13 +172,14 @@ class PatternMatcher:
         normalized_question = self._normalize_text(question)
         
         # First try keyword priority matching
-        answer, confidence = self._keyword_priority_match(question)
+        answer, confidence = self._keyword_priority_match(question, input_type)
         if answer:
             return answer, confidence
         
         # Fall back to general fuzzy matching
         best_match = None
         best_score = 0.0
+        best_pattern_id = None
         
         for pattern_id, pattern_strings in self._pattern_cache.items():
             for pattern_str in pattern_strings:
@@ -189,11 +197,42 @@ class PatternMatcher:
                 
                 if similarity > best_score and similarity >= self.threshold:
                     best_score = similarity
-                    pattern = self.patterns['patterns'].get(pattern_id)
-                    if pattern:
-                        best_match = pattern.get('default')
+                    best_pattern_id = pattern_id
+        
+        # Get the answer, considering input type
+        if best_pattern_id:
+            best_match = self._get_answer_for_pattern(best_pattern_id, input_type)
         
         return best_match, best_score
+    
+    def _get_answer_for_pattern(self, pattern_id: str, input_type: str = None) -> Optional[str]:
+        """
+        Get answer for a pattern, optionally considering input type.
+        
+        Args:
+            pattern_id: The matched pattern ID
+            input_type: Optional input type for specific answer
+            
+        Returns:
+            Answer string or None
+        """
+        pattern = self.patterns['patterns'].get(pattern_id)
+        if not pattern:
+            return None
+        
+        # If input type specified, try to get input-type-specific answer
+        if input_type:
+            input_type = input_type.lower().strip()
+            input_type_defaults = pattern.get('input_type_defaults', {})
+            if input_type_defaults and input_type in input_type_defaults:
+                return input_type_defaults[input_type]
+            
+            # Fallback to numeric_default for number inputs
+            if input_type == 'number':
+                return pattern.get('numeric_default') or pattern.get('default')
+        
+        # Return default answer
+        return pattern.get('default')
     
     def match_with_details(self, question: str) -> Dict[str, Any]:
         """

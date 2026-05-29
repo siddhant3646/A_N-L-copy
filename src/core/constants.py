@@ -77,7 +77,6 @@ PATTERNS_FILE = Path(__file__).parent.parent.parent / "config" / "qa_patterns.js
 
 # Chrome arguments
 CHROME_ARGS = [
-    '--no-sandbox',
     '--disable-blink-features=AutomationControlled',
     '--start-maximized',
     '--disable-session-crashed-bubble',

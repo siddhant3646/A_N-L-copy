@@ -732,7 +732,7 @@ def detect_expected_format(question: str) -> Optional[str]:
         return 'numeric'
     
     # Date
-    if any(x in q_lower for x in ['date', 'when', 'dob', 'birth']):
+    if any(x in q_lower for x in ['when', 'dob', 'birth']) or re.search(r'\bdate\b', q_lower):
         return 'date'
     
     # Experience (numeric)

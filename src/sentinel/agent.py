@@ -116,16 +116,18 @@ class SentinelAgent:
                 input_resolver=self._input_resolver
             )
     
-    def _get_patterns_for_js(self) -> Dict[str, str]:
+    def _get_patterns_for_js(self) -> Dict[str, Any]:
         """
-        Get all patterns as a flat dictionary for JavaScript injection.
+        Get all patterns with input_type_defaults for JavaScript injection.
         
         Uses JSON config (config/qa_patterns.json) as single source of truth.
         
         Returns:
-            Flat dictionary mapping pattern strings to answers
+            Dictionary with 'answers' (flat key->default) and 
+            'with_defaults' (key->object with default and input_type_defaults)
         """
         patterns_dict = {}
+        patterns_with_defaults = {}
         
         # Load patterns from JSON config (single source of truth)
         try:
@@ -135,13 +137,22 @@ class SentinelAgent:
                 if not answer:
                     continue
                 
+                input_type_defaults = pattern_data.get('input_type_defaults', {})
+                
                 # Add each pattern string as a key
                 for pattern_str in pattern_data.get('patterns', []):
                     patterns_dict[pattern_str.lower()] = answer
+                    patterns_with_defaults[pattern_str.lower()] = {
+                        'default': answer,
+                        'input_type_defaults': input_type_defaults
+                    }
         except Exception as e:
             print(f"Warning: Could not load JSON patterns for JS: {e}")
         
-        return patterns_dict
+        return {
+            'answers': patterns_dict,
+            'with_defaults': patterns_with_defaults
+        }
     
     def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
         """
@@ -394,34 +405,45 @@ class SentinelAgent:
         # These questions MUST return "No" for compliance safety
         # ==========================================
         
+        # List of technical/tool/programming keywords to prevent false positives in company matching
+        TECH_KEYWORDS = {
+            'aws', 'python', 'java', 'react', 'angular', 'vue', 'node', 'typescript', 'javascript', 
+            'docker', 'kubernetes', 'gcp', 'azure', 'git', 'jenkins', 'sql', 'nosql', 'kafka', 
+            'redis', 'spark', 'hadoop', 'c#', 'c++', 'go', 'rust', 'ruby', 'php', 'html', 'css', 
+            'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs'
+        }
+        
         # Pattern 1: "Have you worked with/at/for [Company]" - Most common Workday pattern
         worked_with_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)"
         worked_with_match = re.search(worked_with_company_pattern, question_lower)
         if worked_with_match:
             company = worked_with_match.group(1).lower()
-            # Only answer "Yes" for current employer, "No" for all others
-            if company == 'fiserv':
-                return 'Yes', 0.98
-            return 'No', 0.98
+            if company not in TECH_KEYWORDS:
+                # Only answer "Yes" for current employer, "No" for all others
+                if company == 'fiserv':
+                    return 'Yes', 0.98
+                return 'No', 0.98
         
         # Pattern 2: "Have you worked with [Company] in the past X years"
         past_years_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)\s+(?:in\s+the\s+)?(?:past|last)\s+(\d+)"
         past_years_match = re.search(past_years_pattern, question_lower)
         if past_years_match:
             company = past_years_match.group(1).lower()
-            if company == 'fiserv':
-                return 'Yes', 0.98
-            return 'No', 0.98
+            if company not in TECH_KEYWORDS:
+                if company == 'fiserv':
+                    return 'Yes', 0.98
+                return 'No', 0.98
         
         # Pattern 3: "Have you worked with Visa" or similar specific company questions
         specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+in\s+the\s+)?"
         specific_company_match = re.search(specific_company_pattern, question_lower)
         if specific_company_match:
             company = specific_company_match.group(1).lower()
-            if company == 'fiserv':
-                return 'Yes', 0.98
-            # For Visa and other companies, return "No"
-            return 'No', 0.98
+            if company not in TECH_KEYWORDS:
+                if company == 'fiserv':
+                    return 'Yes', 0.98
+                # For Visa and other companies, return "No"
+                return 'No', 0.98
         
         # Pattern 4: "Currently employed by any of the" - blanket No
         currently_employed_pattern = r"currently\s+(?:employed|an\s+employee)\s+(?:by|at|of)\s+(?:any|any\s+of\s+the)"
@@ -782,15 +804,17 @@ class SentinelAgent:
         self,
         answer: str,
         options: List[str],
-        question: str = ""
+        question: str = "",
+        input_type: ResolverInputType = ResolverInputType.SELECT
     ) -> Tuple[str, float]:
         """
         Match an answer to available options using the input-aware resolver.
         
         Args:
             answer: The intended answer value
-            options: List of available options for select/radio
+            options: List of available options for select/radio/checkbox
             question: Question text for context
+            input_type: Type of input (SELECT, RADIO, CHECKBOX)
             
         Returns:
             Tuple of (matched_option, confidence)
@@ -802,7 +826,7 @@ class SentinelAgent:
         
         result = self._input_resolver.resolve(
             answer=answer,
-            input_type=ResolverInputType.SELECT,
+            input_type=input_type,
             options=opt_objects,
             question=question
         )
@@ -2226,6 +2250,9 @@ class SentinelAgent:
                         continue
                     
                     print("🔄 Entering LinkedIn Autopilot Mode...")
+                    # Wait for the Easy Apply modal to fully open before first autopilot iteration
+                    # Without this, the modal heuristics might run before the modal DOM is ready
+                    await asyncio.sleep(random.uniform(3, 4))
                     same_result_count = 0
                     last_result = ""
                     submit_attempt_count = 0  # Track submit attempts without success
@@ -2235,6 +2262,7 @@ class SentinelAgent:
                     
                     while True:
                         autopilot_iteration += 1
+
                         
                         # SAFETY: Exit autopilot if too many iterations (prevents infinite loop)
                         if autopilot_iteration > max_autopilot_iterations:
@@ -2402,6 +2430,20 @@ class SentinelAgent:
                             await asyncio.sleep(random.uniform(2, 4))
                             # Exit autopilot after successful submit to navigate to next job
                             break
+                        # Fallback: if we clicked submit and the modal closed (signaled by no modal actions like clicking Easy Apply or selecting/scrolling jobs)
+                        elif submit_attempt_count > 0 and ('LINKEDIN_EASY_APPLY_CLICKED' in next_result or 'LINKEDIN_JOB_SELECTED' in next_result or 'LINKEDIN_SCROLLED' in next_result):
+                            self.linkedin_applications += 1
+                            self.metrics['applications_submitted'] += 1
+                            print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted (modal closed after submit)!")
+                            submit_attempt_count = 0
+                            
+                            if self.linkedin_applications >= 5:
+                                print("✅ LinkedIn target (5 applications) reached. Task complete!")
+                                self.state.task_complete = True
+                                break
+                                
+                            await asyncio.sleep(random.uniform(2, 4))
+                            break
                         elif 'LINKEDIN_SUBMITTED' in next_result:
                             submit_attempt_count += 1
                             print(f"✅ Clicked Submit (attempt {submit_attempt_count}/{max_submit_attempts})")
@@ -2435,6 +2477,10 @@ class SentinelAgent:
                             continue
                         elif 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED' in next_result:
                             print("🛡️ Acknowledged Safety Reminder")
+                            continue
+                        elif 'LINKEDIN_MODAL_TRANSITIONING' in next_result:
+                            print("⏳ Modal is transitioning or loading, waiting...")
+                            await asyncio.sleep(random.uniform(2, 3))
                             continue
                         elif 'LINKEDIN_NEXT_CLICKED' in next_result or 'LINKEDIN_REVIEW_CLICKED' in next_result:
                             print("➡ Clicked Next/Review")
@@ -2473,6 +2519,18 @@ class SentinelAgent:
                             continue
                         elif 'LINKEDIN_CHECKBOX_CHECKED' in next_result:
                             print("☑️ Checked Terms/Privacy checkbox")
+                            continue
+                        elif 'LINKEDIN_FORM_STUCK' in next_result:
+                            print("⚠️ Form stuck (button not found or validation issue). Waiting for re-render...")
+                            await asyncio.sleep(random.uniform(2, 4))
+                            continue
+                        elif 'LINKEDIN_FORM_STEP_CONTINUED' in next_result:
+                            print("➡️ Form step continued")
+                            submit_attempt_count = 0  # Progress made
+                            continue
+                        elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result:
+                            print("🔄 Easy Apply clicked inside autopilot (modal may have restarted). Waiting for modal...")
+                            await asyncio.sleep(random.uniform(3, 4))
                             continue
                         elif 'NO_ACTION' in next_result or 'MODAL_OPEN_NO_ACTION' in next_result:
                             print("⚠️ Autopilot stuck, checking for form errors...")
@@ -3295,7 +3353,9 @@ class SentinelAgent:
         """Handle Naukri chatbot questionnaire. Returns True if done, 'CONTINUE' for MCC popup, False on failure."""
         # Use merged patterns from JSON config + legacy dict
         patterns_for_js = self._get_patterns_for_js()
-        patterns_json = json.dumps(patterns_for_js)
+        # Extract the flat answers for backward compatibility + with_defaults for input type support
+        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
+        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
         max_iterations = 20
         previous_questions = []
         same_question_count = 0
@@ -3306,7 +3366,77 @@ class SentinelAgent:
             await asyncio.sleep(random.uniform(2, 3.5))
             
             result = await self._page.evaluate(f"""async () => {{
+                // Flat answers for all logic
                 const KNOWN_PATTERNS = {patterns_json};
+                // Full objects with input_type_defaults per pattern
+                const KNOWN_PATTERNS_WITH_DEFAULTS = {patterns_with_defaults_json};
+                
+                // Helper: detect the input type present on the page
+                const detectInputType = (chatLayer) => {{
+                    if (!chatLayer) return 'text';
+                    if (chatLayer.querySelector('select')) return 'select';
+                    if (chatLayer.querySelectorAll('input[type="radio"]').length > 0) return 'radio';
+                    if (chatLayer.querySelectorAll('input[type="checkbox"]').length > 0) return 'checkbox';
+                    if (chatLayer.querySelector('input[type="date"]')) return 'date';
+                    const optBtns = chatLayer.querySelectorAll('.chatbot_OptionContainer button, [class*="option"] button');
+                    if (optBtns.length > 0) return 'button';
+                    return 'text';
+                }};
+                
+                // Input-type-aware fuzzy match — returns the best answer for the detected input type
+                const fuzzyMatch = (question, chatLayer) => {{
+                    if (!question) return null;
+                    const qLower = question.toLowerCase().trim();
+                    let bestMatch = null;
+                    let bestKeyLen = 0;
+                    const detectedType = detectInputType(chatLayer);
+                    
+                    const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
+                    
+                    for (const [key, val] of sortedPatterns) {{
+                        const keyLower = key.toLowerCase();
+                        if (qLower === keyLower) {{
+                            return getAnswerForPattern(key, detectedType, val);
+                        }}
+                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
+                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
+                                continue;
+                            }}
+                            bestMatch = key;
+                            bestKeyLen = key.length;
+                        }}
+                    }}
+                    return bestMatch ? getAnswerForPattern(bestMatch, detectedType, KNOWN_PATTERNS[bestMatch]) : null;
+                }};
+                
+                // Get type-aware answer for a matched pattern
+                const getAnswerForPattern = (patternKey, inputType, defaultVal) => {{
+                    const data = KNOWN_PATTERNS_WITH_DEFAULTS[patternKey];
+                    if (!data) return defaultVal;
+                    const typeDefaults = data.input_type_defaults || {{}};
+                    // Use input_type_defaults if present for this type
+                    if (typeDefaults[inputType]) {{
+                        return typeDefaults[inputType];
+                    }}
+                    // Fallbacks for radio/checkbox when default is long text
+                    if (inputType === 'radio' || inputType === 'button') {{
+                        if (typeDefaults.radio) return typeDefaults.radio;
+                        if (typeDefaults.yes_no) return typeDefaults.yes_no;
+                        if (typeDefaults.checkbox) return typeDefaults.checkbox;
+                        // Normalize Yes/No from long answer
+                        const answerLower = defaultVal.toLowerCase();
+                        if (answerLower.includes('yes') && !answerLower.includes('no')) return 'Yes';
+                        if (answerLower.includes('no')) return 'No';
+                    }}
+                    if (inputType === 'checkbox') {{
+                        if (typeDefaults.checkbox) return typeDefaults.checkbox;
+                        if (typeDefaults.yes_no) return typeDefaults.yes_no;
+                    }}
+                    if (inputType === 'select' && typeDefaults.select) {{
+                        return typeDefaults.select;
+                    }}
+                    return defaultVal;
+                }};
                 
                 // LinkedIn-specific overrides for the chatbot loop
                 if (window.location.hostname.includes('linkedin')) {{
@@ -3338,32 +3468,6 @@ class SentinelAgent:
                         }}
                     }});
                 }}
-                
-                const fuzzyMatch = (question) => {{
-                    if (!question) return null;
-                    const qLower = question.toLowerCase().trim();
-                    let bestMatch = null;
-                    let bestKeyLen = 0;
-                    
-                    const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
-                    
-                    for (const [key, val] of sortedPatterns) {{
-                        const keyLower = key.toLowerCase();
-                        if (qLower === keyLower) {{
-                            return val;
-                        }}
-                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
-                            if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
-                                continue;
-                            }}
-                            bestMatch = val;
-                            bestKeyLen = key.length;
-                        }}
-                    }}
-                    return bestMatch;
-                }};
-                
-                const snackBody = document.querySelector('.ss-snackbar-body');
                 if (snackBody && snackBody.offsetParent !== null) {{
                     const snackText = snackBody.innerText.toLowerCase();
                     if (snackText.includes('error') || snackText.includes('limit') || snackText.includes('reached') || snackText.includes('something went wrong')) {{
@@ -3425,21 +3529,22 @@ class SentinelAgent:
                     answer = '05 Jun 2026';
                     console.log('Chatbot Debug - LWD date question detected, answering:', answer);
                 }} else {{
-                    answer = fuzzyMatch(qText) || '1';
+                    answer = fuzzyMatch(qText, chatLayer) || '1';
                 }}
                 
-                // Special handling for Naukri salary questions - extract numeric value
+                // Special handling for Naukri salary questions - use full INR values
                 const isNaukri = window.location.hostname.includes('naukri');
-                const isSalaryQuestion = qText.toLowerCase().includes('salary') || 
-                    qText.toLowerCase().includes('ctc') || 
+                const isSalaryQuestion = qText.toLowerCase().includes('salary') ||
+                    qText.toLowerCase().includes('ctc') ||
                     qText.toLowerCase().includes('compensation') ||
                     qText.toLowerCase().includes('pay');
-                
-                if (isNaukri && isSalaryQuestion && answer) {{
-                    const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
-                    if (numericMatch) {{
-                        answer = numericMatch[1];
-                    }}
+
+                if (isNaukri && isSalaryQuestion) {{
+                    const isCurrentSalary = qText.toLowerCase().includes('current') ||
+                        qText.toLowerCase().includes('cctc') ||
+                        qText.toLowerCase().includes('present');
+                    // Use full INR values for Naukri
+                    answer = isCurrentSalary ? '1530000' : '2400000';
                 }}
                 
                 // DEBUG: Log what we detected
@@ -3503,6 +3608,39 @@ class SentinelAgent:
                     return true;
                 }});
                 const hasOptionBtns = optBtns.length > 0;
+                
+                // SKIP certain tool/skill-specific experience questions that don't match our profile
+                // Must be checked AFTER optBtns are populated so we can click the Skip button
+                const skipQuestionPatterns = [
+                    'cypress', 'playwright', 'selenium', 'appium', 'test automation',
+                    'cucumber', 'bdd', 'tdd', 'katalon', 'robot framework'
+                ];
+                let shouldSkipQ = false;
+                for (const skipPat of skipQuestionPatterns) {{
+                    if (qLower.includes(skipPat)) {{
+                        shouldSkipQ = true;
+                        break;
+                    }}
+                }}
+                if (shouldSkipQ) {{
+                    console.log('Chatbot Debug - Skipping tool-specific question:', qText.substring(0, 80));
+                    const skipOptBtn = optBtns.find(b => (b.innerText || '').toLowerCase().includes('skip'));
+                    if (skipOptBtn) {{
+                        skipOptBtn.click();
+                        return 'CHATBOT_SKIPPED_QUESTION: ' + qText.slice(0, 50);
+                    }}
+                    const allSkipEls = chatLayer.querySelectorAll('button, span, div, label, a');
+                    for (const skEl of allSkipEls) {{
+                        const skText = (skEl.innerText || '').toLowerCase().trim();
+                        if (skText === 'skip' || skText === 'skip this question' || skText === 'skip question') {{
+                            if (skEl.offsetParent !== null) {{
+                                skEl.click();
+                                return 'CHATBOT_SKIPPED_QUESTION: ' + qText.slice(0, 50);
+                            }}
+                        }}
+                    }}
+                    return 'CHATBOT_SKIP_UNANSWERABLE: ' + qText.slice(0, 50);
+                }}
                 
                 // STEP 2: USE the first available input type (sequential detection)
                 // Order: Option Buttons -> Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
@@ -4279,7 +4417,7 @@ class SentinelAgent:
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs
                     const salaryKeys = [
-                        'salary range', 'current salary range', 'expected salary range', 
+                        'salary range', 'current salary range', 'expected salary range',
                         'annual salary', 'ctc range', 'current ctc', 'expected ctc',
                         'expected annual ctc in inr', 'expected annual ctc', 'expected ctc in inr', 'expected ctc inr',
                         'current salary', 'expected salary', 'current annual salary',
@@ -4291,11 +4429,11 @@ class SentinelAgent:
                     ];
                     salaryKeys.forEach(k => {{
                         if (KNOWN_PATTERNS[k]) {{
-                            // Use plain numeric values (13.5, 24) for LinkedIn text inputs - NOT full INR values
+                            // Use full INR values for LinkedIn text inputs
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {{
-                                KNOWN_PATTERNS[k] = '15.3';
+                                KNOWN_PATTERNS[k] = '1530000';
                             }} else {{
-                                KNOWN_PATTERNS[k] = '24';
+                                KNOWN_PATTERNS[k] = '2400000';
                             }}
                         }}
                     }});
@@ -4362,23 +4500,30 @@ class SentinelAgent:
                     return result;
                 }};
 
-                // Two-pass Fuzzy Matcher implementation
+                // Multi-pass Fuzzy Matcher implementation with robust pattern matching
                 const fuzzyMatch = (question) => {{
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
                     let bestMatch = null;
                     let bestKeyLen = 0;
+                    let bestScore = 0;
                     
                     // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
                     
-                    // --- PASS 1: Exact / Substring match (fast path) ---
+                    // --- PASS 1: Exact match (highest priority) ---
                     for (const [key, val] of sortedPatterns) {{
                         const keyLower = key.toLowerCase();
                         if (qLower === keyLower) return val;
+                    }}
+                    
+                    // --- PASS 2: Substring match (question contains entire pattern key) ---
+                    for (const [key, val] of sortedPatterns) {{
+                        const keyLower = key.toLowerCase();
                         if (qLower.includes(keyLower)) {{
                             // Anti-collision for generic words
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
+                            if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
                             if (key.length > bestKeyLen) {{
                                 bestMatch = val;
                                 bestKeyLen = key.length;
@@ -4386,31 +4531,73 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // --- PASS 2: Keyword overlap (fallback if Pass 1 found nothing) ---
+                    // --- PASS 3: Contains-words match (all significant pattern words exist in question) ---
+                    // This handles: "owned backend architecture end to end" pattern vs "Have you owned backend architecture end to end, from design to production deployment?"
+                    if (!bestMatch) {{
+                        const qWords = new Set(qLower.split(/\s+/));
+                        for (const [key, val] of sortedPatterns) {{
+                            const keyLower = key.toLowerCase();
+                            const keyWords = keyLower.split(/\s+/).filter(w => w.length > 2);
+                            if (keyWords.length < 2) continue; // Only for multi-word patterns
+                            
+                            // Check if ALL significant words from pattern exist in question
+                            const allWordsFound = keyWords.every(word => qWords.has(word) || qLower.includes(word));
+                            if (allWordsFound) {{
+                                // Score based on coverage ratio
+                                const score = keyWords.length / Math.max(qLower.split(/\s+/).length, keyWords.length);
+                                if (score > bestScore || (score === bestScore && key.length > bestKeyLen)) {{
+                                    bestMatch = val;
+                                    bestKeyLen = key.length;
+                                    bestScore = score;
+                                }}
+                            }}
+                        }}
+                    }}
+                    
+                    // --- PASS 4: Keyword overlap (fallback with lower threshold) ---
                     if (!bestMatch) {{
                         const qKeywords = extractKeywords(qLower);
                         if (qKeywords.size > 0) {{
-                            let bestScore = 0;
+                            let bestKeywordScore = 0;
                             for (const [key, val] of sortedPatterns) {{
                                 const kKeywords = extractKeywords(key);
                                 if (kKeywords.size === 0) continue;
                                 const overlap = setIntersect(qKeywords, kKeywords);
                                 const score = overlap.size / Math.max(qKeywords.size, kKeywords.size);
-                                if (score > bestScore && score >= 0.5) {{
-                                    bestScore = score;
+                                // Lower threshold (0.3) for better matching on complex questions
+                                if (score > bestKeywordScore && score >= 0.3) {{
+                                    bestKeywordScore = score;
                                     bestMatch = val;
                                 }}
                             }}
                         }}
                     }}
                     
-                    // --- PASS 3: Smart salary/experience/notice disambiguation (safety net) ---
+                    // --- PASS 5: Smart type-based defaults (safety net) ---
+                    if (!bestMatch) {{
+                        const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
+                        const isExpQ = /experience|years|year|months|exp\.?\b/.test(qLower) && !isSalaryQ;
+                        const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
+                        const isYearsQ = /years\b/.test(qLower) && !isSalaryQ;
+                        
+                        if (isYearsQ) {{
+                            bestMatch = '4'; // Default years
+                        }} else if (isNoticeQ) {{
+                            bestMatch = '30'; // Default notice period
+                        }} else if (isSalaryQ) {{
+                            bestMatch = qLower.includes('current') ? '1530000' : '2400000';
+                        }} else if (isExpQ) {{
+                            bestMatch = '3.8 Years';
+                        }}
+                    }}
+                    
+                    // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {{
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
                         const isExpQ = /experience|years|year|months|exp\.?\b/.test(qLower) && !isSalaryQ;
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
-                        if (isSalaryQ && window.location.hostname.includes('linkedin')) {{
+                        if (isSalaryQ) {{
                             bestMatch = qLower.includes('current') ? '1530000' : '2400000';
                         }}
                     }}
@@ -4421,24 +4608,60 @@ class SentinelAgent:
                 // Helper: Find best matching option
                 const findBestMatch = (answer, options) => {{
                     if (!answer || !options) return null;
-                    const ans = answer.toLowerCase();
+                    const ans = answer.toLowerCase().trim();
                     
                     // Extract numeric value from answer for range matching
                     const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    // Extract the integer part for exact matching (e.g., "3.8" -> 3, "4" -> 4)
+                    const answerInt = Math.floor(answerNum);
                     
                     let bestOpt = null;
                     let bestScore = -1;
                     
                     for (const opt of options) {{
-                        const text = (opt.text || opt.label || '').toLowerCase();
+                        const text = (opt.text || opt.label || '').toLowerCase().trim();
+                        if (!text || text.includes('select')) continue;
                         let score = 0;
                         
-                        // Exact text match (highest priority)
-                        if (text.includes(ans) || ans.includes(text)) {{
-                            score = 100;
+                        // Extract number from option text for numeric comparison
+                        const optNumMatch = text.match(/^(\d+(?:\.\d+)?)/);
+                        const optNum = optNumMatch ? parseFloat(optNumMatch[1]) : -1;
+                        const hasAnswerNum = numMatch !== null; // true if answer contains any number (including 0)
+                        
+                        // PRIORITY 1: Exact number match (e.g., answer="4" matches option="4 years" exactly)
+                        if (optNum >= 0 && hasAnswerNum && optNum === answerNum) {{
+                            score = 120; // Highest priority for exact number match
                         }}
-                        // Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
+                        // PRIORITY 2a: Rounded match (e.g., answer="3.8" matches "4" by rounding)
+                        else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === Math.round(answerNum)) {{
+                            score = 112;
+                        }}
+                        // PRIORITY 2b: Floor match (e.g., answer="3.8" matches "3" by flooring)
+                        else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === answerInt) {{
+                            score = 110;
+                        }}
+                        // PRIORITY 3: Exact full text match
+                        else if (text === ans) {{
+                            score = 105;
+                        }}
+                        // PRIORITY 4: Text contains answer OR answer contains text
+                        // BUT protect against "3.8 years".includes("8 years") false positive
+                        else if (text.includes(ans) || ans.includes(text)) {{
+                            // Guard: if both are numeric-like, verify the numbers actually match
+                            if (optNum >= 0 && hasAnswerNum) {{
+                                // Only count as match if the numbers are close
+                                if (Math.abs(optNum - answerNum) <= 0.5) {{
+                                    score = 100;
+                                }} else {{
+                                    // Substring match but numbers are far apart — likely a false positive
+                                    score = 10;
+                                }}
+                            }} else {{
+                                score = 100;
+                            }}
+                        }}
+                        // PRIORITY 5: Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
                         else if (answerNum > 0) {{
                             const rangeMatch = text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
                             if (rangeMatch) {{
@@ -4463,6 +4686,7 @@ class SentinelAgent:
                         }}
                     }}
                     
+                    console.log('findBestMatch: answer=', answer, '-> selected:', bestOpt?.text, 'score:', bestScore);
                     return bestOpt;
                 }};
                 
@@ -4488,8 +4712,12 @@ class SentinelAgent:
                             score = 100;
                         }}
                         // Check for "yes" or "serving" for Yes/No questions
-                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) && 
+                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) &&
                                 (ans.includes('yes') || ans.includes('serving'))) {{
+                            score = 90;
+                        }}
+                        // Check for "no" when answer is "no"
+                        else if (lowerLabel.includes('no') && ans.includes('no')) {{
                             score = 90;
                         }}
                         // Experience range matching
@@ -4584,6 +4812,13 @@ class SentinelAgent:
                 const isYes = (ans) => ans && ['yes', 'true', 'agree'].some(w => ans.toLowerCase().includes(w));
                 const isNo = (ans) => ans && ['no', 'false'].some(w => ans.toLowerCase().includes(w));
 
+                // Helper: Detect if question text is a Yes/No question
+                const isLikelyYesNoQuestion = (text) => {{
+                    if (!text) return false;
+                    const t = text.replace(/[*?]/g, '').trim().toLowerCase();
+                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t);
+                }};
+
                 const isLinkedIn = document.title.includes('LinkedIn') || window.location.href.includes('linkedin.com');
                 const isNaukri = document.title.includes('Naukri') || window.location.href.includes('naukri.com');
                 const isInstahyre = document.title.includes('Instahyre') || window.location.href.includes('instahyre.com');
@@ -4618,8 +4853,8 @@ class SentinelAgent:
                     console.log('=== LINKEDIN AUTOMATION STARTED ===');
                     
                     // Helper: Find elements by text content (Shadow aware)
-                    const findByText = (selector, text, exact = false) => {{
-                        const elements = queryAllDeep(selector);
+                    const findByText = (selector, text, exact = false, root = document) => {{
+                        const elements = queryAllDeep(selector, root);
                         const searchText = text.toLowerCase();
                         return Array.from(elements).find(el => {{
                             const elText = el.innerText.toLowerCase();
@@ -4653,6 +4888,54 @@ class SentinelAgent:
                     const handleLinkedInForm = (modal) => {{
                         console.log('Filling LinkedIn form fields (Shadow aware)...');
                         const formResults = [];
+
+                        // Helper: Get label text associated with input (radio/checkbox)
+                        const getInputLabelText = (input) => {{
+                            if (!input) return '';
+                            let labelText = '';
+                            if (input.id) {{
+                                const labelEl = document.querySelector(`label[for="${{input.id}}"]`);
+                                if (labelEl) labelText = labelEl.innerText || labelEl.textContent;
+                            }}
+                            if (!labelText) {{
+                                const labelEl = input.closest('label');
+                                if (labelEl) labelText = labelEl.innerText || labelEl.textContent;
+                            }}
+                            if (!labelText && input.parentElement) {{
+                                const siblingLabel = input.parentElement.querySelector('label');
+                                if (siblingLabel) labelText = siblingLabel.innerText || siblingLabel.textContent;
+                                else labelText = input.parentElement.innerText || input.parentElement.textContent;
+                            }}
+                            return (labelText || '').trim().toLowerCase();
+                        }};
+
+                        // Helper: Robust click on input (clicks label if input is hidden)
+                        const clickInput = (input) => {{
+                            if (!input) return;
+                            
+                            let label = null;
+                            if (input.id) {{
+                                label = document.querySelector(`label[for="${{input.id}}"]`);
+                            }}
+                            if (!label) {{
+                                label = input.closest('label');
+                            }}
+                            if (!label && input.parentElement) {{
+                                label = input.parentElement.querySelector('label');
+                            }}
+                            
+                            if (label) {{
+                                console.log('Clicking input label:', label.innerText || label.textContent);
+                                label.scrollIntoView({{ block: 'center' }});
+                                label.click();
+                            }} else {{
+                                console.log('Clicking input directly:', input.id || input.name);
+                                input.scrollIntoView({{ block: 'center' }});
+                                input.click();
+                            }}
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('click', {{ bubbles: true }}));
+                        }};
                         
                         // Helper: Check if a field is already filled
                         const isFieldPreFilled = (element) => {{
@@ -4739,11 +5022,109 @@ class SentinelAgent:
                         }}
 
                         // 1. Handle text/numeric inputs
-                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], textarea', modal);
+                        const textInputs = queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal);
                         for (const input of textInputs) {{
-                            const labelText = input.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
-                                            queryDeep(`label[for="${{input.id}}"]`, modal)?.innerText || 
-                                            input.getAttribute('aria-label') || '';
+                            // ROBUST LABEL DETECTION: Try multiple methods to find the label
+                            let labelText = '';
+                            
+                            // Method 1: .fb-dash-form-element parent (LinkedIn's newer structure)
+                            if (!labelText) {{
+                                const fbParent = input.closest('.fb-dash-form-element');
+                                if (fbParent) {{
+                                    const lbl = fbParent.querySelector('label');
+                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                                }}
+                            }}
+                            
+                            // Method 2: label[for] by input id
+                            if (!labelText && input.id) {{
+                                const lbl = queryDeep(`label[for="${{input.id}}"]`, modal);
+                                if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                            }}
+                            
+                            // Method 3: aria-label attribute
+                            if (!labelText) {{
+                                labelText = input.getAttribute('aria-label') || '';
+                            }}
+                            
+                            // Method 4: aria-labelledby attribute
+                            if (!labelText) {{
+                                const labelledBy = input.getAttribute('aria-labelledby');
+                                if (labelledBy) {{
+                                    const lbl = document.getElementById(labelledBy);
+                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                                }}
+                            }}
+                            
+                            // Method 5: Walk up parent tree looking for label siblings
+                            if (!labelText) {{
+                                let parent = input.parentElement;
+                                for (let i = 0; i < 5 && parent && parent !== modal; i++) {{
+                                    // Check for label element in the same container
+                                    const lbl = parent.querySelector('label');
+                                    if (lbl && lbl.innerText && lbl.innerText.trim().length > 2) {{
+                                        labelText = lbl.innerText.trim();
+                                        break;
+                                    }}
+                                    // Check previous sibling for label
+                                    let prevSib = parent.previousElementSibling;
+                                    while (prevSib) {{
+                                        if (prevSib.tagName === 'LABEL' || prevSib.querySelector?.('label')) {{
+                                            const found = prevSib.tagName === 'LABEL' ? prevSib : prevSib.querySelector('label');
+                                            if (found && found.innerText && found.innerText.trim().length > 2) {{
+                                                labelText = found.innerText.trim();
+                                                break;
+                                            }}
+                                        }}
+                                        // Also check for span/div that acts as label
+                                        if (prevSib.innerText && prevSib.innerText.trim().length > 2 && prevSib.innerText.trim().length < 100) {{
+                                            const text = prevSib.innerText.trim();
+                                            if (!text.includes('Select') && !text.includes('select')) {{
+                                                labelText = text;
+                                                break;
+                                            }}
+                                        }}
+                                        prevSib = prevSib.previousElementSibling;
+                                    }}
+                                    if (labelText) break;
+                                    parent = parent.parentElement;
+                                }}
+                            }}
+                            
+                            // Method 6: Look in form group containers (LinkedIn Easy Apply sections)
+                            if (!labelText) {{
+                                const formGroup = input.closest('.jobs-easy-apply-form-section__question, [data-test-form-element], fieldset, .artdeco-form-field, .jobs-easy-apply-form-element');
+                                if (formGroup) {{
+                                    const legend = formGroup.querySelector('legend, .artdeco-form-field__label');
+                                    if (legend) {{
+                                        labelText = legend.innerText || legend.textContent || '';
+                                    }}
+                                    if (!labelText) {{
+                                        const spans = formGroup.querySelectorAll('span, div, p, label');
+                                        for (const el of spans) {{
+                                            const t = (el.innerText || el.textContent || '').trim();
+                                            if (t.length > 2 && t.length < 200 && !t.includes('Select an option') && !t.includes('select an option')) {{
+                                                // Make sure this element is not inside the input itself
+                                                if (!input.contains(el)) {{
+                                                    labelText = t;
+                                                    break;
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+                                }}
+                            }}
+                            
+                            // Method 7: Placeholder as last resort
+                            if (!labelText) {{
+                                labelText = input.placeholder || '';
+                            }}
+                            
+                            // Clean up the label text (remove asterisks, "required" text, etc.)
+                            labelText = labelText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            
+                            console.log('LABEL DETECTION for input:', input.tagName, input.type || 'textarea', '| Detected label:', JSON.stringify(labelText));
+                            
                             const lowerLabel = labelText.toLowerCase();
                             const isLocationField = lowerLabel.includes('location') || lowerLabel.includes('city');
                             
@@ -4786,39 +5167,87 @@ class SentinelAgent:
                                                   input.className?.toLowerCase().includes('decimal') ||
                                                   (labelText && /how many years|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
                             
-                            if (labelText) {{
-                                let answer = fuzzyMatch(labelText);
-                                
-                                // If it's a numeric input, extract just the number from the answer
-                                if (answer && isNumericInput) {{
-                                    const numericMatch = answer.match(/(\d+\.?\d*)/);
-                                    if (numericMatch) {{
-                                        answer = numericMatch[1];
-                                        console.log('Extracted numeric value for number field:', answer);
-                                    }}
+                            // Try to get answer from fuzzyMatch first
+                            let answer = labelText ? fuzzyMatch(labelText) : null;
+                            
+                            // If it's a numeric input, extract just the number from the answer
+                            if (answer && isNumericInput) {{
+                                const numericMatch = answer.match(/(\d+\.?\d*)/);
+                                if (numericMatch) {{
+                                    answer = numericMatch[1];
+                                    console.log('Extracted numeric value for number field:', answer);
                                 }}
+                            }}
+                            
+                            // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
+                            if (!answer) {{
+                                const combinedText = (lowerLabel + ' ' + (input.placeholder || '').toLowerCase()).trim();
                                 
-                                if (answer) {{
-                                    console.log('Filling text field:', labelText, 'with:', answer);
-                                    
-                                    fillReactInput(input, answer);
-                                    
-                                    formResults.push({{ question: labelText, answer: answer, inputType: 'text' }});
-                                    
-                                    // If this is a location field, trigger autocomplete dropdown
-                                    if (isLocationField) {{
-                                        console.log('Location field filled — triggering autocomplete dropdown...');
-                                        input.focus();
-                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
-                                        input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'ArrowDown', bubbles: true }}));
-                                        
-                                        // Keep the input visible and focused for dropdown to appear
-                                        input.scrollIntoView({{block: 'center', behavior: 'instant'}});
-                                        
-                                        return 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN';
-                                    }}
+                                if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {{
+                                    answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
+                                    console.log('Fallback: Filling skill set field');
+                                }} else if (combinedText.includes('location') || (combinedText.includes('city') && !combinedText.includes('street'))) {{
+                                    answer = 'Noida';
+                                    console.log('Fallback: Filling location/city field');
+                                }} else if (combinedText.includes('street') || combinedText.includes('address line')) {{
+                                    answer = 'Sector 137';
+                                    console.log('Fallback: Filling street address');
+                                }} else if (combinedText.includes('zip') || combinedText.includes('postal') || combinedText.includes('pincode') || combinedText.includes('pin code')) {{
+                                    answer = '201301';
+                                    console.log('Fallback: Filling zip/postal code');
+                                }} else if (combinedText.match(/\bcity\b/) || combinedText.includes('town')) {{
+                                    answer = 'Noida';
+                                    console.log('Fallback: Filling city');
+                                }} else if (combinedText.includes('state') || combinedText.includes('province')) {{
+                                    answer = 'Uttar Pradesh';
+                                    console.log('Fallback: Filling state/province');
+                                }} else if (combinedText.includes('country') || combinedText.includes('nation')) {{
+                                    answer = 'India';
+                                    console.log('Fallback: Filling country');
+                                }} else if (combinedText.includes('phone') || combinedText.includes('mobile') || combinedText.includes('contact number')) {{
+                                    answer = '7905828880';
+                                    console.log('Fallback: Filling phone/mobile');
+                                }} else if (combinedText.includes('email')) {{
+                                    answer = 'siddhant3646@gmail.com';
+                                    console.log('Fallback: Filling email');
+                                }} else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {{
+                                    answer = '30';
+                                    console.log('Fallback: Filling notice/join period');
+                                }} else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should')) {{
+                                    answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
+                                    console.log('Fallback: Filling summary/cover letter');
+                                }} else if (combinedText.includes('linkedin') || combinedText.includes('profile url')) {{
+                                    answer = 'https://www.linkedin.com/in/siddhant-singh';
+                                    console.log('Fallback: Filling LinkedIn URL');
+                                }} else if (combinedText.includes('github') || combinedText.includes('portfolio')) {{
+                                    answer = 'https://github.com/siddhant3646';
+                                    console.log('Fallback: Filling GitHub/portfolio URL');
                                 }}
+                            }}
+                            
+                            if (answer) {{
+                                console.log('Filling text field:', labelText || '(unlabeled)', 'with:', answer);
+                                
+                                fillReactInput(input, answer);
+                                
+                                formResults.push({{ question: labelText || '(unlabeled)', answer: answer, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text' }});
+                                
+                                // If this is a location field, trigger autocomplete dropdown
+                                if (isLocationField) {{
+                                    console.log('Location field filled — triggering autocomplete dropdown...');
+                                    input.focus();
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                    input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'ArrowDown', bubbles: true }}));
+                                    
+                                    // Keep the input visible and focused for dropdown to appear
+                                    input.scrollIntoView({{block: 'center', behavior: 'instant'}});
+                                    
+                                    return 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN';
+                                }}
+                            }} else if (!labelText && isVisible(input) && !isFieldPreFilled(input)) {{
+                                // LAST RESORT: Completely unlabeled field — log it for debugging
+                                console.log('WARNING: Completely unlabeled empty input found, tag:', input.tagName, 'type:', input.type, 'placeholder:', input.placeholder, 'class:', (input.className || '').substring(0, 80));
                             }}
                         }}
 
@@ -4830,9 +5259,90 @@ class SentinelAgent:
                         for (const select of nativeSelects) {{
                             if (!isVisible(select) || isFieldPreFilled(select)) continue;
                             
-                            const labelText = select.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
-                                            queryDeep(`label[for="${{select.id}}"]`, modal)?.innerText ||
-                                            select.getAttribute('aria-label') || '';
+                            // ROBUST LABEL DETECTION for selects (same as text inputs)
+                            let labelText = '';
+                            
+                            // Method 1: .fb-dash-form-element parent
+                            if (!labelText) {{
+                                const fbParent = select.closest('.fb-dash-form-element');
+                                if (fbParent) {{
+                                    const lbl = fbParent.querySelector('label');
+                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                                }}
+                            }}
+                            // Method 2: label[for]
+                            if (!labelText && select.id) {{
+                                const lbl = queryDeep(`label[for="${{select.id}}"]`, modal);
+                                if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                            }}
+                            // Method 3: aria-label
+                            if (!labelText) {{
+                                labelText = select.getAttribute('aria-label') || '';
+                            }}
+                            // Method 4: aria-labelledby
+                            if (!labelText) {{
+                                const labelledBy = select.getAttribute('aria-labelledby');
+                                if (labelledBy) {{
+                                    const lbl = document.getElementById(labelledBy);
+                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                                }}
+                            }}
+                            // Method 5: Walk up parent tree
+                            if (!labelText) {{
+                                let parent = select.parentElement;
+                                for (let i = 0; i < 5 && parent && parent !== modal; i++) {{
+                                    const lbl = parent.querySelector('label');
+                                    if (lbl && lbl.innerText && lbl.innerText.trim().length > 2) {{
+                                        labelText = lbl.innerText.trim();
+                                        break;
+                                    }}
+                                    let prevSib = parent.previousElementSibling;
+                                    while (prevSib) {{
+                                        if (prevSib.tagName === 'LABEL' || prevSib.querySelector?.('label')) {{
+                                            const found = prevSib.tagName === 'LABEL' ? prevSib : prevSib.querySelector('label');
+                                            if (found && found.innerText && found.innerText.trim().length > 2) {{
+                                                labelText = found.innerText.trim();
+                                                break;
+                                            }}
+                                        }}
+                                        if (prevSib.innerText && prevSib.innerText.trim().length > 2 && prevSib.innerText.trim().length < 200) {{
+                                            const text = prevSib.innerText.trim();
+                                            if (!text.includes('Select') && !text.includes('select')) {{
+                                                labelText = text;
+                                                break;
+                                            }}
+                                        }}
+                                        prevSib = prevSib.previousElementSibling;
+                                    }}
+                                    if (labelText) break;
+                                    parent = parent.parentElement;
+                                }}
+                            }}
+                            // Method 6: Form group containers
+                            if (!labelText) {{
+                                const formGroup = select.closest('.jobs-easy-apply-form-section__question, [data-test-form-element], fieldset, .artdeco-form-field, .jobs-easy-apply-form-element');
+                                if (formGroup) {{
+                                    const legend = formGroup.querySelector('legend, .artdeco-form-field__label');
+                                    if (legend) labelText = legend.innerText || legend.textContent || '';
+                                    if (!labelText) {{
+                                        const spans = formGroup.querySelectorAll('span, div, p, label');
+                                        for (const el of spans) {{
+                                            const t = (el.innerText || el.textContent || '').trim();
+                                            if (t.length > 2 && t.length < 200 && !t.includes('Select an option') && !t.includes('select an option')) {{
+                                                if (!select.contains(el)) {{
+                                                    labelText = t;
+                                                    break;
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+                                }}
+                            }}
+                            
+                            // Clean up
+                            labelText = labelText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            
+                            console.log('SELECT LABEL DETECTION:', JSON.stringify(labelText), '| current value:', select.value);
                             
                             const lowerLabel = labelText.toLowerCase();
                             
@@ -4864,8 +5374,22 @@ class SentinelAgent:
                                 continue;
                             }}
                             
-                            if (labelText) {{
-                                const answer = fuzzyMatch(labelText);
+                            {{
+                                let answer = labelText ? fuzzyMatch(labelText) : null;
+                                
+                                // KEYWORD-BASED FALLBACK for select when fuzzyMatch returned nothing
+                                if (!answer && lowerLabel) {{
+                                    if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work')) {{
+                                        answer = '4';
+                                        console.log('Fallback: Using 4 for years of experience select');
+                                    }} else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience')) {{
+                                        answer = '0';
+                                        console.log('Fallback: Using 0 for months of experience select');
+                                    }} else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {{
+                                        answer = '30';
+                                        console.log('Fallback: Using 30 for notice period select');
+                                    }}
+                                }}
                                 
                                 // Determine if we should attempt to select "Yes" based on keywords
                                 const isYesNoQuestion = lowerLabel.includes('experience') || 
@@ -5100,12 +5624,68 @@ class SentinelAgent:
                             if (legend && radios.length > 0 && !radios.some(r => r.checked)) {{
                                 const answer = fuzzyMatch(legend);
                                 if (answer) {{
-                                    const bestRadio = findBestRadioMatch(answer, radios);
+                                    let bestRadio = findBestRadioMatch(answer, radios);
+                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(legend)) {{
+                                        bestRadio = findSalaryRangeMatch(answer, radios);
+                                    }}
                                     if (bestRadio) {{
                                         console.log('Clicking radio:', legend, 'with:', bestRadio.id);
-                                        bestRadio.click();
-                                        bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        clickInput(bestRadio);
                                         formResults.push({{ question: legend, answer: answer, inputType: 'radio' }});
+                                    }} else {{
+                                        // Default to Yes if it's a Yes/No question
+                                        // Check: (1) has yes+no radio options with few radios, OR (2) question text is a Yes/No question pattern
+                                        const hasYes = radios.some(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        }});
+                                        const hasNo = radios.some(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                        }});
+                                        const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
+                                        const isYesNoFromText = isLikelyYesNoQuestion(legend);
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {{
+                                            const yesRadio = radios.find(r => {{
+                                                const val = (r.value || '').toLowerCase();
+                                                const labelText = getInputLabelText(r);
+                                                return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                            }});
+                                            if (yesRadio) {{
+                                                console.log('Defaulting to Yes for Yes/No question:', legend.substring(0, 50));
+                                                clickInput(yesRadio);
+                                                formResults.push({{ question: legend.substring(0, 100), answer: 'Yes', inputType: 'radio' }});
+                                            }}
+                                        }}
+                                    }}
+                                }} else {{
+                                    // No fuzzy match - check if it's a Yes/No question and default to Yes
+                                    const hasYes = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
+                                    const hasNo = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }});
+                                    const isYesNo = radios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoQ = isLikelyYesNoQuestion(legend);
+                                    
+                                    if (isYesNo || (isYesNoQ && hasYes)) {{
+                                        const yesRadio = radios.find(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        }});
+                                        if (yesRadio) {{
+                                            console.log('Defaulting Yes/No question to Yes in fieldset:', legend.substring(0, 50));
+                                            clickInput(yesRadio);
+                                            formResults.push({{ question: legend.substring(0, 100), answer: 'Yes', inputType: 'radio' }});
+                                        }}
                                     }}
                                 }}
                             }}
@@ -5173,53 +5753,92 @@ class SentinelAgent:
                             if (questionText) {{
                                 const answer = fuzzyMatch(questionText);
                                 if (answer) {{
-                                    const bestRadio = findBestRadioMatch(answer, radios);
+                                    let bestRadio = findBestRadioMatch(answer, radios);
+                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {{
+                                        bestRadio = findSalaryRangeMatch(answer, radios);
+                                    }}
                                     if (bestRadio) {{
                                         console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
-                                        bestRadio.click();
-                                        bestRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        clickInput(bestRadio);
                                         formResults.push({{ question: questionText.substring(0, 100), answer: answer, inputType: 'radio' }});
                                     }} else {{
-                                        // No match found - default to first option for Yes/No questions
-                                        const yesRadio = radios.find(r => {{
-                                            const label = r.closest('label')?.innerText || r.value || '';
-                                            return label.toLowerCase().includes('yes');
+                                        // Default to Yes if it's a Yes/No question
+                                        const hasYes = radios.some(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
                                         }});
-                                        if (yesRadio) {{
-                                            console.log('Defaulting to Yes for:', questionText.substring(0, 50));
-                                            yesRadio.click();
-                                            yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                            formResults.push({{ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' }});
+                                        const hasNo = radios.some(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                        }});
+                                        const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
+                                        const isYesNoFromText = isLikelyYesNoQuestion(questionText);
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {{
+                                            const yesRadio = radios.find(r => {{
+                                                const val = (r.value || '').toLowerCase();
+                                                const labelText = getInputLabelText(r);
+                                                return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                            }});
+                                            if (yesRadio) {{
+                                                console.log('Defaulting to Yes for Yes/No question:', questionText.substring(0, 50));
+                                                clickInput(yesRadio);
+                                                formResults.push({{ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' }});
+                                            }}
                                         }}
                                     }}
                                 }} else {{
                                     // No fuzzy match - check if it's a Yes/No question and default to Yes
-                                    const isYesNo = radios.length === 2 && 
-                                        radios.some(r => (r.value || '').toLowerCase() === 'yes') &&
-                                        radios.some(r => (r.value || '').toLowerCase() === 'no');
+                                    const hasYes = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
+                                    const hasNo = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }});
+                                    const isYesNo = radios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
-                                    if (isYesNo) {{
-                                        const yesRadio = radios.find(r => (r.value || '').toLowerCase() === 'yes');
+                                    if (isYesNo || (isYesNoQ && hasYes)) {{
+                                        const yesRadio = radios.find(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        }});
                                         if (yesRadio) {{
                                             console.log('Defaulting Yes/No question to Yes:', questionText.substring(0, 50) || 'Unknown question');
-                                            yesRadio.click();
-                                            yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            clickInput(yesRadio);
                                             formResults.push({{ question: questionText.substring(0, 100) || 'Yes/No question', answer: 'Yes', inputType: 'radio' }});
                                         }}
                                     }}
                                 }}
                             }} else {{
                                 // No question text found - check if it's a Yes/No and default to Yes
-                                const isYesNo = radios.length === 2 && 
-                                    radios.some(r => (r.value || '').toLowerCase() === 'yes') &&
-                                    radios.some(r => (r.value || '').toLowerCase() === 'no');
+                                const hasYes = radios.some(r => {{
+                                    const val = (r.value || '').toLowerCase();
+                                    const labelText = getInputLabelText(r);
+                                    return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                }});
+                                const hasNo = radios.some(r => {{
+                                    const val = (r.value || '').toLowerCase();
+                                    const labelText = getInputLabelText(r);
+                                    return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                }});
+                                const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                 
                                 if (isYesNo) {{
-                                    const yesRadio = radios.find(r => (r.value || '').toLowerCase() === 'yes');
+                                    const yesRadio = radios.find(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
                                     if (yesRadio && !yesRadio.checked) {{
                                         console.log('Selecting Yes for unlabeled Yes/No question');
-                                        yesRadio.click();
-                                        yesRadio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        clickInput(yesRadio);
                                         formResults.push({{ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio' }});
                                     }}
                                 }}
@@ -5335,16 +5954,14 @@ class SentinelAgent:
                             let shouldCheck = isConsentCheckbox;
                             
                             // If it's not a consent checkbox, try to fuzzy match to see if it's a skill/tech question
-                            // where the UI is a list of checkboxes for skills (e.g. POSTGRES, Spring Boot)
+                            // CONSERVATIVE: Only check if match is explicitly 'yes' or label is contained in the response.
+                            // Do NOT check based on numeric matches (e.g. "3.8 years") as these could be
+                            // preference checkboxes (Remote, Frontend, Backend) not skill confirmations.
                             if (!shouldCheck && labelText) {{
                                 const skillMatch = fuzzyMatch(labelText);
-                                // Check if user has experience or positive response
                                 if (skillMatch && (
-                                    skillMatch.toLowerCase() === 'yes' || 
-                                    /^\d+/.test(skillMatch) || 
-                                    skillMatch.toLowerCase().includes('year') ||
-                                    skillMatch.toLowerCase().includes('month') ||
-                                    // if it's a known tech stack response string
+                                    skillMatch.toLowerCase() === 'yes' ||
+                                    // Only match if the response explicitly contains the checkbox label text
                                     skillMatch.toLowerCase().includes(labelText.toLowerCase())
                                 )) {{
                                     shouldCheck = true;
@@ -5354,8 +5971,7 @@ class SentinelAgent:
                             
                             if (shouldCheck) {{
                                 console.log('Checking checkbox:', labelText.substring(0, 50));
-                                checkbox.click();
-                                checkbox.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                clickInput(checkbox);
                                 formResults.push({{ question: labelText, answer: 'Checked', inputType: 'checkbox' }});
                             }} else {{
                                 console.log('Skipping checkbox - not consent/privacy related or no matching skill:', labelText.substring(0, 50));
@@ -5387,9 +6003,20 @@ class SentinelAgent:
                             
                             const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !i.value.trim());
                             
-                            // Strict check for "Select an option" value in native selects
+                            // Check for empty/placeholder selects without assuming index 0 is invalid
                             const hasEmptySelect = requiredSelects.some(s => {{
-                                return isVisible(s) && (!s.value || s.value === 'Select an option' || s.selectedIndex === 0);
+                                if (!isVisible(s)) return false;
+                                const val = (s.value || '').trim();
+                                const opt = s.options[s.selectedIndex];
+                                const optVal = opt ? (opt.value || '').trim() : '';
+                                const optText = opt ? (opt.text || '').trim().toLowerCase() : '';
+                                
+                                return !val || 
+                                       val.toLowerCase().includes('select') || 
+                                       val === '--' || 
+                                       optText.includes('select') || 
+                                       optText.includes('choose') || 
+                                       optText === '--';
                             }});
                             
                             const hasEmptyRadio = radioGroups.some(g => {{
@@ -5435,6 +6062,12 @@ class SentinelAgent:
                             return false;
                         }};
                         
+                        // Scroll modal content to bottom so lazy-rendered buttons are in DOM
+                        const scrollableContent = modal.querySelector('[class*="body"], [class*="content"], form, div[style*="overflow"]') || modal;
+                        if (scrollableContent && scrollableContent.scrollHeight > scrollableContent.clientHeight) {{
+                            scrollableContent.scrollTop = scrollableContent.scrollHeight;
+                        }}
+                        
                         // Find action buttons (Review, Next, Submit)
                         console.log('Searching for primary action button...');
                         const primaryBtn = queryDeep('button[aria-label*="Review your application"]', modal) ||
@@ -5442,8 +6075,9 @@ class SentinelAgent:
                                          queryDeep('button[aria-label*="next step"]', modal) ||
                                          queryDeep('button[aria-label*="Submit application"]', modal) ||
                                          queryDeep('.jobs-apply-button--primary', modal) ||
-                                         findByText('button', 'submit application') ||
-                                         findByText('button', 'next');
+                                         findByText('button', 'submit application', false, modal) ||
+                                         findByText('button', 'review', false, modal) ||
+                                         findByText('button', 'next', false, modal);
 
                         if (primaryBtn) {{
                             // Only click if form is valid
@@ -5454,8 +6088,28 @@ class SentinelAgent:
                             
                             console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
                             primaryBtn.click();
-                            const actionResult = primaryBtn.getAttribute('aria-label')?.includes('Submit') ? 'LINKEDIN_FORM_FINAL_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
+                            const btnText = (primaryBtn.innerText || primaryBtn.textContent || '').toLowerCase();
+                            const btnAria = (primaryBtn.getAttribute('aria-label') || '').toLowerCase();
+                            const isSubmit = btnText.includes('submit') || btnAria.includes('submit');
+                            const actionResult = isSubmit ? 'LINKEDIN_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
                             return actionResult + (formResults.length > 0 ? '|' + JSON.stringify(formResults) : '');
+                        }}
+
+                        // Fallback: try searching entire page for primary buttons if modal-scoped failed
+                        console.log('No button found in modal, trying global fallback...');
+                        const globalPrimaryBtn = findByText('button', 'submit application') ||
+                                                findByText('button', 'review') ||
+                                                findByText('button', 'next');
+                        if (globalPrimaryBtn && isVisible(globalPrimaryBtn)) {{
+                            if (checkForErrors()) {{
+                                console.log('Form has errors. Waiting...');
+                                return 'LINKEDIN_FORM_STUCK: Validation errors';
+                            }}
+                            console.log('Found button via global fallback:', globalPrimaryBtn.innerText);
+                            globalPrimaryBtn.click();
+                            const btnText = (globalPrimaryBtn.innerText || '').toLowerCase();
+                            const isSubmit = btnText.includes('submit');
+                            return isSubmit ? 'LINKEDIN_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
                         }}
 
                         return 'LINKEDIN_FORM_STUCK: No button found';
@@ -5481,7 +6135,7 @@ class SentinelAgent:
                         const allBtns = document.querySelectorAll('button, span[role="button"]');
                         for (const btn of allBtns) {{
                             const txt = (btn.innerText || '').toLowerCase().trim();
-                            if (txt.includes('continue applying') && btn.offsetParent !== null) {{
+                            if (txt.includes('continue applying') && isVisible(btn)) {{
                                 console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
                                 btn.scrollIntoView({{block: 'center'}});
                                 btn.dispatchEvent(new PointerEvent('pointerdown', {{bubbles: true}}));
@@ -5494,59 +6148,169 @@ class SentinelAgent:
                         }}
                     }}
 
-                    // Check for modals (SHADOW DOM AWARE)
+                    // Helper: Check if LinkedIn Easy Apply modal is visible (heuristic-based)
+                    // LinkedIn's new UI uses fully obfuscated CSS class names — we can't rely on
+                    // class selectors. These heuristics detect the modal by its content/structure.
+                    const checkEasyApplyModalOpen = () => {{
+                        // Heuristic 1: visible SVG role="progressbar" with aria-valuenow (% complete bar)
+                        const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+                        if (pb && isVisible(pb)) {{
+                            console.log('Modal detected via progressbar heuristic');
+                            return true;
+                        }}
+                        // Heuristic 2: "X of Y pages" text visible anywhere
+                        const allSpans = document.querySelectorAll('p, span, div');
+                        for (const el of allSpans) {{
+                            if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {{
+                                console.log('Modal detected via pages-text heuristic:', el.innerText.trim().substring(0, 30));
+                                return true;
+                            }}
+                        }}
+                        // Heuristic 3: componentkey attribute + form inputs (LinkedIn Easy Apply root div)
+                        const compKeyEl = document.querySelector('[componentkey]');
+                        if (compKeyEl && isVisible(compKeyEl) && compKeyEl.querySelector('input, select, textarea, button')) {{
+                            console.log('Modal detected via componentkey+inputs heuristic');
+                            return true;
+                        }}
+                        return false;
+                    }};
+
+                    // Helper: Get the modal element for form handling
+                    const findEasyApplyModalEl = () => {{
+                        // Strategy 1: Walk up from progress bar if found (Guaranteed correct modal container)
+                        const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+                        if (pb) {{
+                            let el = pb.parentElement;
+                            while (el && el !== document.body) {{
+                                const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                                const lowerCls = cls.toLowerCase();
+                                const isBlacklisted = lowerCls.includes('dropdown-to-modal') || 
+                                                      lowerCls.includes('msg-overlay') || 
+                                                      lowerCls.includes('msg-convo') || 
+                                                      lowerCls.includes('messaging') ||
+                                                      lowerCls.includes('filter__dropdown');
+                                                      
+                                if (!isBlacklisted) {{
+                                    if (el.tagName === 'FORM' || 
+                                        el.hasAttribute('componentkey') || 
+                                        (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal')))) {{
+                                        return el;
+                                    }}
+                                }}
+                                el = el.parentElement;
+                            }}
+                        }}
+
+                        // Strategy 2: Check standard modal container selectors next
+                        // Skip messaging overlays and background filter dropdowns
+                        const selectors = [
+                            '.artdeco-modal',
+                            '.jobs-easy-apply-modal',
+                            '[role="dialog"]',
+                            '[class*="easy-apply-modal"]',
+                            '[class*="modal-container"]'
+                        ];
+                        for (const selector of selectors) {{
+                            const elements = document.querySelectorAll(selector);
+                            for (const el of elements) {{
+                                if (el && isVisible(el)) {{
+                                    const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                                    const lowerCls = cls.toLowerCase();
+                                    if (lowerCls.includes('msg-overlay') || lowerCls.includes('msg-convo') || 
+                                        lowerCls.includes('msg-form') || lowerCls.includes('messaging') ||
+                                        lowerCls.includes('dropdown-to-modal') || lowerCls.includes('filter__dropdown')) {{
+                                        continue;
+                                    }}
+                                    return el;
+                                }}
+                            }}
+                        }}
+
+                        // Strategy 3: Try componentkey element
+                        const compKeyEl = document.querySelector('[componentkey]');
+                        if (compKeyEl && isVisible(compKeyEl)) return compKeyEl;
+
+                        // Strategy 4: Walk up from pages text element
+                        const allSpans = document.querySelectorAll('p, span, div');
+                        for (const el of allSpans) {{
+                            if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {{
+                                let parent = el.parentElement;
+                                while (parent && parent !== document.body) {{
+                                    const cls = typeof parent.className === 'string' ? parent.className : (parent.getAttribute('class') || '');
+                                    const lowerCls = cls.toLowerCase();
+                                    const isBlacklisted = lowerCls.includes('dropdown-to-modal') || 
+                                                          lowerCls.includes('msg-overlay') || 
+                                                          lowerCls.includes('msg-convo') || 
+                                                          lowerCls.includes('messaging') ||
+                                                          lowerCls.includes('filter__dropdown');
+                                                          
+                                    if (!isBlacklisted) {{
+                                        if (parent.tagName === 'FORM' || 
+                                            parent.hasAttribute('componentkey') || 
+                                            (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal')))) {{
+                                            return parent;
+                                        }}
+                                    }}
+                                    parent = parent.parentElement;
+                                }}
+                            }}
+                        }}
+
+                        // Strategy 5: Look for any visible form element
+                        const form = document.querySelector('form');
+                        if (form && isVisible(form)) {{
+                            const formId = form.getAttribute('data-id') || '';
+                            const formClass = form.className || '';
+                            if (!formId.includes('sign-in') && !formClass.includes('search') && !formClass.includes('sign-in')) {{
+                                return form;
+                            }}
+                        }}
+
+                        // Fallback: Use dummy element rather than document.body to isolate queries
+                        console.warn('Easy Apply modal container not found, using dummy fallback to prevent background interactions');
+                        return document.createElement('div');
+                    }};
+
+                    // Check for modals (success, safety, Easy Apply form)
                     const checkModals = () => {{
-                        console.log('Checking for active modals (Shadow DOM aware)...');
-                        // Search deep for common modal selectors
+                        console.log('Checking for active Easy Apply modal (heuristic-based)...');
+
+                        // Easy Apply form — heuristic check runs FIRST (highest priority)
+                        if (checkEasyApplyModalOpen()) {{
+                            const modalEl = findEasyApplyModalEl();
+                            const text = (modalEl.innerText || '').toLowerCase();
+                            // Make sure it's not a success or safety dialog
+                            if (text.includes('application sent') || text.includes('application submitted')) {{
+                                return {{ type: 'success', element: modalEl }};
+                            }}
+                            if (text.includes('safety reminder') || text.includes('job search safety')) {{
+                                return {{ type: 'safety', element: modalEl }};
+                            }}
+                            return {{ type: 'form', element: modalEl }};
+                        }}
+
+                        // Legacy class-based check for success/safety/limit modals
                         const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"]');
-                        
                         for (const dialog of dialogs) {{
-                            if (!isVisible(dialog)) {{
-                                console.log('Found dialog but it is not visible:', dialog.className);
-                                continue;
-                            }}
-                            
-                            // CRITICAL: Skip LinkedIn messaging overlays — they match [role="dialog"]
-                            // but are NOT Easy Apply modals
-                            if (isMessagingOverlay(dialog)) {{
-                                console.log('Skipping messaging overlay:', dialog.className?.substring(0, 80));
-                                continue;
-                            }}
-                            
-                            const text = dialog.innerText?.toLowerCase() || '';
-                            console.log('Inspecting visible dialog:', dialog.className, 'Text snippet:', text.substring(0, 50));
-                            
-                            // 1. Success Modal
+                            if (!isVisible(dialog)) continue;
+                            if (isMessagingOverlay(dialog)) continue;
+                            const text = (dialog.innerText || '').toLowerCase();
                             if (text.includes('application sent') || text.includes('application submitted') || text.includes('success')) {{
                                 return {{ type: 'success', element: dialog }};
                             }}
-                            
-                            // 2. Easy Apply Daily Limit Modal — "You reached today's Easy Apply limit"
-                            // Detected via data-testid, data-sdui-screen, or text content
                             if (dialog.querySelector('[data-testid="dialog-content"]') ||
-                                dialog.querySelector('[data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.EasyApplyFuseLimitDialogModal"]') ||
-                                dialog.getAttribute('data-testid') === 'dialog-content' ||
-                                text.includes('easy apply limit') ||
-                                text.includes("you reached today") ||
+                                text.includes('easy apply limit') || text.includes('you reached today') ||
                                 (text.includes('apply tomorrow') && text.includes('limit'))) {{
                                 return {{ type: 'easy_apply_limit', element: dialog }};
                             }}
-                            
-                            // 3. Safety/Reminder Modal ("Job search safety reminder" popup)
-                            if (text.includes('safety reminder') || text.includes('legal reminder') ||
-                                text.includes('job search safety') || text.includes('continue applying') ||
-                                text.includes('research the company') || text.includes('report suspicious')) {{
+                            if (text.includes('safety reminder') || text.includes('job search safety') ||
+                                text.includes('continue applying') || text.includes('research the company')) {{
                                 return {{ type: 'safety', element: dialog }};
                             }}
-                            
-                            // 4. Easy Apply Form Modal
-                            if (text.includes('apply to') || 
-                                dialog.querySelector('.jobs-easy-apply-content') || 
-                                dialog.querySelector('[class*="easy-apply"]') ||
-                                dialog.querySelector('form') ||
-                                text.includes('contact info') ||
-                                text.includes('resume') ||
-                                text.includes('additional questions')) {{
+                            // Legacy Easy Apply form detection
+                            if (text.includes('apply to') || dialog.querySelector('.jobs-easy-apply-content') ||
+                                dialog.querySelector('form') || text.includes('contact info') ||
+                                text.includes('resume') || text.includes('additional questions')) {{
                                 return {{ type: 'form', element: dialog }};
                             }}
                         }}
@@ -5671,12 +6435,19 @@ class SentinelAgent:
                         }}
                     }}
 
-                    // CRITICAL: If a REAL modal is visible but not matched above, do NOT click Easy Apply
+                    // CRITICAL: If a REAL modal is present in DOM (even if loading/transitioning), do NOT click Easy Apply
                     // Must exclude messaging overlays which also match [role="dialog"]
-                    const anyModal = queryDeep('.artdeco-modal, [role="dialog"]');
-                    if (anyModal && isVisible(anyModal) && !isMessagingOverlay(anyModal)) {{
-                        console.log('Unknown modal detected via deep query. Handling as generic form...');
-                        return handleLinkedInForm(anyModal);
+                    const modals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"]');
+                    const anyModal = Array.from(modals).find(m => !isMessagingOverlay(m));
+                    if (anyModal) {{
+                        const hasInteractiveElements = queryDeep('input, select, textarea, button', anyModal) !== null;
+                        if (isVisible(anyModal) && hasInteractiveElements) {{
+                            console.log('Unknown modal detected via deep query. Handling as generic form...');
+                            return handleLinkedInForm(anyModal);
+                        }} else {{
+                            console.log('Modal is loading or transitioning (not visible or has no interactive elements). Waiting...');
+                            return 'LINKEDIN_MODAL_TRANSITIONING';
+                        }}
                     }}
 
                     // No modal open - handle job selection and clicking Easy Apply
@@ -5986,24 +6757,35 @@ class SentinelAgent:
                             if (fuzzyAnswer) {{
                                 // Use the enhanced matching function
                                 bestRadio = findBestRadioMatch(fuzzyAnswer, radios);
-                            }}
-                            
-                            // If no fuzzy match found, try Yes/No logic
-                            if (!bestRadio) {{
-                                for (const radio of radios) {{
-                                    const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
-                                    if (label.toLowerCase().includes('yes') || 
-                                        label.toLowerCase().includes('serving') ||
-                                        label.toLowerCase().includes('currently')) {{
-                                        bestRadio = radio;
-                                        break;
-                                    }}
+                                // Try salary range matching for CTC/salary questions
+                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(qText)) {{
+                                    bestRadio = findSalaryRangeMatch(fuzzyAnswer, radios);
                                 }}
                             }}
                             
-                            // Final fallback: use first unselected radio
-                            if (!bestRadio && radios.length > 0 && !radios[0].checked) {{ 
-                                bestRadio = radios[0]; 
+                            // If no fuzzy match found, only default to Yes if it's actually a Yes/No question
+                            if (!bestRadio) {{
+                                const hasYes = Array.from(radios).some(r => {{
+                                    const label = (r.closest('label')?.innerText || r.parentElement?.innerText || '').toLowerCase();
+                                    return label.includes('yes') || label.includes('serving') || label.includes('currently');
+                                }});
+                                const hasNo = Array.from(radios).some(r => {{
+                                    const label = (r.closest('label')?.innerText || r.parentElement?.innerText || '').toLowerCase();
+                                    return label === 'no' || label.includes('no');
+                                }});
+                                const isYesNo = radios.length <= 4 && hasYes && hasNo;
+                                
+                                if (isYesNo) {{
+                                    for (const radio of radios) {{
+                                        const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                                        if (label.toLowerCase().includes('yes') || 
+                                            label.toLowerCase().includes('serving') ||
+                                            label.toLowerCase().includes('currently')) {{
+                                            bestRadio = radio;
+                                            break;
+                                        }}
+                                    }}
+                                }}
                             }}
                             
                             // Click the selected radio button
@@ -7138,6 +7920,233 @@ class SentinelAgent:
                         const lastCard = jobCards[jobCards.length - 1];
                         lastCard.scrollIntoView({{ block: 'end' }});
                         return 'INSTAHYRE_SCROLLING_FOR_MORE';
+                    }}
+                }}
+
+                // ============================================================
+                // GENERIC FALLBACK - Handle forms on unrecognized platforms (TCS, etc.)
+                // Reuses the same helpers: fuzzyMatch, findBestRadioMatch, findSalaryRangeMatch, etc.
+                // ============================================================
+                if (!isLinkedIn && !isNaukri && !isInstahyre) {{
+                    console.log('=== GENERIC PLATFORM FORM FILLING ===');
+                    const genericResults = [];
+                    
+                    // 1. Handle text/number/textarea inputs
+                    const allTextInputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"], input[type="email"], textarea')).filter(isVisible);
+                    for (const input of allTextInputs) {{
+                        const label = input.closest('label')?.innerText || 
+                                      input.closest('.form-group, .field, [class*="field"]')?.querySelector('label, span, p')?.innerText ||
+                                      document.querySelector(`label[for="${{input.id}}"]`)?.innerText ||
+                                      input.getAttribute('placeholder') || 
+                                      input.getAttribute('aria-label') || 
+                                      input.name?.replace(/[_-]/g, ' ') || '';
+                        if (!label || label.length < 2) continue;
+                        
+                        const answer = fuzzyMatch(label);
+                        if (answer && !input.value.trim()) {{
+                            fillReactInput(input, answer);
+                            console.log('GENERIC: Filled input', label.substring(0, 40), 'with:', answer.substring(0, 30));
+                            genericResults.push({{ question: label.substring(0, 80), answer: answer, inputType: 'text' }});
+                        }}
+                    }}
+                    
+                    // 2. Handle select dropdowns
+                    const allSelects = Array.from(document.querySelectorAll('select')).filter(isVisible);
+                    for (const select of allSelects) {{
+                        const label = select.closest('label')?.innerText || 
+                                      select.closest('.form-group, .field, [class*="field"]')?.querySelector('label, span, p')?.innerText ||
+                                      document.querySelector(`label[for="${{select.id}}"]`)?.innerText ||
+                                      select.getAttribute('aria-label') || '';
+                        if (!label || label.length < 2) continue;
+                        
+                        const answer = fuzzyMatch(label);
+                        if (answer && select.selectedIndex <= 0) {{
+                            const options = Array.from(select.options).map(o => ({{ text: o.text, value: o.value, index: o.index }}));
+                            const bestOpt = options.find(o => o.text.toLowerCase().includes(answer.toLowerCase())) ||
+                                            options.find(o => answer.toLowerCase().includes(o.text.toLowerCase()));
+                            if (bestOpt) {{
+                                select.value = bestOpt.value;
+                                if (select.value !== bestOpt.value) select.selectedIndex = bestOpt.index;
+                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                select.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                console.log('GENERIC: Selected dropdown', label.substring(0, 40), ':', bestOpt.text);
+                                genericResults.push({{ question: label.substring(0, 80), answer: bestOpt.text, inputType: 'select' }});
+                            }}
+                        }}
+                    }}
+                    
+                    // 3. Handle fieldset radio buttons
+                    const allFieldsets = document.querySelectorAll('fieldset');
+                    for (const fieldset of allFieldsets) {{
+                        const legend = fieldset.querySelector('legend')?.innerText || '';
+                        const radios = Array.from(fieldset.querySelectorAll('input[type="radio"]')).filter(isVisible);
+                        
+                        if (legend && radios.length > 0 && !radios.some(r => r.checked)) {{
+                            const answer = fuzzyMatch(legend);
+                            if (answer) {{
+                                let bestRadio = findBestRadioMatch(answer, radios);
+                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(legend)) {{
+                                    bestRadio = findSalaryRangeMatch(answer, radios);
+                                }}
+                                if (bestRadio) {{
+                                    clickInput(bestRadio);
+                                    console.log('GENERIC: Clicked fieldset radio', legend.substring(0, 40), ':', answer);
+                                    genericResults.push({{ question: legend.substring(0, 80), answer: answer, inputType: 'radio' }});
+                                }} else {{
+                                    const hasYes = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
+                                    const hasNo = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }});
+                                    const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoFromText = isLikelyYesNoQuestion(legend);
+                                    if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {{
+                                        const yesRadio = radios.find(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        }});
+                                        if (yesRadio) {{
+                                            clickInput(yesRadio);
+                                            console.log('GENERIC: Selected Yes for Yes/No question:', legend.substring(0, 40));
+                                            genericResults.push({{ question: legend.substring(0, 80), answer: 'Yes', inputType: 'radio' }});
+                                        }}
+                                    }}
+                                }}
+                            }} else {{
+                                const hasYes = radios.some(r => {{
+                                    const val = (r.value || '').toLowerCase();
+                                    const labelText = getInputLabelText(r);
+                                    return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                }});
+                                const hasNo = radios.some(r => {{
+                                    const val = (r.value || '').toLowerCase();
+                                    const labelText = getInputLabelText(r);
+                                    return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }});
+                                    const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoFromText = isLikelyYesNoQuestion(legend);
+                                    if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {{
+                                        const yesRadio = radios.find(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
+                                    if (yesRadio) {{
+                                        clickInput(yesRadio);
+                                        console.log('GENERIC: Selected Yes for unlabeled Yes/No question');
+                                        genericResults.push({{ question: 'Yes/No question (no label)', answer: 'Yes', inputType: 'radio' }});
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }}
+                    
+                    // 3b. Handle standalone radio buttons (grouped by name)
+                    const genericAllRadios = Array.from(document.querySelectorAll('input[type="radio"]')).filter(isVisible);
+                    const genericRadioGroups = {{}};
+                    for (const radio of genericAllRadios) {{
+                        const name = radio.name;
+                        if (!name || radio.checked) continue;
+                        if (!genericRadioGroups[name]) genericRadioGroups[name] = [];
+                        genericRadioGroups[name].push(radio);
+                    }}
+                    
+                    for (const [name, radios] of Object.entries(genericRadioGroups)) {{
+                        let questionText = '';
+                        const firstRadio = radios[0];
+                        
+                        const parentLabel = firstRadio.closest('label');
+                        if (parentLabel) {{
+                            questionText = parentLabel.innerText;
+                        }} else {{
+                            const container = firstRadio.closest('div[class*="question"], div[class*="field"], .form-group');
+                            if (container) {{
+                                const textNodes = Array.from(container.childNodes)
+                                    .filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'INPUT' && n.tagName !== 'LABEL'))
+                                    .map(n => n.textContent || n.innerText)
+                                    .join(' ').trim();
+                                questionText = textNodes;
+                            }}
+                        }}
+                        
+                        if (!questionText && name && !name.match(/^[0-9]+$/)) {{
+                            questionText = name.replace(/[_-]/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+                        }}
+                        
+                        // Try aria-labelledby
+                        if (!questionText && firstRadio.id) {{
+                            const labelEl = document.getElementById(firstRadio.getAttribute('aria-labelledby') || '');
+                            if (labelEl) questionText = labelEl.innerText;
+                        }}
+                        
+                        if (questionText) {{
+                            const answer = fuzzyMatch(questionText);
+                            if (answer) {{
+                                let bestRadio = findBestRadioMatch(answer, radios);
+                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {{
+                                    bestRadio = findSalaryRangeMatch(answer, radios);
+                                }}
+                                if (bestRadio) {{
+                                    clickInput(bestRadio);
+                                    console.log('GENERIC: Clicked standalone radio', questionText.substring(0, 40), ':', answer);
+                                    genericResults.push({{ question: questionText.substring(0, 80), answer: answer, inputType: 'radio' }});
+                                }} else {{
+                                    const hasYes = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                    }});
+                                    const hasNo = radios.some(r => {{
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r);
+                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }});
+                                    const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoFromText = isLikelyYesNoQuestion(questionText);
+                                    if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {{
+                                        const yesRadio = radios.find(r => {{
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r);
+                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        }});
+                                        if (yesRadio) {{
+                                            clickInput(yesRadio);
+                                            console.log('GENERIC: Selected Yes for Yes/No:', questionText.substring(0, 40));
+                                            genericResults.push({{ question: questionText.substring(0, 80), answer: 'Yes', inputType: 'radio' }});
+                                        }}
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }}
+                    
+                    // 4. Handle checkboxes (consent, privacy policy)
+                    const genericCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).filter(isVisible);
+                    for (const cb of genericCheckboxes) {{
+                        if (cb.checked) continue;
+                        const label = cb.closest('label')?.innerText || 
+                                      document.querySelector(`label[for="${{cb.id}}"]`)?.innerText || 
+                                      cb.getAttribute('aria-label') || '';
+                        const lowerLabel = label.toLowerCase();
+                        if (lowerLabel.includes('consent') || lowerLabel.includes('privacy') || lowerLabel.includes('terms') || 
+                            lowerLabel.includes('agree') || lowerLabel.includes('accept') || lowerLabel.includes('policy') ||
+                            lowerLabel.includes('declaration') || lowerLabel.includes('confirm')) {{
+                            cb.click();
+                            cb.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            console.log('GENERIC: Checked consent checkbox:', label.substring(0, 40));
+                            genericResults.push({{ question: label.substring(0, 80), answer: 'Checked', inputType: 'checkbox' }});
+                        }}
+                    }}
+                    
+                    if (genericResults.length > 0) {{
+                        console.log('GENERIC: Filled', genericResults.length, 'fields');
+                        return 'GENERIC_FORM_FILLED: ' + JSON.stringify(genericResults);
                     }}
                 }}
 

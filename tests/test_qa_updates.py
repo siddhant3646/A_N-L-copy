@@ -54,6 +54,76 @@ class TestQAUpdates(unittest.TestCase):
             ans, score = self.agent._fuzzy_match_question(q)
             print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
             self.assertEqual(ans, '500+', f"Failed for question: {q}")
+    def test_commuting_availability(self):
+        questions = [
+            "Are you comfortable commuting to this job's location?*",
+            "Are you comfortable commuting to this job's location",
+            "comfortable commuting to this job"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'Yes', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+    def test_ex_amazon_candidate(self):
+        questions = [
+            "Are you an Ex- Amazon candidate?*",
+            "Are you an Ex-Amazon candidate?",
+            "ex-amazon candidate"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'No', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+    def test_join_immediately_serving_np(self):
+        questions = [
+            "Can you Join Immediately or Currently Serving NP?*",
+            "Can you Join Immediately or Currently Serving NP?",
+            "can you join immediately or currently serving np"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'Yes', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+    def test_based_in_mumbai_or_pune(self):
+        questions = [
+            "Are you Currently based in Mumbai or Pune*",
+            "Are you Currently based in Mumbai or Pune",
+            "currently based in mumbai or pune"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'Yes', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+    def test_azure_experience(self):
+        questions = [
+            "Do you have azure cloud experience? if yes how many years?",
+            "azure cloud experience",
+            "years of experience in azure"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, '2', f"Failed for question: {q}")
+            self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
+
+    def test_gcp_experience(self):
+        questions = [
+            "how many years of experience do you have in gcp",
+            "google cloud experience",
+            "gcp experience"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, '1', f"Failed for question: {q}")
             self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
 
 

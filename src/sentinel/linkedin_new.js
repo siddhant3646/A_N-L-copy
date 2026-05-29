@@ -37,6 +37,22 @@
             default: 'Serving Notice Period',
             numeric_default: '30'
         },
+        join_immediately: {
+            patterns: ['join immediately or currently serving', 'can you join immediately or currently serving np', 'currently serving np', 'can you join immediately', 'join immediately'],
+            default: 'Yes'
+        },
+        based_in_city: {
+            patterns: ['currently based in mumbai or pune', 'currently based in mumbai', 'currently based in pune', 'based in mumbai or pune'],
+            default: 'No'
+        },
+        experience_10_plus: {
+            patterns: ['do you have 10+ years of experience in software development', '10+ years of experience in software', '10+ years of experience', '10+ years experience', 'do you have 10+ years'],
+            default: 'No'
+        },
+        aws_services: {
+            patterns: ['have you worked with aws', 'worked with aws ecs', 'worked with aws lambda', 'aws ecs, lambda', 'aws s3, sqs', 'or step functions', 'aws services'],
+            default: 'Yes'
+        },
         location_current: {
             patterns: ['current location', 'current city', 'currently located', 'where are you located', 'where do you stay', 'stay currently'],
             default: 'Noida'
@@ -66,7 +82,7 @@
             default: '8'
         },
         willing_relocate: {
-            patterns: ['willing to relocate', 'comfortable working in shift', 'shift timing', 'night shift', 'rotational shift', 'remote work', 'hybrid work', 'comfortable to work', 'settle in abroad', 'relocate'],
+            patterns: ['open to relocate', 'are you open to relocate', 'willing to relocate', 'comfortable working in shift', 'comfortable working in an onsite', 'comfortable working onsite', 'comfortable working in', 'comfortable to work', 'shift timing', 'night shift', 'rotational shift', 'remote work', 'hybrid work', 'onsite setting', 'onsite', 'settle in abroad', 'relocate'],
             default: 'Yes'
         },
         authorization: {
@@ -78,7 +94,7 @@
             default: 'No'
         },
         education_degree: {
-            patterns: ['degree', 'highest education', 'educational qualification', 'bachelor', 'educational and professional', 'all educational and professional'],
+            patterns: ['have you completed the following level of education', 'completed the following level of education', 'level of education', 'highest education', 'educational qualification', 'bachelor', 'educational and professional', 'all educational and professional', "bachelor's degree"],
             default: 'B.Tech Computer Science',
             yes_no_default: 'Yes'
         },
@@ -168,6 +184,26 @@
         what_bring: {
             patterns: ['what could you bring', 'what can you bring', 'what value can you add', 'what do you bring'],
             default: 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.'
+        },
+        street_address: {
+            patterns: ['street', 'street address', 'address line 1', 'address line1'],
+            default: 'Sector 137'
+        },
+        city: {
+            patterns: ['city', 'town', 'municipality'],
+            default: 'Noida'
+        },
+        state: {
+            patterns: ['state', 'state/province', 'province'],
+            default: 'Uttar Pradesh'
+        },
+        zip_code: {
+            patterns: ['zip', 'zip code', 'postal code', 'pincode', 'pin code', 'zip/postal code'],
+            default: '201301'
+        },
+        country: {
+            patterns: ['country', 'nation', 'country/region'],
+            default: 'India'
         }
     };
     
@@ -233,8 +269,8 @@
             return data.default;
         }
         
-        // For education documents question, return Yes for dropdown
-        if (category === 'education_degree' && (fieldType === 'select' || fieldType === 'dropdown')) {
+        // For education documents question, return Yes for dropdown/radio
+        if (category === 'education_degree' && (fieldType === 'select' || fieldType === 'dropdown' || fieldType === 'radio')) {
             return 'Yes';
         }
         
@@ -243,12 +279,18 @@
             return data.default;
         }
         
+        // For radio buttons: if category has a yes_no_default, use it
+        if (fieldType === 'radio' && data.yes_no_default) {
+            return data.yes_no_default;
+        }
+        
+        // For radio buttons with yes/no answer, return as-is (already Yes/No defaults)
         return data.default;
     }
     
     // Helper: Find elements by text content
-    function findByText(selector, text, exact = false) {
-        const elements = document.querySelectorAll(selector);
+    function findByText(selector, text, exact = false, root = document) {
+        const elements = queryAllDeep(selector, root);
         const searchText = text.toLowerCase();
         return Array.from(elements).find(el => {
             const elText = el.innerText.toLowerCase();
@@ -555,39 +597,241 @@
         return text.includes('applied') || text.includes('see application');
     }
     
-    // Helper: Check for modals
+    // Helper: Check if Easy Apply form modal is open using robust heuristics
+    // LinkedIn's new UI uses fully obfuscated classes — we detect the modal by DOM content
+    function checkEasyApplyModalOpen() {
+        // Heuristic 1: visible SVG role="progressbar" with aria-valuenow (the % complete bar)
+        const progressBar = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+        if (progressBar && progressBar.offsetParent !== null) {
+            console.log('Modal detected via progressbar heuristic');
+            return true;
+        }
+
+        // Heuristic 2: element with "X of Y pages" text AND a Next/Review/Submit button visible
+        const allTexts = Array.from(document.querySelectorAll('p, span, div'));
+        for (const el of allTexts) {
+            if (/\d+\s*\/\s*\d+\s*pages?/i.test(el.innerText) && el.offsetParent !== null) {
+                console.log('Modal detected via pages-text heuristic:', el.innerText.trim());
+                return true;
+            }
+        }
+
+        // Heuristic 3: componentkey attribute present (LinkedIn Easy Apply root div)
+        const compKeyEl = document.querySelector('[componentkey]');
+        if (compKeyEl && compKeyEl.offsetParent !== null) {
+            // Make sure it contains form-like elements
+            const hasInputs = compKeyEl.querySelector('input, select, textarea, button');
+            if (hasInputs) {
+                console.log('Modal detected via componentkey+inputs heuristic');
+                return true;
+            }
+        }
+
+        // Heuristic 4: role="dialog" (old LinkedIn, keep as fallback)
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog && dialog.offsetParent !== null) {
+            const text = dialog.innerText.toLowerCase();
+            if (text.includes('next') || text.includes('submit') || text.includes('review') || text.includes('contact')) {
+                console.log('Modal detected via role=dialog heuristic');
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Helper: Find the Easy Apply modal container element (for form filling)
+    function findEasyApplyModalElement() {
+        // Strategy 1: Walk up from progress bar if found (Guaranteed correct modal container)
+        const progressBar = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+        if (progressBar) {
+            let el = progressBar.parentElement;
+            while (el && el !== document.body) {
+                const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                const lowerCls = cls.toLowerCase();
+                const isBlacklisted = lowerCls.includes('dropdown-to-modal') || 
+                                      lowerCls.includes('msg-overlay') || 
+                                      lowerCls.includes('msg-convo') || 
+                                      lowerCls.includes('messaging') ||
+                                      lowerCls.includes('filter__dropdown');
+                                      
+                if (!isBlacklisted) {
+                    if (el.tagName === 'FORM' || 
+                        el.hasAttribute('componentkey') || 
+                        (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal')))) {
+                        return el;
+                    }
+                }
+                el = el.parentElement;
+            }
+        }
+
+        // Strategy 2: Check standard modal container selectors next
+        // Skip messaging overlays and background filter dropdowns
+        const selectors = [
+            '.artdeco-modal',
+            '.jobs-easy-apply-modal',
+            '[role="dialog"]',
+            '[class*="easy-apply-modal"]',
+            '[class*="modal-container"]'
+        ];
+        for (const selector of selectors) {
+            const elements = document.querySelectorAll(selector);
+            for (const el of elements) {
+                if (el && el.offsetParent !== null) {
+                    const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                    const lowerCls = cls.toLowerCase();
+                    if (lowerCls.includes('msg-overlay') || lowerCls.includes('msg-convo') || 
+                        lowerCls.includes('msg-form') || lowerCls.includes('messaging') ||
+                        lowerCls.includes('dropdown-to-modal') || lowerCls.includes('filter__dropdown')) {
+                        continue;
+                    }
+                    return el;
+                }
+            }
+        }
+
+        // Strategy 3: Try componentkey root
+        const compKeyEl = document.querySelector('[componentkey]');
+        if (compKeyEl) return compKeyEl;
+
+        // Strategy 4: Walk up from pages text element
+        const allSpans = document.querySelectorAll('p, span, div');
+        for (const el of allSpans) {
+            if (/\d+\s*\/\s*\d+\s*pages?/i.test(el.innerText) && el.offsetParent !== null) {
+                let parent = el.parentElement;
+                while (parent && parent !== document.body) {
+                    const cls = typeof parent.className === 'string' ? parent.className : (parent.getAttribute('class') || '');
+                    const lowerCls = cls.toLowerCase();
+                    const isBlacklisted = lowerCls.includes('dropdown-to-modal') || 
+                                          lowerCls.includes('msg-overlay') || 
+                                          lowerCls.includes('msg-convo') || 
+                                          lowerCls.includes('messaging') ||
+                                          lowerCls.includes('filter__dropdown');
+                                          
+                    if (!isBlacklisted) {
+                        if (parent.tagName === 'FORM' || 
+                            parent.hasAttribute('componentkey') || 
+                            (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal')))) {
+                            return parent;
+                        }
+                    }
+                    parent = parent.parentElement;
+                }
+            }
+        }
+
+        // Strategy 5: Look for any visible form element
+        const form = document.querySelector('form');
+        if (form && form.offsetParent !== null) {
+            const formId = form.getAttribute('data-id') || '';
+            const formClass = form.className || '';
+            if (!formId.includes('sign-in') && !formClass.includes('search') && !formClass.includes('sign-in')) {
+                return form;
+            }
+        }
+
+        // Fallback: Use dummy element rather than document.body to isolate queries
+        console.warn('Easy Apply modal container not found, using dummy fallback to prevent background interactions');
+        return document.createElement('div');
+    }
+
+    // Helper: Check for modals (safety, success, and Easy Apply form)
     function checkModals() {
-        // Safety reminder modal
+        // Safety reminder modal — scan all buttons for "Continue applying"
+        const allBtns = document.querySelectorAll('button, span[role="button"]');
+        for (const btn of allBtns) {
+            const txt = (btn.innerText || '').toLowerCase().trim();
+            if (txt.includes('safety reminder') || (btn.closest('[role="dialog"]') && txt.includes('continue'))) {
+                const dialog = btn.closest('[role="dialog"]');
+                if (dialog) {
+                    const text = dialog.innerText.toLowerCase();
+                    if (text.includes('safety reminder')) {
+                        return { type: 'safety', element: dialog };
+                    }
+                }
+            }
+        }
+
+        // Legacy safety/success check via role=dialog
         const dialogs = document.querySelectorAll('[role="dialog"]');
         for (const dialog of dialogs) {
             const text = dialog.innerText.toLowerCase();
-            
             if (text.includes('safety reminder')) {
                 return { type: 'safety', element: dialog };
             }
-            
             if (text.includes('application sent') || text.includes('application submitted')) {
                 return { type: 'success', element: dialog };
             }
         }
-        
-        // Easy Apply form modal
-        const formModal = document.querySelector('div.jobs-easy-apply-modal, div[data-test-modal="jobs-easy-apply-modal"]');
-        if (formModal) {
-            return { type: 'form', element: formModal };
+
+        // Easy Apply form modal — use robust heuristics
+        if (checkEasyApplyModalOpen()) {
+            return { type: 'form', element: findEasyApplyModalElement() };
         }
-        
+
         return null;
     }
-    
-    
+
+
     // Main automation logic
     function runLinkedInAutomation() {
         console.log('=== LINKEDIN AUTOMATION STARTED ===');
         
         let modal;  // Declare once at function scope
-        
-        // First, check if there are visible autocomplete/dropdown options that need selection
+
+        // ⚡ PRIORITY 0: Check if Easy Apply modal is already open
+        // This MUST run first — before anything else — to avoid re-clicking Easy Apply in a loop
+        console.log('Checking for active Easy Apply modal (heuristic-based)...');
+        modal = checkModals();
+        if (modal) {
+            console.log('Modal detected:', modal.type);
+
+            if (modal.type === 'safety') {
+                // Click Continue button
+                const buttons = modal.element.querySelectorAll('button');
+                for (const btn of buttons) {
+                    if (btn.innerText.toLowerCase().includes('continue')) {
+                        btn.click();
+                        return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                    }
+                }
+                // Fallback: click last button
+                if (buttons.length > 0) {
+                    buttons[buttons.length - 1].click();
+                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                }
+            }
+
+            if (modal.type === 'success') {
+                // Close success modal
+                const closeBtn = modal.element.querySelector('button');
+                if (closeBtn) {
+                    closeBtn.click();
+                    return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
+                }
+            }
+
+            if (modal.type === 'form') {
+                return handleApplicationForm(modal.element);
+            }
+        }
+
+        // FIRST-PASS: Safety reminder modal intercept
+        // Catches "Continue applying" button regardless of modal class structure
+        {
+            const allBtns = document.querySelectorAll('button, span[role="button"]');
+            for (const btn of allBtns) {
+                const txt = (btn.innerText || '').toLowerCase().trim();
+                if (txt.includes('continue applying') && btn.offsetParent !== null) {
+                    console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
+                    btn.click();
+                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                }
+            }
+        }
+
+        // Check for visible autocomplete/dropdown options that need selection
         // Search in ENTIRE document since LinkedIn renders dropdowns in portals
         const allDropdownOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, [data-test-typeahead-item], .artdeco-typeahead__result, .jobs-typeahead__item, [class*="typeahead"]');
         console.log('Checking for dropdown options globally - found:', allDropdownOptions.length);
@@ -605,57 +849,8 @@
         
         const currentJobId = new URLSearchParams(window.location.search).get('currentJobId');
         console.log('Current Job ID:', currentJobId);
-        
-        // FIRST-PASS: Safety reminder modal intercept
-        // Catches "Continue applying" button regardless of modal class structure
-        {
-            const allBtns = document.querySelectorAll('button, span[role="button"]');
-            for (const btn of allBtns) {
-                const txt = (btn.innerText || '').toLowerCase().trim();
-                if (txt.includes('continue applying') && btn.offsetParent !== null) {
-                    console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
-                    btn.click();
-                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                }
-            }
-        }
 
-        // Step 1: Handle modals (reuse modal variable)
-        modal = checkModals();
-        if (modal) {
-            console.log('Modal detected:', modal.type);
-            
-            if (modal.type === 'safety') {
-                // Click Continue button
-                const buttons = modal.element.querySelectorAll('button');
-                for (const btn of buttons) {
-                    if (btn.innerText.toLowerCase().includes('continue')) {
-                        btn.click();
-                        return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                    }
-                }
-                // Fallback: click last button
-                if (buttons.length > 0) {
-                    buttons[buttons.length - 1].click();
-                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                }
-            }
-            
-            if (modal.type === 'success') {
-                // Close success modal
-                const closeBtn = modal.element.querySelector('button');
-                if (closeBtn) {
-                    closeBtn.click();
-                    return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
-                }
-            }
-            
-            if (modal.type === 'form') {
-                return handleApplicationForm(modal.element);
-            }
-        }
-        
-        // Step 2: Find job cards
+
         const jobCards = findJobCards();
         console.log('Found', jobCards.length, 'job cards');
         
@@ -1017,6 +1212,21 @@
                     } else if (combinedText.includes('email')) {
                         fillValue = 'siddhant3646@gmail.com';
                         console.log('Fallback: Filling email');
+                    } else if (combinedText.includes('street') || combinedText.includes('address line')) {
+                        fillValue = 'Sector 137';
+                        console.log('Fallback: Filling street address with: Sector 137');
+                    } else if (combinedText.includes('city') || combinedText.includes('town')) {
+                        fillValue = 'Noida';
+                        console.log('Fallback: Filling city with: Noida');
+                    } else if (combinedText.includes('state') || combinedText.includes('province')) {
+                        fillValue = 'Uttar Pradesh';
+                        console.log('Fallback: Filling state with: Uttar Pradesh');
+                    } else if (combinedText.includes('zip') || combinedText.includes('postal code') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
+                        fillValue = '201301';
+                        console.log('Fallback: Filling zip/postal code with: 201301');
+                    } else if (combinedText.includes('country') || combinedText.includes('nation')) {
+                        fillValue = 'India';
+                        console.log('Fallback: Filling country with: India');
                     }
                 } else {
                     console.log('Pattern matched! Filling with:', fillValue);
@@ -1197,59 +1407,191 @@
             }
         }
         
+        function extractQuestionTextFromGroup(group) {
+            const legend = group.querySelector('legend');
+            if (legend && legend.innerText.trim().length > 3) {
+                return legend.innerText.trim();
+            }
+            const label = group.querySelector('.artdeco-form-field__label, [data-test-form-element-label], label');
+            if (label && label.innerText.trim().length > 3) {
+                return label.innerText.trim();
+            }
+            let questionEl = group.querySelector('[class*="question"], [class*="label"], [class*="header"]');
+            if (questionEl) {
+                const spans = questionEl.querySelectorAll('span, p, div');
+                for (const s of spans) {
+                    const t = s.innerText.trim();
+                    if (t.length > 10 && t.length < 300 && !t.includes('Select an option')) {
+                        return t;
+                    }
+                }
+                if (questionEl.innerText.trim().length > 10) return questionEl.innerText.trim();
+            }
+            let fullText = '';
+            for (const child of group.children) {
+                const hasRadioInput = child.querySelector('input[type="radio"], [role="radio"], label input[type="radio"]');
+                const hasRadioLabel = child.querySelector('label[for]') && child.querySelector('label[for]').innerText.trim().length <= 5;
+                if (!hasRadioInput && !hasRadioLabel) {
+                    const t = child.innerText.trim();
+                    if (t && t.length > 3 && !t.toLowerCase().includes('this field is required') && !t.toLowerCase().startsWith('select')) {
+                        fullText += (fullText ? ' ' : '') + t;
+                    }
+                }
+            }
+            if (fullText.length > 3) {
+                return fullText.replace(/\*$/, '').replace(/\* This field is required/gi, '').trim();
+            }
+            let fallback = getLabelForInput(group);
+            if (fallback && fallback.length > 3) {
+                return fallback.replace(/\* This field is required/gi, '').trim();
+            }
+            fallback = group.innerText.substring(0, 200);
+            return fallback.replace(/\* This field is required/gi, '').replace(/\s*(Yes|No)\s*$/i, '').trim();
+        }
+
+        function clickRadioReactAware(radio) {
+            try {
+                const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked').set;
+                nativeSetter.call(radio, true);
+            } catch(e) {
+                radio.checked = true;
+            }
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            radio.dispatchEvent(new Event('input', { bubbles: true }));
+            radio.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            const labelFor = radio.id ? group.querySelector('label[for="' + radio.id + '"]') : null;
+            if (labelFor) {
+                labelFor.click();
+            }
+        }
+
         // Handle radio buttons (Yes/No questions)
-        const radioGroups = modal.querySelectorAll('fieldset, [role="radiogroup"], .jobs-easy-apply-form-section__question');
+        const radioGroups = modal.querySelectorAll('fieldset, [role="radiogroup"], .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field, [class*="form-section"]');
         console.log('Found', radioGroups.length, 'potential radio groups');
         
         for (const group of radioGroups) {
-            const radios = group.querySelectorAll('input[type="radio"]');
-            if (radios.length === 0) continue;
+            let radios = group.querySelectorAll('input[type="radio"]');
+            let customRadios = group.querySelectorAll('[role="radio"], label[data-test-text-selectable-list-item], [class*="radio"]');
+            let hasRadios = radios.length > 0;
+            let hasCustomRadios = !hasRadios && customRadios.length > 0;
             
-            // Check if any radio is already selected
-            const isSelected = Array.from(radios).some(r => r.checked);
-            if (isSelected) continue;
+            if (!hasRadios && !hasCustomRadios) continue;
             
-            // Get the question text from the group
-            const questionText = getLabelForInput(group) || group.innerText.substring(0, 200);
+            if (hasRadios) {
+                const isSelected = Array.from(radios).some(r => r.checked);
+                if (isSelected) continue;
+            }
+            
+            const questionText = extractQuestionTextFromGroup(group);
             console.log('Radio group question:', JSON.stringify(questionText));
             
-            // Get answer from patterns
             const answer = getAnswerForQuestion(questionText, 'radio');
             
             if (answer) {
                 const answerLower = answer.toLowerCase();
                 let selected = false;
                 
-                // Try to find and click the matching radio
-                for (const radio of radios) {
-                    const radioLabel = getLabelForInput(radio) || radio.value || '';
-                    const radioText = radioLabel.toLowerCase();
-                    
-                    if (radioText.includes(answerLower) || 
-                        (answerLower === 'yes' && radioText.includes('yes')) ||
-                        (answerLower === 'no' && radioText.includes('no'))) {
-                        radio.click();
-                        console.log('Selected radio:', answer, 'for question:', questionText.substring(0, 50));
-                        filledAny = true;
-                        selected = true;
-                        break;
-                    }
-                }
-                
-                // If no match found but we have a Yes/No answer, select first Yes or No option
-                if (!selected && (answerLower === 'yes' || answerLower === 'no')) {
+                if (hasRadios) {
                     for (const radio of radios) {
                         const radioLabel = getLabelForInput(radio) || radio.value || '';
                         const radioText = radioLabel.toLowerCase();
                         
-                        if ((answerLower === 'yes' && (radioText.includes('yes') || radio.value === 'true')) ||
-                            (answerLower === 'no' && (radioText.includes('no') || radio.value === 'false'))) {
-                            radio.click();
-                            console.log('Selected radio (fallback):', answer, 'for question:', questionText.substring(0, 50));
+                        if (radioText.includes(answerLower) || 
+                            (answerLower === 'yes' && (radioText.includes('yes') || radio.value === 'yes' || radio.value === 'true')) ||
+                            (answerLower === 'no' && (radioText.includes('no') || radio.value === 'no' || radio.value === 'false'))) {
+                            clickRadioReactAware(radio);
+                            console.log('Selected radio:', answer, 'for question:', questionText.substring(0, 50));
                             filledAny = true;
+                            selected = true;
                             break;
                         }
                     }
+                    
+                    if (!selected && (answerLower === 'yes' || answerLower === 'no')) {
+                        for (const radio of radios) {
+                            const radioLabel = getLabelForInput(radio) || radio.value || '';
+                            const radioText = radioLabel.toLowerCase();
+                            const val = (radio.value || '').toLowerCase();
+                            
+                            if ((answerLower === 'yes' && (radioText.includes('yes') || val === 'yes' || val === 'true')) ||
+                                (answerLower === 'no' && (radioText.includes('no') || val === 'no' || val === 'false'))) {
+                                clickRadioReactAware(radio);
+                                console.log('Selected radio (fallback):', answer, 'for question:', questionText.substring(0, 50));
+                                filledAny = true;
+                                selected = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!selected) {
+                        console.log('Radio label matching failed, trying index-based selection for:', answer);
+                        const radioArray = Array.from(radios);
+                        if (answerLower === 'yes' && radioArray.length >= 1) {
+                            radioArray[0].click();
+                            radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected first radio (Yes index) for:', questionText.substring(0, 50));
+                            filledAny = true;
+                            selected = true;
+                        } else if (answerLower === 'no' && radioArray.length >= 2) {
+                            radioArray[1].click();
+                            radioArray[1].dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected second radio (No index) for:', questionText.substring(0, 50));
+                            filledAny = true;
+                            selected = true;
+                        } else if (radioArray.length > 0) {
+                            radioArray[0].click();
+                            radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected first radio as last resort for:', questionText.substring(0, 50));
+                            filledAny = true;
+                            selected = true;
+                        }
+                    }
+                }
+                
+                if (hasCustomRadios && !selected) {
+                    for (const cRadio of customRadios) {
+                        const text = (cRadio.innerText || cRadio.getAttribute('aria-label') || cRadio.value || '').toLowerCase().trim();
+                        if (text.includes(answerLower) || 
+                            (answerLower === 'yes' && text.includes('yes')) ||
+                            (answerLower === 'no' && text.includes('no'))) {
+                            cRadio.click();
+                            cRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected custom radio:', answer, 'for question:', questionText.substring(0, 50));
+                            filledAny = true;
+                            selected = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!selected) {
+                        const cArr = Array.from(customRadios);
+                        const idx = answerLower === 'yes' ? 0 : Math.min(1, cArr.length - 1);
+                        if (cArr[idx]) {
+                            cArr[idx].click();
+                            cArr[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected custom radio by index:', idx, 'for:', questionText.substring(0, 50));
+                            filledAny = true;
+                        }
+                    }
+                }
+            }
+            
+            if (!answer) {
+                console.log('No pattern match for radio question, defaulting to Yes:', questionText.substring(0, 80));
+                if (hasRadios) {
+                    const radioArray = Array.from(radios);
+                    if (radioArray.length > 0) {
+                        radioArray[0].click();
+                        radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log('Default-selected first radio for unmatched question');
+                        filledAny = true;
+                    }
+                } else if (hasCustomRadios) {
+                    customRadios[0].click();
+                    customRadios[0].dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('Default-selected first custom radio for unmatched question');
+                    filledAny = true;
                 }
             }
         }
@@ -1281,10 +1623,10 @@
         }
         
         // Find next/submit button
-        const nextBtn = findByText('button', 'continue to next step') || 
-                       findByText('button', 'review your application') ||
-                       findByText('button', 'submit application') ||
-                       findByText('button', 'next') ||
+        const nextBtn = findByText('button', 'continue to next step', false, modal) || 
+                       findByText('button', 'review your application', false, modal) ||
+                       findByText('button', 'submit application', false, modal) ||
+                       findByText('button', 'next', false, modal) ||
                        modal.querySelector('button[aria-label="Continue to next step"], button[aria-label="Review your application"], button[aria-label="Submit application"]');
         
         if (!nextBtn) {

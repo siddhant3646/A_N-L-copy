@@ -104,7 +104,6 @@ class Browser:
         self.executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         
         args = [
-            '--no-sandbox',
             '--disable-blink-features=AutomationControlled',
             '--start-maximized',
             '--disable-session-crashed-bubble',
@@ -442,7 +441,7 @@ async def main():
         import subprocess
         pw = await get_shared_playwright()
         args = [
-            '--no-sandbox', '--disable-blink-features=AutomationControlled',
+            '--disable-blink-features=AutomationControlled',
             '--disable-gpu', '--disable-extensions', '--no-first-run',
             '--start-maximized', '--ignore-certificate-errors',
         ]

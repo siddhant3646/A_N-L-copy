@@ -478,23 +478,21 @@ class SentinelAgent:
         
         # Notice period for current company in days - HIGH PRIORITY to avoid matching company name
         if 'notice period' in question_lower and 'company' in question_lower and ('days' in question_lower or 'in days' in question_lower):
-            return '30', 0.99
+            return '7', 0.99
         
         # Handle high-priority question types FIRST
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)', 0.98
+            return 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
-            return '30', 0.98
+            return '7', 0.98
         
         # LWD (Last Working Day) questions - calculate date 30 days from now
         if is_lwd_question:
-            # Try numeric "30" first (for fields expecting days count)
-            # Fallback to date format "03 February 2026" for date pickers
-            return '30', 0.98
+            return '7', 0.98
         
         # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 30 days)
         start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
@@ -505,7 +503,7 @@ class SentinelAgent:
         if not is_start_date_question and 'start date' in question_lower:
             is_start_date_question = True
         if is_start_date_question:
-            start_date = datetime.now() + timedelta(days=30)
+            start_date = datetime.now() + timedelta(days=7)
             return start_date.strftime('%d/%m/%Y'), 0.99
         
         # Project count questions
@@ -627,31 +625,26 @@ class SentinelAgent:
         if is_notice_question or is_immediate_joiners_only:
             if 'last working day' in question_lower or 'lwd' in question_lower:
                 if self._current_platform == 'linkedin' and 'serving' in question_lower:
-                    return '30', 0.98
-                # Calculate LWD as 30 days from today
+                    return '7', 0.98
                 lwd_date = datetime(2026, 6, 5)
-                lwd_formatted = lwd_date.strftime('%d %B %Y')  # "05 June 2026"
-                return f'Serving 30 days notice, LWD: {lwd_formatted}', 0.95
+                lwd_formatted = lwd_date.strftime('%d %B %Y')
+                return f'Serving 7 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
-                # For LinkedIn with immediate joiner questions, return numeric 30
                 if self._current_platform == 'linkedin' and 'immediate' in question_lower:
-                    return '30', 0.98
-                # Use PatternMatcher instead of KNOWN_QA_PATTERNS
+                    return '7', 0.98
                 answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
                 return answer or 'Yes', max(confidence, 0.95)
             elif 'in days' in question_lower:
-                return '30', 0.98
+                return '7', 0.98
             else:
-                # Generic notice period question
-                # LinkedIn: just number, Naukri: include LWD and full text
                 if self._current_platform == 'linkedin':
-                    return '30', 0.95
+                    return '7', 0.95
                 elif self._current_platform == 'naukri':
                     lwd_date = datetime(2026, 6, 5)
                     lwd_formatted = lwd_date.strftime('%d %B %Y')
-                    return f'30 days (LWD: {lwd_formatted})', 0.95
+                    return f'7 days (LWD: {lwd_formatted})', 0.95
                 else:
-                    return '30 days', 0.95
+                    return '7 days', 0.95
         
         if is_location_question:
             if 'preferred' in question_lower:
@@ -3456,7 +3449,7 @@ class SentinelAgent:
                         'if serving notice period immediate joiner'
                     ];
                     noticeKeys.forEach(k => {{
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '7';
                     }});
                     
                     // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
@@ -3464,7 +3457,7 @@ class SentinelAgent:
                         const kLower = k.toLowerCase();
                         if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
                             KNOWN_PATTERNS[k] === 'Yes') {{
-                            KNOWN_PATTERNS[k] = '30';
+                            KNOWN_PATTERNS[k] = '7';
                         }}
                     }});
                 }}
@@ -4451,7 +4444,7 @@ class SentinelAgent:
                         'official notice period lwd', 'official notice'
                     ];
                     noticeKeys.forEach(k => {{
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '30';
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '7';
                     }});
                     
                     // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
@@ -4460,7 +4453,7 @@ class SentinelAgent:
                         const kLower = k.toLowerCase();
                         if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
                             (KNOWN_PATTERNS[k] === 'Yes' || KNOWN_PATTERNS[k] === 'No')) {{
-                            KNOWN_PATTERNS[k] = '30';
+                            KNOWN_PATTERNS[k] = '7';
                         }}
                     }});
                     
@@ -4582,8 +4575,8 @@ class SentinelAgent:
                         
                         if (isYearsQ) {{
                             bestMatch = '4'; // Default years
-                        }} else if (isNoticeQ) {{
-                            bestMatch = '30'; // Default notice period
+                        }                        } else if (isNoticeQ) {{
+                            bestMatch = '7'; // Default notice period
                         }} else if (isSalaryQ) {{
                             bestMatch = qLower.includes('current') ? '1530000' : '2400000';
                         }} else if (isExpQ) {{
@@ -5210,8 +5203,8 @@ class SentinelAgent:
                                 }} else if (combinedText.includes('email')) {{
                                     answer = 'siddhant3646@gmail.com';
                                     console.log('Fallback: Filling email');
-                                }} else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {{
-                                    answer = '30';
+                                }                                } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {{
+                                    answer = '7';
                                     console.log('Fallback: Filling notice/join period');
                                 }} else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should')) {{
                                     answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
@@ -5385,9 +5378,9 @@ class SentinelAgent:
                                     }} else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience')) {{
                                         answer = '0';
                                         console.log('Fallback: Using 0 for months of experience select');
-                                    }} else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {{
-                                        answer = '30';
-                                        console.log('Fallback: Using 30 for notice period select');
+                                    }                                    } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {{
+                                        answer = '7';
+                                        console.log('Fallback: Using 7 for notice period select');
                                     }}
                                 }}
                                 
@@ -6974,10 +6967,12 @@ class SentinelAgent:
                                     debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
                                 }} else {{
                                     // Serving Notice Period not found - select next best option
-                                    // Priority: 1 month > 15 days or less > 2 month > 3 month > first available
+                                    // Priority: 15 days or less / 0-15 days > 7 days > 1 month > 2 month > 3 month > first available
                                     const fallbackPriority = [
-                                        (l) => l.includes('1 month') || l === '1month',
+                                        (l) => l.includes('0-15 day') || l.includes('0-15day'),
                                         (l) => l.includes('15 day') || l.includes('15days') || l.includes('less'),
+                                        (l) => l.includes('7 day') || l.includes('7day'),
+                                        (l) => l.includes('1 month') || l === '1month',
                                         (l) => l.includes('2 month') || l === '2month',
                                         (l) => l.includes('3 month') || l === '3month',
                                     ];

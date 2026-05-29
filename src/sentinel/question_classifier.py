@@ -324,7 +324,7 @@ CATEGORY_DEFAULTS = {
         "degree": "B.Tech Computer Science",
         "university": "VIT Bhopal University",
         "year": "2022",
-        "cgpa": "8.5"
+        "cgpa": "8.51"
     },
     QuestionCategory.AVAILABILITY: {
         "interview": "Yes, available for interview",

@@ -35,7 +35,7 @@
         notice_period: {
             patterns: ['notice period', 'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice', 'your np', 'what is your np', 'mention np'],
             default: 'Serving Notice Period',
-            numeric_default: '30'
+            numeric_default: '7'
         },
         join_immediately: {
             patterns: ['join immediately or currently serving', 'can you join immediately or currently serving np', 'currently serving np', 'can you join immediately', 'join immediately'],
@@ -58,8 +58,8 @@
             default: 'Noida'
         },
         location_preferred: {
-            patterns: ['preferred location', 'preferred city', 'city preference', 'interview city'],
-            default: 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune'
+            patterns: ['preferred location', 'preferred city', 'city preference', 'interview city', 'preferred location for work'],
+            default: 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad'
         },
         contact_phone: {
             patterns: ['phone number', 'mobile number', 'contact number'],
@@ -104,7 +104,7 @@
         },
         education_cgpa: {
             patterns: ['cgpa', 'percentage'],
-            default: '8.5'
+            default: '8.51'
         },
         personal_dob: {
             patterns: ['date of birth', 'dob', 'date of birth as per pan'],
@@ -263,7 +263,7 @@
         if (category === 'notice_period') {
             // For text/number inputs, return numeric value only
             if (fieldType === 'text' || fieldType === 'number') {
-                return data.numeric_default || '30';
+                return data.numeric_default || '7';
             }
             // For dropdowns/radios, return text value
             return data.default;
@@ -1204,8 +1204,8 @@
                 // If no pattern match, use smart fallback based on keywords
                 if (!fillValue) {
                     if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {
-                        fillValue = '30';
-                        console.log('Fallback: Filling notice/join period with: 30');
+                        fillValue = '7';
+                        console.log('Fallback: Filling notice/join period with: 7');
                     } else if (combinedText.includes('phone') || combinedText.includes('mobile')) {
                         fillValue = '7905828880';
                         console.log('Fallback: Filling phone number');

@@ -25,7 +25,7 @@
       "salary_format": "text_with_lpa",
       "salary_example": "15.3 LPA",
       "notice_format": "text_with_days",
-      "notice_example": "30 Days",
+      "notice_example": "7 Days",
       "location_format": "detailed_with_type",
       "boolean_format": "true_false",
       "numeric_defaults": false,
@@ -38,7 +38,7 @@
       "salary_format": "numeric_currency",
       "salary_example": "1530000",
       "notice_format": "numeric_days",
-      "notice_example": "30",
+      "notice_example": "7",
       "location_format": "city_only",
       "boolean_format": "yes_no",
       "numeric_defaults": true,
@@ -51,7 +51,7 @@
       "salary_format": "text_with_lpa",
       "salary_example": "15.3 LPA",
       "notice_format": "text_with_days",
-      "notice_example": "30 Days",
+      "notice_example": "7 Days",
       "location_format": "detailed",
       "boolean_format": "true_false",
       "numeric_defaults": false,
@@ -236,7 +236,7 @@
       ],
       "category": "notice_period",
       "default": "Serving Notice Period",
-      "numeric_default": "30"
+      "numeric_default": "7"
     },
     "location_current": {
       "patterns": [
@@ -277,15 +277,16 @@
         "please select your preferred location",
         "location preference",
         "work location",
-        "preferred city"
+        "preferred city",
+        "preferred location for work"
       ],
       "category": "location",
-      "default": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune",
+      "default": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad",
       "input_type_defaults": {
         "radio": "Noida",
         "checkbox": true,
-        "select": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune",
-        "text": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune"
+        "select": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad",
+        "text": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad"
       }
     },
     "contact_phone": {
@@ -939,11 +940,11 @@
         "percentage"
       ],
       "category": "education",
-      "default": "8.5",
+      "default": "8.51",
       "input_type_defaults": {
-        "radio": "8.5",
-        "select": "8.5",
-        "text": "8.5"
+        "radio": "8.51",
+        "select": "8.51",
+        "text": "8.51"
       }
     },
     "personal_dob": {
@@ -1322,14 +1323,14 @@
         "last working day"
       ],
       "category": "notice_period",
-      "default": "30 days",
-      "numeric_default": "30",
+      "default": "7 days",
+      "numeric_default": "7",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30 days",
-        "text": "30 days",
-        "number": "30"
+        "select": "7 days",
+        "text": "7 days",
+        "number": "7"
       }
     },
     "desired_start_date": {
@@ -1344,15 +1345,15 @@
         "proposed start date"
       ],
       "category": "notice_period",
-      "default": "30 days",
-      "numeric_default": "30",
-      "note": "Dynamic DD/MM/YYYY value (today + 30 days) is computed at runtime in agent.py",
+      "default": "7 days",
+      "numeric_default": "7",
+      "note": "Dynamic DD/MM/YYYY value (today + 7 days) is computed at runtime in agent.py",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30 days",
-        "text": "30 days",
-        "number": "30"
+        "select": "7 days",
+        "text": "7 days",
+        "number": "7"
       }
     },
     "offer_in_hand": {
@@ -1781,18 +1782,21 @@
         "message to the hiring manager",
         "message",
         "comments",
+        "any comments",
         "objective",
         "your message",
         "why are you interested",
         "why do you want",
-        "additional information"
+        "additional information",
+        "why should we hire you",
+        "any additional comments"
       ],
       "category": "preference",
-      "default": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.",
+      "default": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team.",
       "input_type_defaults": {
-        "radio": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java",
-        "select": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team.",
-        "text": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team."
+        "radio": "I bring strong full-stack experience and am eager to contribute.",
+        "select": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications.",
+        "text": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team."
       }
     },
     "why_join_company": {
@@ -2215,11 +2219,11 @@
         "ctc,ectc and np"
       ],
       "category": "preference",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)",
+      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
       "input_type_defaults": {
         "radio": "Current CTC: 15.3 LPA",
-        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)",
-        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)"
+        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
+        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)"
       }
     },
     "candidates_from_mumbai": {
@@ -3552,13 +3556,13 @@
         "please enter your notice period in days"
       ],
       "category": "notice_period",
-      "default": "30",
+      "default": "7",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30",
-        "text": "30",
-        "number": "30"
+        "select": "7",
+        "text": "7",
+        "number": "7"
       }
     },
     "notice_period_9029": {
@@ -3613,13 +3617,13 @@
         "official notice"
       ],
       "category": "notice_period",
-      "default": "30",
+      "default": "7",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30",
-        "text": "30",
-        "number": "30"
+        "select": "7",
+        "text": "7",
+        "number": "7"
       }
     },
     "experience_2607": {
@@ -3718,14 +3722,17 @@
     "education_6302": {
       "patterns": [
         "percentage",
-        "12th percentage"
+        "12th percentage",
+        "12th score",
+        "hsc percentage",
+        "intermediate percentage"
       ],
       "category": "education",
-      "default": "85",
+      "default": "70",
       "input_type_defaults": {
-        "radio": "85",
-        "select": "85",
-        "text": "85"
+        "radio": "70",
+        "select": "70",
+        "text": "70"
       }
     },
     "preference_7966": {
@@ -4556,11 +4563,11 @@
         "np"
       ],
       "category": "preference",
-      "default": "30",
+      "default": "7",
       "input_type_defaults": {
-        "radio": "30",
-        "select": "30",
-        "text": "30"
+        "radio": "7",
+        "select": "7",
+        "text": "7"
       }
     },
     "preference_5233": {
@@ -4981,11 +4988,11 @@
         "ctc,ectc and np"
       ],
       "category": "salary",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)",
+      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
       "input_type_defaults": {
         "radio": "15.3",
-        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)",
-        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)",
+        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
+        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
         "number": "15.3"
       }
     },
@@ -5050,13 +5057,13 @@
         "can you join within"
       ],
       "category": "notice_period",
-      "default": "Yes, can join within 30 days",
+      "default": "Yes, can join within 7 days",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "Yes, can join within 30 days",
-        "text": "Yes, can join within 30 days",
-        "number": "30"
+        "select": "Yes, can join within 7 days",
+        "text": "Yes, can join within 7 days",
+        "number": "7"
       }
     },
     "experience_1235": {
@@ -5064,12 +5071,12 @@
         "expected joining date"
       ],
       "category": "experience",
-      "default": "30 days from offer acceptance",
+      "default": "7 days from offer acceptance",
       "input_type_defaults": {
-        "radio": "30",
-        "select": "30 days from offer acceptance",
-        "text": "30 days from offer acceptance",
-        "number": "30"
+        "radio": "7",
+        "select": "7 days from offer acceptance",
+        "text": "7 days from offer acceptance",
+        "number": "7"
       }
     },
     "notice_period_4363": {
@@ -5077,25 +5084,30 @@
         "tentative joining date"
       ],
       "category": "notice_period",
-      "default": "30 days from offer",
+      "default": "7 days from offer",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30 days from offer",
-        "text": "30 days from offer",
-        "number": "30"
+        "select": "7 days from offer",
+        "text": "7 days from offer",
+        "number": "7"
       }
     },
     "preference_8139": {
       "patterns": [
-        "monthly gross"
+        "monthly gross",
+        "what are your financial expectations",
+        "financial expectations",
+        "monthly gross salary",
+        "expected monthly gross"
       ],
       "category": "preference",
-      "default": "1.5",
+      "default": "2400000",
       "input_type_defaults": {
-        "radio": "1.5",
-        "select": "1.5",
-        "text": "1.5"
+        "radio": "2400000",
+        "select": "2400000",
+        "text": "2400000",
+        "number": "2400000"
       }
     },
     "salary_8846": {
@@ -5466,14 +5478,18 @@
     },
     "education_3569": {
       "patterns": [
-        "10th percentage"
+        "10th percentage",
+        "10th score",
+        "10th marks",
+        "ssc percentage",
+        "ssc score"
       ],
       "category": "education",
-      "default": "90",
+      "default": "88",
       "input_type_defaults": {
-        "radio": "90",
-        "select": "90",
-        "text": "90"
+        "radio": "88",
+        "select": "88",
+        "text": "88"
       }
     },
     "preference_2803": {
@@ -6981,11 +6997,11 @@
         "please share your ctc ectc and notice period"
       ],
       "category": "salary",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days",
+      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
       "input_type_defaults": {
         "radio": "15.3",
-        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days",
-        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days",
+        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
+        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
         "number": "15.3"
       }
     },
@@ -7149,14 +7165,14 @@
         "start date availability"
       ],
       "category": "notice_period",
-      "default": "30",
-      "numeric_default": "30",
+      "default": "7",
+      "numeric_default": "7",
       "input_type_defaults": {
-        "radio": "30",
+        "radio": "7",
         "checkbox": false,
-        "select": "30",
-        "text": "30",
-        "number": "30"
+        "select": "7",
+        "text": "7",
+        "number": "7"
       }
     },
     "linkedin_current_company": {
@@ -7464,15 +7480,16 @@
         "city preference",
         "preferred work location",
         "preferred base location",
-        "location preference"
+        "location preference",
+        "preferred location for work"
       ],
       "category": "location",
-      "default": "Bangalore / Pune / Hyderabad",
+      "default": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad",
       "input_type_defaults": {
-        "radio": "Bangalore / Pune / Hyderabad",
+        "radio": "Noida",
         "checkbox": true,
-        "select": "Bangalore / Pune / Hyderabad",
-        "text": "Bangalore / Pune / Hyderabad"
+        "select": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad",
+        "text": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad"
       }
     },
     "naukri_total_experience": {

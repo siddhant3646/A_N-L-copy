@@ -87,9 +87,9 @@ DETAILS TO USE:
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
 - Experience: 3.8 Years (46 months total). ALWAYS ENTER "3.8 Years" in experience fields.
-- Location: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon.
+- Location: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes. | Immediate Joiner: Yes.
-- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.5 and if asked in percentage then it is 85%
+- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.51 and if asked in percentage then it is 85.1%
 - Completed HSC/10th in year 2018, CGPA: 8.8 and if asked in percentage then it is 88%
 - Completed SSC/12th in year 2016, Percentage was 70%.
 - Resident/Citizen of India.
@@ -109,12 +109,12 @@ DETAILS TO USE:
 - Skills: Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes.
 - Expected Salary: 24,00,000
 - Current Salary: 15,30,000
-- Notice Period: 30 days (Serving Notice). LWD: Feb 03, 2026.
+- Notice Period: 7 days (Serving Notice). LWD: Feb 03, 2026.
 - Experience: 4 Years.
-- Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon.
+- Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes.
 - Immediate Joiner: Yes. Can join by Feb 03, 2026.
-- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.5 and if asked in percentage then it is 85%
+- Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.51 and if asked in percentage then it is 85.1%
 - Completed HSC/10th in year 2018, CGPA: 8.8 and if asked in percentage then it is 88%
 - Completed SSC/12th in year 2016, Percentage was 70%.
 - Resident/Citizen of India

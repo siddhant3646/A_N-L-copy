@@ -44,7 +44,7 @@ test_cases = [
     
     # Notice period
     ("What is your notice period?", "Serving Notice Period"),
-    ("Notice period in days", "30"),
+    ("Notice period in days", "7"),
 ]
 
 # Simplified matching logic (what the JS does)

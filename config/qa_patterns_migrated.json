@@ -94,7 +94,7 @@
         "compensation"
       ],
       "category": "salary",
-      "default": "15.3 LPA"
+      "default": "23 LPA"
     },
     "salary_5211": {
       "patterns": [
@@ -125,7 +125,7 @@
         "please enter your current ctc in inr"
       ],
       "category": "salary",
-      "default": "1530000"
+      "default": "2300000"
     },
     "salary_5206": {
       "patterns": [
@@ -186,7 +186,7 @@
         "your cctc"
       ],
       "category": "salary",
-      "default": "15.3"
+      "default": "23"
     },
     "personal_info_3544": {
       "patterns": [
@@ -1464,7 +1464,7 @@
         "bfsi domain"
       ],
       "category": "preference",
-      "default": "Yes, I am currently working at Fiserv in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience."
+      "default": "Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience."
     },
     "preference_1135": {
       "patterns": [
@@ -1759,7 +1759,7 @@
         "ctc,ectc and np"
       ],
       "category": "salary",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days (Negotiable)"
+      "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)"
     },
     "preference_7138": {
       "patterns": [
@@ -1784,7 +1784,7 @@
         "joining"
       ],
       "category": "notice_period",
-      "default": "30 days"
+      "default": "15 days"
     },
     "notice_period_7391": {
       "patterns": [
@@ -1826,21 +1826,21 @@
         "can you join within"
       ],
       "category": "notice_period",
-      "default": "Yes, can join within 30 days"
+      "default": "Yes, can join within 15 days"
     },
     "experience_1235": {
       "patterns": [
         "expected joining date"
       ],
       "category": "experience",
-      "default": "30 days from offer acceptance"
+      "default": "15 days from offer acceptance"
     },
     "notice_period_4363": {
       "patterns": [
         "tentative joining date"
       ],
       "category": "notice_period",
-      "default": "30 days from offer"
+      "default": "15 days from offer"
     },
     "salary_3709": {
       "patterns": [
@@ -1849,7 +1849,7 @@
         "per month salary"
       ],
       "category": "salary",
-      "default": "127500"
+      "default": "191667"
     },
     "preference_8139": {
       "patterns": [
@@ -1880,7 +1880,7 @@
         "onsite"
       ],
       "category": "preference",
-      "default": "1530000"
+      "default": "2300000"
     },
     "preference_1381": {
       "patterns": [
@@ -1921,7 +1921,7 @@
         "current drawn"
       ],
       "category": "preference",
-      "default": "15.3 LPA"
+      "default": "23 LPA"
     },
     "salary_5297": {
       "patterns": [
@@ -1929,28 +1929,28 @@
         "pay range"
       ],
       "category": "salary",
-      "default": "20-24 LPA"
+      "default": "23-30 LPA"
     },
     "preference_6142": {
       "patterns": [
         "budget"
       ],
       "category": "preference",
-      "default": "20-24 LPA range"
+      "default": "23-30 LPA range"
     },
     "salary_763": {
       "patterns": [
         "ctc breakup"
       ],
       "category": "salary",
-      "default": "Fixed: 15.3 LPA, Variable: 0"
+      "default": "Fixed: 23 LPA, Variable: 0"
     },
     "salary_8415": {
       "patterns": [
         "salary structure"
       ],
       "category": "salary",
-      "default": "Fixed CTC: 15.3 LPA"
+      "default": "Fixed CTC: 23 LPA"
     },
     "experience_6817": {
       "patterns": [
@@ -2668,14 +2668,14 @@
         "available immediately"
       ],
       "category": "preference",
-      "default": "30 days"
+      "default": "15 days"
     },
     "notice_period_4843": {
       "patterns": [
         "mention your lwd"
       ],
       "category": "notice_period",
-      "default": "Serving 30 days notice"
+      "default": "Serving 15 days notice"
     },
     "preference_6838": {
       "patterns": [
@@ -3048,7 +3048,7 @@
         "range"
       ],
       "category": "preference",
-      "default": "20-24 LPA"
+      "default": "23-30 LPA"
     },
     "salary_8914": {
       "patterns": [
@@ -3088,14 +3088,14 @@
         "please share your ctc ectc and notice period"
       ],
       "category": "salary",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 30 Days"
+      "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days"
     },
     "salary_6123": {
       "patterns": [
         "please provide your ctc details"
       ],
       "category": "salary",
-      "default": "Current: 15.3 LPA, Expected: 24 LPA"
+      "default": "Current: 23 LPA, Expected: 30 LPA"
     }
   },
   "categories": {

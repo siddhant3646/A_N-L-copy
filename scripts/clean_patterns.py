@@ -54,7 +54,7 @@ for pid, pdata in auto_learned.items():
     if pid in auto_to_remove:
         continue
     default = pdata.get('default', '')
-    if default in ('Yes', 'No', '7', '7 days', '4', '3.8 Years', 'Fiserv'):
+    if default in ('Yes', 'No', '15', '15 days', '4', '3.8 Years', 'Everbridge', 'Fiserv'):
         for cp_id, cp_data in canonical.items():
             if cp_data.get('default', '') == default:
                 pat_strings = pdata.get('patterns', [])

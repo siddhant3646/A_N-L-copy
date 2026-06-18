@@ -10,23 +10,23 @@ KNOWN_QA_PATTERNS = {
     'total experience': '3.8 Years',
     'overall experience': '3.8 Years',
     'year of exp': '3.8 Years',
-    'current salary': '13.5 LPA',
-    'expected salary': '20 LPA',
-    'current ctc': '13.5 LPA',
-    'expected ctc': '20 LPA',
-    'monthly salary': '112500',
-    'expected annual ctc': '20 LPA',
-    'current annual ctc': '13.5 LPA',
+    'current salary': '23 LPA',
+    'expected salary': '30 LPA',
+    'current ctc': '23 LPA',
+    'expected ctc': '30 LPA',
+    'monthly salary': '191667',
+    'expected annual ctc': '30 LPA',
+    'current annual ctc': '23 LPA',
     'phone number': '7905828880',
     'mobile number': '7905828880',
     'email address': 'siddhant3646@gmail.com',
     'current location': 'Noida',
     'current city': 'Noida',
     'preferred location': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
-    'current employer': 'Fiserv',
-    'current company': 'Fiserv',
+    'current employer': 'Everbridge',
+    'current company': 'Everbridge',
     'previous company': 'Fiserv',
-    'notice period': '30 days',
+    'notice period': '15 days',
     'serving notice': 'Yes',
     'graduation year': '2022',
     'cgpa': '8.51',
@@ -58,50 +58,50 @@ KNOWN_QA_PATTERNS = {
     'virtual interview': 'Yes',
     'telephonic interview': 'Yes',
     'interested for f2f interview': 'Yes',
-    'available on': 'Yes',
-    'contract to hire': 'Yes',
-    'c2h position': 'Yes',
-    'interested in c2h': 'Yes',
-    'contract to hire position': 'Yes',
-    'date of birth': '17/12/2000',
-    'dob': '17/12/2000',
-    'tools used': 'Docker, Kubernetes, Jenkins, GitHub Actions, AWS CloudFormation, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python',
-    'configuration tools': 'Ansible, Terraform, AWS CloudFormation',
-    'deployment tools': 'Docker, Kubernetes, Jenkins, GitHub Actions',
-    'monitoring tools': 'Prometheus, Grafana, CloudWatch, ELK Stack',
-    'automation tools': 'Jenkins, GitHub Actions, Ansible, Terraform',
-    'tools used on extensive basis': 'Docker, Kubernetes, Jenkins, GitHub Actions, Terraform, Ansible, PostgreSQL, MongoDB, Bash, Python',
+    'available for interview': 'Yes',
+    'a': 'Yes',
+    'b': 'No',
+    'c': 'No',
+    'd': 'No',
+    'e': 'No',
+    'share your ctc': 'Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)',
+    'ctc ectc np': 'Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)',
+    'ctc and np': 'Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)',
+    'ctc,ectc and np': 'Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)',
+    'salary range': '23-30 LPA',
+    'current salary range': '23 LPA',
+    'expected salary range': '30 LPA',
+    'annual salary': '2300000',
+    'ctc range': '23-30 LPA',
+    'expected annual ctc in inr': '3000000',
+    'expected annual ctc': '3000000',
+    'expected ctc in inr': '3000000',
+    'expected ctc inr': '3000000',
+    'what is your current annual salary': '2300000',
+    'what is your current annual salary?': '2300000',
+    'what is your expected annual salary': '3000000',
+    'what is your expected annual salary?': '3000000',
+    'what is your current salary?': '23 LPA',
+    'what is your expected salary?': '30 LPA',
+    'what is your current ctc': '23 LPA',
+    'what is your current ctc?': '23 LPA',
+    'gross salary': '23 LPA',
+    'gross current salary': '23 LPA',
+    'gross expected salary': '30 LPA',
+    'salary expectations': '30 LPA',
+    'product based': 'Yes, I have experience working at Everbridge which is a product-based company in the BFSI domain.',
+    'bfsi domain': 'Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience.',
+    'previous company': 'Fiserv',
+    'worked with everbridge': 'Yes',
+    'worked with fiserv': 'Yes',
+    'worked at everbridge': 'Yes',
+    'worked at fiserv': 'Yes',
+    'have you worked with everbridge': 'Yes',
+    'have you worked with fiserv': 'Yes',
+    'have you worked at everbridge': 'Yes',
+    'have you worked at fiserv': 'Yes',
 }
 
-patterns_json = json.dumps(KNOWN_QA_PATTERNS)
-
-# Simulate the f-string processing
-js_code_template = """function() {{
-    // 1. INJECTED KNOWLEDGE
-    const KNOWN_PATTERNS = {patterns_json};
-    const MAX_RETRIES = 3;
-    
-    // 2. SHARED UTILS
-    const isVisible = (elem) => !!(elem && (elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length));
-
-    return 'TEST_OK';
-}}"""
-
-js_code = js_code_template.format(patterns_json=patterns_json)
-
-# Write to file for inspection
-with open('generated_js_debug.js', 'w') as f:
-    f.write(js_code)
-
-print("Generated JavaScript saved to generated_js_debug.js")
-print(f"\nFirst 500 characters:\n{js_code[:500]}")
-print(f"\nLast 500 characters:\n{js_code[-500:]}")
-
-# Check for line 290
-lines = js_code.split('\n')
-if len(lines) >= 290:
-    print(f"\n\nLine 290 context:")
-    for i in range(max(0, 287), min(len(lines), 293)):
-        print(f"{i+1}: {lines[i]}")
-else:
-    print(f"\n\nFile only has {len(lines)} lines")
+if __name__ == '__main__':
+    print("KNOWN_QA_PATTERNS loaded successfully")
+    print(f"Total patterns: {len(KNOWN_QA_PATTERNS)}")

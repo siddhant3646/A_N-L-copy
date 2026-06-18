@@ -22,20 +22,20 @@
         },
         current_salary: {
             patterns: ['current salary', 'what is your current salary', 'current ctc', 'current annual ctc', 'monthly salary', 'current ctc in lakhs', 'current ctc in lpa', 'current ctc [in lpa]', 'ctc in lacs per annum', 'cctc', 'what is your cctc', 'your cctc', 'your current ctc', 'what is your current ctc'],
-            default: '15.3 LPA',
-            numeric_default: '1530000',
-            inr_default: '1530000'
+            default: '23 LPA',
+            numeric_default: '2300000',
+            inr_default: '2300000'
         },
         expected_salary: {
             patterns: ['expected salary', 'what is your expected salary', 'expected ctc', 'expected annual ctc', 'expected ctc in lakhs', 'expected ctc in lpa', 'expected ctc [in lpa]', 'ectc', 'what is your ectc', 'your ectc', 'what is your current expected ctc', 'current expected ctc'],
-            default: '24 LPA',
-            numeric_default: '2400000',
-            inr_default: '2400000'
+            default: '30 LPA',
+            numeric_default: '3000000',
+            inr_default: '3000000'
         },
         notice_period: {
             patterns: ['notice period', 'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice', 'your np', 'what is your np', 'mention np'],
             default: 'Serving Notice Period',
-            numeric_default: '7'
+            numeric_default: '15'
         },
         join_immediately: {
             patterns: ['join immediately or currently serving', 'can you join immediately or currently serving np', 'currently serving np', 'can you join immediately', 'join immediately'],
@@ -116,7 +116,7 @@
         },
         company_current: {
             patterns: ['current employer', 'current company', 'payroll company', 'current payroll company'],
-            default: 'Fiserv'
+            default: 'Everbridge'
         },
         interview_availability: {
             patterns: ['face to face interview', 'f2f interview', 'available for interview', 'interested for interview', 'virtual interview', 'telephonic interview', 'video interview'],
@@ -175,7 +175,7 @@
         },
         previous_relevant_experience: {
             patterns: ['specify previous experiences relevant', 'previous experiences relevant', 'relevant experiences for the position'],
-            default: '3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.'
+            default: '3.8+ years as Full Stack Developer at Everbridge: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.'
         },
         why_join: {
             patterns: ['why would you like to join', 'why do you want to join', 'what makes you interested in joining'],
@@ -254,16 +254,16 @@
             return data.linkedin_default || '4';
         }
         
-        // For CTC/salary fields, on LinkedIn we should always return INR value (1530000 or 2400000)
+        // For CTC/salary fields, on LinkedIn we should always return INR value (2300000 or 3000000)
         if (category === 'current_salary' || category === 'expected_salary') {
-            return data.inr_default; // Return INR numbers: 1530000 or 2400000
+            return data.inr_default; // Return INR numbers: 2300000 or 3000000
         }
         
         // For notice period fields, on LinkedIn return numeric value (30) for text inputs to avoid validation errors
         if (category === 'notice_period') {
             // For text/number inputs, return numeric value only
             if (fieldType === 'text' || fieldType === 'number') {
-                return data.numeric_default || '7';
+                return data.numeric_default || '15';
             }
             // For dropdowns/radios, return text value
             return data.default;

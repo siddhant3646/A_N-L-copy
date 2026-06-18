@@ -33,7 +33,7 @@ class SemanticQuestionMatcher:
                 'compensation currently', 'salary now', 'current package',
                 'how much do you earn', 'what do you make', 'current remuneration'
             ],
-            'answer': '15.3 LPA',
+            'answer': '23 LPA',
             'category': 'salary'
         },
         'salary_expected': {
@@ -43,7 +43,7 @@ class SemanticQuestionMatcher:
                 'salary expected', 'compensation expected', 'expected package',
                 'how much do you want', 'salary you want', 'expecting salary'
             ],
-            'answer': '24 LPA',
+            'answer': '30 LPA',
             'category': 'salary'
         },
         'notice_period': {
@@ -108,7 +108,7 @@ class SemanticQuestionMatcher:
                 'current employer', 'company you work for', 'where do you work',
                 'current organization', 'who do you work for', 'employer name'
             ],
-            'answer': 'Fiserv',
+            'answer': 'Everbridge',
             'category': 'company'
         },
         'position_current': {

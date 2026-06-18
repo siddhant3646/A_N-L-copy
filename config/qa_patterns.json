@@ -23,9 +23,9 @@
       "experience_format": "text_with_years",
       "experience_example": "3.8 Years",
       "salary_format": "text_with_lpa",
-      "salary_example": "15.3 LPA",
+      "salary_example": "23 LPA",
       "notice_format": "text_with_days",
-      "notice_example": "7 Days",
+      "notice_example": "15 Days",
       "location_format": "detailed_with_type",
       "boolean_format": "true_false",
       "numeric_defaults": false,
@@ -36,7 +36,7 @@
       "experience_format": "numeric_only",
       "experience_example": "4",
       "salary_format": "numeric_currency",
-      "salary_example": "1530000",
+      "salary_example": "2300000",
       "notice_format": "numeric_days",
       "notice_example": "7",
       "location_format": "city_only",
@@ -49,9 +49,9 @@
       "experience_format": "text_with_years",
       "experience_example": "3.8 Years",
       "salary_format": "text_with_lpa",
-      "salary_example": "15.3 LPA",
+      "salary_example": "23 LPA",
       "notice_format": "text_with_days",
-      "notice_example": "7 Days",
+      "notice_example": "15 Days",
       "location_format": "detailed",
       "boolean_format": "true_false",
       "numeric_defaults": false,
@@ -144,13 +144,13 @@
         "what is my cctc"
       ],
       "category": "salary",
-      "default": "15.3 LPA",
-      "numeric_default": "15.3",
+      "default": "23 LPA",
+      "numeric_default": "23",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "15.3 LPA",
-        "text": "15.3 LPA",
-        "number": "15.3"
+        "radio": "23",
+        "select": "23 LPA",
+        "text": "23 LPA",
+        "number": "23"
       },
       "priority": 7,
       "negative_patterns": [
@@ -190,13 +190,13 @@
         "salary expectations"
       ],
       "category": "salary",
-      "default": "24 LPA",
-      "numeric_default": "24",
+      "default": "30 LPA",
+      "numeric_default": "30",
       "input_type_defaults": {
-        "radio": "24",
-        "select": "24 LPA",
-        "text": "24 LPA",
-        "number": "24"
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "30 LPA",
+        "number": "30"
       },
       "priority": 7,
       "negative_patterns": [
@@ -372,13 +372,13 @@
         "if yes mention ctc"
       ],
       "category": "salary",
-      "default": "15.3",
-      "numeric_default": "15.3",
+      "default": "23",
+      "numeric_default": "23",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "15.3",
-        "text": "15.3",
-        "number": "15.3"
+        "radio": "23",
+        "select": "23",
+        "text": "23",
+        "number": "23"
       },
       "priority": 7
     },
@@ -743,12 +743,12 @@
         "company name"
       ],
       "category": "employment",
-      "default": "Fiserv",
+      "default": "Everbridge",
       "input_type_defaults": {
-        "radio": "Fiserv",
+        "radio": "Everbridge",
         "checkbox": true,
-        "select": "Fiserv",
-        "text": "Fiserv"
+        "select": "Everbridge",
+        "text": "Everbridge"
       },
       "priority": 8
     },
@@ -1074,13 +1074,13 @@
         "365 days thereafter"
       ],
       "category": "notice_period",
-      "default": "7 days",
+      "default": "15 days",
       "numeric_default": "7",
       "input_type_defaults": {
         "radio": "7",
         "checkbox": false,
-        "select": "7 days",
-        "text": "7 days",
+        "select": "15 days",
+        "text": "15 days",
         "number": "7"
       },
       "priority": 7,
@@ -1102,14 +1102,14 @@
         "proposed start date"
       ],
       "category": "notice_period",
-      "default": "7 days",
+      "default": "15 days",
       "numeric_default": "7",
       "note": "Dynamic DD/MM/YYYY value (today + 7 days) is computed at runtime in agent.py",
       "input_type_defaults": {
         "radio": "7",
         "checkbox": false,
-        "select": "7 days",
-        "text": "7 days",
+        "select": "15 days",
+        "text": "15 days",
         "number": "7"
       },
       "priority": 7
@@ -2005,11 +2005,11 @@
         "ctc,ectc and np"
       ],
       "category": "preference",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
+      "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)",
       "input_type_defaults": {
-        "radio": "Current CTC: 15.3 LPA",
-        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)",
-        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)"
+        "radio": "Current CTC: 23 LPA",
+        "select": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)",
+        "text": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)"
       },
       "priority": 5
     },
@@ -2040,12 +2040,12 @@
         "monthly salary"
       ],
       "category": "salary",
-      "default": "127500",
+      "default": "191667",
       "input_type_defaults": {
-        "radio": "127500",
-        "select": "127500",
-        "text": "127500",
-        "number": "127500"
+        "radio": "191667",
+        "select": "191667",
+        "text": "191667",
+        "number": "191667"
       },
       "priority": 8
     },
@@ -2081,12 +2081,12 @@
         "what is your current annual salary?"
       ],
       "category": "salary",
-      "default": "1530000",
+      "default": "2300000",
       "input_type_defaults": {
-        "radio": "1530000",
-        "select": "1530000",
-        "text": "1530000",
-        "number": "1530000"
+        "radio": "2300000",
+        "select": "2300000",
+        "text": "2300000",
+        "number": "2300000"
       },
       "priority": 9
     },
@@ -2120,11 +2120,11 @@
         "expected salary range"
       ],
       "category": "salary",
-      "default": "20-24 LPA",
+      "default": "20-30 LPA",
       "input_type_defaults": {
         "radio": "20",
-        "select": "20-24 LPA",
-        "text": "20-24 LPA",
+        "select": "20-30 LPA",
+        "text": "20-30 LPA",
         "number": "20"
       },
       "priority": 8
@@ -2147,12 +2147,12 @@
         "your cctc"
       ],
       "category": "salary",
-      "default": "15.3",
+      "default": "23",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "15.3",
-        "text": "15.3",
-        "number": "15.3"
+        "radio": "23",
+        "select": "23",
+        "text": "23",
+        "number": "23"
       },
       "priority": 8
     },
@@ -2170,12 +2170,12 @@
         "what is your ectc"
       ],
       "category": "salary",
-      "default": "24",
+      "default": "30",
       "input_type_defaults": {
-        "radio": "24",
-        "select": "24",
-        "text": "24",
-        "number": "24"
+        "radio": "30",
+        "select": "30",
+        "text": "30",
+        "number": "30"
       },
       "priority": 8
     },
@@ -2615,7 +2615,20 @@
         "have you ever worked for fiserv",
         "have you ever worked with fiserv",
         "are you currently employed by fiserv",
-        "currently employed by fiserv"
+        "currently employed by fiserv",
+        "worked with everbridge",
+        "worked for everbridge",
+        "worked at everbridge",
+        "employed by everbridge",
+        "employed at everbridge",
+        "have you worked with everbridge",
+        "have you worked for everbridge",
+        "have you worked at everbridge",
+        "have you been employed by everbridge",
+        "have you ever worked for everbridge",
+        "have you ever worked with everbridge",
+        "are you currently employed by everbridge",
+        "currently employed by everbridge"
       ],
       "category": "yes_no",
       "default": "Yes",
@@ -2857,12 +2870,12 @@
         "current drawn"
       ],
       "category": "salary",
-      "default": "15.3 LPA",
+      "default": "23 LPA",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "15.3 LPA",
-        "text": "15.3 LPA",
-        "number": "15.3"
+        "radio": "23",
+        "select": "23 LPA",
+        "text": "23 LPA",
+        "number": "23"
       },
       "priority": 8
     },
@@ -3263,12 +3276,12 @@
         "employer name"
       ],
       "category": "employment",
-      "default": "Fiserv",
+      "default": "Everbridge",
       "input_type_defaults": {
-        "radio": "Fiserv",
+        "radio": "Everbridge",
         "checkbox": true,
-        "select": "Fiserv",
-        "text": "Fiserv"
+        "select": "Everbridge",
+        "text": "Everbridge"
       },
       "priority": 8
     },
@@ -3300,13 +3313,13 @@
         "salary target"
       ],
       "category": "salary",
-      "default": "24",
-      "numeric_default": "24",
+      "default": "30",
+      "numeric_default": "30",
       "input_type_defaults": {
-        "radio": "24",
-        "select": "24",
-        "text": "24",
-        "number": "24"
+        "radio": "30",
+        "select": "30",
+        "text": "30",
+        "number": "30"
       },
       "priority": 9
     },
@@ -3617,12 +3630,12 @@
         "current package"
       ],
       "category": "salary",
-      "default": "15.3",
+      "default": "23",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "15.3",
-        "text": "15.3",
-        "number": "15.3"
+        "radio": "23",
+        "select": "23",
+        "text": "23",
+        "number": "23"
       },
       "priority": 8
     },
@@ -4147,12 +4160,12 @@
         "please enter your expected ctc in inr"
       ],
       "category": "salary",
-      "default": "2400000",
+      "default": "3000000",
       "input_type_defaults": {
-        "radio": "2400000",
-        "select": "2400000",
-        "text": "2400000",
-        "number": "2400000"
+        "radio": "3000000",
+        "select": "3000000",
+        "text": "3000000",
+        "number": "3000000"
       },
       "priority": 4
     },
@@ -4561,12 +4574,12 @@
         "expected monthly gross"
       ],
       "category": "preference",
-      "default": "2400000",
+      "default": "3000000",
       "input_type_defaults": {
-        "radio": "2400000",
-        "select": "2400000",
-        "text": "2400000",
-        "number": "2400000"
+        "radio": "3000000",
+        "select": "3000000",
+        "text": "3000000",
+        "number": "3000000"
       },
       "priority": 4
     },
@@ -4575,12 +4588,12 @@
         "ctc breakup"
       ],
       "category": "salary",
-      "default": "Fixed: 15.3 LPA, Variable: 0",
+      "default": "Fixed: 23 LPA, Variable: 0",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "Fixed: 15.3 LPA, Variable: 0",
-        "text": "Fixed: 15.3 LPA, Variable: 0",
-        "number": "15.3"
+        "radio": "23",
+        "select": "Fixed: 23 LPA, Variable: 0",
+        "text": "Fixed: 23 LPA, Variable: 0",
+        "number": "23"
       },
       "priority": 4
     },
@@ -4589,12 +4602,12 @@
         "salary structure"
       ],
       "category": "salary",
-      "default": "Fixed CTC: 15.3 LPA",
+      "default": "Fixed CTC: 23 LPA",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "Fixed CTC: 15.3 LPA",
-        "text": "Fixed CTC: 15.3 LPA",
-        "number": "15.3"
+        "radio": "23",
+        "select": "Fixed CTC: 23 LPA",
+        "text": "Fixed CTC: 23 LPA",
+        "number": "23"
       },
       "priority": 4
     },
@@ -5427,11 +5440,11 @@
         "available immediately"
       ],
       "category": "preference",
-      "default": "30 days",
+      "default": "15 days",
       "input_type_defaults": {
-        "radio": "30 days",
-        "select": "30 days",
-        "text": "30 days"
+        "radio": "15 days",
+        "select": "15 days",
+        "text": "15 days"
       },
       "priority": 4
     },
@@ -5949,11 +5962,11 @@
         "range"
       ],
       "category": "preference",
-      "default": "20-24 LPA",
+      "default": "20-30 LPA",
       "input_type_defaults": {
-        "radio": "20-24 LPA",
-        "select": "20-24 LPA",
-        "text": "20-24 LPA"
+        "radio": "20-30 LPA",
+        "select": "20-30 LPA",
+        "text": "20-30 LPA"
       },
       "priority": 4
     },
@@ -5991,12 +6004,12 @@
         "please share your ctc ectc and notice period"
       ],
       "category": "salary",
-      "default": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
+      "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
-        "text": "Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days",
-        "number": "15.3"
+        "radio": "23",
+        "select": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days",
+        "text": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days",
+        "number": "23"
       },
       "priority": 4
     },
@@ -6005,12 +6018,12 @@
         "please provide your ctc details"
       ],
       "category": "salary",
-      "default": "Current: 15.3 LPA, Expected: 24 LPA",
+      "default": "Current: 23 LPA, Expected: 30 LPA",
       "input_type_defaults": {
-        "radio": "15.3",
-        "select": "Current: 15.3 LPA, Expected: 24 LPA",
-        "text": "Current: 15.3 LPA, Expected: 24 LPA",
-        "number": "15.3"
+        "radio": "23",
+        "select": "Current: 23 LPA, Expected: 30 LPA",
+        "text": "Current: 23 LPA, Expected: 30 LPA",
+        "number": "23"
       },
       "priority": 4
     },
@@ -6110,7 +6123,8 @@
       "priority": 8,
       "negative_patterns": [
         "currently employed by any of the",
-        "currently employed by fiserv"
+        "currently employed by fiserv",
+        "currently employed by everbridge"
       ]
     }
   },

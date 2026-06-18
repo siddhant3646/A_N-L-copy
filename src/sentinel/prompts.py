@@ -2,6 +2,8 @@
 Prompts and Context for Sentinel Agent.
 """
 
+from datetime import datetime, timedelta
+
 
 
 COMMON_CONTEXT = """
@@ -68,8 +70,8 @@ CORE WORKFLOW (STRICT SEQUENCE):
        - IF Question is Yes/No -> **Click "Yes"**.
       - IF Question asks for Years/Number -> **Enter "3.8 Years"** (or just "3.8").
       - **Standard Fields:**
-        - "Current Salary" -> "15.3" (or "15.3 LPA")
-        - "Expected Salary" -> "24" (or "24 LPA")
+        - "Current Salary" -> "23" (or "23 LPA")
+        - "Expected Salary" -> "30" (or "30 LPA")
 
    - **COMPLETION (The "Submit" Step):**
      - **Goal:** Click the button to close the modal.
@@ -83,7 +85,7 @@ CORE WORKFLOW (STRICT SEQUENCE):
 
 DETAILS TO USE:
 - Resume: Use my uploaded resume.
-- Expected Salary: 24 LPA | Current Salary: 15.3 LPA
+- Expected Salary: 30 LPA | Current Salary: 23 LPA
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
 - Experience: 3.8 Years (46 months total). ALWAYS ENTER "3.8 Years" in experience fields.
@@ -107,9 +109,9 @@ DETAILS TO USE:
 - Mobile: 7905828880
 - Phone Code: India (+91)
 - Skills: Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes.
-- Expected Salary: 24,00,000
-- Current Salary: 15,30,000
-- Notice Period: 7 days (Serving Notice). LWD: Feb 03, 2026.
+- Expected Salary: 30,00,000
+- Current Salary: 23,00,000
+- Notice Period: 15 days (Serving Notice). LWD: Feb 03, 2026.
 - Experience: 4 Years.
 - Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes.
@@ -160,8 +162,8 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
    - LWD -> Enter "03/02/2026"
    - Tech Experience (Yes/No) -> Click "Yes"
    - Tech Experience (Years) -> Enter "3.8 Years"
-   - Current Salary -> "15.3 LPA"
-   - Expected Salary -> "24 LPA"
+    - Current Salary -> "23 LPA"
+    - Expected Salary -> "30 LPA"
    - Location -> "Noida"
    - Relocation -> "Yes"
 5. DONE: When modal closes or "Application Submitted" appears, task complete.
@@ -189,18 +191,24 @@ WORKFLOW:
 9. Task Complete
 """
 
-# Task runs second: Sets LWD to System Date + 30 days
-NAUKRI_EMPLOYMENT_LWD_30_TASK = COMMON_CONTEXT + """
+def _build_lwd_task(days_offset: int) -> str:
+    lwd_date = datetime.now() + timedelta(days=days_offset)
+    year = lwd_date.year
+    month = lwd_date.month
+    day = lwd_date.day
+    month_name = lwd_date.strftime('%B')
+
+    return COMMON_CONTEXT + f"""
 NAVIGATE to https://www.naukri.com/mnjuser/profile?id=&altresid immediately.
 
-GOAL: Update 'Expected Last Working Day' in the Employment section to June 5, 2026.
+GOAL: Update 'Expected Last Working Day' in the Employment section to {month_name} {day}, {year}.
 
 WORKFLOW:
 1. Locate Employment section on the profile page
-2. Click the pencil/edit icon next to your current employment (Software Engineer 2 at Fiserv)
+2. Click the pencil/edit icon next to your current employment (Software Engineer 2 at Everbridge)
 3. Wait for the Employment modal to open
 4. Scroll down to find "Expected last working day" dropdowns
-5. Set the Year, Month, and Day dropdowns to: June 5, 2026 (Year=2026, Month=6, Day=5)
+5. Set the Year, Month, and Day dropdowns to: {month_name} {day}, {year} (Year={year}, Month={month}, Day={day})
 6. Click Save button
 7. Task Complete
 
@@ -210,26 +218,8 @@ DOM Selectors:
 - Day dropdown: #lwdDayFor
 """
 
-# Task runs first: Sets LWD to System Date + 31 days
-NAUKRI_EMPLOYMENT_LWD_31_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.naukri.com/mnjuser/profile?id=&altresid immediately.
-
-GOAL: Update 'Expected Last Working Day' in the Employment section to June 5, 2026.
-
-WORKFLOW:
-1. Locate Employment section on the profile page
-2. Click the pencil/edit icon next to your current employment (Software Engineer 2 at Fiserv)
-3. Wait for the Employment modal to open
-4. Scroll down to find "Expected last working day" dropdowns
-5. Set the Year, Month, and Day dropdowns to: June 5, 2026 (Year=2026, Month=6, Day=5)
-6. Click Save button
-7. Task Complete
-
-DOM Selectors:
-- Year dropdown: #lwdYearFor
-- Month dropdown: #lwdMonthFor
-- Day dropdown: #lwdDayFor
-"""
+NAUKRI_EMPLOYMENT_LWD_15_TASK = _build_lwd_task(15)
+NAUKRI_EMPLOYMENT_LWD_14_TASK = _build_lwd_task(14)
 
 NAUKRI_EARLY_ACCESS_TASK = COMMON_CONTEXT + """
 NAVIGATE to https://www.naukri.com/mnjuser/recommended-earjobs immediately.

@@ -53,7 +53,7 @@ class TestSalaryMatching(unittest.TestCase):
         self.assertFalse(is_valid)
 
     def test_salary_validation_accepts_number(self):
-        is_valid, err = AnswerValidator.validate('15.3 LPA', 'salary', '')
+        is_valid, err = AnswerValidator.validate('23 LPA', 'salary', '')
         self.assertTrue(is_valid)
 
 
@@ -73,8 +73,8 @@ class TestExperienceMatching(unittest.TestCase):
         ans, score = self.matcher.fuzzy_match('How many years of experience do you have?')
         if ans:
             self.assertNotIn('LPA', ans)
-            self.assertNotIn('15.3', ans)
-            self.assertNotIn('24', ans)
+            self.assertNotIn('23', ans)
+            self.assertNotIn('30', ans)
 
     def test_experience_validation_rejects_no_number(self):
         is_valid, err = AnswerValidator.validate('Yes', 'experience', '')
@@ -223,19 +223,19 @@ class TestPlatformOverrides(unittest.TestCase):
             return '7', 0.99
         np_keywords = ['your np', 'what is your np', 'mention np', 'np?']
         if any(kw in question_lower for kw in np_keywords):
-            return '7', 0.98
+            return '15', 0.98
         lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working']
         if any(kw in question_lower for kw in lwd_keywords):
-            return '7', 0.98
+            return '15', 0.98
         if 'cctc' in question_lower:
-            return '15.3', 0.98
+            return '23', 0.98
         if 'ectc' in question_lower:
-            return '24', 0.98
+            return '30', 0.98
         return None
 
     def test_cctc_abbreviation(self):
         ans = self._check_platform_overrides('cctc')
-        self.assertEqual(ans, ('15.3', 0.98))
+        self.assertEqual(ans, ('23', 0.98))
 
     def test_ectc_abbreviation(self):
         ans = self._check_platform_overrides('ectc')
@@ -322,7 +322,7 @@ class TestCrossCategoryDisambiguation(unittest.TestCase):
     def test_salary_vs_experience(self):
         ans, score = self.matcher.fuzzy_match('What is your current salary?')
         if ans:
-            has_salary_number = any(x in ans for x in ['15.3', '24', 'LPA', '1530000', '2400000'])
+            has_salary_number = any(x in ans for x in ['23', '30', 'LPA', '2300000', '3000000'])
             self.assertTrue(has_salary_number, f"Expected salary-like answer, got: {ans}")
 
     def test_experience_vs_salary(self):
@@ -334,18 +334,18 @@ class TestCrossCategoryDisambiguation(unittest.TestCase):
         ans, score = self.matcher.fuzzy_match('What is your notice period?')
         if ans:
             self.assertNotIn('LPA', ans)
-            self.assertNotIn('15.3', ans)
+            self.assertNotIn('23', ans)
 
 
 class TestAnswerValidator(unittest.TestCase):
     def test_salary_valid(self):
-        self.assertTrue(AnswerValidator.validate('15.3 LPA', 'salary', '')[0])
+        self.assertTrue(AnswerValidator.validate('23 LPA', 'salary', '')[0])
 
     def test_salary_invalid_no_number(self):
         self.assertFalse(AnswerValidator.validate('Yes', 'salary', '')[0])
 
     def test_salary_fix_extracts_number(self):
-        self.assertEqual(AnswerValidator.fix('15.3 LPA', 'salary', ''), '15.3')
+        self.assertEqual(AnswerValidator.fix('23 LPA', 'salary', ''), '23')
 
     def test_experience_valid(self):
         self.assertTrue(AnswerValidator.validate('3.8 Years', 'experience', '')[0])

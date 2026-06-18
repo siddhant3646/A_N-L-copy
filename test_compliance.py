@@ -30,10 +30,14 @@ compliance_tests = [
     ("worked for reed", "No"),
     ("worked at nielsen", "No"),
     
-    # Current employer (Fiserv) - should return "Yes"
+    # Current employer (Everbridge) - should return "Yes"
+    ("worked with everbridge", "Yes"),
+    ("have you worked at everbridge", "Yes"),
+    ("are you currently employed by everbridge", "Yes"),
+    # Previous employer (Fiserv) - should also return "Yes"
     ("worked with fiserv", "Yes"),
     ("have you worked at fiserv", "Yes"),
-    ("are you currently employed by fiserv", "Yes"),
+    ("are you currently employed by fiserv", "No"),
     
     # Generic employment history - should return "No"
     ("have you worked with any of the following companies", "No"),

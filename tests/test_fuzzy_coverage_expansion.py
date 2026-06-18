@@ -80,7 +80,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
     # --- Category 10: Salary Format Variants ---
     def test_salary_inr_monthly(self):
         ans, score = self.agent._fuzzy_match_question('salary in inr per month')
-        self.assertEqual(ans, '127500')
+        self.assertEqual(ans, '191667')
         self.assertGreater(score, 0.6)
 
     def test_hike_percentage(self):
@@ -178,27 +178,27 @@ class TestSalaryUpdateRegression(unittest.TestCase):
 
     def test_current_salary_lpa(self):
         ans, score = self.agent._fuzzy_match_question('current salary')
-        self.assertIn('15.3', ans)
+        self.assertIn('23', ans)
         self.assertGreater(score, 0.8)
 
     def test_expected_salary_lpa(self):
         ans, score = self.agent._fuzzy_match_question('expected salary')
-        self.assertIn('24', ans)
+        self.assertIn('30', ans)
         self.assertGreater(score, 0.8)
 
     def test_current_ctc_inr(self):
         ans, score = self.agent._fuzzy_match_question('current ctc')
-        self.assertTrue('15' in ans or '1530000' in ans)
+        self.assertTrue('23' in ans or '2300000' in ans)
         self.assertGreater(score, 0.8)
 
     def test_expected_ctc_inr(self):
         ans, score = self.agent._fuzzy_match_question('expected annual ctc in inr')
-        self.assertIn('2400000', ans)
+        self.assertIn('3000000', ans)
         self.assertGreater(score, 0.8)
 
     def test_monthly_salary(self):
         ans, score = self.agent._fuzzy_match_question('monthly salary')
-        self.assertEqual(ans, '127500')
+        self.assertEqual(ans, '191667')
         self.assertGreater(score, 0.8)
 
     def test_take_home(self):
@@ -208,12 +208,12 @@ class TestSalaryUpdateRegression(unittest.TestCase):
 
     def test_cctc_numeric(self):
         ans, score = self.agent._fuzzy_match_question('cctc')
-        self.assertEqual(ans, '15.3')
+        self.assertEqual(ans, '23')
         self.assertGreater(score, 0.8)
 
     def test_ectc_numeric(self):
         ans, score = self.agent._fuzzy_match_question('ectc')
-        self.assertIn('24', ans)
+        self.assertIn('30', ans)
         self.assertGreater(score, 0.8)
 
 

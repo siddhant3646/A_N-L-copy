@@ -286,9 +286,9 @@ CATEGORY_PATTERNS = {
 # Default answers by category
 CATEGORY_DEFAULTS = {
     QuestionCategory.SALARY: {
-        "current": "15.3 LPA",
-        "expected": "24 LPA",
-        "numeric": "24"  # For fields requiring just numbers
+        "current": "23 LPA",
+        "expected": "30 LPA",
+        "numeric": "30"  # For fields requiring just numbers
     },
     QuestionCategory.EXPERIENCE: {
         "years": "3.8 Years",  # Will be overridden by platform config
@@ -296,8 +296,8 @@ CATEGORY_DEFAULTS = {
         "numeric": "4"  # Will be overridden by platform config
     },
     QuestionCategory.NOTICE_PERIOD: {
-        "period": "30 days",
-        "days": "30",
+        "period": "15 days",
+        "days": "15",
         "serving": "Yes",
         "lwd": None  # Calculated dynamically
     },
@@ -527,34 +527,34 @@ class QuestionClassifier:
             "number" in question
         )
         
-        # For LinkedIn, return plain numbers (15.3 or 24) without LPA suffix
+        # For LinkedIn, return plain numbers (23 or 30) without LPA suffix
         if self.platform == "linkedin":
             if "current" in question or "cctc" in question:
-                return "1530000"
+                return "2300000"
             elif "expected" in question or "ectc" in question:
-                return "2400000"
+                return "3000000"
             else:
-                return "2400000"
+                return "3000000"
         else:
             if "current" in question or "cctc" in question:
-                return "15.3" if is_numeric else "15.3 LPA"
+                return "23" if is_numeric else "23 LPA"
             elif "expected" in question or "ectc" in question:
-                return "24" if is_numeric else "24 LPA"
+                return "30" if is_numeric else "30 LPA"
             else:
-                return "24" if is_numeric else "24 LPA"
+                return "30" if is_numeric else "30 LPA"
     
     def _get_notice_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get notice period answer."""
         if "lwd" in question or "last working" in question:
             from datetime import datetime, timedelta
-            lwd = datetime.now() + timedelta(days=30)
+            lwd = datetime.now() + timedelta(days=15)
             return lwd.strftime('%d %B %Y')
         elif "serving" in question:
             return "Yes"
         elif "days" in question or input_type == InputType.NUMBER:
-            return "30"
+            return "15"
         else:
-            return "30 days"
+            return "15 days"
     
     def _get_location_answer(self, question: str) -> str:
         """Get location answer."""
@@ -655,8 +655,8 @@ class QuestionClassifier:
         import re
         for pattern in company_compliance_patterns:
             if re.search(pattern, question_lower):
-                # Additional check: if it's asking about current company (Fiserv), answer truthfully
-                if "fiserv" in question_lower:
+                # Additional check: if it's asking about current company (Everbridge), answer truthfully
+                if "everbridge" in question_lower or "fiserv" in question_lower:
                     return "Yes"
                 # For all other companies, default to "No" (compliance safe answer)
                 return "No"

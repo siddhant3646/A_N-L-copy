@@ -39,12 +39,12 @@ test_cases = [
     ("How much experience do you have?", "3.8 Years"),
     
     # Salary questions  
-    ("What is your current salary?", "15.3 LPA"),
-    ("Current CTC", "1530000"),
+    ("What is your current salary?", "23 LPA"),
+    ("Current CTC", "2300000"),
     
     # Notice period
     ("What is your notice period?", "Serving Notice Period"),
-    ("Notice period in days", "7"),
+    ("Notice period in days", "15"),
 ]
 
 # Simplified matching logic (what the JS does)

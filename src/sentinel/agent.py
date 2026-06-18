@@ -419,8 +419,8 @@ class SentinelAgent:
         if worked_with_match:
             company = worked_with_match.group(1).lower()
             if company not in TECH_KEYWORDS:
-                # Only answer "Yes" for current employer, "No" for all others
-                if company == 'fiserv':
+                # Only answer "Yes" for current/past employer, "No" for all others
+                if company == 'everbridge' or company == 'fiserv':
                     return 'Yes', 0.98
                 return 'No', 0.98
         
@@ -430,7 +430,7 @@ class SentinelAgent:
         if past_years_match:
             company = past_years_match.group(1).lower()
             if company not in TECH_KEYWORDS:
-                if company == 'fiserv':
+                if company == 'everbridge' or company == 'fiserv':
                     return 'Yes', 0.98
                 return 'No', 0.98
         
@@ -440,7 +440,7 @@ class SentinelAgent:
         if specific_company_match:
             company = specific_company_match.group(1).lower()
             if company not in TECH_KEYWORDS:
-                if company == 'fiserv':
+                if company == 'everbridge' or company == 'fiserv':
                     return 'Yes', 0.98
                 # For Visa and other companies, return "No"
                 return 'No', 0.98
@@ -453,8 +453,8 @@ class SentinelAgent:
         # Pattern 5: "Ever been employed by" or "Previously employed by"
         ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed)\s+(?:by|at|with)"
         if re.search(ever_employed_pattern, question_lower):
-            # Check if it's asking about Fiserv specifically
-            if 'fiserv' in question_lower:
+            # Check if it's asking about Everbridge or Fiserv specifically
+            if 'everbridge' in question_lower or 'fiserv' in question_lower:
                 return 'Yes', 0.98
             return 'No', 0.98
         
@@ -478,23 +478,23 @@ class SentinelAgent:
         
         # Notice period for current company in days - HIGH PRIORITY to avoid matching company name
         if 'notice period' in question_lower and 'company' in question_lower and ('days' in question_lower or 'in days' in question_lower):
-            return '7', 0.99
+            return '15', 0.99
         
         # Handle high-priority question types FIRST
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
-            return 'Current CTC: 15.3 LPA, Expected CTC: 24 LPA, Notice Period: 7 Days (Negotiable)', 0.98
+            return 'Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)', 0.98
         
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
-            return '7', 0.98
+            return '15', 0.98
         
-        # LWD (Last Working Day) questions - calculate date 30 days from now
+        # LWD (Last Working Day) questions - calculate date 15 days from now
         if is_lwd_question:
-            return '7', 0.98
+            return '15', 0.98
         
-        # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 30 days)
+        # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 15 days)
         start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
                                'when would you like to start', 'when can you start working',
                                'proposed start date']
@@ -503,7 +503,7 @@ class SentinelAgent:
         if not is_start_date_question and 'start date' in question_lower:
             is_start_date_question = True
         if is_start_date_question:
-            start_date = datetime.now() + timedelta(days=7)
+            start_date = datetime.now() + timedelta(days=15)
             return start_date.strftime('%d/%m/%Y'), 0.99
         
         # Project count questions
@@ -587,17 +587,17 @@ class SentinelAgent:
         if is_salary_question:
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
-                return '15.3', 0.98
+                return '23', 0.98
             if 'ectc' in question_lower:
-                return '24', 0.98
+                return '30', 0.98
             
             # Check for expected vs current - use plain numbers
             if 'expected' in question_lower or 'expect' in question_lower:
-                return '24', 0.95
+                return '30', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
-                return '15.3', 0.95
+                return '23', 0.95
             # Default to expected if unclear
-            return '24', 0.90
+            return '30', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -625,26 +625,26 @@ class SentinelAgent:
         if is_notice_question or is_immediate_joiners_only:
             if 'last working day' in question_lower or 'lwd' in question_lower:
                 if self._current_platform == 'linkedin' and 'serving' in question_lower:
-                    return '7', 0.98
-                lwd_date = datetime(2026, 6, 5)
+                    return '15', 0.98
+                lwd_date = datetime.now() + timedelta(days=15)
                 lwd_formatted = lwd_date.strftime('%d %B %Y')
-                return f'Serving 7 days notice, LWD: {lwd_formatted}', 0.95
+                return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
                 if self._current_platform == 'linkedin' and 'immediate' in question_lower:
-                    return '7', 0.98
+                    return '15', 0.98
                 answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
                 return answer or 'Yes', max(confidence, 0.95)
             elif 'in days' in question_lower:
-                return '7', 0.98
+                return '15', 0.98
             else:
                 if self._current_platform == 'linkedin':
-                    return '7', 0.95
+                    return '15', 0.95
                 elif self._current_platform == 'naukri':
-                    lwd_date = datetime(2026, 6, 5)
+                    lwd_date = datetime.now() + timedelta(days=15)
                     lwd_formatted = lwd_date.strftime('%d %B %Y')
-                    return f'7 days (LWD: {lwd_formatted})', 0.95
+                    return f'15 days (LWD: {lwd_formatted})', 0.95
                 else:
-                    return '7 days', 0.95
+                    return '15 days', 0.95
         
         if is_location_question:
             if 'preferred' in question_lower:
@@ -2764,13 +2764,13 @@ class SentinelAgent:
                                 }
                             }
                             
-                            // Last resort: Find any edit icon near text "Software Engineer" or "Fiserv"
+                            // Last resort: Find any edit icon near text "Software Engineer" or "Everbridge"
                             const allEditIcons = document.querySelectorAll('span.edit.icon, .edit.icon');
                             for (let icon of allEditIcons) {
                                 const parent = icon.closest('.row, div[class*="item"], .card');
                                 if (parent) {
                                     const text = parent.innerText || '';
-                                    if (text.includes('Software Engineer') || text.includes('Fiserv')) {
+                                    if (text.includes('Software Engineer') || text.includes('Everbridge')) {
                                         icon.click();
                                         return 'EDIT_CLICKED';
                                     }
@@ -2784,13 +2784,17 @@ class SentinelAgent:
                         if edit_result == 'EDIT_CLICKED':
                             await asyncio.sleep(random.uniform(3, 5))  # Wait for modal to open
                             
-                            # Step 2: Hardcoded LWD date: June 5, 2026
-                            year_val = '2026'
-                            month_num = '6'
-                            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                            # Step 2: Dynamic LWD date — parse offset from task description
+                            import re as _re
+                            offset_match = _re.search(r'LWD\s*\+(\d+)', self._task_description)
+                            days_offset = int(offset_match.group(1)) if offset_match else 15
+                            lwd_date = datetime.now() + timedelta(days=days_offset)
+                            year_val = str(lwd_date.year)
+                            month_num = str(lwd_date.month)
+                            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                             month_display = month_names[int(month_num) - 1]
-                            day_val = '5'
+                            day_val = str(lwd_date.day)
                             
                             print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
                             
@@ -3541,7 +3545,7 @@ class SentinelAgent:
                         qText.toLowerCase().includes('cctc') ||
                         qText.toLowerCase().includes('present');
                     // Use full INR values for Naukri
-                    answer = isCurrentSalary ? '1530000' : '2400000';
+                    answer = isCurrentSalary ? '2300000' : '3000000';
                 }}
                 
                 // DEBUG: Log what we detected
@@ -3708,7 +3712,7 @@ class SentinelAgent:
                             if (isSalaryQuestion) {{
                                 // Match if option contains our numeric answer
                                 if (optText.includes(answer) || 
-                                    (answer === '24' && (optText.includes('24') || optText.includes('20-25') || optText.includes('20-24')))) {{
+                                    (answer === '30' && (optText.includes('30') || optText.includes('25-30') || optText.includes('23-30')))) {{
                                     select.value = opt.value;
                                     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
                                     const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
@@ -4453,9 +4457,9 @@ class SentinelAgent:
                         if (KNOWN_PATTERNS[k]) {
                             // Use full INR values for LinkedIn text inputs
                             if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {
-                                KNOWN_PATTERNS[k] = '1530000';
+                                KNOWN_PATTERNS[k] = '2300000';
                             } else {
-                                KNOWN_PATTERNS[k] = '2400000';
+                                KNOWN_PATTERNS[k] = '3000000';
                             }
                         }
                     });
@@ -4473,7 +4477,7 @@ class SentinelAgent:
                         'official notice period lwd', 'official notice'
                     ];
                     noticeKeys.forEach(k => {
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '7';
+                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '15';
                     });
                     
                     // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
@@ -4605,9 +4609,9 @@ class SentinelAgent:
                         if (isYearsQ) {
                             bestMatch = '4'; // Default years
                         } else if (isNoticeQ) {
-                            bestMatch = '7'; // Default notice period
+                            bestMatch = '15'; // Default notice period
                         } else if (isSalaryQ) {
-                            bestMatch = qLower.includes('current') ? '1530000' : '2400000';
+                            bestMatch = qLower.includes('current') ? '2300000' : '3000000';
                         } else if (isExpQ) {
                             bestMatch = '3.8 Years';
                         }
@@ -4620,7 +4624,7 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ) {
-                            bestMatch = qLower.includes('current') ? '1530000' : '2400000';
+                            bestMatch = qLower.includes('current') ? '2300000' : '3000000';
                         }
                     }
                     
@@ -5458,8 +5462,8 @@ class SentinelAgent:
                                         answer = '0';
                                         console.log('Fallback: Using 0 for months of experience select');
                                     } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {
-                                        answer = '7';
-                                        console.log('Fallback: Using 7 for notice period select');
+                                        answer = '15';
+                                        console.log('Fallback: Using 15 for notice period select');
                                     }
                                 }
                                 

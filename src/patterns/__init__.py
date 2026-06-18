@@ -23,7 +23,7 @@ Example:
     
     # Resolve answer for dropdown
     resolver = InputAwareResolver()
-    result = resolver.resolve("3.8 Years", InputType.SELECT, options)
+    result = resolver.resolve("4 Years", InputType.SELECT, options)
 """
 
 from .pattern_loader import (

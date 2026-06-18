@@ -35,8 +35,8 @@ test_cases = [
     ("Currently employed as a contractor", "No"),
     
     # Experience questions
-    ("How many years of experience", "3.8 Years"),
-    ("How much experience do you have?", "3.8 Years"),
+    ("How many years of experience", "4 Years"),
+    ("How much experience do you have?", "4 Years"),
     
     # Salary questions  
     ("What is your current salary?", "23 LPA"),
@@ -95,7 +95,7 @@ def fuzzy_match_simple(question, known_patterns):
         elif 'notice' in q_lower and 'period' in q_lower:
             return '30'
         elif 'experience' in q_lower or 'years' in q_lower:
-            return '3.8 Years'
+            return '4 Years'
     
     return best_match
 

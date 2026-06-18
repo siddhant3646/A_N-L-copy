@@ -166,7 +166,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
 
     def test_when_can_you_join(self):
         ans, score = self.agent._fuzzy_match_question('when can you join')
-        self.assertIn('7', ans)
+        self.assertIn('15', ans)
         self.assertGreater(score, 0.5)
 
 
@@ -230,7 +230,7 @@ class TestExistingPatternsRegression(unittest.TestCase):
 
     def test_notice_period(self):
         ans, score = self.agent._fuzzy_match_question('notice period')
-        self.assertIn('7', ans)
+        self.assertIn('15', ans)
         self.assertGreater(score, 0.6)
 
     def test_relocation(self):
@@ -245,7 +245,7 @@ class TestExistingPatternsRegression(unittest.TestCase):
 
     def test_experience_years(self):
         ans, score = self.agent._fuzzy_match_question('How Many Years of work experience do you have')
-        self.assertIn(ans, ['4', '3.8', '3.8 Years'])
+        self.assertIn(ans, ['4', '4', '4 Years'])
         self.assertGreater(score, 0.6)
 
 

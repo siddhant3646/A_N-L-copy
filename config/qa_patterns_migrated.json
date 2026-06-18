@@ -47,7 +47,7 @@
         "exp"
       ],
       "category": "experience",
-      "default": "3.8 Years"
+      "default": "4 Years"
     },
     "experience_6353": {
       "patterns": [
@@ -1326,7 +1326,7 @@
         "comments"
       ],
       "category": "preference",
-      "default": "I am excited about this opportunity and believe my 3.8+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team."
+      "default": "I am excited about this opportunity and believe my 4+ years of full-stack development experience with Java, Spring Boot, React, and AWS would be valuable to your team."
     },
     "preference_2933": {
       "patterns": [
@@ -1374,7 +1374,7 @@
         "relevant experiences for the position"
       ],
       "category": "experience",
-      "default": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases."
+      "default": "4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases."
     },
     "notice_period_6584": {
       "patterns": [
@@ -1383,7 +1383,7 @@
         "what makes you interested in joining"
       ],
       "category": "notice_period",
-      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
+      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
     },
     "preference_1732": {
       "patterns": [
@@ -1394,7 +1394,7 @@
         "familiarity"
       ],
       "category": "preference",
-      "default": "I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews."
+      "default": "I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews."
     },
     "salary_3707": {
       "patterns": [
@@ -1435,7 +1435,7 @@
         "talking to us customers"
       ],
       "category": "preference",
-      "default": "Yes, I have 3.8+ years of experience working with US-based clients, conducting daily standups and demos. I am fluent in English with clear communication skills."
+      "default": "Yes, I have 4+ years of experience working with US-based clients, conducting daily standups and demos. I am fluent in English with clear communication skills."
     },
     "preference_2467": {
       "patterns": [
@@ -1457,14 +1457,14 @@
         "confidence in talking"
       ],
       "category": "preference",
-      "default": "Yes, I have 3.8+ years of experience working with international clients, comfortable with daily video calls and presentations."
+      "default": "Yes, I have 4+ years of experience working with international clients, comfortable with daily video calls and presentations."
     },
     "preference_3828": {
       "patterns": [
         "bfsi domain"
       ],
       "category": "preference",
-      "default": "Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience."
+      "default": "Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 4 years of experience."
     },
     "preference_1135": {
       "patterns": [
@@ -1957,21 +1957,21 @@
         "exposure"
       ],
       "category": "experience",
-      "default": "3.8 Years of hands-on exposure"
+      "default": "4 Years of hands-on exposure"
     },
     "preference_1222": {
       "patterns": [
         "competency"
       ],
       "category": "preference",
-      "default": "3.8 Years of competency"
+      "default": "4 Years of competency"
     },
     "experience_6564": {
       "patterns": [
         "expertise"
       ],
       "category": "experience",
-      "default": "3.8 Years of expertise"
+      "default": "4 Years of expertise"
     },
     "preference_4815": {
       "patterns": [
@@ -1980,21 +1980,21 @@
         "employment history"
       ],
       "category": "preference",
-      "default": "3.8 Years"
+      "default": "4 Years"
     },
     "personal_info_4815": {
       "patterns": [
         "career span"
       ],
       "category": "personal_info",
-      "default": "3.8 Years"
+      "default": "4 Years"
     },
     "experience_4241": {
       "patterns": [
         "domain experience"
       ],
       "category": "experience",
-      "default": "3.8 Years in BFSI domain"
+      "default": "4 Years in BFSI domain"
     },
     "experience_5469": {
       "patterns": [
@@ -2030,7 +2030,7 @@
         "relevant experience as software engineer"
       ],
       "category": "experience",
-      "default": "3.8"
+      "default": "4"
     },
     "experience_9246": {
       "patterns": [
@@ -2338,7 +2338,7 @@
         "mastery"
       ],
       "category": "preference",
-      "default": "Advanced level with 3.8 years experience"
+      "default": "Advanced level with 4 years experience"
     },
     "preference_8440": {
       "patterns": [
@@ -2726,7 +2726,7 @@
         "complex technical problems"
       ],
       "category": "preference",
-      "default": "Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 3.8+ years of full-stack development."
+      "default": "Very comfortable. I enjoy tackling complex technical challenges and have a strong problem-solving mindset built over 4+ years of full-stack development."
     },
     "preference_5946": {
       "patterns": [

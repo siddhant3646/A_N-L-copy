@@ -58,21 +58,21 @@ def test_naukri_tech_experience():
         "Years into AWS",
     ]
     
-    print("\nExpected: All should return '3.8 Years' (with 'Years' suffix)\n")
+    print("\nExpected: All should return '4 Years' (with 'Years' suffix)\n")
     
     all_passed = True
     for question in test_cases:
         category, confidence = classifier.classify(question)
         answer, ans_confidence = classifier.get_answer(question, category)
         
-        passed = answer == "3.8 Years"
+        passed = answer == "4 Years"
         status = "PASS" if passed else "FAIL"
         
         print(f"{status} | {question[:50]:<50} | Answer: '{answer}'")
         
         if not passed:
             all_passed = False
-            print(f"      Expected: '3.8 Years', Got: '{answer}'")
+            print(f"      Expected: '4 Years', Got: '{answer}'")
     
     return all_passed
 
@@ -98,11 +98,11 @@ def test_platform_difference():
     print(f"LinkedIn Answer: '{li_answer}'")
     print(f"Naukri Answer:   '{na_answer}'")
     
-    if li_answer == "4" and na_answer == "3.8 Years":
+    if li_answer == "4" and na_answer == "4 Years":
         print("\nPASS - Platform-specific answers are correct!")
         return True
     else:
-        print(f"\nFAIL - Expected LinkedIn: '4', Naukri: '3.8 Years'")
+        print(f"\nFAIL - Expected LinkedIn: '4', Naukri: '4 Years'")
         return False
 
 

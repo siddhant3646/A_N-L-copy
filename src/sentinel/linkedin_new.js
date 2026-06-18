@@ -175,15 +175,15 @@
         },
         previous_relevant_experience: {
             patterns: ['specify previous experiences relevant', 'previous experiences relevant', 'relevant experiences for the position'],
-            default: '3.8+ years as Full Stack Developer at Everbridge: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.'
+            default: '4+ years as Full Stack Developer at Everbridge: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.'
         },
         why_join: {
             patterns: ['why would you like to join', 'why do you want to join', 'what makes you interested in joining'],
-            default: 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.'
+            default: 'I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.'
         },
         what_bring: {
             patterns: ['what could you bring', 'what can you bring', 'what value can you add', 'what do you bring'],
-            default: 'I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.'
+            default: 'I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.'
         },
         street_address: {
             patterns: ['street', 'street address', 'address line 1', 'address line1'],

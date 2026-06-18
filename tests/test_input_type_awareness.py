@@ -165,8 +165,8 @@ class TestAnswerNormalizer(unittest.TestCase):
         
         # Should handle decimals
         self.assertEqual(
-            self.normalizer.normalize("3.8 Years", InputType.NUMBER),
-            "3.8"
+            self.normalizer.normalize("4 Years", InputType.NUMBER),
+            "4"
         )
         
         # Should handle commas
@@ -244,8 +244,8 @@ class TestConvenienceFunction(unittest.TestCase):
         self.assertEqual(result, "unchecked")
         
         # Test number extraction
-        result = normalize_answer("3.8 Years", "number")
-        self.assertEqual(result, "3.8")
+        result = normalize_answer("4 Years", "number")
+        self.assertEqual(result, "4")
 
 
 class TestJSONConfig(unittest.TestCase):

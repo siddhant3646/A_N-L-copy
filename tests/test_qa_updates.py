@@ -31,7 +31,7 @@ class TestQAUpdates(unittest.TestCase):
         for q in questions:
             ans, score = self.agent._fuzzy_match_question(q)
             print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
-            self.assertIn(ans, ['4', '3.8'], f"Failed for question: {q}") 
+            self.assertIn(ans, ['4', '4'], f"Failed for question: {q}") 
             self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
 
     def test_area_of_experience(self):

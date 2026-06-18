@@ -186,7 +186,7 @@ class SentinelAgent:
         
         if expects_number:
             # Extract numeric value from answer
-            # Handle cases like "3.8 Years" -> "3.8", "8 out of 10" -> "8"
+            # Handle cases like "4 Years" -> "4", "8 out of 10" -> "8"
             match = re.search(r'(\d+\.?\d*)', answer)
             if match:
                 numeric = match.group(1)
@@ -571,7 +571,7 @@ class SentinelAgent:
         
         # Handle total experience (short form) questions
         if is_total_exp_question:
-            return '3.8 Years', 0.95
+            return '4 Years', 0.95
         
         # Handle country/state questions
         if is_country_question:
@@ -620,7 +620,7 @@ class SentinelAgent:
             else:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("years of experience")
-                return answer or '3.8 Years', max(confidence, 0.95)
+                return answer or '4 Years', max(confidence, 0.95)
         
         if is_notice_question or is_immediate_joiners_only:
             if 'last working day' in question_lower or 'lwd' in question_lower:
@@ -3439,10 +3439,8 @@ class SentinelAgent:
                 if (window.location.hostname.includes('linkedin')) {{
                     Object.keys(KNOWN_PATTERNS).forEach(k => {{
                         const v = KNOWN_PATTERNS[k];
-                        if (v === '3.8 Years') KNOWN_PATTERNS[k] = '4';
-                        else if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
+                        if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
                         else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
-                        else if (typeof v === 'string' && v.startsWith('3.8 Years')) KNOWN_PATTERNS[k] = '4';
                     }});
                     
                     const noticeKeys = [
@@ -3521,7 +3519,11 @@ class SentinelAgent:
                 const isLwdDateQ = qLower.includes('when is your lwd') ||
                                    qLower.includes('what is your lwd') ||
                                    qLower.includes('lwd date') ||
-                                   (qLower.includes('lwd') && !qLower.includes('serving lwd') && !qLower.includes('if serving'));
+                                   qLower.includes('your lwd') ||
+                                   qLower.includes('your ldw') ||
+                                   qLower.includes('last working day') ||
+                                   qLower.includes('ldw') ||
+                                   qLower.includes('lwd');
                 let answer;
                 if (isLwdDateQ) {{
                     answer = '05 Jun 2026';
@@ -3573,7 +3575,7 @@ class SentinelAgent:
                 // CHECK FOR COMPLETION: If chatLayer is visible but has no inputs and no real question,
                 // the application was likely submitted successfully
                 const hasAnyInput = hasSelect || hasRadio || hasCheckbox || !!textInput || !!contentEditableEarly;
-                const isShortQuestion = qText && qText.trim().length <= 3; // "2", "3.8" etc are not real questions
+                const isShortQuestion = qText && qText.trim().length <= 3; // "2", "4" etc are not real questions
                 const hasRealQuestion = qText && qText.trim().length > 10 && qText.includes('?');
                 
                 if (!hasAnyInput && chatLayer && isVisible(chatLayer)) {{
@@ -3687,11 +3689,18 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // If no match found, click first option as fallback
+                    // If no match found, check if a contenteditable input exists before falling back to first option
                     if (!clickedBtn && optBtns.length > 0) {{
-                        optBtns[0].click();
-                        clickedBtn = optBtns[0];
-                        console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
+                        const hasContentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
+                                                  document.querySelector('div[contenteditable="true"]');
+                        const allSkip = optBtns.every(b => (b.innerText || '').toLowerCase().includes('skip'));
+                        if (allSkip && hasContentEditable) {{
+                            console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
+                        }} else {{
+                            optBtns[0].click();
+                            clickedBtn = optBtns[0];
+                            console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
+                        }}
                     }}
                     
                     if (clickedBtn) {{
@@ -3757,7 +3766,7 @@ class SentinelAgent:
                     let clickedRadio = false;
                     const answerLower = answer.toLowerCase();
                     
-                    // Extract numeric value from answer (e.g., "3.8 Years" -> 3.8)
+                    // Extract numeric value from answer (e.g., "4 Years" -> 4)
                     const answerNumericMatch = answer.match(/(\d+\.?\d*)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
                     console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
@@ -4435,10 +4444,8 @@ class SentinelAgent:
                     // Instead of maintaining a list, scan all values generically
                     Object.keys(KNOWN_PATTERNS).forEach(k => {
                         const v = KNOWN_PATTERNS[k];
-                        if (v === '3.8 Years') KNOWN_PATTERNS[k] = '4';
-                        else if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
+                        if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
                         else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
-                        else if (typeof v === 'string' && v.startsWith('3.8 Years')) KNOWN_PATTERNS[k] = '4';
                     });
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs
@@ -4613,7 +4620,7 @@ class SentinelAgent:
                         } else if (isSalaryQ) {
                             bestMatch = qLower.includes('current') ? '2300000' : '3000000';
                         } else if (isExpQ) {
-                            bestMatch = '3.8 Years';
+                            bestMatch = '4 Years';
                         }
                     }
                     
@@ -4639,10 +4646,8 @@ class SentinelAgent:
                     // Extract numeric value from answer for range matching
                     const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
-                    // Extract the integer part for exact matching (e.g., "3.8" -> 3, "4" -> 4)
-                    const answerInt = Math.floor(answerNum);
-                    
-                    let bestOpt = null;
+                    // Extract the integer part for exact matching (e.g., "4" -> 4)
+                    const answerInt = Math.floor(answerNum);                    let bestOpt = null;
                     let bestScore = -1;
                     
                     for (const opt of options) {
@@ -4659,11 +4664,11 @@ class SentinelAgent:
                         if (optNum >= 0 && hasAnswerNum && optNum === answerNum) {
                             score = 120; // Highest priority for exact number match
                         }
-                        // PRIORITY 2a: Rounded match (e.g., answer="3.8" matches "4" by rounding)
+                        // PRIORITY 2a: Rounded match (e.g., answer="4.2" matches "4" by rounding)
                         else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === Math.round(answerNum)) {
                             score = 112;
                         }
-                        // PRIORITY 2b: Floor match (e.g., answer="3.8" matches "3" by flooring)
+                        // PRIORITY 2b: Floor match (e.g., answer="4.2" matches "4" by flooring)
                         else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === answerInt) {
                             score = 110;
                         }
@@ -4672,7 +4677,7 @@ class SentinelAgent:
                             score = 105;
                         }
                         // PRIORITY 4: Text contains answer OR answer contains text
-                        // BUT protect against "3.8 years".includes("8 years") false positive
+                        // BUT protect against "4 years".includes("4 years") false positive
                         else if (text.includes(ans) || ans.includes(text)) {
                             // Guard: if both are numeric-like, verify the numbers actually match
                             if (optNum >= 0 && hasAnswerNum) {
@@ -5207,27 +5212,27 @@ class SentinelAgent:
                             // Check if this field has a validation error — if so, clear and refill
                             const inputParent = input.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
                             let hasError = !!(inputParent && inputParent.querySelector('.artdeco-inline-feedback--error'));
-                            if (!hasError && inputParent) {{
+                            if (!hasError && inputParent) {
                                 const helperPs = inputParent.querySelectorAll('[data-testid*="helper-text"] p, [data-testid*="error"] p');
-                                for (const hp of helperPs) {{
+                                for (const hp of helperPs) {
                                     const t = (hp.innerText || '').toLowerCase();
-                                    if (t.includes('invalid') || t.includes('required') || t.includes('enter a valid') || t.includes('please enter')) {{
+                                    if (t.includes('invalid') || t.includes('required') || t.includes('enter a valid') || t.includes('please enter')) {
                                         hasError = true;
                                         break;
-                                    }}
-                                }}
-                            }}
+                                    }
+                                }
+                            }
                             if (isFieldPreFilled(input) && !hasError) continue;
                             
                             // Clear invalid field before refilling
-                            if (hasError) {{
+                            if (hasError) {
                                 const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
                                 if (nativeSetter) nativeSetter.call(input, '');
                                 else input.value = '';
-                                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
                                 console.log('Cleared invalid field:', labelText);
-                            }}
+                            }
                             
                             // Check if input expects numeric values only
                             const isNumericInput = input.type === 'number' || 
@@ -5477,7 +5482,7 @@ class SentinelAgent:
                                     const options = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                     let bestOpt = findBestMatch(answer, options);
                                     
-                                    // Fallback: If answer is numeric (e.g. "3.8 Years") but options are Yes/No
+                                    // Fallback: If answer is numeric (e.g. "4 Years") but options are Yes/No
                                     if ((!bestOpt && answer) && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {
                                         const isYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
                                                       options.some(o => o.text.toLowerCase().includes('no'));
@@ -6058,7 +6063,7 @@ class SentinelAgent:
                             
                             // If it's not a consent checkbox, try to fuzzy match to see if it's a skill/tech question
                             // CONSERVATIVE: Only check if match is explicitly 'yes' or label is contained in the response.
-                            // Do NOT check based on numeric matches (e.g. "3.8 years") as these could be
+                            // Do NOT check based on numeric matches (e.g. "4 years") as these could be
                             // preference checkboxes (Remote, Frontend, Backend) not skill confirmations.
                             if (!shouldCheck && labelText) {
                                 const skillMatch = fuzzyMatch(labelText);
@@ -6778,7 +6783,18 @@ class SentinelAgent:
                                         document.querySelector('div[contenteditable="true"][data-placeholder*="Type message"]');
                         
                         const qText = questionEl?.innerText || 'Unknown question';
-                        const answer = fuzzyMatch(qText) || "3.8 Years";
+                        const qLower = qText.toLowerCase();
+                        
+                        // Pre-match: LWD date questions
+                        const isLwdQ = qLower.includes('ldw') || qLower.includes('lwd') || 
+                                        qLower.includes('last working day');
+                        let answer;
+                        if (isLwdQ) {{
+                            answer = '05 Jun 2026';
+                            console.log('NAUKRI DEBUG: LWD question detected:', qText, '->', answer);
+                        }} else {{
+                            answer = fuzzyMatch(qText) || "4 Years";
+                        }}
 
                         // ─── THREE-FIELD DATE PICKER (DD / MM / YYYY) ─────────────────────
                         // Naukri's date picker uses 3 separate input[type="number"] fields.
@@ -7125,11 +7141,11 @@ class SentinelAgent:
                                 }
                             } else if (isExperienceQuestion) {
                                 // For experience questions with checkboxes, select only the best matching range
-                                // Target: 3.8 years experience -> select "3 - 5 years"
+                                // Target: 4 years experience -> select "3 - 5 years"
                                 let bestCheckbox = null;
                                 let bestScore = -1;
                                 let allLabels = []; // Debug: store all found labels
-                                const targetExperience = 3.8; // Years of experience
+                                const targetExperience = 4; // Years of experience
                                 
                                 for (const item of checkboxLabels) {
                                     allLabels.push(item.labelText);
@@ -7150,7 +7166,7 @@ class SentinelAgent:
                                         else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {
                                             score = 80;
                                         }
-                                        // Within 2 years of either bound (catches "5-6 years" when target=3.8)
+                                        // Within 2 years of either bound (catches "5-6 years" when target=4)
                                         else if (Math.abs(targetExperience - max) <= 2 || Math.abs(targetExperience - min) <= 2) {
                                             score = 60;
                                         }
@@ -7341,10 +7357,16 @@ class SentinelAgent:
                                     return 'NAUKRI_CHAT_OPT_CLICKED: ' + btn.innerText.trim();
                                 }
                             }
-                            // Fallback: click first option if no match
+                            // Fallback: only click first option if it's not just "skip" and no contenteditable exists
                             if (!clickedOpt) {
-                                optionBtns[0].click();
-                                return 'NAUKRI_CHAT_OPT_CLICKED: ' + optionBtns[0].innerText.trim() + ' (fallback)';
+                                const hasCE = document.querySelector('div[contenteditable="true"]');
+                                const allSkipBtns = Array.from(optionBtns).every(b => (b.innerText || '').toLowerCase().includes('skip'));
+                                if (allSkipBtns && hasCE) {
+                                    console.log('Naukri chat - Options are all skip, falling through to contenteditable');
+                                } else {
+                                    optionBtns[0].click();
+                                    return 'NAUKRI_CHAT_OPT_CLICKED: ' + optionBtns[0].innerText.trim() + ' (fallback)';
+                                }
                             }
                         }
                         

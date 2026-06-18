@@ -5,11 +5,11 @@ import json
 
 # Copy of KNOWN_QA_PATTERNS from agent.py
 KNOWN_QA_PATTERNS = {
-    'years of experience': '3.8 Years',
+    'years of experience': '4 Years',
     'months of experience': '46',
-    'total experience': '3.8 Years',
-    'overall experience': '3.8 Years',
-    'year of exp': '3.8 Years',
+    'total experience': '4 Years',
+    'overall experience': '4 Years',
+    'year of exp': '4 Years',
     'current salary': '23 LPA',
     'expected salary': '30 LPA',
     'current ctc': '23 LPA',
@@ -90,7 +90,7 @@ KNOWN_QA_PATTERNS = {
     'gross expected salary': '30 LPA',
     'salary expectations': '30 LPA',
     'product based': 'Yes, I have experience working at Everbridge which is a product-based company in the BFSI domain.',
-    'bfsi domain': 'Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 3.8 years of experience.',
+    'bfsi domain': 'Yes, I am currently working at Everbridge in the BFSI (Banking, Financial Services, Insurance) domain with 4 years of experience.',
     'previous company': 'Fiserv',
     'worked with everbridge': 'Yes',
     'worked with fiserv': 'Yes',

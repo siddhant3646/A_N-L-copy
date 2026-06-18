@@ -68,7 +68,7 @@ CORE WORKFLOW (STRICT SEQUENCE):
    - **SCENARIO C (Tech & Experience):**
      - **Universal Rule:** If asked about specific experience in [Tech Name] (e.g., "Experience in Java?", "Years in React?"):
        - IF Question is Yes/No -> **Click "Yes"**.
-      - IF Question asks for Years/Number -> **Enter "3.8 Years"** (or just "3.8").
+       - IF Question asks for Years/Number -> **Enter "4 Years"** (or just "4").
       - **Standard Fields:**
         - "Current Salary" -> "23" (or "23 LPA")
         - "Expected Salary" -> "30" (or "30 LPA")
@@ -88,7 +88,7 @@ DETAILS TO USE:
 - Expected Salary: 30 LPA | Current Salary: 23 LPA
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
-- Experience: 3.8 Years (46 months total). ALWAYS ENTER "3.8 Years" in experience fields.
+- Experience: 4 Years (48 months total). ALWAYS ENTER "4 Years" in experience fields.
 - Location: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes. | Immediate Joiner: Yes.
 - Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.51 and if asked in percentage then it is 85.1%
@@ -161,7 +161,7 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
    - Notice Period -> Select "Serving Notice Period" or "Yes"
    - LWD -> Enter "03/02/2026"
    - Tech Experience (Yes/No) -> Click "Yes"
-   - Tech Experience (Years) -> Enter "3.8 Years"
+    - Tech Experience (Years) -> Enter "4 Years"
     - Current Salary -> "23 LPA"
     - Expected Salary -> "30 LPA"
    - Location -> "Noida"

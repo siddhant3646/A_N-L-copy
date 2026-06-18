@@ -23,7 +23,7 @@ class SemanticQuestionMatcher:
                 'how long have you worked', 'worked for', 'experience level',
                 'total exp', 'overall exp', 'work experience', 'professional experience'
             ],
-            'answer': '3.8 Years',
+            'answer': '4 Years',
             'category': 'experience'
         },
         'salary_current': {

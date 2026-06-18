@@ -3,7 +3,7 @@
   "description": "Question-Answer patterns for job application automation - SINGLE SOURCE OF TRUTH",
   "platform_defaults": {
     "naukri": {
-      "experience_years": "3.8 Years",
+      "experience_years": "4 Years",
       "experience_months": "46",
       "numeric_only_experience": false
     },
@@ -13,7 +13,7 @@
       "numeric_only_experience": true
     },
     "instahyre": {
-      "experience_years": "3.8 Years",
+      "experience_years": "4 Years",
       "experience_months": "46",
       "numeric_only_experience": false
     }
@@ -21,7 +21,7 @@
   "platform_specific_rules": {
     "naukri": {
       "experience_format": "text_with_years",
-      "experience_example": "3.8 Years",
+      "experience_example": "4 Years",
       "salary_format": "text_with_lpa",
       "salary_example": "23 LPA",
       "notice_format": "text_with_days",
@@ -47,7 +47,7 @@
     },
     "instahyre": {
       "experience_format": "text_with_years",
-      "experience_example": "3.8 Years",
+      "experience_example": "4 Years",
       "salary_format": "text_with_lpa",
       "salary_example": "23 LPA",
       "notice_format": "text_with_days",
@@ -84,13 +84,13 @@
         "java years experience"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "requires_context": true,
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 3,
       "negative_patterns": [
@@ -1330,12 +1330,12 @@
         "years of experience in kafka"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 8
     },
@@ -1591,11 +1591,11 @@
         "any additional comments"
       ],
       "category": "preference",
-      "default": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team.",
+      "default": "With 4+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team.",
       "input_type_defaults": {
         "radio": "I bring strong full-stack experience and am eager to contribute.",
-        "select": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications.",
-        "text": "With 3.8+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team."
+        "select": "With 4+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications.",
+        "text": "With 4+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team."
       },
       "priority": 5
     },
@@ -1606,11 +1606,11 @@
         "what makes you interested in joining"
       ],
       "category": "preference",
-      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
+      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
       "input_type_defaults": {
-        "radio": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java",
-        "select": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
-        "text": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 3.8+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
+        "radio": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java",
+        "select": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
+        "text": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
       },
       "priority": 5
     },
@@ -1622,11 +1622,11 @@
         "what do you bring to the team"
       ],
       "category": "preference",
-      "default": "I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.",
+      "default": "I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.",
       "input_type_defaults": {
-        "radio": "I bring 3.8+ years of hands-on experience in full-stack development with Java",
-        "select": "I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.",
-        "text": "I bring 3.8+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews."
+        "radio": "I bring 4+ years of hands-on experience in full-stack development with Java",
+        "select": "I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.",
+        "text": "I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews."
       },
       "priority": 5
     },
@@ -1653,11 +1653,11 @@
         "relevant experiences for the position"
       ],
       "category": "preference",
-      "default": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.",
+      "default": "4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.",
       "input_type_defaults": {
-        "radio": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices",
-        "select": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.",
-        "text": "3.8+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases."
+        "radio": "4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices",
+        "select": "4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases.",
+        "text": "4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases."
       },
       "priority": 5
     },
@@ -1707,12 +1707,12 @@
         "what is your total exp"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 7
     },
@@ -1756,12 +1756,12 @@
         "java developer experience"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 8
     },
@@ -1797,12 +1797,12 @@
         "python experience"
       ],
       "category": "experience",
-      "default": "3.8",
+      "default": "4",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8",
-        "text": "3.8",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4",
+        "text": "4",
+        "number": "4"
       },
       "priority": 8
     },
@@ -1811,12 +1811,12 @@
         "nodejs experience"
       ],
       "category": "experience",
-      "default": "3.8",
+      "default": "4",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8",
-        "text": "3.8",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4",
+        "text": "4",
+        "number": "4"
       },
       "priority": 8
     },
@@ -1867,12 +1867,12 @@
         "experience in spring boot"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 8
     },
@@ -1886,12 +1886,12 @@
         "frontend experience"
       ],
       "category": "experience",
-      "default": "3.8",
+      "default": "4",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8",
-        "text": "3.8",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4",
+        "text": "4",
+        "number": "4"
       },
       "priority": 7
     },
@@ -2905,12 +2905,12 @@
         "sector experience"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 7
     },
@@ -3503,11 +3503,11 @@
         "profile summary"
       ],
       "category": "preference",
-      "default": "SDE-2 with 3.8 Years Experience at Fiserv",
+      "default": "SDE-2 with 4 Years Experience at Fiserv",
       "input_type_defaults": {
-        "radio": "SDE-2 with 3.8 Years Experience at Fiserv",
-        "select": "SDE-2 with 3.8 Years Experience at Fiserv",
-        "text": "SDE-2 with 3.8 Years Experience at Fiserv"
+        "radio": "SDE-2 with 4 Years Experience at Fiserv",
+        "select": "SDE-2 with 4 Years Experience at Fiserv",
+        "text": "SDE-2 with 4 Years Experience at Fiserv"
       },
       "priority": 7
     },
@@ -3594,12 +3594,12 @@
         "years of total experience"
       ],
       "category": "experience",
-      "default": "3.8 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.8",
-        "select": "3.8 Years",
-        "text": "3.8 Years",
-        "number": "3.8"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 8
     },
@@ -4947,11 +4947,11 @@
         "mastery"
       ],
       "category": "preference",
-      "default": "Advanced level with 3.8 years experience",
+      "default": "Advanced level with 4 years experience",
       "input_type_defaults": {
-        "radio": "Advanced level with 3.8 years experience",
-        "select": "Advanced level with 3.8 years experience",
-        "text": "Advanced level with 3.8 years experience"
+        "radio": "Advanced level with 4 years experience",
+        "select": "Advanced level with 4 years experience",
+        "text": "Advanced level with 4 years experience"
       },
       "priority": 4
     },

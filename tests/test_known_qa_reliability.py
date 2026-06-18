@@ -81,7 +81,7 @@ class TestExperienceMatching(unittest.TestCase):
         self.assertFalse(is_valid)
 
     def test_experience_validation_accepts_number(self):
-        is_valid, err = AnswerValidator.validate('3.8 Years', 'experience', '')
+        is_valid, err = AnswerValidator.validate('4 Years', 'experience', '')
         self.assertTrue(is_valid)
 
 
@@ -239,11 +239,11 @@ class TestPlatformOverrides(unittest.TestCase):
 
     def test_ectc_abbreviation(self):
         ans = self._check_platform_overrides('ectc')
-        self.assertEqual(ans, ('24', 0.98))
+        self.assertEqual(ans, ('30', 0.98))
 
     def test_np_abbreviation(self):
         ans = self._check_platform_overrides('what is your np?')
-        self.assertEqual(ans, ('7', 0.98))
+        self.assertEqual(ans, ('15', 0.98))
 
     def test_notice_period_company_days(self):
         ans = self._check_platform_overrides('notice period in company days')
@@ -251,7 +251,7 @@ class TestPlatformOverrides(unittest.TestCase):
 
     def test_lwd(self):
         ans = self._check_platform_overrides('what is your last working day?')
-        self.assertEqual(ans, ('7', 0.98))
+        self.assertEqual(ans, ('15', 0.98))
 
 
 class TestYesNoMatching(unittest.TestCase):
@@ -290,7 +290,7 @@ class TestPatternMatcherTiers(unittest.TestCase):
     def test_tier2_category_match(self):
         ans, score = self.matcher.fuzzy_match('What is your expected compensation package?')
         if ans:
-            self.assertIn('24', ans)
+            self.assertIn('30', ans)
 
     def test_empty_question(self):
         ans, score = self.matcher.fuzzy_match('')
@@ -348,13 +348,13 @@ class TestAnswerValidator(unittest.TestCase):
         self.assertEqual(AnswerValidator.fix('23 LPA', 'salary', ''), '23')
 
     def test_experience_valid(self):
-        self.assertTrue(AnswerValidator.validate('3.8 Years', 'experience', '')[0])
+        self.assertTrue(AnswerValidator.validate('4 Years', 'experience', '')[0])
 
     def test_experience_invalid_no_number(self):
         self.assertFalse(AnswerValidator.validate('Yes', 'experience', '')[0])
 
     def test_experience_fix_months(self):
-        self.assertEqual(AnswerValidator.fix('3.8 Years', 'experience', 'How many months?', ''), '45')
+        self.assertEqual(AnswerValidator.fix('4 Years', 'experience', 'How many months?', ''), '48')
 
     def test_location_valid(self):
         self.assertTrue(AnswerValidator.validate('Noida', 'location', '')[0])

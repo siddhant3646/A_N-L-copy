@@ -55,26 +55,26 @@ class PlatformConfig:
 PLATFORM_CONFIGS = {
     "naukri": PlatformConfig(
         name="naukri",
-        experience_years="3.8 Years",
-        experience_months="46",
+        experience_years="4 Years",
+        experience_months="48",
         numeric_only_experience=False
     ),
     "linkedin": PlatformConfig(
         name="linkedin",
         experience_years="4",
-        experience_months="46",
+        experience_months="48",
         numeric_only_experience=True
     ),
     "instahyre": PlatformConfig(
         name="instahyre",
-        experience_years="3.8 Years",
-        experience_months="46",
+        experience_years="4 Years",
+        experience_months="48",
         numeric_only_experience=False
     ),
     "default": PlatformConfig(
         name="default",
-        experience_years="3.8 Years",
-        experience_months="46",
+        experience_years="4 Years",
+        experience_months="48",
         numeric_only_experience=False
     )
 }
@@ -291,7 +291,7 @@ CATEGORY_DEFAULTS = {
         "numeric": "30"  # For fields requiring just numbers
     },
     QuestionCategory.EXPERIENCE: {
-        "years": "3.8 Years",  # Will be overridden by platform config
+        "years": "4 Years",  # Will be overridden by platform config
         "months": "46",
         "numeric": "4"  # Will be overridden by platform config
     },
@@ -492,7 +492,7 @@ class QuestionClassifier:
             if self.platform == 'linkedin':
                 return '4'  # LinkedIn: numeric only, no "Years"
             else:
-                return '3.8 Years'  # Naukri: with "Years" suffix
+                return '4 Years'  # Naukri: with "Years" suffix
         
         # Original logic for generic experience questions
         is_numeric_only = (
@@ -506,7 +506,7 @@ class QuestionClassifier:
             self.config.numeric_only_experience
         )
         
-        # Extract numeric value from experience string (e.g., "3.8 Years" -> "3.8")
+        # Extract numeric value from experience string (e.g., "4 Years" -> "4")
         base_answer = self.config.experience_years
         numeric_value = base_answer.split()[0] if " " in base_answer else base_answer
         

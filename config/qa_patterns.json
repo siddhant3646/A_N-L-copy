@@ -428,7 +428,9 @@
         "on a scale of 1 to 10",
         "on a scale of 1-10",
         "competitive programming",
-        "rate yourself"
+        "rate yourself",
+        "english communication skill on the scale of 1-10",
+        "english communication skills on the scale of 1-10"
       ],
       "category": "skills",
       "default": "8",
@@ -1529,6 +1531,30 @@
       },
       "priority": 7
     },
+    "linkedin_communication_rating": {
+      "patterns": [
+        "communication and stakeholder engagement skills",
+        "scale of 1-5",
+        "scale of 1 to 5",
+        "rate your communication",
+        "how would you rate your communication",
+        "stakeholder engagement skills"
+      ],
+      "category": "skills",
+      "default": "4",
+      "input_type_defaults": {
+        "radio": "4",
+        "select": "4",
+        "text": "4"
+      },
+      "priority": 9,
+      "negative_patterns": [
+        "experience",
+        "years",
+        "ctc",
+        "salary"
+      ]
+    },
     "notice_period_negotiable": {
       "patterns": [
         "notice period negotiated",
@@ -1573,6 +1599,24 @@
         "text": "Open to discussion"
       },
       "priority": 5
+    },
+    "stock_rsu_value": {
+      "patterns": [
+        "stock rsu",
+        "rsu value",
+        "stock value yearly",
+        "what is the stock",
+        "stock yearly"
+      ],
+      "category": "compensation",
+      "default": "0",
+      "input_type_defaults": {
+        "radio": "0",
+        "select": "0",
+        "text": "0",
+        "number": "0"
+      },
+      "priority": 8
     },
     "message_to_hiring_manager": {
       "patterns": [
@@ -3253,10 +3297,11 @@
         "when can you start",
         "days of notice",
         "joining availability",
-        "start date availability"
+        "start date availability",
+        "how many days you can join"
       ],
       "category": "notice_period",
-      "default": "7",
+      "default": "15",
       "numeric_default": "7",
       "input_type_defaults": {
         "radio": "7",

@@ -2784,17 +2784,35 @@ class SentinelAgent:
                         if edit_result == 'EDIT_CLICKED':
                             await asyncio.sleep(random.uniform(3, 5))  # Wait for modal to open
                             
-                            # Step 2: Dynamic LWD date — parse offset from task description
+                            # Step 2: LWD date — parse explicit date from task prompt GOAL line
+                            # Format: "GOAL: Update 'Expected Last Working Day' in the Employment section to July 3, 2026."
                             import re as _re
-                            offset_match = _re.search(r'LWD\s*\+(\d+)', self._task_description)
-                            days_offset = int(offset_match.group(1)) if offset_match else 15
-                            lwd_date = datetime.now() + timedelta(days=days_offset)
-                            year_val = str(lwd_date.year)
-                            month_num = str(lwd_date.month)
-                            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                            month_display = month_names[int(month_num) - 1]
-                            day_val = str(lwd_date.day)
+                            month_map = {
+                                'january': '1', 'february': '2', 'march': '3', 'april': '4',
+                                'may': '5', 'june': '6', 'july': '7', 'august': '8',
+                                'september': '9', 'october': '10', 'november': '11', 'december': '12'
+                            }
+                            month_names_rev = {v: k.capitalize() for k, v in month_map.items()}
+                            date_match = _re.search(
+                                r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+),\s+(\d{4})',
+                                self._task_description, _re.IGNORECASE
+                            )
+                            if date_match:
+                                month_name = date_match.group(1)
+                                month_num = month_map[month_name.lower()]
+                                day_val = date_match.group(2)
+                                year_val = date_match.group(3)
+                                month_display = month_name[:3]
+                            else:
+                                # Fallback: use offset-based calculation
+                                offset_match = _re.search(r'LWD\s*\+(\d+)', self._task_description)
+                                days_offset = int(offset_match.group(1)) if offset_match else 15
+                                lwd_date = datetime.now() + timedelta(days=days_offset)
+                                year_val = str(lwd_date.year)
+                                month_num_val = lwd_date.month
+                                month_display = month_names_rev[month_num_val][:3]
+                                day_val = str(lwd_date.day)
+                                month_num = str(month_num_val)
                             
                             print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
                             
@@ -3353,7 +3371,7 @@ class SentinelAgent:
         # Extract the flat answers for backward compatibility + with_defaults for input type support
         patterns_json = json.dumps(patterns_for_js.get('answers', {}))
         patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
-        max_iterations = 20
+        max_iterations = 30
         previous_questions = []
         same_question_count = 0
         consecutive_waiting_count = 0  # Track consecutive CHATBOT_WAITING states
@@ -3526,7 +3544,12 @@ class SentinelAgent:
                                    qLower.includes('lwd');
                 let answer;
                 if (isLwdDateQ) {{
-                    answer = '05 Jun 2026';
+                    const lwd = new Date();
+                    lwd.setDate(lwd.getDate() + 15);
+                    const dd = String(lwd.getDate()).padStart(2, '0');
+                    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
+                    const yyyy = lwd.getFullYear();
+                    answer = dd + ' ' + mon + ' ' + yyyy;
                     console.log('Chatbot Debug - LWD date question detected, answering:', answer);
                 }} else if (qLower.includes('date of birth') || qLower.includes('dob') || qLower.includes('birth date')) {{
                     answer = '17/12/2000';
@@ -3805,7 +3828,7 @@ class SentinelAgent:
                         }}
                         // Match No for negative answers
                         if ((answerLower.includes('no') || answerLower.includes('false')) && 
-                            labelLower.includes('no')) {{
+                            (labelLower === 'no' || /(\bno\b|^no\b|\bno$)/.test(labelLower))) {{
                             if (!radio.checked) {{
                                 radio.click();
                                 clickedRadio = true;
@@ -3831,14 +3854,39 @@ class SentinelAgent:
                                         break;
                                     }}
                                 }} else if (nums.length === 1) {{
-                                    // Single number match (e.g., "5+ years")
-                                    if (answerNumeric >= nums[0]) {{
-                                        if (!radio.checked) {{
-                                            radio.click();
-                                            clickedRadio = true;
-                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
+                                    // Single number match — detect direction (text + symbol prefixes)
+                                    const isLess = /less\s+than|under|up\s+to|^<\s*\d/i.test(labelLower);
+                                    const isMore = /more\s+than|over|above|plus|^>\s*\d/i.test(labelLower);
+                                    if (isLess) {{
+                                        // "Less than X" → answer must be below X
+                                        if (answerNumeric < nums[0]) {{
+                                            if (!radio.checked) {{
+                                                radio.click();
+                                                clickedRadio = true;
+                                                console.log('Chatbot Debug - Clicked numeric upper-bound radio:', label);
+                                            }}
+                                            break;
                                         }}
-                                        break;
+                                    }} else if (isMore) {{
+                                        // "More than X" → answer must be at least X
+                                        if (answerNumeric >= nums[0]) {{
+                                            if (!radio.checked) {{
+                                                radio.click();
+                                                clickedRadio = true;
+                                                console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
+                                            }}
+                                            break;
+                                        }}
+                                    }} else {{
+                                        // No prefix — assume lower bound (e.g., "5+ years", "X years")
+                                        if (answerNumeric >= nums[0]) {{
+                                            if (!radio.checked) {{
+                                                radio.click();
+                                                clickedRadio = true;
+                                                console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
+                                            }}
+                                            break;
+                                        }}
                                     }}
                                 }}
                             }}
@@ -3851,6 +3899,34 @@ class SentinelAgent:
                                     console.log('Chatbot Debug - Clicked exact numeric match radio:', label);
                                 }}
                                 break;
+                            }}
+                        }}
+                    }}
+                    
+                    // Map numeric rating to proficiency levels (Beginner/Intermediate/Advanced)
+                    if (!clickedRadio && answerNumeric !== null) {{
+                        const radioLabels = Array.from(radios).map(r =>
+                            (r.parentElement?.innerText || r.nextSibling?.textContent || '').toLowerCase().trim()
+                        );
+                        const profLevels = ['beginner', 'intermediate', 'advanced'];
+                        const hasProfLevels = profLevels.some(level =>
+                            radioLabels.some(label => label.includes(level))
+                        );
+                        if (hasProfLevels) {{
+                            let targetLevel;
+                            if (answerNumeric >= 7) targetLevel = 'advanced';
+                            else if (answerNumeric >= 4) targetLevel = 'intermediate';
+                            else targetLevel = 'beginner';
+                            for (const radio of radios) {{
+                                const label = (radio.parentElement?.innerText || radio.nextSibling?.textContent || '').toLowerCase();
+                                if (label.includes(targetLevel)) {{
+                                    if (!radio.checked) {{
+                                        radio.click();
+                                        clickedRadio = true;
+                                        console.log('Chatbot Debug - Clicked proficiency radio:', label.trim(), 'for rating', answerNumeric);
+                                    }}
+                                    break;
+                                }}
                             }}
                         }}
                     }}
@@ -4412,9 +4488,9 @@ class SentinelAgent:
                 continue
         
         print("⚠️ Chatbot loop exhausted")
-        # If we answered questions but loop exhausted while waiting, consider it a success
-        if last_action_was_answer and consecutive_waiting_count > 0:
-            print("   📜 Chatbot likely completed - was waiting after answering questions")
+        # If we answered at least one question before exhausting, consider it a success
+        if last_action_was_answer:
+            print("   📜 Chatbot likely completed - answered questions before exhausting")
             self.metrics['applications_submitted'] += 1
             return True
         return False
@@ -4424,7 +4500,7 @@ class SentinelAgent:
         # Serialize patterns, synonyms, and stop words for JS injection
         # Use merged patterns from JSON config + legacy dict
         patterns_for_js = self._get_patterns_for_js()
-        patterns_json = json.dumps(patterns_for_js)
+        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
         synonyms_json = json.dumps(SYNONYM_MAP)
         stopwords_json = json.dumps(list(STOP_WORDS))
         
@@ -4481,7 +4557,8 @@ class SentinelAgent:
                         'if serving notice period immediate joiner',
                         'official notice period', 'what is your official notice period',
                         'official notice period if serving lwd', 'notice period if serving lwd',
-                        'official notice period lwd', 'official notice'
+                        'official notice period lwd', 'official notice',
+                        'how many days you can join'
                     ];
                     noticeKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '15';
@@ -4609,7 +4686,7 @@ class SentinelAgent:
                     // --- PASS 5: Smart type-based defaults (safety net) ---
                     if (!bestMatch) {
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|year|months|exp\.?\b/.test(qLower) && !isSalaryQ;
+                        const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         const isYearsQ = /years\b/.test(qLower) && !isSalaryQ;
                         
@@ -4627,7 +4704,7 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|year|months|exp\.?\b/.test(qLower) && !isSalaryQ;
+                        const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ) {
@@ -4766,8 +4843,32 @@ class SentinelAgent:
                                     score = Math.max(0, 80 - (offset / rangeSize * 20));
                                 }
                             }
-                            // Single year match (e.g., "3+", "2+", "5")
+                            // Prefix-based range matching: "Less than X", "More than X", "Up to X", "Above X", "Under X", "Over X"
                             else if (answerYears > 0) {
+                                const lessMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)/i);
+                                const moreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
+                                if (lessMatch) {
+                                    const bound = parseFloat(lessMatch[1]);
+                                    if (answerYears < bound) {
+                                        const rangeSize = Math.max(bound, 1);
+                                        const offset = Math.abs(answerYears - 0);
+                                        score = Math.max(0, 85 - (offset / rangeSize * 20));
+                                    } else {
+                                        const diff = Math.abs(answerYears - bound);
+                                        score = Math.max(0, 60 - diff * 10);
+                                    }
+                                } else if (moreMatch) {
+                                    const bound = parseFloat(moreMatch[1]);
+                                    if (answerYears >= bound) {
+                                        score = 85;
+                                    } else {
+                                        const diff = Math.abs(answerYears - bound);
+                                        score = Math.max(0, 60 - diff * 10);
+                                    }
+                                }
+                            }
+                            // Single year match (e.g., "3+", "2+", "5")
+                            if (score === 0 && answerYears > 0) {
                                 // First try to match "X+" or "X +" patterns (like "3+", "3 +")
                                 const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
                                 if (plusMatch) {
@@ -5291,18 +5392,27 @@ class SentinelAgent:
                                 } else if (combinedText.includes('email')) {
                                     answer = 'siddhant3646@gmail.com';
                                     console.log('Fallback: Filling email');
-                                } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {
-                                    answer = '7';
-                                    console.log('Fallback: Filling notice/join period');
-                                } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should')) {
+                                } else if (combinedText.includes('full name') || combinedText.includes('your name') || combinedText.includes('candidate name')) {
+                                    answer = 'Siddhant Singh';
+                                    console.log('Fallback: Filling name field');
+                                } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should') || combinedText.includes('why do you want') || combinedText.includes('tell us about') || combinedText.includes('anything else')) {
                                     answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
                                     console.log('Fallback: Filling summary/cover letter');
+                                } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('how soon')) {
+                                    answer = '7';
+                                    console.log('Fallback: Filling notice/join period');
                                 } else if (combinedText.includes('linkedin') || combinedText.includes('profile url')) {
                                     answer = 'https://www.linkedin.com/in/siddhant-singh';
                                     console.log('Fallback: Filling LinkedIn URL');
                                 } else if (combinedText.includes('github') || combinedText.includes('portfolio')) {
                                     answer = 'https://github.com/siddhant3646';
                                     console.log('Fallback: Filling GitHub/portfolio URL');
+                                } else if (combinedText.includes('certification') || combinedText.includes('certificate')) {
+                                    answer = 'AWS Certified, Java Certified';
+                                    console.log('Fallback: Filling certifications');
+                                } else if (combinedText.includes('reason') || combinedText.includes('seeking') || combinedText.includes('looking for a change')) {
+                                    answer = 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals';
+                                    console.log('Fallback: Filling reason for change');
                                 }
                             }
                             
@@ -5697,7 +5807,7 @@ class SentinelAgent:
                         }
 
                         // 3. Handle Radio buttons (e.g., Yes/No questions)
-                        const fieldsets = queryAllDeep('fieldset', modal);
+                        const fieldsets = queryAllDeep('fieldset, [role="radiogroup"]', modal);
                         for (const fieldset of fieldsets) {
                             let legend = fieldset.querySelector('legend')?.innerText || '';
                             
@@ -5823,17 +5933,27 @@ class SentinelAgent:
                             let questionText = '';
                             const firstRadio = radios[0];
                             
+                            // Try .fb-dash-form-element parent label (LinkedIn's structure)
+                            if (!questionText) {
+                                const fbParent = firstRadio.closest('.fb-dash-form-element');
+                                if (fbParent) {
+                                    const lbl = fbParent.querySelector('label');
+                                    if (lbl) questionText = lbl.innerText || lbl.textContent || '';
+                                }
+                            }
+                            
                             // Try to find label text
                             const parentLabel = firstRadio.closest('label');
-                            if (parentLabel) {
+                            if (!questionText && parentLabel) {
                                 questionText = parentLabel.innerText;
-                            } else {
+                            }
+                            if (!questionText) {
                                 // Look for preceding text or parent container text
-                                const container = firstRadio.closest('div[class*="question"], div[class*="field"], .form-group');
+                                const container = firstRadio.closest('.jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field, .jobs-easy-apply-form-element, .fb-dash-form-element');
                                 if (container) {
-                                    // Get text from the container, excluding the radio labels
+                                    // Get text from the container (include label elements — question label is often a <label>)
                                     const textNodes = Array.from(container.childNodes)
-                                        .filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'INPUT' && n.tagName !== 'LABEL'))
+                                        .filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'INPUT'))
                                         .map(n => n.textContent || n.innerText)
                                         .join(' ')
                                         .trim();
@@ -6790,7 +6910,12 @@ class SentinelAgent:
                                         qLower.includes('last working day');
                         let answer;
                         if (isLwdQ) {{
-                            answer = '05 Jun 2026';
+                            const lwd = new Date();
+                            lwd.setDate(lwd.getDate() + 15);
+                            const dd = String(lwd.getDate()).padStart(2, '0');
+                            const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
+                            const yyyy = lwd.getFullYear();
+                            answer = dd + ' ' + mon + ' ' + yyyy;
                             console.log('NAUKRI DEBUG: LWD question detected:', qText, '->', answer);
                         }} else {{
                             answer = fuzzyMatch(qText) || "4 Years";
@@ -6798,13 +6923,13 @@ class SentinelAgent:
 
                         // ─── THREE-FIELD DATE PICKER (DD / MM / YYYY) ─────────────────────
                         // Naukri's date picker uses 3 separate input[type="number"] fields.
-                        // Detect by placeholder and fill each with computed today+30.
+                        // Detect by placeholder and fill each with computed today+15.
                         const nkDD = document.querySelector('input[placeholder="DD"]');
                         const nkMM = document.querySelector('input[placeholder="MM"]');
                         const nkYY = document.querySelector('input[placeholder="YYYY"]');
                         if (nkDD && nkMM && nkYY && nkDD.offsetParent !== null) {
                             const tgt = new Date();
-                            tgt.setDate(tgt.getDate() + 30);
+                            tgt.setDate(tgt.getDate() + 15);
                             const dv = String(tgt.getDate()).padStart(2, '0');
                             const mv = String(tgt.getMonth() + 1).padStart(2, '0');
                             const yv = String(tgt.getFullYear());

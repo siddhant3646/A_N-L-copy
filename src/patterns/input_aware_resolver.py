@@ -139,6 +139,16 @@ class InputAwareResolver:
         "bachelor's": ["bachelor's", 'bachelors', 'b.tech', 'b.e', 'undergraduate'],
         "master's": ["master's", 'masters', 'm.tech', 'm.e', 'postgraduate'],
         'phd': ['phd', 'doctorate', 'doctoral'],
+        
+        'beginner': ['beginner', 'novice', 'entry', 'low', '1', '2', '3',
+                     '1 out of 10', '2 out of 10', '3 out of 10',
+                     '1/10', '2/10', '3/10'],
+        'intermediate': ['intermediate', 'mid', 'medium', 'average', '4', '5', '6',
+                         '4 out of 10', '5 out of 10', '6 out of 10',
+                         '4/10', '5/10', '6/10'],
+        'advanced': ['advanced', 'expert', 'senior', 'high', '7', '8', '9', '10',
+                     '7 out of 10', '8 out of 10', '9 out of 10', '10 out of 10',
+                     '7/10', '8/10', '9/10', '10/10'],
     }
     
     def __init__(self, threshold: float = 0.6):

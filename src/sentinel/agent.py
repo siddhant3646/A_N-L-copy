@@ -3903,8 +3903,44 @@ class SentinelAgent:
                         }}
                     }}
                     
+                    // Education-specific radio matching (before proficiency handler to prevent false matches)
+                    const isEducationQ = qLower.includes('education') || qLower.includes('degree') ||
+                        qLower.includes('qualification') || qLower.includes('academic') ||
+                        qLower.includes('graduate') || qLower.includes('college') ||
+                        qLower.includes('university') || qLower.includes('diploma') ||
+                        qLower.includes('bachelor') || qLower.includes('master') ||
+                        qLower.includes('doctorate') || qLower.includes('school');
+                    if (!clickedRadio && isEducationQ) {{
+                        // Map answer keywords to radio label keywords for education-level questions
+                        const eduAnswerMap = [
+                            {{answerKws: ['b.tech', 'bachelor', 'b.e', 'b.sc', 'bca', 'undergraduate'], labelKws: ['bachelor']}},
+                            {{answerKws: ['m.tech', 'master', 'm.sc', 'mca', 'mba', 'post graduate', 'postgraduate'], labelKws: ['master']}},
+                            {{answerKws: ['phd', 'doctorate', 'doctoral', 'ph.d'], labelKws: ['phd', 'doctorate', 'doctoral']}},
+                            {{answerKws: ['diploma', 'advanced diploma'], labelKws: ['diploma']}},
+                            {{answerKws: ['10th', 'ssc', 'matric', 'matriculation', 'high school'], labelKws: ['10th', 'ssc', 'high school', 'secondary', 'matric']}},
+                            {{answerKws: ['12th', 'hsc', 'intermediate', 'higher secondary'], labelKws: ['12th', 'hsc', 'higher secondary', 'intermediate']}},
+                            {{answerKws: ['associate'], labelKws: ['associate']}}
+                        ];
+                        for (const mapping of eduAnswerMap) {{
+                            if (clickedRadio) break;
+                            const hasAnswerKeyword = mapping.answerKws.some(kw => answerLower.includes(kw));
+                            if (!hasAnswerKeyword) continue;
+                            for (const radio of radios) {{
+                                const label = (radio.parentElement?.innerText || radio.nextSibling?.textContent || '').toLowerCase();
+                                if (mapping.labelKws.some(kw => label.includes(kw))) {{
+                                    if (!radio.checked) {{
+                                        radio.click();
+                                        clickedRadio = true;
+                                        console.log('Chatbot Debug - Clicked education radio:', label.trim());
+                                    }}
+                                    break;
+                                }}
+                            }}
+                        }}
+                    }}
+                    
                     // Map numeric rating to proficiency levels (Beginner/Intermediate/Advanced)
-                    if (!clickedRadio && answerNumeric !== null) {{
+                    if (!clickedRadio && answerNumeric !== null && !isEducationQ) {{
                         const radioLabels = Array.from(radios).map(r =>
                             (r.parentElement?.innerText || r.nextSibling?.textContent || '').toLowerCase().trim()
                         );

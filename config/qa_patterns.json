@@ -2639,7 +2639,7 @@
       "category": "education",
       "default": "B.Tech in Computer Science Engineering (graduated 2022)",
       "input_type_defaults": {
-        "radio": "B.Tech in Computer Science Engineering (graduated 2022)",
+        "radio": "Bachelor's Degree",
         "select": "B.Tech in Computer Science Engineering (graduated 2022)",
         "text": "B.Tech in Computer Science Engineering (graduated 2022)"
       },

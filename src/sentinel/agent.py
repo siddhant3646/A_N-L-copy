@@ -4594,7 +4594,22 @@ class SentinelAgent:
                         'official notice period', 'what is your official notice period',
                         'official notice period if serving lwd', 'notice period if serving lwd',
                         'official notice period lwd', 'official notice',
-                        'how many days you can join'
+                        'how many days you can join',
+                        'in how many days can you join',
+                        'if selected, in how many days can you join',
+                        'how soon can you join us', 'how soon you can join us',
+                        'how soon can you join if gets selected',
+                        'how soon can you join', 'when can you join',
+                        'earliest joining date', 'tentative joining date',
+                        'joining date', 'joining', 'availability',
+                        'when are you available', 'available from',
+                        'days required for notice', 'how immediate can you join',
+                        'please mention your notice period',
+                        'please select your notice period with your current employer',
+                        'please select your notice period',
+                        'how many days will you be able to join',
+                        'within how many days will you be able to join',
+                        'join us', 'joining time', 'joining availability'
                     ];
                     noticeKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '15';
@@ -4604,9 +4619,15 @@ class SentinelAgent:
                     // This catches patterns not explicitly in noticeKeys (e.g. "immediate joiner" → "Yes")
                     Object.keys(KNOWN_PATTERNS).forEach(k => {
                         const kLower = k.toLowerCase();
-                        if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd')) && 
-                            (KNOWN_PATTERNS[k] === 'Yes' || KNOWN_PATTERNS[k] === 'No')) {
-                            KNOWN_PATTERNS[k] = '7';
+                        if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd') ||
+                             kLower.includes('days can you join') || kLower.includes('how many days') ||
+                             kLower.includes('how soon') || kLower.includes('can you join') ||
+                             kLower.includes('join us') || kLower.includes('joining date') ||
+                             kLower.includes('joining time') || kLower.includes('earliest join') ||
+                             kLower.includes('when can you join') || kLower.includes('available from') ||
+                             kLower.includes('days required')) && 
+                            (KNOWN_PATTERNS[k] === 'Yes' || KNOWN_PATTERNS[k] === 'No' || KNOWN_PATTERNS[k] === '15 days')) {
+                            KNOWN_PATTERNS[k] = '15';
                         }
                     });
                     
@@ -4834,7 +4855,7 @@ class SentinelAgent:
                     return bestOpt;
                 };
                 
-                // Helper: Find best matching radio button for experience ranges
+// Helper: Find best matching radio button for experience ranges
                 const findBestRadioMatch = (answer, radios) => {
                     if (!answer || !radios || radios.length === 0) return null;
                     
@@ -4842,87 +4863,114 @@ class SentinelAgent:
                     let bestRadio = null;
                     let bestScore = -1;
                     
-                    // Extract years from answer for better matching
-                    const yearMatch = answer.match(/(\d+(?:\.\d+)?)/);
-                    const answerYears = yearMatch ? parseFloat(yearMatch[1]) : 0;
+                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     
                     for (const radio of radios) {
                         const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
                         const lowerLabel = label.toLowerCase();
                         let score = 0;
                         
-                        // Exact text match
                         if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {
                             score = 100;
                         }
-                        // Check for "yes" or "serving" for Yes/No questions
                         else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) &&
                                 (ans.includes('yes') || ans.includes('serving'))) {
                             score = 90;
                         }
-                        // Check for "no" when answer is "no"
                         else if (lowerLabel.includes('no') && ans.includes('no')) {
                             score = 90;
                         }
-                        // Experience range matching
-                        else {
-                            // Look for range patterns like "0-2", "2-5", "3-5", etc.
-                            const rangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
-                            if (rangeMatch && answerYears > 0) {
-                                const min = parseFloat(rangeMatch[1]);
-                                const max = parseFloat(rangeMatch[2]);
-                                
-                                if (answerYears >= min && answerYears <= max) {
-                                    // Calculate how centered the answer is in the range
+                        else if (answerNum > 0) {
+                            // Day-based matching (notice period questions)
+                            const dayRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)\s*days/i);
+                            const weekMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*weeks/i);
+                            const dayLessMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*days/i);
+                            const dayMoreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)\s*days/i);
+                            
+                            if (dayRangeMatch) {
+                                const min = parseFloat(dayRangeMatch[1]);
+                                const max = parseFloat(dayRangeMatch[2]);
+                                if (answerNum >= min && answerNum <= max) {
                                     const rangeSize = max - min;
-                                    const offset = Math.abs(answerYears - (min + max) / 2);
-                                    score = Math.max(0, 80 - (offset / rangeSize * 20));
+                                    const offset = Math.abs(answerNum - (min + max) / 2);
+                                    score = Math.max(0, 85 - (offset / Math.max(rangeSize, 1) * 20));
+                                } else {
+                                    const diff = Math.min(Math.abs(answerNum - min), Math.abs(answerNum - max));
+                                    score = Math.max(0, 60 - diff * 2);
+                                }
+                            } else if (weekMatch) {
+                                const boundDays = parseFloat(weekMatch[1]) * 7;
+                                if (answerNum < boundDays) {
+                                    score = 85;
+                                } else {
+                                    score = Math.max(0, 60 - (answerNum - boundDays) * 2);
+                                }
+                            } else if (dayLessMatch) {
+                                const bound = parseFloat(dayLessMatch[1]);
+                                if (answerNum < bound) score = 85;
+                                else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                            } else if (dayMoreMatch) {
+                                const bound = parseFloat(dayMoreMatch[1]);
+                                if (answerNum >= bound) score = 85;
+                                else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                            }
+                            
+                            // Year-based range matching
+                            if (score === 0) {
+                                const rangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                if (rangeMatch) {
+                                    const min = parseFloat(rangeMatch[1]);
+                                    const max = parseFloat(rangeMatch[2]);
+                                    if (answerNum >= min && answerNum <= max) {
+                                        const rangeSize = max - min;
+                                        const offset = Math.abs(answerNum - (min + max) / 2);
+                                        score = Math.max(0, 80 - (offset / Math.max(rangeSize, 1) * 20));
+                                    }
                                 }
                             }
-                            // Prefix-based range matching: "Less than X", "More than X", "Up to X", "Above X", "Under X", "Over X"
-                            else if (answerYears > 0) {
-                                const lessMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)/i);
+                            
+                            // Prefix-based range matching
+                            if (score === 0) {
+                                const lessMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)/i);
                                 const moreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
                                 if (lessMatch) {
                                     const bound = parseFloat(lessMatch[1]);
-                                    if (answerYears < bound) {
+                                    if (answerNum < bound) {
                                         const rangeSize = Math.max(bound, 1);
-                                        const offset = Math.abs(answerYears - 0);
+                                        const offset = Math.abs(answerNum - 0);
                                         score = Math.max(0, 85 - (offset / rangeSize * 20));
                                     } else {
-                                        const diff = Math.abs(answerYears - bound);
+                                        const diff = Math.abs(answerNum - bound);
                                         score = Math.max(0, 60 - diff * 10);
                                     }
                                 } else if (moreMatch) {
                                     const bound = parseFloat(moreMatch[1]);
-                                    if (answerYears >= bound) {
+                                    if (answerNum >= bound) {
                                         score = 85;
                                     } else {
-                                        const diff = Math.abs(answerYears - bound);
+                                        const diff = Math.abs(answerNum - bound);
                                         score = Math.max(0, 60 - diff * 10);
                                     }
                                 }
                             }
-                            // Single year match (e.g., "3+", "2+", "5")
-                            if (score === 0 && answerYears > 0) {
-                                // First try to match "X+" or "X +" patterns (like "3+", "3 +")
+                            
+                            // Single year/number match
+                            if (score === 0) {
                                 const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
                                 if (plusMatch) {
-                                    const radioYears = parseFloat(plusMatch[1]);
-                                    // "3+" means 3 or more, so if answer is >=3, it's a good match
-                                    if (answerYears >= radioYears) {
+                                    const radioVal = parseFloat(plusMatch[1]);
+                                    if (answerNum >= radioVal) {
                                         score = 90;
                                     } else {
-                                        // Answer is less than X+, still calculate score
-                                        const diff = Math.abs(answerYears - radioYears);
+                                        const diff = Math.abs(answerNum - radioVal);
                                         score = Math.max(0, 85 - diff * 10);
                                     }
                                 } else {
-                                    // Try simple number match
-                                    const singleYearMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
-                                    if (singleYearMatch) {
-                                        const radioYears = parseFloat(singleYearMatch[1]);
-                                        const diff = Math.abs(answerYears - radioYears);
+                                    const singleNumMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                    if (singleNumMatch) {
+                                        const radioVal = parseFloat(singleNumMatch[1]);
+                                        const diff = Math.abs(answerNum - radioVal);
                                         score = Math.max(0, 90 - diff * 10);
                                     }
                                 }
@@ -4936,6 +4984,177 @@ class SentinelAgent:
                     }
                     
                     return bestRadio;
+                };
+                
+                const findBestCustomRadioMatch = (answer, radios) => {
+                    if (!answer || !radios || radios.length === 0) return null;
+                    
+                    const ans = answer.toLowerCase();
+                    let bestRadio = null;
+                    let bestScore = -1;
+                    
+                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    
+                    for (const radio of radios) {
+                        const textEl = radio.querySelector('p, span');
+                        const label = textEl?.innerText || radio.getAttribute('aria-label') || radio.innerText || radio.textContent || '';
+                        const lowerLabel = label.toLowerCase().trim();
+                        let score = 0;
+                        
+                        if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {
+                            score = 100;
+                        }
+                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) &&
+                                (ans.includes('yes') || ans.includes('serving'))) {
+                            score = 90;
+                        }
+                        else if (lowerLabel.includes('no') && ans.includes('no')) {
+                            score = 90;
+                        }
+                        else if (answerNum > 0) {
+                            // Convert label to numeric value (days or years)
+                            let radioNum = 0;
+                            let radioMin = 0;
+                            let radioMax = 0;
+                            let isRange = false;
+                            let unit = 'years';
+                            
+                            // Check for day-based labels first (notice period questions)
+                            const dayRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)\s*days/i);
+                            const weekMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*weeks/i);
+                            const dayLessMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*days/i);
+                            const dayMoreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)\s*days/i);
+                            const immediateMatch = lowerLabel.match(/immediate|right away|0\s*days/i);
+                            
+                            if (dayRangeMatch) {
+                                radioMin = parseFloat(dayRangeMatch[1]);
+                                radioMax = parseFloat(dayRangeMatch[2]);
+                                isRange = true;
+                                unit = 'days';
+                            } else if (weekMatch) {
+                                const weeks = parseFloat(weekMatch[1]);
+                                radioMax = weeks * 7;
+                                radioMin = 0;
+                                isRange = true;
+                                unit = 'days';
+                            } else if (dayLessMatch) {
+                                radioMax = parseFloat(dayLessMatch[1]);
+                                radioMin = 0;
+                                isRange = true;
+                                unit = 'days';
+                            } else if (dayMoreMatch) {
+                                radioMin = parseFloat(dayMoreMatch[1]);
+                                radioMax = 999;
+                                isRange = true;
+                                unit = 'days';
+                            } else if (immediateMatch) {
+                                radioNum = 0;
+                                unit = 'days';
+                            } else {
+                                // Year-based range matching (experience questions)
+                                const yearRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                if (yearRangeMatch) {
+                                    radioMin = parseFloat(yearRangeMatch[1]);
+                                    radioMax = parseFloat(yearRangeMatch[2]);
+                                    isRange = true;
+                                    unit = 'years';
+                                }
+                            }
+                            
+                            if (isRange) {
+                                if (unit === 'days') {
+                                    // For notice period: answer "7" means 7 days
+                                    if (answerNum >= radioMin && answerNum <= radioMax) {
+                                        const rangeSize = Math.max(radioMax - radioMin, 1);
+                                        const offset = Math.abs(answerNum - (radioMin + radioMax) / 2);
+                                        score = Math.max(0, 85 - (offset / rangeSize * 20));
+                                    } else {
+                                        const diff = Math.min(Math.abs(answerNum - radioMin), Math.abs(answerNum - radioMax));
+                                        score = Math.max(0, 60 - diff * 2);
+                                    }
+                                } else {
+                                    if (answerNum >= radioMin && answerNum <= radioMax) {
+                                        const rangeSize = radioMax - radioMin;
+                                        const offset = Math.abs(answerNum - (radioMin + radioMax) / 2);
+                                        score = Math.max(0, 80 - (offset / Math.max(rangeSize, 1) * 20));
+                                    }
+                                }
+                            }
+                            
+                            if (score === 0 && !isRange) {
+                                // Prefix-based matching for day units
+                                const lessDaysMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)/i);
+                                const moreDaysMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
+                                const lessWeeksMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)\s*weeks/i);
+                                
+                                if (lessWeeksMatch) {
+                                    const boundDays = parseFloat(lessWeeksMatch[1]) * 7;
+                                    if (answerNum < boundDays) score = 85;
+                                    else score = Math.max(0, 60 - (answerNum - boundDays) * 2);
+                                } else if (lessDaysMatch) {
+                                    const bound = parseFloat(lessDaysMatch[1]);
+                                    if (answerNum < bound) score = 85;
+                                    else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                                } else if (moreDaysMatch) {
+                                    const bound = parseFloat(moreDaysMatch[1]);
+                                    if (answerNum >= bound) score = 85;
+                                    else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                                }
+                                
+                                // Year-based prefix matching
+                                if (score === 0) {
+                                    const lessYearMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)/i);
+                                    const moreYearMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
+                                    if (lessYearMatch) {
+                                        const bound = parseFloat(lessYearMatch[1]);
+                                        if (answerNum < bound) score = 85;
+                                        else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 10);
+                                    } else if (moreYearMatch) {
+                                        const bound = parseFloat(moreYearMatch[1]);
+                                        if (answerNum >= bound) score = 85;
+                                        else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 10);
+                                    }
+                                }
+                            }
+                            
+                            if (score === 0) {
+                                const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                if (plusMatch) {
+                                    const radioVal = parseFloat(plusMatch[1]);
+                                    if (answerNum >= radioVal) score = 90;
+                                    else score = Math.max(0, 85 - Math.abs(answerNum - radioVal) * 10);
+                                } else {
+                                    const singleNumMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                    if (singleNumMatch) {
+                                        const radioVal = parseFloat(singleNumMatch[1]);
+                                        const diff = Math.abs(answerNum - radioVal);
+                                        score = Math.max(0, 90 - diff * 10);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestRadio = radio;
+                        }
+                    }
+                    
+                    return bestRadio;
+                };
+                
+                const clickCustomRadio = (element) => {
+                    if (!element) return;
+                    element.scrollIntoView({ block: 'center' });
+                    element.click();
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                    element.dispatchEvent(new Event('click', { bubbles: true }));
+                    const roleInput = element.querySelector('input[type="radio"]');
+                    if (roleInput) {
+                        roleInput.checked = true;
+                        roleInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 };
                 
                 // Helper: Find salary range match for range-based options
@@ -5945,6 +6164,132 @@ class SentinelAgent:
                             }
                         }
                         
+                        // 3.1a Handle LinkedIn custom radio groups (div-based, not fieldset/input)
+                        // LinkedIn screening questions use div containers with role="radio" or label elements
+                        // that have no <fieldset> wrapper and no <input type="radio">
+                        let customRadioContainers = queryAllDeep(
+                            '[data-test-form-builder-radio-button-group]:not(fieldset), ' +
+                            '[role="radiogroup"]:not(fieldset)',
+                            modal
+                        );
+                        
+                        // Also find .fb-dash-form-element containers that contain custom radios
+                        const fbElements = queryAllDeep('.fb-dash-form-element', modal);
+                        for (const fb of fbElements) {
+                            if (fb.tagName === 'FIELDSET') continue;
+                            if (customRadioContainers.includes(fb)) continue;
+                            const hasRoleRadio = fb.querySelector('[role="radio"]');
+                            const hasLabelRadio = fb.querySelector('label[data-test-radio-button], div[data-test-radio-button]');
+                            if (hasRoleRadio || hasLabelRadio) {
+                                customRadioContainers.push(fb);
+                            }
+                        }
+                        
+                        for (const container of customRadioContainers) {
+                            let questionText = '';
+                            
+                            const labelEl = container.querySelector('label, span, p, legend');
+                            if (labelEl) {
+                                const labelText = (labelEl.innerText || labelEl.textContent || '').trim();
+                                if (labelText.length > 3) questionText = labelText;
+                            }
+                            
+                            if (!questionText) {
+                                const parentSection = container.closest('.jobs-easy-apply-form-section__question, [data-test-form-element]');
+                                if (parentSection) {
+                                    const sectionLabel = parentSection.querySelector('label, span, p');
+                                    if (sectionLabel) questionText = (sectionLabel.innerText || sectionLabel.textContent || '').trim();
+                                }
+                            }
+                            
+                            if (!questionText) {
+                                let parent = container.parentElement;
+                                for (let i = 0; i < 4 && parent && parent !== modal; i++) {
+                                    const labelEl2 = parent.querySelector('label');
+                                    if (labelEl2 && labelEl2.innerText && labelEl2.innerText.trim().length > 5) {
+                                        questionText = labelEl2.innerText.trim();
+                                        break;
+                                    }
+                                    parent = parent.parentElement;
+                                }
+                            }
+                            
+                            questionText = questionText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            
+                            const customRadios = Array.from(container.querySelectorAll(
+                                '[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]'
+                            ));
+                            
+                            const hasSelected = customRadios.some(el =>
+                                el.getAttribute('aria-checked') === 'true' ||
+                                el.classList.contains('selected') ||
+                                el.classList.contains('checked') ||
+                                el.getAttribute('aria-selected') === 'true'
+                            );
+                            
+                            if (customRadios.length > 0 && !hasSelected) {
+                                const answer = questionText ? fuzzyMatch(questionText) : null;
+                                console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
+                                
+                                if (answer) {
+                                    let bestRadio = findBestCustomRadioMatch(answer, customRadios);
+                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {
+                                        bestRadio = findSalaryRangeMatch(answer, customRadios);
+                                    }
+                                    if (bestRadio) {
+                                        console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
+                                        clickCustomRadio(bestRadio);
+                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio' });
+                                    } else {
+                                        const hasYes = customRadios.some(r => {
+                                            const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                            return t === 'yes' || t.includes('yes');
+                                        });
+                                        const hasNo = customRadios.some(r => {
+                                            const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                            return t === 'no' || t.includes('no');
+                                        });
+                                        const isYesNoFromRadios = customRadios.length <= 4 && hasYes && hasNo;
+                                        const isYesNoFromText = isLikelyYesNoQuestion(questionText);
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
+                                            const yesRadio = customRadios.find(r => {
+                                                const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                                return t === 'yes' || t.includes('yes');
+                                            });
+                                            if (yesRadio) {
+                                                console.log('Defaulting custom radio to Yes:', questionText.substring(0, 50));
+                                                clickCustomRadio(yesRadio);
+                                                formResults.push({ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' });
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    const hasYes = customRadios.some(r => {
+                                        const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                        return t === 'yes' || t.includes('yes');
+                                    });
+                                    const hasNo = customRadios.some(r => {
+                                        const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                        return t === 'no' || t.includes('no');
+                                    });
+                                    const isYesNo = customRadios.length <= 4 && hasYes && hasNo;
+                                    const isYesNoQ = isLikelyYesNoQuestion(questionText);
+                                    
+                                    if (isYesNo || (isYesNoQ && hasYes)) {
+                                        const yesRadio = customRadios.find(r => {
+                                            const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                            return t === 'yes' || t.includes('yes');
+                                        });
+                                        if (yesRadio) {
+                                            console.log('Defaulting custom Yes/No to Yes:', questionText.substring(0, 50));
+                                            clickCustomRadio(yesRadio);
+                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: 'Yes', inputType: 'radio' });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
                         // 3.1b Handle standalone Radio buttons (not inside fieldsets)
                         // Many forms have radio buttons directly in divs or other containers
                         const allRadios = queryAllDeep('input[type="radio"]', modal);
@@ -6263,7 +6608,12 @@ class SentinelAgent:
                         const checkForErrors = () => {
                             const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
                             const requiredSelects = queryAllDeep('select[required], select[aria-required="true"]', modal);
-                            const radioGroups = queryAllDeep('fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element', modal);
+                            const radioGroups = queryAllDeep(
+                                'fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element, ' +
+                                '[data-test-form-builder-radio-button-group], [role="radiogroup"], ' +
+                                '.fb-dash-form-element',
+                                modal
+                            );
                             
                             const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !i.value.trim());
                             
@@ -6285,10 +6635,14 @@ class SentinelAgent:
                             
                             const hasEmptyRadio = radioGroups.some(g => {
                                 const rs = Array.from(g.querySelectorAll('input[type="radio"]'));
-                                const roleRadios = Array.from(g.querySelectorAll('[role="radio"]'));
+                                const roleRadios = Array.from(g.querySelectorAll('[role="radio"], label[data-test-radio-button], div[data-test-radio-button]'));
                                 const hasCheckedInput = rs.some(r => r.checked);
-                                const hasAriaChecked = roleRadios.some(r => r.getAttribute('aria-checked') === 'true');
-                                return isVisible(g) && (rs.length > 0 || roleRadios.length > 0) && !hasCheckedInput && !hasAriaChecked;
+                                const hasAriaChecked = roleRadios.some(r => r.getAttribute('aria-checked') === 'true' || r.getAttribute('aria-selected') === 'true');
+                                const hasSelectedClass = roleRadios.some(r => r.classList.contains('selected') || r.classList.contains('checked'));
+                                const hasRadios = rs.length > 0 || roleRadios.length > 0;
+                                if (!hasRadios && !g.classList.contains('fb-dash-form-element')) return false;
+                                if (!hasRadios && g.classList.contains('fb-dash-form-element')) return false;
+                                return isVisible(g) && !hasCheckedInput && !hasAriaChecked && !hasSelectedClass;
                             });
                             
                             // Check for unchecked required checkboxes (privacy/consent)

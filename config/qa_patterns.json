@@ -81,7 +81,13 @@
         "years of experience in Java",
         "how many years of experience in Java",
         "Java years of experience",
-        "java years experience"
+        "java years experience",
+        "total work experience in years",
+        "mention your total work experience in years",
+        "relevant work experience",
+        "how many years of relevant work experience",
+        "years of relevant work experience do you have",
+        "how many years of relevant work experience do you have for this requirement"
       ],
       "category": "experience",
       "default": "4 Years",
@@ -1071,6 +1077,8 @@
         "when can you join",
         "notice",
         "within how many days will you be able to join",
+        "in how many days can you join",
+        "if selected, in how many days can you join",
         "availability",
         "last working day",
         "365 days thereafter"

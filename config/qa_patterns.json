@@ -354,17 +354,18 @@
         "pan card number",
         "pan card",
         "pan number",
+        "pan no",
         "kindly help us with your pan",
         "pan for registration",
         "pan card for registration"
       ],
       "category": "personal_info",
-      "default": "BSYPS6328H",
+      "default": "MTKPS1941P",
       "sensitive": true,
       "input_type_defaults": {
-        "radio": "BSYPS6328H",
-        "select": "BSYPS6328H",
-        "text": "BSYPS6328H"
+        "radio": "MTKPS1941P",
+        "select": "MTKPS1941P",
+        "text": "MTKPS1941P"
       },
       "priority": 9
     },
@@ -731,6 +732,28 @@
         "text": "MTKPS1941P"
       },
       "priority": 9
+    },
+    "dob_and_pan": {
+      "patterns": [
+        "dob and pan",
+        "dob and pan no",
+        "dob and pan number",
+        "date of birth and pan",
+        "date of birth and pan no",
+        "date of birth and pan number",
+        "what is your dob and pan",
+        "what is your dob and pan no",
+        "what is your dob and pan number"
+      ],
+      "category": "personal_info",
+      "default": "17/12/2000, MTKPS1941P",
+      "sensitive": true,
+      "input_type_defaults": {
+        "radio": "17/12/2000, MTKPS1941P",
+        "select": "17/12/2000, MTKPS1941P",
+        "text": "17/12/2000, MTKPS1941P"
+      },
+      "priority": 10
     },
     "company_current": {
       "patterns": [

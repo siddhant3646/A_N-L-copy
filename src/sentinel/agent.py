@@ -66,7 +66,8 @@ class SentinelAgent:
         self._last_result = ""  # Track last result for loop detection
         self._same_result_count = 0  # Counter for repeated results
         self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
-        
+        self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
+
         # Metrics tracking
         self.metrics = {
             'task_name': '',
@@ -144,7 +145,8 @@ class SentinelAgent:
                     patterns_dict[pattern_str.lower()] = answer
                     patterns_with_defaults[pattern_str.lower()] = {
                         'default': answer,
-                        'input_type_defaults': input_type_defaults
+                        'input_type_defaults': input_type_defaults,
+                        'requires_exact_match': pattern_data.get('requires_exact_match', False)
                     }
         except Exception as e:
             print(f"Warning: Could not load JSON patterns for JS: {e}")
@@ -2234,6 +2236,33 @@ class SentinelAgent:
                         print("⏭️ Skipped job (already applied or not Easy Apply)")
                     continue
                 
+                # LinkedIn: Form stuck loop detection in outer step loop
+                # When autopilot breaks after being stuck, the outer loop keeps getting
+                # LINKEDIN_FORM_STUCK from _handle_scripted_fallback. After 3 consecutive
+                # stuck results, force-close the modal and navigate away to escape.
+                if 'LINKEDIN_FORM_STUCK' in result:
+                    self._linkedin_stuck_count += 1
+                    print(f"⚠️ LinkedIn form stuck ({self._linkedin_stuck_count}/3): {result}")
+                    if self._linkedin_stuck_count >= 3:
+                        print("⚠️ LinkedIn stuck 3x in outer loop. Force-closing modal and navigating away...")
+                        closed = await self._close_linkedin_modal()
+                        if not closed:
+                            print("⚠️ Modal close failed — navigating to LinkedIn jobs search to escape...")
+                            try:
+                                await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                                await asyncio.sleep(random.uniform(4, 6))
+                            except Exception as nav_e:
+                                print(f"   ⚠️ Navigation fallback error: {nav_e}")
+                        self._linkedin_stuck_count = 0  # Reset counter
+                        await asyncio.sleep(random.uniform(2, 3))
+                    else:
+                        await asyncio.sleep(random.uniform(2, 4))
+                    continue
+                
+                # Reset stuck counter on any non-stuck LinkedIn result
+                if 'LINKEDIN' in result and 'LINKEDIN_FORM_STUCK' not in result:
+                    self._linkedin_stuck_count = 0
+                
                 # LinkedIn Autopilot — triggered by APPLY_CLICKED_LINKEDIN (legacy) or LINKEDIN_EASY_APPLY_CLICKED (JS)
                 if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
                     # STRICT CHECK: If we've already submitted 5 applications, mark task complete
@@ -2252,6 +2281,8 @@ class SentinelAgent:
                     max_submit_attempts = 3   # Max retries per job before skipping
                     autopilot_iteration = 0   # Track total iterations in autopilot
                     max_autopilot_iterations = 50  # Safety limit per job
+                    transitioning_count = 0   # Track consecutive modal transitioning states
+                    max_transitioning_attempts = 5  # Max waits for modal to transition
                     
                     while True:
                         autopilot_iteration += 1
@@ -2260,28 +2291,8 @@ class SentinelAgent:
                         # SAFETY: Exit autopilot if too many iterations (prevents infinite loop)
                         if autopilot_iteration > max_autopilot_iterations:
                             print(f"⚠️ Max iterations ({max_autopilot_iterations}) reached for this job. Skipping...")
-                            # Try to close any open modal and move on
-                            await self._page.evaluate("""() => {
-                                // Try multiple selectors for LinkedIn modal close button
-                                const closeSelectors = [
-                                    'button[aria-label*="Dismiss"]',
-                                    'button[aria-label*="dismiss"]', 
-                                    'button[aria-label*="Close"]',
-                                    'button[aria-label*="close"]',
-                                    'button[data-test-modal-close-btn]',
-                                    '.artdeco-modal__dismiss',
-                                    '.artdeco-button--circle[aria-label]',
-                                    'button[aria-label*="Discard"]'
-                                ];
-                                for (let sel of closeSelectors) {
-                                    const btn = document.querySelector(sel);
-                                    if (btn && btn.offsetParent !== null) {
-                                        btn.click();
-                                        return;
-                                    }
-                                }
-                            }""")
-                            await asyncio.sleep(1)
+                            # Try to close any open modal and move on (two-step close)
+                            await self._close_linkedin_modal()
                             break
                         
                         await asyncio.sleep(random.uniform(4, 8))
@@ -2357,27 +2368,8 @@ class SentinelAgent:
                         
                         if app_load_error:
                             print("⚠️ LinkedIn Application Loading Error Detected! Skipping this job...")
-                            # Close any open modal
-                            await self._page.evaluate("""() => {
-                                const closeSelectors = [
-                                    'button[aria-label*="Dismiss"]',
-                                    'button[aria-label*="dismiss"]', 
-                                    'button[aria-label*="Close"]',
-                                    'button[aria-label*="close"]',
-                                    'button[data-test-modal-close-btn]',
-                                    '.artdeco-modal__dismiss',
-                                    'button[aria-label*="Discard"]'
-                                ];
-                                for (let sel of closeSelectors) {
-                                    const btn = document.querySelector(sel);
-                                    if (btn && btn.offsetParent !== null) {
-                                        btn.click();
-                                        return 'CLOSED';
-                                    }
-                                }
-                                return 'NO_CLOSE_BTN';
-                            }""")
-                            await asyncio.sleep(1)
+                            # Close any open modal (two-step close)
+                            await self._close_linkedin_modal()
                             break  # Skip to next job
                         
                         next_result = await self._handle_scripted_fallback()
@@ -2404,9 +2396,12 @@ class SentinelAgent:
                             same_result_count += 1
                             if same_result_count >= 5:
                                 print("⚠️ Stuck in loop, skipping this job...")
+                                # Two-step close: X button then Discard confirmation
+                                await self._close_linkedin_modal()
                                 break
                         else:
                             same_result_count = 0
+                            transitioning_count = 0  # Reset transitioning counter on any different result
                         last_result = next_result
                         
                         if 'LINKEDIN_SUCCESS' in next_result:
@@ -2444,35 +2439,20 @@ class SentinelAgent:
                             # If we've clicked submit too many times without success, the submission is failing
                             if submit_attempt_count >= max_submit_attempts:
                                 print("⚠️ Submit not working (possible 403 error). Skipping this job...")
-                                # Try to close the modal
-                                await self._page.evaluate("""() => {
-                                    // Try multiple selectors for LinkedIn modal close button
-                                    const closeSelectors = [
-                                        'button[aria-label*="Dismiss"]',
-                                        'button[aria-label*="dismiss"]', 
-                                        'button[aria-label*="Close"]',
-                                        'button[aria-label*="close"]',
-                                        'button[data-test-modal-close-btn]',
-                                        '.artdeco-modal__dismiss',
-                                        '.artdeco-button--circle[aria-label]',
-                                        'button[aria-label*="Discard"]'
-                                    ];
-                                    for (let sel of closeSelectors) {
-                                        const btn = document.querySelector(sel);
-                                        if (btn && btn.offsetParent !== null) {
-                                            btn.click();
-                                            return;
-                                        }
-                                    }
-                                }""")
-                                await asyncio.sleep(1)
+                                # Try to close the modal (two-step close)
+                                await self._close_linkedin_modal()
                                 break
                             continue
                         elif 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED' in next_result:
                             print("🛡️ Acknowledged Safety Reminder")
                             continue
                         elif 'LINKEDIN_MODAL_TRANSITIONING' in next_result:
-                            print("⏳ Modal is transitioning or loading, waiting...")
+                            transitioning_count += 1
+                            if transitioning_count >= max_transitioning_attempts:
+                                print("⚠️ Modal stuck in transitioning state. Forcing navigation to next job...")
+                                transitioning_count = 0
+                                break
+                            print(f"⏳ Modal is transitioning or loading ({transitioning_count}/{max_transitioning_attempts}), waiting...")
                             await asyncio.sleep(random.uniform(2, 3))
                             continue
                         elif 'LINKEDIN_NEXT_CLICKED' in next_result or 'LINKEDIN_REVIEW_CLICKED' in next_result:
@@ -3417,6 +3397,10 @@ class SentinelAgent:
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
                                 continue;
                             }}
+                            const patternData = KNOWN_PATTERNS_WITH_DEFAULTS[key];
+                            if (patternData && patternData.requires_exact_match) {{
+                                continue;
+                            }}
                             bestMatch = key;
                             bestKeyLen = key.length;
                         }}
@@ -3556,6 +3540,55 @@ class SentinelAgent:
                     console.log('Chatbot Debug - DOB question detected, answering:', answer);
                 }} else {{
                     answer = fuzzyMatch(qText, chatLayer) || '1';
+                    
+                    // Yes/no question detection — override numeric/empty fallbacks
+                    // Questions like "Have you worked with X?" or "Do you have experience in X?"
+                    // should answer "Yes", not "1" or "4" (from generic "experience" pattern)
+                    const isYesNoQuestion = (
+                        qLower.startsWith('have you ') ||
+                        qLower.startsWith('do you ') ||
+                        qLower.startsWith('are you ') ||
+                        qLower.startsWith('can you ') ||
+                        qLower.startsWith('will you ') ||
+                        qLower.startsWith('did you ') ||
+                        qLower.startsWith('have u ') ||
+                        qLower.startsWith('r u ')
+                    );
+                    
+                    // Exclude questions that are genuinely asking for years/numbers
+                    // e.g., "Do you have 4+ years of experience?" should NOT be overridden
+                    const isNumericQuestion = (
+                        qLower.includes('how many years') ||
+                        qLower.includes('years of experience') ||
+                        qLower.includes('how much') ||
+                        qLower.includes('rate your') ||
+                        qLower.includes('on a scale') ||
+                        qLower.includes('proficiency') ||
+                        qLower.includes('salary') ||
+                        qLower.includes('ctc')
+                    );
+                    
+                    if (isYesNoQuestion && !isNumericQuestion) {{
+                        // Override if answer is null, "1", starts with a digit (numeric result
+                        // from generic "experience" pattern matching "Do you have experience..."),
+                        // OR is a non-yes/no answer that's not a known exception
+                        const isNumericResult = answer && /^\d/.test(answer.trim());
+                        const answerLowerYN = answer ? answer.toLowerCase().trim() : '';
+                        const hasYesOrNo = answerLowerYN.includes('yes') || answerLowerYN.includes('no');
+                        const knownExceptions = ['serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer'];
+                        const isException = knownExceptions.some(e => answerLowerYN.includes(e));
+                        
+                        if (!answer || answer === '1' || isNumericResult || (!hasYesOrNo && !isException)) {{
+                            // Check negative indicators for No vs Yes
+                            const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
+                                'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
+                                'convict', 'disability', 'previously employed', 'ever been employed',
+                                'currently employed', 'worked at', 'worked for', 'worked with'];
+                            const isNegative = negativeIndicators.some(p => qLower.includes(p));
+                            answer = isNegative ? 'No' : 'Yes';
+                            console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
+                        }}
+                    }}
                 }}
                 
                 // Special handling for Naukri salary questions - use full INR values
@@ -3594,6 +3627,27 @@ class SentinelAgent:
                                           document.querySelector('div[contenteditable="true"]');
                 
                 console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditableEarly}});
+                
+                // EARLY COMPLETION PHRASE CHECK: If the question text itself contains
+                // a completion phrase, the application was submitted successfully
+                if (qText) {{
+                    const qLowerForCompletion = qText.toLowerCase();
+                    const completionPhrases = [
+                        'thank you for your response',
+                        'thank you for your responses',
+                        'thank you for applying',
+                        'thank you for your interest',
+                        'application has been submitted',
+                        'we have received your application',
+                        'your application has been received',
+                        'your response has been recorded',
+                        'thanks for your response'
+                    ];
+                    if (completionPhrases.some(p => qLowerForCompletion.includes(p))) {{
+                        console.log('Chatbot Debug - Completion phrase detected:', qText.substring(0, 100));
+                        return 'CHATBOT_COMPLETE';
+                    }}
+                }}
                 
                 // CHECK FOR COMPLETION: If chatLayer is visible but has no inputs and no real question,
                 // the application was likely submitted successfully
@@ -3796,7 +3850,27 @@ class SentinelAgent:
                     
                     // Try to match answer to radio label
                     for (const radio of radios) {{
-                        const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
+                        // Improved label extraction: try label[for], aria-label, parent <label>, then fallback
+                        let label = '';
+                        if (radio.id) {{
+                            const labelEl = chatLayer.querySelector('label[for="' + radio.id + '"]');
+                            if (labelEl) label = labelEl.innerText.trim();
+                        }}
+                        if (!label && radio.getAttribute('aria-label')) {{
+                            label = radio.getAttribute('aria-label');
+                        }}
+                        if (!label) {{
+                            let parent = radio.parentElement;
+                            while (parent && parent.tagName !== 'LABEL' && parent !== chatLayer) {{
+                                parent = parent.parentElement;
+                            }}
+                            if (parent && parent.tagName === 'LABEL') {{
+                                label = parent.innerText.trim();
+                            }}
+                        }}
+                        if (!label) {{
+                            label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
+                        }}
                         const labelLower = label.toLowerCase();
                         
                         // TEXT MATCH: for non-numeric answers, find best text overlap
@@ -3826,9 +3900,10 @@ class SentinelAgent:
                             }}
                             break;
                         }}
-                        // Match No for negative answers
+                        // Match No for negative answers — guard: skip if label also contains "yes"
                         if ((answerLower.includes('no') || answerLower.includes('false')) && 
-                            (labelLower === 'no' || /(\bno\b|^no\b|\bno$)/.test(labelLower))) {{
+                            (labelLower === 'no' || /(\bno\b|^no\b|\bno$)/.test(labelLower)) &&
+                            !labelLower.includes('yes')) {{
                             if (!radio.checked) {{
                                 radio.click();
                                 clickedRadio = true;
@@ -4041,11 +4116,16 @@ class SentinelAgent:
                     
                     // If no specific match but answer is "Yes" or positive, check ALL options
                     // except "Skip this question" (user wants to select all available locations)
+                    // BUT skip "No" if this is a Yes/No pair (don't select both)
                     if (!clickedCheckbox && (answerLower.includes('yes') || answerLower.includes('true'))) {{
+                        const visLabels = Array.from(checkboxes).map(c => (c.parentElement?.innerText || c.nextSibling?.textContent || '').toLowerCase().trim());
+                        const visIsYesNoPair = visLabels.some(l => l === 'yes') && visLabels.some(l => l === 'no');
                         for (const checkbox of checkboxes) {{
                             const lbl = (checkbox.parentElement?.innerText || checkbox.nextSibling?.textContent || '').toLowerCase();
                             // Skip the "skip" option
                             if (lbl.includes('skip')) continue;
+                            // For Yes/No pairs, skip "no" — only select "yes"
+                            if (visIsYesNoPair && lbl.trim() === 'no') continue;
                             if (!checkbox.checked) {{
                                 checkbox.click();
                                 clickedCheckbox = true;
@@ -4098,13 +4178,23 @@ class SentinelAgent:
                     }}
                     
                     // Strategy: use the named inputs to get labels, click corresponding .mcc__checkbox by index
+                    // Detect Yes/No pair: if both "yes" and "no" are options, only click "yes"
+                    const mccInputNames = Array.from(namedInputs).map(n => (n.name || '').toLowerCase().trim());
+                    const mccHasYes = mccInputNames.some(n => n === 'yes');
+                    const mccHasNo = mccInputNames.some(n => n === 'no');
+                    const mccIsYesNoPair = mccHasYes && mccHasNo;
+                    if (mccIsYesNoPair) {{
+                        console.log('Chatbot Debug - MCC Yes/No pair detected, will only click Yes');
+                    }}
                     let mccClicked = 0;
                     const skipNames = [];
                     for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
                         const inputName = (namedInputs[i].name || '').toLowerCase().trim();
                         const isSkip = inputName.includes('skip') || inputName.includes('skip this');
-                        console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip);
-                        if (isSkip) {{
+                        // For Yes/No pairs, skip "no" — only select "yes"
+                        const isNoInPair = mccIsYesNoPair && inputName === 'no';
+                        console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
+                        if (isSkip || isNoInPair) {{
                             skipNames.push(inputName);
                             continue;
                         }}
@@ -4531,6 +4621,82 @@ class SentinelAgent:
             return True
         return False
 
+    async def _close_linkedin_modal(self) -> bool:
+        """
+        Close the LinkedIn Easy Apply modal with a two-step close:
+        1) Click the X/Dismiss button (opens 'Discard application?' confirmation dialog)
+        2) Wait for the Discard dialog, then click the Discard confirmation button
+        
+        Returns True if the modal was closed (no visible modal remains), False otherwise.
+        """
+        if not self._page:
+            return False
+        try:
+            # Step 1: Click the dismiss/close (X) button
+            step1 = await self._page.evaluate("""() => {
+                const closeSelectors = [
+                    'button[aria-label*="Dismiss"]',
+                    'button[aria-label*="dismiss"]',
+                    'button[aria-label*="Close"]',
+                    'button[aria-label*="close"]',
+                    'button[data-test-modal-close-btn]',
+                    '.artdeco-modal__dismiss',
+                    '.artdeco-button--circle[aria-label]',
+                    'button[aria-label*="Discard"]'
+                ];
+                for (let sel of closeSelectors) {
+                    const btn = document.querySelector(sel);
+                    if (btn && btn.offsetParent !== null) {
+                        btn.click();
+                        return 'CLICKED';
+                    }
+                }
+                return 'NO_CLOSE_BTN';
+            }""")
+            if step1 == 'NO_CLOSE_BTN':
+                # Maybe already closed, or a Discard dialog is already open
+                pass
+            await asyncio.sleep(1)
+            
+            # Step 2: Click the "Discard application" confirmation button (appears after step 1)
+            step2 = await self._page.evaluate("""() => {
+                // The Discard confirmation dialog has a primary button with text "Discard application"
+                const buttons = document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                    if ((text === 'discard' || text === 'discard application' || text.includes('discard application')) && btn.offsetParent !== null) {
+                        btn.click();
+                        return 'DISCARDED';
+                    }
+                }
+                // Fallback: aria-label based
+                const discardBtn = document.querySelector('button[data-test-dialog-primary-button], button.artdeco-button--primary');
+                if (discardBtn && discardBtn.offsetParent !== null) {
+                    const t = (discardBtn.innerText || '').toLowerCase();
+                    if (t.includes('discard')) {
+                        discardBtn.click();
+                        return 'DISCARDED';
+                    }
+                }
+                return 'NO_DISCARD_BTN';
+            }""")
+            await asyncio.sleep(1)
+            
+            # Step 3: Verify modal is actually closed
+            modal_still_open = await self._page.evaluate("""() => {
+                const modal = document.querySelector('.artdeco-modal--is-open, .jobs-easy-apply-modal');
+                return !!(modal && modal.offsetParent !== null);
+            }""")
+            
+            if not modal_still_open:
+                print("✅ LinkedIn modal closed successfully (two-step close)")
+                return True
+            print("⚠️ LinkedIn modal still open after two-step close attempt")
+            return False
+        except Exception as e:
+            print(f"⚠️ _close_linkedin_modal error: {e}")
+            return False
+
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
         # Serialize patterns, synonyms, and stop words for JS injection
@@ -4539,6 +4705,8 @@ class SentinelAgent:
         patterns_json = json.dumps(patterns_for_js.get('answers', {}))
         synonyms_json = json.dumps(SYNONYM_MAP)
         stopwords_json = json.dumps(list(STOP_WORDS))
+        exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
+        exact_match_keys_json = json.dumps(exact_match_keys)
         
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
@@ -4549,6 +4717,7 @@ class SentinelAgent:
                 const KNOWN_PATTERNS = __PATTERNS__;
                 const SYNONYMS = __SYNONYMS__;
                 const STOP_WORDS_SET = new Set(__STOPWORDS__);
+                const EXACT_MATCH_KEYS = new Set(__EXACT_MATCH_KEYS__);
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {
@@ -4691,6 +4860,7 @@ class SentinelAgent:
                             // Anti-collision for generic words
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
+                            if (EXACT_MATCH_KEYS.has(keyLower)) continue;
                             if (key.length > bestKeyLen) {
                                 bestMatch = val;
                                 bestKeyLen = key.length;
@@ -4704,6 +4874,7 @@ class SentinelAgent:
                         const qWords = new Set(qLower.split(/\s+/));
                         for (const [key, val] of sortedPatterns) {
                             const keyLower = key.toLowerCase();
+                            if (EXACT_MATCH_KEYS.has(keyLower)) continue;
                             const keyWords = keyLower.split(/\s+/).filter(w => w.length > 2);
                             if (keyWords.length < 2) continue; // Only for multi-word patterns
                             
@@ -4729,6 +4900,7 @@ class SentinelAgent:
                             for (const [key, val] of sortedPatterns) {
                                 const kKeywords = extractKeywords(key);
                                 if (kKeywords.size === 0) continue;
+                                if (EXACT_MATCH_KEYS.has(key.toLowerCase())) continue;
                                 const overlap = setIntersect(qKeywords, kKeywords);
                                 const score = overlap.size / Math.max(qKeywords.size, kKeywords.size);
                                 // Lower threshold (0.3) for better matching on complex questions
@@ -5616,11 +5788,37 @@ class SentinelAgent:
                                 }
                             }
                             
+                            // Yes/no question override — if fuzzyMatch returned nothing or a numeric answer,
+                            // and the question is a yes/no question, answer "Yes" (or "No" for negative indicators)
+                            if (!answer || /^\d+$/.test(answer.trim())) {
+                                if (labelText && isLikelyYesNoQuestion(labelText)) {
+                                    const ynNegativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
+                                        'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
+                                        'convict', 'disability', 'previously employed', 'ever been employed',
+                                        'currently employed', 'worked at', 'worked for', 'worked with'];
+                                    const lowerQ = labelText.toLowerCase();
+                                    const isNeg = ynNegativeIndicators.some(p => lowerQ.includes(p));
+                                    answer = isNeg ? 'No' : 'Yes';
+                                    console.log('LinkedIn form: Yes/no override, answer:', answer, '| question:', labelText.substring(0, 80));
+                                }
+                            }
+                            
                             // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
                             if (!answer) {
                                 const combinedText = (lowerLabel + ' ' + (input.placeholder || '').toLowerCase()).trim();
                                 
-                                if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
+                                // Yes/no phrasing safety net — catch questions that don't start with
+                                // standard yes/no prefixes but contain yes/no phrasing keywords
+                                if (combinedText.includes('willing') || combinedText.includes('comfortable') ||
+                                    combinedText.includes('relocate') || combinedText.includes('able to') ||
+                                    combinedText.includes('authorized') || combinedText.includes('eligible') ||
+                                    combinedText.includes('require sponsorship') || combinedText.includes('work on site') ||
+                                    combinedText.includes('work onsite')) {
+                                    const ynNegInd = ['sponsorship', 'visa', 'require sponsorship'];
+                                    const isNeg = ynNegInd.some(p => combinedText.includes(p));
+                                    answer = isNeg ? 'No' : 'Yes';
+                                    console.log('LinkedIn form: Yes/no keyword fallback, answer:', answer, '| text:', combinedText.substring(0, 80));
+                                } else if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
                                     answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
                                     console.log('Fallback: Filling skill set field');
                                 } else if (combinedText.includes('location') || (combinedText.includes('city') && !combinedText.includes('street'))) {
@@ -7068,16 +7266,32 @@ class SentinelAgent:
 
                     // CRITICAL: If a REAL modal is present in DOM (even if loading/transitioning), do NOT click Easy Apply
                     // Must exclude messaging overlays which also match [role="dialog"]
+                    // IMPROVED: Also check if it's actually an Easy Apply modal by checking for specific indicators
                     const modals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"]');
                     const anyModal = Array.from(modals).find(m => !isMessagingOverlay(m));
                     if (anyModal) {
                         const hasInteractiveElements = queryDeep('input, select, textarea, button', anyModal) !== null;
+                        
+                        // IMPROVED: Check for Easy Apply specific indicators
+                        const hasProgressBar = anyModal.querySelector('svg[role="progressbar"][aria-valuenow]') !== null;
+                        const hasPageIndicator = /\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(anyModal.innerText || '');
+                        const hasEasyApplyContent = (anyModal.innerText || '').toLowerCase().includes('easy apply') ||
+                                                    (anyModal.innerText || '').toLowerCase().includes('apply to') ||
+                                                    (anyModal.innerText || '').toLowerCase().includes('contact info') ||
+                                                    (anyModal.innerText || '').toLowerCase().includes('resume');
+                        
+                        // Only wait for transitioning if it looks like an actual Easy Apply modal
+                        const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent;
+                        
                         if (isVisible(anyModal) && hasInteractiveElements) {
                             console.log('Unknown modal detected via deep query. Handling as generic form...');
                             return handleLinkedInForm(anyModal);
-                        } else {
-                            console.log('Modal is loading or transitioning (not visible or has no interactive elements). Waiting...');
+                        } else if (isLikelyEasyApplyModal && (isVisible(anyModal) || hasInteractiveElements)) {
+                            console.log('Easy Apply modal is loading or transitioning. Waiting...');
                             return 'LINKEDIN_MODAL_TRANSITIONING';
+                        } else {
+                            // Not an Easy Apply modal or it's stale - proceed to look for Easy Apply button
+                            console.log('Modal found but not an Easy Apply modal. Proceeding to look for Easy Apply button...');
                         }
                     }
 
@@ -8806,7 +9020,7 @@ class SentinelAgent:
                 }
 
                 return 'NO_ACTION';
-            })""".replace("__PATTERNS__", patterns_json).replace("__SYNONYMS__", synonyms_json).replace("__STOPWORDS__", stopwords_json)
+            })""".replace("__PATTERNS__", patterns_json).replace("__SYNONYMS__", synonyms_json).replace("__STOPWORDS__", stopwords_json).replace("__EXACT_MATCH_KEYS__", exact_match_keys_json)
 
             
             # Playwright automatically invokes the function expression

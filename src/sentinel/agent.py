@@ -1,4 +1,5 @@
 import asyncio
+import csv
 import json
 import random
 import os
@@ -50,6 +51,14 @@ class SentinelAgent:
     UNKNOWN_QUESTIONS_LOG = os.path.expanduser("~/Desktop/sentinel_errors/unknown_questions.log")
     ALL_QUESTIONS_LOG = os.path.expanduser("~/Desktop/sentinel_errors/all_questions.log")
     METRICS_LOG = os.path.expanduser("~/Desktop/sentinel_errors/metrics.jsonl")
+    # Single consolidated sheet of every question answered or rejected.
+    # Columns: timestamp, platform, url, question, answer, input_type, options,
+    # selected_option, confidence, status, error_message
+    QA_RESULTS_CSV = os.path.join(SCREENSHOT_DIR, "qa_results.csv")
+    QA_RESULTS_COLUMNS = [
+        "timestamp", "platform", "url", "question", "answer", "input_type",
+        "options", "selected_option", "confidence", "status", "error_message",
+    ]
     
     def __init__(self, browser=None):
         self.browser = browser
@@ -612,7 +621,7 @@ class SentinelAgent:
             if 'month' in question_lower:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("months of experience")
-                return answer or '46', max(confidence, 0.95)
+                return answer or '48', max(confidence, 0.95)
             # LinkedIn requires whole numbers - return '4' for those cases
             if 'whole number' in question_lower or 'enter a number' in question_lower:
                 return '4', 0.98
@@ -874,7 +883,21 @@ class SentinelAgent:
         
         for error in errors:
             healed_value = None
-            
+
+            # Record the failing answer in the consolidated QA results CSV sheet
+            self._log_qa_result(
+                question=error.field_label or "",
+                answer=error.field_value or "",
+                input_type="select" if error.available_options else "text",
+                options=error.available_options,
+                selected_option=error.field_value or "",
+                confidence="",
+                status="validation_error",
+                error_message=error.message or "",
+                url=self._page.url if self._page else "",
+                platform=error.platform.value if error.platform else "",
+            )
+
             # Try learned patterns for this field
             if error.field_label:
                 learned = self._get_learned_answer(error.field_label)
@@ -998,7 +1021,19 @@ class SentinelAgent:
             
             with open(self.UNKNOWN_QUESTIONS_LOG, 'a', encoding='utf-8') as f:
                 f.write(log_entry)
-            
+
+            # Also record unknown questions in the consolidated QA results CSV sheet
+            self._log_qa_result(
+                question=question,
+                answer="",
+                input_type=input_type,
+                options=options,
+                selected_option=selected_option,
+                confidence="",
+                status="unknown",
+                platform=context,
+            )
+
             print(f"   📝 Logged unknown question to file")
         except Exception as e:
             print(f"   ⚠️ Failed to log question: {e}")
@@ -1034,6 +1069,57 @@ class SentinelAgent:
             self.metrics['questions_answered'] += 1
         except Exception as e:
             print(f"   ⚠️ Failed to log question: {e}")
+
+    def _log_qa_result(self, question: str, answer: str, input_type: str = "",
+                       options: List[str] = None, selected_option: str = "",
+                       confidence="", status: str = "submitted",
+                       error_message: str = "", url: str = "",
+                       platform: str = ""):
+        """
+        Write a single row to the consolidated QA results CSV sheet.
+
+        This is the ONE place that records every question, the answer given,
+        the answer type, available options, and whether the form accepted it
+        (status). Use status='submitted' for answered questions and
+        status='validation_error' for answers rejected by the form.
+
+        Args:
+            question: Question text
+            answer: Answer that was provided (or attempted)
+            input_type: Type of input (text, radio, checkbox, select, number)
+            options: Available options for select/radio/checkbox
+            selected_option: The option that was selected
+            confidence: Match confidence score (str or float)
+            status: One of 'submitted', 'validation_error', 'unknown', 'recovered'
+            error_message: Validation error message if status is validation_error
+            url: Page URL
+            platform: Platform context (linkedin, naukri, instahyre)
+        """
+        try:
+            os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
+            row = {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "platform": platform or self._current_platform or "",
+                "url": url or (self._page.url if self._page else ""),
+                "question": question or "",
+                "answer": answer or "",
+                "input_type": input_type or "",
+                "options": ", ".join(str(o) for o in options) if options else "",
+                "selected_option": selected_option or "",
+                "confidence": str(confidence) if confidence != "" else "",
+                "status": status,
+                "error_message": error_message or "",
+            }
+            write_header = not os.path.exists(self.QA_RESULTS_CSV)
+            with open(self.QA_RESULTS_CSV, "a", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(
+                    f, fieldnames=self.QA_RESULTS_COLUMNS, extrasaction="ignore"
+                )
+                if write_header:
+                    writer.writeheader()
+                writer.writerow(row)
+        except Exception as e:
+            print(f"   ⚠️ Failed to log QA result to CSV: {e}")
 
     def _log_question_detailed(self, question_data: Dict[str, Any]):
         """
@@ -1100,7 +1186,20 @@ class SentinelAgent:
             json_log = os.path.join(self.SCREENSHOT_DIR, 'all_questions.jsonl')
             with open(json_log, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(json_entry) + '\n')
-            
+
+            # Write to the consolidated QA results CSV sheet (success row)
+            self._log_qa_result(
+                question=question,
+                answer=answer,
+                input_type=input_type,
+                options=options,
+                selected_option=selected_option,
+                confidence=confidence,
+                status="submitted",
+                url=url,
+                platform=context,
+            )
+
             print(f"   📝 Logged detailed question: {question[:50]}...")
         except Exception as e:
             print(f"   ⚠️ Failed to log detailed question: {e}")
@@ -1135,6 +1234,7 @@ class SentinelAgent:
     def _save_metrics(self):
         """Save task metrics to JSONL file for analysis."""
         try:
+            os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
             self.metrics['end_time'] = datetime.now().isoformat()
             self.metrics['steps_taken'] = self.state.step_count
             

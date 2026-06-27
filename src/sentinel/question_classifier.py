@@ -103,8 +103,8 @@ CATEGORY_PATTERNS = {
     QuestionCategory.EXPERIENCE: {
         "keywords": [
             "experience", "years", "exp", "tenure", "worked", "yrs",
-            r"work\s+experience", r"professional\s+experience", r"total\s+exp",
-            r"how\s+long", "duration", "period"
+            "work experience", "professional experience", "total exp",
+            "how long", "duration", "period"
         ],
         "regex_patterns": [
             r"\d+\+?\s*years?\s*of\s*experience",
@@ -138,7 +138,7 @@ CATEGORY_PATTERNS = {
     QuestionCategory.LOCATION: {
         "keywords": [
             "location", "city", "relocate", "based", "stay", "place",
-            "where", "address", "reside", "live", r"currently\s*in",
+            "where", "address", "reside", "live", "currently in",
             "currently located", "where are you"
         ],
         "regex_patterns": [
@@ -155,9 +155,9 @@ CATEGORY_PATTERNS = {
     },
     QuestionCategory.SKILLS: {
         "keywords": [
-            "skills", "proficiency", "expertise", "knowledge", r"tech\s*stack",
+            "skills", "proficiency", "expertise", "knowledge", "tech stack",
             "technologies", "tools", "programming", "languages", "frameworks",
-            "libraries", "competencies", "technologies"
+            "libraries", "competencies"
         ],
         "regex_patterns": [
             r"tech\s*stack",
@@ -176,7 +176,7 @@ CATEGORY_PATTERNS = {
         "keywords": [
             "willing", "comfortable", "available", "ready", "interested",
             "agree", "accept", "confirm", "authorized", "eligible",
-            "open\\s*to", "fine\\s*with", "okay\\s*with", "do you have", 
+            "open to", "fine with", "okay with", "do you have",
             "have all", "educational and professional", "lawfully authorized",
             "consent", "collect", "process", "data", "1825 days", "730 days", "highradius",
             "ai apis", "openai", "anthropic", "ci/cd", "cicd", "cloud servers",
@@ -197,18 +197,6 @@ CATEGORY_PATTERNS = {
             r"deployed\s*applications\s*to\s*cloud",
             r"designed\s*database\s*architecture",
             r"worked\s*with\s*ci/cd"
-        ],
-        "regex_patterns": [
-            r"willing\s*to\s*relocate",
-            r"available\s*for",
-            r"comfortable\s*with",
-            r"ready\s*to",
-            r"interested\s*in",
-            r"do\s*you\s*have",
-            r"have\s*you\s*ever",
-            r"are\s*you",
-            r"have\s*your\s*all\s*educational",
-            r"educational\s*and\s*professional"
         ],
         "input_type_hints": ["radio", "checkbox", "select"],
         "requires_numeric": False
@@ -292,7 +280,7 @@ CATEGORY_DEFAULTS = {
     },
     QuestionCategory.EXPERIENCE: {
         "years": "4 Years",  # Will be overridden by platform config
-        "months": "46",
+        "months": "48",
         "numeric": "4"  # Will be overridden by platform config
     },
     QuestionCategory.NOTICE_PERIOD: {

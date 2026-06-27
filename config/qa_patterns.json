@@ -4,17 +4,17 @@
   "platform_defaults": {
     "naukri": {
       "experience_years": "4 Years",
-      "experience_months": "46",
+      "experience_months": "48",
       "numeric_only_experience": false
     },
     "linkedin": {
       "experience_years": "4",
-      "experience_months": "46",
+      "experience_months": "48",
       "numeric_only_experience": true
     },
     "instahyre": {
       "experience_years": "4 Years",
-      "experience_months": "46",
+      "experience_months": "48",
       "numeric_only_experience": false
     }
   },
@@ -4204,12 +4204,12 @@
         "months of experience"
       ],
       "category": "experience",
-      "default": "46",
+      "default": "48",
       "input_type_defaults": {
-        "radio": "46",
-        "select": "46",
-        "text": "46",
-        "number": "46"
+        "radio": "48",
+        "select": "48",
+        "text": "48",
+        "number": "48"
       },
       "priority": 4
     },

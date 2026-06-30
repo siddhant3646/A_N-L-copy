@@ -1,8 +1,11 @@
 import asyncio
+import atexit
 import random
 import sys
 import datetime
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 # Add workspace root to Python path for imports
@@ -12,6 +15,46 @@ from playwright.async_api import async_playwright
 
 _browser_counter = 0
 _shared_playwright = None
+
+# Shared temp management — ONE wrapper dir per process run, reused across all
+# tasks/cycles. Previously every Browser.start() created a fresh sentinel_<rand>
+# wrapper + a sentinel_profile_<pid>_<taskid> dir (copying ~200MB of Chrome
+# profile data) and never cleaned them up, leaking GBs across the infinite loop.
+_shared_tmp_root = None      # e.g. /var/folders/.../T/sentinel_<rand>
+_shared_profile_dir = None   # <_shared_tmp_root>/profile  (the user_data_dir)
+
+
+def _ensure_tmp_root():
+    """Lazily create the single shared temp wrapper + profile dir.
+
+    Sets TMPDIR once so subsequent tempfile calls stay under our wrapper.
+    Returns the shared profile directory path.
+    """
+    global _shared_tmp_root, _shared_profile_dir
+    if _shared_tmp_root is None:
+        _shared_tmp_root = tempfile.mkdtemp(prefix="sentinel_")
+        os.environ["TMPDIR"] = _shared_tmp_root
+        # Name includes PID so the existing pgrep-based Chrome kill logic
+        # (which matches `sentinel_profile_<pid>`) keeps working.
+        _shared_profile_dir = os.path.join(
+            _shared_tmp_root, f"sentinel_profile_{os.getpid()}"
+        )
+        os.makedirs(_shared_profile_dir, exist_ok=True)
+        print(f"🔧 Shared TMPDIR: {_shared_tmp_root}")
+    return _shared_profile_dir
+
+
+def cleanup_tmp_root():
+    """Delete the shared temp wrapper. Safe to call multiple times."""
+    global _shared_tmp_root, _shared_profile_dir
+    if _shared_tmp_root is not None:
+        shutil.rmtree(_shared_tmp_root, ignore_errors=True)
+        print(f"🧹 Cleaned up shared temp: {_shared_tmp_root}")
+        _shared_tmp_root = None
+        _shared_profile_dir = None
+
+
+atexit.register(cleanup_tmp_root)
 
 async def get_shared_playwright():
     global _shared_playwright
@@ -93,11 +136,12 @@ class Browser:
     
     async def start(self):
         import os
-        import tempfile
-        
-        local_tmp = tempfile.mkdtemp(prefix="sentinel_")
-        os.environ["TMPDIR"] = local_tmp
-        print(f"🔧 Set TMPDIR to: {local_tmp}")
+        import glob
+
+        # Reuse ONE shared temp wrapper per process run (created lazily).
+        # This replaces the old per-call tempfile.mkdtemp() that leaked a new
+        # sentinel_<rand> dir on every Browser.start().
+        _ensure_tmp_root()
 
         self.playwright = await get_shared_playwright()
         
@@ -121,7 +165,9 @@ class Browser:
             import shutil
             import glob
             
-            temp_dir = os.path.join(tempfile.gettempdir(), f"sentinel_profile_{os.getpid()}_{self._task_id}")
+            # Reuse the single shared profile dir for the whole process run
+            # instead of sentinel_profile_<pid>_<taskid> per task (which leaked).
+            temp_dir = _shared_profile_dir
             self._temp_dir = temp_dir
             os.makedirs(temp_dir, exist_ok=True)
             
@@ -145,9 +191,11 @@ class Browser:
             
             if os.path.exists(src_default):
                 try:
-                    # Don't try to delete — macOS locks some files. Just overwrite with dirs_exist_ok
-                    if not os.path.exists(dst_default):
-                        os.makedirs(dst_default, exist_ok=True)
+                    # Wipe any previous task's Default so each task starts from a
+                    # clean mirror of the source profile (no stale session data),
+                    # without allocating a new wrapper dir each time.
+                    shutil.rmtree(dst_default, ignore_errors=True)
+                    os.makedirs(dst_default, exist_ok=True)
                     print("  ⚡ Mirroring full profile (excluding Cache)...")
                     
                     def ignore_cache(path, names):
@@ -567,6 +615,7 @@ async def main():
             except KeyboardInterrupt:
                 print("\n🛑 Stopped by User (Ctrl+C)")
                 await stop_shared_playwright()
+                cleanup_tmp_root()
                 return  # Exit the entire program
             except RuntimeError as e:
                 # Browser launch failures (profile locked, Playwright pipe stale, etc.)
@@ -638,6 +687,7 @@ async def main():
             print("\n🛑 Stopped by User (Ctrl+C)")
             await intersession_browser.stop()
             await stop_shared_playwright()
+            cleanup_tmp_root()
             return
         except Exception as e:
             print(f"⚠️  [INTERSESSION] Error: {e}")

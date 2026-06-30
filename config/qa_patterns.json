@@ -1988,12 +1988,14 @@
     "area_of_experience": {
       "patterns": [
         "area have you most experience in",
-        "area of most experience"
+        "area of most experience",
+        "what area have you most experience in"
       ],
       "category": "preference",
       "default": "Full-stack",
       "input_type_defaults": {
         "radio": "Full-stack",
+        "checkbox": "Full-stack",
         "select": "Full-stack",
         "text": "Full-stack"
       },
@@ -2037,6 +2039,60 @@
         "text": "5"
       },
       "priority": 6
+    },
+    "other_areas_experience": {
+      "patterns": [
+        "other areas have you previous employment experience in",
+        "other areas of previous employment experience",
+        "other areas of experience",
+        "previous employment experience in"
+      ],
+      "category": "preference",
+      "default": "Full-stack, AI/ML",
+      "input_type_defaults": {
+        "radio": "Full-stack",
+        "checkbox": "Full-stack, AI/ML",
+        "select": "Full-stack, AI/ML",
+        "text": "Full-stack, AI/ML"
+      },
+      "priority": 6
+    },
+    "fulltime_onsite_availability": {
+      "patterns": [
+        "available to work full-time on-site",
+        "available to work full time on-site",
+        "available to work full time onsite",
+        "available to work fulltime onsite",
+        "full-time on-site",
+        "full time on site"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": true,
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 8
+    },
+    "team_size": {
+      "patterns": [
+        "team size you have worked with",
+        "team size you worked with",
+        "what was the team size",
+        "size of the team",
+        "team size"
+      ],
+      "category": "preference",
+      "default": "5-10",
+      "input_type_defaults": {
+        "radio": "5-10",
+        "select": "5-10",
+        "text": "5-10",
+        "number": "7"
+      },
+      "priority": 7
     },
     "which_database": {
       "patterns": [
@@ -3688,12 +3744,12 @@
         "pertinent experience"
       ],
       "category": "experience",
-      "default": "3.5 Years",
+      "default": "4 Years",
       "input_type_defaults": {
-        "radio": "3.5",
-        "select": "3.5 Years",
-        "text": "3.5 Years",
-        "number": "3.5"
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
       },
       "priority": 8
     },
@@ -4187,7 +4243,10 @@
         "relocate to",
         "willingness to travel",
         "are you comfortable commuting to this job\u2019s location",
-        "are you comfortable commuting to this job\u2019s location?"
+        "are you comfortable commuting to this job\u2019s location?",
+        "comfortable relocating",
+        "relocating",
+        "relocating to"
       ],
       "category": "yes_no",
       "default": "Yes",

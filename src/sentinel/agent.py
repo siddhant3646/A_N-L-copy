@@ -3,28 +3,25 @@ import csv
 import json
 import random
 import os
-import hashlib
 import re
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from typing import Optional, Dict, List, Tuple, Any
 
 from src.sentinel.schemas import (
-    ManagerIntent, ActionResult, SentinelState
+    SentinelState
 )
 from src.sentinel.prompts import NAUKRI_TASK_CONTEXT
 from src.sentinel.question_classifier import (
-    QuestionClassifier, classify_question, QuestionCategory, InputType
+    QuestionClassifier, QuestionCategory
 )
 from src.sentinel.question_fingerprint import (
-    create_fingerprint, create_fingerprint_hash,
     SuccessTracker, FingerprintMatcher,
     detect_expected_format, validate_answer,
-    are_questions_similar,
     SYNONYM_MAP, STOP_WORDS
 )
 from src.patterns.input_aware_resolver import (
-    InputAwareResolver, InputType as ResolverInputType, Option, MatchResult
+    InputAwareResolver, InputType as ResolverInputType, Option
 )
 from src.sentinel.self_healing import SelfHealingMatcher
 from src.patterns.pattern_learner import PatternLearner
@@ -154,6 +151,7 @@ class SentinelAgent:
                     patterns_dict[pattern_str.lower()] = answer
                     patterns_with_defaults[pattern_str.lower()] = {
                         'default': answer,
+                        'category': pattern_data.get('category', ''),
                         'input_type_defaults': input_type_defaults,
                         'requires_exact_match': pattern_data.get('requires_exact_match', False)
                     }
@@ -607,8 +605,8 @@ class SentinelAgent:
                 return '30', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
                 return '23', 0.95
-            # Default to expected if unclear
-            return '30', 0.90
+            # Default to current CTC if unclear (which is standard for generic "CTC" questions)
+            return '23', 0.90
         
         # Specific Experience Questions (Priority over generic check)
         if 'area' in question_lower and 'experience' in question_lower:
@@ -634,23 +632,25 @@ class SentinelAgent:
                 return answer or '4 Years', max(confidence, 0.95)
         
         if is_notice_question or is_immediate_joiners_only:
+            if self._current_platform == 'linkedin':
+                # Check if it is a yes/no question about serving notice
+                is_yes_no = 'serving' in question_lower and not any(kw in question_lower for kw in ['days', 'how many', 'duration', 'lwd', 'last working'])
+                if is_yes_no:
+                    answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
+                    return answer or 'Yes', max(confidence, 0.95)
+                return '15', 0.98
+            
             if 'last working day' in question_lower or 'lwd' in question_lower:
-                if self._current_platform == 'linkedin' and 'serving' in question_lower:
-                    return '15', 0.98
                 lwd_date = datetime.now() + timedelta(days=15)
                 lwd_formatted = lwd_date.strftime('%d %B %Y')
                 return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
             elif 'serving' in question_lower:
-                if self._current_platform == 'linkedin' and 'immediate' in question_lower:
-                    return '15', 0.98
                 answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
                 return answer or 'Yes', max(confidence, 0.95)
             elif 'in days' in question_lower:
                 return '15', 0.98
             else:
-                if self._current_platform == 'linkedin':
-                    return '15', 0.95
-                elif self._current_platform == 'naukri':
+                if self._current_platform == 'naukri':
                     lwd_date = datetime.now() + timedelta(days=15)
                     lwd_formatted = lwd_date.strftime('%d %B %Y')
                     return f'15 days (LWD: {lwd_formatted})', 0.95
@@ -992,8 +992,8 @@ class SentinelAgent:
                         return True
                     else:
                         print(f"   ⚠️ Failed to inject healed value '{healed_value}' into DOM")
-                except Exception as e:
-                    print(f"   ⚠️ Error during DOM injection: {{e}}")
+                except Exception:
+                    print("   ⚠️ Error during DOM injection: {e}")
                     
         return False
 
@@ -1034,7 +1034,7 @@ class SentinelAgent:
                 platform=context,
             )
 
-            print(f"   📝 Logged unknown question to file")
+            print("   📝 Logged unknown question to file")
         except Exception as e:
             print(f"   ⚠️ Failed to log question: {e}")
 
@@ -1538,24 +1538,24 @@ class SentinelAgent:
         Returns True if click succeeded, False otherwise.
         """
         try:
-            result = await self._page.evaluate(f"""(selector) => {{
+            result = await self._page.evaluate("""(selector) => {
                 const el = document.querySelector(selector);
                 if (!el) return 'NOT_FOUND';
                 
                 // Scroll into view
-                el.scrollIntoView({{block: 'center', behavior: 'instant'}});
+                el.scrollIntoView({block: 'center', behavior: 'instant'});
                 
                 // Try direct click
-                try {{ el.click(); return 'CLICKED'; }} catch(e) {{}}
+                try { el.click(); return 'CLICKED'; } catch(e) {}
                 
                 // Fallback: dispatch event
-                try {{
-                    el.dispatchEvent(new MouseEvent('click', {{bubbles: true, cancelable: true, view: window}}));
+                try {
+                    el.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window}));
                     return 'DISPATCHED';
-                }} catch(e) {{
+                } catch(e) {
                     return 'FAILED: ' + e.message;
-                }}
-            }}""", selector)
+                }
+            }""", selector)
             
             if result in ['CLICKED', 'DISPATCHED']:
                 return True
@@ -1571,19 +1571,19 @@ class SentinelAgent:
         Click element containing specific text, using JS to bypass viewport issues.
         """
         try:
-            result = await self._page.evaluate(f"""(text, tag, exact) => {{
+            result = await self._page.evaluate("""(text, tag, exact) => {
                 const elements = document.querySelectorAll(tag);
-                for (const el of elements) {{
+                for (const el of elements) {
                     const elText = el.innerText || el.textContent || '';
                     const matches = exact ? elText.trim() === text : elText.toLowerCase().includes(text.toLowerCase());
-                    if (matches && el.offsetParent !== null) {{
-                        el.scrollIntoView({{block: 'center'}});
+                    if (matches && el.offsetParent !== null) {
+                        el.scrollIntoView({block: 'center'});
                         el.click();
                         return 'CLICKED: ' + elText.substring(0, 50);
-                    }}
-                }}
+                    }
+                }
                 return 'NOT_FOUND';
-            }}""", text, tag, exact)
+            }""", text, tag, exact)
             
             if 'CLICKED' in result:
                 return True
@@ -1598,12 +1598,12 @@ class SentinelAgent:
         Uses JS to bypass viewport issues.
         """
         try:
-            result = await self._page.evaluate(f"""(valueOrText, fallbackIndex) => {{
+            result = await self._page.evaluate("""(valueOrText, fallbackIndex) => {
                 const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
                 if (radios.length === 0) return 'NO_RADIOS';
                 
                 // Try to find by value, id, or associated label
-                for (const r of radios) {{
+                for (const r of radios) {
                     const val = (r.value || '').toLowerCase();
                     const id = (r.id || '').toLowerCase();
                     const label = r.closest('label') || document.querySelector('label[for="' + r.id + '"]');
@@ -1611,22 +1611,22 @@ class SentinelAgent:
                     
                     if (val.includes(valueOrText.toLowerCase()) || 
                         id.includes(valueOrText.toLowerCase()) || 
-                        labelText.includes(valueOrText.toLowerCase())) {{
-                        r.scrollIntoView({{block: 'center'}});
+                        labelText.includes(valueOrText.toLowerCase())) {
+                        r.scrollIntoView({block: 'center'});
                         r.click();
                         return 'CLICKED: ' + (label ? label.innerText : val);
-                    }}
-                }}
+                    }
+                }
                 
                 // Fallback to index
-                if (fallbackIndex !== null && fallbackIndex < radios.length) {{
-                    radios[fallbackIndex].scrollIntoView({{block: 'center'}});
+                if (fallbackIndex !== null && fallbackIndex < radios.length) {
+                    radios[fallbackIndex].scrollIntoView({block: 'center'});
                     radios[fallbackIndex].click();
                     return 'CLICKED_INDEX: ' + fallbackIndex;
-                }}
+                }
                 
                 return 'NOT_FOUND';
-            }}""", value_or_text, fallback_index)
+            }""", value_or_text, fallback_index)
             
             if 'CLICKED' in result:
                 return True
@@ -1641,11 +1641,11 @@ class SentinelAgent:
         Uses JS to bypass viewport issues.
         """
         try:
-            result = await self._page.evaluate(f"""(valueOrText, selectAll) => {{
+            result = await self._page.evaluate("""(valueOrText, selectAll) => {
                 const cbs = Array.from(document.querySelectorAll('input[type="checkbox"]'));
                 let clicked = 0;
                 
-                for (const cb of cbs) {{
+                for (const cb of cbs) {
                     if (cb.offsetParent === null) continue;  // Skip hidden
                     if (cb.checked) continue;  // Skip already checked
                     
@@ -1653,22 +1653,22 @@ class SentinelAgent:
                     const label = cb.closest('label') || document.querySelector('label[for="' + cb.id + '"]');
                     const labelText = label ? label.innerText.toLowerCase() : '';
                     
-                    if (selectAll) {{
-                        cb.scrollIntoView({{block: 'center'}});
+                    if (selectAll) {
+                        cb.scrollIntoView({block: 'center'});
                         cb.click();
                         clicked++;
-                    }} else if (valueOrText) {{
-                        if (val.includes(valueOrText.toLowerCase()) || labelText.includes(valueOrText.toLowerCase())) {{
-                            cb.scrollIntoView({{block: 'center'}});
+                    } else if (valueOrText) {
+                        if (val.includes(valueOrText.toLowerCase()) || labelText.includes(valueOrText.toLowerCase())) {
+                            cb.scrollIntoView({block: 'center'});
                             cb.click();
                             return 'CLICKED: ' + (label ? label.innerText : val);
-                        }}
-                    }}
-                }}
+                        }
+                    }
+                }
                 
                 if (selectAll) return clicked > 0 ? 'CLICKED_ALL: ' + clicked : 'NONE_TO_CLICK';
                 return 'NOT_FOUND';
-            }}""", value_or_text, select_all)
+            }""", value_or_text, select_all)
             
             if 'CLICKED' in result:
                 return True
@@ -1684,18 +1684,18 @@ class SentinelAgent:
         """
         for pattern in text_patterns:
             try:
-                result = await self._page.evaluate(f"""(pattern) => {{
+                result = await self._page.evaluate("""(pattern) => {
                     const buttons = document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], .btn, a.button');
-                    for (const btn of buttons) {{
+                    for (const btn of buttons) {
                         const text = btn.innerText || btn.value || '';
-                        if (text.toLowerCase().includes(pattern.toLowerCase()) && btn.offsetParent !== null) {{
-                            btn.scrollIntoView({{block: 'center'}});
+                        if (text.toLowerCase().includes(pattern.toLowerCase()) && btn.offsetParent !== null) {
+                            btn.scrollIntoView({block: 'center'});
                             btn.click();
                             return 'CLICKED: ' + text.substring(0, 30);
-                        }}
-                    }}
+                        }
+                    }
                     return 'NOT_FOUND';
-                }}""", pattern)
+                }""", pattern)
                 
                 if 'CLICKED' in result:
                     return True
@@ -1704,7 +1704,7 @@ class SentinelAgent:
         
         # Try fallback selector
         if fallback_selector:
-            return await self._robust_js_click(fallback_selector, f"button fallback")
+            return await self._robust_js_click(fallback_selector, "button fallback")
         
         return False
 
@@ -1714,10 +1714,10 @@ class SentinelAgent:
         """
         try:
             if isinstance(selector_or_locator, str):
-                await self._page.evaluate(f"""(selector, block) => {{
+                await self._page.evaluate("""(selector, block) => {
                     const el = document.querySelector(selector);
-                    if (el) el.scrollIntoView({{block: block, behavior: 'instant'}});
-                }}""", selector_or_locator, block)
+                    if (el) el.scrollIntoView({block: block, behavior: 'instant'});
+                }""", selector_or_locator, block)
             else:
                 await selector_or_locator.evaluate(f'el => el.scrollIntoView({{block: "{block}", behavior: "instant"}})')
             await asyncio.sleep(0.1)
@@ -2240,7 +2240,7 @@ class SentinelAgent:
                         }""")
                         
                         if click_result == 'CLICKED':
-                            print(f"   ✅ Dropdown option clicked")
+                            print("   ✅ Dropdown option clicked")
                             self._location_retrigger_count = 0
                             await asyncio.sleep(1)
                         else:
@@ -2576,7 +2576,7 @@ class SentinelAgent:
                                             context="LinkedIn_Form",
                                             match_confidence="Keyword Match"
                                         )
-                                except Exception as e:
+                                except Exception:
                                     pass  # Silently handle parse errors
                             continue
                         elif 'LINKEDIN_AUTOCOMPLETE_OPTION_SELECTED' in next_result:
@@ -2703,7 +2703,7 @@ class SentinelAgent:
                             
                             await asyncio.sleep(2)
                             if save_result == 'NO_SAVE_BUTTON':
-                                print(f"      ⚠️ No Save button found, retrying edit...")
+                                print("      ⚠️ No Save button found, retrying edit...")
                                 self.state.task_complete = True
                                 break
                             
@@ -3116,7 +3116,7 @@ class SentinelAgent:
                         count_info = result.split(': ')[1] if ': ' in result else ''
                         print(f"📋 Selected job {count_info}, continuing to select more...")
                     except:
-                        print(f"📋 Checkbox selected, continuing to select more...")
+                        print("📋 Checkbox selected, continuing to select more...")
                     await asyncio.sleep(random.uniform(0.5, 1))
                     continue  # Continue loop to select more checkboxes
                 
@@ -3545,15 +3545,45 @@ class SentinelAgent:
                         else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
                     }});
                     
+                    // Category-based overrides for notice period:
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {{
+                        const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
+                        if (defaultObj && defaultObj.category === 'notice_period') {{
+                            const v = KNOWN_PATTERNS[k];
+                            if (v && typeof v === 'string') {{
+                                if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {{
+                                    const match = v.match(/(\d+)/);
+                                    KNOWN_PATTERNS[k] = match ? match[1] : '15';
+                                    
+                                    if (defaultObj.input_type_defaults) {{
+                                        Object.keys(defaultObj.input_type_defaults).forEach(type => {{
+                                            const typeVal = defaultObj.input_type_defaults[type];
+                                            if (typeof typeVal === 'string' && typeVal.includes('days')) {{
+                                                const typeMatch = typeVal.match(/(\d+)/);
+                                                defaultObj.input_type_defaults[type] = typeMatch ? typeMatch[1] : '15';
+                                            }}
+                                        }});
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }});
+                    
                     const noticeKeys = [
                         'notice period', 'what is your notice period', 'notice period in days', 'notice period days',
                         'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice',
                         'if serving lwd', 'if serving lwd. looking for immediate joiners only',
                         'if serving lwd, looking for immediate joiners only', 'serving lwd',
-                        'if serving notice period immediate joiner'
+                        'if serving notice period immediate joiner', 'last working day'
                     ];
                     noticeKeys.forEach(k => {{
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = 'Serving Notice Period';
+                        const v = KNOWN_PATTERNS[k];
+                        if (v && v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {{
+                            const match = v.match(/(\d+)/);
+                            KNOWN_PATTERNS[k] = match ? match[1] : '15';
+                        }} else if (KNOWN_PATTERNS[k]) {{
+                            KNOWN_PATTERNS[k] = 'Serving Notice Period';
+                        }}
                     }});
                     
                     // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
@@ -3652,7 +3682,14 @@ class SentinelAgent:
                         qLower.startsWith('will you ') ||
                         qLower.startsWith('did you ') ||
                         qLower.startsWith('have u ') ||
-                        qLower.startsWith('r u ')
+                        qLower.startsWith('r u ') ||
+                        qLower.startsWith('apply only ') ||
+                        qLower.includes('willing') ||
+                        qLower.includes('comfortable') ||
+                        qLower.includes('localite') ||
+                        qLower.includes('relocate') ||
+                        qLower.includes('relocation') ||
+                        qLower.includes('open to')
                     );
                     
                     // Exclude questions that are genuinely asking for years/numbers
@@ -3683,7 +3720,7 @@ class SentinelAgent:
                             const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
-                                'currently employed', 'worked at', 'worked for', 'worked with'];
+                                'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs'];
                             const isNegative = negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
                             console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
@@ -4803,6 +4840,7 @@ class SentinelAgent:
         # Use merged patterns from JSON config + legacy dict
         patterns_for_js = self._get_patterns_for_js()
         patterns_json = json.dumps(patterns_for_js.get('answers', {}))
+        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
         synonyms_json = json.dumps(SYNONYM_MAP)
         stopwords_json = json.dumps(list(STOP_WORDS))
         exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
@@ -4815,6 +4853,7 @@ class SentinelAgent:
             js_code = """(function() {
                 // 1. INJECTED KNOWLEDGE
                 const KNOWN_PATTERNS = __PATTERNS__;
+                const KNOWN_PATTERNS_WITH_DEFAULTS = __PATTERNS_WITH_DEFAULTS__;
                 const SYNONYMS = __SYNONYMS__;
                 const STOP_WORDS_SET = new Set(__STOPWORDS__);
                 const EXACT_MATCH_KEYS = new Set(__EXACT_MATCH_KEYS__);
@@ -4844,15 +4883,40 @@ class SentinelAgent:
                     salaryKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) {
                             // Use full INR values for LinkedIn text inputs
-                            if (k.includes('current') || k.includes('gross current') || k === 'annual salary' || k === 'salary range' || k === 'ctc range') {
-                                KNOWN_PATTERNS[k] = '2300000';
-                            } else {
+                            if (k.includes('expected') || k.includes('ectc') || k.includes('expect')) {
                                 KNOWN_PATTERNS[k] = '3000000';
+                            } else {
+                                KNOWN_PATTERNS[k] = '2300000';
                             }
                         }
                     });
                     
-                    // Override notice period to numeric days for LinkedIn
+                    // Override notice period keys to numeric days for LinkedIn
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {
+                        const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
+                        if (defaultObj && defaultObj.category === 'notice_period') {
+                            const v = KNOWN_PATTERNS[k];
+                            if (v && typeof v === 'string') {
+                                if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
+                                    const match = v.match(/(\d+)/);
+                                    KNOWN_PATTERNS[k] = match ? match[1] : '15';
+                                    
+                                    // Also override the input_type_defaults if present
+                                    if (defaultObj.input_type_defaults) {
+                                        Object.keys(defaultObj.input_type_defaults).forEach(type => {
+                                            const typeVal = defaultObj.input_type_defaults[type];
+                                            if (typeof typeVal === 'string' && typeVal.includes('days')) {
+                                                const typeMatch = typeVal.match(/(\d+)/);
+                                                defaultObj.input_type_defaults[type] = typeMatch ? typeMatch[1] : '15';
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Fallback to noticeKeys list just in case some keys aren't in defaults
                     const noticeKeys = [
                         'notice period', 'what is your notice period', 'what is your notice period?',
                         'what is your notice period ?', 'notice period in days', 'notice period days',
@@ -4878,25 +4942,14 @@ class SentinelAgent:
                         'please select your notice period',
                         'how many days will you be able to join',
                         'within how many days will you be able to join',
-                        'join us', 'joining time', 'joining availability'
+                        'join us', 'joining time', 'joining availability',
+                        'last working day'
                     ];
                     noticeKeys.forEach(k => {
-                        if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '15';
-                    });
-                    
-                    // Broader override: any pattern whose VALUE is "Yes" but key contains notice/serving/lwd
-                    // This catches patterns not explicitly in noticeKeys (e.g. "immediate joiner" → "Yes")
-                    Object.keys(KNOWN_PATTERNS).forEach(k => {
-                        const kLower = k.toLowerCase();
-                        if ((kLower.includes('notice') || kLower.includes('serving') || kLower.includes('lwd') ||
-                             kLower.includes('days can you join') || kLower.includes('how many days') ||
-                             kLower.includes('how soon') || kLower.includes('can you join') ||
-                             kLower.includes('join us') || kLower.includes('joining date') ||
-                             kLower.includes('joining time') || kLower.includes('earliest join') ||
-                             kLower.includes('when can you join') || kLower.includes('available from') ||
-                             kLower.includes('days required')) && 
-                            (KNOWN_PATTERNS[k] === 'Yes' || KNOWN_PATTERNS[k] === 'No' || KNOWN_PATTERNS[k] === '15 days')) {
-                            KNOWN_PATTERNS[k] = '15';
+                        const v = KNOWN_PATTERNS[k];
+                        if (v && v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
+                            const match = v.match(/(\d+)/);
+                            KNOWN_PATTERNS[k] = match ? match[1] : '15';
                         }
                     });
                     
@@ -5024,7 +5077,7 @@ class SentinelAgent:
                         } else if (isNoticeQ) {
                             bestMatch = '15'; // Default notice period
                         } else if (isSalaryQ) {
-                            bestMatch = qLower.includes('current') ? '2300000' : '3000000';
+                            bestMatch = (qLower.includes('expected') || qLower.includes('ectc') || qLower.includes('expect')) ? '3000000' : '2300000';
                         } else if (isExpQ) {
                             bestMatch = '4 Years';
                         }
@@ -5037,7 +5090,13 @@ class SentinelAgent:
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         
                         if (isSalaryQ) {
-                            bestMatch = qLower.includes('current') ? '2300000' : '3000000';
+                            bestMatch = (qLower.includes('expected') || qLower.includes('ectc') || qLower.includes('expect')) ? '3000000' : '2300000';
+                        } else if (isExpQ && !/\d/.test(bestMatch)) {
+                            if (/how many|years|months|\bexp\b/i.test(qLower)) {
+                                bestMatch = '4';
+                            }
+                        } else if (isNoticeQ && !/\d/.test(bestMatch)) {
+                            bestMatch = '15';
                         }
                     }
                     
@@ -5146,11 +5205,11 @@ class SentinelAgent:
                         if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {
                             score = 100;
                         }
-                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) &&
-                                (ans.includes('yes') || ans.includes('serving'))) {
+                        else if ((/\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving')) &&
+                                (/\byes\b/i.test(ans) || ans.includes('serving'))) {
                             score = 90;
                         }
-                        else if (lowerLabel.includes('no') && ans.includes('no')) {
+                        else if (/\bno\b/i.test(lowerLabel) && /\bno\b/i.test(ans)) {
                             score = 90;
                         }
                         else if (answerNum > 0) {
@@ -5475,7 +5534,14 @@ class SentinelAgent:
                 const isLikelyYesNoQuestion = (text) => {
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
-                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t);
+                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t) ||
+                           t.startsWith('apply only ') ||
+                           t.includes('willing') ||
+                           t.includes('comfortable') ||
+                           t.includes('localite') ||
+                           t.includes('relocate') ||
+                           t.includes('relocation') ||
+                           t.includes('open to');
                 };
 
                 const isLinkedIn = document.title.includes('LinkedIn') || window.location.href.includes('linkedin.com');
@@ -5546,6 +5612,42 @@ class SentinelAgent:
                     // Helper: Fill LinkedIn form fields
                     const handleLinkedInForm = (modal) => {
                         console.log('Filling LinkedIn form fields (Shadow aware)...');
+
+                        // ──────────────────────────────────────────────────
+                        // SAFETY GUARD: If this modal is actually a safety
+                        // reminder popup (mislabeled as 'form' by checkModals),
+                        // click "Continue applying" and return immediately.
+                        // This is the last line of defense.
+                        // ──────────────────────────────────────────────────
+                        {
+                            const modalText = (modal.innerText || '').toLowerCase();
+                            // Also check ancestor dialog text (modal may be a sub-container)
+                            const dialogAncestor = modal.closest('[role="dialog"], .artdeco-modal, [class*="modal"]');
+                            const ancestorText = dialogAncestor ? (dialogAncestor.innerText || '').toLowerCase() : '';
+                            const combinedText = modalText + ' ' + ancestorText;
+                            const safetyKeywords = ['safety reminder', 'job search safety', 'research the company', 'report suspicious', 'review job post', 'continue applying'];
+                            if (safetyKeywords.some(kw => combinedText.includes(kw))) {
+                                console.log('SAFETY GUARD (form handler): Modal is a safety reminder popup. Looking for "Continue applying" button...');
+                                const btns = Array.from(queryAllDeep('button, span[role="button"]', modal));
+                                const allBtns = dialogAncestor ? btns.concat(Array.from(queryAllDeep('button, span[role="button"]', dialogAncestor))) : btns;
+                                const continueBtn = allBtns.find(b => (b.innerText || '').toLowerCase().includes('continue applying')) ||
+                                                   allBtns.find(b => (b.innerText || '').toLowerCase().trim() === 'continue') ||
+                                                   allBtns[allBtns.length - 1];  // fallback: last button
+                                if (continueBtn) {
+                                    console.log('SAFETY GUARD: Clicking "Continue applying":', continueBtn.innerText);
+                                    continueBtn.scrollIntoView({block: 'center'});
+                                    continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                    continueBtn.click();
+                                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                                }
+                                console.log('SAFETY GUARD: Safety modal detected but no "Continue applying" button found.');
+                                return 'LINKEDIN_FORM_STUCK: Safety modal detected, no continue button';
+                            }
+                        }
+
                         const formResults = [];
 
                         // Helper: Get label text associated with input (radio/checkbox)
@@ -5873,6 +5975,19 @@ class SentinelAgent:
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
                             
+                            // If the answer is notice period-related and we are filling a text input,
+                            // we must use a numeric value (e.g. '15')
+                            if (answer && (answer === 'Serving Notice Period' || /notice|np|lwd|days/i.test(labelText))) {
+                                const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
+                                if (defaultObj && defaultObj.category === 'notice_period') {
+                                    const match = answer.match(/(\d+)/);
+                                    answer = match ? match[1] : '15';
+                                } else if (/np|notice/i.test(labelText)) {
+                                    const match = answer.match(/(\d+)/);
+                                    answer = match ? match[1] : '15';
+                                }
+                            }
+                            
                             // If it's a numeric input, extract just the number from the answer
                             if (answer && isNumericInput) {
                                 const numericMatch = answer.match(/(\d+\.?\d*)/);
@@ -5885,6 +6000,10 @@ class SentinelAgent:
                                     }
                                     answer = String(numVal);
                                     console.log('Extracted numeric value for number field:', answer);
+                                } else {
+                                    // Fallback if answer contained no numbers but input expects numeric/years
+                                    answer = /notice|lwd/i.test(labelText) ? '15' : '4';
+                                    console.log('Fallback numeric value for number field:', answer);
                                 }
                             }
                             
@@ -5971,6 +6090,14 @@ class SentinelAgent:
                             
                             if (answer) {
                                 console.log('Filling text field:', labelText || '(unlabeled)', 'with:', answer);
+                                
+                                if (input.hasAttribute('maxlength')) {
+                                    const maxLen = parseInt(input.getAttribute('maxlength'), 10);
+                                    if (!isNaN(maxLen) && answer.length > maxLen) {
+                                        console.log(`Truncating answer from ${answer.length} to maxlength ${maxLen}`);
+                                        answer = answer.substring(0, maxLen);
+                                    }
+                                }
                                 
                                 fillReactInput(input, answer);
                                 
@@ -6752,12 +6879,94 @@ class SentinelAgent:
                             }
                         }
                         
-                        // 3.2 Handle Checkboxes (consent, privacy policy, etc.)
-                        // Search for all checkboxes including those with specific LinkedIn classes
+                        // 3.2 Handle Checkboxes - TWO PHASE:
+                        // Phase 1 (Group): Multi-checkbox fieldsets → look up parent question → check matching options only
+                        // Phase 2 (Singleton): Remaining single consent/privacy checkboxes → old logic
                         const checkboxes = queryAllDeep('input[type="checkbox"], .fb-form-element__checkbox', modal);
                         console.log('Found', checkboxes.length, 'checkboxes in modal');
-                        
+
+                        // Helper: get the question text for a group/fieldset (legend or heading)
+                        function getGroupQuestionText(fieldset) {
+                            const legend = fieldset.querySelector('legend');
+                            if (legend && legend.innerText.trim().length > 3) return legend.innerText.trim();
+                            const heading = fieldset.querySelector('[class*="label"], [class*="header"], [class*="question"], .artdeco-form-field__label, [data-test-form-element-label]');
+                            if (heading && heading.innerText.trim().length > 3) return heading.innerText.trim();
+                            return '';
+                        }
+
+                        // Helper: get only the per-option label for a single checkbox (NOT the whole fieldset)
+                        function getOptionLabel(cb) {
+                            // aria-labelledby
+                            const lby = cb.getAttribute('aria-labelledby');
+                            if (lby) { const el = document.getElementById(lby); if (el) return el.innerText.trim(); }
+                            // aria-label
+                            const al = cb.getAttribute('aria-label');
+                            if (al) return al.trim();
+                            // id → label[for]
+                            if (cb.id) { const lbl = queryDeep('label[for="' + cb.id + '"]', modal); if (lbl) return lbl.innerText.trim(); }
+                            // sibling label (immediate parent)
+                            const parent = cb.parentElement;
+                            if (parent) {
+                                const sibling = parent.querySelector('label');
+                                if (sibling) return sibling.innerText.trim();
+                                // data-test option label
+                                const optLabel = parent.querySelector('[data-test-text-selectable-option__label]');
+                                if (optLabel) return optLabel.innerText.trim();
+                            }
+                            return '';
+                        }
+
+                        // Phase 1: Handle multi-checkbox fieldsets group-by-group
+                        const handledCheckboxes = new Set();
+                        const multiCheckboxFieldsets = Array.from(
+                            modal.querySelectorAll('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field')
+                        ).filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
+
+                        console.log('Found', multiCheckboxFieldsets.length, 'multi-checkbox fieldsets');
+
+                        for (const fieldset of multiCheckboxFieldsets) {
+                            const groupQuestion = getGroupQuestionText(fieldset);
+                            console.log('Checkbox group question:', groupQuestion.substring(0, 80));
+
+                            const groupAnswer = groupQuestion ? fuzzyMatch(groupQuestion) : null;
+                            console.log('Checkbox group answer:', groupAnswer);
+
+                            const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
+                            for (const cb of groupCbs) {
+                                handledCheckboxes.add(cb);
+                                if (!isVisible(cb) || cb.checked) continue;
+
+                                const optLabel = getOptionLabel(cb);
+                                console.log('Checkbox option label:', optLabel || '(none)');
+
+                                let shouldCheck = false;
+
+                                if (groupAnswer) {
+                                    const answerLower = groupAnswer.toLowerCase();
+                                    const optLower = optLabel.toLowerCase();
+                                    // Check if this option is explicitly listed in the answer
+                                    // e.g. answer="Full-stack" matches option "Full-stack"
+                                    // answer="Yes" on a Yes/No group ticks the Yes checkbox
+                                    shouldCheck = optLower.length > 0 && (
+                                        answerLower.includes(optLower) ||
+                                        optLower.includes(answerLower) ||
+                                        answerLower === 'yes' && (optLower === 'yes' || optLower.startsWith('yes'))
+                                    );
+                                }
+
+                                if (shouldCheck) {
+                                    console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
+                                    clickInput(cb);
+                                    formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox' });
+                                } else {
+                                    console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
+                                }
+                            }
+                        }
+
+                        // Phase 2: Remaining singleton/consent checkboxes
                         for (const checkbox of checkboxes) {
+                            if (handledCheckboxes.has(checkbox)) continue;
                             if (!isVisible(checkbox) || checkbox.checked) continue;
                             
                             // Get label text for the checkbox - try multiple methods
@@ -6785,7 +6994,6 @@ class SentinelAgent:
                             if (!labelText) {
                                 const fieldset = checkbox.closest('fieldset');
                                 if (fieldset) {
-                                    // Get text from legend or the entire fieldset
                                     const legend = fieldset.querySelector('legend');
                                     if (legend) {
                                         labelText = legend.innerText;
@@ -6799,12 +7007,10 @@ class SentinelAgent:
                             if (!labelText) {
                                 const parent = checkbox.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element]');
                                 if (parent) {
-                                    // Look for label with data-test-text-selectable-option__label
                                     const label = parent.querySelector('[data-test-text-selectable-option__label], label');
                                     if (label) {
                                         labelText = label.innerText || label.getAttribute('data-test-text-selectable-option__label') || '';
                                     }
-                                    // If still no label, get all text from parent
                                     if (!labelText) {
                                         labelText = parent.innerText.substring(0, 300);
                                     }
@@ -6841,7 +7047,6 @@ class SentinelAgent:
                                                      lowerLabel.includes('730 days') ||
                                                      lowerLabel.includes('1825 days') ||
                                                      lowerLabel.includes('considering me for employment') ||
-                                                     // Acknowledge / Certify variants
                                                      lowerLabel.includes('acknowledge') ||
                                                      lowerLabel.includes('i acknowledge') ||
                                                      lowerLabel.includes('hereby acknowledge') ||
@@ -6852,7 +7057,6 @@ class SentinelAgent:
                                                      lowerLabel.includes('i have read and') ||
                                                      lowerLabel.includes('read and understood') ||
                                                      lowerLabel.includes('read and acknowledge') ||
-                                                     // Data privacy notice labels
                                                      lowerLabel.includes('data privacy notice') ||
                                                      lowerLabel.includes('privacy notice') ||
                                                      lowerLabel.includes('applicant data privacy') ||
@@ -6860,15 +7064,10 @@ class SentinelAgent:
                             
                             let shouldCheck = isConsentCheckbox;
                             
-                            // If it's not a consent checkbox, try to fuzzy match to see if it's a skill/tech question
-                            // CONSERVATIVE: Only check if match is explicitly 'yes' or label is contained in the response.
-                            // Do NOT check based on numeric matches (e.g. "4 years") as these could be
-                            // preference checkboxes (Remote, Frontend, Backend) not skill confirmations.
                             if (!shouldCheck && labelText) {
                                 const skillMatch = fuzzyMatch(labelText);
                                 if (skillMatch && (
                                     skillMatch.toLowerCase() === 'yes' ||
-                                    // Only match if the response explicitly contains the checkbox label text
                                     skillMatch.toLowerCase().includes(labelText.toLowerCase())
                                 )) {
                                     shouldCheck = true;
@@ -6998,6 +7197,8 @@ class SentinelAgent:
                         }
                         
                         // Find action buttons (Review, Next, Submit)
+                        // NOTE: 'review your application' (not just 'review') to avoid
+                        // matching "Review job post" on the safety reminder modal.
                         console.log('Searching for primary action button...');
                         const primaryBtn = queryDeep('button[aria-label*="Review your application"]', modal) ||
                                          queryDeep('button[aria-label*="Continue to next step"]', modal) ||
@@ -7005,7 +7206,7 @@ class SentinelAgent:
                                          queryDeep('button[aria-label*="Submit application"]', modal) ||
                                          queryDeep('.jobs-apply-button--primary', modal) ||
                                          findByText('button', 'submit application', false, modal) ||
-                                         findByText('button', 'review', false, modal) ||
+                                         findByText('button', 'review your application', false, modal) ||
                                          findByText('button', 'next', false, modal);
 
                         if (primaryBtn) {
@@ -7027,7 +7228,7 @@ class SentinelAgent:
                         // Fallback: try searching entire page for primary buttons if modal-scoped failed
                         console.log('No button found in modal, trying global fallback...');
                         const globalPrimaryBtn = findByText('button', 'submit application') ||
-                                                findByText('button', 'review') ||
+                                                findByText('button', 'review your application') ||
                                                 findByText('button', 'next');
                         if (globalPrimaryBtn && isVisible(globalPrimaryBtn)) {
                             if (checkForErrors()) {
@@ -7059,11 +7260,16 @@ class SentinelAgent:
                     // modal classes that the deep query misses.
                     // We look for a visible "Continue applying" button
                     // anywhere on the page — very robust.
+                    // Uses queryAllDeep to penetrate Shadow DOM.
                     // ──────────────────────────────────────────────────
                     {
-                        const allBtns = document.querySelectorAll('button, span[role="button"]');
+                        const safetyKeywords = ['safety reminder', 'job search safety', 'research the company', 'report suspicious', 'review job post'];
+                        const allBtns = queryAllDeep('button, span[role="button"]');
+                        let scanned = 0;
                         for (const btn of allBtns) {
+                            scanned++;
                             const txt = (btn.innerText || '').toLowerCase().trim();
+                            // Match "Continue applying" button directly
                             if (txt.includes('continue applying') && isVisible(btn)) {
                                 console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
                                 btn.scrollIntoView({block: 'center'});
@@ -7074,7 +7280,25 @@ class SentinelAgent:
                                 btn.click();
                                 return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                             }
+                            // Also match any button inside a safety dialog context
+                            if (isVisible(btn)) {
+                                const dialogAncestor = btn.closest('[role="dialog"], .artdeco-modal, [class*="modal"]');
+                                if (dialogAncestor) {
+                                    const dialogText = (dialogAncestor.innerText || '').toLowerCase();
+                                    if (safetyKeywords.some(kw => dialogText.includes(kw)) && txt.includes('continue')) {
+                                        console.log('FIRST-PASS SAFETY INTERCEPT: Found continue button inside safety dialog, clicking...');
+                                        btn.scrollIntoView({block: 'center'});
+                                        btn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                        btn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                        btn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                        btn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                        btn.click();
+                                        return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                                    }
+                                }
+                            }
                         }
+                        console.log('FIRST-PASS SAFETY INTERCEPT: Scanned', scanned, 'buttons, no "Continue applying" found.');
                     }
 
                     // Helper: Check if LinkedIn Easy Apply modal is visible (heuristic-based)
@@ -7200,43 +7424,57 @@ class SentinelAgent:
                         return document.createElement('div');
                     };
 
-                    // Check for modals (success, safety, Easy Apply form)
+                    // Check for modals (safety FIRST, then success, limit, then Easy Apply form)
                     const checkModals = () => {
                         console.log('Checking for active Easy Apply modal (heuristic-based)...');
 
-                        // Easy Apply form — heuristic check runs FIRST (highest priority)
-                        if (checkEasyApplyModalOpen()) {
-                            const modalEl = findEasyApplyModalEl();
-                            const text = (modalEl.innerText || '').toLowerCase();
-                            // Make sure it's not a success or safety dialog
-                            if (text.includes('application sent') || text.includes('application submitted')) {
-                                return { type: 'success', element: modalEl };
-                            }
-                            if (text.includes('safety reminder') || text.includes('job search safety')) {
-                                return { type: 'safety', element: modalEl };
-                            }
-                            return { type: 'form', element: modalEl };
-                        }
-
-                        // Legacy class-based check for success/safety/limit modals
-                        const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"]');
+                        // PRIORITY 1: Scan all visible dialogs for safety/success/limit modals
+                        // This runs BEFORE the Easy Apply heuristic to prevent the componentkey
+                        // heuristic from misclassifying a safety modal as a form modal.
+                        const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"], [class*="modal"]');
                         for (const dialog of dialogs) {
                             if (!isVisible(dialog)) continue;
                             if (isMessagingOverlay(dialog)) continue;
                             const text = (dialog.innerText || '').toLowerCase();
+                            // Safety reminder modal — check FIRST (broad keyword set)
+                            if (text.includes('safety reminder') || text.includes('job search safety') ||
+                                text.includes('research the company') || text.includes('report suspicious') ||
+                                text.includes('review job post') || text.includes('continue applying')) {
+                                return { type: 'safety', element: dialog };
+                            }
+                            // Success modal
                             if (text.includes('application sent') || text.includes('application submitted') || text.includes('success')) {
                                 return { type: 'success', element: dialog };
                             }
+                            // Easy Apply daily limit
                             if (dialog.querySelector('[data-testid="dialog-content"]') ||
                                 text.includes('easy apply limit') || text.includes('you reached today') ||
                                 (text.includes('apply tomorrow') && text.includes('limit'))) {
                                 return { type: 'easy_apply_limit', element: dialog };
                             }
+                        }
+
+                        // PRIORITY 2: Easy Apply form — heuristic check
+                        if (checkEasyApplyModalOpen()) {
+                            const modalEl = findEasyApplyModalEl();
+                            const text = (modalEl.innerText || '').toLowerCase();
+                            // Double-check it's not a safety/success dialog (defense-in-depth)
                             if (text.includes('safety reminder') || text.includes('job search safety') ||
-                                text.includes('continue applying') || text.includes('research the company')) {
-                                return { type: 'safety', element: dialog };
+                                text.includes('research the company') || text.includes('report suspicious') ||
+                                text.includes('review job post') || text.includes('continue applying')) {
+                                return { type: 'safety', element: modalEl };
                             }
-                            // Legacy Easy Apply form detection
+                            if (text.includes('application sent') || text.includes('application submitted')) {
+                                return { type: 'success', element: modalEl };
+                            }
+                            return { type: 'form', element: modalEl };
+                        }
+
+                        // PRIORITY 3: Legacy Easy Apply form detection via dialog text
+                        for (const dialog of dialogs) {
+                            if (!isVisible(dialog)) continue;
+                            if (isMessagingOverlay(dialog)) continue;
+                            const text = (dialog.innerText || '').toLowerCase();
                             if (text.includes('apply to') || dialog.querySelector('.jobs-easy-apply-content') ||
                                 dialog.querySelector('form') || text.includes('contact info') ||
                                 text.includes('resume') || text.includes('additional questions')) {
@@ -7246,6 +7484,53 @@ class SentinelAgent:
                         return null;
                     };
                     
+                    // ──────────────────────────────────────────────────
+                    // INTERCEPT 2: Safety/Reminder popup ("Job search safety reminder")
+                    // Runs BEFORE checkModals() so safety modals are caught
+                    // even if checkModals() would misclassify them as 'form'.
+                    // ──────────────────────────────────────────────────
+                    {
+                        const allVisibleDialogs = queryAllDeep('.artdeco-modal, [role="dialog"], [class*="modal"]');
+                        for (const d of allVisibleDialogs) {
+                            if (!isVisible(d) || isMessagingOverlay(d)) continue;
+                            const dText = (d.innerText || '').toLowerCase();
+
+                            // Easy Apply limit check on any visible dialog
+                            if (dText.includes('easy apply limit') || dText.includes('you reached today') ||
+                                (dText.includes('apply tomorrow') && dText.includes('limit'))) {
+                                console.log('LINKEDIN: Easy Apply limit popup detected via dialog scan. Clicking Got it...');
+                                const btns = Array.from(queryAllDeep('button', d));
+                                const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
+                                if (gotItBtn) {
+                                    gotItBtn.scrollIntoView({block: 'center'});
+                                    gotItBtn.click();
+                                }
+                                return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached (scan)';
+                            }
+
+                            if (dText.includes('safety reminder') || dText.includes('job search safety') ||
+                                dText.includes('research the company') || dText.includes('report suspicious') ||
+                                dText.includes('review job post') || dText.includes('continue applying')) {
+                                console.log('LINKEDIN: Safety reminder popup detected via intercept (pre-checkModals).');
+                                // Find "Continue applying" button inside this element (shadow-DOM aware)
+                                const btns = Array.from(queryAllDeep('button, span[role="button"]', d));
+                                const continueBtn = btns.find(b => (b.innerText || '').toLowerCase().includes('continue applying')) ||
+                                                   btns.find(b => (b.innerText || '').toLowerCase().includes('continue')) ||
+                                                   btns[btns.length - 1];  // fallback: last button
+                                if (continueBtn) {
+                                    console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', continueBtn.innerText);
+                                    continueBtn.scrollIntoView({block: 'center'});
+                                    continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                    continueBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                    continueBtn.click();
+                                    return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
+                                }
+                            }
+                        }
+                    }
+
                     const modal = checkModals();
                     if (modal) {
                         console.log('Active Modal detected:', modal.type);
@@ -7323,46 +7608,7 @@ class SentinelAgent:
                         }
                     }
 
-                    // INTERCEPT 2: Safety/Reminder popup ("Job search safety reminder")
-                    // even if checkModals() failed to classify it (e.g., different DOM structure)
-                    const allVisibleDialogs = queryAllDeep('.artdeco-modal, [role="dialog"], [class*="modal"]');
-                    for (const d of allVisibleDialogs) {
-                        if (!isVisible(d) || isMessagingOverlay(d)) continue;
-                        const dText = (d.innerText || '').toLowerCase();
-
-                        // Easy Apply limit check on any visible dialog
-                        if (dText.includes('easy apply limit') || dText.includes('you reached today') ||
-                            (dText.includes('apply tomorrow') && dText.includes('limit'))) {
-                            console.log('LINKEDIN: Easy Apply limit popup detected via dialog scan. Clicking Got it...');
-                            const btns = Array.from(d.querySelectorAll('button'));
-                            const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
-                            if (gotItBtn) {
-                                gotItBtn.scrollIntoView({block: 'center'});
-                                gotItBtn.click();
-                            }
-                            return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached (scan)';
-                        }
-
-                        if (dText.includes('safety reminder') || dText.includes('job search safety') ||
-                            dText.includes('research the company') || dText.includes('report suspicious')) {
-                            console.log('LINKEDIN: Safety reminder popup detected via intercept.');
-                            // Find "Continue applying" button inside this element
-                            const btns = Array.from(d.querySelectorAll('button'));
-                            const continueBtn = btns.find(b => b.innerText.toLowerCase().includes('continue applying')) ||
-                                               btns.find(b => b.innerText.toLowerCase().includes('continue')) ||
-                                               btns[btns.length - 1];  // fallback: last button
-                            if (continueBtn) {
-                                console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', continueBtn.innerText);
-                                continueBtn.scrollIntoView({block: 'center'});
-                                continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
-                                continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                                continueBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
-                                continueBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                                continueBtn.click();
-                                return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
-                            }
-                        }
-                    }
+                    // INTERCEPT 2 was moved BEFORE checkModals() for safety-first detection
 
                     // CRITICAL: If a REAL modal is present in DOM (even if loading/transitioning), do NOT click Easy Apply
                     // Must exclude messaging overlays which also match [role="dialog"]
@@ -9120,7 +9366,7 @@ class SentinelAgent:
                 }
 
                 return 'NO_ACTION';
-            })""".replace("__PATTERNS__", patterns_json).replace("__SYNONYMS__", synonyms_json).replace("__STOPWORDS__", stopwords_json).replace("__EXACT_MATCH_KEYS__", exact_match_keys_json)
+            })""".replace("__PATTERNS__", patterns_json).replace("__PATTERNS_WITH_DEFAULTS__", patterns_with_defaults_json).replace("__SYNONYMS__", synonyms_json).replace("__STOPWORDS__", stopwords_json).replace("__EXACT_MATCH_KEYS__", exact_match_keys_json)
 
             
             # Playwright automatically invokes the function expression

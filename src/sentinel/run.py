@@ -148,7 +148,7 @@ class Browser:
                     # Don't try to delete — macOS locks some files. Just overwrite with dirs_exist_ok
                     if not os.path.exists(dst_default):
                         os.makedirs(dst_default, exist_ok=True)
-                    print(f"  ⚡ Mirroring full profile (excluding Cache)...")
+                    print("  ⚡ Mirroring full profile (excluding Cache)...")
                     
                     def ignore_cache(path, names):
                         ignored_patterns = ['Cache', 'Code Cache', 'GPUCache', 'VideoDecodeStats', 'Crashpad', '.DS_Store', 'Singleton', 'lock', '.parentlock']
@@ -288,7 +288,9 @@ class Browser:
     @staticmethod
     def _kill_pids(pids: list, label: str, timeout: float = 5.0) -> None:
         """SIGTERM then SIGKILL a list of PIDs."""
-        import signal, time, subprocess as sp
+        import signal
+        import time
+        import subprocess as sp
         if not pids:
             return
         print(f"   🔪 Killing {len(pids)} Chrome process(es): {label}")
@@ -403,18 +405,18 @@ class Browser:
         else:
             # Processes didn't exit cleanly — forcibly kill them so the next
             # task's launch_persistent_context is not blocked by a profile lock.
-            print(f"⚠️ Chrome still alive after 10s — force-killing...")
+            print("⚠️ Chrome still alive after 10s — force-killing...")
             temp_dir = getattr(self, '_temp_dir', None)
             if temp_dir:
                 self._kill_chrome_holding_dir(temp_dir)
             else:
                 self._kill_chrome_holding_dir(profile_marker)
-from src.core.config import CHROME_USER_DATA, CHROME_EXECUTABLE_PATH
+from src.core.config import CHROME_USER_DATA
 from src.sentinel.agent import create_agent
 from src.sentinel import prompts
 
 async def main():
-    print(f"🛡️  SENTINEL REBORN - Infinite Loop Mode")
+    print("🛡️  SENTINEL REBORN - Infinite Loop Mode")
     
     # Define Tasks: (Task Name, Start URL, Prompt)
     tasks = [
@@ -481,7 +483,7 @@ async def main():
                     print(f"\n⏸️  Skipping LinkedIn (Rate Limited) - {remaining} mins remaining")
                     continue
                 else:
-                    print(f"✅ LinkedIn rate limit expired, resuming...")
+                    print("✅ LinkedIn rate limit expired, resuming...")
                     linkedin_rate_limit_until = None
             
             # Check Naukri rate limit
@@ -491,7 +493,7 @@ async def main():
                     print(f"\n⏸️  Skipping Naukri (Rate Limited) - {remaining} mins remaining")
                     continue
                 else:
-                    print(f"✅ Naukri rate limit expired, resuming...")
+                    print("✅ Naukri rate limit expired, resuming...")
                     naukri_rate_limit_until = None
             
             print(f"\n\n{'='*50}")
@@ -649,7 +651,7 @@ async def main():
             print(f"⏳ Waiting {remaining_wait/60:.1f} more minutes...")
             await asyncio.sleep(remaining_wait)
         else:
-            print(f"⏩ Intersession took longer than wait time, starting next cycle immediately")
+            print("⏩ Intersession took longer than wait time, starting next cycle immediately")
         
         print(f"\n🔄 Starting Cycle {cycle_count + 1}...")
 

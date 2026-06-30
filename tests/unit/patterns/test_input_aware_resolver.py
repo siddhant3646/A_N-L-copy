@@ -1,6 +1,5 @@
 """Tests for InputAwareResolver module."""
 
-import pytest
 from src.patterns.input_aware_resolver import (
     InputType, Option, MatchResult, NumericRangeMatcher,
     InputAwareResolver

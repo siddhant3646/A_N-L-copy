@@ -5,7 +5,7 @@ Matches questions based on semantic intent rather than exact text,
 enabling cross-question learning and better pattern matching.
 """
 
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple
 from difflib import SequenceMatcher
 
 

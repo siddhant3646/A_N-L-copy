@@ -10,7 +10,7 @@ Integrates with SelfHealingMatcher for automatic retry.
 """
 
 import asyncio
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from playwright.async_api import Page

@@ -5,12 +5,12 @@ import re
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.patterns.pattern_matcher import PatternMatcher, create_matcher
+from src.patterns.pattern_matcher import create_matcher
 from src.patterns.answer_validator import AnswerValidator
 
 SENTINEL_AGENT_IMPORTABLE = True
 try:
-    from src.sentinel.agent import SentinelAgent
+    pass
 except SyntaxError:
     SENTINEL_AGENT_IMPORTABLE = False
     print("WARNING: agent.py has pre-existing f-string syntax error — skipping agent tests")

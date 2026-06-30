@@ -8,14 +8,12 @@ This module provides:
 4. Integration with InputAwareResolver
 """
 
-import asyncio
-import re
-from typing import Dict, List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 from dataclasses import dataclass
-from playwright.async_api import Page, Locator, ElementHandle
+from playwright.async_api import Page, ElementHandle
 
 from src.patterns.input_aware_resolver import (
-    InputAwareResolver, InputType, Option, MatchResult
+    InputAwareResolver, InputType, Option
 )
 
 

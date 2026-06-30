@@ -21,7 +21,6 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -49,7 +48,6 @@ class SentinelCLI:
         low_conf = [p for p in patterns if p.confidence < 0.5]
         
         # Recovery stats
-        from src.sentinel.recovery_pipeline import RecoveryPipeline
         # Note: We'd need to persist pipeline stats, for now use placeholder
         
         data = {

@@ -1,4 +1,3 @@
-import pytest
 from src.patterns.pattern_learner import PatternExpander
 
 

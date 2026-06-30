@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from src.sentinel.correction_capture import CorrectionCapture, Correction
 
 

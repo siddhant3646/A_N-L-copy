@@ -3,7 +3,7 @@ Tests for Human Behavior module.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from src.sentinel.human_behavior import (
     human_mouse_move,
     human_scroll,

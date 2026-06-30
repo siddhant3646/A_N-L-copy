@@ -10,7 +10,7 @@ import random
 from typing import Optional, List, Any
 from playwright.async_api import Page, Locator
 
-from src.sentinel.human_behavior import human_click, human_scroll, random_delay
+from src.sentinel.human_behavior import human_click
 
 
 async def robust_click(

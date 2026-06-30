@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Tuple, Optional
 import re
 from collections import defaultdict
 
-from .pattern_loader import PatternLoader, get_pattern_answer
+from .pattern_loader import PatternLoader
 from .answer_validator import AnswerValidator
 
 

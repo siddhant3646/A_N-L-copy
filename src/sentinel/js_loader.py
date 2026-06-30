@@ -5,7 +5,6 @@ This module provides utilities for loading and executing JavaScript
 from separate .js files.
 """
 
-import os
 from pathlib import Path
 from typing import Dict, Optional
 

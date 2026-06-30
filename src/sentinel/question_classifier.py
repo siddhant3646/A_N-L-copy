@@ -534,12 +534,14 @@ class QuestionClassifier:
     def _get_notice_answer(self, question: str, input_type: Optional[InputType]) -> str:
         """Get notice period answer."""
         if "lwd" in question or "last working" in question:
+            if self.platform == "linkedin":
+                return "15"
             from datetime import datetime, timedelta
             lwd = datetime.now() + timedelta(days=15)
             return lwd.strftime('%d %B %Y')
         elif "serving" in question:
             return "Yes"
-        elif "days" in question or input_type == InputType.NUMBER:
+        elif "days" in question or input_type == InputType.NUMBER or self.platform == "linkedin":
             return "15"
         else:
             return "15 days"
@@ -548,10 +550,10 @@ class QuestionClassifier:
         """Get location answer."""
         if "preferred" in question:
             return CATEGORY_DEFAULTS[QuestionCategory.LOCATION]["preferred"]
-        elif "relocate" in question or "willing" in question:
+        elif "relocat" in question or "willing" in question:
             return "Yes"
         elif any(city in question for city in ["bangalore", "mumbai", "pune", "hyderabad", "chennai"]):
-            return f"No, I am currently based in Noida. However, I am willing to relocate."
+            return "No, I am currently based in Noida. However, I am willing to relocate."
         else:
             return CATEGORY_DEFAULTS[QuestionCategory.LOCATION]["current"]
     

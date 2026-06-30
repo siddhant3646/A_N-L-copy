@@ -7,9 +7,8 @@ Captures manual corrections via multiple methods:
 3. Keyboard shortcut: Ctrl+Shift+C
 """
 
-import json
 import re
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -141,7 +140,6 @@ class CorrectionCapture:
                 return opt
         
         # Try numeric matching
-        import re
         num_match = re.search(r'(\d+\.?\d*)', answer)
         if num_match:
             value = float(num_match.group(1))

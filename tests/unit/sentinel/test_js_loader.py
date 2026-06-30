@@ -2,7 +2,6 @@
 Tests for JS Loader module.
 """
 
-import os
 import pytest
 from pathlib import Path
 from src.sentinel.js_loader import JSLoader, load_js

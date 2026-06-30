@@ -108,6 +108,19 @@ def _normalize_answer(answer: str, category: str, question: str, platform: str) 
         match = re.search(r'(\d+\.?\d*)', answer)
         if match:
             return match.group(1)
+    elif category == 'notice_period':
+        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period'):
+            return answer
+        if platform == 'linkedin':
+            match = re.search(r'(\d+)', answer)
+            if match:
+                return match.group(1)
+            return '15'
+        else:
+            match = re.search(r'(\d+)', answer)
+            if match:
+                return f"{match.group(1)} days"
+            return '15 days'
     return answer
 
 
@@ -130,4 +143,17 @@ def _fix_answer(answer: str, category: str, question: str, platform: str) -> Opt
         match = re.search(r'(\d+\.?\d*)', answer)
         if match:
             return match.group(1)
+    elif category == 'notice_period':
+        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period'):
+            return None
+        if platform == 'linkedin':
+            match = re.search(r'(\d+)', answer)
+            if match:
+                return match.group(1)
+            return '15'
+        else:
+            match = re.search(r'(\d+)', answer)
+            if match:
+                return f"{match.group(1)} days"
+            return '15 days'
     return None

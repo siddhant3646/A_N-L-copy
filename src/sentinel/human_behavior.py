@@ -7,7 +7,7 @@ mouse movements, scrolling, and clicking with natural delays and patterns.
 
 import asyncio
 import random
-from typing import Optional, Tuple
+from typing import Optional
 from playwright.async_api import Page
 
 

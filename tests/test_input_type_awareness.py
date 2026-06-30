@@ -18,9 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from patterns.pattern_loader import (
     PatternLoader, 
-    get_pattern_answer_for_input_type,
-    get_pattern,
-    load_patterns
+    get_pattern_answer_for_input_type
 )
 from patterns.answer_normalizer import AnswerNormalizer, InputType, normalize_answer
 

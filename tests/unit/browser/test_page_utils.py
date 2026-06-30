@@ -3,7 +3,7 @@ Tests for Page Utils module.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from src.sentinel.page_utils import (
     check_page_health,
     maybe_cleanup_memory,

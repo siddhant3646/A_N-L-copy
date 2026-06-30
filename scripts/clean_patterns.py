@@ -8,8 +8,6 @@ Script to clean and restructure qa_patterns.json:
 """
 
 import json
-import re
-import sys
 from collections import defaultdict
 
 INPUT_FILE = "config/qa_patterns.json"

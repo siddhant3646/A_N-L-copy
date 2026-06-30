@@ -7,7 +7,6 @@ field to patterns that need different answers based on input type.
 """
 
 import json
-import sys
 from pathlib import Path
 
 

@@ -3,10 +3,6 @@ Tests for ProfileManager module.
 """
 
 import os
-import pytest
-import tempfile
-import shutil
-from pathlib import Path
 from src.sentinel.profile_manager import ProfileManager
 
 

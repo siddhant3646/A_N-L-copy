@@ -1,4 +1,3 @@
-import pytest
 from src.sentinel.semantic_matcher import SemanticQuestionMatcher
 
 

@@ -1,4 +1,3 @@
-import pytest
 from src.patterns.answer_validator import AnswerValidator, _fix_answer, _normalize_answer
 
 
@@ -168,6 +167,14 @@ class TestNormalizeAnswer:
         result = _normalize_answer('None', 'numeric', '', '')
         assert result == 'None'
 
+    def test_normalize_notice_period_linkedin(self):
+        result = _normalize_answer('15 days', 'notice_period', '', 'linkedin')
+        assert result == '15'
+
+    def test_normalize_notice_period_naukri(self):
+        result = _normalize_answer('15 days', 'notice_period', '', 'naukri')
+        assert result == '15 days'
+
 
 class TestFixAnswer:
     def test_fix_salary_extracts_number(self):
@@ -205,6 +212,14 @@ class TestFixAnswer:
     def test_fix_numeric_no_number_returns_none(self):
         result = _fix_answer('Yes', 'numeric', '', '')
         assert result is None
+
+    def test_fix_notice_period_linkedin(self):
+        result = _fix_answer('15 days', 'notice_period', '', 'linkedin')
+        assert result == '15'
+
+    def test_fix_notice_period_naukri(self):
+        result = _fix_answer('15 days', 'notice_period', '', 'naukri')
+        assert result == '15 days'
 
     def test_fix_unknown_category_returns_none(self):
         result = _fix_answer('anything', 'unknown', '', '')

@@ -5,7 +5,6 @@ This module provides utilities for monitoring page health, cleaning up memory,
 and handling common page-level operations.
 """
 
-import asyncio
 from typing import Optional
 from playwright.async_api import Page
 

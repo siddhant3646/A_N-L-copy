@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, List, Dict
+from typing import Optional, List
 from dataclasses import dataclass, field
 
 class ManagerIntent(str, Enum):

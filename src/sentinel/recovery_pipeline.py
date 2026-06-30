@@ -5,14 +5,14 @@ This module provides a pipeline of recovery strategies that are tried
 in order until one succeeds or all are exhausted.
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import re
 from difflib import SequenceMatcher
 
 from src.patterns.input_aware_resolver import (
-    InputAwareResolver, InputType, Option, MatchResult
+    InputAwareResolver, InputType, Option
 )
 
 
@@ -473,7 +473,7 @@ class RecoveryPipeline:
                 print(f"   ❌ Failed: {result.message}")
         
         # All strategies failed
-        print(f"   ⚠️ All recovery strategies failed")
+        print("   ⚠️ All recovery strategies failed")
         return RecoveryResult(
             success=False,
             answer=failed_answer,

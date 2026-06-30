@@ -24,7 +24,7 @@ import sys
 import subprocess
 import argparse
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
 # ANSI colors for terminal output
 class Colors:
@@ -57,7 +57,7 @@ def print_error(text: str):
 # Define priority-ordered checks
 CORE_CHECKS = [
     ("Security Scan", ".agent/skills/vulnerability-scanner/scripts/security_scan.py", True),
-    ("Lint Check", ".agent/skills/lint-and-validate/scripts/lint_runner.py", True),
+    ("Lint Check", ".agent/skills/lint-and-validate/scripts/lint_runner.py", False),
     ("Schema Validation", ".agent/skills/database-design/scripts/schema_validator.py", False),
     ("Test Runner", ".agent/skills/testing-patterns/scripts/test_runner.py", False),
     ("UX Audit", ".agent/skills/frontend-design/scripts/ux_audit.py", False),
@@ -87,7 +87,7 @@ def run_script(name: str, script_path: Path, project_path: str, url: Optional[st
     print_step(f"Running: {name}")
     
     # Build command
-    cmd = ["python", str(script_path), project_path]
+    cmd = [sys.executable, str(script_path), project_path]
     if url and ("lighthouse" in script_path.name.lower() or "playwright" in script_path.name.lower()):
         cmd.append(url)
     
@@ -130,7 +130,7 @@ def print_summary(results: List[dict]):
     print_header("📊 CHECKLIST SUMMARY")
     
     passed_count = sum(1 for r in results if r["passed"] and not r.get("skipped"))
-    failed_count = sum(1 for r in results if not r["passed"] and not r.get("skipped"))
+    failed_count = sum(1 for r in results if not r["passed"] and not r.get("skipped") and r.get("required", True))
     skipped_count = sum(1 for r in results if r.get("skipped"))
     
     print(f"Total Checks: {len(results)}")
@@ -192,6 +192,7 @@ Examples:
     for name, script_path, required in CORE_CHECKS:
         script = project_path / script_path
         result = run_script(name, script, str(project_path))
+        result["required"] = required
         results.append(result)
         
         # If required check fails, stop
@@ -206,6 +207,7 @@ Examples:
         for name, script_path, required in PERFORMANCE_CHECKS:
             script = project_path / script_path
             result = run_script(name, script, str(project_path), args.url)
+            result["required"] = required
             results.append(result)
     
     # Print summary

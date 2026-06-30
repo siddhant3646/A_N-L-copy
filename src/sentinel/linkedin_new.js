@@ -204,6 +204,10 @@
         country: {
             patterns: ['country', 'nation', 'country/region'],
             default: 'India'
+        },
+        team_size: {
+            patterns: ['team size you have worked with', 'team size you worked with', 'what was the team size', 'size of the team', 'team size'],
+            default: '5-10'
         }
     };
     
@@ -1242,6 +1246,13 @@
                 }
                 
                 if (fillValue) {
+                    // Respect the field's maxlength attribute to avoid "Invalid input" errors
+                    const maxLen = parseInt(input.getAttribute('maxlength') || input.maxLength, 10);
+                    if (maxLen > 0 && fillValue.length > maxLen) {
+                        console.log(`Answer too long (${fillValue.length} > maxlength ${maxLen}), truncating:`, fillValue.substring(0, 50));
+                        fillValue = fillValue.substring(0, maxLen);
+                    }
+
                     // Use property setter for React inputs
                     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
                     nativeInputValueSetter.call(input, fillValue);
@@ -1349,61 +1360,96 @@
             }
         }
         
-        // Handle checkboxes (consent, privacy policy, etc.)
-        // Search in modal first, then fall back to entire document
-        let checkboxes = modal.querySelectorAll('input[type="checkbox"]');
-        
-        // Also try broader selectors in case checkboxes are in shadow DOM or different structure
-        if (checkboxes.length === 0) {
-            checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            console.log('No checkboxes in modal, searching entire document - found:', checkboxes.length);
+        // Handle checkboxes - two strategies:
+        // 1. GROUP strategy: fieldsets with multiple checkbox options
+        //    → look up the parent question text → check only the option(s) matching the answer
+        // 2. SINGLETON strategy: single consent/privacy checkboxes (fallback behaviour)
+
+        const checkboxFieldsets = Array.from(
+            modal.querySelectorAll('fieldset, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field')
+        ).filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
+
+        console.log('Found', checkboxFieldsets.length, 'multi-checkbox fieldsets');
+
+        const handledCheckboxes = new Set();
+
+        for (const fieldset of checkboxFieldsets) {
+            const groupQuestion = extractQuestionTextFromGroup(fieldset);
+            console.log('Checkbox group question:', JSON.stringify(groupQuestion));
+
+            const answer = getAnswerForQuestion(groupQuestion, 'checkbox');
+            if (!answer) {
+                console.log('No answer found for checkbox group:', groupQuestion.substring(0, 60));
+                continue;
+            }
+
+            // answer may be a comma-separated list of option labels (e.g. "Full-stack, AI/ML")
+            const desiredLabels = answer.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+            console.log('Desired checkbox labels:', desiredLabels);
+
+            const groupCheckboxes = fieldset.querySelectorAll('input[type="checkbox"]');
+            for (const cb of groupCheckboxes) {
+                handledCheckboxes.add(cb);
+                if (cb.checked) continue;
+
+                const cbLabel = (getLabelForInput(cb) || cb.getAttribute('aria-label') || cb.value || '').trim().toLowerCase();
+                const shouldCheck = desiredLabels.some(desired =>
+                    cbLabel.includes(desired) || desired.includes(cbLabel)
+                );
+
+                if (shouldCheck) {
+                    cb.click();
+                    console.log('Checked checkbox option:', cbLabel, 'for group:', groupQuestion.substring(0, 50));
+                    filledAny = true;
+                } else {
+                    console.log('Skipping checkbox option:', cbLabel, '(not in desired:', desiredLabels.join(', '), ')');
+                }
+            }
         }
-        
-        // Further filter to only unchecked checkboxes that are visible
-        checkboxes = Array.from(checkboxes).filter(cb => !cb.checked && cb.offsetParent !== null);
-        
-        console.log('Found', checkboxes.length, 'visible unchecked checkboxes');
-        
-        for (const checkbox of checkboxes) {
-            // Check if already checked
+
+        // Singleton / consent checkboxes (those not already handled by a group)
+        let allSingletonCheckboxes = modal.querySelectorAll('input[type="checkbox"]');
+        if (allSingletonCheckboxes.length === 0) {
+            allSingletonCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+            console.log('No checkboxes in modal, searching entire document - found:', allSingletonCheckboxes.length);
+        }
+
+        const remainingCheckboxes = Array.from(allSingletonCheckboxes).filter(
+            cb => !handledCheckboxes.has(cb) && !cb.checked && cb.offsetParent !== null
+        );
+        console.log('Found', remainingCheckboxes.length, 'singleton/remaining unchecked checkboxes');
+
+        for (const checkbox of remainingCheckboxes) {
             if (checkbox.checked) continue;
-            
-            // Get the question text from the checkbox or its label
+
             let questionText = getLabelForInput(checkbox) || checkbox.getAttribute('aria-label') || '';
-            
-            // If no label found, try to get text from nearby elements or parent containers
             if (!questionText) {
-                // Look for text in parent fieldset or form section
                 let parent = checkbox.closest('fieldset, .jobs-easy-apply-form-section__question, [data-test-form-element]');
                 if (parent) {
                     questionText = parent.innerText.substring(0, 300);
                 }
             }
-            
-            console.log('Checkbox question:', JSON.stringify(questionText));
-            
-            // Get answer from patterns
+
+            console.log('Singleton checkbox question:', JSON.stringify(questionText));
+
             const answer = getAnswerForQuestion(questionText, 'checkbox');
-            
-            // Check the checkbox if answer is Yes or if it's a privacy/consent checkbox
             const questionLower = questionText.toLowerCase();
-            const isPrivacyOrConsent = questionLower.includes('privacy') || 
+            const isPrivacyOrConsent = questionLower.includes('privacy') ||
                                       questionLower.includes('consent') ||
                                       questionLower.includes('agree') ||
                                       questionLower.includes('declare') ||
                                       questionLower.includes('i consent');
-            
+
             if (answer && answer.toLowerCase() === 'yes') {
                 checkbox.click();
-                console.log('Checked checkbox for:', questionText.substring(0, 50));
+                console.log('Checked singleton checkbox for:', questionText.substring(0, 50));
                 filledAny = true;
             } else if (isPrivacyOrConsent) {
-                // Default to checking privacy/consent checkboxes
                 checkbox.click();
                 console.log('Checked privacy/consent checkbox:', questionText.substring(0, 50));
                 filledAny = true;
             } else {
-                console.log('Skipping checkbox - not privacy/consent related:', questionText.substring(0, 50));
+                console.log('Skipping singleton checkbox - not matched:', questionText.substring(0, 50));
             }
         }
         

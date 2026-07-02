@@ -2383,6 +2383,7 @@ class SentinelAgent:
                     max_autopilot_iterations = 50  # Safety limit per job
                     transitioning_count = 0   # Track consecutive modal transitioning states
                     max_transitioning_attempts = 5  # Max waits for modal to transition
+                    easy_apply_restart_count = 0  # Track Easy Apply re-clicks inside autopilot (modal restarted)
                     
                     while True:
                         autopilot_iteration += 1
@@ -2602,7 +2603,12 @@ class SentinelAgent:
                             submit_attempt_count = 0  # Progress made
                             continue
                         elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result:
-                            print("🔄 Easy Apply clicked inside autopilot (modal may have restarted). Waiting for modal...")
+                            easy_apply_restart_count += 1
+                            print(f"🔄 Easy Apply re-clicked inside autopilot (restart {easy_apply_restart_count}/2)...")
+                            if easy_apply_restart_count >= 2:
+                                print("⚠️ Modal restarted twice — application likely submitted or stuck. Moving to next job...")
+                                await self._close_linkedin_modal()
+                                break
                             await asyncio.sleep(random.uniform(3, 4))
                             continue
                         elif 'NO_ACTION' in next_result or 'MODAL_OPEN_NO_ACTION' in next_result:
@@ -6007,21 +6013,6 @@ class SentinelAgent:
                                 }
                             }
                             
-                            // Yes/no question override — if fuzzyMatch returned nothing or a numeric answer,
-                            // and the question is a yes/no question, answer "Yes" (or "No" for negative indicators)
-                            if (!answer || /^\d+$/.test(answer.trim())) {
-                                if (labelText && isLikelyYesNoQuestion(labelText)) {
-                                    const ynNegativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
-                                        'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
-                                        'convict', 'disability', 'previously employed', 'ever been employed',
-                                        'currently employed', 'worked at', 'worked for', 'worked with'];
-                                    const lowerQ = labelText.toLowerCase();
-                                    const isNeg = ynNegativeIndicators.some(p => lowerQ.includes(p));
-                                    answer = isNeg ? 'No' : 'Yes';
-                                    console.log('LinkedIn form: Yes/no override, answer:', answer, '| question:', labelText.substring(0, 80));
-                                }
-                            }
-                            
                             // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
                             if (!answer) {
                                 const combinedText = (lowerLabel + ' ' + (input.placeholder || '').toLowerCase()).trim();
@@ -6259,6 +6250,35 @@ class SentinelAgent:
                                     } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {
                                         answer = '15';
                                         console.log('Fallback: Using 15 for notice period select');
+                                    }
+                                }
+                                
+                                // EDUCATION LEVEL MATCHING — bypass generic findBestMatch which
+                                // fails on free-text education descriptions (e.g. "B.Tech in Computer
+                                // Science Engineering"). User has B.Tech = Bachelor's Degree.
+                                if (lowerLabel.includes('education') || lowerLabel.includes('highest level') || lowerLabel.includes('qualification') || lowerLabel.includes('degree')) {
+                                    const eduOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let eduMatch = eduOptions.find(o =>
+                                        o.text.toLowerCase().includes('bachelor') &&
+                                        !o.text.toLowerCase().includes('master')
+                                    );
+                                    if (!eduMatch) {
+                                        eduMatch = eduOptions.find(o =>
+                                            o.text.toLowerCase().includes('b.tech') ||
+                                            o.text.toLowerCase().includes('undergraduate') ||
+                                            o.text.toLowerCase().includes('college degree') ||
+                                            o.text.toLowerCase().includes("bachelor's")
+                                        );
+                                    }
+                                    if (eduMatch) {
+                                        select.value = eduMatch.value;
+                                        if (select.value !== eduMatch.value) select.selectedIndex = eduMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        console.log('Education match: Selected', eduMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: eduMatch.text, inputType: 'select-education' });
+                                        continue;
                                     }
                                 }
                                 
@@ -7190,23 +7210,33 @@ class SentinelAgent:
                             return false;
                         };
                         
-                        // Scroll modal content to bottom so lazy-rendered buttons are in DOM
-                        const scrollableContent = modal.querySelector('[class*="body"], [class*="content"], form, div[style*="overflow"]') || modal;
+                        // Scroll modal content to bottom so lazy-rendered buttons are in DOM.
+                        // Prefer .artdeco-modal__content (the actual scrollable container) over
+                        // the FORM element, which may not have overflow scrolling.
+                        const scrollableContent = modal.querySelector('.artdeco-modal__content, [class*="modal__content"], [class*="body"], [class*="content"], div[style*="overflow"]') ||
+                                                  (modal.matches && modal.matches('.artdeco-modal__content, .artdeco-modal') ? modal : null) ||
+                                                  modal.querySelector('form') || modal;
                         if (scrollableContent && scrollableContent.scrollHeight > scrollableContent.clientHeight) {
                             scrollableContent.scrollTop = scrollableContent.scrollHeight;
+                            console.log('Scrolled modal content to bottom to reveal lazy buttons');
                         }
                         
                         // Find action buttons (Review, Next, Submit)
                         // NOTE: 'review your application' (not just 'review') to avoid
                         // matching "Review job post" on the safety reminder modal.
                         console.log('Searching for primary action button...');
+                        const modalFooter = queryDeep('footer', modal);
                         const primaryBtn = queryDeep('button[aria-label*="Review your application"]', modal) ||
                                          queryDeep('button[aria-label*="Continue to next step"]', modal) ||
                                          queryDeep('button[aria-label*="next step"]', modal) ||
                                          queryDeep('button[aria-label*="Submit application"]', modal) ||
+                                         queryDeep('button[data-easy-apply-next-button]', modal) ||
+                                         queryDeep('button[data-live-test-easy-apply-next-button]', modal) ||
+                                         queryDeep('button[data-live-test-easy-apply-review-button]', modal) ||
                                          queryDeep('.jobs-apply-button--primary', modal) ||
                                          findByText('button', 'submit application', false, modal) ||
                                          findByText('button', 'review your application', false, modal) ||
+                                         (modalFooter ? findByText('button', 'review', false, modalFooter) : null) ||
                                          findByText('button', 'next', false, modal);
 
                         if (primaryBtn) {
@@ -7214,6 +7244,15 @@ class SentinelAgent:
                             if (checkForErrors()) {
                                 console.log('Form has errors or missing required fields. Waiting for resolution...');
                                 return 'LINKEDIN_FORM_STUCK: Validation errors or required fields missing';
+                            }
+                            
+                            // Scroll the button into view before clicking (handles tall forms
+                            // where the footer/Next button is scrolled out of view)
+                            try {
+                                primaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});
+                                console.log('Scrolled primary button into view');
+                            } catch (e) {
+                                console.log('scrollIntoView failed (non-critical):', e.message);
                             }
                             
                             console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
@@ -7225,20 +7264,29 @@ class SentinelAgent:
                             return actionResult + (formResults.length > 0 ? '|' + JSON.stringify(formResults) : '');
                         }
 
-                        // Fallback: try searching entire page for primary buttons if modal-scoped failed
-                        console.log('No button found in modal, trying global fallback...');
-                        const globalPrimaryBtn = findByText('button', 'submit application') ||
-                                                findByText('button', 'review your application') ||
-                                                findByText('button', 'next');
+                        // Conservative global fallback: search entire page ONLY for modal-specific
+                        // button phrasings. Never match generic 'next' globally — that matches the
+                        // job search results pagination button and dismisses the modal.
+                        console.log('No button found in modal, trying conservative global fallback (no generic next)...');
+                        const globalPrimaryBtn = queryDeep('button[aria-label*="Review your application"]') ||
+                                                 queryDeep('button[aria-label*="Submit application"]') ||
+                                                 queryDeep('button[data-live-test-easy-apply-review-button]') ||
+                                                 findByText('button', 'submit application') ||
+                                                 findByText('button', 'review your application') ||
+                                                 findByText('button', 'review');
                         if (globalPrimaryBtn && isVisible(globalPrimaryBtn)) {
                             if (checkForErrors()) {
                                 console.log('Form has errors. Waiting...');
                                 return 'LINKEDIN_FORM_STUCK: Validation errors';
                             }
-                            console.log('Found button via global fallback:', globalPrimaryBtn.innerText);
+                            try {
+                                globalPrimaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});
+                            } catch (e) {}
+                            console.log('Found button via global fallback:', globalPrimaryBtn.innerText || globalPrimaryBtn.getAttribute('aria-label'));
                             globalPrimaryBtn.click();
                             const btnText = (globalPrimaryBtn.innerText || '').toLowerCase();
-                            const isSubmit = btnText.includes('submit');
+                            const btnAria = (globalPrimaryBtn.getAttribute('aria-label') || '').toLowerCase();
+                            const isSubmit = btnText.includes('submit') || btnAria.includes('submit');
                             return isSubmit ? 'LINKEDIN_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED';
                         }
 
@@ -7328,12 +7376,16 @@ class SentinelAgent:
                         return false;
                     };
 
-                    // Helper: Get the modal element for form handling
+// Helper: Get the modal element for form handling
                     const findEasyApplyModalEl = () => {
                         // Strategy 1: Walk up from progress bar if found (Guaranteed correct modal container)
+                        // Prefer .artdeco-modal__content / .artdeco-modal / [role="dialog"] over FORM,
+                        // because the content container is the actual scrollable element and contains
+                        // the footer buttons (Next/Review/Submit). Returning FORM breaks scrolling.
                         const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
                         if (pb) {
                             let el = pb.parentElement;
+                            let formFallback = null;
                             while (el && el !== document.body) {
                                 const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
                                 const lowerCls = cls.toLowerCase();
@@ -7342,21 +7394,31 @@ class SentinelAgent:
                                                       lowerCls.includes('msg-convo') || 
                                                       lowerCls.includes('messaging') ||
                                                       lowerCls.includes('filter__dropdown');
-                                                      
+                                                  
                                 if (!isBlacklisted) {
-                                    if (el.tagName === 'FORM' || 
-                                        el.hasAttribute('componentkey') || 
-                                        (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal')))) {
+                                    // Priority 1: modal content container (scrollable, contains footer buttons)
+                                    if (el.matches && (el.matches('.artdeco-modal__content') || lowerCls.includes('modal__content'))) {
                                         return el;
+                                    }
+                                    // Priority 2: outer modal/dialog container
+                                    if (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal'))) {
+                                        return el;
+                                    }
+                                    // Priority 3 (fallback): FORM or componentkey — remember but keep walking
+                                    if (!formFallback && (el.tagName === 'FORM' || el.hasAttribute('componentkey'))) {
+                                        formFallback = el;
                                     }
                                 }
                                 el = el.parentElement;
                             }
+                            // Return FORM fallback only if no modal container was found walking up
+                            if (formFallback) return formFallback;
                         }
 
                         // Strategy 2: Check standard modal container selectors next
                         // Skip messaging overlays and background filter dropdowns
                         const selectors = [
+                            '.artdeco-modal__content',
                             '.artdeco-modal',
                             '.jobs-easy-apply-modal',
                             '[role="dialog"]',

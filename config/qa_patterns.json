@@ -371,9 +371,6 @@
     },
     "offer_ctc": {
       "patterns": [
-        "currently holding any offer",
-        "holding any offer",
-        "any offer in hand",
         "offer in hand ctc",
         "offer ctc",
         "if yes mention ctc"
@@ -407,6 +404,24 @@
         "text": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis"
       },
       "priority": 7
+    },
+    "skills_frontend": {
+      "patterns": [
+        "tech stack in front end",
+        "frontend tech stack",
+        "front end tech stack",
+        "tech stack in frontend",
+        "front-end tech stack"
+      ],
+      "category": "skills",
+      "default": "React, JavaScript, HTML, CSS, TypeScript",
+      "input_type_defaults": {
+        "radio": "React",
+        "checkbox": true,
+        "select": "React, JavaScript, HTML, CSS, TypeScript",
+        "text": "React, JavaScript, HTML, CSS, TypeScript"
+      },
+      "priority": 8
     },
     "skills_languages": {
       "patterns": [
@@ -879,6 +894,7 @@
         "why switching",
         "reasons for your job change",
         "reason for job change",
+        "reason for change",
         "why are you looking",
         "reasons for job change"
       ],
@@ -909,6 +925,25 @@
         "text": "Backend"
       },
       "priority": 6
+    },
+    "preferred_role_fullstack": {
+      "patterns": [
+        "backend or fullstack",
+        "backend or full stack",
+        "backend or java fullstack",
+        "java backend or java fullstack",
+        "java backend or fullstack",
+        "backend developer or fullstack",
+        "backend or fullstack developer"
+      ],
+      "category": "preference",
+      "default": "FullStack",
+      "input_type_defaults": {
+        "radio": "FullStack",
+        "select": "FullStack",
+        "text": "FullStack"
+      },
+      "priority": 8
     },
     "highradius_consent": {
       "patterns": [
@@ -3529,6 +3564,23 @@
         "text": "I am not a protected veteran"
       },
       "priority": 7
+    },
+    "military_spouse": {
+      "patterns": [
+        "military spouse",
+        "military spouse or partner",
+        "identify as a military spouse",
+        "are you a military spouse"
+      ],
+      "category": "yes_no",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": false,
+        "select": "No",
+        "text": "No, I am not a military spouse"
+      },
+      "priority": 9
     },
     "naukri_industry_preference": {
       "patterns": [

@@ -67,7 +67,6 @@
         "software experience",
         "how many years of experience do you have",
         "exp",
-        "java experience",
         "how many years of experience",
         "years of experience do you have",
         "programming experience",
@@ -239,15 +238,22 @@
       ],
       "category": "notice_period",
       "default": "Serving Notice Period",
-      "numeric_default": "7",
-      "priority": 7,
+      "numeric_default": "15",
       "negative_patterns": [
         "current salary",
         "expected salary",
         "ctc",
         "salary",
         "experience"
-      ]
+      ],
+      "input_type_defaults": {
+        "radio": "15",
+        "select": "Serving Notice Period",
+        "text": "Serving Notice Period",
+        "number": "15",
+        "checkbox": false
+      },
+      "priority": 7
     },
     "location_current": {
       "patterns": [
@@ -425,10 +431,7 @@
     },
     "skills_languages": {
       "patterns": [
-        "programming languages",
-        "python libraries",
-        "which python libraries",
-        "python packages"
+        "programming languages"
       ],
       "category": "skills",
       "default": "Java, Python, JavaScript",
@@ -899,11 +902,11 @@
         "reasons for job change"
       ],
       "category": "preference",
-      "default": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
+      "default": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
       "input_type_defaults": {
-        "radio": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
-        "select": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
-        "text": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects."
+        "radio": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
+        "select": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
+        "text": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals"
       },
       "priority": 6
     },
@@ -1226,13 +1229,13 @@
       ],
       "category": "notice_period",
       "default": "15 days",
-      "numeric_default": "7",
+      "numeric_default": "15",
       "input_type_defaults": {
-        "radio": "7",
+        "radio": "15",
         "checkbox": false,
         "select": "15 days",
         "text": "15 days",
-        "number": "7"
+        "number": "15"
       },
       "priority": 7,
       "negative_patterns": [
@@ -1254,14 +1257,14 @@
       ],
       "category": "notice_period",
       "default": "15 days",
-      "numeric_default": "7",
-      "note": "Dynamic DD/MM/YYYY value (today + 7 days) is computed at runtime in agent.py",
+      "numeric_default": "15",
+      "note": "Dynamic DD/MM/YYYY value (today + 15 days) is computed at runtime in agent.py",
       "input_type_defaults": {
-        "radio": "7",
+        "radio": "15",
         "checkbox": false,
         "select": "15 days",
         "text": "15 days",
-        "number": "7"
+        "number": "15"
       },
       "priority": 7
     },
@@ -1341,6 +1344,13 @@
       ],
       "category": "yes_no",
       "default": "Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.",
+      "input_type_defaults": {
+        "radio": "Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.",
+        "select": "Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.",
+        "text": "Very comfortable. I actively contribute to coding daily, working on Java/Spring Boot microservices, React frontends, and AWS cloud services. I enjoy tackling complex technical challenges and have a strong problem-solving mindset.",
+        "number": "0",
+        "checkbox": false
+      },
       "priority": 7
     },
     "referral_source": {
@@ -2323,17 +2333,11 @@
     "fixed_component": {
       "patterns": [
         "fixed ctc numeric",
-        "current ctc",
-        "current annual salary",
         "fixed component",
-        "what is your current annual salary",
         "fixed ctc",
-        "what is your current ctc",
         "fixed ctc numeric input",
         "please enter your annual current ctc in inr",
-        "please enter your current ctc in inr",
-        "what is your current ctc?",
-        "what is your current annual salary?"
+        "please enter your current ctc in inr"
       ],
       "category": "salary",
       "default": "2300000",
@@ -3390,6 +3394,12 @@
       ],
       "category": "experience",
       "default": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure",
+      "input_type_defaults": {
+        "radio": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure",
+        "select": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure",
+        "text": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure",
+        "checkbox": false
+      },
       "priority": 6
     },
     "project_and_skills": {
@@ -3402,6 +3412,12 @@
       ],
       "category": "experience",
       "default": "Currently working on full-stack Java Spring Boot microservices with React on AWS. Primary skills: Java, Spring Boot, React, AWS",
+      "input_type_defaults": {
+        "radio": "Currently working on full-stack Java Spring Boot microservices with React on AWS. Primary skills: Java, Spring Boot, React, AWS",
+        "select": "Currently working on full-stack Java Spring Boot microservices with React on AWS. Primary skills: Java, Spring Boot, React, AWS",
+        "text": "Currently working on full-stack Java Spring Boot microservices with React on AWS. Primary skills: Java, Spring Boot, React, AWS",
+        "checkbox": false
+      },
       "priority": 6
     },
     "linkedin_remote_preference": {
@@ -3558,13 +3574,13 @@
       ],
       "category": "notice_period",
       "default": "15",
-      "numeric_default": "7",
+      "numeric_default": "15",
       "input_type_defaults": {
-        "radio": "7",
+        "radio": "15",
         "checkbox": false,
-        "select": "7",
-        "text": "7",
-        "number": "7"
+        "select": "15",
+        "text": "15",
+        "number": "15"
       },
       "priority": 8
     },
@@ -4522,8 +4538,9 @@
     },
     "preference_6249": {
       "patterns": [
-        "role",
-        "please enter your current designation"
+        "please enter your current designation",
+        "current designation",
+        "your designation"
       ],
       "category": "preference",
       "default": "SDE-2 Full Stack Developer",
@@ -4594,7 +4611,7 @@
       "negative_patterns": [
         "sexual orientation"
       ],
-      "category": "preference",
+      "category": "self_identification",
       "default": "Decline to self-identify",
       "input_type_defaults": {
         "radio": "Decline to self-identify",
@@ -4607,7 +4624,7 @@
       "patterns": [
         "ethnicity"
       ],
-      "category": "location",
+      "category": "self_identification",
       "default": "Decline to self-identify",
       "input_type_defaults": {
         "radio": "Decline to self-identify",
@@ -4634,8 +4651,7 @@
     },
     "preference_5224": {
       "patterns": [
-        "s date",
-        "methodologies"
+        "s date"
       ],
       "category": "preference",
       "default": "02/15/2026",
@@ -4651,11 +4667,11 @@
         "first name"
       ],
       "category": "preference",
-      "default": "3",
+      "default": "Siddhant",
       "input_type_defaults": {
-        "radio": "3",
-        "select": "3",
-        "text": "3"
+        "radio": "Siddhant",
+        "select": "Siddhant",
+        "text": "Siddhant"
       },
       "priority": 4
     },
@@ -4748,20 +4764,26 @@
         "linkedin job"
       ],
       "category": "preference",
-      "default": "Professional proficiency",
+      "default": "Yes, I actively use LinkedIn for job opportunities and professional networking",
       "input_type_defaults": {
-        "radio": "Professional proficiency",
-        "select": "Professional proficiency",
-        "text": "Professional proficiency"
+        "radio": "Yes, I actively use LinkedIn for job opportunities and professional networking",
+        "select": "Yes, I actively use LinkedIn for job opportunities and professional networking",
+        "text": "Yes, I actively use LinkedIn for job opportunities and professional networking"
       },
       "priority": 4
     },
     "experience_528": {
       "patterns": [
-        "last professinnal experience"
+        "last professional experience"
       ],
       "category": "experience",
       "default": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.",
+      "input_type_defaults": {
+        "radio": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.",
+        "select": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.",
+        "text": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_4536": {
@@ -4769,11 +4791,11 @@
         "benefits"
       ],
       "category": "preference",
-      "default": "Yes, I am fluent in English with clear communication. I regularly interact with US-based clients and stakeholders.",
+      "default": "Yes, I am interested in learning about the benefits offered by the company",
       "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes, I am fluent in English with clear communication. I regularly interact with US-based clients and stakeholders.",
-        "text": "Yes, I am fluent in English with clear communication. I regularly interact with US-based clients and stakeholders."
+        "radio": "Yes, I am interested in learning about the benefits offered by the company",
+        "select": "Yes, I am interested in learning about the benefits offered by the company",
+        "text": "Yes, I am interested in learning about the benefits offered by the company"
       },
       "priority": 4
     },
@@ -5127,6 +5149,12 @@
       ],
       "category": "experience",
       "default": "Java, Spring Boot, Microservices, React",
+      "input_type_defaults": {
+        "radio": "Java, Spring Boot, Microservices, React",
+        "select": "Java, Spring Boot, Microservices, React",
+        "text": "Java, Spring Boot, Microservices, React",
+        "checkbox": false
+      },
       "priority": 4
     },
     "experience_7883": {
@@ -5135,6 +5163,12 @@
       ],
       "category": "experience",
       "default": "Full Stack Development",
+      "input_type_defaults": {
+        "radio": "Full Stack Development",
+        "select": "Full Stack Development",
+        "text": "Full Stack Development",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_5990": {
@@ -5209,6 +5243,12 @@
       ],
       "category": "experience",
       "default": "Yes, experienced with Scrum ceremonies",
+      "input_type_defaults": {
+        "radio": "Yes, experienced with Scrum ceremonies",
+        "select": "Yes, experienced with Scrum ceremonies",
+        "text": "Yes, experienced with Scrum ceremonies",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_5678": {
@@ -5244,6 +5284,12 @@
       ],
       "category": "experience",
       "default": "Yes, proficient in Git",
+      "input_type_defaults": {
+        "radio": "Yes, proficient in Git",
+        "select": "Yes, proficient in Git",
+        "text": "Yes, proficient in Git",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_264": {
@@ -5265,6 +5311,12 @@
       ],
       "category": "experience",
       "default": "Advanced",
+      "input_type_defaults": {
+        "radio": "Advanced",
+        "select": "Advanced",
+        "text": "Advanced",
+        "checkbox": false
+      },
       "priority": 4
     },
     "skills_8863": {
@@ -5407,6 +5459,13 @@
       ],
       "category": "yes_no",
       "default": "Indian citizen - no visa required for India",
+      "input_type_defaults": {
+        "radio": "Indian citizen - no visa required for India",
+        "select": "Indian citizen - no visa required for India",
+        "text": "Indian citizen - no visa required for India",
+        "number": "0",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_651": {
@@ -5483,7 +5542,9 @@
     },
     "preference_7802": {
       "patterns": [
-        "team"
+        "which team",
+        "team name",
+        "current team"
       ],
       "category": "preference",
       "default": "Full Stack Development Team",
@@ -5496,7 +5557,9 @@
     },
     "preference_4561": {
       "patterns": [
-        "division"
+        "which division",
+        "current division",
+        "division name"
       ],
       "category": "preference",
       "default": "Technology",
@@ -5522,7 +5585,9 @@
     },
     "preference_9315": {
       "patterns": [
-        "vertical"
+        "which vertical",
+        "preferred vertical",
+        "vertical domain"
       ],
       "category": "preference",
       "default": "Banking and Financial Services",
@@ -5935,6 +6000,12 @@
       ],
       "category": "experience",
       "default": "Looking for long-term opportunity",
+      "input_type_defaults": {
+        "radio": "Looking for long-term opportunity",
+        "select": "Looking for long-term opportunity",
+        "text": "Looking for long-term opportunity",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_9037": {
@@ -5952,7 +6023,9 @@
     },
     "preference_8594": {
       "patterns": [
-        "period"
+        "work period",
+        "employment period",
+        "contract period"
       ],
       "category": "preference",
       "default": "Open to any period",
@@ -5965,7 +6038,9 @@
     },
     "preference_2804": {
       "patterns": [
-        "timeframe"
+        "expected timeframe",
+        "joining timeframe",
+        "what timeframe"
       ],
       "category": "preference",
       "default": "Flexible with timeframe",
@@ -6020,7 +6095,9 @@
     },
     "preference_8454": {
       "patterns": [
-        "full time"
+        "full time role",
+        "full time opportunity",
+        "looking for full time"
       ],
       "category": "preference",
       "default": "Yes, looking for full-time",
@@ -6033,7 +6110,9 @@
     },
     "preference_470": {
       "patterns": [
-        "part time"
+        "part time role",
+        "part time opportunity",
+        "open to part time"
       ],
       "category": "preference",
       "default": "No, looking for full-time only",
@@ -6046,7 +6125,9 @@
     },
     "preference_4327": {
       "patterns": [
-        "freelance"
+        "freelance work",
+        "open to freelance",
+        "freelance opportunity"
       ],
       "category": "preference",
       "default": "No, looking for full-time employment",
@@ -6076,6 +6157,12 @@
       ],
       "category": "salary",
       "default": "Direct payroll preferred",
+      "input_type_defaults": {
+        "radio": "Direct payroll preferred",
+        "select": "Direct payroll preferred",
+        "text": "Direct payroll preferred",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_3075": {
@@ -6093,7 +6180,9 @@
     },
     "preference_311": {
       "patterns": [
-        "permanent"
+        "permanent role",
+        "permanent position",
+        "looking for permanent"
       ],
       "category": "preference",
       "default": "Yes, looking for permanent role",
@@ -6106,7 +6195,9 @@
     },
     "preference_2170": {
       "patterns": [
-        "temporary"
+        "temporary role",
+        "temporary position",
+        "open to temporary"
       ],
       "category": "preference",
       "default": "Open to temporary assignments",
@@ -6249,7 +6340,9 @@
     },
     "preference_1555": {
       "patterns": [
-        "negotiable"
+        "is it negotiable",
+        "open to negotiation",
+        "willing to negotiate"
       ],
       "category": "preference",
       "default": "Yes, open to negotiation within range",
@@ -6279,6 +6372,12 @@
       ],
       "category": "salary",
       "default": "Yes, within reasonable range",
+      "input_type_defaults": {
+        "radio": "Yes, within reasonable range",
+        "select": "Yes, within reasonable range",
+        "text": "Yes, within reasonable range",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_8796": {
@@ -6300,6 +6399,12 @@
       ],
       "category": "salary",
       "default": "Yes, willing to discuss",
+      "input_type_defaults": {
+        "radio": "Yes, willing to discuss",
+        "select": "Yes, willing to discuss",
+        "text": "Yes, willing to discuss",
+        "checkbox": false
+      },
       "priority": 4
     },
     "salary_8796": {
@@ -6308,11 +6413,19 @@
       ],
       "category": "salary",
       "default": "Yes, open to discussion",
+      "input_type_defaults": {
+        "radio": "Yes, open to discussion",
+        "select": "Yes, open to discussion",
+        "text": "Yes, open to discussion",
+        "checkbox": false
+      },
       "priority": 4
     },
     "preference_5297": {
       "patterns": [
-        "range"
+        "expected range",
+        "compensation range",
+        "expected ctc range"
       ],
       "category": "preference",
       "default": "20-30 LPA",
@@ -6329,6 +6442,12 @@
       ],
       "category": "salary",
       "default": "Yes, flexible within reason",
+      "input_type_defaults": {
+        "radio": "Yes, flexible within reason",
+        "select": "Yes, flexible within reason",
+        "text": "Yes, flexible within reason",
+        "checkbox": false
+      },
       "priority": 4
     },
     "education_9326": {
@@ -6336,11 +6455,11 @@
         "please select your highest education qualification"
       ],
       "category": "education",
-      "default": "Bachelor\\",
+      "default": "Bachelor's",
       "input_type_defaults": {
-        "radio": "Bachelor\\",
-        "select": "Bachelor\\",
-        "text": "Bachelor\\"
+        "radio": "Bachelor's",
+        "select": "Bachelor's",
+        "text": "Bachelor's"
       },
       "priority": 4
     },
@@ -6350,6 +6469,13 @@
       ],
       "category": "yes_no",
       "default": "Authorized to work in India",
+      "input_type_defaults": {
+        "radio": "Authorized to work in India",
+        "select": "Authorized to work in India",
+        "text": "Authorized to work in India",
+        "number": "0",
+        "checkbox": false
+      },
       "priority": 4
     },
     "salary_3657": {
@@ -6381,27 +6507,48 @@
       "priority": 4
     },
     "work_authorization": {
-      "category": "work_authorization",
-      "default": "Yes, I am legally authorized to work in India.",
       "patterns": [
         "legally authorized"
       ],
+      "category": "work_authorization",
+      "default": "Yes, I am legally authorized to work in India.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes, I am legally authorized to work in India.",
+        "text": "Yes, I am legally authorized to work in India.",
+        "number": "1",
+        "checkbox": false
+      },
       "priority": 5
     },
     "work_mode_wfo": {
-      "category": "work_mode",
-      "default": "Yes, I am open to both remote and work-from-office arrangements.",
       "patterns": [
         "remote work"
       ],
+      "category": "work_mode",
+      "default": "Yes, I am open to both remote and work-from-office arrangements.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes, I am open to both remote and work-from-office arrangements.",
+        "text": "Yes, I am open to both remote and work-from-office arrangements.",
+        "number": "1",
+        "checkbox": false
+      },
       "priority": 5
     },
     "tech_yes_no": {
-      "category": "yes_no",
-      "default": "Yes",
       "patterns": [
         "willing to accept"
       ],
+      "category": "yes_no",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "number": "1",
+        "checkbox": false
+      },
       "priority": 5
     },
     "criminal_background": {
@@ -6413,10 +6560,17 @@
         "criminal charges",
         "background verification"
       ],
-      "default": "No",
       "category": "compliance",
-      "priority": 8,
-      "negative_patterns": []
+      "default": "No",
+      "negative_patterns": [],
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "number": "0",
+        "checkbox": false
+      },
+      "priority": 8
     },
     "future_openings_consider": {
       "patterns": [
@@ -6426,10 +6580,17 @@
         "future job openings",
         "consider me for future roles"
       ],
-      "default": "Yes",
       "category": "yes_no",
-      "priority": 5,
-      "negative_patterns": []
+      "default": "Yes",
+      "negative_patterns": [],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "number": "1",
+        "checkbox": false
+      },
+      "priority": 5
     },
     "bond_agreement": {
       "patterns": [
@@ -6441,10 +6602,16 @@
         "bond of",
         "serve bond"
       ],
-      "default": "No bond",
       "category": "preference",
-      "priority": 7,
-      "negative_patterns": []
+      "default": "No bond",
+      "negative_patterns": [],
+      "input_type_defaults": {
+        "radio": "No bond",
+        "select": "No bond",
+        "text": "No bond",
+        "checkbox": false
+      },
+      "priority": 7
     },
     "nda_sign": {
       "patterns": [
@@ -6455,14 +6622,21 @@
         "sign a non-disclosure",
         "confidentiality agreement"
       ],
-      "default": "Yes",
       "category": "yes_no",
-      "priority": 7,
+      "default": "Yes",
       "negative_patterns": [
         "secondary email",
         "secondary skills",
         "secondary technology"
-      ]
+      ],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "number": "1",
+        "checkbox": false
+      },
+      "priority": 7
     },
     "currently_employed_general": {
       "patterns": [
@@ -6471,14 +6645,38 @@
         "presently employed",
         "currently employed"
       ],
-      "default": "Yes",
       "category": "preference",
-      "priority": 8,
+      "default": "Yes",
       "negative_patterns": [
         "currently employed by any of the",
         "currently employed by fiserv",
         "currently employed by everbridge"
-      ]
+      ],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "checkbox": false
+      },
+      "priority": 8
+    },
+    "python_libraries": {
+      "patterns": [
+        "python libraries",
+        "which python libraries",
+        "python library",
+        "python libs",
+        "python packages",
+        "which python"
+      ],
+      "category": "skills",
+      "default": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI",
+      "input_type_defaults": {
+        "radio": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI",
+        "select": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI",
+        "text": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI"
+      },
+      "priority": 8
     }
   },
   "categories": {

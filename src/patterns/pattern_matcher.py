@@ -22,6 +22,7 @@ CATEGORY_KEYWORDS = {
     'employment': ['current company', 'current organization', 'employer', 'designation', 'role', 'title'],
     'self_identification': ['disability', 'veteran', 'gender', 'race', 'ethnicity', 'identity'],
     'work_authorization': ['authorized', 'visa', 'work permit', 'legally', 'citizenship', 'sponsorship'],
+    'compliance': ['criminal', 'background', 'bond', 'nda', 'conflict', 'felony', 'conviction', 'non-compete', 'non compete'],
 }
 
 

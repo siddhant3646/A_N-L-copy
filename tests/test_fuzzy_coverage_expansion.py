@@ -48,6 +48,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
     def test_jira(self):
         ans, score = self.agent._fuzzy_match_question('jira experience')
         self.assertIsNotNone(ans)
+        # Fingerprint matcher returns 0.50 confidence for this question
         self.assertGreater(score, 0.4)
 
     def test_agile(self):
@@ -86,6 +87,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
     def test_hike_percentage(self):
         ans, score = self.agent._fuzzy_match_question('hike percentage')
         self.assertIsNotNone(ans)
+        # Fingerprint matcher returns 0.50 confidence for this question
         self.assertGreater(score, 0.4)
 
     # --- Category 11: Bond ---
@@ -127,6 +129,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
     def test_hybrid(self):
         ans, score = self.agent._fuzzy_match_question('hybrid model')
         self.assertIsNotNone(ans)
+        # Fingerprint matcher returns 0.50 confidence for this question
         self.assertGreater(score, 0.4)
 
     # --- Category 18: CTC Breakup ---
@@ -171,7 +174,13 @@ class TestNewPatternsCoverage(unittest.TestCase):
 
 
 class TestSalaryUpdateRegression(unittest.TestCase):
-    """Verify salary values reflect the updated amounts."""
+    """Verify salary values reflect the updated amounts.
+
+    Note: These tests use assertGreater(score, 0.8) which exceeds
+    PatternMatcher.DEFAULT_THRESHOLD (0.65). They pass because PHASE 1
+    hardcoded salary interceptions in agent.py return 0.90-0.98 confidence.
+    See IMPLEMENTATION_SUMMARY.md 'Two-Tier Matching Architecture' for details.
+    """
 
     def setUp(self):
         self.agent = SentinelAgent()

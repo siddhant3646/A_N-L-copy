@@ -142,6 +142,7 @@ class TestComplianceSafetyNet(unittest.TestCase):
             'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs'
         }
         CURRENT_EMPLOYER = 'fiserv'
+        WORKED_COMPANIES = {'everbridge', 'fiserv'}
 
         worked_patterns = [
             r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)",
@@ -153,13 +154,13 @@ class TestComplianceSafetyNet(unittest.TestCase):
             if m:
                 company = m.group(1).lower()
                 if company not in TECH_KEYWORDS:
-                    return ('Yes', 0.98) if company == CURRENT_EMPLOYER else ('No', 0.98)
+                    return ('Yes', 0.98) if company in WORKED_COMPANIES else ('No', 0.98)
 
         if re.search(r"currently\s+(?:employed|an\s+employee)\s+(?:by|at|of)\s+(?:any|any\s+of\s+the)", question_lower):
             return 'No', 0.98
 
         if re.search(r"(?:ever\s+been\s+employed|previously\s+employed)\s+(?:by|at|with)", question_lower):
-            return ('Yes', 0.98) if CURRENT_EMPLOYER in question_lower else ('No', 0.98)
+            return ('Yes', 0.98) if any(c in question_lower for c in WORKED_COMPANIES) else ('No', 0.98)
 
         conflict_keywords = ['conflict of interest', 'close relative', 'family member',
                              'relative working', 'family in company', 'relatives in company']
@@ -180,6 +181,10 @@ class TestComplianceSafetyNet(unittest.TestCase):
 
     def test_worked_at_fiserv(self):
         ans = self._check_compliance('have you worked at fiserv?')
+        self.assertEqual(ans, ('Yes', 0.98))
+
+    def test_worked_at_everbridge(self):
+        ans = self._check_compliance('have you worked at everbridge?')
         self.assertEqual(ans, ('Yes', 0.98))
 
     def test_currently_employed_by_any(self):
@@ -220,7 +225,7 @@ class TestPlatformOverrides(unittest.TestCase):
 
     def _check_platform_overrides(self, question_lower):
         if 'notice period' in question_lower and 'company' in question_lower and ('days' in question_lower or 'in days' in question_lower):
-            return '7', 0.99
+            return '15', 0.99
         np_keywords = ['your np', 'what is your np', 'mention np', 'np?']
         if any(kw in question_lower for kw in np_keywords):
             return '15', 0.98
@@ -247,7 +252,7 @@ class TestPlatformOverrides(unittest.TestCase):
 
     def test_notice_period_company_days(self):
         ans = self._check_platform_overrides('notice period in company days')
-        self.assertEqual(ans, ('7', 0.99))
+        self.assertEqual(ans, ('15', 0.99))
 
     def test_lwd(self):
         ans = self._check_platform_overrides('what is your last working day?')

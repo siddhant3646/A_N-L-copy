@@ -8,6 +8,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.sentinel.agent import SentinelAgent
 
 class TestQAUpdates(unittest.TestCase):
+    """QA pattern matching tests.
+
+    Note: Tests use assertGreater(score, 0.8) which exceeds
+    PatternMatcher.DEFAULT_THRESHOLD (0.65). They pass because PHASE 1
+    hardcoded interceptions in agent.py return 0.90-0.98 confidence.
+    See IMPLEMENTATION_SUMMARY.md 'Two-Tier Matching Architecture' for details.
+    """
     def setUp(self):
         self.agent = SentinelAgent()
 

@@ -3,6 +3,54 @@
 ## Overview
 Successfully implemented input-type-aware answer generation for the job application automation system. This ensures answers are properly formatted for different input types (radio, checkbox, select, text) based on the actual form field detected on the page.
 
+## Two-Tier Matching Architecture
+
+The QA matching system uses a two-tier architecture. Understanding both tiers is essential for maintenance:
+
+### Tier 1: PHASE 1 Hardcoded Interceptions (`agent.py:282-703`)
+
+`SentinelAgent._fuzzy_match_question()` contains ~35 hardcoded keyword checks that execute **before** `PatternMatcher` is consulted. These return fixed answers with high confidence (0.90-0.99) for well-known question categories.
+
+**Categories intercepted by PHASE 1:**
+- Skip patterns (empty return, conf 1.0)
+- Fingerprint matching (dynamic)
+- Learned patterns (dynamic, conf >= 0.5)
+- Company-specific "have you worked with" (regex, conf 0.98)
+- Compliance/conflict (conf 0.98)
+- Composite HR questions (CTC+NP combined, conf 0.98)
+- Notice period / NP / LWD (conf 0.98-0.99)
+- Start date (dynamic date computation, conf 0.99)
+- Project count (conf 0.98)
+- Yes/No proficiency (conf 0.98)
+- E-commerce experience (conf 0.98)
+- Rating/proficiency scale (conf 0.95)
+- Preferred position/role (conf 0.95)
+- Database knowledge (conf 0.95)
+- DSA/algorithms (conf 0.95)
+- Python libraries (conf 0.95)
+- Tech stack (conf 0.95)
+- Database name (conf 0.95)
+- Location-specific (conf 0.95)
+- Referral (conf 0.95)
+- Job change reason (conf 0.95)
+- Total experience (conf 0.95)
+- Country/state (conf 0.95)
+- Salary (CCTC/ECTC/current/expected, conf 0.90-0.98)
+- Experience (months/years, conf 0.95-0.98)
+- Notice period (platform-specific, conf 0.95-0.98)
+- Location (conf 0.95)
+
+### Tier 2: PatternMatcher (`pattern_matcher.py`) + `qa_patterns.json`
+
+When PHASE 1 does not intercept, the question falls through to `PatternMatcher.fuzzy_match()`, which uses `difflib.SequenceMatcher` against pattern strings in `qa_patterns.json` (v3.0, 361 pattern groups). The `DEFAULT_THRESHOLD` is 0.65.
+
+### Interaction Rules
+1. **PHASE 1 takes precedence** — if a keyword matches, the JSON pattern is never consulted.
+2. **PHASE 1 answers must be kept in sync** with the corresponding JSON pattern defaults. When updating a JSON default, check if PHASE 1 also handles the same question and align both.
+3. **Tests using `create_matcher()` directly** (e.g., `test_known_qa_reliability.py`) bypass PHASE 1 and test the JSON patterns in isolation.
+4. **Tests using `SentinelAgent._fuzzy_match_question()`** (e.g., `test_fuzzy_coverage_expansion.py`, `test_qa_updates.py`) go through both tiers.
+5. **Tests asserting `score > 0.8`** rely on PHASE 1's 0.90+ confidence, not `PatternMatcher` scores.
+
 ## Key Problems Solved
 
 ### 1. **Hardcoded SELECT in `_match_answer_to_options`**

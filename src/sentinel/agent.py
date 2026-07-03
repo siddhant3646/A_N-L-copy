@@ -73,6 +73,7 @@ class SentinelAgent:
         self._same_result_count = 0  # Counter for repeated results
         self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
         self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
+        self._linkedin_no_jobs_scroll_count = 0  # Track consecutive 'No jobs found' scrolls for pagination
 
         # Metrics tracking
         self.metrics = {
@@ -2317,6 +2318,71 @@ class SentinelAgent:
                 # LinkedIn: Scrolled for more jobs
                 if 'LINKEDIN_SCROLLED' in result:
                     print(f"📜 {result}")
+                    
+                    # Track consecutive 'No jobs found' scrolls for pagination
+                    if 'No jobs found' in result:
+                        self._linkedin_no_jobs_scroll_count += 1
+                        print(f"   📊 No jobs scroll count: {self._linkedin_no_jobs_scroll_count}/3")
+                        
+                        # If JS already clicked next page, reset counter
+                        if 'NEXT_PAGE_CLICKED' in result:
+                            print("📄 JS clicked next page pagination button!")
+                            self._linkedin_no_jobs_scroll_count = 0
+                            await asyncio.sleep(random.uniform(5, 8))  # Wait for new page to load
+                            continue
+                        
+                        # Safety net: After 3 consecutive no-jobs scrolls, try clicking next page via Playwright
+                        if self._linkedin_no_jobs_scroll_count >= 3:
+                            print("📄 3 consecutive no-jobs scrolls — attempting pagination via Playwright...")
+                            try:
+                                # Try clicking the "Next" button or next page number
+                                next_page_clicked = False
+                                
+                                # Strategy 1: Click the visible "Next" pagination button
+                                next_btn = self._page.locator('button[data-testid="pagination-controls-next-button-visible"]')
+                                if await next_btn.count() > 0:
+                                    await next_btn.first.click()
+                                    next_page_clicked = True
+                                    print("   ✅ Clicked 'Next' pagination button (data-testid)")
+                                
+                                # Strategy 2: Find the next page number button (aria-current="false" after aria-current="true")
+                                if not next_page_clicked:
+                                    current_page = self._page.locator('button[aria-current="true"][aria-label^="Page"]')
+                                    if await current_page.count() > 0:
+                                        current_label = await current_page.first.get_attribute('aria-label')
+                                        if current_label:
+                                            import re
+                                            page_match = re.search(r'Page (\d+)', current_label)
+                                            if page_match:
+                                                current_num = int(page_match.group(1))
+                                                next_num = current_num + 1
+                                                next_page_btn = self._page.locator(f'button[aria-label="Page {next_num}"]')
+                                                if await next_page_btn.count() > 0:
+                                                    await next_page_btn.first.click()
+                                                    next_page_clicked = True
+                                                    print(f"   ✅ Clicked page {next_num} pagination button")
+                                
+                                # Strategy 3: Generic "Next" button text match
+                                if not next_page_clicked:
+                                    next_text_btn = self._page.locator('button:has-text("Next")').filter(has=self._page.locator('svg[id*="chevron-right"]'))
+                                    if await next_text_btn.count() > 0:
+                                        await next_text_btn.first.click()
+                                        next_page_clicked = True
+                                        print("   ✅ Clicked 'Next' button (text + chevron match)")
+                                
+                                if next_page_clicked:
+                                    self._linkedin_no_jobs_scroll_count = 0
+                                    await asyncio.sleep(random.uniform(5, 8))  # Wait for new page to load
+                                else:
+                                    print("   ⚠️ No pagination button found — may be on last page")
+                                    self._linkedin_no_jobs_scroll_count = 0  # Reset to avoid infinite loop
+                            except Exception as e:
+                                print(f"   ⚠️ Pagination click failed: {e}")
+                                self._linkedin_no_jobs_scroll_count = 0
+                    else:
+                        # Reset counter on successful scroll (jobs were found)
+                        self._linkedin_no_jobs_scroll_count = 0
+                    
                     await asyncio.sleep(random.uniform(4, 8))  # Wait for new jobs to load
                     continue
                 
@@ -5118,7 +5184,8 @@ class SentinelAgent:
                     const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     // Extract the integer part for exact matching (e.g., "4" -> 4)
-                    const answerInt = Math.floor(answerNum);                    let bestOpt = null;
+                    const answerInt = Math.floor(answerNum);                    const MIN_MATCH_SCORE = 10; // Don't select if no meaningful match found
+                    let bestOpt = null;
                     let bestScore = -1;
                     
                     for (const opt of options) {
@@ -5189,6 +5256,12 @@ class SentinelAgent:
                     }
                     
                     console.log('findBestMatch: answer=', answer, '-> selected:', bestOpt?.text, 'score:', bestScore);
+                    // Minimum score gate: don't select if no meaningful match found
+                    // Score 0 means no pattern matched at all — selecting would be random garbage
+                    if (bestScore < MIN_MATCH_SCORE) {
+                        console.log('findBestMatch: score too low (' + bestScore + '), skipping selection');
+                        return null;
+                    }
                     return bestOpt;
                 };
                 
@@ -6236,6 +6309,107 @@ class SentinelAgent:
                                 continue;
                             }
                             
+                            // ===== SELF-IDENTIFICATION HANDLING (gender, orientation, birth sex) =====
+                            // These questions use non-standard option text ("Man" vs "Male", etc.)
+                            // and must NOT fall through to generic findBestMatch which fails on them.
+                            const isSelfIdQuestion = lowerLabel.includes('gender') || 
+                                                    lowerLabel.includes('sexual orientation') ||
+                                                    lowerLabel.includes('sex registered at birth') ||
+                                                    lowerLabel.includes('identify with') ||
+                                                    lowerLabel.includes('disability');
+                            
+                            if (isSelfIdQuestion) {
+                                const selfIdOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let selfIdOpt = null;
+                                
+                                if ((lowerLabel.includes('gender') || lowerLabel.includes('identify with')) && 
+                                    !lowerLabel.includes('sex registered') && !lowerLabel.includes('same as') &&
+                                    !lowerLabel.includes('sexual orientation') && !lowerLabel.includes('disability')) {
+                                    // Gender question — look for Man/Male
+                                    selfIdOpt = selfIdOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t === 'man' || t === 'male' || t.startsWith('man ');
+                                    });
+                                    // Fallback: Prefer not to say
+                                    if (!selfIdOpt) {
+                                        selfIdOpt = selfIdOptions.find(o => {
+                                            const t = o.text.toLowerCase();
+                                            return t.includes('prefer not') || t.includes('decline') || t.includes('rather not');
+                                        });
+                                    }
+                                } else if (lowerLabel.includes('sex registered at birth') || lowerLabel.includes('same as your sex') || lowerLabel.includes('same as')) {
+                                    // Gender same as birth — answer Yes
+                                    selfIdOpt = selfIdOptions.find(o => o.text.toLowerCase().trim() === 'yes');
+                                } else if (lowerLabel.includes('sexual orientation')) {
+                                    // Sexual orientation — Heterosexual or Straight
+                                    selfIdOpt = selfIdOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t.includes('heterosexual') || t.includes('straight');
+                                    });
+                                    // Fallback: Decline to self-identify
+                                    if (!selfIdOpt) {
+                                        selfIdOpt = selfIdOptions.find(o => {
+                                            const t = o.text.toLowerCase();
+                                            return t.includes('prefer not') || t.includes('decline') || t.includes('rather not');
+                                        });
+                                    }
+                                } else if (lowerLabel.includes('disability')) {
+                                    // Disability question — No or Prefer not to say
+                                    selfIdOpt = selfIdOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t === 'no' || t.includes('do not') || t.includes('prefer not') || t.includes('decline');
+                                    });
+                                }
+                                
+                                if (selfIdOpt) {
+                                    console.log('Self-ID match: Selecting', selfIdOpt.text, 'for:', labelText.substring(0, 80));
+                                    select.value = selfIdOpt.value;
+                                    if (select.value !== selfIdOpt.value) select.selectedIndex = selfIdOpt.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: selfIdOpt.text, inputType: 'select-self-id' });
+                                } else {
+                                    console.log('Self-ID: No match found for:', labelText.substring(0, 80), '— skipping (optional)');
+                                }
+                                continue;
+                            }
+                            
+                            // ===== NOTICE SERVING QUESTION =====
+                            // "Are you currently serving your notice?" is Yes/No, not numeric
+                            const isNoticeServingQ = lowerLabel.includes('currently serving') && lowerLabel.includes('notice');
+                            if (isNoticeServingQ) {
+                                const noticeOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                const yesOpt = noticeOptions.find(o => o.text.toLowerCase().trim() === 'yes');
+                                if (yesOpt) {
+                                    console.log('Notice serving: Selecting Yes');
+                                    select.value = yesOpt.value;
+                                    if (select.value !== yesOpt.value) select.selectedIndex = yesOpt.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: 'Yes', inputType: 'select-notice' });
+                                }
+                                continue;
+                            }
+                            
+                            // ===== EMPLOYER PARTNER QUESTION =====
+                            const isEmployerPartnerQ = lowerLabel.includes('employer') && lowerLabel.includes('partner');
+                            if (isEmployerPartnerQ) {
+                                const partnerOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                const noOpt = partnerOptions.find(o => o.text.toLowerCase().trim() === 'no');
+                                if (noOpt) {
+                                    console.log('Employer partner: Selecting No');
+                                    select.value = noOpt.value;
+                                    if (select.value !== noOpt.value) select.selectedIndex = noOpt.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: 'No', inputType: 'select-partner' });
+                                }
+                                continue;
+                            }
+                            
                             {
                                 let answer = labelText ? fuzzyMatch(labelText) : null;
                                 
@@ -6932,6 +7106,22 @@ class SentinelAgent:
                                 // data-test option label
                                 const optLabel = parent.querySelector('[data-test-text-selectable-option__label]');
                                 if (optLabel) return optLabel.innerText.trim();
+                                // Fallback: span sibling (used by LinkedIn nationality checkboxes)
+                                const spanSibling = parent.querySelector('span');
+                                if (spanSibling && spanSibling.innerText.trim()) return spanSibling.innerText.trim();
+                                // Fallback: direct text content of parent (excluding checkbox input)
+                                const parentText = Array.from(parent.childNodes)
+                                    .filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'INPUT'))
+                                    .map(n => n.textContent.trim())
+                                    .filter(t => t.length > 0)
+                                    .join(' ').trim();
+                                if (parentText) return parentText;
+                            }
+                            // Fallback: grandparent traversal for deeply nested checkboxes
+                            const grandparent = cb.parentElement?.parentElement;
+                            if (grandparent) {
+                                const gpLabel = grandparent.querySelector('label, span');
+                                if (gpLabel && gpLabel.innerText.trim()) return gpLabel.innerText.trim();
                             }
                             return '';
                         }
@@ -6947,6 +7137,63 @@ class SentinelAgent:
                         for (const fieldset of multiCheckboxFieldsets) {
                             const groupQuestion = getGroupQuestionText(fieldset);
                             console.log('Checkbox group question:', groupQuestion.substring(0, 80));
+
+                            // ===== NATIONALITY CHECKBOX DETECTION =====
+                            // LinkedIn Avaloq-style: 187 checkboxes with country demonyms (Afghan, Albanian, ...Indian...)
+                            const isNationalityGroup = groupQuestion.toLowerCase().includes('nationality') ||
+                                                     groupQuestion.toLowerCase().includes('nationalities') ||
+                                                     groupQuestion.toLowerCase().includes('citizenship');
+                            
+                            if (isNationalityGroup) {
+                                console.log('Nationality checkbox group detected, looking for Indian...');
+                                const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
+                                let found = false;
+                                for (const cb of groupCbs) {
+                                    handledCheckboxes.add(cb);
+                                    if (found || !isVisible(cb) || cb.checked) continue;
+                                    const optLabel = getOptionLabel(cb);
+                                    if (optLabel.toLowerCase() === 'indian') {
+                                        console.log('Nationality: Selecting Indian checkbox');
+                                        clickInput(cb);
+                                        formResults.push({ question: groupQuestion || 'Nationality', answer: 'Indian', inputType: 'checkbox-nationality' });
+                                        found = true;
+                                    }
+                                }
+                                if (!found) console.log('Nationality: Could not find Indian option');
+                                continue;
+                            }
+
+                            // ===== FALLBACK: If group has 50+ checkboxes with no question, check if they look like nationalities =====
+                            const groupCbsAll = fieldset.querySelectorAll('input[type="checkbox"]');
+                            if (!groupQuestion && groupCbsAll.length > 50) {
+                                // Sample a few labels to detect nationality pattern
+                                const sampleLabels = [];
+                                const sampleCbs = Array.from(groupCbsAll).slice(0, 10);
+                                for (const cb of sampleCbs) {
+                                    const lbl = getOptionLabel(cb);
+                                    if (lbl) sampleLabels.push(lbl.toLowerCase());
+                                }
+                                const nationalityHints = ['afghan', 'albanian', 'american', 'australian', 'indian', 'british', 'chinese'];
+                                const looksLikeNationality = sampleLabels.filter(l => nationalityHints.some(h => l.includes(h))).length >= 2;
+                                
+                                if (looksLikeNationality) {
+                                    console.log('Detected unlabeled nationality checkbox group (heuristic), looking for Indian...');
+                                    let found = false;
+                                    for (const cb of groupCbsAll) {
+                                        handledCheckboxes.add(cb);
+                                        if (found || !isVisible(cb) || cb.checked) continue;
+                                        const optLabel = getOptionLabel(cb);
+                                        if (optLabel.toLowerCase() === 'indian') {
+                                            console.log('Nationality (heuristic): Selecting Indian checkbox');
+                                            clickInput(cb);
+                                            formResults.push({ question: 'Nationality (detected)', answer: 'Indian', inputType: 'checkbox-nationality' });
+                                            found = true;
+                                        }
+                                    }
+                                    if (!found) console.log('Nationality (heuristic): Could not find Indian option');
+                                    continue;
+                                }
+                            }
 
                             const groupAnswer = groupQuestion ? fuzzyMatch(groupQuestion) : null;
                             console.log('Checkbox group answer:', groupAnswer);
@@ -7819,7 +8066,62 @@ class SentinelAgent:
                         return 'LINKEDIN_JOB_SELECTED';
                     }
 
-                    console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
+                    // No eligible jobs found — check if we should paginate or scroll
+                    const isAtBottom = (sidebar.scrollTop + sidebar.clientHeight) >= (sidebar.scrollHeight - 50);
+                    
+                    if (!isAtBottom) {
+                        // Still have room to scroll in sidebar
+                        console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
+                        sidebar.scrollBy(0, 800);
+                        return 'LINKEDIN_SCROLLED: No jobs found';
+                    }
+                    
+                    // At bottom of sidebar — try to click next page pagination button
+                    console.log('Sidebar fully scrolled. Looking for next page pagination button...');
+                    
+                    // Strategy 1: data-testid based (most reliable)
+                    const nextBtnByTestId = document.querySelector('button[data-testid="pagination-controls-next-button-visible"]');
+                    if (nextBtnByTestId) {
+                        console.log('Found Next button via data-testid, clicking...');
+                        nextBtnByTestId.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nextBtnByTestId.click();
+                        return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                    }
+                    
+                    // Strategy 2: Find current page and click next page number
+                    const currentPageBtn = document.querySelector('button[aria-current="true"][aria-label^="Page"]');
+                    if (currentPageBtn) {
+                        const label = currentPageBtn.getAttribute('aria-label');
+                        const match = label && label.match(/Page (\d+)/);
+                        if (match) {
+                            const nextPageNum = parseInt(match[1]) + 1;
+                            const nextPageBtn = document.querySelector('button[aria-label="Page ' + nextPageNum + '"]');
+                            if (nextPageBtn) {
+                                console.log('Found Page ' + nextPageNum + ' button, clicking...');
+                                nextPageBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                nextPageBtn.click();
+                                return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                            }
+                        }
+                    }
+                    
+                    // Strategy 3: Find any pagination "Next" button with chevron
+                    const allBtns = Array.from(document.querySelectorAll('button'));
+                    const nextChevronBtn = allBtns.find(btn => {
+                        const hasNext = (btn.innerText || '').toLowerCase().includes('next');
+                        const hasChevron = btn.querySelector('svg[id*="chevron-right"]');
+                        const isVisible = btn.offsetParent !== null && !btn.disabled;
+                        return hasNext && hasChevron && isVisible;
+                    });
+                    if (nextChevronBtn) {
+                        console.log('Found Next button via chevron match, clicking...');
+                        nextChevronBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nextChevronBtn.click();
+                        return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                    }
+                    
+                    // No pagination found — might be last page
+                    console.log('No pagination button found — possibly last page. Scrolling sidebar as fallback...');
                     sidebar.scrollBy(0, 800);
                     return 'LINKEDIN_SCROLLED: No jobs found';
                 }

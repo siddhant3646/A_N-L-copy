@@ -899,11 +899,11 @@
         "reasons for job change"
       ],
       "category": "preference",
-      "default": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
+      "default": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
       "input_type_defaults": {
-        "radio": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
-        "select": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals",
-        "text": "Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals"
+        "radio": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
+        "select": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects.",
+        "text": "Looking to work on challenging AI/ML products at scale. My current role has been great for building strong foundational skills, and I am now seeking a position where I can drive technical decisions, mentor junior developers, and contribute to high-impact projects."
       },
       "priority": 6
     },
@@ -1027,7 +1027,9 @@
     "self_id_gender": {
       "patterns": [
         "gender",
-        "what is your gender"
+        "what is your gender",
+        "gender you prefer to identify",
+        "identify with"
       ],
       "category": "self_identification",
       "default": "Male",
@@ -1036,7 +1038,88 @@
         "select": "Male",
         "text": "Male"
       },
+      "negative_patterns": [
+        "sexual orientation",
+        "sex registered at birth",
+        "same as your sex"
+      ],
       "priority": 9
+    },
+    "self_id_birth_sex": {
+      "patterns": [
+        "sex registered at birth",
+        "same as your sex",
+        "gender same as birth",
+        "gender you identify with the same"
+      ],
+      "category": "self_identification",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 10
+    },
+    "self_id_sexual_orientation": {
+      "patterns": [
+        "sexual orientation",
+        "which sexual orientation"
+      ],
+      "category": "self_identification",
+      "default": "Heterosexual",
+      "input_type_defaults": {
+        "radio": "Heterosexual",
+        "select": "Heterosexual",
+        "text": "Heterosexual"
+      },
+      "priority": 10
+    },
+    "self_id_nationality": {
+      "patterns": [
+        "nationality",
+        "nationalities",
+        "what is your nationality",
+        "citizenship"
+      ],
+      "category": "self_identification",
+      "default": "Indian",
+      "input_type_defaults": {
+        "radio": "Indian",
+        "checkbox": "Indian",
+        "select": "Indian",
+        "text": "Indian"
+      },
+      "priority": 9
+    },
+    "currently_serving_notice_yes": {
+      "patterns": [
+        "currently serving your notice",
+        "are you currently serving your notice"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 10
+    },
+    "employer_partner_no": {
+      "patterns": [
+        "employer a partner",
+        "employer partner",
+        "is your employer a partner"
+      ],
+      "category": "yes_no",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 10
     },
     "self_id_veteran": {
       "patterns": [
@@ -2043,17 +2126,23 @@
         "residential address",
         "home town",
         "native place",
-        "place of residence"
+        "place of residence",
+        "complete current address",
+        "address with pin",
+        "address with pin code",
+        "complete address",
+        "full address",
+        "share your address"
       ],
       "category": "location",
-      "default": "Noida, Uttar Pradesh",
+      "default": "Noida, Uttar Pradesh - 201301",
       "input_type_defaults": {
         "radio": "Noida",
         "checkbox": true,
         "select": "Noida, Uttar Pradesh",
-        "text": "Noida, Uttar Pradesh"
+        "text": "Noida, Uttar Pradesh - 201301"
       },
-      "priority": 7
+      "priority": 8
     },
     "project_count": {
       "patterns": [
@@ -2917,6 +3006,19 @@
         "interviewed with",
         "previous application"
       ],
+      "negative_patterns": [
+        "ok with permanent",
+        "okay with permanent",
+        "ok with joining",
+        "okay with joining",
+        "willing to join",
+        "interested in permanent",
+        "interested in joining",
+        "ok to join",
+        "ready to join",
+        "open to permanent",
+        "open to joining"
+      ],
       "category": "yes_no",
       "default": "No",
       "input_type_defaults": {
@@ -2926,6 +3028,38 @@
         "text": "No"
       },
       "priority": 8
+    },
+    "ok_with_permanent_company": {
+      "patterns": [
+        "ok with permanent",
+        "okay with permanent",
+        "ok with joining permanently",
+        "okay with joining permanently",
+        "interested in permanent",
+        "interested in joining permanently",
+        "ok to join permanently",
+        "willing to join permanently",
+        "ready for permanent",
+        "open to permanent role",
+        "ok with permanent with accenture",
+        "ok with permanent with tcs",
+        "ok with permanent with infosys",
+        "ok with permanent with wipro",
+        "ok with permanent with hcl",
+        "ok with permanent with cognizant",
+        "ok with permanent with ibm",
+        "ok with permanent with capgemini",
+        "ok with permanent with deloitte"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": true,
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 9
     },
     "walk_in_interview": {
       "patterns": [
@@ -3875,6 +4009,11 @@
         "gemini",
         "ai model"
       ],
+      "negative_patterns": [
+        "years of experience in generative",
+        "years of experience do you have in generative",
+        "how many years"
+      ],
       "category": "skills",
       "default": "Yes, worked with GPT APIs and LangChain",
       "input_type_defaults": {
@@ -3884,6 +4023,31 @@
         "text": "Yes, worked with GPT APIs and LangChain"
       },
       "priority": 7
+    },
+    "genai_years_experience": {
+      "patterns": [
+        "years of experience in generative ai",
+        "years of experience do you have in generative ai",
+        "how many years of experience in generative ai",
+        "how many years of experience do you have in generative ai",
+        "experience in generative ai",
+        "generative ai years",
+        "genai years of experience",
+        "years of experience in ai",
+        "how many years of experience in ai",
+        "years of experience in llm",
+        "how many years of experience in llm",
+        "experience in large language models"
+      ],
+      "category": "experience",
+      "default": "4 Years",
+      "input_type_defaults": {
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
+      },
+      "priority": 8
     },
     "cloud_platform_experience": {
       "patterns": [
@@ -4417,7 +4581,6 @@
     "preference_9507": {
       "patterns": [
         "race",
-        "sexual orientation",
         "lgbtq",
         "pronouns",
         "ethnic background",
@@ -4427,6 +4590,9 @@
         "equal opportunity",
         "affirmative action",
         "family status"
+      ],
+      "negative_patterns": [
+        "sexual orientation"
       ],
       "category": "preference",
       "default": "Decline to self-identify",

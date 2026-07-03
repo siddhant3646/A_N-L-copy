@@ -16,12 +16,50 @@ from playwright.async_api import async_playwright
 _browser_counter = 0
 _shared_playwright = None
 
+# Capture the REAL system temp dir BEFORE we override TMPDIR below.
+# Chrome's own temp files (.com.google.Chrome.*, chrome_chrome_url_fetcher_*)
+# land here regardless of TMPDIR (it uses confstr/NSTemporaryDirectory on macOS),
+# so we need the original path to sweep them.
+_SYSTEM_TEMP = tempfile.gettempdir()
+
 # Shared temp management — ONE wrapper dir per process run, reused across all
 # tasks/cycles. Previously every Browser.start() created a fresh sentinel_<rand>
 # wrapper + a sentinel_profile_<pid>_<taskid> dir (copying ~200MB of Chrome
 # profile data) and never cleaned them up, leaking GBs across the infinite loop.
 _shared_tmp_root = None      # e.g. /var/folders/.../T/sentinel_<rand>
-_shared_profile_dir = None   # <_shared_tmp_root>/profile  (the user_data_dir)
+_shared_profile_dir = None   # <_shared_tmp_root>/sentinel_profile_<pid> (user_data_dir)
+
+
+def _sweep_chrome_temp():
+    """Remove stale Chrome temp artifacts from the system temp dir.
+
+    Cleans up three categories of leaked files that Chrome leaves behind when
+    force-killed (which our stop() does via SIGTERM/SIGKILL):
+      - sentinel_*                         our wrapper dirs (from past runs)
+      - com.google.Chrome.chrome_chrome_url_fetcher_*   download temp (AI model etc)
+      - .com.google.Chrome.*               per-session temp files (~458 MB each)
+
+    Called at startup and after every Browser.stop() to keep temp bounded.
+    """
+    import glob
+    patterns = [
+        "sentinel_*",
+        "com.google.Chrome.chrome_chrome_url_fetcher_*",
+        ".com.google.Chrome.*",
+    ]
+    swept = 0
+    for pattern in patterns:
+        for path in glob.glob(os.path.join(_SYSTEM_TEMP, pattern)):
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path, ignore_errors=True)
+                else:
+                    os.unlink(path)
+                swept += 1
+            except OSError:
+                pass
+    if swept:
+        print(f"🧹 Swept {swept} stale Chrome temp item(s) from {_SYSTEM_TEMP}")
 
 
 def _ensure_tmp_root():
@@ -32,6 +70,8 @@ def _ensure_tmp_root():
     """
     global _shared_tmp_root, _shared_profile_dir
     if _shared_tmp_root is None:
+        # Sweep stale Chrome temp from past force-killed runs first
+        _sweep_chrome_temp()
         _shared_tmp_root = tempfile.mkdtemp(prefix="sentinel_")
         os.environ["TMPDIR"] = _shared_tmp_root
         # Name includes PID so the existing pgrep-based Chrome kill logic
@@ -45,13 +85,15 @@ def _ensure_tmp_root():
 
 
 def cleanup_tmp_root():
-    """Delete the shared temp wrapper. Safe to call multiple times."""
+    """Delete the shared temp wrapper + sweep Chrome temp. Safe to call multiple times."""
     global _shared_tmp_root, _shared_profile_dir
     if _shared_tmp_root is not None:
         shutil.rmtree(_shared_tmp_root, ignore_errors=True)
         print(f"🧹 Cleaned up shared temp: {_shared_tmp_root}")
         _shared_tmp_root = None
         _shared_profile_dir = None
+    # Also sweep Chrome's own temp artifacts (session files, download dirs)
+    _sweep_chrome_temp()
 
 
 atexit.register(cleanup_tmp_root)
@@ -157,6 +199,11 @@ class Browser:
             '--disable-gpu',
             '--disable-extensions',
             '--no-first-run',
+            # Prevent Chrome from downloading its 4 GB on-device AI model
+            # (OptGuideOnDeviceModel) into the temp profile on every run.
+            # This model is useless for automation and was the primary cause
+            # of ~8 GB/run storage leak (4 GB download + 4 GB unpacked model).
+            '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide',
         ]
         
         final_user_data_dir = self.user_data_dir
@@ -459,6 +506,13 @@ class Browser:
                 self._kill_chrome_holding_dir(temp_dir)
             else:
                 self._kill_chrome_holding_dir(profile_marker)
+
+        # 6. Sweep Chrome's temp artifacts from the system temp dir.
+        # Chrome leaves behind .com.google.Chrome.* session files (~458 MB each)
+        # and chrome_chrome_url_fetcher_* download dirs when force-killed.
+        # Cleaning after every stop() keeps temp bounded across the infinite loop.
+        _sweep_chrome_temp()
+
 from src.core.config import CHROME_USER_DATA
 from src.sentinel.agent import create_agent
 from src.sentinel import prompts

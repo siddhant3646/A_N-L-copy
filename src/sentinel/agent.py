@@ -1041,7 +1041,8 @@ class SentinelAgent:
 
     def _log_all_questions(self, question: str, answer: str, context: str = "", 
                            match_confidence: str = "", input_type: str = "",
-                           options: List[str] = None, selected_option: str = ""):
+                           options: List[str] = None, selected_option: str = "",
+                           prefilled: bool = False):
         """Log ALL questions encountered during Naukri and LinkedIn tasks for analysis."""
         try:
             # Avoid duplicate logging (same question in same session)
@@ -1051,8 +1052,9 @@ class SentinelAgent:
             self._all_logged_questions.add(q_hash)
             
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            prefixed_tag = " [PREFILLED]" if prefilled else ""
             confidence_str = f" [{match_confidence}]" if match_confidence else ""
-            log_entry = f"[{timestamp}] [{context}]{confidence_str}\n"
+            log_entry = f"[{timestamp}] [{context}]{confidence_str}{prefixed_tag}\n"
             log_entry += f"  Q: {question}\n"
             log_entry += f"  A: {answer}\n"
             if input_type:
@@ -1065,6 +1067,20 @@ class SentinelAgent:
             
             with open(self.ALL_QUESTIONS_LOG, 'a', encoding='utf-8') as f:
                 f.write(log_entry)
+            
+            # Also write to consolidated CSV sheet
+            status = "prefilled" if prefilled else "submitted"
+            self._log_qa_result(
+                question=question,
+                answer=answer,
+                input_type=input_type,
+                options=options or [],
+                selected_option=selected_option,
+                confidence=match_confidence if match_confidence else "",
+                status=status,
+                url=self._page.url if self._page else "",
+                platform=context or self._current_platform or "",
+            )
             
             # Track in metrics
             self.metrics['questions_answered'] += 1
@@ -2603,6 +2619,24 @@ class SentinelAgent:
                             submit_attempt_count += 1
                             print(f"✅ Clicked Submit (attempt {submit_attempt_count}/{max_submit_attempts})")
                             
+                            # Parse and log Q&A data from the submission payload
+                            if '|' in next_result:
+                                try:
+                                    qa_json = next_result.split('|', 1)[1]
+                                    qa_pairs = json.loads(qa_json)
+                                    for qa in qa_pairs:
+                                        self._log_all_questions(
+                                            qa.get('q', qa.get('question', 'Unknown')),
+                                            qa.get('a', qa.get('answer', '')),
+                                            context="LinkedIn_Form",
+                                            match_confidence="Keyword Match",
+                                            input_type=qa.get('inputType', qa.get('t', '')) or '',
+                                            selected_option=qa.get('answer', '') or '',
+                                            prefilled=qa.get('prefilled', False) or False,
+                                        )
+                                except Exception:
+                                    pass  # Silently handle parse errors
+                            
                             # If we've clicked submit too many times without success, the submission is failing
                             if submit_attempt_count >= max_submit_attempts:
                                 print("⚠️ Submit not working (possible 403 error). Skipping this job...")
@@ -2641,7 +2675,10 @@ class SentinelAgent:
                                             qa.get('q', 'Unknown'),
                                             qa.get('a', ''),
                                             context="LinkedIn_Form",
-                                            match_confidence="Keyword Match"
+                                            match_confidence="Keyword Match",
+                                            input_type=qa.get('inputType', '') or '',
+                                            selected_option=qa.get('answer', '') or '',
+                                            prefilled=qa.get('prefilled', False) or False,
                                         )
                                 except Exception:
                                     pass  # Silently handle parse errors
@@ -2665,6 +2702,23 @@ class SentinelAgent:
                             await asyncio.sleep(random.uniform(2, 4))
                             continue
                         elif 'LINKEDIN_FORM_STEP_CONTINUED' in next_result:
+                            # Parse and log Q&A data if present
+                            if '|' in next_result:
+                                try:
+                                    qa_json = next_result.split('|', 1)[1]
+                                    qa_pairs = json.loads(qa_json)
+                                    for qa in qa_pairs:
+                                        self._log_all_questions(
+                                            qa.get('q', qa.get('question', 'Unknown')),
+                                            qa.get('a', qa.get('answer', '')),
+                                            context="LinkedIn_Form",
+                                            match_confidence="Keyword Match",
+                                            input_type=qa.get('inputType', qa.get('t', '')) or '',
+                                            selected_option=qa.get('answer', '') or '',
+                                            prefilled=qa.get('prefilled', False) or False,
+                                        )
+                                except Exception:
+                                    pass  # Silently handle parse errors
                             print("➡️ Form step continued")
                             submit_attempt_count = 0  # Progress made
                             continue
@@ -3558,6 +3612,22 @@ class SentinelAgent:
                     let bestKeyLen = 0;
                     const detectedType = detectInputType(chatLayer);
                     
+                    // PRE-CHECK: "How many years of exp/experience in X?" -> force experience pattern
+                    // This prevents tech-specific patterns (microservices, cloud, etc.) from
+                    // overriding when the question is clearly asking for numeric years.
+                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years/.test(qLower);
+                    if (isYearsOfExpQuestion) {{
+                        // Find the experience pattern key explicitly
+                        const expKeys = ['years of experience do you have', 'how many years of experience do you have',
+                            'how many years of experience', 'years of experience', 'total years of exp',
+                            'years of exp', 'years of work experience do you have', 'experience', 'exp', 'years'];
+                        for (const ek of expKeys) {{
+                            if (KNOWN_PATTERNS[ek] && qLower.includes(ek)) {{
+                                return getAnswerForPattern(ek, detectedType, KNOWN_PATTERNS[ek]);
+                            }}
+                        }}
+                    }}
+                    
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
                     
                     for (const [key, val] of sortedPatterns) {{
@@ -4014,7 +4084,7 @@ class SentinelAgent:
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
-                                    return 'CHATBOT_DROPDOWN_SELECTED: ' + opt.text;
+                                    return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text}});
                                 }}
                             }} else {{
                                 // Non-salary: try to match by answer text
@@ -4025,7 +4095,7 @@ class SentinelAgent:
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
-                                    return 'CHATBOT_SELECTED: ' + opt.text;
+                                    return 'CHATBOT_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text}});
                                 }}
                             }}
                         }}
@@ -4037,9 +4107,9 @@ class SentinelAgent:
                             const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
                             if (saveDiv && saveDiv.offsetParent !== null) {{
                                 saveDiv.click();
-                                return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ' + selectOptions[1].text;
+                                return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text}});
                             }}
-                            return 'CHATBOT_SELECTED_DEFAULT: ' + selectOptions[1].text;
+                            return 'CHATBOT_SELECTED_DEFAULT|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text}});
                         }}
                     }}
                 }}
@@ -4251,20 +4321,52 @@ class SentinelAgent:
                         }}
                     }}
                     
-                    // If no match found, click first non-"No experience" radio
+                    // If no match found, use answer-aware fallback
                     if (!clickedRadio) {{
-                        for (const radio of radios) {{
-                            if (!radio.checked) {{
-                                const label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
-                                const labelLower = label.toLowerCase();
-                                // Skip "No experience" option
-                                if (labelLower.includes('no experience') || labelLower.includes('0 years')) {{
+                        // Collect all radio labels for smart fallback
+                        const allRadioInfo = Array.from(radios).filter(r => !r.checked).map(r => {{
+                            const label = r.parentElement?.innerText || r.nextSibling?.textContent || '';
+                            return {{ radio: r, label: label, labelLower: label.toLowerCase().trim() }};
+                        }});
+                        
+                        // When answer is "No"/"False", look for decline/negative/none options
+                        if (answerLower.includes('no') || answerLower.includes('false')) {{
+                            // Priority 1: Labels with decline/prefer not/none keywords
+                            const declineKeywords = ['decline', 'prefer not', 'not to', 'none', 'n/a', 'not applicable', 'neither', "i don't"];
+                            const declineRadio = allRadioInfo.find(r => 
+                                declineKeywords.some(kw => r.labelLower.includes(kw))
+                            );
+                            if (declineRadio) {{
+                                declineRadio.radio.click();
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked decline radio:', declineRadio.label);
+                            }}
+                            
+                            // Priority 2: Pick last non-Yes radio (safest negative in most UIs)
+                            if (!clickedRadio) {{
+                                const nonYesRadios = allRadioInfo.filter(r => 
+                                    !r.labelLower.startsWith('yes') && !r.labelLower.startsWith('i am') &&
+                                    !r.labelLower.startsWith('i have') && !r.labelLower.startsWith('i do')
+                                );
+                                if (nonYesRadios.length > 0) {{
+                                    const target = nonYesRadios[nonYesRadios.length - 1];
+                                    target.radio.click();
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked last non-Yes radio for No answer:', target.label);
+                                }}
+                            }}
+                        }}
+                        
+                        // Generic fallback: click first non-"No experience" radio
+                        if (!clickedRadio) {{
+                            for (const info of allRadioInfo) {{
+                                if (info.labelLower.includes('no experience') || info.labelLower.includes('0 years')) {{
                                     console.log('Chatbot Debug - Skipping "No experience" option');
                                     continue;
                                 }}
-                                radio.click();
+                                info.radio.click();
                                 clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked default radio:', label);
+                                console.log('Chatbot Debug - Clicked default radio:', info.label);
                                 break;
                             }}
                         }}
@@ -4278,7 +4380,9 @@ class SentinelAgent:
                         if (naukSaveDiv && naukSaveDiv.offsetParent !== null) {{
                             naukSaveDiv.click();
                             console.log('Chatbot Debug - Save clicked after radio');
-                            return 'CHATBOT_RADIO_AND_SAVE: ' + qText.slice(0, 50);
+                            const _chkRadio = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
+                            const _radLabel = _chkRadio ? (_chkRadio.parentElement?.innerText || _chkRadio.nextSibling?.textContent || _chkRadio.value || '').trim() : '';
+                            return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel || answer, t: 'radio', s: _radLabel || answer}});
                         }}
                         
                         const allButtons = chatLayer ? 
@@ -4291,11 +4395,15 @@ class SentinelAgent:
                                 && btn.offsetParent !== null) {{
                                 btn.click();
                                 console.log('Chatbot Debug - Save clicked after radio (fallback)');
-                                return 'CHATBOT_RADIO_AND_SAVE: ' + qText.slice(0, 50);
+                                const _chkRadio2 = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
+                                const _radLabel2 = _chkRadio2 ? (_chkRadio2.parentElement?.innerText || _chkRadio2.nextSibling?.textContent || _chkRadio2.value || '').trim() : '';
+                                return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel2 || answer, t: 'radio', s: _radLabel2 || answer}});
                             }}
                         }}
                         
-                        return 'CHATBOT_RADIO_CLICKED: ' + qText.slice(0, 50);
+                        const _chkRadio3 = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
+                        const _radLabel3 = _chkRadio3 ? (_chkRadio3.parentElement?.innerText || _chkRadio3.nextSibling?.textContent || _chkRadio3.value || '').trim() : '';
+                        return 'CHATBOT_RADIO_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel3 || answer, t: 'radio', s: _radLabel3 || answer}});
                     }}
                 }}
                 
@@ -4353,10 +4461,14 @@ class SentinelAgent:
                         if (saveBtn && saveBtn.offsetParent !== null) {{
                             saveBtn.click();
                             console.log('Chatbot Debug - Save clicked after checkbox');
-                            return 'CHATBOT_CHECKBOX_AND_SAVE: ' + qText.slice(0, 50);
+                            const _chkCbs = chatLayer ? Array.from(chatLayer.querySelectorAll('input[type="checkbox"]:checked')) : [];
+                            const _cbLabels = _chkCbs.map(function(cb) {{ return (cb.parentElement?.innerText || cb.nextSibling?.textContent || cb.name || '').trim(); }}).filter(Boolean);
+                            return 'CHATBOT_CHECKBOX_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels.join('; ') || 'Yes'}});
                         }}
                         
-                        return 'CHATBOT_CHECKBOX_CLICKED: ' + qText.slice(0, 50);
+                        const _chkCbs2 = chatLayer ? Array.from(chatLayer.querySelectorAll('input[type="checkbox"]:checked')) : [];
+                        const _cbLabels2 = _chkCbs2.map(function(cb) {{ return (cb.parentElement?.innerText || cb.nextSibling?.textContent || cb.name || '').trim(); }}).filter(Boolean);
+                        return 'CHATBOT_CHECKBOX_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels2.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels2.join('; ') || 'Yes'}});
                     }}
                     
                     // Naukri fallback: hidden input[type="checkbox"] exist inside .mcc__checkbox divs
@@ -4466,9 +4578,11 @@ class SentinelAgent:
                         saveBtn.dispatchEvent(new MouseEvent('mouseup',   {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         console.log('Chatbot Debug - Save clicked after date fill');
-                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
+                        const _dateVal = dd + '/' + mm + '/' + yyyy;
+                        return 'CHATBOT_ANSWERED_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _dateVal, t: 'date', s: _dateVal}});
                     }}
-                    return 'CHATBOT_DATE_FILLED: ' + dd + '/' + mm + '/' + yyyy;
+                    const _dateVal2 = dd + '/' + mm + '/' + yyyy;
+                    return 'CHATBOT_DATE_FILLED|' + JSON.stringify({{q: qText.substring(0,200), a: _dateVal2, t: 'date', s: _dateVal2}});
                 }}
                 // ───────────────────────────────────────────────────────────────────
                 
@@ -4587,9 +4701,9 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
+                        return 'CHATBOT_ANSWERED_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: answer || '', t: 'text', s: answer || ''}});
                     }}
-                    return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
+                    return 'CHATBOT_ANSWERED|' + JSON.stringify({{q: qText.substring(0,200), a: answer || '', t: 'text', s: answer || ''}});
                 }}
                 
                 if (input && input.type !== 'file') {{
@@ -4689,9 +4803,9 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        return 'CHATBOT_ANSWERED_AND_SAVE: ' + qText.slice(0, 50);
+                        return 'CHATBOT_ANSWERED_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: answer || '', t: 'text', s: answer || ''}});
                     }}
-                    return 'CHATBOT_ANSWERED: ' + qText.slice(0, 50);
+                    return 'CHATBOT_ANSWERED|' + JSON.stringify({{q: qText.substring(0,200), a: answer || '', t: 'text', s: answer || ''}});
                 }}
                 
                 // Option buttons are now handled at the top of STEP 2 (before dropdowns/radios)
@@ -4721,28 +4835,47 @@ class SentinelAgent:
                 return 'CHATBOT_WAITING';
             }}""")
             
-            # Extract question text from result for tracking
+            # Extract question text from result for tracking and log Q&A to CSV
             current_question = None
-            if 'CHATBOT_ANSWERED_AND_SAVE:' in result:
-                current_question = result.split('CHATBOT_ANSWERED_AND_SAVE: ')[1] if 'CHATBOT_ANSWERED_AND_SAVE: ' in result else None
-            elif 'CHATBOT_ANSWERED:' in result:
-                current_question = result.split('CHATBOT_ANSWERED: ')[1] if 'CHATBOT_ANSWERED: ' in result else None
-            elif 'CHATBOT_SUBMISSION_ERROR:' in result:
-                current_question = result.split('CHATBOT_SUBMISSION_ERROR: ')[1] if 'CHATBOT_SUBMISSION_ERROR: ' in result else None
-            elif 'CHATBOT_DROPDOWN_SELECTED:' in result:
-                current_question = result.split('CHATBOT_DROPDOWN_SELECTED: ')[1] if 'CHATBOT_DROPDOWN_SELECTED: ' in result else None
-            elif 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE:' in result:
-                current_question = result.split('CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ')[1] if 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE: ' in result else None
-            elif 'CHATBOT_SAVE_DISABLED:' in result:
-                current_question = result.split('CHATBOT_SAVE_DISABLED: ')[1] if 'CHATBOT_SAVE_DISABLED: ' in result else None
-            elif 'CHATBOT_RADIO_AND_SAVE:' in result:
-                current_question = result.split('CHATBOT_RADIO_AND_SAVE: ')[1] if 'CHATBOT_RADIO_AND_SAVE: ' in result else None
-            elif 'CHATBOT_RADIO_CLICKED:' in result:
-                current_question = result.split('CHATBOT_RADIO_CLICKED: ')[1] if 'CHATBOT_RADIO_CLICKED: ' in result else None
-            elif 'CHATBOT_CHECKBOX_AND_SAVE:' in result:
-                current_question = result.split('CHATBOT_CHECKBOX_AND_SAVE: ')[1] if 'CHATBOT_CHECKBOX_AND_SAVE: ' in result else None
-            elif 'CHATBOT_CHECKBOX_CLICKED:' in result:
-                current_question = result.split('CHATBOT_CHECKBOX_CLICKED: ')[1] if 'CHATBOT_CHECKBOX_CLICKED: ' in result else None
+            qa_data = None
+            
+            # New JSON format: "ACTION|{q:..., a:..., t:..., s:...}"
+            if '|' in result and not result.startswith('NAUKRI_RATE_LIMITED'):
+                try:
+                    _, json_str = result.split('|', 1)
+                    qa_data = json.loads(json_str)
+                    current_question = qa_data.get('q', '')
+                except Exception:
+                    qa_data = None
+            
+            # Fallback: old text format (backward compat)
+            if qa_data is None:
+                colon_formats = [
+                    'CHATBOT_ANSWERED_AND_SAVE:', 'CHATBOT_ANSWERED:',
+                    'CHATBOT_SUBMISSION_ERROR:', 'CHATBOT_DROPDOWN_SELECTED:',
+                    'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE:', 'CHATBOT_SAVE_DISABLED:',
+                    'CHATBOT_RADIO_AND_SAVE:', 'CHATBOT_RADIO_CLICKED:',
+                    'CHATBOT_CHECKBOX_AND_SAVE:', 'CHATBOT_CHECKBOX_CLICKED:',
+                ]
+                for prefix in colon_formats:
+                    fmt = prefix + ' '
+                    if fmt in result:
+                        current_question = result.split(fmt)[1] if fmt in result else None
+                        break
+            
+            # NEW: Log Q&A to CSV if we got structured data
+            if qa_data and qa_data.get('q') and qa_data.get('a'):
+                self._log_qa_result(
+                    question=qa_data['q'],
+                    answer=qa_data['a'],
+                    input_type=qa_data.get('t', '') or '',
+                    selected_option=qa_data.get('s', '') or qa_data['a'],
+                    confidence="pattern_match",
+                    status="submitted",
+                    url=self._page.url if self._page else "",
+                    platform="naukri",
+                )
+                self.metrics['questions_answered'] += 1
             
             # Check if stuck on same question
             if current_question:
@@ -6031,7 +6164,16 @@ class SentinelAgent:
                                     }
                                 }
                             }
-                            if (isFieldPreFilled(input) && !hasError) continue;
+                            if (isFieldPreFilled(input) && !hasError) {
+                                // Capture pre-filled value before skipping
+                                const pfLabel = labelText || input.placeholder || '(prefilled field)';
+                                const pfVal = input.value || '';
+                                if (pfLabel && pfVal) {
+                                    formResults.push({ question: pfLabel, answer: pfVal, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text', prefilled: true });
+                                    console.log('Pre-filled field captured:', pfLabel, '=', pfVal);
+                                }
+                                continue;
+                            }
                             
                             // Clear invalid field before refilling
                             if (hasError) {
@@ -6192,7 +6334,29 @@ class SentinelAgent:
                         
                         // Process native <select> elements
                         for (const select of nativeSelects) {
-                            if (!isVisible(select) || isFieldPreFilled(select)) continue;
+                            if (!isVisible(select)) continue;
+                            
+                            // Capture pre-filled selects before label detection
+                            if (isFieldPreFilled(select)) {
+                                let pfLabel = select.getAttribute('aria-label') || '';
+                                if (!pfLabel && select.id) {
+                                    const lbl = queryDeep(`label[for="${select.id}"]`, modal);
+                                    if (lbl) pfLabel = lbl.innerText || lbl.textContent || '';
+                                }
+                                if (!pfLabel) {
+                                    const fbParent = select.closest('.fb-dash-form-element');
+                                    if (fbParent) {
+                                        const lbl = fbParent.querySelector('label');
+                                        if (lbl) pfLabel = lbl.innerText || lbl.textContent || '';
+                                    }
+                                }
+                                const pfOpt = select.options[select.selectedIndex];
+                                if (pfOpt && pfLabel) {
+                                    formResults.push({ question: pfLabel, answer: pfOpt.text, inputType: 'select', prefilled: true });
+                                    console.log('Pre-filled select captured:', pfLabel, '=', pfOpt.text);
+                                }
+                                continue;
+                            }
                             
                             // ROBUST LABEL DETECTION for selects (same as text inputs)
                             let labelText = '';
@@ -7752,7 +7916,7 @@ class SentinelAgent:
                                 return { type: 'safety', element: dialog };
                             }
                             // Success modal
-                            if (text.includes('application sent') || text.includes('application submitted') || text.includes('success')) {
+                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /application\s+\w+\s+(sent|submitted)/i.test(text)) {
                                 return { type: 'success', element: dialog };
                             }
                             // Easy Apply daily limit

@@ -355,6 +355,26 @@
       },
       "priority": 9
     },
+    "email_and_phone": {
+      "patterns": [
+        "email and phone number",
+        "email and phone",
+        "email id and phone number",
+        "please mention your email and phone number",
+        "your email and phone number",
+        "email id and mobile number",
+        "email and mobile number"
+      ],
+      "category": "personal_info",
+      "default": "siddhant3646@gmail.com / 7905828880",
+      "sensitive": true,
+      "input_type_defaults": {
+        "radio": "siddhant3646@gmail.com / 7905828880",
+        "select": "siddhant3646@gmail.com / 7905828880",
+        "text": "siddhant3646@gmail.com / 7905828880"
+      },
+      "priority": 10
+    },
     "pan_card": {
       "patterns": [
         "pan card number",

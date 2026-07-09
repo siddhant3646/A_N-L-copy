@@ -6153,14 +6153,32 @@ class SentinelAgent:
                             
                             // Check if this field has a validation error — if so, clear and refill
                             const inputParent = input.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
-                            let hasError = !!(inputParent && inputParent.querySelector('.artdeco-inline-feedback--error'));
+                            let hasError = !!(inputParent && inputParent.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field'));
                             if (!hasError && inputParent) {
-                                const helperPs = inputParent.querySelectorAll('[data-testid*="helper-text"] p, [data-testid*="error"] p');
+                                // Check for helper-text/error paragraphs
+                                const helperPs = inputParent.querySelectorAll('[data-testid*="helper-text"] p, [data-testid*="error"] p, [class*="error"] p, [class*="feedback"] p');
                                 for (const hp of helperPs) {
                                     const t = (hp.innerText || '').toLowerCase();
-                                    if (t.includes('invalid') || t.includes('required') || t.includes('enter a valid') || t.includes('please enter')) {
+                                    if ((t.includes('invalid') || t.includes('required') || t.includes('enter a valid') || t.includes('please enter')) && hp.offsetParent !== null) {
                                         hasError = true;
                                         break;
+                                    }
+                                }
+                            }
+                            // Also check aria-invalid and red border indicators on input itself
+                            if (!hasError && (input.getAttribute('aria-invalid') === 'true' || input.getAttribute('aria-describedby')?.includes('error'))) {
+                                hasError = true;
+                            }
+                            // Check for any visible red text sibling near the input
+                            if (!hasError && inputParent) {
+                                const allSpans = inputParent.querySelectorAll('span, div, p');
+                                for (const sp of allSpans) {
+                                    const t = (sp.innerText || '').trim().toLowerCase();
+                                    if (t === 'this field is required' || t === 'required' || t === 'please enter a valid answer') {
+                                        if (sp.offsetParent !== null) {
+                                            hasError = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -6172,6 +6190,20 @@ class SentinelAgent:
                                     formResults.push({ question: pfLabel, answer: pfVal, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text', prefilled: true });
                                     console.log('Pre-filled field captured:', pfLabel, '=', pfVal);
                                 }
+                                continue;
+                            }
+                            
+                            // If field is pre-filled but HAS a validation error, re-trigger
+                            // the existing value to force React to recognize it
+                            if (isFieldPreFilled(input) && hasError) {
+                                const existingValue = input.value;
+                                console.log('Re-triggering pre-filled field with error:', labelText, '=', existingValue);
+                                fillReactInput(input, existingValue);
+                                // Also try focus+blur to clear validation
+                                input.focus();
+                                input.dispatchEvent(new Event('focus', { bubbles: true }));
+                                input.dispatchEvent(new Event('blur', { bubbles: true }));
+                                formResults.push({ question: labelText || '(re-triggered)', answer: existingValue, inputType: 'text', retriggered: true });
                                 continue;
                             }
                             
@@ -6572,6 +6604,59 @@ class SentinelAgent:
                                     formResults.push({ question: labelText, answer: 'No', inputType: 'select-partner' });
                                 }
                                 continue;
+                            }
+                            
+                            // ===== NOTICE PERIOD SELECT HANDLER =====
+                            // "What will be your notice period?" - options like "Serving Notice Period", "30 Days", etc.
+                            // When "15 days" isn't an option, select "Serving Notice Period" as fallback
+                            const isNoticePeriodSelect = lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day') || lowerLabel.includes('join'));
+                            if (isNoticePeriodSelect) {
+                                const npOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let npMatch = null;
+                                
+                                // Priority 1: Exact "15 days" match
+                                npMatch = npOptions.find(o => o.text.toLowerCase().includes('15 day') || o.text.toLowerCase() === '15');
+                                
+                                // Priority 2: "Serving Notice Period" or "Serving Notice"
+                                if (!npMatch) {
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('serving notice'));
+                                }
+                                
+                                // Priority 3: "0-15 days" or similar short notice range
+                                if (!npMatch) {
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('0-15') || o.text.toLowerCase().includes('0 - 15'));
+                                }
+                                
+                                // Priority 4: "Immediate Joiner" / "Immediate"
+                                if (!npMatch) {
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('immediate'));
+                                }
+                                
+                                // Priority 5: Shortest numeric days option (e.g., "30 Days" over "60 Days")
+                                if (!npMatch) {
+                                    let shortestDays = Infinity;
+                                    for (const opt of npOptions) {
+                                        const daysMatch = opt.text.match(/(\d+)\s*day/i);
+                                        if (daysMatch) {
+                                            const days = parseInt(daysMatch[1]);
+                                            if (days < shortestDays) {
+                                                shortestDays = days;
+                                                npMatch = opt;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (npMatch) {
+                                    console.log('Notice Period Select: Selecting', npMatch.text, 'for', labelText);
+                                    select.value = npMatch.value;
+                                    if (select.value !== npMatch.value) select.selectedIndex = npMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: npMatch.text, inputType: 'select-notice-period' });
+                                    continue;
+                                }
                             }
                             
                             {
@@ -7653,8 +7738,21 @@ class SentinelAgent:
                         if (primaryBtn) {
                             // Only click if form is valid
                             if (checkForErrors()) {
-                                console.log('Form has errors or missing required fields. Waiting for resolution...');
-                                return 'LINKEDIN_FORM_STUCK: Validation errors or required fields missing';
+                                // Check if the ONLY issue is visible errors (stale React validation)
+                                // When all fields are filled but LinkedIn shows "This field is required",
+                                // force-click Next to let LinkedIn's submission re-validate
+                                const allInputsFilled = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
+                                    .some(inp => isVisible(inp) && !inp.value?.trim() && !inp.disabled);
+                                const allSelectsFilled = !queryAllDeep('select', modal)
+                                    .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
+                                
+                                if (allInputsFilled && allSelectsFilled) {
+                                    console.log('All fields filled but visible errors remain — force-clicking Next to re-trigger validation');
+                                    // Don't return FORM_STUCK, fall through to click the button
+                                } else {
+                                    console.log('Form has errors or missing required fields. Waiting for resolution...');
+                                    return 'LINKEDIN_FORM_STUCK: Validation errors or required fields missing';
+                                }
                             }
                             
                             // Scroll the button into view before clicking (handles tall forms
@@ -7687,8 +7785,16 @@ class SentinelAgent:
                                                  findByText('button', 'review');
                         if (globalPrimaryBtn && isVisible(globalPrimaryBtn)) {
                             if (checkForErrors()) {
-                                console.log('Form has errors. Waiting...');
-                                return 'LINKEDIN_FORM_STUCK: Validation errors';
+                                // Same force-proceed logic as primary button
+                                const allInputsFilled2 = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
+                                    .some(inp => isVisible(inp) && !inp.value?.trim() && !inp.disabled);
+                                const allSelectsFilled2 = !queryAllDeep('select', modal)
+                                    .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
+                                if (!(allInputsFilled2 && allSelectsFilled2)) {
+                                    console.log('Form has errors. Waiting...');
+                                    return 'LINKEDIN_FORM_STUCK: Validation errors';
+                                }
+                                console.log('All fields filled but visible errors remain (global fallback) — force-clicking');
                             }
                             try {
                                 globalPrimaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});

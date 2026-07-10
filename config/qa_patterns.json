@@ -2621,7 +2621,9 @@
     "linkedin_url": {
       "patterns": [
         "linkedin url",
-        "linkedin profile"
+        "linkedin profile",
+        "linkedin profile url",
+        "please enter your linkedin profile"
       ],
       "category": "preference",
       "default": "https://www.linkedin.com/in/siddhant3646",
@@ -5093,6 +5095,27 @@
       },
       "priority": 4
     },
+    "others_specify": {
+      "patterns": [
+        "others (please specify)",
+        "others please specify",
+        "others",
+        "other (please specify)",
+        "other please specify",
+        "other specify",
+        "others specify",
+        "if others please specify",
+        "if other please specify"
+      ],
+      "category": "preference",
+      "default": "NA",
+      "input_type_defaults": {
+        "radio": "NA",
+        "select": "NA",
+        "text": "NA"
+      },
+      "priority": 5
+    },
     "education_3569": {
       "patterns": [
         "10th percentage",
@@ -6087,8 +6110,7 @@
     },
     "preference_6654": {
       "patterns": [
-        "1 year",
-        "please enter your linkedin profile"
+        "1 year"
       ],
       "category": "preference",
       "default": "Open to 1 year contracts",

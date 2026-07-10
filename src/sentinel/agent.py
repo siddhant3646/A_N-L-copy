@@ -6042,24 +6042,71 @@ class SentinelAgent:
                             if (input.getAttribute('data-testid') === 'date-picker-input' && isVisible(input)) {
                                 console.log('DATE PICKER detected, filling via direct text input...');
                                 
-                                // Compute target date: today + 15 days (notice period / earliest start)
-                                const today = new Date();
-                                const targetDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
-                                const targetMonth = targetDate.getMonth() + 1; // 1-indexed for display
-                                const targetDay = targetDate.getDate();
-                                const targetYear = targetDate.getFullYear();
-                                // Format as mm/dd/yyyy (per config/qa_patterns.json self_id_date.format)
-                                const dateStr = String(targetMonth).padStart(2, '0') + '/' +
-                                                String(targetDay).padStart(2, '0') + '/' +
-                                                String(targetYear);
+                                // Detect this field's label so we can pick the right date value.
+                                // Reuses the same heuristics as the main label detector below, kept
+                                // local so the date-picker branch stays self-contained.
+                                let dpLabel = '';
+                                {
+                                    const fbParent = input.closest('.fb-dash-form-element');
+                                    if (fbParent) {
+                                        const lbl = fbParent.querySelector('label');
+                                        if (lbl) dpLabel = (lbl.innerText || lbl.textContent || '').trim();
+                                    }
+                                    if (!dpLabel && input.id) {
+                                        const lbl = queryDeep('label[for="' + input.id + '"]', modal);
+                                        if (lbl) dpLabel = (lbl.innerText || lbl.textContent || '').trim();
+                                    }
+                                    if (!dpLabel) dpLabel = (input.getAttribute('aria-label') || '').trim();
+                                    if (!dpLabel) {
+                                        const lb = input.getAttribute('aria-labelledby');
+                                        if (lb) { const el = document.getElementById(lb); if (el) dpLabel = (el.innerText || el.textContent || '').trim(); }
+                                    }
+                                    if (!dpLabel) {
+                                        let p = input.parentElement;
+                                        for (let k = 0; k < 5 && p && p !== modal; k++) {
+                                            const lbl = p.querySelector('label');
+                                            if (lbl && (lbl.innerText || '').trim().length > 2) { dpLabel = lbl.innerText.trim(); break; }
+                                            p = p.parentElement;
+                                        }
+                                    }
+                                    if (!dpLabel) dpLabel = (input.getAttribute('placeholder') || '').trim();
+                                }
+                                const dpLabelLower = dpLabel.toLowerCase().replace(/\*+$/g, '').trim();
+                                const isDob = dpLabelLower.includes('date of birth') || dpLabelLower.includes('dob') || dpLabelLower.includes('birth date');
+                                console.log('DATE PICKER label:', dpLabel, '| isDob:', isDob);
+                                
+                                // LinkedIn date-picker-input displays MM/DD/YYYY (the wrong value
+                                // 07/25/2026 seen in the field was today+15 in MM/DD/YYYY, proving
+                                // the field order). DOB is 17 Dec 2000 -> MM/DD/YYYY = 12/17/2000
+                                // (per config/qa_patterns.json personal_dob default 17/12/2000 DD/MM).
+                                // Any other date picker is treated as earliest-start / availability
+                                // -> today + 15 days (notice period) in MM/DD/YYYY.
+                                let dateStr, dpQuestion;
+                                if (isDob) {
+                                    dateStr = '12/17/2000';
+                                    dpQuestion = 'Date of Birth';
+                                } else {
+                                    const today = new Date();
+                                    const targetDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
+                                    const targetMonth = targetDate.getMonth() + 1; // 1-indexed for display
+                                    const targetDay = targetDate.getDate();
+                                    const targetYear = targetDate.getFullYear();
+                                    dateStr = String(targetMonth).padStart(2, '0') + '/' +
+                                              String(targetDay).padStart(2, '0') + '/' +
+                                              String(targetYear);
+                                    dpQuestion = 'Earliest start date';
+                                }
                                 console.log('Target date:', dateStr);
                                 
-                                // Type the date directly using the React-aware filler (defined above
-                                // in this same IIFE). Uses Object.getOwnPropertyDescriptor native setter
-                                // + input/change/blur events so React state updates correctly.
+                                // Type the date directly via the React-aware native value setter
+                                // (fillReactInput, defined above in this IIFE). Uses
+                                // Object.getOwnPropertyDescriptor + input/change/blur so React state
+                                // updates. Calendar-popup clicking is impossible here because this
+                                // IIFE is synchronous (React renders the popup on the next microtask,
+                                // after this function returns) — that caused the infinite loop bug.
                                 const filled = fillReactInput(input, dateStr);
                                 if (filled) {
-                                    formResults.push({ question: 'Earliest start date', answer: dateStr, inputType: 'date' });
+                                    formResults.push({ question: dpQuestion, answer: dateStr, inputType: 'date' });
                                     console.log('DATE PICKER: filled with', dateStr);
                                 } else {
                                     console.log('DATE PICKER: direct fill did not change value:', dateStr);

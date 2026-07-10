@@ -3998,7 +3998,10 @@ class SentinelAgent:
                             }}
                         }}
                     }}
-                    return 'CHATBOT_SKIP_UNANSWERABLE: ' + qText.slice(0, 50);
+                    // No Skip button found - fall through to normal input handling
+                    // (contenteditable/text input) instead of returning unanswerable
+                    // which causes an infinite loop
+                    console.log('Chatbot Debug - No skip button found for tool question, falling through to input handler');
                 }}
                 
                 // STEP 2: USE the first available input type (sequential detection)
@@ -5024,6 +5027,17 @@ class SentinelAgent:
             }""")
             await asyncio.sleep(1)
             
+            # Step 2.5: Clean up stale componentkey elements to prevent false modal detection
+            try:
+                await self._page.evaluate("""() => {
+                    const el = document.querySelector('[componentkey]');
+                    if (el && !el.querySelector('svg[role="progressbar"]')) {
+                        el.removeAttribute('componentkey');
+                    }
+                }""")
+            except Exception:
+                pass  # Non-critical cleanup
+            
             # Step 3: Verify modal is actually closed
             modal_still_open = await self._page.evaluate("""() => {
                 const modal = document.querySelector('.artdeco-modal--is-open, .jobs-easy-apply-modal');
@@ -6016,6 +6030,43 @@ class SentinelAgent:
                         // 1. Handle text/numeric inputs
                         const textInputs = queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal);
                         for (const input of textInputs) {
+                            // DATE PICKER HANDLING: LinkedIn date pickers use data-testid="date-picker-input"
+                            // These are React-controlled text inputs that accept a typed mm/dd/yyyy value.
+                            // NOTE: This IIFE is synchronous (Playwright evaluate runs it in one microtask —
+                            // see _handle_scripted_fallback docstring), so calendar-popup clicking is NOT
+                            // viable here: React renders the popup on the NEXT microtask, after this
+                            // function has already returned. So type the date string directly via the
+                            // React-aware native value setter — the same approach proven for every other
+                            // LinkedIn text field. Calendar-clicking "open then retry" caused an infinite
+                            // loop (same result 5x -> "Stuck in loop" abort). Fixes the Step-6 loop bug.
+                            if (input.getAttribute('data-testid') === 'date-picker-input' && isVisible(input)) {
+                                console.log('DATE PICKER detected, filling via direct text input...');
+                                
+                                // Compute target date: today + 15 days (notice period / earliest start)
+                                const today = new Date();
+                                const targetDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
+                                const targetMonth = targetDate.getMonth() + 1; // 1-indexed for display
+                                const targetDay = targetDate.getDate();
+                                const targetYear = targetDate.getFullYear();
+                                // Format as mm/dd/yyyy (per config/qa_patterns.json self_id_date.format)
+                                const dateStr = String(targetMonth).padStart(2, '0') + '/' +
+                                                String(targetDay).padStart(2, '0') + '/' +
+                                                String(targetYear);
+                                console.log('Target date:', dateStr);
+                                
+                                // Type the date directly using the React-aware filler (defined above
+                                // in this same IIFE). Uses Object.getOwnPropertyDescriptor native setter
+                                // + input/change/blur events so React state updates correctly.
+                                const filled = fillReactInput(input, dateStr);
+                                if (filled) {
+                                    formResults.push({ question: 'Earliest start date', answer: dateStr, inputType: 'date' });
+                                    console.log('DATE PICKER: filled with', dateStr);
+                                } else {
+                                    console.log('DATE PICKER: direct fill did not change value:', dateStr);
+                                }
+                                continue; // Skip normal text fill for date pickers
+                            }
+                            
                             // ROBUST LABEL DETECTION: Try multiple methods to find the label
                             let labelText = '';
                             
@@ -7765,6 +7816,10 @@ class SentinelAgent:
                             }
                             
                             console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
+                            primaryBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                            primaryBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                            primaryBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                            primaryBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
                             primaryBtn.click();
                             const btnText = (primaryBtn.innerText || primaryBtn.textContent || '').toLowerCase();
                             const btnAria = (primaryBtn.getAttribute('aria-label') || '').toLowerCase();
@@ -7800,6 +7855,10 @@ class SentinelAgent:
                                 globalPrimaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});
                             } catch (e) {}
                             console.log('Found button via global fallback:', globalPrimaryBtn.innerText || globalPrimaryBtn.getAttribute('aria-label'));
+                            globalPrimaryBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                            globalPrimaryBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                            globalPrimaryBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                            globalPrimaryBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
                             globalPrimaryBtn.click();
                             const btnText = (globalPrimaryBtn.innerText || '').toLowerCase();
                             const btnAria = (globalPrimaryBtn.getAttribute('aria-label') || '').toLowerCase();
@@ -7885,8 +7944,13 @@ class SentinelAgent:
                             }
                         }
                         // Heuristic 3: componentkey attribute + form inputs (LinkedIn Easy Apply root div)
+                        // GUARD: Require Easy Apply-specific indicators to prevent false positives
+                        // from job details panel or other page elements with [componentkey]
                         const compKeyEl = document.querySelector('[componentkey]');
-                        if (compKeyEl && isVisible(compKeyEl) && compKeyEl.querySelector('input, select, textarea, button')) {
+                        if (compKeyEl && isVisible(compKeyEl) && compKeyEl.querySelector('input, select, textarea') &&
+                            (compKeyEl.querySelector('svg[role="progressbar"]') ||
+                             compKeyEl.querySelector('button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]') ||
+                             /apply|application|resume|contact info/i.test((compKeyEl.innerText || '').substring(0, 500)))) {
                             console.log('Modal detected via componentkey+inputs heuristic');
                             return true;
                         }

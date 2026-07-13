@@ -338,7 +338,7 @@ class SentinelAgent:
         location_keywords = ['location', 'city', 'relocate', 'preferred location']
         
         # LWD (Last Working Day) detection - BEFORE experience keywords
-        lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working']
+        lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working', 'official last working day']
         is_lwd_question = any(kw in question_lower for kw in lwd_keywords)
 
         # Immediate joiners only - LinkedIn specific pattern
@@ -364,6 +364,10 @@ class SentinelAgent:
         # DSA questions
         dsa_keywords = ['dsa', 'data structures', 'algorithms', 'how good are you']
         is_dsa_question = any(kw in question_lower for kw in dsa_keywords)
+        
+        # Async/Background job questions - MUST BE BEFORE generic experience check
+        async_job_keywords = ['asynchronous programming', 'celery', 'asyncio', 'async io', 'background job', 'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka', 'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing']
+        is_async_job_question = any(kw in question_lower for kw in async_job_keywords)
         
         # Tech stacks / Python libraries questions - MUST CHECK BEFORE EXPERIENCE
         tech_stack_keywords = ['tech stack', 'tech-stack', 'technologies worked', 'worked upon', 'major tech']
@@ -420,8 +424,15 @@ class SentinelAgent:
             'aws', 'python', 'java', 'react', 'angular', 'vue', 'node', 'typescript', 'javascript', 
             'docker', 'kubernetes', 'gcp', 'azure', 'git', 'jenkins', 'sql', 'nosql', 'kafka', 
             'redis', 'spark', 'hadoop', 'c#', 'c++', 'go', 'rust', 'ruby', 'php', 'html', 'css', 
-            'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs'
+            'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs',
+            'celery', 'asyncio', 'async', 'asynchronous', 'background', 'rabbitmq', 'logging'
         }
+        
+        # Pattern: Async/Celery/Background job questions - MUST be before company patterns
+        async_job_keywords = ['asynchronous programming', 'celery', 'asyncio', 'async io', 'background job', 'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka', 'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing']
+        is_async_job_question = any(kw in question_lower for kw in async_job_keywords)
+        if is_async_job_question:
+            return 'Yes, I have extensive experience with asynchronous programming using Celery, AsyncIO, and background job processing. I have designed and implemented task queues, scheduled jobs, and message-driven architectures using RabbitMQ, Redis, and logging frameworks to handle high-throughput event processing.', 0.98
         
         # Pattern 1: "Have you worked with/at/for [Company]" - Most common Workday pattern
         worked_with_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)"
@@ -500,9 +511,11 @@ class SentinelAgent:
         if is_np_abbreviation:
             return '15', 0.98
         
-        # LWD (Last Working Day) questions - calculate date 15 days from now
+        # LWD (Last Working Day) questions - calculate actual date 15 days from now
         if is_lwd_question:
-            return '15', 0.98
+            lwd_date = datetime.now() + timedelta(days=15)
+            # Format: DD MMM YYYY (e.g., "25 Jul 2026")
+            return lwd_date.strftime('%d %b %Y'), 0.98
         
         # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 15 days)
         start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
@@ -529,7 +542,7 @@ class SentinelAgent:
             return 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.', 0.98
         
         if is_rating_question:
-            return '8', 0.95
+            return '9', 0.95
         
         if is_position_question:
             return 'Backend', 0.95
@@ -538,7 +551,7 @@ class SentinelAgent:
             return 'Yes', 0.95
         
         if is_dsa_question:
-            return '8', 0.95
+            return '9', 0.95
         
         # Handle tech stack and python library questions - BEFORE experience check
         if is_python_lib_question:
@@ -3608,6 +3621,8 @@ class SentinelAgent:
                 const fuzzyMatch = (question, chatLayer) => {{
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
+                    // Normalize hyphens/dashes to spaces so "work-from-office" matches "work from office"
+                    const qNormalized = qLower.replace(/[-–]/g, ' ');
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     const detectedType = detectInputType(chatLayer);
@@ -3635,7 +3650,8 @@ class SentinelAgent:
                         if (qLower === keyLower) {{
                             return getAnswerForPattern(key, detectedType, val);
                         }}
-                        if (qLower.includes(keyLower) && key.length > bestKeyLen) {{
+                        // Use normalized question so hyphenated text still matches space-separated patterns
+                        if (qNormalized.includes(keyLower) && key.length > bestKeyLen) {{
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
                                 continue;
                             }}
@@ -3664,10 +3680,10 @@ class SentinelAgent:
                         if (typeDefaults.radio) return typeDefaults.radio;
                         if (typeDefaults.yes_no) return typeDefaults.yes_no;
                         if (typeDefaults.checkbox) return typeDefaults.checkbox;
-                        // Normalize Yes/No from long answer
+                        // Normalize Yes/No from long answer - use word boundaries to avoid false matches like "Noida" containing "no"
                         const answerLower = defaultVal.toLowerCase();
-                        if (answerLower.includes('yes') && !answerLower.includes('no')) return 'Yes';
-                        if (answerLower.includes('no')) return 'No';
+                        if (/\\byes\\b/.test(answerLower) && !/\\bno\\b/.test(answerLower)) return 'Yes';
+                        if (/\\bno\\b/.test(answerLower)) return 'No';
                     }}
                     if (inputType === 'checkbox') {{
                         if (typeDefaults.checkbox) return typeDefaults.checkbox;
@@ -3853,7 +3869,8 @@ class SentinelAgent:
                         // OR is a non-yes/no answer that's not a known exception
                         const isNumericResult = answer && /^\d/.test(answer.trim());
                         const answerLowerYN = answer ? answer.toLowerCase().trim() : '';
-                        const hasYesOrNo = answerLowerYN.includes('yes') || answerLowerYN.includes('no');
+                        // Use word-boundary regex to avoid false matches like "Noida" containing "no"
+                        const hasYesOrNo = /\\byes\\b/.test(answerLowerYN) || /\\bno\\b/.test(answerLowerYN);
                         const knownExceptions = ['serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer'];
                         const isException = knownExceptions.some(e => answerLowerYN.includes(e));
                         
@@ -4033,14 +4050,14 @@ class SentinelAgent:
                             console.log('Chatbot Debug - Clicked partial match option:', btn.innerText.trim());
                             break;
                         }}
-                        // Yes/No matching
-                        if ((answerLower === 'yes' || answerLower.includes('yes')) && btnText === 'yes') {{
+                        // Yes/No matching - use word boundaries to avoid false matches (e.g. "Noida" contains "no")
+                        if ((answerLower === 'yes' || /\\byes\\b/.test(answerLower)) && btnText === 'yes') {{
                             btn.click();
                             clickedBtn = btn;
                             console.log('Chatbot Debug - Clicked Yes option');
                             break;
                         }}
-                        if ((answerLower === 'no' || answerLower.startsWith('no')) && btnText === 'no') {{
+                        if ((answerLower === 'no' || /\\bno\\b/.test(answerLower)) && btnText === 'no') {{
                             btn.click();
                             clickedBtn = btn;
                             console.log('Chatbot Debug - Clicked No option');
@@ -4172,8 +4189,8 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // Match Yes/Serving for positive answers
-                        if ((answerLower.includes('yes') || answerLower.includes('true')) && 
+                        // Match Yes/Serving for positive answers - use word boundaries to avoid "Noida" matching "no"
+                        if ((/\\byes\\b/.test(answerLower) || answerLower.includes('true')) && 
                             (labelLower.includes('yes') || labelLower.includes('serving'))) {{
                             if (!radio.checked) {{
                                 radio.click();
@@ -4183,7 +4200,7 @@ class SentinelAgent:
                             break;
                         }}
                         // Match No for negative answers — guard: skip if label also contains "yes"
-                        if ((answerLower.includes('no') || answerLower.includes('false')) && 
+                        if ((/\\bno\\b/.test(answerLower) || answerLower.includes('false')) && 
                             (labelLower === 'no' || /(\bno\b|^no\b|\bno$)/.test(labelLower)) &&
                             !labelLower.includes('yes')) {{
                             if (!radio.checked) {{
@@ -4333,7 +4350,7 @@ class SentinelAgent:
                         }});
                         
                         // When answer is "No"/"False", look for decline/negative/none options
-                        if (answerLower.includes('no') || answerLower.includes('false')) {{
+                        if (/\\bno\\b/.test(answerLower) || answerLower.includes('false')) {{
                             // Priority 1: Labels with decline/prefer not/none keywords
                             const declineKeywords = ['decline', 'prefer not', 'not to', 'none', 'n/a', 'not applicable', 'neither', "i don't"];
                             const declineRadio = allRadioInfo.find(r => 
@@ -4437,7 +4454,7 @@ class SentinelAgent:
                     // If no specific match but answer is "Yes" or positive, check ALL options
                     // except "Skip this question" (user wants to select all available locations)
                     // BUT skip "No" if this is a Yes/No pair (don't select both)
-                    if (!clickedCheckbox && (answerLower.includes('yes') || answerLower.includes('true'))) {{
+                    if (!clickedCheckbox && (/\\byes\\b/.test(answerLower) || answerLower.includes('true'))) {{
                         const visLabels = Array.from(checkboxes).map(c => (c.parentElement?.innerText || c.nextSibling?.textContent || '').toLowerCase().trim());
                         const visIsYesNoPair = visLabels.some(l => l === 'yes') && visLabels.some(l => l === 'no');
                         for (const checkbox of checkboxes) {{

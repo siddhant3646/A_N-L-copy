@@ -1559,8 +1559,9 @@
                             const radioText = radioLabel.toLowerCase();
                             const val = (radio.value || '').toLowerCase();
                             
+                            // Use word boundaries to avoid false matches like "Noida" containing "no"
                             if ((answerLower === 'yes' && (radioText.includes('yes') || val === 'yes' || val === 'true')) ||
-                                (answerLower === 'no' && (radioText.includes('no') || val === 'no' || val === 'false'))) {
+                                (answerLower === 'no' && (/\bno\b/.test(radioText) || val === 'no' || val === 'false'))) {
                                 clickRadioReactAware(radio);
                                 console.log('Selected radio (fallback):', answer, 'for question:', questionText.substring(0, 50));
                                 filledAny = true;
@@ -1598,9 +1599,10 @@
                 if (hasCustomRadios && !selected) {
                     for (const cRadio of customRadios) {
                         const text = (cRadio.innerText || cRadio.getAttribute('aria-label') || cRadio.value || '').toLowerCase().trim();
+                        // Use word boundaries to avoid false matches like "Noida" containing "no"
                         if (text.includes(answerLower) || 
                             (answerLower === 'yes' && text.includes('yes')) ||
-                            (answerLower === 'no' && text.includes('no'))) {
+                            (answerLower === 'no' && /\bno\b/.test(text))) {
                             cRadio.click();
                             cRadio.dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Selected custom radio:', answer, 'for question:', questionText.substring(0, 50));

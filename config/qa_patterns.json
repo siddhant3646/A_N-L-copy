@@ -126,8 +126,37 @@
         "ctc",
         "salary",
         "notice period",
-        "notice"
+        "notice",
+        "payment",
+        "fintech",
+        "domain"
       ]
+    },
+    "experience_domain_specific": {
+      "patterns": [
+        "years of relevant experience you have in the payment",
+        "years of relevant experience in payment",
+        "years of relevant experience in fintech",
+        "years of relevant experience you have in fintech",
+        "years of experience in payment",
+        "years of experience in fintech",
+        "experience in payment",
+        "experience in fintech",
+        "relevant experience in payment",
+        "relevant experience in fintech",
+        "payment fintech product companies",
+        "fintech product companies"
+      ],
+      "category": "experience",
+      "default": "4 Years",
+      "requires_context": true,
+      "input_type_defaults": {
+        "radio": "4",
+        "select": "4 Years",
+        "text": "4 Years",
+        "number": "4"
+      },
+      "priority": 9
     },
     "current_salary": {
       "patterns": [
@@ -164,7 +193,14 @@
         "ectc",
         "expected",
         "notice period",
-        "experience"
+        "experience",
+        "current employer",
+        "current payroll company",
+        "payroll company",
+        "current organisation",
+        "current organization",
+        "current company",
+        "employer"
       ]
     },
     "expected_salary": {
@@ -188,6 +224,7 @@
         "expected salary in lac",
         "expected salary in lakhs",
         "expected annual ctc in inr",
+        "desired salary",
         "expected ctc inr",
         "expected annual ctc",
         "expected salary",
@@ -463,6 +500,49 @@
       },
       "priority": 6
     },
+    "strongest_programming_language": {
+      "patterns": [
+        "which programming/scripting language are you strongest in",
+        "programming/scripting language are you strongest in",
+        "strongest programming language",
+        "strongest scripting language",
+        "which language are you strongest in",
+        "programming language are you strongest"
+      ],
+      "category": "skills",
+      "default": "Java. I have built production automation tools including a CI/CD pipeline orchestrator using Java and Spring Boot that automated deployment processes across multiple environments, reducing deployment time by 60%.",
+      "input_type_defaults": {
+        "radio": "Java",
+        "select": "Java",
+        "text": "Java. I have built production automation tools including a CI/CD pipeline orchestrator using Java and Spring Boot that automated deployment processes across multiple environments, reducing deployment time by 60%.",
+        "textarea": "Java. I have built production automation tools including a CI/CD pipeline orchestrator using Java and Spring Boot that automated deployment processes across multiple environments, reducing deployment time by 60%."
+      },
+      "priority": 8
+    },
+    "java_version": {
+      "patterns": [
+        "latest version of java",
+        "which is the latest version of java you are using",
+        "which version of java",
+        "java version",
+        "version of java you are using",
+        "version of java are you using",
+        "java version are you using",
+        "java version you are using",
+        "which java version",
+        "current java version",
+        "what version of java"
+      ],
+      "category": "skills",
+      "default": "24",
+      "input_type_defaults": {
+        "radio": "21",
+        "select": "21",
+        "text": "24",
+        "number": "24"
+      },
+      "priority": 9
+    },
     "proficiency_rating": {
       "patterns": [
         "rate your proficiency",
@@ -478,12 +558,12 @@
         "english communication skills on the scale of 1-10"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 7,
       "negative_patterns": [
@@ -634,6 +714,33 @@
       },
       "priority": 7
     },
+    "westernacher_association": {
+      "patterns": [
+        "westernacher",
+        "associate with westernacher",
+        "associated with westernacher",
+        "have you been associated with westernacher",
+        "have you been associated with westernacher before",
+        "have you ever been associated with westernacher",
+        "have you ever worked for westernacher",
+        "have you ever worked with westernacher",
+        "previously worked for westernacher",
+        "previously worked with westernacher",
+        "previously associated with westernacher",
+        "any association with westernacher",
+        "associated with westernacher before"
+      ],
+      "category": "yes_no",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": false,
+        "select": "No",
+        "text": "No",
+        "textarea": "No"
+      },
+      "priority": 9
+    },
     "qualification_experience": {
       "patterns": [
         "owned backend architecture",
@@ -664,6 +771,57 @@
         "text": "Yes"
       },
       "priority": 6
+    },
+    "team_management": {
+      "patterns": [
+        "have you managed teams before",
+        "managed teams before",
+        "team size and structure",
+        "have you managed teams",
+        "have you lead a team",
+        "have you led a team",
+        "team management experience",
+        "managed a team",
+        "people management",
+        "leadership experience",
+        "managed team",
+        "team lead experience"
+      ],
+      "category": "yes_no",
+      "default": "Yes, I have managed and mentored teams of 5-10 developers, conducting code reviews, sprint planning, and 1:1 mentorship sessions to ensure timely delivery and team growth.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": true,
+        "select": "Yes",
+        "text": "Yes, I have managed teams of 5-10 developers including conducting code reviews, sprint planning, and mentoring.",
+        "textarea": "Yes, I have managed and mentored teams of 5-10 developers. My responsibilities included sprint planning, code reviews, 1:1 mentorship, hiring interviews, and ensuring timely delivery of features while maintaining code quality standards."
+      },
+      "priority": 7
+    },
+    "project_examples_ai": {
+      "patterns": [
+        "have you worked on both small-scale and large-scale projects",
+        "small-scale and large-scale projects",
+        "provide examples of projects",
+        "project examples",
+        "describe a challenging project",
+        "most complex project",
+        "interesting project you worked on",
+        "project you are proud of",
+        "ai project",
+        "ai based project",
+        "artificial intelligence project",
+        "machine learning project"
+      ],
+      "category": "experience",
+      "default": "Yes, I led the development of an AI-powered document intelligence platform that automated data extraction from unstructured documents using GPT-4, LangChain, and custom NLP pipelines. The system processed 50,000+ documents monthly with 94% accuracy, reducing manual data entry by 80%.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "AI Document Intelligence Platform - automated data extraction from unstructured documents using GPT-4 and LangChain with 94% accuracy.",
+        "textarea": "I led the development of an AI-powered Document Intelligence Platform that automated data extraction from unstructured documents (PDFs, images, scans) using GPT-4, LangChain, and custom NLP pipelines.\n\nKey achievements:\n- Processed 50,000+ documents monthly with 94% extraction accuracy\n- Reduced manual data entry by 80%, saving 200+ person-hours per month\n- Built microservices architecture with Java/Spring Boot, Python, and AWS (Lambda, S3, DynamoDB)\n- Integrated with existing systems via REST APIs and event-driven architecture using Kafka\n- Implemented CI/CD pipelines reducing deployment time from 4 hours to 20 minutes\n\nTech stack: Java, Spring Boot, Python, OpenAI API, LangChain, AWS Lambda, S3, DynamoDB, Kafka, PostgreSQL, React, Docker, Kubernetes"
+      },
+      "priority": 8
     },
     "education_degree": {
       "patterns": [
@@ -1311,9 +1469,15 @@
         "remote work",
         "hybrid work",
         "work from office",
+        "work-from-office",
         "comfortable for 5 days",
         "5 days working from office",
         "5 days wfo",
+        "5-day work-from-office",
+        "5-day work from office",
+        "comfortable with a 5-day work-from-office schedule",
+        "comfortable with a 5-day work from office schedule",
+        "comfortable with 5-day work schedule",
         "wfo"
       ],
       "category": "yes_no",
@@ -1500,6 +1664,27 @@
       },
       "priority": 7
     },
+    "aws_services": {
+      "patterns": [
+        "which aws services have you worked on",
+        "aws services have you worked on",
+        "worked on hands-on aws",
+        "hands-on aws services",
+        "ec2 vpc s3 lambda",
+        "rds aurora api gateway",
+        "cloudwatch elb route53"
+      ],
+      "category": "skills",
+      "default": "EC2, VPC, S3, Lambda, RDS/Aurora, API Gateway, IAM, CloudWatch, ELB, Route53",
+      "input_type_defaults": {
+        "radio": "EC2",
+        "checkbox": true,
+        "select": "EC2, VPC, S3, Lambda, RDS/Aurora, API Gateway, IAM, CloudWatch, ELB, Route53",
+        "text": "EC2, VPC, S3, Lambda, RDS/Aurora, API Gateway, IAM, CloudWatch, ELB, Route53",
+        "textarea": "I have hands-on experience with EC2, VPC, S3, Lambda, RDS/Aurora, API Gateway, IAM, CloudWatch, ELB, and Route53. I've designed and deployed scalable architectures using these services."
+      },
+      "priority": 8
+    },
     "kafka_experience": {
       "patterns": [
         "experience in kafka",
@@ -1629,12 +1814,12 @@
         "how good are you"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 7,
       "negative_patterns": [
@@ -1758,6 +1943,30 @@
         "checkbox": true,
         "select": "Yes",
         "text": "Yes"
+      },
+      "priority": 7
+    },
+    "certifications": {
+      "patterns": [
+        "have you completed any relevant certifications",
+        "relevant certifications or training programs",
+        "certifications or training",
+        "professional certifications",
+        "technical certifications",
+        "any certifications",
+        "certification do you hold",
+        "certifications do you have",
+        "certified in",
+        "industry certifications"
+      ],
+      "category": "skills",
+      "default": "No formal certifications, but continuous self-learning through online courses and hands-on project work",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": false,
+        "select": "No formal certifications",
+        "text": "No formal certifications, but continuous self-learning through online courses and hands-on project work",
+        "textarea": "No formal certifications, but continuous self-learning through online courses and hands-on project work. I regularly upskill through platforms like Coursera, Udemy, and AWS documentation to stay current with industry trends."
       },
       "priority": 7
     },
@@ -2712,12 +2921,12 @@
         "proficiency in typescript"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 8
     },
@@ -2740,12 +2949,12 @@
         "proficiency in react"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 8
     },
@@ -2768,12 +2977,12 @@
         "proficiency in python"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 8
     },
@@ -2796,12 +3005,12 @@
         "proficiency in node"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 8
     },
@@ -2824,12 +3033,12 @@
         "proficiency in sql"
       ],
       "category": "skills",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8",
-        "number": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9",
+        "number": "9"
       },
       "priority": 8
     },
@@ -4871,11 +5080,11 @@
         "self rating"
       ],
       "category": "preference",
-      "default": "8",
+      "default": "9",
       "input_type_defaults": {
-        "radio": "8",
-        "select": "8",
-        "text": "8"
+        "radio": "9",
+        "select": "9",
+        "text": "9"
       },
       "priority": 4
     },
@@ -5340,11 +5549,11 @@
         "how would you rate yourself"
       ],
       "category": "preference",
-      "default": "8 out of 10",
+      "default": "9 out of 10",
       "input_type_defaults": {
-        "radio": "8 out of 10",
-        "select": "8 out of 10",
-        "text": "8 out of 10"
+        "radio": "9 out of 10",
+        "select": "9 out of 10",
+        "text": "9 out of 10"
       },
       "priority": 4
     },

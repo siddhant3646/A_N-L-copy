@@ -297,8 +297,8 @@ CATEGORY_DEFAULTS = {
     QuestionCategory.SKILLS: {
         "tech_stack": "Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis",
         "languages": "Java, Python, JavaScript",
-        "proficiency": "8",
-        "dsa": "8"
+        "proficiency": "9",
+        "dsa": "9"
     },
     QuestionCategory.YES_NO: "Yes",
     QuestionCategory.PERSONAL_INFO: {
@@ -583,8 +583,8 @@ class QuestionClassifier:
         )
         
         if is_rating_question:
-            # Return numeric rating (8/10 or just 8)
-            return "8" if is_numeric_only else "8 out of 10"
+            # Return numeric rating (9/10 or just 9)
+            return "9" if is_numeric_only else "9 out of 10"
         elif "tech stack" in question_lower or "technologies" in question_lower:
             return CATEGORY_DEFAULTS[QuestionCategory.SKILLS]["tech_stack"]
         elif "language" in question_lower:

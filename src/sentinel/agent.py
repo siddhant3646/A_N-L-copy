@@ -3327,9 +3327,11 @@ class SentinelAgent:
                             self.state.task_complete = True
                             break
                         elif chatbot_done:
-                            print("🎉 Naukri Application Completed!")
-                            self.state.task_complete = True
-                            break
+                            # Success - decide whether to continue (need more jobs) or stop (target reached)
+                            should_continue = await self._handle_naukri_post_apply(chatbot_done)
+                            if not should_continue:
+                                break
+                            continue
                         else:
                             # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
                             print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
@@ -3354,68 +3356,11 @@ class SentinelAgent:
                         self.state.task_complete = True
                         break
                     elif chatbot_done:
-                        # Check if this was a partial application (less than target)
-                        if 'PARTIAL' in result:
-                            # Extract how many were applied (e.g., "APPLY_CLICKED_PARTIAL: 2/5" -> 2)
-                            try:
-                                applied_count = int(result.split(': ')[1].split('/')[0])
-                                target_count = int(result.split('/')[1])
-                                print(f"🔄 Applied to {applied_count}/{target_count} jobs. Looking for more on next section...")
-                            except:
-                                print("🔄 Partial application. Looking for more jobs on next section...")
-                            
-                            # Navigate to next tab to find more jobs
-                            await asyncio.sleep(2)
-                            next_tab_result = await self._page.evaluate("""() => {
-                                // Tab IDs in order: profile -> apply -> preference -> similar_jobs -> top_candidate
-                                const tabIds = ['profile', 'apply', 'preference', 'similar_jobs', 'top_candidate'];
-                                const tabNames = ['Profile', 'Applies', 'Preferences', 'You might like', 'Top Candidate'];
-                                
-                                // Find which tab is currently active
-                                let currentTabIndex = -1;
-                                for (let i = 0; i < tabIds.length; i++) {
-                                    const wrapper = document.querySelector('#' + tabIds[i]);
-                                    if (wrapper) {
-                                        const activeItem = wrapper.querySelector('.tab-list-active');
-                                        if (activeItem) {
-                                            currentTabIndex = i;
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                // Try to click the next tab
-                                const nextTabIndex = currentTabIndex + 1;
-                                if (nextTabIndex < tabIds.length) {
-                                    const nextTabId = tabIds[nextTabIndex];
-                                    const nextTabName = tabNames[nextTabIndex];
-                                    
-                                    const nextWrapper = document.querySelector('#' + nextTabId);
-                                    if (nextWrapper) {
-                                        const tabItem = nextWrapper.querySelector('.tab-list-item');
-                                        if (tabItem && tabItem.offsetParent !== null) {
-                                            tabItem.click();
-                                            return 'TAB_CLICKED: ' + nextTabName;
-                                        }
-                                        nextWrapper.click();
-                                        return 'TAB_CLICKED: ' + nextTabName;
-                                    }
-                                }
-                                
-                                return 'NO_MORE_TABS';
-                            }""")
-                            
-                            if 'TAB_CLICKED' in next_tab_result:
-                                tab_name = next_tab_result.split(': ')[1] if ': ' in next_tab_result else 'Unknown'
-                                print(f"📑 Switched to tab: {tab_name} to find more jobs")
-                                await asyncio.sleep(random.uniform(4, 8))
-                                continue  # Continue loop to find and apply to more jobs
-                            else:
-                                print("📭 No more tabs available. Finishing with current applications.")
-                        
-                        print("🎉 Naukri Application Completed!")
-                        self.state.task_complete = True
-                        break
+                        # Success - decide whether to continue (need more jobs) or stop (target reached)
+                        should_continue = await self._handle_naukri_post_apply(chatbot_done)
+                        if not should_continue:
+                            break
+                        continue
                     else:
                         # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
                         print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
@@ -3431,10 +3376,18 @@ class SentinelAgent:
                     chatbot_done = await self._handle_chatbot_loop()
                     if chatbot_done == 'CONTINUE':
                         continue  # MCC popup, let scripted fallback handle it
-                    elif chatbot_done:
-                        print("🎉 Naukri Application Completed!")
+                    elif isinstance(chatbot_done, str) and 'NAUKRI_RATE_LIMITED' in chatbot_done:
+                        # Error popup detected - set rate limit and exit
+                        self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
+                        print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
                         self.state.task_complete = True
                         break
+                    elif chatbot_done:
+                        # Success - decide whether to continue (need more jobs) or stop (target reached)
+                        should_continue = await self._handle_naukri_post_apply(chatbot_done)
+                        if not should_continue:
+                            break
+                        continue
                 
                 # Naukri: Tab clicked - wait for page to load new jobs
                 if 'TAB_CLICKED' in result and 'naukri.com' in current_url:
@@ -3582,6 +3535,93 @@ class SentinelAgent:
         self._save_metrics()
         
         return self.state.task_complete
+
+    async def _resolve_naukri_completion(self) -> str:
+        """
+        Resolve how many Naukri jobs have been applied to cumulatively.
+
+        Called when the chatbot loop detects a successful application. Parses the
+        "X out of Y" text on the Naukri success page, updates the cumulative
+        counter in sessionStorage (naukri_total_applied / naukri_remaining), and
+        returns a string of the form 'CHATBOT_COMPLETE: <newTotal>/5' so callers
+        can branch on whether the 5-job target has been reached.
+
+        If no "X out of Y" text is found, the previous cumulative total is
+        returned unchanged (no increment) so the caller can still make a
+        safe decision.
+        """
+        if not self._page:
+            return 'CHATBOT_COMPLETE: 0/5'
+
+        try:
+            result = await self._page.evaluate("""() => {
+                const TARGET_JOBS = 5;
+                const bodyText = document.body.innerText || '';
+                const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
+                const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
+                let newTotal = prevTotal;
+                if (match) {
+                    const appliedThisRound = parseInt(match[1]);
+                    newTotal = prevTotal + appliedThisRound;
+                    sessionStorage.setItem('naukri_total_applied', newTotal.toString());
+                    const remaining = Math.max(0, TARGET_JOBS - newTotal);
+                    sessionStorage.setItem('naukri_remaining', remaining.toString());
+                }
+                return 'CHATBOT_COMPLETE: ' + newTotal + '/' + TARGET_JOBS;
+            }""")
+            return result if isinstance(result, str) else 'CHATBOT_COMPLETE: 0/5'
+        except Exception as e:
+            print(f"   ⚠️ _resolve_naukri_completion failed: {e}")
+            return 'CHATBOT_COMPLETE: 0/5'
+
+    async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
+        """
+        Decide what to do after a Naukri chatbot application attempt.
+
+        Parses the cumulative applied count from the chatbot result string
+        (format: 'CHATBOT_COMPLETE: <newTotal>/5'). If the 5-job target has
+        been reached, marks the task complete and returns False (caller should
+        break). Otherwise updates applications_submitted, navigates back to the
+        recommended jobs page so the next iteration can select the remaining
+        jobs from the next section/tab, and returns True (caller should
+        continue).
+
+        Args:
+            chatbot_result: Return value of _handle_chatbot_loop. Expected to
+                be a string like 'CHATBOT_COMPLETE: 3/5' on success.
+
+        Returns:
+            True if the main loop should continue (more jobs needed),
+            False if the task is complete (target reached or unrecoverable).
+        """
+        TARGET_JOBS = 5
+
+        new_total = 0
+        if isinstance(chatbot_result, str) and 'CHATBOT_COMPLETE' in chatbot_result:
+            try:
+                count_part = chatbot_result.split(':')[-1].strip()
+                new_total = int(count_part.split('/')[0])
+            except (ValueError, IndexError):
+                print(f"   ⚠️ Could not parse count from '{chatbot_result}', assuming 1 applied")
+                new_total = self.metrics.get('applications_submitted', 0) + 1
+        else:
+            new_total = self.metrics.get('applications_submitted', 0) + 1
+
+        self.metrics['applications_submitted'] = new_total
+
+        if new_total >= TARGET_JOBS:
+            print(f"🎉 Naukri target reached ({new_total}/{TARGET_JOBS}). Task complete.")
+            self.state.task_complete = True
+            return False
+
+        remaining = TARGET_JOBS - new_total
+        print(f"🔄 Applied to {new_total}/{TARGET_JOBS} jobs. Need {remaining} more — navigating to next section.")
+        try:
+            await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
+            await asyncio.sleep(random.uniform(4, 6))
+        except Exception as e:
+            print(f"   ⚠️ Navigation to recommendedjobs failed: {e}")
+        return True
 
     async def _handle_chatbot_loop(self) -> "bool | str":
         """Handle Naukri chatbot questionnaire. Returns True if done, 'CONTINUE' for MCC popup, False on failure."""
@@ -4914,8 +4954,7 @@ class SentinelAgent:
                 print(f"   📜 Chatbot[{iteration}]: {result}")
             
             if result == 'CHATBOT_COMPLETE':
-                self.metrics['applications_submitted'] += 1
-                return True
+                return await self._resolve_naukri_completion()
             elif result == 'MCC_POPUP_DETECTED':
                 return 'CONTINUE'  # Signal main loop to handle MCC
             elif 'NAUKRI_RATE_LIMITED' in result:
@@ -4932,7 +4971,7 @@ class SentinelAgent:
             elif result == 'NO_CHATBOT':
                 # Check if maybe we're done
                 if iteration > 3:
-                    return True
+                    return await self._resolve_naukri_completion()
                 continue
             elif 'CHATBOT_ANSWERED_AND_SAVE' in result:
                 # Wait longer after successful save to let UI update
@@ -4971,16 +5010,14 @@ class SentinelAgent:
                 # the chatbot is likely done but just hasn't closed yet
                 if consecutive_waiting_count >= 3 and last_action_was_answer:
                     print(f"   📜 Chatbot completed after {consecutive_waiting_count} waiting iterations post-answer")
-                    self.metrics['applications_submitted'] += 1
-                    return True
+                    return await self._resolve_naukri_completion()
                 continue
         
         print("⚠️ Chatbot loop exhausted")
         # If we answered at least one question before exhausting, consider it a success
         if last_action_was_answer:
             print("   📜 Chatbot likely completed - answered questions before exhausting")
-            self.metrics['applications_submitted'] += 1
-            return True
+            return await self._resolve_naukri_completion()
         return False
 
     async def _close_linkedin_modal(self) -> bool:
@@ -5395,8 +5432,11 @@ class SentinelAgent:
                             }
                         }
                         // PRIORITY 5: Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
+                        // Also handles Indian number formats like "2,00,000 to 5,00,000 INR"
                         else if (answerNum > 0) {
-                            const rangeMatch = text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                            // Strip commas from option text to handle Indian/intl number formats
+                            const textNoCommas = text.replace(/,/g, '');
+                            const rangeMatch = textNoCommas.match(/(\d+(?:\.\d+)?)\s*(?:[-–]|\bto\b)\s*(\d+(?:\.\d+)?)/);
                             if (rangeMatch) {
                                 const min = parseFloat(rangeMatch[1]);
                                 const max = parseFloat(rangeMatch[2]);
@@ -5785,6 +5825,24 @@ class SentinelAgent:
                            t.includes('relocate') ||
                            t.includes('relocation') ||
                            t.includes('open to');
+                };
+
+                // Helper: Detect if a Yes/No question should default to "No"
+                // Catches company employment history, compliance, and conflict-of-interest patterns
+                const shouldDefaultToNo = (text) => {
+                    if (!text) return false;
+                    const t = text.replace(/[*?]/g, '').trim().toLowerCase();
+                    const negativePatterns = [
+                        'worked with', 'worked for', 'worked at',
+                        'employed by', 'employed at', 'employed with',
+                        'previously employed', 'ever been employed', 'currently employed',
+                        'conflict of interest', 'close relative', 'family member',
+                        'relative working', 'referred', 'referral',
+                        'criminal', 'felony', 'convict',
+                        'worked with nielsen', 'worked with navan', 'worked with visa',
+                        'worked with reed', 'worked with mastercard'
+                    ];
+                    return negativePatterns.some(p => t.includes(p));
                 };
 
                 const isLinkedIn = document.title.includes('LinkedIn') || window.location.href.includes('linkedin.com');
@@ -6620,20 +6678,45 @@ class SentinelAgent:
                                 continue;
                             }
                             
+                            // ===== CITIZENSHIP STATUS HANDLING =====
+                            // Options: "Citizen (India)", "Non Citizen (India)" — must select directly
+                            const isCitizenshipSelect = lowerLabel.includes('citizenship');
+                            if (isCitizenshipSelect) {
+                                const citizenOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                // Select "Citizen (India)" or "Citizen" — NOT "Non Citizen"
+                                let citizenMatch = citizenOptions.find(o => {
+                                    const t = o.text.toLowerCase().trim();
+                                    return (t.includes('citizen') && !t.includes('non') && !t.includes('select'));
+                                });
+                                if (citizenMatch) {
+                                    console.log('Citizenship match: Selecting', citizenMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = citizenMatch.value;
+                                    if (select.value !== citizenMatch.value) select.selectedIndex = citizenMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: citizenMatch.text, inputType: 'select-citizenship' });
+                                }
+                                continue;
+                            }
+                            
                             // ===== SELF-IDENTIFICATION HANDLING (gender, orientation, birth sex) =====
                             // These questions use non-standard option text ("Man" vs "Male", etc.)
                             // and must NOT fall through to generic findBestMatch which fails on them.
+                            // Also catches diversity/equal-opportunity monitoring selects that don't
+                            // explicitly mention "gender" in their label (e.g. "All applicants are invited...")
                             const isSelfIdQuestion = lowerLabel.includes('gender') || 
                                                     lowerLabel.includes('sexual orientation') ||
                                                     lowerLabel.includes('sex registered at birth') ||
                                                     lowerLabel.includes('identify with') ||
-                                                    lowerLabel.includes('disability');
+                                                    lowerLabel.includes('disability') ||
+                                                    (lowerLabel.includes('equal opportunit') && lowerLabel.includes('statistical'));
                             
                             if (isSelfIdQuestion) {
                                 const selfIdOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 let selfIdOpt = null;
                                 
-                                if ((lowerLabel.includes('gender') || lowerLabel.includes('identify with')) && 
+                                if ((lowerLabel.includes('gender') || lowerLabel.includes('identify with') || (lowerLabel.includes('equal opportunit') && lowerLabel.includes('statistical'))) && 
                                     !lowerLabel.includes('sex registered') && !lowerLabel.includes('same as') &&
                                     !lowerLabel.includes('sexual orientation') && !lowerLabel.includes('disability')) {
                                     // Gender question — look for Man/Male
@@ -6774,6 +6857,105 @@ class SentinelAgent:
                                 }
                             }
                             
+                            // ===== CTC/SALARY SELECT HANDLER =====
+                            // Handles LinkedIn dropdowns with INR range options like "20,00,000 to 25,00,000 INR"
+                            // The generic findBestMatch fails on these because answer is in raw INR (2300000)
+                            // but options use Indian number format with commas
+                            const isCTCQuestion = lowerLabel.includes('ctc') || 
+                                                  lowerLabel.includes('salary') || 
+                                                  (lowerLabel.includes('annual') && lowerLabel.includes('inr')) ||
+                                                  (lowerLabel.includes('current') && lowerLabel.includes('inr')) ||
+                                                  (lowerLabel.includes('expected') && lowerLabel.includes('inr'));
+                            
+                            if (isCTCQuestion) {
+                                const ctcOptions = Array.from(select.options).map(o => ({ 
+                                    text: o.text, 
+                                    value: o.value, 
+                                    index: o.index 
+                                }));
+                                
+                                // Get the answer - fuzzyMatch returns INR value like "2300000"
+                                let ctcAnswer = labelText ? fuzzyMatch(labelText) : null;
+                                
+                                // Fallback: detect expected vs current based on label
+                                if (!ctcAnswer) {
+                                    if (lowerLabel.includes('expected') || lowerLabel.includes('ectc')) {
+                                        ctcAnswer = '3000000';
+                                    } else {
+                                        ctcAnswer = '2300000';
+                                    }
+                                    console.log('CTC Select: Using fallback answer', ctcAnswer, 'for', labelText.substring(0, 80));
+                                }
+                                
+                                // Extract numeric INR value from answer
+                                const ctcNumMatch = String(ctcAnswer).match(/(\d+(?:\.\d+)?)/);
+                                const ctcValue = ctcNumMatch ? parseFloat(ctcNumMatch[1]) : 0;
+                                
+                                if (ctcValue > 0) {
+                                    let bestCTCOpt = null;
+                                    let closestCTCOpt = null;
+                                    let minDistance = Infinity;
+                                    
+                                    for (const opt of ctcOptions) {
+                                        const optText = (opt.text || '').toLowerCase().trim();
+                                        if (!optText || optText.includes('select')) continue;
+                                        
+                                        // Robust range extraction: strip ALL non-digit chars except spaces, hyphens, "to"
+                                        // Handle formats: "20,00,000 to 25,00,000 INR", "2000000-2500000", etc.
+                                        const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
+                                        
+                                        // Try multiple regex patterns for range matching
+                                        let rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:[-\u2013\u2014]|\bto\b)\s*(\d+(?:\.\d+)?)/);
+                                        
+                                        // Fallback: any two numbers separated by space(s)
+                                        if (!rangeMatch) {
+                                            const numbers = cleaned.match(/(\d+(?:\.\d+)?)/g);
+                                            if (numbers && numbers.length >= 2) {
+                                                rangeMatch = [null, numbers[0], numbers[numbers.length - 1]];
+                                            }
+                                        }
+                                        
+                                        if (rangeMatch) {
+                                            const minVal = parseFloat(rangeMatch[1]);
+                                            const maxVal = parseFloat(rangeMatch[2]);
+                                            
+                                            // Check if exact match (value falls in range)
+                                            if (ctcValue >= minVal && ctcValue <= maxVal) {
+                                                bestCTCOpt = opt;
+                                                console.log('CTC Select: Exact range match -', opt.text, 'contains', ctcValue);
+                                                break; // Found exact match, stop searching
+                                            }
+                                            
+                                            // Track closest range (for fallback)
+                                            const distance = Math.min(
+                                                Math.abs(ctcValue - minVal), 
+                                                Math.abs(ctcValue - maxVal)
+                                            );
+                                            if (distance < minDistance) {
+                                                minDistance = distance;
+                                                closestCTCOpt = opt;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Use exact match if found, otherwise closest range
+                                    const selectedOpt = bestCTCOpt || closestCTCOpt;
+                                    
+                                    if (selectedOpt) {
+                                        console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', ctcValue + ')');
+                                        select.value = selectedOpt.value;
+                                        if (select.value !== selectedOpt.value) select.selectedIndex = selectedOpt.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        formResults.push({ question: labelText, answer: selectedOpt.text, inputType: 'select-ctc' });
+                                        continue;
+                                    } else {
+                                        console.log('CTC Select: No matching range found for', ctcValue, '- falling through to generic handler');
+                                    }
+                                }
+                            }
+                            
                             {
                                 let answer = labelText ? fuzzyMatch(labelText) : null;
                                 
@@ -6801,12 +6983,16 @@ class SentinelAgent:
                                         !o.text.toLowerCase().includes('master')
                                     );
                                     if (!eduMatch) {
-                                        eduMatch = eduOptions.find(o =>
-                                            o.text.toLowerCase().includes('b.tech') ||
-                                            o.text.toLowerCase().includes('undergraduate') ||
-                                            o.text.toLowerCase().includes('college degree') ||
-                                            o.text.toLowerCase().includes("bachelor's")
-                                        );
+                                        eduMatch = eduOptions.find(o => {
+                                            const t = o.text.toLowerCase().trim();
+                                            return t.includes('b.tech') ||
+                                                t.includes('undergraduate') ||
+                                                t.includes('college degree') ||
+                                                t.includes("bachelor's") ||
+                                                t === 'ug' ||
+                                                t.startsWith('ug ') ||
+                                                t.includes('ug/');
+                                        });
                                     }
                                     if (eduMatch) {
                                         select.value = eduMatch.value;
@@ -7104,15 +7290,17 @@ class SentinelAgent:
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(legend);
                                         if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
-                                            const yesRadio = radios.find(r => {
+                                            const defaultNo = shouldDefaultToNo(legend);
+                                            const targetValue = defaultNo ? 'no' : 'yes';
+                                            const targetRadio = radios.find(r => {
                                                 const val = (r.value || '').toLowerCase();
                                                 const labelText = getInputLabelText(r);
-                                                return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                                return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
-                                            if (yesRadio) {
-                                                console.log('Defaulting to Yes for Yes/No question:', legend.substring(0, 50));
-                                                clickInput(yesRadio);
-                                                formResults.push({ question: legend.substring(0, 100), answer: 'Yes', inputType: 'radio' });
+                                            if (targetRadio) {
+                                                console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, legend.substring(0, 50));
+                                                clickInput(targetRadio);
+                                                formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                             }
                                         }
                                     }
@@ -7132,15 +7320,17 @@ class SentinelAgent:
                                     const isYesNoQ = isLikelyYesNoQuestion(legend);
                                     
                                     if (isYesNo || (isYesNoQ && hasYes)) {
-                                        const yesRadio = radios.find(r => {
+                                        const defaultNo = shouldDefaultToNo(legend);
+                                        const targetValue = defaultNo ? 'no' : 'yes';
+                                        const targetRadio = radios.find(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
-                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                            return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
-                                        if (yesRadio) {
-                                            console.log('Defaulting Yes/No question to Yes in fieldset:', legend.substring(0, 50));
-                                            clickInput(yesRadio);
-                                            formResults.push({ question: legend.substring(0, 100), answer: 'Yes', inputType: 'radio' });
+                                        if (targetRadio) {
+                                            console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'} in fieldset:`, legend.substring(0, 50));
+                                            clickInput(targetRadio);
+                                            formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                         }
                                     }
                                 }
@@ -7235,14 +7425,16 @@ class SentinelAgent:
                                         const isYesNoFromRadios = customRadios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
                                         if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
-                                            const yesRadio = customRadios.find(r => {
+                                            const defaultNo = shouldDefaultToNo(questionText);
+                                            const targetValue = defaultNo ? 'no' : 'yes';
+                                            const targetRadio = customRadios.find(r => {
                                                 const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
-                                                return t === 'yes' || t.includes('yes');
+                                                return t === targetValue || t.includes(targetValue);
                                             });
-                                            if (yesRadio) {
-                                                console.log('Defaulting custom radio to Yes:', questionText.substring(0, 50));
-                                                clickCustomRadio(yesRadio);
-                                                formResults.push({ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' });
+                                            if (targetRadio) {
+                                                console.log(`Defaulting custom radio to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
+                                                clickCustomRadio(targetRadio);
+                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                             }
                                         }
                                     }
@@ -7259,14 +7451,16 @@ class SentinelAgent:
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
                                     if (isYesNo || (isYesNoQ && hasYes)) {
-                                        const yesRadio = customRadios.find(r => {
+                                        const defaultNo = shouldDefaultToNo(questionText);
+                                        const targetValue = defaultNo ? 'no' : 'yes';
+                                        const targetRadio = customRadios.find(r => {
                                             const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
-                                            return t === 'yes' || t.includes('yes');
+                                            return t === targetValue || t.includes(targetValue);
                                         });
-                                        if (yesRadio) {
-                                            console.log('Defaulting custom Yes/No to Yes:', questionText.substring(0, 50));
-                                            clickCustomRadio(yesRadio);
-                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: 'Yes', inputType: 'radio' });
+                                        if (targetRadio) {
+                                            console.log(`Defaulting custom Yes/No to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
+                                            clickCustomRadio(targetRadio);
+                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                         }
                                     }
                                 }
@@ -7368,15 +7562,17 @@ class SentinelAgent:
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
                                         if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
-                                            const yesRadio = radios.find(r => {
+                                            const defaultNo = shouldDefaultToNo(questionText);
+                                            const targetValue = defaultNo ? 'no' : 'yes';
+                                            const targetRadio = radios.find(r => {
                                                 const val = (r.value || '').toLowerCase();
                                                 const labelText = getInputLabelText(r);
-                                                return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                                return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
-                                            if (yesRadio) {
-                                                console.log('Defaulting to Yes for Yes/No question:', questionText.substring(0, 50));
-                                                clickInput(yesRadio);
-                                                formResults.push({ question: questionText.substring(0, 100), answer: 'Yes', inputType: 'radio' });
+                                            if (targetRadio) {
+                                                console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, questionText.substring(0, 50));
+                                                clickInput(targetRadio);
+                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                             }
                                         }
                                     }
@@ -7396,15 +7592,17 @@ class SentinelAgent:
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
                                     if (isYesNo || (isYesNoQ && hasYes)) {
-                                        const yesRadio = radios.find(r => {
+                                        const defaultNo = shouldDefaultToNo(questionText);
+                                        const targetValue = defaultNo ? 'no' : 'yes';
+                                        const targetRadio = radios.find(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
-                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                            return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
-                                        if (yesRadio) {
-                                            console.log('Defaulting Yes/No question to Yes:', questionText.substring(0, 50) || 'Unknown question');
-                                            clickInput(yesRadio);
-                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: 'Yes', inputType: 'radio' });
+                                        if (targetRadio) {
+                                            console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50) || 'Unknown question');
+                                            clickInput(targetRadio);
+                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
                                         }
                                     }
                                 }
@@ -7662,7 +7860,7 @@ class SentinelAgent:
                             console.log('Checkbox label text found:', labelText.substring(0, 100));
                             const lowerLabel = labelText.toLowerCase();
                             
-                            // Check if this is a privacy/consent/acknowledge checkbox
+                            // Check if this is a privacy/consent/acknowledge/confirm checkbox
                             const isConsentCheckbox = lowerLabel.includes('consent') || 
                                                      lowerLabel.includes('privacy') || 
                                                      lowerLabel.includes('agree') ||
@@ -7684,6 +7882,7 @@ class SentinelAgent:
                                                      lowerLabel.includes('i certify') ||
                                                      lowerLabel.includes('hereby certify') ||
                                                      lowerLabel.includes('i confirm') ||
+                                                     lowerLabel.includes('confirmed') ||
                                                      lowerLabel.includes('i understand and agree') ||
                                                      lowerLabel.includes('i have read and') ||
                                                      lowerLabel.includes('read and understood') ||

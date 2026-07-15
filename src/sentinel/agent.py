@@ -6956,6 +6956,71 @@ class SentinelAgent:
                                 }
                             }
                             
+                            // ===== LOCATION SELECT HANDLER =====
+                            // Handles "Current Location?", "Preferred Location?", "City" dropdowns where
+                            // the user's answer (e.g. "Noida") may not be among the listed options.
+                            // Strategy: try exact/fuzzy match first (incl. each comma-separated preferred
+                            // city); if nothing matches, select the FIRST real option so the required
+                            // field is never left empty (which would stall the form on validation).
+                            // Excludes street/address/zip/postal which are handled as text inputs.
+                            const isLocationSelect = (lowerLabel.includes('location') ||
+                                                      lowerLabel.includes('city') ||
+                                                      lowerLabel.includes('based in') ||
+                                                      lowerLabel.includes('where are you') ||
+                                                      lowerLabel.includes('where do you')) &&
+                                                     !lowerLabel.includes('street') &&
+                                                     !lowerLabel.includes('address') &&
+                                                     !lowerLabel.includes('zip') &&
+                                                     !lowerLabel.includes('postal') &&
+                                                     !lowerLabel.includes('pin code') &&
+                                                     !lowerLabel.includes('pincode');
+                            
+                            if (isLocationSelect) {
+                                const locOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let locAnswer = labelText ? fuzzyMatch(labelText) : null;
+                                if (!locAnswer) locAnswer = 'Noida';
+                                
+                                let locMatch = findBestMatch(locAnswer, locOptions);
+                                
+                                // If answer is comma-separated (e.g. preferred locations), try each part
+                                if (!locMatch && locAnswer.includes(',')) {
+                                    const parts = locAnswer.split(',').map(s => s.trim()).filter(s => s.length > 1);
+                                    for (const part of parts) {
+                                        locMatch = findBestMatch(part, locOptions);
+                                        if (locMatch) {
+                                            console.log('Location Select: matched comma part:', part);
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // FALLBACK: select the first real (non-placeholder) option so the
+                                // required dropdown is never left empty. Mirrors the "learn about"
+                                // placeholder-skip logic above.
+                                if (!locMatch) {
+                                    locMatch = locOptions.find(o => {
+                                        const t = (o.text || '').toLowerCase().trim();
+                                        return t.length > 0 &&
+                                               !t.includes('select') &&
+                                               !t.includes('choose') &&
+                                               !t.includes('please') &&
+                                               !t.includes('an option');
+                                    });
+                                    console.log('Location Select: no match for', locAnswer, '- defaulting to first option:', locMatch?.text);
+                                }
+                                
+                                if (locMatch) {
+                                    console.log('Location Select: Selecting', locMatch.text, 'for', labelText);
+                                    select.value = locMatch.value;
+                                    if (select.value !== locMatch.value) select.selectedIndex = locMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: locMatch.text, inputType: 'select-location' });
+                                    continue;
+                                }
+                            }
+                            
                             {
                                 let answer = labelText ? fuzzyMatch(labelText) : null;
                                 

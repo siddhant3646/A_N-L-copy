@@ -912,6 +912,54 @@ class SentinelAgent:
                 platform=error.platform.value if error.platform else "",
             )
 
+            # Desync-first try: if the field already has a visible value but is
+            # flagged invalid, the framework's internal state likely never
+            # received the input/change/blur events. Run the backspace+retype+blur
+            # protocol to sync state before attempting heavier recovery.
+            if error.field_value and error.field_value.strip():
+                try:
+                    from src.sentinel.human_behavior import resync_input_state
+
+                    field_label = error.field_label or ""
+                    resync_element = None
+                    try:
+                        resync_element = await self._page.query_selector(
+                            'input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"]'
+                        )
+                    except Exception:
+                        pass
+
+                    if not resync_element and field_label:
+                        try:
+                            resync_element = await self._page.evaluate_handle(
+                                """() => {
+                                    const labels = Array.from(document.querySelectorAll('label'));
+                                    const target = labels.find(l => l.innerText.trim().includes('""" + field_label.replace("'", "\\'") + """'));
+                                    if (!target) return null;
+                                    const container = target.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, .form-group, .input-field') || target.parentElement;
+                                    return container ? container.querySelector('input:not([type="radio"]):not([type="checkbox"]), textarea, select') : null;
+                                }"""
+                            )
+                        except Exception:
+                            pass
+
+                    if resync_element:
+                        print(f"   🔧 Attempting state resync for '{(field_label or 'field')[:30]}...'")
+                        ok = await resync_input_state(self._page, resync_element)
+                        if ok:
+                            await asyncio.sleep(0.5)
+                            remaining = await self._error_detector.detect_errors()
+                            still_bad = any(
+                                (e.field_label or "") == (error.field_label or "")
+                                for e in remaining
+                            )
+                            if not still_bad:
+                                print(f"   ✅ State resync cleared error for '{(field_label or 'field')[:30]}...'")
+                                continue
+                            print("   ⚠️ State resync did not clear error, trying heavier recovery")
+                except Exception as e:
+                    print(f"   ⚠️ State resync attempt failed: {e}")
+
             # Try learned patterns for this field
             if error.field_label:
                 learned = self._get_learned_answer(error.field_label)
@@ -3493,6 +3541,12 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
+                # Instahyre: Waiting for results to load (grace period after Show Results)
+                if 'INSTAHYRE_WAITING_FOR_RESULTS' in result:
+                    print("   ⏳ Instahyre: Waiting for results to load...")
+                    await asyncio.sleep(random.uniform(2, 3))
+                    continue
+                
                 # Instahyre: All visible jobs already applied — scrolling for more
                 if 'INSTAHYRE_ALL_APPLIED_SCROLLING' in result:
                     print("   📜 All visible jobs already applied — scrolling for more...")
@@ -3919,7 +3973,8 @@ class SentinelAgent:
                             const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
-                                'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs'];
+                                'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs',
+                                'military spouse'];
                             const isNegative = negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
                             console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
@@ -4239,10 +4294,10 @@ class SentinelAgent:
                             }}
                             break;
                         }}
-                        // Match No for negative answers — guard: skip if label also contains "yes"
+                        // Match No for negative answers — guard: skip if label starts with "yes"
                         if ((/\\bno\\b/.test(answerLower) || answerLower.includes('false')) && 
-                            (labelLower === 'no' || /(\bno\b|^no\b|\bno$)/.test(labelLower)) &&
-                            !labelLower.includes('yes')) {{
+                            (labelLower === 'no' || labelLower.startsWith('no') || /(\bno\b|^no\b|\bno$)/.test(labelLower)) &&
+                            !labelLower.startsWith('yes')) {{
                             if (!radio.checked) {{
                                 radio.click();
                                 clickedRadio = true;
@@ -4389,20 +4444,33 @@ class SentinelAgent:
                             return {{ radio: r, label: label, labelLower: label.toLowerCase().trim() }};
                         }});
                         
-                        // When answer is "No"/"False", look for decline/negative/none options
+                        // When answer is "No"/"False", look for No radio FIRST, then decline
                         if (/\\bno\\b/.test(answerLower) || answerLower.includes('false')) {{
-                            // Priority 1: Labels with decline/prefer not/none keywords
-                            const declineKeywords = ['decline', 'prefer not', 'not to', 'none', 'n/a', 'not applicable', 'neither', "i don't"];
-                            const declineRadio = allRadioInfo.find(r => 
-                                declineKeywords.some(kw => r.labelLower.includes(kw))
+                            // Priority 1: Find a radio whose label starts with "no" (most specific)
+                            const noRadio = allRadioInfo.find(r => 
+                                r.labelLower === 'no' || r.labelLower.startsWith('no,') || 
+                                r.labelLower.startsWith('no ') || r.labelLower.startsWith('no.')
                             );
-                            if (declineRadio) {{
-                                declineRadio.radio.click();
+                            if (noRadio) {{
+                                noRadio.radio.click();
                                 clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked decline radio:', declineRadio.label);
+                                console.log('Chatbot Debug - Clicked No radio (fallback):', noRadio.label);
                             }}
                             
-                            // Priority 2: Pick last non-Yes radio (safest negative in most UIs)
+                            // Priority 2: Labels with explicit decline keywords (not generic 'not to')
+                            if (!clickedRadio) {{
+                                const declineKeywords = ['decline', 'prefer not to', 'choose not to', 'none', 'n/a', 'not applicable', 'neither', "i don't"];
+                                const declineRadio = allRadioInfo.find(r => 
+                                    declineKeywords.some(kw => r.labelLower.includes(kw))
+                                );
+                                if (declineRadio) {{
+                                    declineRadio.radio.click();
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked decline radio:', declineRadio.label);
+                                }}
+                            }}
+                            
+                            // Priority 3: Pick last non-Yes radio (safest negative in most UIs)
                             if (!clickedRadio) {{
                                 const nonYesRadios = allRadioInfo.filter(r => 
                                     !r.labelLower.startsWith('yes') && !r.labelLower.startsWith('i am') &&
@@ -4413,6 +4481,48 @@ class SentinelAgent:
                                     target.radio.click();
                                     clickedRadio = true;
                                     console.log('Chatbot Debug - Clicked last non-Yes radio for No answer:', target.label);
+                                }}
+                            }}
+                        }}
+                        
+                        // When answer is "Yes", look for Yes radio or positive phrasing
+                        if (!clickedRadio && /\\byes\\b/.test(answerLower)) {{
+                            // Priority 1: Find a radio whose label starts with "yes" or contains "yes"
+                            const yesRadio = allRadioInfo.find(r => 
+                                r.labelLower.startsWith('yes') || r.labelLower.includes('yes')
+                            );
+                            if (yesRadio) {{
+                                yesRadio.radio.click();
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked Yes radio (fallback):', yesRadio.label);
+                            }}
+                            
+                            // Priority 2: Find positive phrasing — "I have", "I am", "I do" (but NOT "I don't" or "I am not")
+                            if (!clickedRadio) {{
+                                const positiveRadio = allRadioInfo.find(r => {{
+                                    const ll = r.labelLower;
+                                    return ((ll.startsWith('i have') && !ll.includes('not')) ||
+                                            (ll.startsWith('i am') && !ll.includes('not')) ||
+                                            (ll.startsWith('i do') && !ll.includes("n't") && !ll.includes(' not')));
+                                }});
+                                if (positiveRadio) {{
+                                    positiveRadio.radio.click();
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked positive radio for Yes answer:', positiveRadio.label);
+                                }}
+                            }}
+                            
+                            // Priority 3: Avoid negative radios, pick first non-negative
+                            if (!clickedRadio) {{
+                                const nonNegativeRadios = allRadioInfo.filter(r => 
+                                    !r.labelLower.startsWith('no') && !r.labelLower.startsWith('never') &&
+                                    !r.labelLower.startsWith('i am not') && !r.labelLower.startsWith("i don't") &&
+                                    !r.labelLower.includes('decline') && !r.labelLower.includes('choose not to')
+                                );
+                                if (nonNegativeRadios.length > 0) {{
+                                    nonNegativeRadios[0].radio.click();
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked first non-negative radio for Yes answer:', nonNegativeRadios[0].label);
                                 }}
                             }}
                         }}
@@ -6018,6 +6128,55 @@ class SentinelAgent:
                             input.dispatchEvent(new Event('click', { bubbles: true }));
                         };
                         
+                        // Helper: Read the visible value of a field from multiple sources.
+                        // LinkedIn Easy Apply uses React-controlled / composite inputs where the
+                        // visible text is NOT always reflected in element.value. We probe several
+                        // sources in priority order and return the first non-empty trimmed string.
+                        const readFieldValue = (element) => {
+                            if (!element) return '';
+
+                            // 1. Primary: the native .value property
+                            const directVal = element.value;
+                            if (typeof directVal === 'string' && directVal.trim().length > 0) {
+                                return directVal.trim();
+                            }
+
+                            // 2. aria-valuenow (used by composite / custom widgets)
+                            const ariaValNow = element.getAttribute && element.getAttribute('aria-valuenow');
+                            if (ariaValNow && ariaValNow.trim().length > 0) return ariaValNow.trim();
+
+                            // 3. data-value attribute (some LinkedIn composite inputs expose this)
+                            const dataVal = element.getAttribute && element.getAttribute('data-value');
+                            if (dataVal && dataVal.trim().length > 0) return dataVal.trim();
+
+                            // 4. Walk up to the form-element wrapper and look for a visible
+                            //    preview / display-value element. LinkedIn renders the chosen
+                            //    value as a sibling span inside .fb-dash-form-element.
+                            const wrapper = element.closest && element.closest(
+                                '.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]'
+                            );
+                            if (wrapper) {
+                                const previewSelectors = [
+                                    '.fb-dash-form-element__preview-value',
+                                    '[data-test*="displayValue"]',
+                                    '[data-test*="DisplayValue"]',
+                                    'span.fb-dash-form-element__value',
+                                    '.fb-dash-form-element__text',
+                                    '[class*="preview-value"]',
+                                    '[class*="display-value"]'
+                                ];
+                                for (const sel of previewSelectors) {
+                                    const preview = wrapper.querySelector(sel);
+                                    if (preview) {
+                                        const txt = (preview.innerText || preview.textContent || '').trim();
+                                        if (txt.length > 0) return txt;
+                                    }
+                                }
+                            }
+
+                            return '';
+                        };
+
                         // Helper: Check if a field is already filled
                         const isFieldPreFilled = (element) => {
                             if (!element) return false;
@@ -6025,16 +6184,18 @@ class SentinelAgent:
                             // For checkboxes/radios, readOnly is not an applicable check for filled state
 
                             const tagName = element.tagName.toLowerCase();
-                            const value = element.value ? element.value.trim() : "";
 
                             if (tagName === 'input' || tagName === 'textarea') {
                                 // if it's radio or checkbox, it's prefilled if checked
                                 if (element.type === 'radio' || element.type === 'checkbox') return element.checked;
-                                return value.length > 0;
+                                // Use multi-source reader so React-controlled / composite inputs
+                                // whose visible text is not in .value are still detected as filled.
+                                return readFieldValue(element).length > 0;
                             }
 
                             if (tagName === 'select') {
                                 // LinkedIn uses "Select an option" as placeholder.
+                                const value = element.value ? element.value.trim() : "";
                                 const isPlaceholder = !value || value === "" || value.toLowerCase().includes("select an option") || element.options[element.selectedIndex]?.text.toLowerCase().includes("select");
                                 return !isPlaceholder;
                             }
@@ -6358,7 +6519,7 @@ class SentinelAgent:
                             if (isFieldPreFilled(input) && !hasError) {
                                 // Capture pre-filled value before skipping
                                 const pfLabel = labelText || input.placeholder || '(prefilled field)';
-                                const pfVal = input.value || '';
+                                const pfVal = readFieldValue(input);
                                 if (pfLabel && pfVal) {
                                     formResults.push({ question: pfLabel, answer: pfVal, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text', prefilled: true });
                                     console.log('Pre-filled field captured:', pfLabel, '=', pfVal);
@@ -6369,7 +6530,7 @@ class SentinelAgent:
                             // If field is pre-filled but HAS a validation error, re-trigger
                             // the existing value to force React to recognize it
                             if (isFieldPreFilled(input) && hasError) {
-                                const existingValue = input.value;
+                                const existingValue = readFieldValue(input);
                                 console.log('Re-triggering pre-filled field with error:', labelText, '=', existingValue);
                                 fillReactInput(input, existingValue);
                                 // Also try focus+blur to clear validation
@@ -6380,15 +6541,12 @@ class SentinelAgent:
                                 continue;
                             }
                             
-                            // Clear invalid field before refilling
-                            if (hasError) {
-                                const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                                if (nativeSetter) nativeSetter.call(input, '');
-                                else input.value = '';
-                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                                input.dispatchEvent(new Event('change', { bubbles: true }));
-                                console.log('Cleared invalid field:', labelText);
-                            }
+                            // NOTE: The previous "clear invalid field before refilling" block ran
+                            // here unconditionally on hasError, BEFORE an answer was resolved. If no
+                            // answer resolved, the field was wiped to '' and left empty — causing
+                            // "this field is required" on submit. The clear now happens ONLY inside
+                            // the `if (answer)` block below, so a field is never emptied unless we
+                            // have a concrete value to refill it with.
                             
                             // Check if input expects numeric values only
                             const isNumericInput = input.type === 'number' || 
@@ -6508,6 +6666,19 @@ class SentinelAgent:
                                         console.log(`Truncating answer from ${answer.length} to maxlength ${maxLen}`);
                                         answer = answer.substring(0, maxLen);
                                     }
+                                }
+                                
+                                // Only clear the field now that we have a concrete answer to
+                                // refill with. Previously the clear ran unconditionally on
+                                // hasError before the answer was known, which could leave a
+                                // field empty (and trigger "this field is required").
+                                if (hasError) {
+                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                    if (nativeSetter) nativeSetter.call(input, '');
+                                    else input.value = '';
+                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                                    console.log('Cleared invalid field before refill:', labelText);
                                 }
                                 
                                 fillReactInput(input, answer);
@@ -8007,7 +8178,7 @@ class SentinelAgent:
                                 modal
                             );
                             
-                            const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !i.value.trim());
+                            const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !readFieldValue(i));
                             
                             // Check for empty/placeholder selects without assuming index 0 is invalid
                             const hasEmptySelect = requiredSelects.some(s => {
@@ -8121,7 +8292,7 @@ class SentinelAgent:
                                 // When all fields are filled but LinkedIn shows "This field is required",
                                 // force-click Next to let LinkedIn's submission re-validate
                                 const allInputsFilled = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
-                                    .some(inp => isVisible(inp) && !inp.value?.trim() && !inp.disabled);
+                                    .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
                                 
@@ -8170,7 +8341,7 @@ class SentinelAgent:
                             if (checkForErrors()) {
                                 // Same force-proceed logic as primary button
                                 const allInputsFilled2 = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
-                                    .some(inp => isVisible(inp) && !inp.value?.trim() && !inp.disabled);
+                                    .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled2 = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
                                 if (!(allInputsFilled2 && allSelectsFilled2)) {
@@ -8847,6 +9018,8 @@ class SentinelAgent:
                             if (remaining <= 0) {
                                 sessionStorage.removeItem('naukri_total_applied');
                                 sessionStorage.removeItem('naukri_remaining');
+                                sessionStorage.removeItem('naukri_tab_idx');
+                                sessionStorage.removeItem('naukri_cycled_once');
                                 // Task complete - do NOT navigate, signal done
                                 return 'NAUKRI_TASK_DONE: Applied to ' + newTotal + ' jobs total. Task complete.';
                             }
@@ -9491,8 +9664,14 @@ class SentinelAgent:
                             'i.naukicon.naukicon-ot-checkbox:not(.naukicon-ot-Checked)'
                         );
                         
-                        // If no unchecked boxes in current section, navigate to next tab
-                        if (uncheckedBoxes.length === 0) {
+                        // Only select from a section when it has at least TARGET_JOBS (5) jobs.
+                        // If fewer, move to the next section. After cycling all tabs once
+                        // with no section reaching 5, fall back to applying to whatever is
+                        // available (best-available) rather than applying to nothing.
+                        const cycledOnce = sessionStorage.getItem('naukri_cycled_once') === '1';
+                        
+                        if (uncheckedBoxes.length < TARGET_JOBS && !cycledOnce) {
+                            // Section has fewer than 5 jobs — navigate to next tab
                             // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
                             const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                             
@@ -9501,13 +9680,15 @@ class SentinelAgent:
                             nextIdx = (nextIdx + 1) % tabOrder.length;
                             sessionStorage.setItem('naukri_tab_idx', nextIdx);
                             
-                            // If we've cycled all the way back to index 0, we've checked all tabs
+                            // If we've cycled all the way back to index 0, we've checked all
+                            // tabs once. Set the cycled-once flag so the next <5 section falls
+                            // through to best-available instead of navigating forever.
                             if (nextIdx === 0) {
-                                return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
+                                sessionStorage.setItem('naukri_cycled_once', '1');
                             }
                             
                             const nextTabId = tabOrder[nextIdx];
-                            console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId);
+                            console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId, '(section had', uncheckedBoxes.length, 'jobs <', TARGET_JOBS + ')');
                             
                             // Try multiple selectors to find the tab
                             let nextTab = document.querySelector(`#${nextTabId} .tab-list-item`);
@@ -9528,15 +9709,17 @@ class SentinelAgent:
                             if (nextTab) {
                                 console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
                                 nextTab.click();
-                                return 'NAUKRI_NAVIGATING_TO_TAB (0 jobs): ' + nextTabId;
+                                return 'NAUKRI_NAVIGATING_TO_TAB (' + uncheckedBoxes.length + ' jobs < ' + TARGET_JOBS + '): ' + nextTabId;
                             } else {
                                 console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
                                 return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
                             }
                         }
                         
-                        // Apply to WHATEVER jobs are available (even if < 5)
-                        // The remaining counter will be updated after successful application
+                        // Apply to jobs in this section. We only reach here when:
+                        // - uncheckedBoxes.length >= TARGET_JOBS (normal: 5+ jobs), OR
+                        // - cycledOnce is true (best-available: apply to whatever is here)
+                        // The remaining counter caps selection at what we still need.
                         
                         for (const checkbox of uncheckedBoxes) {
                             if (clickedCount >= remaining) break;
@@ -9597,9 +9780,11 @@ class SentinelAgent:
                             return 'NAUKRI_APPLY_CLICKED: ' + clickedCount + ' jobs selected';
                         }
                         
-                        // Check if there are already some checked
+                        // Check if there are already some checked.
+                        // Only submit already-checked jobs when there are at least TARGET_JOBS,
+                        // OR when in best-available mode (cycledOnce) — submit whatever is checked.
                         const alreadyChecked = document.querySelectorAll('i.naukicon-ot-Checked, .tuple-check-box i.checked, input[type="checkbox"]:checked').length;
-                        if (alreadyChecked > 0) {
+                        if (alreadyChecked >= TARGET_JOBS || (cycledOnce && alreadyChecked > 0)) {
                             applyBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
                             // NOTE: await removed - Python handles delays between evaluate calls
                             
@@ -9631,7 +9816,7 @@ class SentinelAgent:
                             return 'NAUKRI_APPLY_CLICKED: ' + alreadyChecked + ' jobs already selected';
                         }
                         
-                        // No checkboxes in current section - navigate to next tab in order
+                        // No selectable jobs in current section - navigate to next tab in order
                         // Tab cycle: Applies -> Preferences -> You might like -> Profile -> Top Candidate
                         const tabOrder = ['apply', 'preference', 'similar_jobs', 'profile', 'top_candidate'];
                         
@@ -9640,9 +9825,14 @@ class SentinelAgent:
                         nextIdx = (nextIdx + 1) % tabOrder.length;
                         sessionStorage.setItem('naukri_tab_idx', nextIdx);
                         
-                        // If we've cycled all the way back to index 0, we've checked all tabs
+                        // If we've cycled all the way back to index 0:
+                        // - In best-available mode (cycledOnce), this is true exhaustion.
+                        // - Otherwise, set the flag and keep navigating.
                         if (nextIdx === 0) {
-                            return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
+                            if (cycledOnce) {
+                                return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
+                            }
+                            sessionStorage.setItem('naukri_cycled_once', '1');
                         }
                         
                         const nextTabId = tabOrder[nextIdx];
@@ -10018,6 +10208,7 @@ class SentinelAgent:
                             if (hasExp && hasLocation && hasSkills && hasJobFuncs) {
                                 showResultsBtn.scrollIntoView({ block: 'center' });
                                 showResultsBtn.click();
+                                sessionStorage.setItem('instahyre_results_clicked', Date.now().toString());
                                 return 'INSTAHYRE_SHOW_RESULTS_CLICKED';
                             } else {
                                 // Return status indicating which field is pending
@@ -10144,16 +10335,34 @@ class SentinelAgent:
                         bodyText.includes('No results found'),
                         bodyText.includes('0 opportunities'),
                     ];
-                    if (noJobsIndicators.some(Boolean)) {
+                    
+                    // Grace period: if we recently clicked "Show Results", wait for jobs to load
+                    // before declaring no more jobs (prevents race condition with slow rendering)
+                    const resultsClickedAt = sessionStorage.getItem('instahyre_results_clicked');
+                    const inResultsGracePeriod = resultsClickedAt && (Date.now() - parseInt(resultsClickedAt) < 15000);
+                    
+                    if (!inResultsGracePeriod && noJobsIndicators.some(Boolean)) {
+                        sessionStorage.removeItem('instahyre_results_clicked');
                         return 'INSTAHYRE_NO_MORE_JOBS';
+                    }
+                    if (inResultsGracePeriod && noJobsIndicators.some(Boolean)) {
+                        return 'INSTAHYRE_WAITING_FOR_RESULTS';
                     }
                     
                     // D2. Check if results page has zero actual job cards (not generic .card elements)
                     const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card');
                     const viewBtnsExist = document.querySelectorAll('button#interested-btn, button.button-interested').length > 0;
                     if (jobCards.length === 0 && !viewBtnsExist) {
+                        if (inResultsGracePeriod) {
+                            return 'INSTAHYRE_WAITING_FOR_RESULTS';
+                        }
                         // On the results page but no job cards at all — no jobs match
+                        sessionStorage.removeItem('instahyre_results_clicked');
                         return 'INSTAHYRE_NO_MORE_JOBS';
+                    }
+                    // Results loaded successfully — clear the grace period timestamp
+                    if (jobCards.length > 0 || viewBtnsExist) {
+                        sessionStorage.removeItem('instahyre_results_clicked');
                     }
                     
                     // E. Scroll to load more jobs if needed

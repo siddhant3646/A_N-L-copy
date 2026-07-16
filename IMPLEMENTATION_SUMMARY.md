@@ -225,3 +225,77 @@ The implementation successfully addresses all identified gaps:
 - ✅ Comprehensive tests validate the functionality
 
 The system is now ready to handle radio buttons, checkboxes, select dropdowns, and text inputs with appropriate answers for each type.
+
+---
+
+## State Desynchronization Handling
+
+### Problem Description
+
+Modern web applications (React, Vue, Angular) maintain an internal state that is separate from the DOM. When automation scripts fill forms using `element.fill()` or direct DOM manipulation, the visible input value updates, but the framework's internal state remains empty. This causes validation errors like "This field is required" even when the field appears filled.
+
+### Detection Methods
+
+Three detection methods are now implemented in `src/sentinel/ui_error_detector.py`:
+
+| Method | Reliability | Description |
+|--------|-------------|-------------|
+| **Method A** | Highest | `aria-invalid="true"` attribute scanning |
+| **Method B** | High | Platform-specific class detection (Artdeco `.artdeco-inline-feedback--error`) |
+| **Method D** | Fallback | Computed CSS color detection (LinkedIn error red `rgb(204, 0, 0)` ± tolerance) |
+
+When a field has a non-empty visible value but an error is detected, it's classified as `ErrorType.STATE_DESYNC`.
+
+### Recovery Strategy
+
+The "Backspace & Retype" protocol is implemented in `src/sentinel/human_behavior.py`:
+
+```python
+async def resync_input_state(page, element, blur_with_tab=True):
+    # 1. Focus the element
+    # 2. Move cursor to end (End key)
+    # 3. Delete last character (Backspace)
+    # 4. Re-type the character (fires keydown/input/keyup)
+    # 5. Blur the field (Tab key or click elsewhere)
+    #    This fires change/blur events, triggering validation
+```
+
+### Root-Cause Prevention
+
+`src/sentinel/smart_element_handler.py:_fill_text` now uses the React-safe pattern:
+
+```javascript
+// Use native value setter to bypass React's synthetic event system
+const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+nativeSetter.call(element, value);
+// Dispatch events manually
+element.dispatchEvent(new Event('input', { bubbles: true }));
+element.dispatchEvent(new Event('change', { bubbles: true }));
+element.dispatchEvent(new Event('blur', { bubbles: true }));
+```
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/sentinel/ui_error_detector.py` | Added `ErrorType.STATE_DESYNC`; added `_detect_aria_invalid_errors()` (Method A); added `_detect_error_color_elements()` (Method D); added STATE_DESYNC recovery branch in `attempt_recovery()` |
+| `src/sentinel/human_behavior.py` | Added `resync_input_state()` (backspace+retype+blur protocol); added `resync_all_inputs()` (bulk resync helper) |
+| `src/sentinel/smart_element_handler.py` | Modified `_fill_text()` to use nativeSetter + dispatchEvent for React compatibility |
+| `src/sentinel/agent.py` | Added desync-first try in `_attempt_form_recovery()` — resync runs before learned-pattern/option-match recovery |
+
+### Test Coverage
+
+- `tests/unit/sentinel/test_ui_error_detector.py`: 9 new tests for aria-invalid, computed-color, STATE_DESYNC, dedupe, recovery
+- `tests/unit/browser/test_human_behavior.py`: 7 new tests for `resync_input_state` and `resync_all_inputs`
+- `tests/unit/browser/test_smart_element_handler.py`: 7 new tests for `_fill_text` event dispatch
+
+All 348 unit tests pass.
+
+### Usage
+
+Detection and recovery are automatic. When a form fill fails with a validation error:
+
+1. `UIErrorDetector.detect_errors()` finds the error via aria-invalid/Artdeco/color
+2. If `field_value` is non-empty, error is classified as `STATE_DESYNC`
+3. `_attempt_form_recovery()` calls `resync_input_state()` first
+4. If resync clears the error, heavier recovery (learned patterns, option matching) is skipped

@@ -24,6 +24,7 @@ class ErrorType(Enum):
     SUBMISSION_FAILED = "submission_failed"
     RATE_LIMIT = "rate_limit"
     SESSION_EXPIRED = "session_expired"
+    STATE_DESYNC = "state_desync"
     GENERIC_ERROR = "generic_error"
 
 
@@ -120,7 +121,16 @@ class UIErrorDetector:
                         const container = errorEl.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question');
                         const label = container?.querySelector('label')?.innerText || '';
                         const input = container?.querySelector('input, select, textarea');
-                        const value = input?.value || '';
+                        // Read value from multiple sources: LinkedIn React-controlled inputs
+                        // don't always expose their visible text via .value.
+                        let value = input?.value || '';
+                        if (!value.trim() && input) {
+                            value = input.getAttribute('aria-valuenow') || input.getAttribute('data-value') || '';
+                            if (!value.trim()) {
+                                const preview = container?.querySelector('.fb-dash-form-element__preview-value, [data-test*="displayValue"], [data-test*="DisplayValue"], span.fb-dash-form-element__value, .fb-dash-form-element__text, [class*="preview-value"], [class*="display-value"]');
+                                if (preview) value = (preview.innerText || preview.textContent || '').trim();
+                            }
+                        }
                         
                         const select = container?.querySelector('select');
                         const options = select ? 
@@ -140,6 +150,8 @@ class UIErrorDetector:
             
             for err in inline_errors:
                 error_type = self._classify_error(err['message'])
+                if err.get('field_value') and err['field_value'].strip():
+                    error_type = ErrorType.STATE_DESYNC
                 errors.append(UIError(
                     error_type=error_type,
                     platform=Platform.LINKEDIN,
@@ -170,7 +182,11 @@ class UIErrorDetector:
                     available_options=[],
                     suggestions=['Retry submission', 'Check for missing fields']
                 ))
-        
+
+            errors.extend(await self._detect_aria_invalid_errors(Platform.LINKEDIN))
+            errors.extend(await self._detect_error_color_elements(Platform.LINKEDIN))
+            errors = self._dedupe_errors(errors)
+
         except Exception as e:
             print(f"⚠️ Error detecting LinkedIn errors: {e}")
         
@@ -235,7 +251,11 @@ class UIErrorDetector:
                     available_options=[],
                     suggestions=[]
                 ))
-        
+
+            errors.extend(await self._detect_aria_invalid_errors(Platform.NAUKRI))
+            errors.extend(await self._detect_error_color_elements(Platform.NAUKRI))
+            errors = self._dedupe_errors(errors)
+
         except Exception as e:
             print(f"⚠️ Error detecting Naukri errors: {e}")
         
@@ -266,12 +286,195 @@ class UIErrorDetector:
                     available_options=[],
                     suggestions=[]
                 ))
-        
+
+            errors.extend(await self._detect_aria_invalid_errors(Platform.INSTAHYRE))
+            errors.extend(await self._detect_error_color_elements(Platform.INSTAHYRE))
+            errors = self._dedupe_errors(errors)
+
         except Exception as e:
             print(f"⚠️ Error detecting Instahyre errors: {e}")
         
         return errors
     
+    async def _detect_aria_invalid_errors(self, platform: Platform) -> List[UIError]:
+        """
+        Method A: Detect errors via aria-invalid="true" attributes.
+
+        Most reliable across frameworks. Scans for inputs/selects/textareas
+        that the framework has marked as invalid.
+        """
+        errors = []
+        try:
+            raw = await self.page.evaluate('''
+                () => {
+                    const errors = [];
+                    const invalids = document.querySelectorAll(
+                        'input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"]'
+                    );
+                    for (const el of invalids) {
+                        if (el.offsetParent === null && el.type !== 'hidden') continue;
+
+                        const container = el.closest(
+                            '.fb-dash-form-element, .jobs-easy-apply-form-section__question, .form-group, .input-field, [role="group"]'
+                        ) || el.parentElement;
+
+                        let label = '';
+                        if (container) {
+                            const labelEl = container.querySelector('label');
+                            if (labelEl) label = labelEl.innerText;
+                        }
+                        if (!label) {
+                            const id = el.id;
+                            if (id) {
+                                const forLabel = document.querySelector('label[for="' + id + '"]');
+                                if (forLabel) label = forLabel.innerText;
+                            }
+                        }
+
+                        let value = el.value || '';
+                        if (!value.trim()) {
+                            value = el.getAttribute('aria-valuenow') || el.getAttribute('data-value') || '';
+                        }
+
+                        let options = [];
+                        if (el.tagName.toLowerCase() === 'select') {
+                            options = Array.from(el.options).map(o => o.text);
+                        }
+
+                        let message = '';
+                        if (container) {
+                            const msgEl = container.querySelector(
+                                '.artdeco-inline-feedback--error .artdeco-inline-feedback__message, .error-message, .validation-error'
+                            );
+                            if (msgEl) message = msgEl.innerText.trim();
+                        }
+                        if (!message) message = 'Invalid input';
+
+                        errors.push({
+                            message: message,
+                            field_label: (label || '').trim(),
+                            field_value: value,
+                            available_options: options
+                        });
+                    }
+                    return errors;
+                }
+            ''')
+
+            for err in raw:
+                error_type = self._classify_error(err['message'])
+                if err.get('field_value') and err['field_value'].strip():
+                    error_type = ErrorType.STATE_DESYNC
+                errors.append(UIError(
+                    error_type=error_type,
+                    platform=platform,
+                    message=err['message'],
+                    field_label=err.get('field_label'),
+                    field_value=err.get('field_value'),
+                    available_options=err.get('available_options', []),
+                    suggestions=self._get_suggestions(error_type, err)
+                ))
+        except Exception as e:
+            print(f"⚠️ Error detecting aria-invalid errors: {e}")
+
+        return errors
+
+    async def _detect_error_color_elements(self, platform: Platform) -> List[UIError]:
+        """
+        Method D: Detect errors via computed CSS color (fallback).
+
+        Targets LinkedIn Artdeco error red rgb(204, 0, 0) with a tolerance
+        band: R 200-210, G 0-10, B 0-10.
+        """
+        errors = []
+        try:
+            raw = await self.page.evaluate('''
+                () => {
+                    const ERROR_R_MIN = 200, ERROR_R_MAX = 210;
+                    const ERROR_G_MAX = 10;
+                    const ERROR_B_MAX = 10;
+                    const errors = [];
+
+                    const candidates = document.querySelectorAll(
+                        'p, span, div, li, .artdeco-inline-feedback__message'
+                    );
+                    for (const el of candidates) {
+                        if (el.offsetParent === null) continue;
+                        const text = (el.innerText || '').trim();
+                        if (!text || text.length > 200) continue;
+
+                        const color = window.getComputedStyle(el).color;
+                        const m = color.match(/rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+                        if (!m) continue;
+
+                        const r = parseInt(m[1]);
+                        const g = parseInt(m[2]);
+                        const b = parseInt(m[3]);
+
+                        if (r >= ERROR_R_MIN && r <= ERROR_R_MAX &&
+                            g <= ERROR_G_MAX && b <= ERROR_B_MAX) {
+                            const container = el.closest(
+                                '.fb-dash-form-element, .jobs-easy-apply-form-section__question, .form-group, .input-field'
+                            ) || el.parentElement;
+
+                            let label = '';
+                            let value = '';
+                            let options = [];
+
+                            if (container) {
+                                const labelEl = container.querySelector('label');
+                                if (labelEl) label = labelEl.innerText;
+                                const input = container.querySelector('input, select, textarea');
+                                if (input) {
+                                    value = input.value || input.getAttribute('aria-valuenow') || '';
+                                    if (input.tagName.toLowerCase() === 'select') {
+                                        options = Array.from(input.options).map(o => o.text);
+                                    }
+                                }
+                            }
+
+                            errors.push({
+                                message: text,
+                                field_label: (label || '').trim(),
+                                field_value: value,
+                                available_options: options
+                            });
+                        }
+                    }
+                    return errors;
+                }
+            ''')
+
+            for err in raw:
+                error_type = self._classify_error(err['message'])
+                if err.get('field_value') and err['field_value'].strip():
+                    error_type = ErrorType.STATE_DESYNC
+                errors.append(UIError(
+                    error_type=error_type,
+                    platform=platform,
+                    message=err['message'],
+                    field_label=err.get('field_label'),
+                    field_value=err.get('field_value'),
+                    available_options=err.get('available_options', []),
+                    suggestions=self._get_suggestions(error_type, err)
+                ))
+        except Exception as e:
+            print(f"⚠️ Error detecting color-based errors: {e}")
+
+        return errors
+
+    def _dedupe_errors(self, errors: List[UIError]) -> List[UIError]:
+        """Remove duplicate errors by (field_label, message) key."""
+        seen = set()
+        result = []
+        for err in errors:
+            key = (err.field_label or '', err.message or '')
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(err)
+        return result
+
     def _classify_error(self, message: str) -> ErrorType:
         if not message:
             return ErrorType.GENERIC_ERROR
@@ -373,6 +576,33 @@ class UIErrorRecovery:
         original_answer: str,
         question: str = ""
     ) -> Tuple[bool, str, str]:
+        if error.error_type == ErrorType.STATE_DESYNC:
+            from src.sentinel.human_behavior import resync_input_state
+
+            try:
+                field_label = error.field_label or ""
+                js_find = """() => {
+                    const labels = Array.from(document.querySelectorAll('label'));
+                    const target = labels.find(l => l.innerText.trim().includes('""" + field_label.replace("'", "\'") + """'));
+                    if (!target) return null;
+                    const container = target.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, .form-group, .input-field') || target.parentElement;
+                    return container ? container.querySelector('input:not([type="radio"]):not([type="checkbox"]), textarea, select') : null;
+                }"""
+                element = await self.detector.page.query_selector(
+                    'input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"]'
+                )
+                if not element and field_label:
+                    element = await self.detector.page.evaluate_handle(js_find)
+
+                if element:
+                    ok = await resync_input_state(self.detector.page, element)
+                    if ok:
+                        return True, original_answer, 'state_resync'
+            except Exception as e:
+                print(f"⚠️ STATE_DESYNC recovery failed: {e}")
+
+            return False, original_answer, 'state_resync_failed'
+
         if error.error_type == ErrorType.INPUT_MISMATCH:
             if error.available_options:
                 from src.patterns.input_aware_resolver import Option, InputType

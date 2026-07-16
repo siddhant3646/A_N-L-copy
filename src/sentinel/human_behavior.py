@@ -249,6 +249,97 @@ async def human_type(
         return False
 
 
+async def resync_input_state(
+    page: Page,
+    element,
+    blur_with_tab: bool = True
+) -> bool:
+    """
+    Force React/form state to sync with visible input value.
+
+    Implements the "Backspace & Retype" protocol: focus the field, move cursor
+    to end, delete the last character, retype it (fires keydown/input/keyup),
+    then blur (fires change/blur) so the framework re-runs validation against
+    the now-synced state.
+
+    Args:
+        page: Playwright page object
+        element: ElementHandle or Locator for the input/textarea
+        blur_with_tab: If True, press Tab to blur; otherwise click blank space
+
+    Returns:
+        True if the resync sequence completed successfully
+    """
+    try:
+        await element.click()
+        await asyncio.sleep(random.uniform(0.1, 0.25))
+
+        current_value = await element.evaluate('el => el.value || ""')
+        if not current_value:
+            await element.type(' ', delay=random.uniform(50, 120))
+            await asyncio.sleep(random.uniform(0.05, 0.15))
+            await element.press('Backspace')
+        else:
+            await element.press('End')
+            await asyncio.sleep(random.uniform(0.05, 0.1))
+
+            last_char = current_value[-1]
+            await element.press('Backspace')
+            await asyncio.sleep(random.uniform(0.1, 0.25))
+            await element.type(last_char, delay=random.uniform(50, 150))
+
+        if blur_with_tab:
+            await asyncio.sleep(random.uniform(0.1, 0.2))
+            await element.press('Tab')
+        else:
+            try:
+                body_box = await page.evaluate(
+                    "() => ({w: window.innerWidth, h: window.innerHeight})"
+                )
+                await page.mouse.click(body_box.get('w', 800) // 2, 10)
+            except Exception:
+                await element.press('Tab')
+
+        await asyncio.sleep(random.uniform(0.2, 0.4))
+        return True
+
+    except Exception as e:
+        print(f"⚠️ resync_input_state failed: {e}")
+        return False
+
+
+async def resync_all_inputs(page: Page) -> int:
+    """
+    Run resync_input_state on every input flagged aria-invalid="true".
+
+    Returns the count of fields that were resynced.
+    """
+    try:
+        invalid_handles = await page.query_selector_all(
+            '[aria-invalid="true"]'
+        )
+    except Exception as e:
+        print(f"⚠️ resync_all_inputs could not enumerate invalid fields: {e}")
+        return 0
+
+    count = 0
+    for handle in invalid_handles:
+        try:
+            is_visible = await handle.evaluate(
+                'el => el.offsetParent !== null'
+            )
+            if not is_visible:
+                continue
+            ok = await resync_input_state(page, handle)
+            if ok:
+                count += 1
+                await asyncio.sleep(random.uniform(0.15, 0.35))
+        except Exception:
+            continue
+
+    return count
+
+
 async def random_delay(
     min_seconds: float = 1.0,
     max_seconds: float = 3.0

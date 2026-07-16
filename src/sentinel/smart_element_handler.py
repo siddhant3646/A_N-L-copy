@@ -286,12 +286,36 @@ class SmartElementHandler:
     async def _fill_text(self, element: ElementHandle, option: Option) -> bool:
         if option is None:
             return False
-        
+
         try:
-            await element.fill(option.value)
+            value = option.value if hasattr(option, 'value') else str(option)
+            await element.evaluate('''
+                (el, val) => {
+                    const proto = el.tagName === 'TEXTAREA'
+                        ? window.HTMLTextAreaElement.prototype
+                        : window.HTMLInputElement.prototype;
+                    const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value');
+                    try {
+                        if (nativeSetter && nativeSetter.set) {
+                            nativeSetter.set.call(el, val);
+                        } else {
+                            el.value = val;
+                        }
+                    } catch (e) {
+                        el.value = val;
+                    }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    el.dispatchEvent(new Event('blur', { bubbles: true }));
+                }
+            ''', value)
             return True
         except Exception:
-            return False
+            try:
+                await element.fill(option.value if hasattr(option, 'value') else str(option))
+                return True
+            except Exception:
+                return False
     
     async def get_element_info(self, element: ElementHandle, page: Page) -> ElementInfo:
         element_type = await self.detect_element_type(element)

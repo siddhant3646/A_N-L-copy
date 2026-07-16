@@ -71,7 +71,10 @@ class UIErrorDetector:
         ],
         ErrorType.RATE_LIMIT: [
             'rate limit', 'too many', 'try again later', 'limit reached',
-            'slow down', 'please wait'
+            'slow down', 'please wait',
+            # Naukri server-side error toast: "There was some error processing your request"
+            'error processing', 'some error', 'processing your request',
+            'something went wrong',
         ],
     }
     
@@ -198,9 +201,22 @@ class UIErrorDetector:
         try:
             snackbar_error = await self.page.evaluate('''
                 () => {
-                    const snackbar = document.querySelector('.ss-snackbar-body');
+                    // Hybrid selector: real Naukri DOM is div.ss-snackbar.ss-snackbar-error.ss-snackbar-active
+                    // (no -body suffix). Keep legacy .ss-snackbar-body + attribute fallbacks for resilience.
+                    const snackbar = document.querySelector(
+                        '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                        + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                    );
                     if (snackbar && snackbar.offsetParent !== null) {
                         return snackbar.innerText;
+                    }
+                    // Generic fallback: any visible snackbar/toast/alert mentioning error/processing
+                    const generic = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                    if (generic && generic.offsetParent !== null) {
+                        const t = (generic.innerText || '').toLowerCase();
+                        if (t.includes('error') || t.includes('processing') || t.includes('some error')) {
+                            return generic.innerText;
+                        }
                     }
                     return null;
                 }

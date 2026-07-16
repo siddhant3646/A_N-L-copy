@@ -3326,22 +3326,28 @@ class SentinelAgent:
 
                             // MONITOR: Check for error snackbar
                             // NOTE: Loop-based await removed - single check only, Python handles polling
+                            // Hybrid selector: real DOM is div.ss-snackbar.ss-snackbar-error.ss-snackbar-active
+                            // (no -body suffix), but keep legacy + attribute fallbacks.
                             for (let i = 0; i < 1; i++) {
                                 // NOTE: await new Promise removed - Python handles delays between evaluate calls
-                                // Target the exact structure found in DOM inspection
-                                const snackBody = document.querySelector('.ss-snackbar-body');
+                                const snackBody = document.querySelector(
+                                    '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                                    + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                                );
                                 if (snackBody && snackBody.offsetParent !== null) {
                                     const text = snackBody.innerText.toLowerCase();
-                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong')) {
+                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
                                         // Dismiss if close button exists
-                                        const closeBtn = document.querySelector('button.ss-close');
+                                        const closeBtn = document.querySelector('button.ss-close, .ss-close');
                                         if (closeBtn) closeBtn.click();
                                         return 'NAUKRI_RATE_LIMITED: Error snackbar detected (' + text + ')';
                                     }
                                 }
                                 // Generic fallback check
-                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"]');
-                                if (genericSnack && genericSnack.innerText.toLowerCase().includes('error')) {
+                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                                if (genericSnack && genericSnack.offsetParent !== null
+                                    && (genericSnack.innerText.toLowerCase().includes('error')
+                                        || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
                                 }
                             }
@@ -3361,6 +3367,15 @@ class SentinelAgent:
                     
                     print(f"   📜 Apply result: {apply_result}")
                     
+                    # Poll for async error toast that surfaces AFTER the click returned.
+                    if 'APPLY_CLICKED' in apply_result:
+                        waited = await self._poll_naukri_error_snackbar()
+                        if 'NAUKRI_RATE_LIMITED' in waited:
+                            self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
+                            print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
+                            self.state.task_complete = True
+                            break
+                    
                     if 'APPLY_CLICKED' in apply_result:
                         print("⏳ Waiting for Naukri chatbot...")
                         await asyncio.sleep(random.uniform(4, 8))
@@ -3375,6 +3390,14 @@ class SentinelAgent:
                             self.state.task_complete = True
                             break
                         elif chatbot_done:
+                            # Check if 0 jobs applied — might be error toast, poll again
+                            if isinstance(chatbot_done, str) and 'CHATBOT_COMPLETE: 0/' in chatbot_done:
+                                snackbar_final = await self._poll_naukri_error_snackbar(attempts=3, interval=1.0)
+                                if 'NAUKRI_RATE_LIMITED' in snackbar_final:
+                                    self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
+                                    print(f"⚠️ Naukri Rate Limit Detected after chatbot! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
+                                    self.state.task_complete = True
+                                    break
                             # Success - decide whether to continue (need more jobs) or stop (target reached)
                             should_continue = await self._handle_naukri_post_apply(chatbot_done)
                             if not should_continue:
@@ -3404,6 +3427,14 @@ class SentinelAgent:
                         self.state.task_complete = True
                         break
                     elif chatbot_done:
+                        # Check if 0 jobs applied — might be error toast, poll again
+                        if isinstance(chatbot_done, str) and 'CHATBOT_COMPLETE: 0/' in chatbot_done:
+                            snackbar_final = await self._poll_naukri_error_snackbar(attempts=3, interval=1.0)
+                            if 'NAUKRI_RATE_LIMITED' in snackbar_final:
+                                self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
+                                print(f"⚠️ Naukri Rate Limit Detected after chatbot! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
+                                self.state.task_complete = True
+                                break
                         # Success - decide whether to continue (need more jobs) or stop (target reached)
                         should_continue = await self._handle_naukri_post_apply(chatbot_done)
                         if not should_continue:
@@ -3628,6 +3659,57 @@ class SentinelAgent:
             print(f"   ⚠️ _resolve_naukri_completion failed: {e}")
             return 'CHATBOT_COMPLETE: 0/5'
 
+    async def _poll_naukri_error_snackbar(self, attempts: int = 4, interval: float = 1.5) -> str:
+        """
+        Poll the page for the Naukri error snackbar that appears after clicking Apply.
+
+        The toast (``div.ss-snackbar.ss-snackbar-error.ss-snackbar-active``) is
+        rendered asynchronously AFTER the click handler returns, so the single
+        in-JS check inside ``evaluate`` often misses it. This helper re-checks
+        from Python a few times with a short delay and returns the
+        ``NAUKRI_RATE_LIMITED`` signal string the moment the toast surfaces.
+        """
+        # Hybrid selector (Options A+B+C): matches the real DOM structure
+        # (.ss-snackbar-error / .ss-snackbar.ss-snackbar-active) while keeping
+        # the legacy .ss-snackbar-body + attribute fallbacks for resilience.
+        check_js = """
+        () => {
+            const snack = document.querySelector(
+                '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+            );
+            if (!snack || snack.offsetParent === null) return null;
+            const text = (snack.innerText || '').toLowerCase();
+            const hit = text.includes('error') || text.includes('limit')
+                || text.includes('reached') || text.includes('something went wrong')
+                || text.includes('processing') || text.includes('some error');
+            if (hit) {
+                const closeBtn = document.querySelector('button.ss-close, .ss-close');
+                if (closeBtn) closeBtn.click();
+                return 'NAUKRI_RATE_LIMITED: Error snackbar detected (' + text + ')';
+            }
+            // Generic fallback (Option C): any snackbar/toast mentioning "error"
+            const generic = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+            if (generic && generic.offsetParent !== null) {
+                const gText = (generic.innerText || '').toLowerCase();
+                if (gText.includes('error') || gText.includes('processing')) {
+                    return 'NAUKRI_RATE_LIMITED: Generic error detected (' + gText + ')';
+                }
+            }
+            return null;
+        }
+        """
+        for _ in range(max(1, attempts)):
+            try:
+                found = await self._page.evaluate(check_js)
+                if found:
+                    return found
+            except Exception as e:
+                print(f"   ⚠️ snackbar poll evaluate failed: {e}")
+                break
+            await asyncio.sleep(interval)
+        return ''
+
     async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
         """
         Decide what to do after a Naukri chatbot application attempt.
@@ -3692,6 +3774,13 @@ class SentinelAgent:
         
         for iteration in range(max_iterations):
             await asyncio.sleep(random.uniform(2, 3.5))
+            
+            # Python-side error snackbar check at start of each iteration
+            if iteration < 3:
+                snackbar_result = await self._poll_naukri_error_snackbar(attempts=1, interval=0.5)
+                if 'NAUKRI_RATE_LIMITED' in snackbar_result:
+                    print(f"   ⚠️ Error snackbar detected in chatbot loop iteration {iteration}")
+                    return snackbar_result
             
             result = await self._page.evaluate(f"""async () => {{
                 // Flat answers for all logic
@@ -3847,13 +3936,24 @@ class SentinelAgent:
                         }}
                     }});
                 }}
-                const snackBody = document.querySelector('.ss-snackbar-body');
+                const snackBody = document.querySelector(
+                    '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                    + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                );
                 if (snackBody && snackBody.offsetParent !== null) {{
                     const snackText = snackBody.innerText.toLowerCase();
-                    if (snackText.includes('error') || snackText.includes('limit') || snackText.includes('reached') || snackText.includes('something went wrong')) {{
-                        const closeBtn = document.querySelector('button.ss-close');
+                    if (snackText.includes('error') || snackText.includes('limit') || snackText.includes('reached') || snackText.includes('something went wrong') || snackText.includes('processing') || snackText.includes('some error')) {{
+                        const closeBtn = document.querySelector('button.ss-close, .ss-close');
                         if (closeBtn) closeBtn.click();
                         return 'NAUKRI_RATE_LIMITED: Error popup detected at loop start';
+                    }}
+                }}
+                // Generic fallback (Option C): any snackbar/toast/alert mentioning error/processing
+                const genericSnackStart = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                if (genericSnackStart && genericSnackStart.offsetParent !== null) {{
+                    const gText = (genericSnackStart.innerText || '').toLowerCase();
+                    if (gText.includes('error') || gText.includes('processing') || gText.includes('some error')) {{
+                        return 'NAUKRI_RATE_LIMITED: Generic error detected at loop start';
                     }}
                 }}
                 
@@ -3884,6 +3984,18 @@ class SentinelAgent:
                 if (!chatLayer || !isVisible(chatLayer)) {{
                     if (document.body.innerText.includes('applied')) {{
                         return 'CHATBOT_COMPLETE';
+                    }}
+                    const errSnack = document.querySelector(
+                        '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                        + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                    );
+                    if (errSnack && errSnack.offsetParent !== null) {{
+                        const errText = (errSnack.innerText || '').toLowerCase();
+                        if (errText.includes('error') || errText.includes('processing') || errText.includes('some error')) {{
+                            const closeBtn = document.querySelector('button.ss-close, .ss-close');
+                            if (closeBtn) closeBtn.click();
+                            return 'NAUKRI_RATE_LIMITED: Error snackbar on no chatLayer';
+                        }}
                     }}
                     return 'NO_CHATBOT';
                 }}
@@ -4047,6 +4159,19 @@ class SentinelAgent:
                 const hasRealQuestion = qText && qText.trim().length > 10 && qText.includes('?');
                 
                 if (!hasAnyInput && chatLayer && isVisible(chatLayer)) {{
+                    // Check for error snackbar BEFORE declaring completion
+                    const errSnack2 = document.querySelector(
+                        '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                        + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                    );
+                    if (errSnack2 && errSnack2.offsetParent !== null) {{
+                        const errText2 = (errSnack2.innerText || '').toLowerCase();
+                        if (errText2.includes('error') || errText2.includes('processing') || errText2.includes('some error')) {{
+                            const closeBtn = document.querySelector('button.ss-close, .ss-close');
+                            if (closeBtn) closeBtn.click();
+                            return 'NAUKRI_RATE_LIMITED: Error snackbar on empty chatLayer';
+                        }}
+                    }}
                     // Check for success indicators first
                     const hasSuccessMsg = document.querySelector('.chatbot_SuccessMsg') !== null ||
                                          document.querySelector('[class*="success"]') !== null ||
@@ -8989,14 +9114,29 @@ class SentinelAgent:
                     }
                     
                     // Check for error popup - "There was some error processing your request"
-                    // Uses specific Naukri selector: div.ss-snackbar-body
-                    const snackbarBody = document.querySelector('div.ss-snackbar-body');
+                    // Hybrid selector: real DOM is div.ss-snackbar.ss-snackbar-error.ss-snackbar-active
+                    // (no -body suffix). Keep legacy + attribute fallbacks.
+                    const snackbarBody = document.querySelector(
+                        '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                        + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                    );
                     if (snackbarBody) {
                         const snackText = snackbarBody.innerText.toLowerCase();
-                        if (snackText.includes('error processing') || snackText.includes('some error')) {
-                            const closeBtn = document.querySelector('button.ss-close');
+                        if (snackText.includes('error processing') || snackText.includes('some error')
+                            || snackText.includes('error') || snackText.includes('processing')
+                            || snackText.includes('limit') || snackText.includes('reached')
+                            || snackText.includes('something went wrong')) {
+                            const closeBtn = document.querySelector('button.ss-close, .ss-close');
                             if (closeBtn) closeBtn.click();
                             return 'NAUKRI_RATE_LIMITED: Error popup detected during fallback start';
+                        }
+                    }
+                    // Generic fallback (Option C)
+                    const genericSnackFallback = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                    if (genericSnackFallback && genericSnackFallback.offsetParent !== null) {
+                        const gText = (genericSnackFallback.innerText || '').toLowerCase();
+                        if (gText.includes('error') || gText.includes('processing') || gText.includes('some error')) {
+                            return 'NAUKRI_RATE_LIMITED: Generic error detected during fallback start';
                         }
                     }
                     
@@ -9761,18 +9901,24 @@ class SentinelAgent:
                             // NOTE: Loop-based await removed - single check only, Python handles polling
                             for (let i = 0; i < 1; i++) {
                                 // NOTE: await sleep(500) removed - Python handles delays between evaluate calls
-                                const snackBody = document.querySelector('.ss-snackbar-body');
+                                // Hybrid selector: real DOM is div.ss-snackbar.ss-snackbar-error.ss-snackbar-active
+                                const snackBody = document.querySelector(
+                                    '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                                    + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                                );
                                 if (snackBody && snackBody.offsetParent !== null) {
                                     const text = snackBody.innerText.toLowerCase();
-                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong')) {
-                                        const closeBtn = document.querySelector('button.ss-close');
+                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
+                                        const closeBtn = document.querySelector('button.ss-close, .ss-close');
                                         if (closeBtn) closeBtn.click();
                                         return 'NAUKRI_RATE_LIMITED: Error snackbar detected (' + text + ')';
                                     }
                                 }
                                 // Generic fallback
-                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"]');
-                                if (genericSnack && genericSnack.innerText.toLowerCase().includes('error')) {
+                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                                if (genericSnack && genericSnack.offsetParent !== null
+                                    && (genericSnack.innerText.toLowerCase().includes('error')
+                                        || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
                                 }
                             }
@@ -9797,18 +9943,24 @@ class SentinelAgent:
                             // NOTE: Loop-based await removed - single check only, Python handles polling
                             for (let i = 0; i < 1; i++) {
                                 // NOTE: await sleep(500) removed - Python handles delays between evaluate calls
-                                const snackBody = document.querySelector('.ss-snackbar-body');
+                                // Hybrid selector: real DOM is div.ss-snackbar.ss-snackbar-error.ss-snackbar-active
+                                const snackBody = document.querySelector(
+                                    '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
+                                    + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
+                                );
                                 if (snackBody && snackBody.offsetParent !== null) {
                                     const text = snackBody.innerText.toLowerCase();
-                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong')) {
-                                        const closeBtn = document.querySelector('button.ss-close');
+                                    if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
+                                        const closeBtn = document.querySelector('button.ss-close, .ss-close');
                                         if (closeBtn) closeBtn.click();
                                         return 'NAUKRI_RATE_LIMITED: Error snackbar detected (' + text + ')';
                                     }
                                 }
                                 // Generic fallback
-                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"]');
-                                if (genericSnack && genericSnack.innerText.toLowerCase().includes('error')) {
+                                const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
+                                if (genericSnack && genericSnack.offsetParent !== null
+                                    && (genericSnack.innerText.toLowerCase().includes('error')
+                                        || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
                                 }
                             }

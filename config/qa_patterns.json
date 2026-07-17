@@ -488,7 +488,11 @@
     },
     "skills_languages": {
       "patterns": [
-        "programming languages"
+        "programming languages",
+        "what is your programming languages",
+        "your programming languages",
+        "please mention programming languages",
+        "mention programming languages"
       ],
       "category": "skills",
       "default": "Java, Python, JavaScript",
@@ -1304,7 +1308,11 @@
     },
     "self_id_veteran": {
       "patterns": [
-        "veteran"
+        "veteran",
+        "what is your veteran",
+        "your veteran",
+        "please mention veteran",
+        "mention veteran"
       ],
       "category": "self_identification",
       "default": "I am not a protected veteran",
@@ -1317,7 +1325,11 @@
     },
     "self_id_name": {
       "patterns": [
-        "your name"
+        "your name",
+        "what is your your name",
+        "your your name",
+        "please mention your name",
+        "mention your name"
       ],
       "category": "self_identification",
       "default": "Siddhant Singh",
@@ -2226,7 +2238,11 @@
     },
     "rel_exp_python": {
       "patterns": [
-        "python experience"
+        "python experience",
+        "years of python experience",
+        "how many years of python experience",
+        "python experience do you have",
+        "your python experience"
       ],
       "category": "experience",
       "default": "4",
@@ -2240,7 +2256,11 @@
     },
     "rel_exp_node": {
       "patterns": [
-        "nodejs experience"
+        "nodejs experience",
+        "years of nodejs experience",
+        "how many years of nodejs experience",
+        "nodejs experience do you have",
+        "your nodejs experience"
       ],
       "category": "experience",
       "default": "4",
@@ -2684,7 +2704,11 @@
     },
     "configuration_tools": {
       "patterns": [
-        "configuration tools"
+        "configuration tools",
+        "what is your configuration tools",
+        "your configuration tools",
+        "please mention configuration tools",
+        "mention configuration tools"
       ],
       "category": "skills",
       "default": "Ansible, Terraform, AWS CloudFormation",
@@ -2698,7 +2722,11 @@
     },
     "deployment_tools": {
       "patterns": [
-        "deployment tools"
+        "deployment tools",
+        "what is your deployment tools",
+        "your deployment tools",
+        "please mention deployment tools",
+        "mention deployment tools"
       ],
       "category": "skills",
       "default": "Docker, Kubernetes, Jenkins, GitHub Actions",
@@ -2712,7 +2740,11 @@
     },
     "automation_tools": {
       "patterns": [
-        "automation tools"
+        "automation tools",
+        "what is your automation tools",
+        "your automation tools",
+        "please mention automation tools",
+        "mention automation tools"
       ],
       "category": "skills",
       "default": "Jenkins, GitHub Actions, Ansible, Terraform",
@@ -2918,7 +2950,11 @@
     },
     "proficiency_typescript": {
       "patterns": [
-        "proficiency in typescript"
+        "proficiency in typescript",
+        "rate your typescript",
+        "how would you rate yourself in typescript",
+        "rate yourself in typescript",
+        "your proficiency in typescript"
       ],
       "category": "skills",
       "default": "9",
@@ -2932,7 +2968,11 @@
     },
     "proficiency_javascript": {
       "patterns": [
-        "proficiency in javascript"
+        "proficiency in javascript",
+        "rate your javascript",
+        "how would you rate yourself in javascript",
+        "rate yourself in javascript",
+        "your proficiency in javascript"
       ],
       "category": "skills",
       "default": "9",
@@ -2946,7 +2986,11 @@
     },
     "proficiency_react": {
       "patterns": [
-        "proficiency in react"
+        "proficiency in react",
+        "rate your react",
+        "how would you rate yourself in react",
+        "rate yourself in react",
+        "your proficiency in react"
       ],
       "category": "skills",
       "default": "9",
@@ -2960,7 +3004,11 @@
     },
     "proficiency_java": {
       "patterns": [
-        "proficiency in java"
+        "proficiency in java",
+        "rate your java",
+        "how would you rate yourself in java",
+        "rate yourself in java",
+        "your proficiency in java"
       ],
       "category": "skills",
       "default": "9",
@@ -2974,7 +3022,11 @@
     },
     "proficiency_python": {
       "patterns": [
-        "proficiency in python"
+        "proficiency in python",
+        "rate your python",
+        "how would you rate yourself in python",
+        "rate yourself in python",
+        "your proficiency in python"
       ],
       "category": "skills",
       "default": "9",
@@ -2988,7 +3040,11 @@
     },
     "proficiency_angular": {
       "patterns": [
-        "proficiency in angular"
+        "proficiency in angular",
+        "rate your angular",
+        "how would you rate yourself in angular",
+        "rate yourself in angular",
+        "your proficiency in angular"
       ],
       "category": "skills",
       "default": "7",
@@ -3002,7 +3058,11 @@
     },
     "proficiency_node": {
       "patterns": [
-        "proficiency in node"
+        "proficiency in node",
+        "rate your node",
+        "how would you rate yourself in node",
+        "rate yourself in node",
+        "your proficiency in node"
       ],
       "category": "skills",
       "default": "9",
@@ -3016,7 +3076,11 @@
     },
     "proficiency_aws": {
       "patterns": [
-        "proficiency in aws"
+        "proficiency in aws",
+        "rate your aws",
+        "how would you rate yourself in aws",
+        "rate yourself in aws",
+        "your proficiency in aws"
       ],
       "category": "skills",
       "default": "7",
@@ -3030,7 +3094,11 @@
     },
     "proficiency_sql": {
       "patterns": [
-        "proficiency in sql"
+        "proficiency in sql",
+        "rate your sql",
+        "how would you rate yourself in sql",
+        "rate yourself in sql",
+        "your proficiency in sql"
       ],
       "category": "skills",
       "default": "9",
@@ -3568,7 +3636,10 @@
     },
     "take_home_assignment": {
       "patterns": [
-        "take home assignment"
+        "take home assignment",
+        "do you have take home assignment",
+        "are you take home assignment",
+        "your take home assignment"
       ],
       "category": "yes_no",
       "default": "Yes, can complete take-home assignments",
@@ -4723,7 +4794,11 @@
     },
     "experience_6353": {
       "patterns": [
-        "months of experience"
+        "months of experience",
+        "years of months of experience",
+        "how many years of months of experience",
+        "months of experience do you have",
+        "your months of experience"
       ],
       "category": "experience",
       "default": "48",
@@ -4853,7 +4928,11 @@
     },
     "location_9507": {
       "patterns": [
-        "ethnicity"
+        "ethnicity",
+        "what is your ethnicity",
+        "your ethnicity",
+        "please mention ethnicity",
+        "mention ethnicity"
       ],
       "category": "self_identification",
       "default": "Decline to self-identify",
@@ -4882,7 +4961,11 @@
     },
     "preference_5224": {
       "patterns": [
-        "s date"
+        "s date",
+        "what is your s date",
+        "your s date",
+        "please mention s date",
+        "mention s date"
       ],
       "category": "preference",
       "default": "02/15/2026",
@@ -4895,7 +4978,11 @@
     },
     "preference_4278": {
       "patterns": [
-        "first name"
+        "first name",
+        "what is your first name",
+        "your first name",
+        "please mention first name",
+        "mention first name"
       ],
       "category": "preference",
       "default": "Siddhant",
@@ -4908,7 +4995,11 @@
     },
     "preference_6764": {
       "patterns": [
-        "top 3 primary competencies"
+        "top 3 primary competencies",
+        "what is your top 3 primary competencies",
+        "your top 3 primary competencies",
+        "please mention top 3 primary competencies",
+        "mention top 3 primary competencies"
       ],
       "category": "preference",
       "default": "Full Stack Development, Cloud Architecture, System Design",
@@ -4921,7 +5012,11 @@
     },
     "preference_1871": {
       "patterns": [
-        "tools familiar"
+        "tools familiar",
+        "what is your tools familiar",
+        "your tools familiar",
+        "please mention tools familiar",
+        "mention tools familiar"
       ],
       "category": "preference",
       "default": "Docker, Kubernetes, Jenkins, GitHub Actions",
@@ -4979,7 +5074,11 @@
     },
     "preference_8216": {
       "patterns": [
-        "ep no only"
+        "ep no only",
+        "what is your ep no only",
+        "your ep no only",
+        "please mention ep no only",
+        "mention ep no only"
       ],
       "category": "preference",
       "default": "N/A",
@@ -4992,7 +5091,10 @@
     },
     "preference_2933": {
       "patterns": [
-        "linkedin job"
+        "linkedin job",
+        "do you have linkedin job",
+        "are you linkedin job",
+        "your linkedin job"
       ],
       "category": "preference",
       "default": "Yes, I actively use LinkedIn for job opportunities and professional networking",
@@ -5005,7 +5107,11 @@
     },
     "experience_528": {
       "patterns": [
-        "last professional experience"
+        "last professional experience",
+        "years of last professional experience",
+        "how many years of last professional experience",
+        "last professional experience do you have",
+        "your last professional experience"
       ],
       "category": "experience",
       "default": "Full Stack Development using Java, Spring Boot, React, and AWS. Built scalable microservices, RESTful APIs, and responsive web applications. Led feature development, code reviews, and deployment pipelines.",
@@ -5019,7 +5125,10 @@
     },
     "preference_4536": {
       "patterns": [
-        "benefits"
+        "benefits",
+        "do you have benefits",
+        "are you benefits",
+        "your benefits"
       ],
       "category": "preference",
       "default": "Yes, I am interested in learning about the benefits offered by the company",
@@ -5032,7 +5141,11 @@
     },
     "preference_1135": {
       "patterns": [
-        "registration number for tcs portal"
+        "registration number for tcs portal",
+        "what is your registration number for tcs portal",
+        "your registration number for tcs portal",
+        "please mention registration number for tcs portal",
+        "mention registration number for tcs portal"
       ],
       "category": "preference",
       "default": "N/A - Not registered in TCS",
@@ -5045,7 +5158,11 @@
     },
     "experience_4715": {
       "patterns": [
-        "exp in angular and microservices"
+        "exp in angular and microservices",
+        "what is your exp in angular and microservices",
+        "your exp in angular and microservices",
+        "please mention exp in angular and microservices",
+        "mention exp in angular and microservices"
       ],
       "category": "experience",
       "default": "4 years experience in both Angular and Microservices architecture",
@@ -5090,7 +5207,11 @@
     },
     "location_5864": {
       "patterns": [
-        "based in bangalore"
+        "based in bangalore",
+        "located in bangalore",
+        "from bangalore",
+        "stay in bangalore",
+        "currently in bangalore"
       ],
       "category": "location",
       "default": "No, I am currently based in Noida. However, I am willing to relocate to Bangalore.",
@@ -5104,7 +5225,11 @@
     },
     "location_1393": {
       "patterns": [
-        "based in mumbai"
+        "based in mumbai",
+        "located in mumbai",
+        "from mumbai",
+        "stay in mumbai",
+        "currently in mumbai"
       ],
       "category": "location",
       "default": "No, I am currently based in Noida. However, I am willing to relocate to Mumbai.",
@@ -5118,7 +5243,11 @@
     },
     "location_4369": {
       "patterns": [
-        "based in pune"
+        "based in pune",
+        "located in pune",
+        "from pune",
+        "stay in pune",
+        "currently in pune"
       ],
       "category": "location",
       "default": "No, I am currently based in Noida. However, I am willing to relocate to Pune.",
@@ -5132,7 +5261,11 @@
     },
     "location_8084": {
       "patterns": [
-        "based in hyderabad"
+        "based in hyderabad",
+        "located in hyderabad",
+        "from hyderabad",
+        "stay in hyderabad",
+        "currently in hyderabad"
       ],
       "category": "location",
       "default": "No, I am currently based in Noida. However, I am willing to relocate to Hyderabad.",
@@ -5146,7 +5279,11 @@
     },
     "location_5589": {
       "patterns": [
-        "based in chennai"
+        "based in chennai",
+        "located in chennai",
+        "from chennai",
+        "stay in chennai",
+        "currently in chennai"
       ],
       "category": "location",
       "default": "No, I am currently based in Noida. However, I am willing to relocate to Chennai.",
@@ -5160,7 +5297,10 @@
     },
     "preference_1450": {
       "patterns": [
-        "from mumbai"
+        "from mumbai",
+        "based in mumbai",
+        "located in mumbai",
+        "currently in mumbai"
       ],
       "category": "preference",
       "default": "No, I am currently based in Noida. However, I am willing to relocate.",
@@ -5191,7 +5331,11 @@
     },
     "salary_763": {
       "patterns": [
-        "ctc breakup"
+        "ctc breakup",
+        "what is your ctc breakup",
+        "your ctc breakup",
+        "please mention ctc breakup",
+        "mention your ctc breakup"
       ],
       "category": "salary",
       "default": "Fixed: 23 LPA, Variable: 0",
@@ -5205,7 +5349,11 @@
     },
     "salary_8415": {
       "patterns": [
-        "salary structure"
+        "salary structure",
+        "what is your salary structure",
+        "your salary structure",
+        "please mention salary structure",
+        "mention your salary structure"
       ],
       "category": "salary",
       "default": "Fixed CTC: 23 LPA",
@@ -5219,7 +5367,10 @@
     },
     "preference_6082": {
       "patterns": [
-        "shift to"
+        "shift to",
+        "do you have shift to",
+        "are you shift to",
+        "your shift to"
       ],
       "category": "preference",
       "default": "Yes, can shift to any metro city",
@@ -5232,7 +5383,10 @@
     },
     "preference_552": {
       "patterns": [
-        "move to"
+        "move to",
+        "do you have move to",
+        "are you move to",
+        "your move to"
       ],
       "category": "preference",
       "default": "Yes, willing to move",
@@ -5245,7 +5399,10 @@
     },
     "education_373": {
       "patterns": [
-        "educational background"
+        "educational background",
+        "what is your educational background",
+        "your educational background",
+        "please mention educational background"
       ],
       "category": "education",
       "default": "B.Tech in Computer Science from VIT Bhopal University",
@@ -5344,7 +5501,11 @@
     },
     "preference_2803": {
       "patterns": [
-        "certification"
+        "certification",
+        "what is your certification",
+        "your certification",
+        "please mention certification",
+        "mention certification"
       ],
       "category": "preference",
       "default": "AWS Certified, Java Certified",
@@ -5357,7 +5518,11 @@
     },
     "preference_6485": {
       "patterns": [
-        "training"
+        "training",
+        "what is your training",
+        "your training",
+        "please mention training",
+        "mention training"
       ],
       "category": "preference",
       "default": "Corporate training in Java, React, AWS",
@@ -5370,7 +5535,11 @@
     },
     "preference_1230": {
       "patterns": [
-        "internship"
+        "internship",
+        "what is your internship",
+        "your internship",
+        "please mention internship",
+        "mention internship"
       ],
       "category": "preference",
       "default": "Completed internships during college",
@@ -5383,7 +5552,11 @@
     },
     "skills_2950": {
       "patterns": [
-        "secondary skills"
+        "secondary skills",
+        "what is your secondary skills",
+        "your secondary skills",
+        "please mention secondary skills",
+        "mention secondary skills"
       ],
       "category": "skills",
       "default": "Python, Docker, Kubernetes, Node.js",
@@ -5397,7 +5570,11 @@
     },
     "experience_8683": {
       "patterns": [
-        "key expertise"
+        "key expertise",
+        "what is your key expertise",
+        "your key expertise",
+        "please mention key expertise",
+        "mention key expertise"
       ],
       "category": "experience",
       "default": "Java, Spring Boot, Microservices, React",
@@ -5411,7 +5588,11 @@
     },
     "experience_7883": {
       "patterns": [
-        "area of expertise"
+        "area of expertise",
+        "what is your area of expertise",
+        "your area of expertise",
+        "please mention area of expertise",
+        "mention area of expertise"
       ],
       "category": "experience",
       "default": "Full Stack Development",
@@ -5425,7 +5606,11 @@
     },
     "preference_5990": {
       "patterns": [
-        "domain knowledge"
+        "domain knowledge",
+        "what is your domain knowledge",
+        "your domain knowledge",
+        "please mention domain knowledge",
+        "mention domain knowledge"
       ],
       "category": "preference",
       "default": "BFSI, Fintech",
@@ -5438,7 +5623,11 @@
     },
     "preference_2710": {
       "patterns": [
-        "primary technology"
+        "primary technology",
+        "what is your primary technology",
+        "your primary technology",
+        "please mention primary technology",
+        "mention primary technology"
       ],
       "category": "preference",
       "default": "Java, Spring Boot",
@@ -5451,7 +5640,11 @@
     },
     "preference_9661": {
       "patterns": [
-        "secondary technology"
+        "secondary technology",
+        "what is your secondary technology",
+        "your secondary technology",
+        "please mention secondary technology",
+        "mention secondary technology"
       ],
       "category": "preference",
       "default": "React, Node.js",
@@ -5464,7 +5657,11 @@
     },
     "skills_1847": {
       "patterns": [
-        "frameworks known"
+        "frameworks known",
+        "what is your frameworks known",
+        "your frameworks known",
+        "please mention frameworks known",
+        "mention frameworks known"
       ],
       "category": "skills",
       "default": "Spring Boot, React, Angular, Express",
@@ -5478,7 +5675,11 @@
     },
     "preference_2189": {
       "patterns": [
-        "databases known"
+        "databases known",
+        "what is your databases known",
+        "your databases known",
+        "please mention databases known",
+        "mention databases known"
       ],
       "category": "preference",
       "default": "PostgreSQL, MySQL, MongoDB, Redis",
@@ -5491,7 +5692,11 @@
     },
     "experience_9109": {
       "patterns": [
-        "scrum experience"
+        "scrum experience",
+        "years of scrum experience",
+        "how many years of scrum experience",
+        "scrum experience do you have",
+        "your scrum experience"
       ],
       "category": "experience",
       "default": "Yes, experienced with Scrum ceremonies",
@@ -5505,7 +5710,11 @@
     },
     "preference_5678": {
       "patterns": [
-        "version control"
+        "version control",
+        "what is your version control",
+        "your version control",
+        "please mention version control",
+        "mention version control"
       ],
       "category": "preference",
       "default": "Git, GitHub, GitLab",
@@ -5518,7 +5727,11 @@
     },
     "experience_7930": {
       "patterns": [
-        "github experience"
+        "github experience",
+        "years of github experience",
+        "how many years of github experience",
+        "github experience do you have",
+        "your github experience"
       ],
       "category": "experience",
       "default": "Yes, 3+ years",
@@ -5532,7 +5745,11 @@
     },
     "experience_7113": {
       "patterns": [
-        "git experience"
+        "git experience",
+        "years of git experience",
+        "how many years of git experience",
+        "git experience do you have",
+        "your git experience"
       ],
       "category": "experience",
       "default": "Yes, proficient in Git",
@@ -5546,7 +5763,11 @@
     },
     "preference_264": {
       "patterns": [
-        "how would you rate yourself"
+        "how would you rate yourself",
+        "what is your how would you rate yourself",
+        "your how would you rate yourself",
+        "please mention how would you rate yourself",
+        "mention how would you rate yourself"
       ],
       "category": "preference",
       "default": "9 out of 10",
@@ -5559,7 +5780,11 @@
     },
     "experience_8863": {
       "patterns": [
-        "expertise level"
+        "expertise level",
+        "what is your expertise level",
+        "your expertise level",
+        "please mention expertise level",
+        "mention expertise level"
       ],
       "category": "experience",
       "default": "Advanced",
@@ -5573,7 +5798,11 @@
     },
     "skills_8863": {
       "patterns": [
-        "skill level"
+        "skill level",
+        "what is your skill level",
+        "your skill level",
+        "please mention skill level",
+        "mention skill level"
       ],
       "category": "skills",
       "default": "Advanced",
@@ -5601,7 +5830,11 @@
     },
     "preference_4537": {
       "patterns": [
-        "mastery"
+        "mastery",
+        "what is your mastery",
+        "your mastery",
+        "please mention mastery",
+        "mention mastery"
       ],
       "category": "preference",
       "default": "Advanced level with 4 years experience",
@@ -5614,7 +5847,11 @@
     },
     "preference_8440": {
       "patterns": [
-        "comfort level"
+        "comfort level",
+        "what is your comfort level",
+        "your comfort level",
+        "please mention comfort level",
+        "mention comfort level"
       ],
       "category": "preference",
       "default": "Very comfortable - 8/10",
@@ -5627,7 +5864,11 @@
     },
     "preference_6302": {
       "patterns": [
-        "on scale of 1-100"
+        "on scale of 1-100",
+        "what is your on scale of 1-100",
+        "your on scale of 1-100",
+        "please mention on scale of 1-100",
+        "mention on scale of 1-100"
       ],
       "category": "preference",
       "default": "85",
@@ -5640,7 +5881,11 @@
     },
     "experience_3416": {
       "patterns": [
-        "percentage expertise"
+        "percentage expertise",
+        "what is your percentage expertise",
+        "your percentage expertise",
+        "please mention percentage expertise",
+        "mention percentage expertise"
       ],
       "category": "experience",
       "default": "85%",
@@ -5654,7 +5899,11 @@
     },
     "preference_2307": {
       "patterns": [
-        "last name"
+        "last name",
+        "what is your last name",
+        "your last name",
+        "please mention last name",
+        "mention last name"
       ],
       "category": "preference",
       "default": "Singh",
@@ -5681,7 +5930,11 @@
     },
     "preference_3908": {
       "patterns": [
-        "nationality"
+        "nationality",
+        "what is your nationality",
+        "your nationality",
+        "please mention nationality",
+        "mention nationality"
       ],
       "category": "preference",
       "default": "Indian",
@@ -5694,7 +5947,11 @@
     },
     "preference_8627": {
       "patterns": [
-        "country of origin"
+        "country of origin",
+        "what is your country of origin",
+        "your country of origin",
+        "please mention country of origin",
+        "mention country of origin"
       ],
       "category": "preference",
       "default": "India",
@@ -5707,7 +5964,11 @@
     },
     "yes_no_672": {
       "patterns": [
-        "visa status"
+        "visa status",
+        "what is your visa status",
+        "your visa status",
+        "please mention visa status",
+        "mention visa status"
       ],
       "category": "yes_no",
       "default": "Indian citizen - no visa required for India",
@@ -5722,7 +5983,11 @@
     },
     "preference_651": {
       "patterns": [
-        "work permit"
+        "work permit",
+        "what is your work permit",
+        "your work permit",
+        "please mention work permit",
+        "mention work permit"
       ],
       "category": "preference",
       "default": "Not required - Indian citizen",
@@ -5735,7 +6000,11 @@
     },
     "skills_7023": {
       "patterns": [
-        "languages known"
+        "languages known",
+        "what is your languages known",
+        "your languages known",
+        "please mention languages known",
+        "mention languages known"
       ],
       "category": "skills",
       "default": "English, Hindi",
@@ -5749,7 +6018,11 @@
     },
     "skills_2051": {
       "patterns": [
-        "native language"
+        "native language",
+        "what is your native language",
+        "your native language",
+        "please mention native language",
+        "mention native language"
       ],
       "category": "skills",
       "default": "Hindi",
@@ -5824,7 +6097,11 @@
     },
     "preference_574": {
       "patterns": [
-        "business unit"
+        "business unit",
+        "what is your business unit",
+        "your business unit",
+        "please mention business unit",
+        "mention business unit"
       ],
       "category": "preference",
       "default": "Banking Solutions",
@@ -5852,7 +6129,11 @@
     },
     "preference_9273": {
       "patterns": [
-        "available for"
+        "available for",
+        "what is your available for",
+        "your available for",
+        "please mention available for",
+        "mention available for"
       ],
       "category": "preference",
       "default": "Any weekday - flexible timing",
@@ -5893,7 +6174,11 @@
     },
     "preference_753": {
       "patterns": [
-        "suitable time"
+        "suitable time",
+        "what is your suitable time",
+        "your suitable time",
+        "please mention suitable time",
+        "mention suitable time"
       ],
       "category": "preference",
       "default": "Flexible with timing",
@@ -5920,7 +6205,11 @@
     },
     "preference_1201": {
       "patterns": [
-        "interview mode"
+        "interview mode",
+        "what is your interview mode",
+        "your interview mode",
+        "please mention interview mode",
+        "mention interview mode"
       ],
       "category": "preference",
       "default": "Video call or in-person",
@@ -5933,7 +6222,10 @@
     },
     "preference_41": {
       "patterns": [
-        "video call"
+        "video call",
+        "do you have video call",
+        "are you video call",
+        "your video call"
       ],
       "category": "preference",
       "default": "Yes, comfortable with video interviews",
@@ -5946,7 +6238,10 @@
     },
     "personal_info_9627": {
       "patterns": [
-        "phone call"
+        "phone call",
+        "do you have phone call",
+        "are you phone call",
+        "your phone call"
       ],
       "category": "personal_info",
       "default": "Yes, available for phone screening",
@@ -5989,7 +6284,10 @@
     },
     "personal_info_9573": {
       "patterns": [
-        "panel interview"
+        "panel interview",
+        "do you have panel interview",
+        "are you panel interview",
+        "your panel interview"
       ],
       "category": "personal_info",
       "default": "Yes, comfortable with panel interviews",
@@ -6002,7 +6300,10 @@
     },
     "preference_8269": {
       "patterns": [
-        "group discussion"
+        "group discussion",
+        "do you have group discussion",
+        "are you group discussion",
+        "your group discussion"
       ],
       "category": "preference",
       "default": "Yes, can participate",
@@ -6015,7 +6316,10 @@
     },
     "preference_8521": {
       "patterns": [
-        "assignment"
+        "assignment",
+        "do you have assignment",
+        "are you assignment",
+        "your assignment"
       ],
       "category": "preference",
       "default": "Yes, can take assignments",
@@ -6028,7 +6332,10 @@
     },
     "preference_8145": {
       "patterns": [
-        "live coding"
+        "live coding",
+        "do you have live coding",
+        "are you live coding",
+        "your live coding"
       ],
       "category": "preference",
       "default": "Yes, comfortable with live coding",
@@ -6041,7 +6348,11 @@
     },
     "preference_9619": {
       "patterns": [
-        "why leaving"
+        "why leaving",
+        "what is your why leaving",
+        "your why leaving",
+        "please mention why leaving",
+        "mention why leaving"
       ],
       "category": "preference",
       "default": "Seeking new challenges and growth opportunities",
@@ -6054,7 +6365,11 @@
     },
     "preference_8518": {
       "patterns": [
-        "why change"
+        "why change",
+        "what is your why change",
+        "your why change",
+        "please mention why change",
+        "mention why change"
       ],
       "category": "preference",
       "default": "Career growth and new challenges",
@@ -6067,7 +6382,11 @@
     },
     "preference_1351": {
       "patterns": [
-        "motivation"
+        "motivation",
+        "what is your motivation",
+        "your motivation",
+        "please mention motivation",
+        "mention motivation"
       ],
       "category": "preference",
       "default": "Professional growth and skill development",
@@ -6080,7 +6399,11 @@
     },
     "preference_3114": {
       "patterns": [
-        "career goal"
+        "career goal",
+        "what is your career goal",
+        "your career goal",
+        "please mention career goal",
+        "mention career goal"
       ],
       "category": "preference",
       "default": "To become a Technical Lead in 2-3 years",
@@ -6093,7 +6416,11 @@
     },
     "preference_7771": {
       "patterns": [
-        "aspiration"
+        "aspiration",
+        "what is your aspiration",
+        "your aspiration",
+        "please mention aspiration",
+        "mention aspiration"
       ],
       "category": "preference",
       "default": "To work on challenging full-stack projects",
@@ -6140,7 +6467,11 @@
     },
     "preference_281": {
       "patterns": [
-        "job portal"
+        "job portal",
+        "what is your job portal",
+        "your job portal",
+        "please mention job portal",
+        "mention job portal"
       ],
       "category": "preference",
       "default": "LinkedIn",
@@ -6167,7 +6498,11 @@
     },
     "preference_1645": {
       "patterns": [
-        "referral code"
+        "referral code",
+        "what is your referral code",
+        "your referral code",
+        "please mention referral code",
+        "mention referral code"
       ],
       "category": "preference",
       "default": "Not applicable - self applied",
@@ -6196,7 +6531,11 @@
     },
     "preference_7350": {
       "patterns": [
-        "disability accommodation"
+        "disability accommodation",
+        "what is your disability accommodation",
+        "your disability accommodation",
+        "please mention disability accommodation",
+        "mention disability accommodation"
       ],
       "category": "preference",
       "default": "Not required",
@@ -6209,7 +6548,11 @@
     },
     "preference_2792": {
       "patterns": [
-        "contract duration"
+        "contract duration",
+        "what is your contract duration",
+        "your contract duration",
+        "please mention contract duration",
+        "mention contract duration"
       ],
       "category": "preference",
       "default": "Open to both permanent and contract",
@@ -6222,7 +6565,11 @@
     },
     "preference_6342": {
       "patterns": [
-        "project duration"
+        "project duration",
+        "what is your project duration",
+        "your project duration",
+        "please mention project duration",
+        "mention project duration"
       ],
       "category": "preference",
       "default": "Flexible with project duration",
@@ -6235,7 +6582,11 @@
     },
     "preference_5937": {
       "patterns": [
-        "engagement length"
+        "engagement length",
+        "what is your engagement length",
+        "your engagement length",
+        "please mention engagement length",
+        "mention engagement length"
       ],
       "category": "preference",
       "default": "Open to long-term engagements",
@@ -6248,7 +6599,11 @@
     },
     "experience_9015": {
       "patterns": [
-        "tenure"
+        "tenure",
+        "what is your tenure",
+        "your tenure",
+        "please mention tenure",
+        "mention tenure"
       ],
       "category": "experience",
       "default": "Looking for long-term opportunity",
@@ -6262,7 +6617,11 @@
     },
     "preference_9037": {
       "patterns": [
-        "assignment length"
+        "assignment length",
+        "what is your assignment length",
+        "your assignment length",
+        "please mention assignment length",
+        "mention assignment length"
       ],
       "category": "preference",
       "default": "Flexible",
@@ -6305,7 +6664,11 @@
     },
     "experience_20": {
       "patterns": [
-        "6 months"
+        "6 months",
+        "what is your 6 months",
+        "your 6 months",
+        "please mention 6 months",
+        "mention 6 months"
       ],
       "category": "experience",
       "default": "Open to 6 month contracts",
@@ -6319,7 +6682,11 @@
     },
     "preference_6654": {
       "patterns": [
-        "1 year"
+        "1 year",
+        "what is your 1 year",
+        "your 1 year",
+        "please mention 1 year",
+        "mention 1 year"
       ],
       "category": "preference",
       "default": "Open to 1 year contracts",
@@ -6332,7 +6699,11 @@
     },
     "experience_8555": {
       "patterns": [
-        "2 years"
+        "2 years",
+        "what is your 2 years",
+        "your 2 years",
+        "please mention 2 years",
+        "mention 2 years"
       ],
       "category": "experience",
       "default": "Open to 2 year contracts",
@@ -6391,7 +6762,11 @@
     },
     "preference_6629": {
       "patterns": [
-        "consultant"
+        "consultant",
+        "what is your consultant",
+        "your consultant",
+        "please mention consultant",
+        "mention consultant"
       ],
       "category": "preference",
       "default": "Open to consulting roles",
@@ -6404,7 +6779,11 @@
     },
     "salary_5466": {
       "patterns": [
-        "payroll"
+        "payroll",
+        "what is your payroll",
+        "your payroll",
+        "please mention payroll",
+        "mention payroll"
       ],
       "category": "salary",
       "default": "Direct payroll preferred",
@@ -6418,7 +6797,10 @@
     },
     "preference_3075": {
       "patterns": [
-        "direct hire"
+        "direct hire",
+        "do you have direct hire",
+        "are you direct hire",
+        "your direct hire"
       ],
       "category": "preference",
       "default": "Yes, preferred",
@@ -6461,7 +6843,10 @@
     },
     "preference_7134": {
       "patterns": [
-        "flexible with dates"
+        "flexible with dates",
+        "do you have flexible with dates",
+        "are you flexible with dates",
+        "your flexible with dates"
       ],
       "category": "preference",
       "default": "Yes, flexible with dates and times",
@@ -6474,7 +6859,10 @@
     },
     "preference_5106": {
       "patterns": [
-        "flexible with timing"
+        "flexible with timing",
+        "do you have flexible with timing",
+        "are you flexible with timing",
+        "your flexible with timing"
       ],
       "category": "preference",
       "default": "Yes, flexible with timing",
@@ -6487,7 +6875,10 @@
     },
     "preference_8703": {
       "patterns": [
-        "weekdays"
+        "weekdays",
+        "do you have weekdays",
+        "are you weekdays",
+        "your weekdays"
       ],
       "category": "preference",
       "default": "Yes, available on weekdays",
@@ -6500,7 +6891,11 @@
     },
     "preference_4113": {
       "patterns": [
-        "weekends"
+        "weekends",
+        "what is your weekends",
+        "your weekends",
+        "please mention weekends",
+        "mention weekends"
       ],
       "category": "preference",
       "default": "If necessary, available on weekends",
@@ -6513,7 +6908,10 @@
     },
     "preference_9504": {
       "patterns": [
-        "working days"
+        "working days",
+        "do you have working days",
+        "are you working days",
+        "your working days"
       ],
       "category": "preference",
       "default": "Yes, available on working days",
@@ -6526,7 +6924,11 @@
     },
     "preference_9150": {
       "patterns": [
-        "calendar"
+        "calendar",
+        "what is your calendar",
+        "your calendar",
+        "please mention calendar",
+        "mention calendar"
       ],
       "category": "preference",
       "default": "Can schedule anytime as per mutual convenience",
@@ -6539,7 +6941,10 @@
     },
     "preference_5186": {
       "patterns": [
-        "schedule interview"
+        "schedule interview",
+        "do you have schedule interview",
+        "are you schedule interview",
+        "your schedule interview"
       ],
       "category": "preference",
       "default": "Yes, please share available slots",
@@ -6552,7 +6957,11 @@
     },
     "preference_891": {
       "patterns": [
-        "linkedin specific"
+        "linkedin specific",
+        "what is your linkedin specific",
+        "your linkedin specific",
+        "please mention linkedin specific",
+        "mention linkedin specific"
       ],
       "category": "preference",
       "default": "Applying via LinkedIn Easy Apply",
@@ -6565,7 +6974,10 @@
     },
     "preference_5268": {
       "patterns": [
-        "easy apply"
+        "easy apply",
+        "do you have easy apply",
+        "are you easy apply",
+        "your easy apply"
       ],
       "category": "preference",
       "default": "Yes, via LinkedIn Easy Apply",
@@ -6578,7 +6990,11 @@
     },
     "preference_2958": {
       "patterns": [
-        "job id"
+        "job id",
+        "what is your job id",
+        "your job id",
+        "please mention job id",
+        "mention job id"
       ],
       "category": "preference",
       "default": "Found via LinkedIn",
@@ -6606,7 +7022,10 @@
     },
     "preference_4179": {
       "patterns": [
-        "open to negotiation"
+        "open to negotiation",
+        "do you have open to negotiation",
+        "are you open to negotiation",
+        "your open to negotiation"
       ],
       "category": "preference",
       "default": "Yes, can discuss compensation",
@@ -6619,7 +7038,11 @@
     },
     "salary_2880": {
       "patterns": [
-        "salary negotiable"
+        "salary negotiable",
+        "what is your salary negotiable",
+        "your salary negotiable",
+        "please mention salary negotiable",
+        "mention your salary negotiable"
       ],
       "category": "salary",
       "default": "Yes, within reasonable range",
@@ -6633,7 +7056,10 @@
     },
     "preference_8796": {
       "patterns": [
-        "negotiation"
+        "negotiation",
+        "do you have negotiation",
+        "are you negotiation",
+        "your negotiation"
       ],
       "category": "preference",
       "default": "Yes, open to discussion",
@@ -6646,7 +7072,11 @@
     },
     "salary_8328": {
       "patterns": [
-        "discuss salary"
+        "discuss salary",
+        "what is your discuss salary",
+        "your discuss salary",
+        "please mention discuss salary",
+        "mention your discuss salary"
       ],
       "category": "salary",
       "default": "Yes, willing to discuss",
@@ -6660,7 +7090,11 @@
     },
     "salary_8796": {
       "patterns": [
-        "salary discussion"
+        "salary discussion",
+        "what is your salary discussion",
+        "your salary discussion",
+        "please mention salary discussion",
+        "mention your salary discussion"
       ],
       "category": "salary",
       "default": "Yes, open to discussion",
@@ -6689,7 +7123,11 @@
     },
     "salary_8914": {
       "patterns": [
-        "flexible on salary"
+        "flexible on salary",
+        "what is your flexible on salary",
+        "your flexible on salary",
+        "please mention flexible on salary",
+        "mention your flexible on salary"
       ],
       "category": "salary",
       "default": "Yes, flexible within reason",
@@ -6703,7 +7141,10 @@
     },
     "education_9326": {
       "patterns": [
-        "please select your highest education qualification"
+        "please select your highest education qualification",
+        "what is your please select your highest education qualification",
+        "your please select your highest education qualification",
+        "please mention please select your highest education qualification"
       ],
       "category": "education",
       "default": "Bachelor's",
@@ -6716,7 +7157,11 @@
     },
     "yes_no_3731": {
       "patterns": [
-        "please select your current work authorization status"
+        "please select your current work authorization status",
+        "what is your please select your current work authorization status",
+        "your please select your current work authorization status",
+        "please mention please select your current work authorization status",
+        "mention please select your current work authorization status"
       ],
       "category": "yes_no",
       "default": "Authorized to work in India",
@@ -6731,7 +7176,11 @@
     },
     "salary_3657": {
       "patterns": [
-        "please share your ctc ectc and notice period"
+        "please share your ctc ectc and notice period",
+        "what is your please share your ctc ectc and notice period",
+        "your please share your ctc ectc and notice period",
+        "please mention please share your ctc ectc and notice period",
+        "mention your please share your ctc ectc and notice period"
       ],
       "category": "salary",
       "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days",
@@ -6745,7 +7194,11 @@
     },
     "salary_6123": {
       "patterns": [
-        "please provide your ctc details"
+        "please provide your ctc details",
+        "what is your please provide your ctc details",
+        "your please provide your ctc details",
+        "please mention please provide your ctc details",
+        "mention your please provide your ctc details"
       ],
       "category": "salary",
       "default": "Current: 23 LPA, Expected: 30 LPA",
@@ -6759,7 +7212,10 @@
     },
     "work_authorization": {
       "patterns": [
-        "legally authorized"
+        "legally authorized",
+        "do you have legally authorized",
+        "are you legally authorized",
+        "your legally authorized"
       ],
       "category": "work_authorization",
       "default": "Yes, I am legally authorized to work in India.",
@@ -6774,7 +7230,10 @@
     },
     "work_mode_wfo": {
       "patterns": [
-        "remote work"
+        "remote work",
+        "do you have remote work",
+        "are you remote work",
+        "your remote work"
       ],
       "category": "work_mode",
       "default": "Yes, I am open to both remote and work-from-office arrangements.",
@@ -6789,7 +7248,10 @@
     },
     "tech_yes_no": {
       "patterns": [
-        "willing to accept"
+        "willing to accept",
+        "do you have willing to accept",
+        "are you willing to accept",
+        "your willing to accept"
       ],
       "category": "yes_no",
       "default": "Yes",
@@ -6928,6 +7390,246 @@
         "text": "NumPy, Pandas, FastAPI, Flask, SQLAlchemy, Celery, PyTorch, TensorFlow, Scikit-learn, LangChain, OpenAI"
       },
       "priority": 8
+    },
+    "react_version": {
+      "patterns": [
+        "version of react",
+        "react version are you using",
+        "what version of react",
+        "which version of react",
+        "react version you are using",
+        "latest version of react",
+        "current react version",
+        "which react version",
+        "react version have you been using",
+        "version of react have you been using"
+      ],
+      "category": "skills",
+      "default": "18.x",
+      "input_type_defaults": {
+        "radio": "18.x",
+        "select": "18.x",
+        "text": "18.x",
+        "number": "18"
+      },
+      "priority": 9
+    },
+    "angular_version": {
+      "patterns": [
+        "version of angular",
+        "angular version are you using",
+        "what version of angular",
+        "which angular version",
+        "angular version you are using",
+        "latest version of angular",
+        "current angular version",
+        "which version of angular are you",
+        "angular version you are working",
+        "angular version currently"
+      ],
+      "category": "skills",
+      "default": "15",
+      "input_type_defaults": {
+        "radio": "18",
+        "select": "18",
+        "text": "18",
+        "number": "18"
+      },
+      "priority": 9
+    },
+    "class_vs_functional": {
+      "patterns": [
+        "class components or functional components",
+        "prefer class components or functional",
+        "do you prefer class components",
+        "class component or functional component",
+        "functional components vs class components",
+        "writing class components or functional components",
+        "prefer writing class components"
+      ],
+      "category": "preference",
+      "default": "Functional Components",
+      "input_type_defaults": {
+        "radio": "Functional Components",
+        "select": "Functional Components",
+        "text": "Functional Components"
+      },
+      "priority": 9
+    },
+    "technologies_worked": {
+      "patterns": [
+        "front-end and back-end technologies have you worked",
+        "technologies have you worked on",
+        "what technologies have you worked",
+        "frontend and backend technologies",
+        "which frontend and backend",
+        "backend languages have you used in production",
+        "which backend languages",
+        "front-end technologies have you worked"
+      ],
+      "category": "skills",
+      "default": "React, Node.js, Python, Java, Spring Boot, PostgreSQL, MongoDB, Docker, AWS",
+      "input_type_defaults": {
+        "radio": "React, Node.js",
+        "select": "React, Node.js, Python, Java, Spring Boot",
+        "text": "React, Node.js, Python, Java, Spring Boot, PostgreSQL, MongoDB, Docker, AWS"
+      },
+      "priority": 9
+    },
+    "expertise_proficiency": {
+      "patterns": [
+        "expertise with react",
+        "expertise with typescript",
+        "expertise with angular",
+        "expertise with node",
+        "expertise with java",
+        "expertise with python",
+        "expertise with",
+        "expertise level",
+        "what is your expertise level",
+        "proficiency level",
+        "what is your proficiency level",
+        "level of proficiency",
+        "level of expertise",
+        "your expertise in",
+        "your proficiency in",
+        "how proficient are you",
+        "rate your expertise"
+      ],
+      "category": "skills",
+      "default": "Strong proficiency - 4+ years hands-on experience building production applications",
+      "input_type_defaults": {
+        "radio": "Strong",
+        "select": "Strong proficiency",
+        "text": "Strong proficiency - 4+ years hands-on experience building production applications"
+      },
+      "priority": 8
+    },
+    "joining_availability": {
+      "patterns": [
+        "how soon you can join us",
+        "how soon you will be able to join us",
+        "how soon can you join",
+        "when can you join us",
+        "joining availability"
+      ],
+      "category": "availability",
+      "default": "Can join within 15 days",
+      "input_type_defaults": {
+        "radio": "15 days",
+        "select": "Within 15 days",
+        "text": "Can join within 15 days"
+      },
+      "priority": 8
+    },
+    "last_working_date_format": {
+      "patterns": [
+        "last working date in dd-mmm-yy format",
+        "last working date in dd-mmm-yyyy",
+        "last working date format",
+        "exact lwd in dd-mmm-yy",
+        "lwd in dd-mmm-yy"
+      ],
+      "category": "notice_period",
+      "default": "dynamic_date",
+      "input_type_defaults": {
+        "text": "dynamic_date"
+      },
+      "priority": 9,
+      "dynamic_answer": true
+    },
+    "rating_scale_short": {
+      "patterns": [
+        "rate your experience",
+        "rate your proficiency",
+        "rate your skills",
+        "rate your experience debugging",
+        "rate your experience working",
+        "rate your communication",
+        "rate your stakeholder"
+      ],
+      "category": "skills",
+      "default": "4",
+      "input_type_defaults": {
+        "radio": "4",
+        "select": "4",
+        "text": "4",
+        "number": "4"
+      },
+      "priority": 7
+    },
+    "current_salary_lpa": {
+      "patterns": [
+        "ctc in lakhs per annum",
+        "ctc in lpa",
+        "current ctc in lpa",
+        "current ctc (lpa)",
+        "salary in lpa",
+        "current salary in lpa",
+        "mention your current ctc in lpa",
+        "what is your ctc-lpa",
+        "ctc salary in lakh per annum"
+      ],
+      "category": "salary",
+      "default": "23",
+      "input_type_defaults": {
+        "radio": "23",
+        "select": "23",
+        "text": "23",
+        "number": "23"
+      },
+      "priority": 10
+    },
+    "expected_salary_lpa": {
+      "patterns": [
+        "expected ctc in lakhs per annum",
+        "expected ctc in lpa",
+        "expected ctc (lpa)",
+        "expected salary in lpa",
+        "expected ctc salary in lakh per annum",
+        "desired compensation in lpa"
+      ],
+      "category": "salary",
+      "default": "30",
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30",
+        "text": "30",
+        "number": "30"
+      },
+      "priority": 10
+    },
+    "current_monthly_salary": {
+      "patterns": [
+        "current monthly salary",
+        "monthly salary current",
+        "what is your current monthly salary"
+      ],
+      "category": "salary",
+      "default": "191667",
+      "input_type_defaults": {
+        "radio": "191667",
+        "select": "191667",
+        "text": "191667",
+        "number": "191667"
+      },
+      "priority": 10
+    },
+    "expected_monthly_salary": {
+      "patterns": [
+        "expected monthly salary",
+        "monthly salary expected",
+        "what is your expected monthly salary"
+      ],
+      "category": "salary",
+      "default": "250000",
+      "input_type_defaults": {
+        "radio": "250000",
+        "select": "250000",
+        "text": "250000",
+        "number": "250000"
+      },
+      "priority": 10
     }
   },
   "categories": {

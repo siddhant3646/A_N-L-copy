@@ -35,6 +35,19 @@ FUZZY_MATCH_THRESHOLD = 0.65
 FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
 
 
+# Module-level keyword constants - single definition used by all methods.
+# Previously these were duplicated in _same_keyword_category() and _fuzzy_match_question().
+SALARY_KEYWORDS = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
+EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp']
+NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'availability']
+LOCATION_KEYWORDS = ['location', 'city', 'relocate', 'preferred location']
+ASYNC_JOB_KEYWORDS = [
+    'asynchronous programming', 'celery', 'asyncio', 'async io', 'background job',
+    'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka',
+    'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing',
+]
+
+
 class SentinelAgent:
     """
     Sentinel Agent - 100% Scripted Browser Automation.
@@ -263,15 +276,10 @@ class SentinelAgent:
     
     def _same_keyword_category(self, q1: str, q2: str) -> bool:
         """Check if two questions belong to the same keyword category."""
-        salary_keywords = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
-        experience_keywords = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp']
-        notice_keywords = ['notice', 'serving', 'join', 'availability']
-        location_keywords = ['location', 'city', 'relocate', 'preferred location']
-        
         q1_lower = q1.lower()
         q2_lower = q2.lower()
         
-        categories = [salary_keywords, experience_keywords, notice_keywords, location_keywords]
+        categories = [SALARY_KEYWORDS, EXPERIENCE_KEYWORDS, NOTICE_KEYWORDS, LOCATION_KEYWORDS]
         for category in categories:
             q1_in_cat = any(kw in q1_lower for kw in category)
             q2_in_cat = any(kw in q2_lower for kw in category)
@@ -331,11 +339,11 @@ class SentinelAgent:
         # Prevents CTC questions matching experience patterns
         # ==========================================
         
-        # Define keyword categories for priority matching
-        salary_keywords = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
-        experience_keywords = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp']
-        notice_keywords = ['notice', 'serving', 'join', 'availability']
-        location_keywords = ['location', 'city', 'relocate', 'preferred location']
+        # Use module-level keyword constants (defined at top of file)
+        salary_keywords = SALARY_KEYWORDS
+        experience_keywords = EXPERIENCE_KEYWORDS
+        notice_keywords = NOTICE_KEYWORDS
+        location_keywords = LOCATION_KEYWORDS
         
         # LWD (Last Working Day) detection - BEFORE experience keywords
         lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working', 'official last working day']
@@ -366,8 +374,7 @@ class SentinelAgent:
         is_dsa_question = any(kw in question_lower for kw in dsa_keywords)
         
         # Async/Background job questions - MUST BE BEFORE generic experience check
-        async_job_keywords = ['asynchronous programming', 'celery', 'asyncio', 'async io', 'background job', 'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka', 'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing']
-        is_async_job_question = any(kw in question_lower for kw in async_job_keywords)
+        is_async_job_question = any(kw in question_lower for kw in ASYNC_JOB_KEYWORDS)
         
         # Tech stacks / Python libraries questions - MUST CHECK BEFORE EXPERIENCE
         tech_stack_keywords = ['tech stack', 'tech-stack', 'technologies worked', 'worked upon', 'major tech']
@@ -414,6 +421,42 @@ class SentinelAgent:
         country_keywords = ['country you currently', 'which country', 'country currently', 'state you', 'which state']
         is_country_question = any(kw in question_lower for kw in country_keywords)
         
+        # React/Angular version questions - MUST be checked BEFORE total_exp
+        version_keywords = ['version of react', 'react version', 'version of angular', 'angular version',
+                           'which version of react', 'which version of angular', 'which react version',
+                           'which angular version', 'react version have you been', 'angular version you are working']
+        is_version_question = any(kw in question_lower for kw in version_keywords)
+        
+        # Expertise questions ("Expertise with React.js?") - NOT years of experience
+        expertise_keywords = ['expertise with', 'expertise level', 'proficiency level',
+                              'level of proficiency', 'level of expertise',
+                              'how proficient are you', 'your expertise in', 'your proficiency in']
+        is_expertise_question = any(kw in question_lower for kw in expertise_keywords)
+        
+        # Rating scale short ("Rate your experience (1-5)") - without "on a scale"
+        rating_scale_short_keywords = ['rate your experience', 'rate your proficiency', 'rate your skills',
+                                       'rate your communication', 'rate your stakeholder']
+        is_rating_scale_short = any(kw in question_lower for kw in rating_scale_short_keywords)
+        
+        # Last Working Date in specific format ("dd-mmm-yy format")
+        lwd_format_keywords = ['last working date in dd-mmm', 'lwd in dd-mmm', 'last working date format']
+        is_lwd_format_question = any(kw in question_lower for kw in lwd_format_keywords)
+        
+        # Class vs Functional components
+        class_vs_functional_keywords = ['class components or functional', 'functional components vs class',
+                                        'prefer writing class components', 'class component or functional']
+        is_class_vs_functional = any(kw in question_lower for kw in class_vs_functional_keywords)
+        
+        # Technologies worked question
+        technologies_worked_keywords = ['front-end and back-end technologies', 'technologies have you worked',
+                                        'backend languages have you used', 'which frontend and backend']
+        is_technologies_worked = any(kw in question_lower for kw in technologies_worked_keywords)
+        
+        # Joining availability ("How soon you can join us?")
+        joining_availability_keywords = ['how soon you can join', 'how soon you will be able to join',
+                                         'how soon can you join', 'when can you join us']
+        is_joining_availability = any(kw in question_lower for kw in joining_availability_keywords)
+        
         # ==========================================
         # COMPLIANCE & EMPLOYMENT HISTORY DETECTION
         # These questions MUST return "No" for compliance safety
@@ -429,8 +472,7 @@ class SentinelAgent:
         }
         
         # Pattern: Async/Celery/Background job questions - MUST be before company patterns
-        async_job_keywords = ['asynchronous programming', 'celery', 'asyncio', 'async io', 'background job', 'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka', 'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing']
-        is_async_job_question = any(kw in question_lower for kw in async_job_keywords)
+        is_async_job_question = any(kw in question_lower for kw in ASYNC_JOB_KEYWORDS)
         if is_async_job_question:
             return 'Yes, I have extensive experience with asynchronous programming using Celery, AsyncIO, and background job processing. I have designed and implemented task queues, scheduled jobs, and message-driven architectures using RabbitMQ, Redis, and logging frameworks to handle high-throughput event processing.', 0.98
         
@@ -517,6 +559,11 @@ class SentinelAgent:
             # Format: DD MMM YYYY (e.g., "25 Jul 2026")
             return lwd_date.strftime('%d %b %Y'), 0.98
         
+        # LWD in specific dd-mmm-yy format ("Last Working Date in dd-mmm-yy format")
+        if is_lwd_format_question:
+            lwd_date = datetime.now() + timedelta(days=15)
+            return lwd_date.strftime('%d-%b-%y'), 0.98
+        
         # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 15 days)
         start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
                                'when would you like to start', 'when can you start working',
@@ -544,6 +591,10 @@ class SentinelAgent:
         if is_rating_question:
             return '9', 0.95
         
+        # Rating scale short ("Rate your experience (1-5)") - different scale than 1-10
+        if is_rating_scale_short:
+            return '4', 0.95
+        
         if is_position_question:
             return 'Backend', 0.95
         
@@ -559,6 +610,18 @@ class SentinelAgent:
         
         if is_tech_question:
             return 'Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis', 0.95
+        
+        # Handle technologies worked question ("Which front-end and back-end technologies have you worked on?")
+        if is_technologies_worked:
+            return 'React, Node.js, Python, Java, Spring Boot, PostgreSQL, MongoDB, Docker, AWS', 0.95
+        
+        # Handle expertise questions ("Expertise with React.js?") - NOT years of experience
+        if is_expertise_question:
+            return 'Strong proficiency - 4+ years hands-on experience building production applications', 0.95
+        
+        # Handle class vs functional components question
+        if is_class_vs_functional:
+            return 'Functional Components', 0.95
         
         # Handle database NAME questions - BEFORE experience check
         if is_db_name_question:
@@ -592,6 +655,14 @@ class SentinelAgent:
         if is_job_change_question:
             return 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals', 0.95
         
+        # Handle version questions - MUST be BEFORE total_exp (compound questions like
+        # "What is total experience? Which Angular version you are working currently?")
+        if is_version_question:
+            if 'react' in question_lower:
+                return '18.x', 0.98
+            if 'angular' in question_lower:
+                return '18', 0.98
+        
         # Handle total experience (short form) questions
         if is_total_exp_question:
             return '4 Years', 0.95
@@ -608,6 +679,20 @@ class SentinelAgent:
         
         # Priority patterns based on detected category
         if is_salary_question:
+            # Monthly salary - MUST check before generic CTC handling
+            # Annual CTC 2300000 / 3000000 -> monthly ~191667 / ~250000
+            if 'monthly' in question_lower:
+                if 'expected' in question_lower or 'expect' in question_lower:
+                    return '250000', 0.98
+                return '191667', 0.98
+
+            # LPA (Lakhs Per Annum) questions - return LPA value, not annual INR
+            # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum" -> "23" or "30"
+            if 'lpa' in question_lower or 'lakh' in question_lower or 'per annum' in question_lower:
+                if 'expected' in question_lower or 'expect' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
+                    return '30', 0.98
+                return '23', 0.98
+
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
                 return '23', 0.98
@@ -644,6 +729,11 @@ class SentinelAgent:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("years of experience")
                 return answer or '4 Years', max(confidence, 0.95)
+        
+        # Handle joining availability ("How soon you can join us?") - BEFORE notice check
+        # since "join" is in notice_keywords and would otherwise return NP days
+        if is_joining_availability:
+            return 'Can join within 15 days', 0.95
         
         if is_notice_question or is_immediate_joiners_only:
             if self._current_platform == 'linkedin':
@@ -2475,8 +2565,17 @@ class SentinelAgent:
                     elif 'NEXT' in result:
                         print("⏭️ Skipped to next job in list")
                         await asyncio.sleep(random.uniform(4, 8))  # Wait for job details to load
+                    elif 'No Easy Apply' in result:
+                        print("⏭️ Job has no Easy Apply button (closed/expired), moving on...")
+                        await asyncio.sleep(random.uniform(2, 4))  # Short wait before selecting next
                     else:
                         print("⏭️ Skipped job (already applied or not Easy Apply)")
+                    continue
+                
+                # LinkedIn: Job card selected from sidebar — wait for details pane to load
+                if 'LINKEDIN_JOB_SELECTED' in result:
+                    print(f"📋 Selected job from list, waiting for details to load...")
+                    await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to render
                     continue
                 
                 # LinkedIn: Form stuck loop detection in outer step loop
@@ -8908,6 +9007,9 @@ class SentinelAgent:
                         }
                     }
 
+                    // Persistent skip-list across invocations (survives between evaluate calls)
+                    if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+
                     // No modal open - handle job selection and clicking Easy Apply
                     console.log('No modal detected. Checking for Easy Apply button...');
                     const easyApplyBtn = findEasyApplyButton();
@@ -8915,6 +9017,57 @@ class SentinelAgent:
                         console.log('Easy Apply button found, clicking...');
                         easyApplyBtn.click();
                         return 'LINKEDIN_EASY_APPLY_CLICKED';
+                    }
+
+                    // ── NO EASY APPLY BUTTON FOUND ──
+                    // If a job is currently selected/active but has no Easy Apply button
+                    // (e.g. "No longer accepting applications"), mark it as skipped so we
+                    // don't keep re-selecting it in an infinite loop.
+                    {
+                        // Detect active job ID from URL parameter OR from active card in DOM
+                        const urlParams = new URLSearchParams(window.location.search);
+                        let currentJobId = urlParams.get('currentJobId');
+                        
+                        // Fallback: extract job ID from the active card in the sidebar
+                        if (!currentJobId) {
+                            const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                              document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                              document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                              document.querySelector('.active [data-job-id]') ||
+                                              document.querySelector('[data-occludable-job-id].jobs-search-results-list__list-item--active');
+                            if (activeCard) {
+                                currentJobId = activeCard.getAttribute('data-job-id') || 
+                                              activeCard.getAttribute('data-occludable-job-id');
+                            }
+                        }
+                        
+                        if (currentJobId && !window.__skippedJobIds.has(currentJobId)) {
+                            // Check for signs this job cannot be applied to
+                            const detailPane = document.querySelector('.job-view-layout, .jobs-unified-top-card, .jobs-details, .scaffold-layout__detail');
+                            const detailText = detailPane ? (detailPane.innerText || '').toLowerCase() : document.body.innerText.toLowerCase();
+                            const noApplySignals = [
+                                'no longer accepting',
+                                'application closed',
+                                'applications closed',
+                                'no longer available',
+                                'this job is no longer',
+                                'expired',
+                                'position has been filled'
+                            ];
+                            const hasNoApplySignal = noApplySignals.some(sig => detailText.includes(sig));
+                            // Also skip if we simply can't find an Easy Apply button after selecting this job
+                            if (hasNoApplySignal || !findEasyApplyButton()) {
+                                console.log('Job ' + currentJobId + ' has no Easy Apply button (closed/expired). Marking as skipped.');
+                                window.__skippedJobIds.add(currentJobId);
+                                return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — ' + (hasNoApplySignal ? 'job closed' : 'button not found');
+                            }
+                        }
+                        
+                        // Even without a job ID, if we still can't find Easy Apply, return skip
+                        if (!currentJobId && !findEasyApplyButton()) {
+                            console.log('No Easy Apply button and could not identify job ID. Skipping...');
+                            return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — unknown job';
+                        }
                     }
 
                     // Navigation logic if needed
@@ -8988,17 +9141,32 @@ class SentinelAgent:
                     // 2. Must NOT be "Applied"
                     // 3. Must have "Easy Apply" text
                     // 4. Must not be the currently active card
+                    // 5. Must not be in the skipped jobs set
                     const candidates = jobCards.filter(card => {
                         const text = card.innerText.toLowerCase();
                         // Active class may be on card itself OR on a parent <li> element
                         // LinkedIn puts --active on the <li> wrapper, not on .job-card-container
                         const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
+                                        card.classList.contains('job-card-list__list-item--active') ||
                                         card.closest('.jobs-search-results-list__list-item--active') !== null ||
+                                        card.closest('.job-card-list__list-item--active') !== null ||
                                         card.closest('[aria-current="true"]') !== null ||
-                                        card.getAttribute('aria-current') === 'true';
+                                        card.getAttribute('aria-current') === 'true' ||
+                                        card.classList.contains('active') ||
+                                        card.closest('.active') !== null;
                         
                         if (isActive) return false;
                         if (!isVisible(card)) return false;
+                        
+                        // Check if this job's ID is in the skip list
+                        const cardJobId = card.getAttribute('data-job-id') ||
+                                         card.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
+                                         card.getAttribute('data-occludable-job-id') ||
+                                         card.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id');
+                        if (cardJobId && window.__skippedJobIds && window.__skippedJobIds.has(cardJobId)) {
+                            console.log('Skipping previously-skipped job ID:', cardJobId);
+                            return false;
+                        }
                         
                         // Check explicit "Applied" status
                         if (text.includes('applied')) {

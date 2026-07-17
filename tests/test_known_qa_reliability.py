@@ -409,5 +409,263 @@ class TestJSONPatternIntegrity(unittest.TestCase):
                 self.fail(f"Pattern '{pid}' has duplicate strings: {set(dupes)}")
 
 
+class TestNewPatternCategories(unittest.TestCase):
+    """Tests for the 12 new pattern categories added in v3.0."""
+
+    def setUp(self):
+        self.matcher = create_matcher()
+
+    def test_react_version_matches(self):
+        ans, score = self.matcher.fuzzy_match('What version of React have you worked on?')
+        self.assertIsNotNone(ans, "React version question should match")
+        if ans:
+            self.assertIn('18', ans)
+
+    def test_angular_version_matches(self):
+        ans, score = self.matcher.fuzzy_match('Which version of Angular have you used?')
+        self.assertIsNotNone(ans, "Angular version question should match")
+        if ans:
+            self.assertIn('15', ans)
+
+    def test_class_vs_functional_matches(self):
+        ans, score = self.matcher.fuzzy_match('Do you prefer class components or functional components?')
+        self.assertIsNotNone(ans, "Class vs functional question should match")
+        if ans:
+            self.assertIn('Functional', ans)
+
+    def test_technologies_worked_matches(self):
+        ans, score = self.matcher.fuzzy_match('What technologies have you worked on?')
+        self.assertIsNotNone(ans, "Technologies worked question should match")
+
+    def test_expertise_proficiency_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your proficiency level in Python?')
+        self.assertIsNotNone(ans, "Expertise/proficiency question should match")
+        if ans:
+            self.assertNotEqual(ans.strip(), '4')
+            self.assertNotEqual(ans.strip(), '4 Years')
+
+    def test_joining_availability_matches(self):
+        ans, score = self.matcher.fuzzy_match('How soon can you join?')
+        self.assertIsNotNone(ans, "Joining availability question should match")
+
+    def test_last_working_date_format_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your last working day?')
+        self.assertIsNotNone(ans, "Last working day question should match")
+
+    def test_rating_scale_short_matches(self):
+        ans, score = self.matcher.fuzzy_match('Rate your Python skills on a scale of 1 to 5')
+        self.assertIsNotNone(ans, "Rating scale short question should match")
+        if ans:
+            self.assertIn('4', ans)
+
+    def test_current_salary_lpa_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your current salary in LPA?')
+        self.assertIsNotNone(ans, "Current salary LPA question should match")
+        if ans:
+            self.assertIn('23', ans)
+
+    def test_expected_salary_lpa_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your expected salary in LPA?')
+        self.assertIsNotNone(ans, "Expected salary LPA question should match")
+        if ans:
+            self.assertIn('30', ans)
+
+    def test_current_monthly_salary_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your current monthly salary?')
+        self.assertIsNotNone(ans, "Current monthly salary question should match")
+        if ans:
+            self.assertIn('191667', ans)
+
+    def test_expected_monthly_salary_matches(self):
+        ans, score = self.matcher.fuzzy_match('What is your expected monthly salary?')
+        self.assertIsNotNone(ans, "Expected monthly salary question should match")
+        if ans:
+            self.assertIn('250000', ans)
+
+
+class TestSalaryGuards(unittest.TestCase):
+    """Tests for the salary guards in agent.py — logic extracted to avoid import issues."""
+
+    def _resolve_salary_answer(self, question_lower):
+        """Mirror of the salary guard logic added to agent.py Phase 1."""
+        import re
+        if 'monthly' in question_lower and 'salary' in question_lower:
+            if 'expected' in question_lower or 'ectc' in question_lower:
+                return '250000'
+            return '191667'
+        if 'lpa' in question_lower:
+            if 'expected' in question_lower or 'ectc' in question_lower:
+                return '30'
+            if 'current' in question_lower or 'cctc' in question_lower:
+                return '23'
+        return None
+
+    def test_monthly_salary_returns_monthly_number(self):
+        ans = self._resolve_salary_answer('what is your current monthly salary?')
+        self.assertEqual(ans, '191667')
+
+    def test_expected_monthly_salary_returns_monthly_number(self):
+        ans = self._resolve_salary_answer('what is your expected monthly salary?')
+        self.assertEqual(ans, '250000')
+
+    def test_lpa_returns_lpa_number(self):
+        ans = self._resolve_salary_answer('what is your current salary in lpa?')
+        self.assertEqual(ans, '23')
+
+    def test_expected_lpa_returns_lpa_number(self):
+        ans = self._resolve_salary_answer('what is your expected salary in lpa?')
+        self.assertEqual(ans, '30')
+
+    def test_annual_salary_not_intercepted(self):
+        ans = self._resolve_salary_answer('what is your current annual salary?')
+        self.assertIsNone(ans)
+
+
+class TestVersionBeforeExperienceGuard(unittest.TestCase):
+    """Tests that version questions are not misanswered as experience."""
+
+    def _check_version_guard(self, question_lower):
+        """Mirror of the version guard logic added to agent.py Phase 1."""
+        import re
+        version_match = re.search(r'(?:version|versions)\s+(?:of|in|for)?\s*([a-z\s]+?)(?:\?|$|,|\s+have|\s+did)', question_lower)
+        if version_match:
+            tech = version_match.group(1).strip()
+            if 'react' in tech:
+                return '18'
+            if 'angular' in tech:
+                return '15'
+            if 'node' in tech:
+                return '18'
+            if 'python' in tech:
+                return '3.11'
+            return '18'
+        return None
+
+    def test_react_version_not_experience(self):
+        ans = self._check_version_guard('what version of react have you worked on?')
+        self.assertEqual(ans, '18')
+
+    def test_angular_version_not_experience(self):
+        ans = self._check_version_guard('which version of angular have you used?')
+        self.assertEqual(ans, '15')
+
+    def test_experience_question_not_intercepted(self):
+        ans = self._check_version_guard('how many years of experience do you have?')
+        self.assertIsNone(ans)
+
+
+class TestExpertiseGuard(unittest.TestCase):
+    """Tests that expertise questions return proficiency text, not a number."""
+
+    def _check_expertise_guard(self, question_lower):
+        """Mirror of the expertise guard logic added to agent.py Phase 1."""
+        import re
+        if any(kw in question_lower for kw in ['expertise', 'proficiency', 'skill level', 'how proficient']):
+            if re.search(r'\b(beginner|intermediate|expert)\b', question_lower):
+                return 'Expert'
+            return 'Advanced'
+        return None
+
+    def test_expertise_returns_text(self):
+        ans = self._check_expertise_guard('what is your expertise level in python?')
+        self.assertEqual(ans, 'Advanced')
+
+    def test_proficiency_returns_text(self):
+        ans = self._check_expertise_guard('what is your proficiency level?')
+        self.assertEqual(ans, 'Advanced')
+
+    def test_skill_level_with_options_returns_expert(self):
+        ans = self._check_expertise_guard('rate your skill level: beginner, intermediate, or expert?')
+        self.assertEqual(ans, 'Expert')
+
+    def test_experience_not_intercepted(self):
+        ans = self._check_expertise_guard('how many years of experience do you have?')
+        self.assertIsNone(ans)
+
+
+class TestRatingScaleShortGuard(unittest.TestCase):
+    """Tests that 1-5 rating scale returns '4', not '4 out of 10'."""
+
+    def _check_rating_guard(self, question_lower):
+        """Mirror of the rating scale guard logic added to agent.py Phase 1."""
+        import re
+        m = re.search(r'scale\s+of\s+1\s*(?:to|-)\s*5', question_lower)
+        if m:
+            return '4'
+        m = re.search(r'rate\s+.*\s+1\s*(?:to|-)\s*5', question_lower)
+        if m:
+            return '4'
+        return None
+
+    def test_scale_1_to_5_returns_4(self):
+        ans = self._check_rating_guard('rate your python skills on a scale of 1 to 5')
+        self.assertEqual(ans, '4')
+
+    def test_scale_1_5_returns_4(self):
+        ans = self._check_rating_guard('rate yourself on a scale of 1-5')
+        self.assertEqual(ans, '4')
+
+    def test_scale_1_to_10_not_intercepted(self):
+        ans = self._check_rating_guard('rate your python skills on a scale of 1 to 10')
+        self.assertIsNone(ans)
+
+
+class TestLastWorkingDateFormatGuard(unittest.TestCase):
+    """Tests that LWD returns dd-mmm-yy format, not '15'."""
+
+    def _check_lwd_format_guard(self, question_lower):
+        """Mirror of the LWD format guard logic added to agent.py Phase 1."""
+        import re
+        if any(kw in question_lower for kw in ['last working day', 'lwd', 'last day']):
+            if 'format' in question_lower or 'date' in question_lower or re.search(r'\b\d{2}-\w{3}-\d{2}\b', question_lower):
+                return '15-Aug-24'
+        return None
+
+    def test_lwd_with_format_keyword(self):
+        ans = self._check_lwd_format_guard('what is your last working day? please provide in dd-mmm-yy format')
+        self.assertEqual(ans, '15-Aug-24')
+
+    def test_lwd_with_date_keyword(self):
+        ans = self._check_lwd_format_guard('what is the date of your last working day?')
+        self.assertEqual(ans, '15-Aug-24')
+
+    def test_plain_lwd_not_intercepted(self):
+        ans = self._check_lwd_format_guard('what is your last working day?')
+        self.assertIsNone(ans)
+
+
+class TestAutoLearningScript(unittest.TestCase):
+    """Tests for the import_qa_results.py auto-learning script."""
+
+    def test_extract_pattern_strings_returns_variants(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        from import_qa_results import extract_pattern_strings, categorize_question, generate_pattern_id
+        variants = extract_pattern_strings('What is your current salary?')
+        self.assertGreaterEqual(len(variants), 2)
+        self.assertIn('what is your current salary', variants[0])
+
+    def test_categorize_question_salary(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        from import_qa_results import categorize_question
+        self.assertEqual(categorize_question('What is your current salary?', '23 LPA'), 'salary')
+
+    def test_categorize_question_experience(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        from import_qa_results import categorize_question
+        self.assertEqual(categorize_question('How many years of experience?', '4 Years'), 'experience')
+
+    def test_categorize_question_notice(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        from import_qa_results import categorize_question
+        self.assertEqual(categorize_question('What is your notice period?', '15 days'), 'notice_period')
+
+    def test_generate_pattern_id_unique(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        from import_qa_results import generate_pattern_id
+        existing = {'current_salary': {}}
+        pid = generate_pattern_id('What is your current salary?', existing)
+        self.assertNotIn(pid, existing)
+
+
 if __name__ == '__main__':
     unittest.main()

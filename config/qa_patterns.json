@@ -1272,7 +1272,7 @@
       "input_type_defaults": {
         "radio": "Indian",
         "checkbox": "Indian",
-        "select": "Indian",
+        "select": "India",
         "text": "Indian"
       },
       "priority": 9
@@ -5940,7 +5940,7 @@
       "default": "Indian",
       "input_type_defaults": {
         "radio": "Indian",
-        "select": "Indian",
+        "select": "India",
         "text": "Indian"
       },
       "priority": 4

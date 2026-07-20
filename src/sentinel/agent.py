@@ -87,6 +87,9 @@ class SentinelAgent:
         self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
         self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
         self._linkedin_no_jobs_scroll_count = 0  # Track consecutive 'No jobs found' scrolls for pagination
+        self._naukri_no_progress_count = 0  # Track consecutive chatbot completions with no count progress
+        self._naukri_no_progress_max = 3  # Max no-progress rounds before stopping the task
+        self._naukri_last_batch_size = 0  # Jobs selected in the last apply batch (for close-enough logic)
 
         # Metrics tracking
         self.metrics = {
@@ -3410,6 +3413,8 @@ class SentinelAgent:
                 if 'CHECKBOX_CLICKED' in result and 'NEED_MORE' not in result and 'naukri.com' in current_url:
                     print("✅ Checkbox clicked, trying Apply...")
                     await asyncio.sleep(random.uniform(4, 8))
+                    # Parse batch size from result (e.g., "CHECKBOX_CLICKED: 5/5")
+                    self._naukri_last_batch_size = self._parse_naukri_batch_size(result)
                     # Try to click apply immediately with robust logic and 2s monitoring
                     # NOTE: Using regular function expression for better Playwright compatibility
                     apply_result = await self._page.evaluate("""function() {
@@ -3490,7 +3495,10 @@ class SentinelAgent:
                             break
                         elif chatbot_done:
                             # Check if 0 jobs applied — might be error toast, poll again
-                            if isinstance(chatbot_done, str) and 'CHATBOT_COMPLETE: 0/' in chatbot_done:
+                            if isinstance(chatbot_done, str) and (
+                                'CHATBOT_COMPLETE: 0/' in chatbot_done
+                                or 'CHATBOT_NO_PROGRESS: 0/' in chatbot_done
+                            ):
                                 snackbar_final = await self._poll_naukri_error_snackbar(attempts=3, interval=1.0)
                                 if 'NAUKRI_RATE_LIMITED' in snackbar_final:
                                     self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
@@ -3511,11 +3519,13 @@ class SentinelAgent:
                                 continue
                             except Exception as e:
                                 print(f"   ⚠️ Navigation error: {e}")
-                
+            
                 # Naukri Chatbot handling (for direct APPLY_CLICKED)
                 if 'APPLY_CLICKED' in result and 'LINKEDIN' not in result and 'naukri.com' in current_url:
                     print("⏳ Waiting for Naukri chatbot...")
                     await asyncio.sleep(random.uniform(4, 8))
+                    # Parse batch size from result (e.g., "NAUKRI_APPLY_CLICKED: 5 jobs selected")
+                    self._naukri_last_batch_size = self._parse_naukri_batch_size(result)
                     chatbot_done = await self._handle_chatbot_loop()
                     if chatbot_done == 'CONTINUE':
                         continue
@@ -3527,7 +3537,10 @@ class SentinelAgent:
                         break
                     elif chatbot_done:
                         # Check if 0 jobs applied — might be error toast, poll again
-                        if isinstance(chatbot_done, str) and 'CHATBOT_COMPLETE: 0/' in chatbot_done:
+                        if isinstance(chatbot_done, str) and (
+                            'CHATBOT_COMPLETE: 0/' in chatbot_done
+                            or 'CHATBOT_NO_PROGRESS: 0/' in chatbot_done
+                        ):
                             snackbar_final = await self._poll_naukri_error_snackbar(attempts=3, interval=1.0)
                             if 'NAUKRI_RATE_LIMITED' in snackbar_final:
                                 self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
@@ -3730,33 +3743,54 @@ class SentinelAgent:
         returns a string of the form 'CHATBOT_COMPLETE: <newTotal>/5' so callers
         can branch on whether the 5-job target has been reached.
 
-        If no "X out of Y" text is found, the previous cumulative total is
-        returned unchanged (no increment) so the caller can still make a
-        safe decision.
+        If no "X out of Y" text is found, returns 'CHATBOT_NO_PROGRESS: <prevTotal>/5'
+        (NOT 'CHATBOT_COMPLETE') so the caller can distinguish a real completion
+        from a stale-state false positive and break out of an infinite loop.
+
+        RETRY LOGIC: The success text may take a few seconds to appear on the
+        page after the chatbot modal closes. This method retries up to 3 times
+        with a 2-second delay between attempts before giving up and returning
+        CHATBOT_NO_PROGRESS.
         """
         if not self._page:
-            return 'CHATBOT_COMPLETE: 0/5'
+            return 'CHATBOT_NO_PROGRESS: 0/5'
 
+        check_js = """() => {
+            const TARGET_JOBS = 5;
+            const bodyText = document.body.innerText || '';
+            const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
+            const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
+            if (!match) {
+                return 'CHATBOT_NO_PROGRESS: ' + prevTotal + '/' + TARGET_JOBS;
+            }
+            const appliedThisRound = parseInt(match[1]);
+            const newTotal = prevTotal + appliedThisRound;
+            sessionStorage.setItem('naukri_total_applied', newTotal.toString());
+            const remaining = Math.max(0, TARGET_JOBS - newTotal);
+            sessionStorage.setItem('naukri_remaining', remaining.toString());
+            return 'CHATBOT_COMPLETE: ' + newTotal + '/' + TARGET_JOBS;
+        }"""
+
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                result = await self._page.evaluate(check_js)
+                if isinstance(result, str) and 'CHATBOT_COMPLETE' in result:
+                    return result
+                # If not found and we have retries left, wait and try again
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2)
+            except Exception as e:
+                print(f"   ⚠️ _resolve_naukri_completion attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2)
+
+        # All retries exhausted — return the last result or safe default
         try:
-            result = await self._page.evaluate("""() => {
-                const TARGET_JOBS = 5;
-                const bodyText = document.body.innerText || '';
-                const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
-                const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
-                let newTotal = prevTotal;
-                if (match) {
-                    const appliedThisRound = parseInt(match[1]);
-                    newTotal = prevTotal + appliedThisRound;
-                    sessionStorage.setItem('naukri_total_applied', newTotal.toString());
-                    const remaining = Math.max(0, TARGET_JOBS - newTotal);
-                    sessionStorage.setItem('naukri_remaining', remaining.toString());
-                }
-                return 'CHATBOT_COMPLETE: ' + newTotal + '/' + TARGET_JOBS;
-            }""")
-            return result if isinstance(result, str) else 'CHATBOT_COMPLETE: 0/5'
-        except Exception as e:
-            print(f"   ⚠️ _resolve_naukri_completion failed: {e}")
-            return 'CHATBOT_COMPLETE: 0/5'
+            result = await self._page.evaluate(check_js)
+            return result if isinstance(result, str) else 'CHATBOT_NO_PROGRESS: 0/5'
+        except Exception:
+            return 'CHATBOT_NO_PROGRESS: 0/5'
 
     async def _poll_naukri_error_snackbar(self, attempts: int = 4, interval: float = 1.5) -> str:
         """
@@ -3809,21 +3843,57 @@ class SentinelAgent:
             await asyncio.sleep(interval)
         return ''
 
+    def _parse_naukri_batch_size(self, result: str) -> int:
+        """
+        Parse the number of jobs selected in the last apply batch from a script
+        result string. Handles formats like:
+          - "NAUKRI_APPLY_CLICKED: 5 jobs selected"
+          - "NAUKRI_APPLY_CLICKED: 1 jobs already selected"
+          - "CHECKBOX_CLICKED: 5/5"
+        Returns 0 if the count cannot be parsed.
+        """
+        if not isinstance(result, str):
+            return 0
+        import re
+        # "NAUKRI_APPLY_CLICKED: 5 jobs selected" or "...already selected"
+        m = re.search(r':\s*(\d+)\s+jobs?\s', result)
+        if m:
+            return int(m.group(1))
+        # "CHECKBOX_CLICKED: 5/5"
+        m = re.search(r':\s*(\d+)\s*/\s*\d+', result)
+        if m:
+            return int(m.group(1))
+        return 0
+
     async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
         """
         Decide what to do after a Naukri chatbot application attempt.
 
         Parses the cumulative applied count from the chatbot result string
-        (format: 'CHATBOT_COMPLETE: <newTotal>/5'). If the 5-job target has
-        been reached, marks the task complete and returns False (caller should
-        break). Otherwise updates applications_submitted, navigates back to the
-        recommended jobs page so the next iteration can select the remaining
-        jobs from the next section/tab, and returns True (caller should
-        continue).
+        (format: 'CHATBOT_COMPLETE: <newTotal>/5' or 'CHATBOT_NO_PROGRESS:
+        <prevTotal>/5'). If the 5-job target has been reached, marks the task
+        complete and returns False (caller should break). Otherwise updates
+        applications_submitted, navigates back to the recommended jobs page so
+        the next iteration can select the remaining jobs from the next
+        section/tab, and returns True (caller should continue).
+
+        CLOSE-ENOUGH RULE: If the last batch selected >= TARGET_JOBS (5) jobs
+        but one failed (e.g., 4/5 applied), the task is marked complete. There
+        is no point in applying to extra jobs just to hit exactly 5 — one
+        failure in a full batch is acceptable.
+
+        NO-PROGRESS GUARD: If the result is CHATBOT_NO_PROGRESS (no "X out of Y"
+        text found on the page) OR the parsed new_total did not advance beyond
+        the previously recorded applications_submitted, a no-progress counter is
+        incremented. After self._naukri_no_progress_max consecutive no-progress
+        rounds, the task is marked complete to break the infinite
+        "applied N/5, need more, navigate, repeat" loop. The counter is reset
+        to 0 whenever real progress is made.
 
         Args:
             chatbot_result: Return value of _handle_chatbot_loop. Expected to
-                be a string like 'CHATBOT_COMPLETE: 3/5' on success.
+                be a string like 'CHATBOT_COMPLETE: 3/5' on success or
+                'CHATBOT_NO_PROGRESS: 3/5' when the success text was not found.
 
         Returns:
             True if the main loop should continue (more jobs needed),
@@ -3831,8 +3901,15 @@ class SentinelAgent:
         """
         TARGET_JOBS = 5
 
+        is_no_progress_signal = (
+            isinstance(chatbot_result, str)
+            and 'CHATBOT_NO_PROGRESS' in chatbot_result
+        )
+
         new_total = 0
-        if isinstance(chatbot_result, str) and 'CHATBOT_COMPLETE' in chatbot_result:
+        if isinstance(chatbot_result, str) and (
+            'CHATBOT_COMPLETE' in chatbot_result or 'CHATBOT_NO_PROGRESS' in chatbot_result
+        ):
             try:
                 count_part = chatbot_result.split(':')[-1].strip()
                 new_total = int(count_part.split('/')[0])
@@ -3842,12 +3919,60 @@ class SentinelAgent:
         else:
             new_total = self.metrics.get('applications_submitted', 0) + 1
 
-        self.metrics['applications_submitted'] = new_total
+        prev_total = self.metrics.get('applications_submitted', 0)
+        made_progress = new_total > prev_total
 
         if new_total >= TARGET_JOBS:
             print(f"🎉 Naukri target reached ({new_total}/{TARGET_JOBS}). Task complete.")
+            self.metrics['applications_submitted'] = new_total
+            self._naukri_no_progress_count = 0
             self.state.task_complete = True
             return False
+
+        # CLOSE-ENOUGH: Selected a full batch (>= TARGET_JOBS) but one job failed.
+        # Accepting 4/5 is better than risk over-applying or getting stuck.
+        if (
+            self._naukri_last_batch_size >= TARGET_JOBS
+            and new_total >= TARGET_JOBS - 1
+            and new_total > 0
+        ):
+            print(
+                f"✅ Naukri close-enough: selected {self._naukri_last_batch_size} jobs, "
+                f"applied {new_total}/{TARGET_JOBS}. One job failed — accepting and moving on."
+            )
+            self.metrics['applications_submitted'] = new_total
+            self._naukri_no_progress_count = 0
+            self.state.task_complete = True
+            return False
+
+        if is_no_progress_signal or not made_progress:
+            self._naukri_no_progress_count += 1
+            print(
+                f"   ⚠️ No progress on applications (stuck at {new_total}/{TARGET_JOBS}) "
+                f"— no-progress {self._naukri_no_progress_count}/{self._naukri_no_progress_max}"
+            )
+            if self._naukri_no_progress_count >= self._naukri_no_progress_max:
+                print(
+                    f"🛑 Naukri stuck at {new_total}/{TARGET_JOBS} for "
+                    f"{self._naukri_no_progress_max} rounds. Ending task to break infinite loop."
+                )
+                self.metrics['applications_submitted'] = new_total
+                self._naukri_no_progress_count = 0
+                self.state.task_complete = True
+                return False
+            # Still navigate back and try once more — the success text may surface
+            # on the next page load. The counter will trip if it keeps failing.
+            self.metrics['applications_submitted'] = new_total
+            try:
+                await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
+                await asyncio.sleep(random.uniform(4, 6))
+            except Exception as e:
+                print(f"   ⚠️ Navigation to recommendedjobs failed: {e}")
+            return True
+
+        # Real progress was made — reset the no-progress counter.
+        self._naukri_no_progress_count = 0
+        self.metrics['applications_submitted'] = new_total
 
         remaining = TARGET_JOBS - new_total
         print(f"🔄 Applied to {new_total}/{TARGET_JOBS} jobs. Need {remaining} more — navigating to next section.")
@@ -4254,7 +4379,10 @@ class SentinelAgent:
                 // CHECK FOR COMPLETION: If chatLayer is visible but has no inputs and no real question,
                 // the application was likely submitted successfully
                 const hasAnyInput = hasSelect || hasRadio || hasCheckbox || !!textInput || !!contentEditableEarly;
-                const isShortQuestion = qText && qText.trim().length <= 3; // "2", "4" etc are not real questions
+                // isShortQuestion: a stale fragment like "2" left over from a previous chatbot
+                // session. This is NOT a completion signal on its own — it must fall through to
+                // CHATBOT_WAITING so the Python loop can re-evaluate instead of false-completing.
+                const isShortQuestion = qText && qText.trim().length > 0 && qText.trim().length <= 3;
                 const hasRealQuestion = qText && qText.trim().length > 10 && qText.includes('?');
                 
                 if (!hasAnyInput && chatLayer && isVisible(chatLayer)) {{
@@ -4278,11 +4406,16 @@ class SentinelAgent:
                                          document.body.innerText.includes('Successfully applied') ||
                                          document.body.innerText.includes('applied successfully');
                     
-                    // If no inputs and either success message OR no real question, consider it complete
-                    if (hasSuccessMsg || !hasRealQuestion || isShortQuestion) {{
-                        console.log('Chatbot Debug - Completion detected: No inputs, success indicators or short question');
+                    // Declare completion ONLY when there is a real success message OR the
+                    // chatLayer is genuinely empty (no real question AND no short stale
+                    // fragment). A short fragment like "2" with no success message is a
+                    // stale state, not completion — fall through to CHATBOT_WAITING so the
+                    // Python no-progress guard can break the loop.
+                    if (hasSuccessMsg || (!hasRealQuestion && !isShortQuestion)) {{
+                        console.log('Chatbot Debug - Completion detected: success message or empty chatLayer');
                         return 'CHATBOT_COMPLETE';
                     }}
+                    console.log('Chatbot Debug - Stale short text with no inputs and no success message, waiting instead of completing');
                 }}
                 
                 // STEP 1.5: DETECT option buttons EARLY (must be checked before text inputs)
@@ -5303,8 +5436,9 @@ class SentinelAgent:
                 await asyncio.sleep(random.uniform(1, 2))
                 continue
             elif result == 'NO_CHATBOT':
-                # Check if maybe we're done
+                # Chatbot modal closed — give page time to show success text
                 if iteration > 3:
+                    await asyncio.sleep(random.uniform(2, 3))
                     return await self._resolve_naukri_completion()
                 continue
             elif 'CHATBOT_ANSWERED_AND_SAVE' in result:
@@ -6778,7 +6912,7 @@ class SentinelAgent:
                                                   input.getAttribute('pattern')?.includes('\\d') ||
                                                   input.className?.toLowerCase().includes('number') ||
                                                   input.className?.toLowerCase().includes('decimal') ||
-                                                  (labelText && /how many years|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
+                                                  (labelText && /how many|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
                             
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
@@ -6878,6 +7012,12 @@ class SentinelAgent:
                                 } else if (combinedText.includes('reason') || combinedText.includes('seeking') || combinedText.includes('looking for a change')) {
                                     answer = 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals';
                                     console.log('Fallback: Filling reason for change');
+                                }
+                                
+                                // "How many X" fallback: always fill with a number for any unmatched "how many" question
+                                if (!answer && /how many/i.test(combinedText)) {
+                                    answer = '3';
+                                    console.log('Fallback: Filling how-many question with numeric default 3');
                                 }
                             }
                             
@@ -7414,6 +7554,125 @@ class SentinelAgent:
                                     formResults.push({ question: labelText, answer: locMatch.text, inputType: 'select-location' });
                                     continue;
                                 }
+                            }
+                            
+                            // ===== NATIONALITY SELECT HANDLER =====
+                            // Handles "Nationality" dropdowns where options are country names ("India")
+                            // but our default answer is "Indian" (demonym). Substring matching would
+                            // incorrectly pick "British Indian Ocean Territory". Use exact matching instead.
+                            const isNationalitySelect = lowerLabel.includes('nationality') && !lowerLabel.includes('citizenship');
+                            if (isNationalitySelect) {
+                                const natOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let natMatch = null;
+                                
+                                // Priority 1: Exact "India" or "Indian" (case-insensitive)
+                                natMatch = natOptions.find(o => {
+                                    const t = o.text.toLowerCase().trim();
+                                    return t === 'india' || t === 'indian';
+                                });
+                                
+                                // Priority 2: Starts with "India" but NOT "Indian Ocean" or "British Indian"
+                                if (!natMatch) {
+                                    natMatch = natOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t.startsWith('india') && !t.includes('ocean') && !t.includes('british');
+                                    });
+                                }
+                                
+                                // Priority 3: Contains "India" as a standalone word
+                                if (!natMatch) {
+                                    natMatch = natOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return /\bindia\b/.test(t) && !t.includes('british') && !t.includes('ocean');
+                                    });
+                                }
+                                
+                                if (natMatch) {
+                                    console.log('Nationality match: Selecting', natMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = natMatch.value;
+                                    if (select.value !== natMatch.value) select.selectedIndex = natMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: natMatch.text, inputType: 'select-nationality' });
+                                }
+                                continue;
+                            }
+                            
+                            // ===== JOB TITLE / SENIORITY LEVEL HANDLER =====
+                            // Handles "Current Job Title", "Designation", "Seniority Level" dropdowns
+                            // where options are level names (Fresher, Junior, Mid-Level, Senior, Lead)
+                            // and the user's actual title ("SDE-2") won't match any option.
+                            const isJobLevelSelect = lowerLabel.includes('job title') || lowerLabel.includes('designation') || 
+                                                     lowerLabel.includes('seniority') || lowerLabel.includes('job level') ||
+                                                     lowerLabel.includes('career level') || lowerLabel.includes('experience level');
+                            if (isJobLevelSelect) {
+                                const jlOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let jlMatch = null;
+                                
+                                // With 4 years experience, select Mid-Level > Senior > Experienced > Associate
+                                jlMatch = jlOptions.find(o => /\bmid[\s-]?level\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bsenior\b/i.test(o.text) && !/\bsuper\b|\bstaff\b|\bprincipal\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bexperienced\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bassociate\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bprofessional\b/i.test(o.text));
+                                
+                                // Fallback: first non-placeholder option
+                                if (!jlMatch) {
+                                    jlMatch = jlOptions.find(o => {
+                                        const t = (o.text || '').toLowerCase().trim();
+                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('please') && !t.includes('fresher');
+                                    });
+                                }
+                                
+                                if (jlMatch) {
+                                    console.log('Job Level match: Selecting', jlMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = jlMatch.value;
+                                    if (select.value !== jlMatch.value) select.selectedIndex = jlMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: jlMatch.text, inputType: 'select-job-level' });
+                                }
+                                continue;
+                            }
+                            
+                            // ===== WORKPLACE TYPE / WORK MODE HANDLER =====
+                            // Handles "Preferred Workplace Type", "Work Mode" dropdowns where
+                            // options are like Onsite, Remote, Hybrid, Any. fuzzyMatch often returns
+                            // an unrelated answer (e.g. "Serving Notice Period") due to keyword overlap.
+                            const isWorkplaceType = lowerLabel.includes('workplace') || lowerLabel.includes('work mode') || 
+                                                    lowerLabel.includes('work type') || lowerLabel.includes('working model') ||
+                                                    lowerLabel.includes('work preference') || lowerLabel.includes('mode of work');
+                            if (isWorkplaceType) {
+                                const wpOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let wpMatch = null;
+                                
+                                // Preference order: Hybrid > Any > Flexible > Remote > Onsite
+                                wpMatch = wpOptions.find(o => /\bhybrid\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bany\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bflexible\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bremote\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bonsite\b|\bon[\s-]?site\b/i.test(o.text));
+                                
+                                // Fallback: first non-placeholder option
+                                if (!wpMatch) {
+                                    wpMatch = wpOptions.find(o => {
+                                        const t = (o.text || '').toLowerCase().trim();
+                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('please');
+                                    });
+                                }
+                                
+                                if (wpMatch) {
+                                    console.log('Workplace Type match: Selecting', wpMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = wpMatch.value;
+                                    if (select.value !== wpMatch.value) select.selectedIndex = wpMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: wpMatch.text, inputType: 'select-workplace' });
+                                }
+                                continue;
                             }
                             
                             {

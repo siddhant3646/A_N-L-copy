@@ -2891,6 +2891,32 @@ class SentinelAgent:
                             if easy_apply_restart_count >= 2:
                                 print("⚠️ Modal restarted twice — application likely submitted or stuck. Moving to next job...")
                                 await self._close_linkedin_modal()
+                                # Mark the current job as skipped so it's not re-selected in an
+                                # infinite loop. The job ID is extracted from the URL (preferred)
+                                # or from the active card in the DOM (fallback).
+                                try:
+                                    await self._page.evaluate("""() => {
+                                        if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                        const urlParams = new URLSearchParams(window.location.search);
+                                        let currentJobId = urlParams.get('currentJobId');
+                                        if (!currentJobId) {
+                                            const activeCard = document.querySelector(
+                                                '.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                                document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                                document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                                document.querySelector('.active [data-job-id]');
+                                            if (activeCard) {
+                                                currentJobId = activeCard.getAttribute('data-job-id') ||
+                                                               activeCard.getAttribute('data-occludable-job-id');
+                                            }
+                                        }
+                                        if (currentJobId) {
+                                            window.__skippedJobIds.add(currentJobId);
+                                            console.log('Marked job as skipped after modal restart failure:', currentJobId);
+                                        }
+                                    }""")
+                                except Exception as e:
+                                    print(f"   ⚠️ Failed to mark job as skipped: {e}")
                                 break
                             await asyncio.sleep(random.uniform(3, 4))
                             continue

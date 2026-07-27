@@ -208,6 +208,12 @@
         team_size: {
             patterns: ['team size you have worked with', 'team size you worked with', 'what was the team size', 'size of the team', 'team size'],
             default: '5-10'
+        },
+        salary_range: {
+            patterns: ['compensation range', 'fixed compensation range', 'salary range', 'ctc range', 'compensation bracket', 'yearly fixed compensation'],
+            default: '20 - 30 LPA',
+            current_lpa: 23,
+            expected_lpa: 30
         }
     };
     
@@ -242,6 +248,33 @@
         return null;
     }
     
+    // Helper: Pick the correct LPA range string for a given LPA value
+    // Dropdown options are typically: "5 - 10 LPA", "10 - 15 LPA", "20 - 30 LPA", etc.
+    // Returns a partial match string that will match the correct option via includes()
+    function _pickLpaRange(lpaValue) {
+        const ranges = [
+            [0, 5, '0 - 5'],
+            [5, 10, '5 - 10'],
+            [10, 15, '10 - 15'],
+            [15, 20, '15 - 20'],
+            [20, 30, '20 - 30'],
+            [30, 40, '30 - 40'],
+            [40, 50, '40 - 50'],
+            [50, 60, '50 - 60'],
+            [60, 70, '60 - 70'],
+            [70, 80, '70 - 80'],
+            [80, 100, '80 - 100'],
+            [100, Infinity, '100']
+        ];
+        for (const [low, high, label] of ranges) {
+            if (lpaValue >= low && lpaValue < high) {
+                console.log('Picked LPA range:', label, 'for value:', lpaValue);
+                return label;
+            }
+        }
+        return '20 - 30'; // safe fallback
+    }
+    
     // Helper: Get answer for a question based on patterns
     function getAnswerForQuestion(questionText, fieldType = 'text') {
         const match = matchQuestionToPattern(questionText);
@@ -260,7 +293,23 @@
         
         // For CTC/salary fields, on LinkedIn we should always return INR value (2300000 or 3000000)
         if (category === 'current_salary' || category === 'expected_salary') {
+            // For dropdown/select with LPA range options, pick the matching range
+            if (fieldType === 'select' || fieldType === 'dropdown') {
+                const lpaValue = category === 'current_salary' ? 23 : 30;
+                return _pickLpaRange(lpaValue);
+            }
             return data.inr_default; // Return INR numbers: 2300000 or 3000000
+        }
+        
+        // For salary/compensation range dropdowns (e.g. "5 - 10 LPA", "20 - 30 LPA")
+        if (category === 'salary_range') {
+            if (fieldType === 'select' || fieldType === 'dropdown') {
+                // Determine if question is about current or expected
+                const lowerQ = questionText.toLowerCase();
+                const lpaValue = lowerQ.includes('expected') ? data.expected_lpa : data.current_lpa;
+                return _pickLpaRange(lpaValue);
+            }
+            return data.default;
         }
         
         // For notice period fields, on LinkedIn return numeric value (30) for text inputs to avoid validation errors
@@ -268,6 +317,10 @@
             // For text/number inputs, return numeric value only
             if (fieldType === 'text' || fieldType === 'number') {
                 return data.numeric_default || '15';
+            }
+            // For checkbox groups (e.g. "Less than a month", "2 months", "3 months")
+            if (fieldType === 'checkbox') {
+                return 'Less than a month';
             }
             // For dropdowns/radios, return text value
             return data.default;

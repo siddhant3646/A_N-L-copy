@@ -66,6 +66,7 @@
         "total years of exp",
         "software experience",
         "how many years of experience do you have",
+        "exp",
         "how many years of experience",
         "years of experience do you have",
         "programming experience",
@@ -165,6 +166,7 @@
         "gross salary",
         "current annual ctc",
         "salary",
+        "pay",
         "compensation",
         "please enter your ctc",
         "please enter your salary",
@@ -218,6 +220,7 @@
         "fixed salary in lpa",
         "fixed salary in lac per annum",
         "expected fixed ctc",
+        "expected salary in lpa",
         "expected salary in lac",
         "expected salary in lakhs",
         "expected annual ctc in inr",
@@ -267,7 +270,8 @@
         "currently serving notice period",
         "what is your np",
         "what is your notice period",
-        "mention np"
+        "mention np",
+        "can you join immediately or currently serving np?"
       ],
       "category": "notice_period",
       "default": "Serving Notice Period",
@@ -299,6 +303,7 @@
         "base location",
         "home address",
         "where do you live",
+        "city",
         "residence",
         "residing in",
         "where do you stay",
@@ -307,7 +312,8 @@
         "where are you located",
         "current city",
         "live in",
-        "based in"
+        "based in",
+        "are you currently based in mumbai or pune?"
       ],
       "category": "location",
       "default": "Noida",
@@ -847,7 +853,9 @@
     "education_bachelor": {
       "patterns": [
         "bachelor",
+        "b.e",
         "b.tech",
+        "b e",
         "undergraduate",
         "ug degree"
       ],
@@ -1406,7 +1414,8 @@
         "in how many days can you join",
         "if selected, in how many days can you join",
         "availability",
-        "last working day"
+        "last working day",
+        "365 days thereafter"
       ],
       "category": "notice_period",
       "default": "15 days",
@@ -1480,7 +1489,8 @@
         "5-day work from office",
         "comfortable with a 5-day work-from-office schedule",
         "comfortable with a 5-day work from office schedule",
-        "comfortable with 5-day work schedule"
+        "comfortable with 5-day work schedule",
+        "wfo"
       ],
       "category": "yes_no",
       "default": "Yes",
@@ -1505,6 +1515,7 @@
         "worked on any end-to-end",
         "full stack projects",
         "led a team",
+        "managed a team",
         "end-to-end full stack projects",
         "must have strong knowledge"
       ],
@@ -2836,7 +2847,8 @@
         "website",
         "online portfolio url",
         "portfolio url",
-        "please enter your online portfolio url"
+        "please enter your online portfolio url",
+        "blog"
       ],
       "category": "preference",
       "default": "https://siddhant3646.github.io/Portfolio/",
@@ -2896,19 +2908,7 @@
         "select": "SDE-2 (Professional Software Developer)",
         "text": "SDE-2 (Professional Software Developer)"
       },
-      "priority": 8,
-      "negative_patterns": [
-        "ctc",
-        "salary",
-        "compensation",
-        "lpa",
-        "package",
-        "pay",
-        "remuneration",
-        "cctc",
-        "ectc",
-        "inr"
-      ]
+      "priority": 8
     },
     "salary_acceptance": {
       "patterns": [
@@ -3287,11 +3287,14 @@
         "applied or recieved",
         "applied or received",
         "itc infotech",
+        "tcs",
         "infosys",
         "wipro",
+        "hcl",
         "tech mahindra",
         "cognizant",
         "accenture",
+        "ibm",
         "oracle",
         "microsoft",
         "google",
@@ -3299,6 +3302,8 @@
         "flipkart",
         "swiggy",
         "zomato",
+        "ola",
+        "uber",
         "have you previously applied",
         "have you interviewed with",
         "interviewed with",
@@ -3583,7 +3588,8 @@
     "country": {
       "patterns": [
         "country",
-        "country/region"
+        "country/region",
+        "nation"
       ],
       "category": "personal_info",
       "default": "India",
@@ -3600,7 +3606,8 @@
         "team leadership",
         "experience leading a team",
         "leading a team of developers",
-        "experience do you have leading"
+        "experience do you have leading",
+        "team management experience"
       ],
       "category": "preference",
       "default": "1",
@@ -3660,16 +3667,7 @@
         "text": "0",
         "number": "0"
       },
-      "priority": 7,
-      "negative_patterns": [
-        "experience",
-        "years of experience",
-        "total exp",
-        "total experience",
-        "how many years",
-        "yoe",
-        "years worked"
-      ]
+      "priority": 7
     },
     "leetcode_solved": {
       "patterns": [
@@ -3848,8 +3846,12 @@
     "linkedin_certifications": {
       "patterns": [
         "do you have any certifications",
+        "professional certifications",
+        "technical certifications",
+        "certified in",
         "certifications held",
-        "professional certificates"
+        "professional certificates",
+        "industry certifications"
       ],
       "category": "skills",
       "default": "No certifications currently",
@@ -3924,6 +3926,7 @@
         "salary expectation",
         "expected compensation",
         "target salary",
+        "desired salary",
         "compensation expectation",
         "expected pay",
         "salary target"
@@ -4662,10 +4665,12 @@
     },
     "team_size_managed": {
       "patterns": [
+        "team size",
         "how many people",
         "team managed",
         "reportees",
         "direct reports",
+        "people management",
         "team lead size",
         "team members"
       ],
@@ -4771,8 +4776,8 @@
         "relocation",
         "relocate to",
         "willingness to travel",
-        "are you comfortable commuting to this job’s location",
-        "are you comfortable commuting to this job’s location?",
+        "are you comfortable commuting to this job\u2019s location",
+        "are you comfortable commuting to this job\u2019s location?",
         "comfortable relocating",
         "relocating",
         "relocating to"
@@ -4822,6 +4827,7 @@
     },
     "salary_5206": {
       "patterns": [
+        "what is your expected annual salary?",
         "what is your expected annual salary ?",
         "please enter your annual expected ctc in inr",
         "please enter your expected ctc in inr"
@@ -4838,7 +4844,9 @@
     },
     "preference_6249": {
       "patterns": [
-        "please enter your current designation"
+        "please enter your current designation",
+        "current designation",
+        "your designation"
       ],
       "category": "preference",
       "default": "SDE-2 Full Stack Developer",
@@ -4877,14 +4885,7 @@
         "select": "70",
         "text": "70"
       },
-      "priority": 4,
-      "negative_patterns": [
-        "cgpa",
-        "gpa",
-        "grade point",
-        "cumulative grade",
-        "sgpa"
-      ]
+      "priority": 4
     },
     "preference_9062": {
       "patterns": [
@@ -4973,14 +4974,7 @@
         "select": "02/15/2026",
         "text": "02/15/2026"
       },
-      "priority": 4,
-      "negative_patterns": [
-        "date of birth",
-        "birth date",
-        "dob",
-        "born on",
-        "birthday"
-      ]
+      "priority": 4
     },
     "preference_4278": {
       "patterns": [
@@ -5113,6 +5107,7 @@
     },
     "experience_528": {
       "patterns": [
+        "last professional experience",
         "years of last professional experience",
         "how many years of last professional experience",
         "last professional experience do you have",
@@ -5297,6 +5292,22 @@
         "checkbox": true,
         "select": "No, I am currently based in Noida. However, I am willing to relocate to Chennai.",
         "text": "No, I am currently based in Noida. However, I am willing to relocate to Chennai."
+      },
+      "priority": 4
+    },
+    "preference_1450": {
+      "patterns": [
+        "from mumbai",
+        "based in mumbai",
+        "located in mumbai",
+        "currently in mumbai"
+      ],
+      "category": "preference",
+      "default": "No, I am currently based in Noida. However, I am willing to relocate.",
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No, I am currently based in Noida. However, I am willing to relocate.",
+        "text": "No, I am currently based in Noida. However, I am willing to relocate."
       },
       "priority": 4
     },
@@ -5919,6 +5930,8 @@
     },
     "preference_3908": {
       "patterns": [
+        "nationality",
+        "what is your nationality",
         "your nationality",
         "please mention nationality",
         "mention nationality"
@@ -6772,7 +6785,7 @@
         "please mention payroll",
         "mention payroll"
       ],
-      "category": "preference",
+      "category": "salary",
       "default": "Direct payroll preferred",
       "input_type_defaults": {
         "radio": "Direct payroll preferred",
@@ -7009,6 +7022,7 @@
     },
     "preference_4179": {
       "patterns": [
+        "open to negotiation",
         "do you have open to negotiation",
         "are you open to negotiation",
         "your open to negotiation"
@@ -7030,7 +7044,7 @@
         "please mention salary negotiable",
         "mention your salary negotiable"
       ],
-      "category": "yes_no",
+      "category": "salary",
       "default": "Yes, within reasonable range",
       "input_type_defaults": {
         "radio": "Yes, within reasonable range",
@@ -7064,7 +7078,7 @@
         "please mention discuss salary",
         "mention your discuss salary"
       ],
-      "category": "yes_no",
+      "category": "salary",
       "default": "Yes, willing to discuss",
       "input_type_defaults": {
         "radio": "Yes, willing to discuss",
@@ -7082,7 +7096,7 @@
         "please mention salary discussion",
         "mention your salary discussion"
       ],
-      "category": "yes_no",
+      "category": "salary",
       "default": "Yes, open to discussion",
       "input_type_defaults": {
         "radio": "Yes, open to discussion",
@@ -7099,6 +7113,7 @@
         "expected ctc range",
         "yearly fixed compensation",
         "fixed compensation range",
+        "salary range",
         "compensation bracket"
       ],
       "category": "salary",
@@ -7118,7 +7133,7 @@
         "please mention flexible on salary",
         "mention your flexible on salary"
       ],
-      "category": "yes_no",
+      "category": "salary",
       "default": "Yes, flexible within reason",
       "input_type_defaults": {
         "radio": "Yes, flexible within reason",
@@ -7201,6 +7216,7 @@
     },
     "work_authorization": {
       "patterns": [
+        "legally authorized",
         "do you have legally authorized",
         "are you legally authorized",
         "your legally authorized"
@@ -7218,6 +7234,7 @@
     },
     "work_mode_wfo": {
       "patterns": [
+        "remote work",
         "do you have remote work",
         "are you remote work",
         "your remote work"
@@ -7235,6 +7252,7 @@
     },
     "tech_yes_no": {
       "patterns": [
+        "willing to accept",
         "do you have willing to accept",
         "are you willing to accept",
         "your willing to accept"
@@ -7256,18 +7274,12 @@
         "criminal background check",
         "any criminal history",
         "convicted of any crime",
-        "criminal charges"
+        "criminal charges",
+        "background verification"
       ],
       "category": "compliance",
       "default": "No",
-      "negative_patterns": [
-        "background verification",
-        "background check",
-        "bgv",
-        "comfortable with background",
-        "pre-employment",
-        "pre employment"
-      ],
+      "negative_patterns": [],
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -7477,6 +7489,9 @@
         "expertise with java",
         "expertise with python",
         "expertise with",
+        "expertise level",
+        "what is your expertise level",
+        "proficiency level",
         "what is your proficiency level",
         "level of proficiency",
         "level of expertise",
@@ -7496,8 +7511,11 @@
     },
     "joining_availability": {
       "patterns": [
+        "how soon you can join us",
         "how soon you will be able to join us",
-        "when can you join us"
+        "how soon can you join",
+        "when can you join us",
+        "joining availability"
       ],
       "category": "availability",
       "default": "Can join within 15 days",
@@ -7527,9 +7545,11 @@
     "rating_scale_short": {
       "patterns": [
         "rate your experience",
+        "rate your proficiency",
         "rate your skills",
         "rate your experience debugging",
         "rate your experience working",
+        "rate your communication",
         "rate your stakeholder"
       ],
       "category": "skills",
@@ -7546,7 +7566,9 @@
       "patterns": [
         "ctc in lakhs per annum",
         "ctc in lpa",
+        "current ctc in lpa",
         "current ctc (lpa)",
+        "salary in lpa",
         "current salary in lpa",
         "mention your current ctc in lpa",
         "what is your ctc-lpa",
@@ -7565,6 +7587,7 @@
     "expected_salary_lpa": {
       "patterns": [
         "expected ctc in lakhs per annum",
+        "expected ctc in lpa",
         "expected ctc (lpa)",
         "expected salary in lpa",
         "expected ctc salary in lakh per annum",
@@ -7611,29 +7634,6 @@
         "number": "250000"
       },
       "priority": 10
-    },
-    "background_verification": {
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "patterns": [
-        "background verification",
-        "are you comfortable with background verification",
-        "comfortable with a background check",
-        "background screening",
-        "pre-employment screening",
-        "pre employment background",
-        "bgv",
-        "background check authorization",
-        "consent to background",
-        "consent to a background"
-      ],
-      "negative_patterns": [
-        "criminal",
-        "felony",
-        "conviction",
-        "criminal background"
-      ]
     }
   },
   "categories": {

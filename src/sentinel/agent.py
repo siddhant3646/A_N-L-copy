@@ -4709,6 +4709,9 @@ class SentinelAgent:
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
                     console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
                     
+                    // Collect all matching ranges to pick the best one (closest to lower bound)
+                    const matchingRanges = [];
+                    
                     // Try to match answer to radio label
                     for (const radio of radios) {{
                         // Improved label extraction: try label[for], aria-label, parent <label>, then fallback
@@ -4774,7 +4777,8 @@ class SentinelAgent:
                         }}
                         
                         // Match numeric answers to experience ranges
-                        if (answerNumeric !== null) {{
+                        // Collect all matching ranges to pick the one where answer is closest to lower bound
+                        if (answerNumeric !== null && !clickedRadio) {{
                             // Extract numbers from label (e.g., "3-5 years" -> [3, 5])
                             const labelNumbers = labelLower.match(/(\d+\.?\d*)/g);
                             if (labelNumbers) {{
@@ -4782,12 +4786,9 @@ class SentinelAgent:
                                 // Check if answer falls within range
                                 if (nums.length >= 2) {{
                                     if (answerNumeric >= nums[0] && answerNumeric <= nums[1]) {{
-                                        if (!radio.checked) {{
-                                            radio.click();
-                                            clickedRadio = true;
-                                            console.log('Chatbot Debug - Clicked numeric range radio:', label);
-                                        }}
-                                        break;
+                                        // Store this match with distance from lower bound
+                                        const distanceFromMin = Math.abs(answerNumeric - nums[0]);
+                                        matchingRanges.push({{radio, label, distanceFromMin}});
                                     }}
                                 }} else if (nums.length === 1) {{
                                     // Single number match — detect direction (text + symbol prefixes)
@@ -4828,7 +4829,7 @@ class SentinelAgent:
                             }}
                             
                             // Also try to match by looking for the number in the label
-                            if (labelLower.includes(String(answerNumeric))) {{
+                            if (!clickedRadio && labelLower.includes(String(answerNumeric))) {{
                                 if (!radio.checked) {{
                                     radio.click();
                                     clickedRadio = true;
@@ -4836,6 +4837,18 @@ class SentinelAgent:
                                 }}
                                 break;
                             }}
+                        }}
+                    }}
+                    
+                    // After processing all radios, if we have multiple range matches, pick the best one
+                    if (!clickedRadio && matchingRanges.length > 0) {{
+                        // Sort by distance from lower bound (ascending) - prefer ranges where answer is closer to min
+                        matchingRanges.sort((a, b) => a.distanceFromMin - b.distanceFromMin);
+                        const bestMatch = matchingRanges[0];
+                        if (!bestMatch.radio.checked) {{
+                            bestMatch.radio.click();
+                            clickedRadio = true;
+                            console.log('Chatbot Debug - Clicked best range radio:', bestMatch.label, '| distance from min:', bestMatch.distanceFromMin);
                         }}
                     }}
                     
@@ -6011,6 +6024,7 @@ class SentinelAgent:
                         }
                         // PRIORITY 5: Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
                         // Also handles Indian number formats like "2,00,000 to 5,00,000 INR"
+                        // Prefer ranges where answer is closer to the lower bound (e.g., 4 prefers "4-6" over "3-4")
                         else if (answerNum > 0) {
                             // Strip commas from option text to handle Indian/intl number formats
                             const textNoCommas = text.replace(/,/g, '');
@@ -6019,7 +6033,10 @@ class SentinelAgent:
                                 const min = parseFloat(rangeMatch[1]);
                                 const max = parseFloat(rangeMatch[2]);
                                 if (answerNum >= min && answerNum <= max) {
-                                    score = 80;
+                                    const rangeSize = max - min;
+                                    const offsetFromMin = Math.abs(answerNum - min);
+                                    // Higher score when closer to min (lower bound)
+                                    score = Math.max(0, 85 - (offsetFromMin / Math.max(rangeSize, 1) * 30));
                                 }
                             }
                             // Match "X+" patterns (e.g., answer='4' matches option='3+ years')
@@ -6108,7 +6125,7 @@ class SentinelAgent:
                                 else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
                             }
                             
-                            // Year-based range matching
+                            // Year-based range matching - prefer ranges where value is closer to lower bound
                             if (score === 0) {
                                 const rangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
                                 if (rangeMatch) {
@@ -6116,8 +6133,12 @@ class SentinelAgent:
                                     const max = parseFloat(rangeMatch[2]);
                                     if (answerNum >= min && answerNum <= max) {
                                         const rangeSize = max - min;
-                                        const offset = Math.abs(answerNum - (min + max) / 2);
-                                        score = Math.max(0, 80 - (offset / Math.max(rangeSize, 1) * 20));
+                                        // Prefer ranges where answer is closer to the lower bound (min)
+                                        // This ensures 4 prefers "4-6" over "3-4"
+                                        const offsetFromMin = Math.abs(answerNum - min);
+                                        const offsetFromCenter = Math.abs(answerNum - (min + max) / 2);
+                                        // Higher score when closer to min, full score at min
+                                        score = Math.max(0, 85 - (offsetFromMin / Math.max(rangeSize, 1) * 30));
                                     }
                                 }
                             }

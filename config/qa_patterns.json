@@ -3328,7 +3328,6 @@
         "family in company",
         "currently an employee of",
         "employed by any of the",
-        "currently employed as a",
         "previously employed by",
         "have you ever worked for",
         "employment consent"
@@ -8041,7 +8040,6 @@
         "associated with accenture",
         "previously employed at",
         "have you worked at",
-        "are you currently employed at",
         "previously associated with",
         "current or previous employee"
       ],
@@ -8851,10 +8849,7 @@
     },
     "gap_year_explanation": {
       "patterns": [
-        "career gap",
-        "gap in employment",
         "explain gap",
-        "break in career",
         "sabbatical",
         "gap year reason"
       ],

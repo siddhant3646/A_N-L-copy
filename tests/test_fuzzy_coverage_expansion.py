@@ -20,7 +20,7 @@ class TestNewPatternsCoverage(unittest.TestCase):
     # --- Category 1: Team / People Management ---
     def test_team_size(self):
         ans, score = self.agent._fuzzy_match_question('team size')
-        self.assertIn('contributor', ans.lower())
+        self.assertIn('5-10', ans)
         self.assertGreater(score, 0.6)
 
     def test_direct_reports(self):

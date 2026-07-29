@@ -26,6 +26,10 @@ from src.patterns.input_aware_resolver import (
 from src.sentinel.self_healing import SelfHealingMatcher
 from src.patterns.pattern_learner import PatternLearner
 from src.patterns.pattern_matcher import create_matcher
+from src.sentinel.rate_limiter import RateLimiter
+from src.sentinel.form_state_validator import FormStateValidator
+from src.sentinel.session_manager import SessionManager
+from src.patterns.enhanced_answer_validator import EnhancedAnswerValidator
 
 
 # Patterns are now loaded from config/qa_patterns.json (single source of truth)
@@ -125,6 +129,12 @@ class SentinelAgent:
         self._pattern_learner = PatternLearner()
         self._error_detector = None  # Initialized when page is available
         self._error_recovery = None
+        
+        # Resilience components
+        self._rate_limiter = RateLimiter()
+        self._form_validator = FormStateValidator()
+        self._session_manager = SessionManager()
+        self._enhanced_validator = EnhancedAnswerValidator()
     
     def _init_error_detection(self):
         """Initialize error detection components when page is available."""
@@ -634,21 +644,21 @@ class SentinelAgent:
         if is_location_specific:
             # Check for Mumbai-only/exclusivity requirements
             if ('mumbai' in question_lower or 'andheri' in question_lower) and ('need candidates from' in question_lower or 'candidates from mumbai' in question_lower or 'from mumbai itself' in question_lower):
-                return 'No, I am currently based in Noida, not in Mumbai. I am open to immediate relocation to Mumbai if required.', 0.95
+                return 'No, I am currently based in Bangalore, not in Mumbai. I am open to immediate relocation to Mumbai if required.', 0.95
             # Check for specific city mentions
             if 'bangalore' in question_lower or 'bengaluru' in question_lower:
-                return 'No, I am currently based in Noida. However, I am willing to relocate to Bangalore.', 0.95
+                return 'Yes, I am currently based in Bangalore.', 0.95
             if 'mumbai' in question_lower or 'andheri' in question_lower:
-                return 'No, I am currently based in Noida. However, I am willing to relocate to Mumbai.', 0.95
+                return 'No, I am currently based in Bangalore. However, I am willing to relocate to Mumbai.', 0.95
             if 'pune' in question_lower:
-                return 'No, I am currently based in Noida. However, I am willing to relocate to Pune.', 0.95
+                return 'No, I am currently based in Bangalore. However, I am willing to relocate to Pune.', 0.95
             if 'hyderabad' in question_lower:
-                return 'No, I am currently based in Noida. However, I am willing to relocate to Hyderabad.', 0.95
+                return 'No, I am currently based in Bangalore. However, I am willing to relocate to Hyderabad.', 0.95
             if 'chennai' in question_lower:
-                return 'No, I am currently based in Noida. However, I am willing to relocate to Chennai.', 0.95
+                return 'No, I am currently based in Bangalore. However, I am willing to relocate to Chennai.', 0.95
             if 'delhi' in question_lower or 'ncr' in question_lower or 'noida' in question_lower or 'gurgaon' in question_lower or 'gurugram' in question_lower:
-                return 'Yes, I am currently based in Noida, Delhi NCR.', 0.95
-            return 'Noida, Delhi NCR', 0.95
+                return 'No, I am currently based in Bangalore. However, I am willing to relocate to Delhi/NCR.', 0.95
+            return 'Bangalore', 0.95
         
         # Handle referral questions
         if is_referral_question:
@@ -768,10 +778,10 @@ class SentinelAgent:
             if 'preferred' in question_lower:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("preferred location")
-                return answer or 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune', max(confidence, 0.95)
+                return answer or 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Noida', max(confidence, 0.95)
             # Use PatternMatcher instead of KNOWN_QA_PATTERNS
             answer, confidence = self._pattern_matcher.fuzzy_match("current location")
-            return answer or 'Noida', max(confidence, 0.95)
+            return answer or 'Bangalore', max(confidence, 0.95)
         
         # ==========================================
         # PHASE 2: Fuzzy Matching for Other Questions
@@ -1076,6 +1086,19 @@ class SentinelAgent:
                     healed_value = matched
 
             if healed_value:
+                # Enhance/fix the answer using platform-aware validation before injecting
+                try:
+                    from src.sentinel.ui_error_detector import Platform
+                    category = "yes_no"
+                    if error.category:
+                        category = error.category.value.lower()
+                    input_type = "select" if error.available_options else "text"
+                    platform = self._detect_platform()
+                    healed_value = self._enhanced_validator.fix(
+                        healed_value, category, input_type, platform, error.available_options
+                    )
+                except Exception as e:
+                    print(f"   ⚠️ Enhanced validation failed during recovery: {e}")
                 # Inject the healed value back into the DOM using the label text to find the input
                 try:
                     js_inject = f"""() => {{
@@ -1418,6 +1441,20 @@ class SentinelAgent:
 
     async def _check_page_health(self) -> bool:
         """Verify page is responsive before actions."""
+        # Session-level health check (crashes, inactivity)
+        health = await self._session_manager.check_health(self._page)
+        if not health["healthy"]:
+            print(f"   ⚠️ Session health check failed: {health['reason']}")
+            if self._session_manager.should_stop():
+                print("   🛑 Too many session crashes. Stopping task.")
+                self.state.task_complete = True
+                return False
+            recovered = await self._session_manager.recover(self._page)
+            if recovered:
+                print("   ✅ Session recovered via reload")
+            else:
+                return False
+
         try:
             # Quick JS evaluation to check if page responds
             result = await asyncio.wait_for(
@@ -1428,6 +1465,13 @@ class SentinelAgent:
                 print(f"   ⚠️ Page not ready: {result}")
                 await asyncio.sleep(2)
                 return False
+            # Record successful activity for session manager
+            try:
+                current_url = self._page.url
+                current_title = await self._page.title()
+                self._session_manager.record_activity(url=current_url, title=current_title)
+            except Exception:
+                pass
             return True
         except asyncio.TimeoutError:
             print("   ⚠️ Page health check timeout - page may be unresponsive")
@@ -2036,6 +2080,22 @@ class SentinelAgent:
             self.state.step_count += 1
             print(f"\n📍 Step {self.state.step_count}/{max_steps}")
             
+            # Rate limiting and session health
+            platform = self._detect_platform() or "default"
+            await self._rate_limiter.wait_if_needed(platform)
+            health = await self._session_manager.check_health(self._page)
+            if not health["healthy"]:
+                print(f"   ⚠️ Session issue: {health['reason']}")
+                if self._session_manager.should_stop():
+                    self.state.task_complete = True
+                    break
+                recovered = await self._session_manager.recover(self._page)
+                if not recovered:
+                    print("   🛑 Session recovery failed. Stopping.")
+                    self.state.task_complete = True
+                    break
+                print("   ✅ Session recovered")
+            
             try:
                 # Guard: stop immediately if LinkedIn rate limit is still active
                 if self.linkedin_rate_limit_until and datetime.now() < self.linkedin_rate_limit_until:
@@ -2073,9 +2133,27 @@ class SentinelAgent:
                 
                 await asyncio.sleep(random.uniform(4, 8))  # Random 4-8 sec gap between actions
                 
+                # Snapshot form state before filling
+                try:
+                    before_snapshot = await self._form_validator.snapshot(self._page)
+                except Exception:
+                    before_snapshot = {}
+
                 # Run scripted fallback
                 result = await self._handle_scripted_fallback()
                 print(f"📜 Script Result: {result}")
+
+                # Validate form state if a form was filled
+                if result and 'FORM_FILLED' in result:
+                    try:
+                        after_snapshot = await self._form_validator.snapshot(self._page)
+                        validation = self._form_validator.validate_change(before_snapshot, after_snapshot)
+                        if not validation['valid']:
+                            print(f"   ⚠️ Form validation issues: {validation['errors']}")
+                        else:
+                            print(f"   ✅ Form changes validated ({len(validation['changed'])} fields)")
+                    except Exception as e:
+                        print(f"   ⚠️ Form validation snapshot failed: {e}")
                 
                 # Handle question data logging if present
                 if result and '|' in result:
@@ -2198,7 +2276,7 @@ class SentinelAgent:
                                 let locationInput = null;
                                 for (const inp of inputs) {
                                     const val = inp.value || '';
-                                    if (val.toLowerCase().includes('noida')) {
+                                    if (val.toLowerCase().includes('bangalore') || val.toLowerCase().includes('bengaluru')) {
                                         locationInput = inp;
                                         break;
                                     }
@@ -2267,17 +2345,18 @@ class SentinelAgent:
                             const modal = document.querySelector('.jobs-easy-apply-modal, .artdeco-modal--is-open');
                             if (!modal) return { error: 'No modal found' };
                             
-                            // Find the Noida input
+                            // Find the Bangalore input
                             const inputs = modal.querySelectorAll('input[type="text"], input[type="search"], textarea');
-                            let noIdaInput = null;
+                            let bangaloreInput = null;
                             for (const inp of inputs) {
-                                if ((inp.value || '').includes('Noida')) {
-                                    noIdaInput = inp;
+                                const val = inp.value || '';
+                                if (val.includes('Bangalore') || val.includes('Bengaluru') || val.toLowerCase().includes('bangalore') || val.toLowerCase().includes('bengaluru')) {
+                                    bangaloreInput = inp;
                                     break;
                                 }
                             }
                             
-                            if (!noIdaInput) return { error: 'Noida input not found' };
+                            if (!bangaloreInput) return { error: 'Bangalore input not found' };
                             
                             // Look for dropdown-related elements
                             const dropdownLists = modal.querySelectorAll('[role="listbox"], .typeahead-input__dropdown-list, .artdeco-typeahead__results-list, [data-test-typeahead-results]');
@@ -2288,12 +2367,12 @@ class SentinelAgent:
                             const selectOptions = selects.length > 0 ? Array.from(selects[0].querySelectorAll('option')).map(o => o.text) : [];
                             
                             // Look for buttons near the input
-                            const inputContainer = noIdaInput.closest('.fb-dash-form-element') || noIdaInput.parentElement;
+                            const inputContainer = bangaloreInput.closest('.fb-dash-form-element') || bangaloreInput.parentElement;
                             const buttonsNear = inputContainer ? inputContainer.querySelectorAll('button') : [];
                             
                             return {
-                                inputId: noIdaInput.id,
-                                inputValue: noIdaInput.value,
+                                inputId: bangaloreInput.id,
+                                inputValue: bangaloreInput.value,
                                 dropdownListsFound: dropdownLists.length,
                                 dropdownItemsFound: dropdownItems.length,
                                 selectsFound: selects.length,
@@ -2315,7 +2394,7 @@ class SentinelAgent:
                             let locationInput = null;
                             for (const inp of inputs) {
                                 const val = inp.value || '';
-                                if (val.toLowerCase().includes('noida')) {
+                                if (val.toLowerCase().includes('bangalore') || val.toLowerCase().includes('bengaluru')) {
                                     locationInput = inp;
                                     break;
                                 }
@@ -2367,8 +2446,8 @@ class SentinelAgent:
                                     // Check if option is visible and has content
                                     if (option.offsetParent !== null) {
                                         const text = (option.innerText || option.textContent || '').trim();
-                                        if (text && text.toLowerCase().includes('noida')) {
-                                            console.log('Found Noida option, clicking:', text);
+                                        if (text && (text.toLowerCase().includes('bangalore') || text.toLowerCase().includes('bengaluru'))) {
+                                            console.log('Found Bangalore option, clicking:', text);
                                             option.scrollIntoView({block: 'nearest'});
                                             option.click();
                                             option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -2418,8 +2497,8 @@ class SentinelAgent:
                             # Fallback: Try using Playwright's locator to find and click the option
                             print("   📍 JavaScript click didn't work, trying Playwright locator...")
                             try:
-                                # Try to find and click any option containing "Noida"
-                                option_locator = self._page.locator('[role="option"]:has-text("Noida")')
+                                # Try to find and click any option containing "Bangalore"
+                                option_locator = self._page.locator('[role="option"]:has-text("Bangalore")')
                                 if await option_locator.count() > 0:
                                     await option_locator.first.click(timeout=2000)
                                     print("   ✅ Clicked option via Playwright locator")
@@ -3745,6 +3824,11 @@ class SentinelAgent:
                 print(f"❌ Error: {e}")
                 self.state.errors.append(str(e))
                 self.metrics['errors_encountered'] += 1
+                try:
+                    platform = self._detect_platform() or "default"
+                    self._rate_limiter.record_error(platform)
+                except Exception:
+                    pass
                 if len(self.state.errors) > 5:
                     print("🚨 Too many errors. Stopping.")
                     break
@@ -6994,19 +7078,19 @@ class SentinelAgent:
                                     answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
                                     console.log('Fallback: Filling skill set field');
                                 } else if (combinedText.includes('location') || (combinedText.includes('city') && !combinedText.includes('street'))) {
-                                    answer = 'Noida';
+                                    answer = 'Bangalore';
                                     console.log('Fallback: Filling location/city field');
                                 } else if (combinedText.includes('street') || combinedText.includes('address line')) {
-                                    answer = 'Sector 137';
+                                    answer = 'Koramangala';
                                     console.log('Fallback: Filling street address');
                                 } else if (combinedText.includes('zip') || combinedText.includes('postal') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
-                                    answer = '201301';
+                                    answer = '560034';
                                     console.log('Fallback: Filling zip/postal code');
                                 } else if (combinedText.match(/\bcity\b/) || combinedText.includes('town')) {
-                                    answer = 'Noida';
+                                    answer = 'Bangalore';
                                     console.log('Fallback: Filling city');
                                 } else if (combinedText.includes('state') || combinedText.includes('province')) {
-                                    answer = 'Uttar Pradesh';
+                                    answer = 'Karnataka';
                                     console.log('Fallback: Filling state/province');
                                 } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                                     answer = 'India';
@@ -7539,7 +7623,7 @@ class SentinelAgent:
                             if (isLocationSelect) {
                                 const locOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 let locAnswer = labelText ? fuzzyMatch(labelText) : null;
-                                if (!locAnswer) locAnswer = 'Noida';
+                                if (!locAnswer) locAnswer = 'Bangalore';
                                 
                                 let locMatch = findBestMatch(locAnswer, locOptions);
                                 

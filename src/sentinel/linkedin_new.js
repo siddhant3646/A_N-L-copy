@@ -55,11 +55,11 @@
         },
         location_current: {
             patterns: ['current location', 'current city', 'currently located', 'where are you located', 'where do you stay', 'stay currently'],
-            default: 'Noida'
+            default: 'Bangalore'
         },
         location_preferred: {
             patterns: ['preferred location', 'preferred city', 'city preference', 'interview city', 'preferred location for work'],
-            default: 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad'
+            default: 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida'
         },
         contact_phone: {
             patterns: ['phone number', 'mobile number', 'contact number'],
@@ -191,15 +191,15 @@
         },
         city: {
             patterns: ['city', 'town', 'municipality'],
-            default: 'Noida'
+            default: 'Bangalore'
         },
         state: {
             patterns: ['state', 'state/province', 'province'],
-            default: 'Uttar Pradesh'
+            default: 'Karnataka'
         },
         zip_code: {
             patterns: ['zip', 'zip code', 'postal code', 'pincode', 'pin code', 'zip/postal code'],
-            default: '201301'
+            default: '560001'
         },
         country: {
             patterns: ['country', 'nation', 'country/region'],
@@ -1273,14 +1273,14 @@
                         fillValue = 'Sector 137';
                         console.log('Fallback: Filling street address with: Sector 137');
                     } else if (combinedText.includes('city') || combinedText.includes('town')) {
-                        fillValue = 'Noida';
-                        console.log('Fallback: Filling city with: Noida');
+                        fillValue = 'Bangalore';
+                        console.log('Fallback: Filling city with: Bangalore');
                     } else if (combinedText.includes('state') || combinedText.includes('province')) {
-                        fillValue = 'Uttar Pradesh';
-                        console.log('Fallback: Filling state with: Uttar Pradesh');
+                        fillValue = 'Karnataka';
+                        console.log('Fallback: Filling state with: Karnataka');
                     } else if (combinedText.includes('zip') || combinedText.includes('postal code') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
-                        fillValue = '201301';
-                        console.log('Fallback: Filling zip/postal code with: 201301');
+                        fillValue = '560001';
+                        console.log('Fallback: Filling zip/postal code with: 560001');
                     } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                         fillValue = 'India';
                         console.log('Fallback: Filling country with: India');

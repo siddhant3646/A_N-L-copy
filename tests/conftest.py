@@ -165,7 +165,7 @@ def sample_qa_patterns():
         "location": {
             "patterns": ["current location", "current city", "where are you located"],
             "category": "location",
-            "default": "Noida"
+            "default": "Bangalore"
         }
     }
 
@@ -177,7 +177,7 @@ def sample_questions():
         ("What is your current salary?", "13.5 LPA", "salary"),
         ("How many years of experience do you have?", "4", "experience"),
         ("What is your notice period?", "Serving Notice Period", "notice_period"),
-        ("Where are you currently located?", "Noida", "location"),
+        ("Where are you currently located?", "Bangalore", "location"),
         ("Current CTC in LPA?", "13.5", "salary"),
         ("Total years of experience", "4", "experience"),
     ]

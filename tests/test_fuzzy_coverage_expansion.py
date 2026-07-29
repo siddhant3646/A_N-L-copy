@@ -249,7 +249,7 @@ class TestExistingPatternsRegression(unittest.TestCase):
 
     def test_location(self):
         ans, score = self.agent._fuzzy_match_question('current location')
-        self.assertIn('Noida', ans)
+        self.assertIn('Bangalore', ans)
         self.assertGreater(score, 0.6)
 
     def test_experience_years(self):

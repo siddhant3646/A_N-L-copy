@@ -290,8 +290,8 @@ CATEGORY_DEFAULTS = {
         "lwd": None  # Calculated dynamically
     },
     QuestionCategory.LOCATION: {
-        "current": "Noida",
-        "preferred": "Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune",
+        "current": "Bangalore",
+        "preferred": "Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Noida",
         "relocate": "Yes"
     },
     QuestionCategory.SKILLS: {
@@ -552,8 +552,8 @@ class QuestionClassifier:
             return CATEGORY_DEFAULTS[QuestionCategory.LOCATION]["preferred"]
         elif "relocat" in question or "willing" in question:
             return "Yes"
-        elif any(city in question for city in ["bangalore", "mumbai", "pune", "hyderabad", "chennai"]):
-            return "No, I am currently based in Noida. However, I am willing to relocate."
+        elif any(city in question for city in ["mumbai", "pune", "hyderabad", "chennai", "delhi", "noida"]):
+            return "No, I am currently based in Bangalore. However, I am willing to relocate."
         else:
             return CATEGORY_DEFAULTS[QuestionCategory.LOCATION]["current"]
     

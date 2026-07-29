@@ -89,7 +89,7 @@ DETAILS TO USE:
 - Notice Period: "Serving Notice Period" (Always select this radio button/option).
 - Last Working Day (LWD): "Feb 3, 2026" (Format as required: 03/02/2026).
 - Experience: 4 Years (48 months total). ALWAYS ENTER "4 Years" in experience fields.
-- Location: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
+- Location: Bangalore. Preferred: Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes. | Immediate Joiner: Yes.
 - Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.51 and if asked in percentage then it is 85.1%
 - Completed HSC/10th in year 2018, CGPA: 8.8 and if asked in percentage then it is 88%
@@ -113,7 +113,7 @@ DETAILS TO USE:
 - Current Salary: 23,00,000
 - Notice Period: 15 days (Serving Notice). LWD: Feb 03, 2026.
 - Experience: 4 Years.
-- Location: Current: Noida. Preferred: Mumbai, Delhi/NCR, Bangalore, Hyderabad, Remote, Pune, Noida, Gurgaon, Chennai, Kolkata, Ahmedabad.
+- Location: Current: Bangalore. Preferred: Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad.
 - Relocation: Yes.
 - Immediate Joiner: Yes. Can join by Feb 03, 2026.
 - Completed B.Tech in CSE from VIT Bhopal in year 2022, CGPA: 8.51 and if asked in percentage then it is 85.1%
@@ -164,7 +164,7 @@ CRITICAL SEQUENCE (MUST FOLLOW IN ORDER):
     - Tech Experience (Years) -> Enter "4 Years"
     - Current Salary -> "23 LPA"
     - Expected Salary -> "30 LPA"
-   - Location -> "Noida"
+   - Location -> "Bangalore"
    - Relocation -> "Yes"
 5. DONE: When modal closes or "Application Submitted" appears, task complete.
 
@@ -246,7 +246,7 @@ GOAL: Configure job search filters on Instahyre and apply to 5 jobs.
 PHASE 1 - CONFIGURE SEARCH:
 1. Click "Search other jobs" dropdown to expand the filter panel
 2. Set Experience: 4 years
-3. Add Locations (one by one, same as skills entry): Anywhere in India, Work from home / Remote, Bangalore, Noida, Gurgaon, Pune, Delhi, Delhi / NCR, Mumbai, Hyderabad
+3. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
 4. Add Skills (one by one): Java, JavaScript, HTML, CSS, SpringBoot, ReactJS, AWS
 5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
 6. Click "Show results" button after all configuration is complete
@@ -280,7 +280,7 @@ GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 1. If filters are already set, skip to Phase 2
 2. Otherwise: Set Experience: 4 years
-3. Add Locations (one by one): Anywhere in India, Work from home / Remote, Bangalore, Noida, Gurgaon, Pune, Delhi, Delhi / NCR, Mumbai, Hyderabad
+3. Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
 4. Add Skills: Java, JavaScript, SpringBoot, ReactJS
 5. Add Job Functions: Backend Development, Frontend Development
 6. Click "Show results"

@@ -353,3 +353,62 @@ async def dismiss_browser_dialogs(page: Page) -> bool:
     except Exception as e:
         print(f"⚠️ Dialog dismissal setup failed: {e}")
         return False
+
+
+async def smart_wait_for_stable_dom(
+    page: Page,
+    selector: str,
+    stability_ms: int = 500,
+    timeout_ms: int = 10000
+) -> bool:
+    """
+    Wait until a DOM element stops changing for a given duration.
+    Polls element's outerHTML to detect stability.
+    """
+    start = asyncio.get_event_loop().time()
+    last_html = None
+    stable_since = None
+
+    while True:
+        try:
+            html = await page.evaluate(
+                """(sel) => {
+                    const el = document.querySelector(sel);
+                    return el ? el.outerHTML : null;
+                }""",
+                selector,
+            )
+        except Exception:
+            html = None
+
+        now = asyncio.get_event_loop().time()
+        if html is None:
+            stable_since = None
+        elif html == last_html:
+            if stable_since is None:
+                stable_since = now
+            elif (now - stable_since) * 1000 >= stability_ms:
+                return True
+        else:
+            stable_since = None
+
+        last_html = html
+        if (now - start) * 1000 >= timeout_ms:
+            return False
+        await asyncio.sleep(0.2)
+
+
+async def smart_wait_for_network_idle(
+    page: Page,
+    idle_ms: int = 500,
+    timeout_ms: int = 10000
+) -> bool:
+    """
+    Wait until no network requests have been initiated for idle_ms milliseconds.
+    Uses Playwright's built-in wait_for_load_state('networkidle') if available.
+    """
+    try:
+        await page.wait_for_load_state("networkidle", timeout=timeout_ms)
+        return True
+    except Exception:
+        return False

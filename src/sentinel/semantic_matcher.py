@@ -90,7 +90,7 @@ class SemanticQuestionMatcher:
                 'city you are in', 'current city', 'present location',
                 'where do you stay', 'based out of', 'currently in'
             ],
-            'answer': 'Noida',
+            'answer': 'Bangalore',
             'category': 'location'
         },
         'location_preferred': {
@@ -99,7 +99,7 @@ class SemanticQuestionMatcher:
                 'willing to move', 'preferred city', 'location preference',
                 'where would you like', 'preferred place', 'desired location'
             ],
-            'answer': 'Noida, Delhi NCR, Bangalore, Hyderabad, Mumbai, Pune',
+            'answer': 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Noida',
             'category': 'location'
         },
         'company_current': {

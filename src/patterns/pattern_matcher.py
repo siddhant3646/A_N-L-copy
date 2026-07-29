@@ -231,6 +231,32 @@ class PatternMatcher:
         self._category_index.clear()
         self._build_index()
 
+    def detect_duplicate_patterns(self, new_pattern_id: str, similarity_threshold: float = 0.85) -> List[Tuple[str, float]]:
+        """
+        Check if a newly added pattern is too similar to existing patterns.
+
+        Returns list of (existing_pattern_id, similarity_score) tuples above threshold.
+        """
+        new_patterns = self._pattern_cache.get(new_pattern_id, [])
+        if not new_patterns:
+            return []
+        duplicates = []
+        norm_new = [self._normalize(p) for p in new_patterns]
+        for pid, pat_strings in self._pattern_cache.items():
+            if pid == new_pattern_id:
+                continue
+            for np in norm_new:
+                for ps in pat_strings:
+                    sim = self._similarity(np, self._normalize(ps))
+                    if sim >= similarity_threshold:
+                        duplicates.append((pid, sim))
+                        break
+                else:
+                    continue
+                break
+        duplicates.sort(key=lambda x: x[1], reverse=True)
+        return duplicates
+
 
 def create_matcher(json_path: Optional[str] = None, threshold: float = PatternMatcher.DEFAULT_THRESHOLD) -> PatternMatcher:
     loader = PatternLoader(json_path)

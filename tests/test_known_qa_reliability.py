@@ -667,5 +667,49 @@ class TestAutoLearningScript(unittest.TestCase):
         self.assertNotIn(pid, existing)
 
 
+class TestExperienceTextInputDefaults(unittest.TestCase):
+    """Verify experience-category patterns return '4 Years' for text inputs.
+
+    Regression test for bug where Naukri text inputs received bare '4' instead
+    of '4 Years' because input_type_defaults.text was a bare number for 10
+    experience patterns. LinkedIn must still get bare '4' (handled in JS via
+    platform override, not in input_type_defaults).
+    """
+
+    def setUp(self):
+        self.matcher = create_matcher()
+
+    def _experience_questions(self):
+        return [
+            'years of experience',
+            'total experience',
+            'relevant experience',
+            'how many years of experience do you have',
+            'kubernetes experience',
+            'docker experience',
+        ]
+
+    def test_text_input_returns_4_years(self):
+        """Text inputs (Naukri chatbot) must return '4 Years', not bare '4'."""
+        for q in self._experience_questions():
+            ans, score = self.matcher.fuzzy_match(q, input_type='text')
+            self.assertEqual(ans, '4 Years',
+                             f'For {q!r} with input_type=text, expected "4 Years" but got {ans!r}')
+
+    def test_number_input_returns_bare_4(self):
+        """Number inputs must still return bare '4' (for numeric-only fields)."""
+        for q in self._experience_questions():
+            ans, score = self.matcher.fuzzy_match(q, input_type='number')
+            self.assertEqual(ans, '4',
+                             f'For {q!r} with input_type=number, expected "4" but got {ans!r}')
+
+    def test_no_input_type_returns_4_years(self):
+        """Without input_type, the pattern default ('4 Years') must be returned."""
+        for q in self._experience_questions():
+            ans, score = self.matcher.fuzzy_match(q)
+            self.assertEqual(ans, '4 Years',
+                             f'For {q!r} with no input_type, expected "4 Years" but got {ans!r}')
+
+
 if __name__ == '__main__':
     unittest.main()

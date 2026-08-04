@@ -43,7 +43,7 @@ FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
 # Previously these were duplicated in _same_keyword_category() and _fuzzy_match_question().
 SALARY_KEYWORDS = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
 EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp']
-NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'availability']
+NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'np', 'lwd', 'last working']
 LOCATION_KEYWORDS = ['location', 'city', 'relocate', 'preferred location']
 ASYNC_JOB_KEYWORDS = [
     'asynchronous programming', 'celery', 'asyncio', 'async io', 'background job',
@@ -2657,6 +2657,30 @@ class SentinelAgent:
                 # LinkedIn: Job card selected from sidebar — wait for details pane to load
                 if 'LINKEDIN_JOB_SELECTED' in result:
                     print(f"📋 Selected job from list, waiting for details to load...")
+                    # Infinite loop guard: if we get JOB_SELECTED repeatedly without any other
+                    # result in between, the JS is stuck re-selecting the same job.
+                    # After 5 consecutive JOB_SELECTED results, force a page navigation to escape.
+                    if not hasattr(self, '_job_selected_streak'):
+                        self._job_selected_streak = 0
+                    self._job_selected_streak += 1
+                    if self._job_selected_streak >= 5:
+                        print(f"⚠️ JOB_SELECTED loop detected ({self._job_selected_streak}x consecutive). Force-navigating to escape...")
+                        self._job_selected_streak = 0
+                        try:
+                            current_url = self._page.url
+                            # Navigate to the search page (strip currentJobId to reset selection)
+                            from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+                            parsed = urlparse(current_url)
+                            params = parse_qs(parsed.query, keep_blank_values=True)
+                            params.pop('currentJobId', None)
+                            new_query = urlencode({k: v[0] for k, v in params.items()})
+                            escape_url = urlunparse(parsed._replace(query=new_query))
+                            await self._page.goto(escape_url, timeout=30000)
+                            await asyncio.sleep(random.uniform(4, 6))
+                        except Exception as escape_e:
+                            print(f"   ⚠️ Escape navigation error: {escape_e}")
+                            await asyncio.sleep(random.uniform(3, 5))
+                        continue
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to render
                     continue
                 
@@ -2686,6 +2710,11 @@ class SentinelAgent:
                 # Reset stuck counter on any non-stuck LinkedIn result
                 if 'LINKEDIN' in result and 'LINKEDIN_FORM_STUCK' not in result:
                     self._linkedin_stuck_count = 0
+                
+                # Reset JOB_SELECTED streak counter on any non-selection result
+                if 'LINKEDIN' in result and 'LINKEDIN_JOB_SELECTED' not in result:
+                    if hasattr(self, '_job_selected_streak'):
+                        self._job_selected_streak = 0
                 
                 # LinkedIn Autopilot — triggered by APPLY_CLICKED_LINKEDIN (legacy) or LINKEDIN_EASY_APPLY_CLICKED (JS)
                 if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
@@ -4269,6 +4298,28 @@ class SentinelAgent:
                             KNOWN_PATTERNS[k] = 'Serving Notice Period';
                         }}
                     }});
+
+                    // LinkedIn: experience-category patterns must answer bare number ("4"), not "4 Years".
+                    // Naukri text inputs now return "4 Years" from input_type_defaults.text; LinkedIn must
+                    // strip the " Years" suffix for both the flat default and input_type_defaults.
+                    Object.keys(KNOWN_PATTERNS_WITH_DEFAULTS).forEach(k => {{
+                        const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
+                        if (!defaultObj || defaultObj.category !== 'experience') return;
+                        const flatVal = KNOWN_PATTERNS[k];
+                        if (typeof flatVal === 'string' && /\d+\s*Years?/i.test(flatVal)) {{
+                            const m = flatVal.match(/(\d+(?:\.\d+)?)/);
+                            KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
+                        }}
+                        if (defaultObj.input_type_defaults) {{
+                            Object.keys(defaultObj.input_type_defaults).forEach(t => {{
+                                const tv = defaultObj.input_type_defaults[t];
+                                if (typeof tv === 'string' && /\d+\s*Years?/i.test(tv)) {{
+                                    const m = tv.match(/(\d+(?:\.\d+)?)/);
+                                    defaultObj.input_type_defaults[t] = m ? m[1] : tv;
+                                }}
+                            }});
+                        }}
+                    }});
                 }}
                 const snackBody = document.querySelector(
                     '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
@@ -4367,7 +4418,7 @@ class SentinelAgent:
                     answer = '17/12/2000';
                     console.log('Chatbot Debug - DOB question detected, answering:', answer);
                 }} else {{
-                    answer = fuzzyMatch(qText, chatLayer) || '1';
+                    answer = fuzzyMatch(qText, chatLayer) || 'Yes';
                     
                     // Yes/no question detection — override numeric/empty fallbacks
                     // Questions like "Have you worked with X?" or "Do you have experience in X?"
@@ -4382,12 +4433,32 @@ class SentinelAgent:
                         qLower.startsWith('have u ') ||
                         qLower.startsWith('r u ') ||
                         qLower.startsWith('apply only ') ||
+                        qLower.startsWith('need to ') ||
+                        qLower.startsWith('required to ') ||
+                        qLower.startsWith('willing to ') ||
+                        qLower.startsWith('open to ') ||
+                        qLower.startsWith('comfortable ') ||
                         qLower.includes('willing') ||
                         qLower.includes('comfortable') ||
                         qLower.includes('localite') ||
                         qLower.includes('relocate') ||
                         qLower.includes('relocation') ||
-                        qLower.includes('open to')
+                        qLower.includes('open to') ||
+                        qLower.includes('freelancer') ||
+                        qLower.includes('freelance') ||
+                        qLower.includes('days in a week') ||
+                        qLower.includes('days in week') ||
+                        qLower.includes('work from office') ||
+                        qLower.includes('work from home') ||
+                        qLower.includes('wfh') ||
+                        qLower.includes('wfo') ||
+                        qLower.includes('hybrid') ||
+                        qLower.includes('onsite') ||
+                        qLower.includes('night shift') ||
+                        qLower.includes('rotational shift') ||
+                        qLower.includes('bond') ||
+                        qLower.includes('contract') ||
+                        qLower.includes('agreement')
                     );
                     
                     // Exclude questions that are genuinely asking for years/numbers
@@ -5733,6 +5804,7 @@ class SentinelAgent:
                     });
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs
+                    // Smart salary handling: check for monthly, LPA, expected keywords
                     const salaryKeys = [
                         'salary range', 'current salary range', 'expected salary range',
                         'annual salary', 'ctc range', 'current ctc', 'expected ctc',
@@ -5742,14 +5814,28 @@ class SentinelAgent:
                         'expected annual salary', 'what is your expected annual salary', 'what is your expected annual salary?',
                         'what is your current salary?', 'what is your expected salary?',
                         'what is your current ctc', 'what is your current ctc?',
-                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations'
+                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations',
+                        'monthly salary', 'current monthly salary', 'expected monthly salary',
+                        'per month salary', 'current ctc in lpa', 'expected ctc in lpa',
+                        'desired compensation', 'desired salary'
                     ];
                     salaryKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) {
-                            // Use full INR values for LinkedIn text inputs
-                            if (k.includes('expected') || k.includes('ectc') || k.includes('expect')) {
+                            const kLower = k.toLowerCase();
+                            // Monthly salary questions
+                            if (kLower.includes('monthly') || kLower.includes('per month')) {
+                                KNOWN_PATTERNS[k] = kLower.includes('expected') ? '250000' : '191667';
+                            }
+                            // LPA/Lakh questions
+                            else if (kLower.includes('lpa') || kLower.includes('lakh') || kLower.includes('lac')) {
+                                KNOWN_PATTERNS[k] = (kLower.includes('expected') || kLower.includes('desired')) ? '30' : '23';
+                            }
+                            // Expected/desired salary (annual INR)
+                            else if (kLower.includes('expected') || kLower.includes('ectc') || kLower.includes('desired')) {
                                 KNOWN_PATTERNS[k] = '3000000';
-                            } else {
+                            }
+                            // Current salary (annual INR)
+                            else {
                                 KNOWN_PATTERNS[k] = '2300000';
                             }
                         }
@@ -5829,6 +5915,28 @@ class SentinelAgent:
                     ];
                     cloudKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
+                    });
+
+                    // LinkedIn: experience-category patterns must answer bare number ("4"), not "4 Years".
+                    // Naukri text inputs now return "4 Years" from input_type_defaults.text; LinkedIn must
+                    // strip the " Years" suffix for both the flat default and input_type_defaults.
+                    Object.keys(KNOWN_PATTERNS_WITH_DEFAULTS).forEach(k => {
+                        const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
+                        if (!defaultObj || defaultObj.category !== 'experience') return;
+                        const flatVal = KNOWN_PATTERNS[k];
+                        if (typeof flatVal === 'string' && /\d+\s*Years?/i.test(flatVal)) {
+                            const m = flatVal.match(/(\d+(?:\.\d+)?)/);
+                            KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
+                        }
+                        if (defaultObj.input_type_defaults) {
+                            Object.keys(defaultObj.input_type_defaults).forEach(t => {
+                                const tv = defaultObj.input_type_defaults[t];
+                                if (typeof tv === 'string' && /\d+\s*Years?/i.test(tv)) {
+                                    const m = tv.match(/(\d+(?:\.\d+)?)/);
+                                    defaultObj.input_type_defaults[t] = m ? m[1] : tv;
+                                }
+                            });
+                        }
                     });
                 }
 
@@ -5935,15 +6043,27 @@ class SentinelAgent:
                         const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
                         const isYearsQ = /years\b/.test(qLower) && !isSalaryQ;
+                        // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
+                        const isLinkedInHost = window.location.hostname.includes('linkedin');
+                        const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
                         if (isYearsQ) {
-                            bestMatch = '4'; // Default years
+                            bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
                             bestMatch = '15'; // Default notice period
                         } else if (isSalaryQ) {
-                            bestMatch = (qLower.includes('expected') || qLower.includes('ectc') || qLower.includes('expect')) ? '3000000' : '2300000';
+                            // Smart salary handling: check for monthly, LPA, expected keywords
+                            if (/monthly|per month/.test(qLower)) {
+                                bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
+                            } else if (/lpa|lakh|lac/.test(qLower)) {
+                                bestMatch = /expected|desired/.test(qLower) ? '30' : '23';
+                            } else if (/expected|ectc|desired/.test(qLower)) {
+                                bestMatch = '3000000';
+                            } else {
+                                bestMatch = '2300000';
+                            }
                         } else if (isExpQ) {
-                            bestMatch = '4 Years';
+                            bestMatch = yearsDefault;
                         }
                     }
                     
@@ -5952,12 +6072,23 @@ class SentinelAgent:
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
                         const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
                         const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
+                        const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
                         if (isSalaryQ) {
-                            bestMatch = (qLower.includes('expected') || qLower.includes('ectc') || qLower.includes('expect')) ? '3000000' : '2300000';
+                            // Smart salary handling: check for monthly, LPA, expected keywords
+                            if (/monthly|per month/.test(qLower)) {
+                                bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
+                            } else if (/lpa|lakh|lac/.test(qLower)) {
+                                bestMatch = /expected|desired/.test(qLower) ? '30' : '23';
+                            } else if (/expected|ectc|desired/.test(qLower)) {
+                                bestMatch = '3000000';
+                            } else {
+                                bestMatch = '2300000';
+                            }
                         } else if (isExpQ && !/\d/.test(bestMatch)) {
                             if (/how many|years|months|\bexp\b/i.test(qLower)) {
-                                bestMatch = '4';
+                                // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
+                                bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
                         } else if (isNoticeQ && !/\d/.test(bestMatch)) {
                             bestMatch = '15';
@@ -7646,7 +7777,16 @@ class SentinelAgent:
                                 let locAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!locAnswer) locAnswer = 'Bangalore';
                                 
-                                let locMatch = findBestMatch(locAnswer, locOptions);
+                                // PRIORITY 1: Try Bangalore first (user's primary location)
+                                let locMatch = findBestMatch('Bangalore', locOptions);
+                                if (locMatch) {
+                                    console.log('Location Select: matched Bangalore (primary preference)');
+                                }
+                                
+                                // PRIORITY 2: Try the pattern-matched answer
+                                if (!locMatch) {
+                                    locMatch = findBestMatch(locAnswer, locOptions);
+                                }
                                 
                                 // If answer is comma-separated (e.g. preferred locations), try each part
                                 if (!locMatch && locAnswer.includes(',')) {
@@ -7670,7 +7810,8 @@ class SentinelAgent:
                                                !t.includes('select') &&
                                                !t.includes('choose') &&
                                                !t.includes('please') &&
-                                               !t.includes('an option');
+                                               !t.includes('an option') &&
+                                               !t.includes('skip');
                                     });
                                     console.log('Location Select: no match for', locAnswer, '- defaulting to first option:', locMatch?.text);
                                 }
@@ -8707,6 +8848,38 @@ class SentinelAgent:
                                 }
                             }
                             
+                            // Method 7: If label is short/generic (e.g. "Yes"), scan nearest ancestor
+                            // containers for GDPR/consent text. Handles SmartBear-style checkboxes where
+                            // the checkbox is labeled simply "Yes" but the consent question is a paragraph
+                            // above it. Without this, the bot logs "Skipping checkbox" and gets stuck.
+                            if (!labelText || /^(yes|no|agree|ok|accept|confirm|check)$/i.test(labelText.trim())) {
+                                const ancestors = [
+                                    checkbox.closest('.jobs-easy-apply-form-section__question'),
+                                    checkbox.closest('.fb-dash-form-element'),
+                                    checkbox.closest('[data-test-form-element]'),
+                                    checkbox.closest('fieldset'),
+                                    checkbox.closest('li'),
+                                    checkbox.parentElement ? checkbox.parentElement.parentElement : null,
+                                    (checkbox.parentElement && checkbox.parentElement.parentElement)
+                                        ? checkbox.parentElement.parentElement.parentElement : null,
+                                ].filter(Boolean);
+                                for (const container of ancestors) {
+                                    const containerText = container.innerText || '';
+                                    const ctLower = containerText.toLowerCase();
+                                    if (ctLower.includes('consent') || ctLower.includes('privacy') ||
+                                        ctLower.includes('collect') || ctLower.includes('store and process') ||
+                                        ctLower.includes('1825 days') || ctLower.includes('730 days') ||
+                                        ctLower.includes('365 days') || ctLower.includes('days thereafter') ||
+                                        ctLower.includes('for employment') || ctLower.includes('acknowledge') ||
+                                        ctLower.includes('processing of my') || ctLower.includes('personal data')) {
+                                        const overrideText = containerText.substring(0, 500);
+                                        console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
+                                        labelText = overrideText;
+                                        break;
+                                    }
+                                }
+                            }
+                            
                             console.log('Checkbox label text found:', labelText.substring(0, 100));
                             const lowerLabel = labelText.toLowerCase();
                             
@@ -9431,6 +9604,16 @@ class SentinelAgent:
                             }
                         }
                         
+                        // NOT_ELIGIBLE_FOR_CHARGING in URL = LinkedIn internally marks the job as closed/ineligible
+                        const isNotEligible = window.location.href.includes('NOT_ELIGIBLE_FOR_CHARGING') ||
+                                              window.location.href.includes('eBP=NOT_ELIGIBLE') ||
+                                              window.location.search.includes('eBP=NOT');
+                        if (isNotEligible && currentJobId && !window.__skippedJobIds.has(currentJobId)) {
+                            console.log('Job ' + currentJobId + ' is NOT_ELIGIBLE_FOR_CHARGING (URL signal). Marking as skipped.');
+                            window.__skippedJobIds.add(currentJobId);
+                            return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — job closed (URL signal)';
+                        }
+                        
                         if (currentJobId && !window.__skippedJobIds.has(currentJobId)) {
                             // Check for signs this job cannot be applied to
                             const detailPane = document.querySelector('.job-view-layout, .jobs-unified-top-card, .jobs-details, .scaffold-layout__detail');
@@ -9442,7 +9625,8 @@ class SentinelAgent:
                                 'no longer available',
                                 'this job is no longer',
                                 'expired',
-                                'position has been filled'
+                                'position has been filled',
+                                'no longer accepting applications'
                             ];
                             const hasNoApplySignal = noApplySignals.some(sig => detailText.includes(sig));
                             // Also skip if we simply can't find an Easy Apply button after selecting this job
@@ -9450,6 +9634,28 @@ class SentinelAgent:
                                 console.log('Job ' + currentJobId + ' has no Easy Apply button (closed/expired). Marking as skipped.');
                                 window.__skippedJobIds.add(currentJobId);
                                 return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — ' + (hasNoApplySignal ? 'job closed' : 'button not found');
+                            }
+                        }
+                        
+                        // Fallback: even without a job ID, detect closed jobs by URL or detail pane
+                        if (!currentJobId) {
+                            const detailPane = document.querySelector('.job-view-layout, .jobs-unified-top-card, .jobs-details, .scaffold-layout__detail');
+                            const detailText = detailPane ? (detailPane.innerText || '').toLowerCase() : '';
+                            const isClosed = isNotEligible || 
+                                            detailText.includes('no longer accepting') ||
+                                            detailText.includes('no longer available') ||
+                                            detailText.includes('application closed');
+                            if (isClosed && !findEasyApplyButton()) {
+                                console.log('Job with no ID appears closed (URL/detail signal). Skipping...');
+                                // Track by title to avoid re-selecting
+                                const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, h1');
+                                const title = titleEl ? titleEl.innerText.trim().substring(0, 80) : '';
+                                if (title) {
+                                    if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
+                                    window.__skippedJobTitles.add(title);
+                                    console.log('Added to skipped titles:', title);
+                                }
+                                return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — closed job (no ID)';
                             }
                         }
                         
@@ -9574,12 +9780,46 @@ class SentinelAgent:
                         return true;
                     });
 
-                    if (candidates.length > 0) {
-                        const nextJob = candidates[0];
-                        console.log('Clicking next job:', nextJob.innerText.split('\\n')[0]);
+                    // Filter out jobs whose title was skipped by the title-based skip list
+                    const titleFilteredCandidates = candidates.filter(card => {
+                        if (!window.__skippedJobTitles || window.__skippedJobTitles.size === 0) return true;
+                        const cardTitle = card.innerText.split('\\n')[0].trim().substring(0, 80);
+                        return !window.__skippedJobTitles.has(cardTitle);
+                    });
+
+                    if (titleFilteredCandidates.length > 0) {
+                        const nextJob = titleFilteredCandidates[0];
+                        const nextJobTitle = nextJob.innerText.split('\\n')[0].trim();
+                        
+                        // Detect infinite loop: if we already clicked this exact job title last time,
+                        // it means clicking it did not advance state. Skip it.
+                        if (window.__lastClickedJobTitle === nextJobTitle) {
+                            window.__lastClickedJobSameCount = (window.__lastClickedJobSameCount || 0) + 1;
+                            console.log('Same job selected again (' + window.__lastClickedJobSameCount + 'x): ' + nextJobTitle);
+                            if (window.__lastClickedJobSameCount >= 2) {
+                                console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip list');
+                                if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
+                                window.__skippedJobTitles.add(nextJobTitle);
+                                window.__lastClickedJobTitle = null;
+                                window.__lastClickedJobSameCount = 0;
+                                // Scroll sidebar to reveal next jobs
+                                if (sidebar) sidebar.scrollBy(0, 400);
+                                return 'LINKEDIN_SCROLLED: Skipping stuck job — ' + nextJobTitle;
+                            }
+                        } else {
+                            window.__lastClickedJobSameCount = 0;
+                        }
+                        window.__lastClickedJobTitle = nextJobTitle;
+                        
+                        console.log('Clicking next job:', nextJobTitle);
                         nextJob.click();
                         nextJob.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return 'LINKEDIN_JOB_SELECTED';
+                    } else if (candidates.length > 0) {
+                        // All candidates were filtered by title skip list — scroll to load more
+                        console.log('All visible candidates are in skip list, scrolling sidebar...');
+                        if (sidebar) sidebar.scrollBy(0, 400);
+                        return 'LINKEDIN_SCROLLED: All candidates skipped';
                     }
 
                     // No eligible jobs found — check if we should paginate or scroll

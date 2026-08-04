@@ -121,7 +121,7 @@ CATEGORY_PATTERNS = {
     QuestionCategory.NOTICE_PERIOD: {
         "keywords": [
             "notice", "serving", "lwd", "last working", "join",
-            "joining", "available", "availability", "np", "notice period"
+            "joining", "np", "notice period"
         ],
         "regex_patterns": [
             r"notice\s*period",
@@ -129,8 +129,7 @@ CATEGORY_PATTERNS = {
             r"lwd",
             r"serving\s*notice",
             r"when\s*can\s*you\s*join",
-            r"joining\s*date",
-            r"availability"
+            r"joining\s*date"
         ],
         "input_type_hints": ["number", "text", "radio", "select"],
         "requires_numeric": False
@@ -241,7 +240,8 @@ CATEGORY_PATTERNS = {
     QuestionCategory.AVAILABILITY: {
         "keywords": [
             "interview", "assessment", "schedule", "time", "slot",
-            "date", "when", r"available\s*on"
+            "date", "when", r"available\s*on", "available", "availability",
+            "virtual", "f2f", "face to face", "telephonic", "video interview"
         ],
         "regex_patterns": [
             r"available\s*for\s*interview",
@@ -249,7 +249,11 @@ CATEGORY_PATTERNS = {
             r"assessment\s*date",
             r"when\s*can\s*we",
             r"preferred\s*time",
-            r"time\s*slot"
+            r"time\s*slot",
+            r"when\s*are\s*you\s*available",
+            r"virtual\s*interview",
+            r"f2f\s*interview",
+            r"face\s*to\s*face\s*interview"
         ],
         "input_type_hints": ["text", "select", "radio"],
         "requires_numeric": False

@@ -2,6 +2,7 @@ from difflib import SequenceMatcher
 from typing import Dict, Any, List, Tuple, Optional
 import re
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from .pattern_loader import PatternLoader
 from .answer_validator import AnswerValidator
@@ -194,10 +195,21 @@ class PatternMatcher:
             input_type = input_type.lower().strip()
             itd = pattern.get('input_type_defaults', {})
             if itd and input_type in itd:
-                return itd[input_type]
+                answer = itd[input_type]
+                # Handle dynamic LWD marker
+                if answer == '__DYNAMIC_LWD__':
+                    lwd_date = datetime.now() + timedelta(days=15)
+                    return lwd_date.strftime('%d %b %Y')
+                return answer
             if input_type == 'number':
                 return pattern.get('numeric_default') or pattern.get('default')
-        return pattern.get('default')
+        
+        answer = pattern.get('default')
+        # Handle dynamic LWD marker
+        if answer == '__DYNAMIC_LWD__':
+            lwd_date = datetime.now() + timedelta(days=15)
+            return lwd_date.strftime('%d %b %Y')
+        return answer
 
     def match_with_details(self, question: str) -> Dict[str, Any]:
         answer, confidence = self.fuzzy_match(question)

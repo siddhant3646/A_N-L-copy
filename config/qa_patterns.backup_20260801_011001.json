@@ -13,9 +13,9 @@
       "numeric_only_experience": true
     },
     "instahyre": {
-      "experience_years": "4",
+      "experience_years": "4 Years",
       "experience_months": "48",
-      "numeric_only_experience": true
+      "numeric_only_experience": false
     }
   },
   "platform_specific_rules": {
@@ -46,15 +46,15 @@
       "work_mode_format": "simple"
     },
     "instahyre": {
-      "experience_format": "numeric_only",
-      "experience_example": "4",
+      "experience_format": "text_with_years",
+      "experience_example": "4 Years",
       "salary_format": "text_with_lpa",
       "salary_example": "23 LPA",
       "notice_format": "text_with_days",
       "notice_example": "15 Days",
       "location_format": "detailed",
       "boolean_format": "true_false",
-      "numeric_defaults": true,
+      "numeric_defaults": false,
       "suffix_required": true,
       "work_mode_format": "detailed"
     }
@@ -93,7 +93,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 3,
@@ -152,7 +152,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 9
@@ -205,7 +205,9 @@
     "expected_salary": {
       "patterns": [
         "gross expected salary",
+        "what is your expected annual salary",
         "what is your expected salary",
+        "expected annual salary",
         "please select your salary expectation",
         "what is your expected salary?",
         "please enter your expected salary",
@@ -275,13 +277,7 @@
         "expected salary",
         "ctc",
         "salary",
-        "experience",
-        "interview",
-        "virtual interview",
-        "f2f",
-        "face to face",
-        "available for interview",
-        "when are you available for"
+        "experience"
       ],
       "input_type_defaults": {
         "radio": "15 Days or less(Serving Notice)",
@@ -394,8 +390,7 @@
         "secondary email",
         "email address",
         "personal email",
-        "please enter your email address",
-        "email"
+        "please enter your email address"
       ],
       "category": "personal_info",
       "default": "siddhant3646@gmail.com",
@@ -661,6 +656,7 @@
         "legally authorized",
         "background check",
         "drug test",
+        "authorized to work",
         "authorized to lawfully work",
         "authorized to lawfully work for",
         "lawfully authorized to work",
@@ -668,15 +664,14 @@
         "are you legally authorized to work",
         "are you authorized to lawfully work",
         "do you have the right to work",
-        "eligible to work in india",
-        "do you currently have the legal right to work in the country where the job is based"
+        "eligible to work in india"
       ],
       "category": "yes_no",
       "default": "Yes",
       "input_type_defaults": {
         "radio": "Yes",
         "checkbox": "Yes",
-        "select": "Authorized to work now and in the future, no employer sponsorship",
+        "select": "Yes",
         "text": "Yes"
       },
       "priority": 7
@@ -1030,30 +1025,17 @@
         "are you available for face to face drive",
         "f2f drive",
         "final round f2f",
-        "face to face drive",
-        "will you be available for in person interview on 8th august",
-        "available for in person interview on",
-        "available for inperson interview on",
-        "available for walk in interview",
-        "walkin drive",
-        "walk-in drive",
-        "conducting a walkin drive",
-        "walkin drive at our hyderabad office",
-        "when are you available for virtual interview",
-        "when are you available for interview",
-        "when are you available for",
-        "available for interview",
-        "virtual interview availability"
+        "face to face drive"
       ],
       "category": "availability",
-      "default": "Yes, available any day",
+      "default": "Yes",
       "input_type_defaults": {
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes, available any day"
+        "text": "Yes"
       },
-      "priority": 8
+      "priority": 6
     },
     "interview_slots": {
       "patterns": [
@@ -1241,20 +1223,23 @@
       "patterns": [
         "non-compete",
         "non compete",
-        "noncompete agreement",
+        "noncompete",
+        "non-competition",
+        "do you have a non-compete",
         "non-compete agreement",
-        "do you have non-compete",
-        "bound by non-compete"
+        "agreement that would prevent you from working",
+        "prevent you from working with onit",
+        "prevent you from working with simplelegal"
       ],
-      "category": "compliance",
+      "category": "yes_no",
       "default": "No",
-      "priority": 10,
       "input_type_defaults": {
         "radio": "No",
+        "checkbox": "No",
         "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
+        "text": "No"
+      },
+      "priority": 8
     },
     "self_id_gender": {
       "patterns": [
@@ -1445,6 +1430,7 @@
         "offered the role",
         "how soon can you join us",
         "join us",
+        "when are you available",
         "joining date",
         "join by",
         "joining",
@@ -1461,6 +1447,7 @@
         "within how many days will you be able to join",
         "in how many days can you join",
         "if selected, in how many days can you join",
+        "availability",
         "how soon can you fill this position (days)",
         "if selected, how soon can you fill this position",
         "if selected, how soon can you fill this position (days)",
@@ -1483,13 +1470,7 @@
       "negative_patterns": [
         "salary",
         "ctc",
-        "experience",
-        "interview",
-        "virtual interview",
-        "f2f",
-        "face to face",
-        "available for interview",
-        "when are you available for"
+        "experience"
       ]
     },
     "desired_start_date": {
@@ -1816,7 +1797,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes"
+        "text": "4"
       },
       "priority": 7,
       "negative_patterns": []
@@ -1836,7 +1817,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes"
+        "text": "4"
       },
       "priority": 7
     },
@@ -1913,21 +1894,23 @@
     "willing_to_travel": {
       "patterns": [
         "willing to travel",
-        "travel required",
-        "business travel",
-        "travel for work",
-        "comfortable with travel",
-        "open to travel"
+        "open to travel",
+        "travel",
+        "onsite",
+        "offshore",
+        "client location",
+        "project location",
+        "site location"
       ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
+      "category": "yes_no",
+      "default": "Yes, open to travel up to 20%",
       "input_type_defaults": {
         "radio": "Yes",
+        "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
+        "text": "Yes, open to travel up to 20%"
+      },
+      "priority": 7
     },
     "product_based": {
       "patterns": [
@@ -2222,7 +2205,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 7
@@ -2269,7 +2252,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -2296,7 +2279,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -2314,7 +2297,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -2332,68 +2315,71 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
     },
     "azure_experience": {
       "patterns": [
-        "azure",
-        "microsoft azure",
-        "azure cloud",
-        "experience with azure",
-        "years of experience with azure",
-        "experience in azure"
+        "azure experience",
+        "azure cloud experience",
+        "experience in azure",
+        "years of experience in azure",
+        "how many years of experience in azure",
+        "do you have azure cloud experience",
+        "azure cloud experience if yes how many years"
       ],
       "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
+      "default": "2",
       "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
+        "radio": "2",
+        "select": "2",
+        "text": "2",
+        "number": "2"
+      },
+      "priority": 8
     },
     "gcp_experience": {
       "patterns": [
-        "gcp",
-        "google cloud",
-        "google cloud platform",
-        "experience with gcp",
-        "years of experience with gcp",
-        "experience in gcp"
+        "gcp experience",
+        "google cloud experience",
+        "google cloud platform experience",
+        "experience in gcp",
+        "years of experience in gcp",
+        "how many years of experience in gcp",
+        "hands-on experience with gcp",
+        "experience with google cloud platform",
+        "gcp google cloud platform",
+        "years of work experience do you have with google cloud platform",
+        "years of experience in google cloud engineer",
+        "experience in google cloud engineer",
+        "years of experience with cloud and container technologies",
+        "experience working with cloud and container technologies"
       ],
       "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
+      "default": "4",
       "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
+        "radio": "1+ Years with GCP",
+        "select": "1",
+        "text": "4",
+        "number": "1"
+      },
+      "priority": 8
     },
     "rel_exp_spring_boot": {
       "patterns": [
         "how many years of experience do you have in spring boot",
         "years of experience do you have in spring boot",
         "experience do you have in spring boot",
-        "experience in spring boot",
-        "exp in springboot spring mvc",
-        "exp in sprigboot spring mvc",
-        "experience in springboot spring mvc",
-        "springboot spring mvc experience"
+        "experience in spring boot"
       ],
       "category": "experience",
       "default": "4 Years",
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -2432,7 +2418,7 @@
       "category": "experience",
       "default": "4",
       "input_type_defaults": {
-        "text": "4 Years",
+        "text": "4",
         "number": "4",
         "radio": "Yes",
         "select": "Yes",
@@ -2727,13 +2713,7 @@
         "text": "20-30 LPA",
         "number": "20"
       },
-      "priority": 8,
-      "negative_patterns": [
-        "current annual",
-        "expected annual",
-        "your current annual",
-        "your expected annual"
-      ]
+      "priority": 8
     },
     "ctc_in_lakhs": {
       "patterns": [
@@ -2832,7 +2812,7 @@
         "radio": "Docker",
         "checkbox": "Yes",
         "select": "Docker, Kubernetes, Jenkins, GitHub Actions",
-        "text": "Docker, Kubernetes, Jenkins, GitHub Actions"
+        "text": "4"
       },
       "priority": 6
     },
@@ -2915,7 +2895,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes"
+        "text": "4"
       },
       "priority": 6
     },
@@ -3093,8 +3073,7 @@
         "rate your typescript",
         "how would you rate yourself in typescript",
         "rate yourself in typescript",
-        "your proficiency in typescript",
-        "proficiency level in typescript"
+        "your proficiency in typescript"
       ],
       "category": "skills",
       "default": "9",
@@ -3112,8 +3091,7 @@
         "rate your javascript",
         "how would you rate yourself in javascript",
         "rate yourself in javascript",
-        "your proficiency in javascript",
-        "proficiency level in javascript"
+        "your proficiency in javascript"
       ],
       "category": "skills",
       "default": "9",
@@ -3131,8 +3109,7 @@
         "rate your react",
         "how would you rate yourself in react",
         "rate yourself in react",
-        "your proficiency in react",
-        "proficiency level in react"
+        "your proficiency in react"
       ],
       "category": "skills",
       "default": "9",
@@ -3150,8 +3127,7 @@
         "rate your java",
         "how would you rate yourself in java",
         "rate yourself in java",
-        "your proficiency in java",
-        "proficiency level in java"
+        "your proficiency in java"
       ],
       "category": "skills",
       "default": "9",
@@ -3169,8 +3145,7 @@
         "rate your python",
         "how would you rate yourself in python",
         "rate yourself in python",
-        "your proficiency in python",
-        "proficiency level in python"
+        "your proficiency in python"
       ],
       "category": "skills",
       "default": "9",
@@ -3188,8 +3163,7 @@
         "rate your angular",
         "how would you rate yourself in angular",
         "rate yourself in angular",
-        "your proficiency in angular",
-        "proficiency level in angular"
+        "your proficiency in angular"
       ],
       "category": "skills",
       "default": "7",
@@ -3207,8 +3181,7 @@
         "rate your node",
         "how would you rate yourself in node",
         "rate yourself in node",
-        "your proficiency in node",
-        "proficiency level in node"
+        "your proficiency in node"
       ],
       "category": "skills",
       "default": "9",
@@ -3226,8 +3199,7 @@
         "rate your aws",
         "how would you rate yourself in aws",
         "rate yourself in aws",
-        "your proficiency in aws",
-        "proficiency level in aws"
+        "your proficiency in aws"
       ],
       "category": "skills",
       "default": "7",
@@ -3245,8 +3217,7 @@
         "rate your sql",
         "how would you rate yourself in sql",
         "rate yourself in sql",
-        "your proficiency in sql",
-        "proficiency level in sql"
+        "your proficiency in sql"
       ],
       "category": "skills",
       "default": "9",
@@ -3535,7 +3506,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 7
@@ -3654,7 +3625,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 7
@@ -3776,21 +3747,20 @@
     },
     "take_home_assignment": {
       "patterns": [
-        "take home",
-        "home assignment",
-        "coding assignment",
-        "project assignment",
-        "willing to do assignment"
+        "take home assignment",
+        "do you have take home assignment",
+        "are you take home assignment",
+        "your take home assignment"
       ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
+      "category": "yes_no",
+      "default": "Yes, can complete take-home assignments",
       "input_type_defaults": {
         "radio": "Yes",
+        "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
+        "text": "Yes, can complete take-home assignments"
+      },
+      "priority": 7
     },
     "additional_months": {
       "patterns": [
@@ -3953,7 +3923,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -4208,33 +4178,7 @@
         "job function",
         "role function",
         "functional domain",
-        "work area",
-        "area of work",
-        "area of expertise",
-        "specialization",
-        "specialization area",
-        "domain area",
-        "work domain",
-        "job area",
-        "role area",
-        "select functional area",
-        "please select your functional area",
-        "choose functional area",
-        "what is your functional area",
-        "your functional area",
-        "mention your functional area",
-        "select your function",
-        "what is your function",
-        "your function",
-        "mention your function",
-        "select department",
-        "what is your department",
-        "your department",
-        "mention your department",
-        "select job function",
-        "what is your job function",
-        "your job function",
-        "mention your job function"
+        "work area"
       ],
       "category": "preference",
       "default": "Engineering - Software & QA",
@@ -4243,7 +4187,7 @@
         "select": "Engineering - Software & QA",
         "text": "Engineering - Software & QA"
       },
-      "priority": 8
+      "priority": 7
     },
     "naukri_job_type": {
       "patterns": [
@@ -4271,6 +4215,7 @@
         "willing to work in",
         "shifts",
         "day shift",
+        "night shift",
         "shift timings"
       ],
       "category": "preference",
@@ -4287,6 +4232,7 @@
         "working hours",
         "work hours",
         "flexible hours",
+        "rotational shifts",
         "24/7 shifts",
         "shift schedule",
         "work schedule"
@@ -4509,7 +4455,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, worked with GPT APIs and LangChain",
-        "text": "Yes, worked with GPT APIs and LangChain"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4533,7 +4479,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 8
@@ -4564,7 +4510,7 @@
         "radio": "AWS (primary)",
         "checkbox": "Yes",
         "select": "AWS (primary), Azure (secondary)",
-        "text": "AWS (primary), Azure (secondary)"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4677,7 +4623,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, designed scalable systems with microservices and event-driven architecture",
-        "text": "Yes, designed scalable systems with microservices and event-driven architecture"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4700,7 +4646,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, proficient in JUnit, Pytest, and Selenium",
-        "text": "Yes, proficient in JUnit, Pytest, and Selenium"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4721,7 +4667,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, understand OWASP top 10 and secure coding practices",
-        "text": "Yes, understand OWASP top 10 and secure coding practices"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4737,7 +4683,7 @@
         "radio": "Strong in DSA with 500+ LeetCode problems solved",
         "checkbox": "Yes",
         "select": "Strong in DSA with 500+ LeetCode problems solved",
-        "text": "Strong in DSA with 500+ LeetCode problems solved"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4757,7 +4703,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, designed schemas for PostgreSQL, MongoDB, and Redis",
-        "text": "Yes, designed schemas for PostgreSQL, MongoDB, and Redis"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4778,7 +4724,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, designed RESTful APIs and GraphQL endpoints",
-        "text": "Yes, designed RESTful APIs and GraphQL endpoints"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4798,7 +4744,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, optimized APIs from 2s to 200ms latency through caching and indexing",
-        "text": "Yes, optimized APIs from 2s to 200ms latency through caching and indexing"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4821,7 +4767,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, experience with Prometheus, Grafana, and ELK Stack",
-        "text": "Yes, experience with Prometheus, Grafana, and ELK Stack"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4844,7 +4790,7 @@
         "radio": "Yes",
         "checkbox": "Yes",
         "select": "Yes, worked with Kafka, RabbitMQ, and AWS SQS",
-        "text": "Yes, worked with Kafka, RabbitMQ, and AWS SQS"
+        "text": "4"
       },
       "priority": 7
     },
@@ -4959,8 +4905,8 @@
         "relocation",
         "relocate to",
         "willingness to travel",
-        "are you comfortable commuting to this job\u2019s location",
-        "are you comfortable commuting to this job\u2019s location?",
+        "are you comfortable commuting to this job’s location",
+        "are you comfortable commuting to this job’s location?",
         "comfortable relocating",
         "relocating",
         "relocating to",
@@ -5005,7 +4951,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 Years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 4
@@ -5379,7 +5325,7 @@
       "input_type_defaults": {
         "radio": "4",
         "select": "4 years",
-        "text": "4 Years",
+        "text": "4",
         "number": "4"
       },
       "priority": 4
@@ -6632,7 +6578,7 @@
         "lwd date"
       ],
       "category": "notice_period",
-      "default": "15 Aug 2026",
+      "default": "13 Aug 2026",
       "input_type_defaults": {
         "radio": "01",
         "checkbox": "No",
@@ -7450,12 +7396,7 @@
         "criminal charges",
         "willing to undergo an employment education and criminal background check",
         "willing to undergo employment education and criminal background",
-        "employment education and criminal background check",
-        "have you ever been convicted for any criminal offence",
-        "convicted for any criminal offence",
-        "ever been convicted",
-        "criminal offence conviction",
-        "convicted of any criminal"
+        "employment education and criminal background check"
       ],
       "category": "compliance",
       "default": "No",
@@ -7831,18 +7772,14 @@
         "what is your current fixed ctc",
         "kindly mention your current ctc in lpa",
         "what is your current ctc salary in lakh per annum",
-        "preferred annual salary",
-        "what is your current annual salary",
-        "current annual salary",
-        "annual salary current"
+        "preferred annual salary"
       ],
       "numeric_default": "2300000",
       "input_type_defaults": {
         "text": "2300000",
         "number": "2300000",
         "radio": "23",
-        "select": "23",
-        "textarea": "2300000"
+        "select": "23"
       },
       "negative_patterns": [
         "expected",
@@ -7865,18 +7802,14 @@
         "ectc the maximum budget",
         "expected ctc offer in hand",
         "expected ctc and offer in hand",
-        "expected ctc? & offer in hand",
-        "what is your expected annual salary",
-        "expected annual salary",
-        "annual salary expected"
+        "expected ctc? & offer in hand"
       ],
       "numeric_default": "3000000",
       "input_type_defaults": {
         "text": "3000000",
         "number": "3000000",
         "radio": "30",
-        "select": "30",
-        "textarea": "3000000"
+        "select": "30"
       },
       "negative_patterns": [
         "current ctc",
@@ -7908,9 +7841,7 @@
         "notice period left to serve if currently serving",
         "kindly mention your official notice period if serving please mention",
         "if you are serving notice what will be your official last working day",
-        "serving notice what will be your official last working day",
-        "if yes please describe",
-        "if yes please specify"
+        "serving notice what will be your official last working day"
       ],
       "numeric_default": "15",
       "input_type_defaults": {
@@ -7923,17 +7854,12 @@
         "last working day",
         "lwd",
         "date",
-        "when",
-        "interview",
-        "virtual interview",
-        "f2f",
-        "face to face",
-        "available for interview"
+        "when"
       ]
     },
     "last_working_date": {
       "category": "notice_period",
-      "default": "__DYNAMIC_LWD__",
+      "default": "13 Aug 2026",
       "priority": 9,
       "patterns": [
         "last working date",
@@ -7955,15 +7881,10 @@
         "do you have offer if yes please give offer amount and last working day",
         "last working day in current company",
         "if serving notice what will be your official last working day",
-        "notice period/lwd if serving mention remaining days if not working mention",
-        "please specify your notice period if currently serving notice kindly mention",
-        "notice period please mention last working day if currently serving",
-        "serving notice period please mention your lwd",
-        "if serving notice period pls mention your lwd",
-        "if you are serving notice period pls mention your lwd"
+        "notice period/lwd if serving mention remaining days if not working mention"
       ],
       "input_type_defaults": {
-        "text": "__DYNAMIC_LWD__",
+        "text": "13 Aug 2026",
         "radio": "15",
         "select": "Serving Notice Period"
       },
@@ -8052,11 +7973,7 @@
         "100% wfo",
         "full time from office",
         "this role requires wfo",
-        "important note this role requires working from office",
-        "5 days office in client location",
-        "days office in client location",
-        "client location 5 days",
-        "5 days work from client office"
+        "important note this role requires working from office"
       ],
       "input_type_defaults": {
         "radio": "Yes",
@@ -8492,21 +8409,20 @@
     },
     "notice_period_buyout": {
       "patterns": [
-        "notice buyout",
-        "buy out notice",
-        "notice period buyout",
-        "can buy out notice",
-        "willing to buy out"
+        "can you buy out notice period",
+        "notice period buyout possible",
+        "will you buy out your notice",
+        "can you join earlier if buyout",
+        "early release with buyout",
+        "notice period negotiable with buyout"
       ],
       "category": "notice_period",
       "default": "Yes",
-      "priority": 10,
+      "priority": 2,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
+        "text": "Yes"
       }
     },
     "immediate_joining": {
@@ -8819,21 +8735,18 @@
     },
     "relocation_package": {
       "patterns": [
-        "relocation package",
         "relocation assistance",
-        "relocation support",
-        "relocation benefits",
-        "moving assistance",
-        "moving package"
+        "relocation reimbursement",
+        "relocation package",
+        "will you need relocation support"
       ],
       "category": "location",
       "default": "Yes",
-      "priority": 9,
+      "priority": 2,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
+        "text": "Yes"
       }
     },
     "bond_period_duration": {
@@ -8854,20 +8767,18 @@
     },
     "non_compete_duration": {
       "patterns": [
-        "non-compete duration",
         "non compete period",
-        "how long is non-compete",
-        "non-compete length",
-        "duration of non-compete"
+        "non compete agreement duration",
+        "restriction period after exit",
+        "cooling off period"
       ],
-      "category": "compliance",
-      "default": "Not applicable",
-      "priority": 10,
+      "category": "employment",
+      "default": "6 Months",
+      "priority": 2,
       "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
+        "radio": "6 Months",
+        "select": "6 Months",
+        "text": "6 Months"
       }
     },
     "aadhaar_number": {
@@ -9021,6 +8932,7 @@
     },
     "work_permit_status": {
       "patterns": [
+        "work authorization status",
         "eligible to work",
         "work visa"
       ],
@@ -9065,7 +8977,7 @@
         "experience with k8s"
       ],
       "input_type_defaults": {
-        "text": "4 Years",
+        "text": "4",
         "number": "4",
         "radio": "Yes",
         "select": "Yes",
@@ -9085,7 +8997,7 @@
         "hands-on with docker"
       ],
       "input_type_defaults": {
-        "text": "4 Years",
+        "text": "4",
         "number": "4",
         "radio": "Yes",
         "select": "Yes",
@@ -9097,7 +9009,7 @@
       "default": "AWS",
       "priority": 10,
       "patterns": [
-        "cloud platform",
+        "cloud exp.",
         "which cloud platform",
         "which cloud platforms have you worked on",
         "cloud platforms aws azure gcp",
@@ -9123,15 +9035,12 @@
         "experience in oracle fusion technical",
         "microsoft sql server experience",
         "years of experience in microsoft sql server",
+        "experience in oracle fusion technical",
         "oracle fusion technical",
-        "years of experience do you have in oracle fusion",
-        "experience in oracle jde worldsoft",
-        "oracle jde worldsoft",
-        "jde worldsoft experience",
-        "experience in oracle jde"
+        "years of experience do you have in oracle fusion"
       ],
       "input_type_defaults": {
-        "text": "4 Years",
+        "text": "4",
         "number": "4",
         "radio": "4",
         "select": "4"
@@ -9238,44 +9147,6 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "form_link_submission": {
-      "category": "compliance",
-      "default": "filled the form",
-      "priority": 9,
-      "patterns": [
-        "form link",
-        "google form",
-        "fill the form",
-        "filled the form",
-        "have you filled the form",
-        "did you fill the form",
-        "have you submitted the form",
-        "did you submit the form",
-        "form submission",
-        "submit the form",
-        "please fill the form",
-        "kindly fill the form",
-        "fill this form",
-        "fill out the form",
-        "complete the form",
-        "have you completed the form",
-        "did you complete the form",
-        "form filled",
-        "filled form",
-        "have you filled form",
-        "share the form link",
-        "provide the form link",
-        "form url",
-        "have you filled the google form",
-        "did you fill the google form"
-      ],
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "filled the form",
-        "text": "filled the form",
         "checkbox": "Yes"
       }
     },
@@ -9547,5594 +9418,6 @@
         "work authorization",
         "sponsorship"
       ]
-    },
-    "job_application_location": {
-      "category": "location",
-      "default": "Noida",
-      "priority": 9,
-      "patterns": [
-        "which location are you applying for",
-        "location are you applying for",
-        "apply for which location",
-        "preferred location for this role",
-        "applying location"
-      ],
-      "input_type_defaults": {
-        "select": "Noida",
-        "radio": "Noida",
-        "text": "Noida"
-      }
-    },
-    "micro_frontends_exp": {
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "patterns": [
-        "experience in micro frontends",
-        "do you have experience in micro frontends",
-        "micro frontends experience",
-        "microfrontend experience",
-        "micro frontend architecture",
-        "experience with micro frontends"
-      ],
-      "input_type_defaults": {
-        "text": "Yes",
-        "radio": "Yes",
-        "checkbox": "Yes",
-        "select": "Yes"
-      }
-    },
-    "health_ailment": {
-      "category": "yes_no",
-      "default": "No",
-      "priority": 10,
-      "patterns": [
-        "passed through or are you passing through any physical ailment",
-        "physical ailment or state of health",
-        "physical ailment",
-        "health condition",
-        "medical condition",
-        "disability or health condition",
-        "any health ailment"
-      ],
-      "input_type_defaults": {
-        "text": "No",
-        "radio": "No",
-        "select": "No",
-        "textarea": "No"
-      }
-    },
-    "shift_work": {
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "patterns": [
-        "willing to work in shifts",
-        "willing to work in shifts including night shifts",
-        "night shift",
-        "willing to work night shifts",
-        "open to shift work",
-        "rotational shifts",
-        "shift work",
-        "are you willing to work in shifts"
-      ],
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "select-aggressive": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "jenkins_experience": {
-      "patterns": [
-        "jenkins",
-        "jenkins ci",
-        "jenkins pipeline",
-        "jenkins automation",
-        "experience with jenkins",
-        "years of experience with jenkins"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "gitlab_ci_experience": {
-      "patterns": [
-        "gitlab ci",
-        "gitlab ci/cd",
-        "gitlab pipeline",
-        "experience with gitlab ci",
-        "years of experience with gitlab"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "circleci_experience": {
-      "patterns": [
-        "circleci",
-        "circle ci",
-        "experience with circleci",
-        "years of experience with circleci"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "travis_ci_experience": {
-      "patterns": [
-        "travis ci",
-        "travisci",
-        "experience with travis ci",
-        "years of experience with travis"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "github_actions_experience": {
-      "patterns": [
-        "github actions",
-        "github workflows",
-        "github ci",
-        "experience with github actions",
-        "years of experience with github actions"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "azure_devops_experience": {
-      "patterns": [
-        "azure devops",
-        "azure pipelines",
-        "azure ci",
-        "experience with azure devops",
-        "years of experience with azure devops"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "teamcity_experience": {
-      "patterns": [
-        "teamcity",
-        "team city",
-        "experience with teamcity",
-        "years of experience with teamcity"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "bamboo_experience": {
-      "patterns": [
-        "bamboo",
-        "atlassian bamboo",
-        "experience with bamboo",
-        "years of experience with bamboo"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "argo_cd_experience": {
-      "patterns": [
-        "argocd",
-        "argo cd",
-        "argo continuous delivery",
-        "experience with argocd",
-        "years of experience with argocd"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "spinnaker_experience": {
-      "patterns": [
-        "spinnaker",
-        "experience with spinnaker",
-        "years of experience with spinnaker"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "terraform_experience": {
-      "patterns": [
-        "terraform",
-        "terraform iac",
-        "experience with terraform",
-        "years of experience with terraform",
-        "terraform infrastructure"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ansible_experience": {
-      "patterns": [
-        "ansible",
-        "ansible automation",
-        "experience with ansible",
-        "years of experience with ansible"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "puppet_experience": {
-      "patterns": [
-        "puppet",
-        "puppet automation",
-        "experience with puppet",
-        "years of experience with puppet"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "chef_experience": {
-      "patterns": [
-        "chef",
-        "chef automation",
-        "experience with chef",
-        "years of experience with chef"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pulumi_experience": {
-      "patterns": [
-        "pulumi",
-        "experience with pulumi",
-        "years of experience with pulumi"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cloudformation_experience": {
-      "patterns": [
-        "cloudformation",
-        "aws cloudformation",
-        "experience with cloudformation",
-        "years of experience with cloudformation"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "arm_templates_experience": {
-      "patterns": [
-        "arm templates",
-        "azure resource manager",
-        "experience with arm templates",
-        "years of experience with arm"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "alibaba_cloud_experience": {
-      "patterns": [
-        "alibaba cloud",
-        "alicloud",
-        "experience with alibaba cloud",
-        "years of experience with alibaba"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "oracle_cloud_experience": {
-      "patterns": [
-        "oracle cloud",
-        "oci",
-        "oracle cloud infrastructure",
-        "experience with oracle cloud",
-        "years of experience with oracle cloud"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "digital_ocean_experience": {
-      "patterns": [
-        "digitalocean",
-        "digital ocean",
-        "experience with digitalocean",
-        "years of experience with digitalocean"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "heroku_experience": {
-      "patterns": [
-        "heroku",
-        "experience with heroku",
-        "years of experience with heroku"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "firebase_experience": {
-      "patterns": [
-        "firebase",
-        "google firebase",
-        "experience with firebase",
-        "years of experience with firebase"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cassandra_experience": {
-      "patterns": [
-        "cassandra",
-        "apache cassandra",
-        "experience with cassandra",
-        "years of experience with cassandra"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "redis_experience": {
-      "patterns": [
-        "redis",
-        "redis cache",
-        "experience with redis",
-        "years of experience with redis"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "elasticsearch_experience": {
-      "patterns": [
-        "elasticsearch",
-        "elastic search",
-        "experience with elasticsearch",
-        "years of experience with elasticsearch"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "neo4j_experience": {
-      "patterns": [
-        "neo4j",
-        "neo4j graph database",
-        "experience with neo4j",
-        "years of experience with neo4j"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "dynamodb_experience": {
-      "patterns": [
-        "dynamodb",
-        "dynamo db",
-        "aws dynamodb",
-        "experience with dynamodb",
-        "years of experience with dynamodb"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cosmos_db_experience": {
-      "patterns": [
-        "cosmos db",
-        "cosmosdb",
-        "azure cosmos",
-        "experience with cosmos db",
-        "years of experience with cosmos"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "couchbase_experience": {
-      "patterns": [
-        "couchbase",
-        "experience with couchbase",
-        "years of experience with couchbase"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "influxdb_experience": {
-      "patterns": [
-        "influxdb",
-        "influx db",
-        "experience with influxdb",
-        "years of experience with influxdb"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "timescaledb_experience": {
-      "patterns": [
-        "timescaledb",
-        "timescale db",
-        "experience with timescaledb",
-        "years of experience with timescaledb"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cockroachdb_experience": {
-      "patterns": [
-        "cockroachdb",
-        "cockroach db",
-        "experience with cockroachdb",
-        "years of experience with cockroachdb"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "rabbitmq_experience": {
-      "patterns": [
-        "rabbitmq",
-        "rabbit mq",
-        "experience with rabbitmq",
-        "years of experience with rabbitmq"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "apache_kafka_experience": {
-      "patterns": [
-        "apache kafka",
-        "kafka streaming",
-        "experience with apache kafka",
-        "years of experience with kafka"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "activemq_experience": {
-      "patterns": [
-        "activemq",
-        "active mq",
-        "apache activemq",
-        "experience with activemq",
-        "years of experience with activemq"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "sqs_experience": {
-      "patterns": [
-        "sqs",
-        "aws sqs",
-        "simple queue service",
-        "experience with sqs",
-        "years of experience with sqs"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "azure_service_bus_experience": {
-      "patterns": [
-        "azure service bus",
-        "service bus",
-        "experience with azure service bus",
-        "years of experience with service bus"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "google_pub_sub_experience": {
-      "patterns": [
-        "google pub sub",
-        "pubsub",
-        "google pubsub",
-        "experience with google pubsub",
-        "years of experience with pubsub"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "nats_experience": {
-      "patterns": [
-        "nats",
-        "nats messaging",
-        "experience with nats",
-        "years of experience with nats"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pulsar_experience": {
-      "patterns": [
-        "pulsar",
-        "apache pulsar",
-        "experience with pulsar",
-        "years of experience with pulsar"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "graphql_experience": {
-      "patterns": [
-        "graphql",
-        "graph ql",
-        "experience with graphql",
-        "years of experience with graphql",
-        "graphql api"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "grpc_experience": {
-      "patterns": [
-        "grpc",
-        "grpc framework",
-        "experience with grpc",
-        "years of experience with grpc"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "rest_api_experience": {
-      "patterns": [
-        "rest api",
-        "restful api",
-        "experience with rest api",
-        "years of experience with rest",
-        "restful services"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "soap_api_experience": {
-      "patterns": [
-        "soap",
-        "soap api",
-        "soap services",
-        "experience with soap",
-        "years of experience with soap"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "openapi_experience": {
-      "patterns": [
-        "openapi",
-        "openapi spec",
-        "swagger",
-        "experience with openapi",
-        "years of experience with openapi"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "postman_experience": {
-      "patterns": [
-        "postman",
-        "postman api",
-        "experience with postman",
-        "years of experience with postman"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "vue_experience": {
-      "patterns": [
-        "vue",
-        "vuejs",
-        "vue.js",
-        "experience with vue",
-        "years of experience with vue"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "angular_experience": {
-      "patterns": [
-        "angular",
-        "angularjs",
-        "angular.js",
-        "experience with angular",
-        "years of experience with angular"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "svelte_experience": {
-      "patterns": [
-        "svelte",
-        "experience with svelte",
-        "years of experience with svelte"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "nextjs_experience": {
-      "patterns": [
-        "nextjs",
-        "next.js",
-        "next js",
-        "experience with nextjs",
-        "years of experience with nextjs"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "nuxtjs_experience": {
-      "patterns": [
-        "nuxtjs",
-        "nuxt.js",
-        "nuxt js",
-        "experience with nuxtjs",
-        "years of experience with nuxtjs"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ember_experience": {
-      "patterns": [
-        "ember",
-        "emberjs",
-        "ember.js",
-        "experience with ember",
-        "years of experience with ember"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "backbone_experience": {
-      "patterns": [
-        "backbone",
-        "backbonejs",
-        "experience with backbone",
-        "years of experience with backbone"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "django_experience": {
-      "patterns": [
-        "django",
-        "django framework",
-        "experience with django",
-        "years of experience with django"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "flask_experience": {
-      "patterns": [
-        "flask",
-        "flask framework",
-        "experience with flask",
-        "years of experience with flask"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "fastapi_experience": {
-      "patterns": [
-        "fastapi",
-        "fast api",
-        "experience with fastapi",
-        "years of experience with fastapi"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "express_experience": {
-      "patterns": [
-        "express",
-        "expressjs",
-        "express.js",
-        "experience with express",
-        "years of experience with express"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "nestjs_experience": {
-      "patterns": [
-        "nestjs",
-        "nest.js",
-        "nest js",
-        "experience with nestjs",
-        "years of experience with nestjs"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "laravel_experience": {
-      "patterns": [
-        "laravel",
-        "laravel framework",
-        "experience with laravel",
-        "years of experience with laravel"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ruby_on_rails_experience": {
-      "patterns": [
-        "ruby on rails",
-        "rails",
-        "ror",
-        "experience with ruby on rails",
-        "years of experience with rails"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "gin_experience": {
-      "patterns": [
-        "gin",
-        "gin framework",
-        "gin golang",
-        "experience with gin",
-        "years of experience with gin"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "fiber_experience": {
-      "patterns": [
-        "fiber",
-        "fiber framework",
-        "fiber golang",
-        "experience with fiber",
-        "years of experience with fiber"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "python_experience": {
-      "patterns": [
-        "python",
-        "python programming",
-        "experience with python",
-        "years of experience with python",
-        "experience in python"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      },
-      "negative_patterns": [
-        "proficiency",
-        "skill level",
-        "proficiency level"
-      ]
-    },
-    "go_experience": {
-      "patterns": [
-        "golang",
-        "go programming",
-        "experience with go",
-        "years of experience with go",
-        "experience in go"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "rust_experience": {
-      "patterns": [
-        "rust",
-        "rust programming",
-        "experience with rust",
-        "years of experience with rust",
-        "experience in rust"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "typescript_experience": {
-      "patterns": [
-        "typescript",
-        "experience with typescript",
-        "years of experience with typescript"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "kotlin_experience": {
-      "patterns": [
-        "kotlin",
-        "kotlin programming",
-        "experience with kotlin",
-        "years of experience with kotlin"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "scala_experience": {
-      "patterns": [
-        "scala",
-        "scala programming",
-        "experience with scala",
-        "years of experience with scala"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "php_experience": {
-      "patterns": [
-        "php",
-        "php programming",
-        "experience with php",
-        "years of experience with php"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ruby_experience": {
-      "patterns": [
-        "ruby",
-        "ruby programming",
-        "experience with ruby",
-        "years of experience with ruby"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cpp_experience": {
-      "patterns": [
-        "c plus plus",
-        "cpp",
-        "experience with c plus plus",
-        "years of experience with c plus plus"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "csharp_experience": {
-      "patterns": [
-        "c sharp",
-        "csharp",
-        "experience with c sharp",
-        "years of experience with c sharp"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "tensorflow_experience": {
-      "patterns": [
-        "tensorflow",
-        "tf",
-        "experience with tensorflow",
-        "years of experience with tensorflow"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pytorch_experience": {
-      "patterns": [
-        "pytorch",
-        "torch",
-        "experience with pytorch",
-        "years of experience with pytorch"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "scikit_learn_experience": {
-      "patterns": [
-        "scikit-learn",
-        "sklearn",
-        "scikit learn",
-        "experience with scikit-learn",
-        "years of experience with sklearn"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "huggingface_experience": {
-      "patterns": [
-        "huggingface",
-        "hugging face",
-        "transformers",
-        "experience with huggingface",
-        "years of experience with huggingface"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "langchain_experience": {
-      "patterns": [
-        "langchain",
-        "lang chain",
-        "experience with langchain",
-        "years of experience with langchain"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "llamaindex_experience": {
-      "patterns": [
-        "llamaindex",
-        "llama index",
-        "experience with llamaindex",
-        "years of experience with llamaindex"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "openai_experience": {
-      "patterns": [
-        "openai",
-        "openai api",
-        "experience with openai",
-        "years of experience with openai"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "react_native_experience": {
-      "patterns": [
-        "react native",
-        "reactnative",
-        "experience with react native",
-        "years of experience with react native"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "flutter_experience": {
-      "patterns": [
-        "flutter",
-        "flutter dart",
-        "experience with flutter",
-        "years of experience with flutter"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "swift_experience": {
-      "patterns": [
-        "swift",
-        "swift programming",
-        "experience with swift",
-        "years of experience with swift"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "kotlin_android_experience": {
-      "patterns": [
-        "kotlin android",
-        "android kotlin",
-        "experience with kotlin android",
-        "years of experience with android"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ionic_experience": {
-      "patterns": [
-        "ionic",
-        "ionic framework",
-        "experience with ionic",
-        "years of experience with ionic"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "vault_experience": {
-      "patterns": [
-        "vault",
-        "hashicorp vault",
-        "experience with vault",
-        "years of experience with vault"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "consul_experience": {
-      "patterns": [
-        "consul",
-        "hashicorp consul",
-        "experience with consul",
-        "years of experience with consul"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "prometheus_experience": {
-      "patterns": [
-        "prometheus",
-        "prometheus monitoring",
-        "experience with prometheus",
-        "years of experience with prometheus"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "grafana_experience": {
-      "patterns": [
-        "grafana",
-        "grafana dashboard",
-        "experience with grafana",
-        "years of experience with grafana"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "datadog_experience": {
-      "patterns": [
-        "datadog",
-        "data dog",
-        "experience with datadog",
-        "years of experience with datadog"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "newrelic_experience": {
-      "patterns": [
-        "newrelic",
-        "new relic",
-        "experience with newrelic",
-        "years of experience with newrelic"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "splunk_experience": {
-      "patterns": [
-        "splunk",
-        "experience with splunk",
-        "years of experience with splunk"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "elk_stack_experience": {
-      "patterns": [
-        "elk",
-        "elk stack",
-        "elastic stack",
-        "experience with elk",
-        "years of experience with elk"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "jaeger_experience": {
-      "patterns": [
-        "jaeger",
-        "jaeger tracing",
-        "experience with jaeger",
-        "years of experience with jaeger"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "selenium_experience": {
-      "patterns": [
-        "selenium",
-        "selenium testing",
-        "experience with selenium",
-        "years of experience with selenium"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cypress_experience": {
-      "patterns": [
-        "cypress",
-        "cypress testing",
-        "experience with cypress",
-        "years of experience with cypress"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "playwright_experience": {
-      "patterns": [
-        "playwright",
-        "playwright testing",
-        "experience with playwright",
-        "years of experience with playwright"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "junit_experience": {
-      "patterns": [
-        "junit",
-        "junit testing",
-        "experience with junit",
-        "years of experience with junit"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pytest_experience": {
-      "patterns": [
-        "pytest",
-        "pytest testing",
-        "experience with pytest",
-        "years of experience with pytest"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "jest_experience": {
-      "patterns": [
-        "jest",
-        "jest testing",
-        "experience with jest",
-        "years of experience with jest"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "mocha_experience": {
-      "patterns": [
-        "mocha",
-        "mocha testing",
-        "experience with mocha",
-        "years of experience with mocha"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cucumber_experience": {
-      "patterns": [
-        "cucumber",
-        "cucumber testing",
-        "experience with cucumber",
-        "years of experience with cucumber"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "gatling_experience": {
-      "patterns": [
-        "gatling",
-        "gatling performance",
-        "experience with gatling",
-        "years of experience with gatling"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "k6_experience": {
-      "patterns": [
-        "k6",
-        "k6 testing",
-        "k6 load",
-        "experience with k6",
-        "years of experience with k6"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "git_experience": {
-      "patterns": [
-        "git",
-        "git version control",
-        "experience with git",
-        "years of experience with git"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "svn_experience": {
-      "patterns": [
-        "svn",
-        "subversion",
-        "experience with svn",
-        "years of experience with svn"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "mercurial_experience": {
-      "patterns": [
-        "mercurial",
-        "hg",
-        "experience with mercurial",
-        "years of experience with mercurial"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "jira_experience": {
-      "patterns": [
-        "jira",
-        "atlassian jira",
-        "experience with jira",
-        "years of experience with jira"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "confluence_experience": {
-      "patterns": [
-        "confluence",
-        "atlassian confluence",
-        "experience with confluence",
-        "years of experience with confluence"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "trello_experience": {
-      "patterns": [
-        "trello",
-        "experience with trello",
-        "years of experience with trello"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "asana_experience": {
-      "patterns": [
-        "asana",
-        "experience with asana",
-        "years of experience with asana"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "monday_experience": {
-      "patterns": [
-        "monday",
-        "monday.com",
-        "experience with monday",
-        "years of experience with monday"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "swagger_experience": {
-      "patterns": [
-        "swagger",
-        "swagger api",
-        "experience with swagger",
-        "years of experience with swagger"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "asciidoc_experience": {
-      "patterns": [
-        "asciidoc",
-        "ascii doc",
-        "experience with asciidoc",
-        "years of experience with asciidoc"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "markdown_experience": {
-      "patterns": [
-        "markdown",
-        "md",
-        "experience with markdown",
-        "years of experience with markdown"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "timezone_flexibility": {
-      "patterns": [
-        "timezone",
-        "time zone",
-        "flexible with timezone",
-        "comfortable with timezone",
-        "any timezone",
-        "work in any timezone",
-        "timezone flexibility",
-        "willing to work across timezones"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "est_timezone": {
-      "patterns": [
-        "eastern time",
-        "eastern standard time",
-        "work in est",
-        "available in est",
-        "comfortable with est timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pst_timezone": {
-      "patterns": [
-        "pst",
-        "pacific time",
-        "pacific standard time",
-        "work in pst",
-        "available in pst",
-        "comfortable with pst timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "gmt_timezone": {
-      "patterns": [
-        "gmt",
-        "greenwich mean time",
-        "work in gmt",
-        "available in gmt",
-        "comfortable with gmt timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ist_timezone": {
-      "patterns": [
-        "ist",
-        "indian standard time",
-        "work in ist",
-        "available in ist",
-        "comfortable with ist timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "cet_timezone": {
-      "patterns": [
-        "cet",
-        "central european time",
-        "work in cet",
-        "available in cet",
-        "comfortable with cet timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "jst_timezone": {
-      "patterns": [
-        "jst",
-        "japan standard time",
-        "work in jst",
-        "available in jst",
-        "comfortable with jst timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "aest_timezone": {
-      "patterns": [
-        "aest",
-        "australian eastern",
-        "work in aest",
-        "available in aest",
-        "comfortable with aest timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "utc_timezone": {
-      "patterns": [
-        "utc",
-        "coordinated universal time",
-        "work in utc",
-        "available in utc",
-        "comfortable with utc timezone"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "overlap_hours": {
-      "patterns": [
-        "overlap hours",
-        "working hours overlap",
-        "timezone overlap",
-        "hours overlap",
-        "comfortable with overlap"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "night_shift": {
-      "patterns": [
-        "night shift",
-        "graveyard shift",
-        "overnight shift",
-        "willing to work night",
-        "comfortable with night shift"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "early_morning": {
-      "patterns": [
-        "early morning",
-        "morning shift",
-        "6am",
-        "7am",
-        "willing to start early",
-        "comfortable with early hours"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "weekend_work": {
-      "patterns": [
-        "weekend work",
-        "work on weekends",
-        "saturday work",
-        "sunday work",
-        "willing to work weekends",
-        "available on weekends"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "flexible_hours": {
-      "patterns": [
-        "flexible hours",
-        "flexible timing",
-        "flexible schedule",
-        "work flexible hours",
-        "comfortable with flexible timing"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "any_hours": {
-      "patterns": [
-        "any hours",
-        "any time",
-        "24/7 availability",
-        "round the clock",
-        "always available",
-        "work anytime"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "work_authorization_us": {
-      "patterns": [
-        "authorized to work in us",
-        "work authorization us",
-        "us work permit",
-        "eligible to work in us",
-        "legally authorized us"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in US",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in US",
-        "select": "Authorized to work in US",
-        "text": "Authorized to work in US",
-        "checkbox": "Authorized to work in US"
-      }
-    },
-    "work_authorization_uk": {
-      "patterns": [
-        "authorized to work in uk",
-        "work authorization uk",
-        "uk work permit",
-        "eligible to work in uk",
-        "legally authorized uk"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in UK",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in UK",
-        "select": "Authorized to work in UK",
-        "text": "Authorized to work in UK",
-        "checkbox": "Authorized to work in UK"
-      }
-    },
-    "work_authorization_eu": {
-      "patterns": [
-        "authorized to work in eu",
-        "work authorization eu",
-        "eu work permit",
-        "eligible to work in eu",
-        "legally authorized eu"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in EU",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in EU",
-        "select": "Authorized to work in EU",
-        "text": "Authorized to work in EU",
-        "checkbox": "Authorized to work in EU"
-      }
-    },
-    "work_authorization_canada": {
-      "patterns": [
-        "authorized to work in canada",
-        "work authorization canada",
-        "canada work permit",
-        "eligible to work in canada"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in Canada",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in Canada",
-        "select": "Authorized to work in Canada",
-        "text": "Authorized to work in Canada",
-        "checkbox": "Authorized to work in Canada"
-      }
-    },
-    "work_authorization_australia": {
-      "patterns": [
-        "authorized to work in australia",
-        "work authorization australia",
-        "australia work permit",
-        "eligible to work in australia"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in Australia",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in Australia",
-        "select": "Authorized to work in Australia",
-        "text": "Authorized to work in Australia",
-        "checkbox": "Authorized to work in Australia"
-      }
-    },
-    "work_authorization_singapore": {
-      "patterns": [
-        "authorized to work in singapore",
-        "work authorization singapore",
-        "singapore work permit",
-        "eligible to work in singapore"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in Singapore",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in Singapore",
-        "select": "Authorized to work in Singapore",
-        "text": "Authorized to work in Singapore",
-        "checkbox": "Authorized to work in Singapore"
-      }
-    },
-    "work_authorization_dubai": {
-      "patterns": [
-        "authorized to work in dubai",
-        "work authorization uae",
-        "dubai work permit",
-        "eligible to work in uae"
-      ],
-      "category": "work_authorization",
-      "default": "Authorized to work in Dubai/UAE",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Authorized to work in Dubai/UAE",
-        "select": "Authorized to work in Dubai/UAE",
-        "text": "Authorized to work in Dubai/UAE",
-        "checkbox": "Authorized to work in Dubai/UAE"
-      }
-    },
-    "no_sponsorship_needed": {
-      "patterns": [
-        "do you need sponsorship",
-        "require visa sponsorship",
-        "need employer sponsorship",
-        "sponsorship required",
-        "will you need sponsorship"
-      ],
-      "category": "work_authorization",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "no_visa_required": {
-      "patterns": [
-        "do you need a visa",
-        "visa required",
-        "work visa needed",
-        "do you have visa",
-        "visa status"
-      ],
-      "category": "work_authorization",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "citizenship_status": {
-      "patterns": [
-        "citizenship",
-        "citizen",
-        "are you a citizen",
-        "do you hold citizenship",
-        "citizenship status"
-      ],
-      "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "permanent_resident": {
-      "patterns": [
-        "permanent resident",
-        "green card",
-        "pr status",
-        "are you a permanent resident",
-        "hold permanent residency"
-      ],
-      "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "work_permit_valid": {
-      "patterns": [
-        "valid work permit",
-        "work permit valid",
-        "is your work permit valid",
-        "current work permit"
-      ],
-      "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "h1b_status": {
-      "patterns": [
-        "h1b",
-        "h-1b",
-        "do you have h1b",
-        "h1b visa",
-        "h1b status"
-      ],
-      "category": "work_authorization",
-      "default": "Not applicable",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
-      }
-    },
-    "l1_status": {
-      "patterns": [
-        "l1",
-        "l-1",
-        "do you have l1",
-        "l1 visa",
-        "l1 status"
-      ],
-      "category": "work_authorization",
-      "default": "Not applicable",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
-      }
-    },
-    "tn_visa_status": {
-      "patterns": [
-        "tn visa",
-        "tn status",
-        "do you have tn",
-        "tn permit"
-      ],
-      "category": "work_authorization",
-      "default": "Not applicable",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
-      }
-    },
-    "opt_status": {
-      "patterns": [
-        "opt",
-        "optional practical training",
-        "do you have opt",
-        "opt visa"
-      ],
-      "category": "work_authorization",
-      "default": "Not applicable",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
-      }
-    },
-    "stem_opt": {
-      "patterns": [
-        "stem opt",
-        "stem extension",
-        "do you have stem opt"
-      ],
-      "category": "work_authorization",
-      "default": "Not applicable",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Not applicable",
-        "select": "Not applicable",
-        "text": "Not applicable",
-        "checkbox": "Not applicable"
-      }
-    },
-    "independent_contractor": {
-      "patterns": [
-        "independent contractor",
-        "1099",
-        "contractor status",
-        "are you a contractor"
-      ],
-      "category": "work_authorization",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "right_to_work": {
-      "patterns": [
-        "right to work",
-        "legal right to work",
-        "do you have right to work",
-        "right to work status"
-      ],
-      "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "employment_eligibility": {
-      "patterns": [
-        "employment eligibility",
-        "eligible for employment",
-        "employment authorization",
-        "authorized for employment"
-      ],
-      "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "immediate_joining_confirm": {
-      "patterns": [
-        "immediate joining",
-        "join immediately",
-        "can join immediately",
-        "immediate availability",
-        "available immediately",
-        "join right away",
-        "join now",
-        "immediate start"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "joining_within_week": {
-      "patterns": [
-        "join within a week",
-        "join in 7 days",
-        "join within 7 days",
-        "available within week",
-        "can join in one week"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "joining_within_days": {
-      "patterns": [
-        "join within days",
-        "join in few days",
-        "available in days",
-        "can join within days",
-        "short notice joining"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "no_notice_period": {
-      "patterns": [
-        "zero notice",
-        "not serving notice",
-        "no np",
-        "without notice period"
-      ],
-      "category": "notice_period",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "serving_notice": {
-      "patterns": [
-        "serving notice",
-        "currently serving",
-        "serving np",
-        "on notice"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes, currently serving notice period",
-        "checkbox": "Yes"
-      }
-    },
-    "early_release": {
-      "patterns": [
-        "early release",
-        "early relieving",
-        "can be released early",
-        "early exit possible",
-        "early joining possible"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "negotiable_notice": {
-      "patterns": [
-        "negotiable notice",
-        "notice negotiable",
-        "can negotiate notice",
-        "flexible notice period",
-        "notice period flexible"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "last_working_day": {
-      "patterns": [
-        "last working day",
-        "lwd",
-        "last day at work",
-        "final working day",
-        "last day of work"
-      ],
-      "category": "notice_period",
-      "default": "15 Aug 2025",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "15 Aug 2025",
-        "select": "15 Aug 2025",
-        "text": "15 Aug 2025",
-        "checkbox": "15 Aug 2025",
-        "date": "15 Aug 2025"
-      }
-    },
-    "joining_date_flexible": {
-      "patterns": [
-        "flexible joining date",
-        "joining date flexible",
-        "flexible start date",
-        "when can you join",
-        "preferred joining date"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "joining_urgency": {
-      "patterns": [
-        "how soon can you join",
-        "urgency of joining",
-        "joining urgency",
-        "when will you join",
-        "expected joining"
-      ],
-      "category": "notice_period",
-      "default": "Immediately",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Immediately",
-        "select": "Immediately",
-        "text": "Immediately",
-        "checkbox": "Immediately",
-        "date": "15 Aug 2025"
-      }
-    },
-    "availability_status": {
-      "patterns": [
-        "current availability",
-        "availability status",
-        "are you available",
-        "when are you available",
-        "availability for new role"
-      ],
-      "category": "notice_period",
-      "default": "Immediately Available",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Immediately Available",
-        "select": "Immediately Available",
-        "text": "Immediately Available",
-        "checkbox": "Immediately Available",
-        "date": "15 Aug 2025"
-      }
-    },
-    "transition_time": {
-      "patterns": [
-        "transition time",
-        "handover time",
-        "transition period",
-        "how much time to transition",
-        "time needed to join"
-      ],
-      "category": "notice_period",
-      "default": "Immediate",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Immediate",
-        "select": "Immediate",
-        "text": "Immediate",
-        "checkbox": "Immediate",
-        "date": "15 Aug 2025"
-      }
-    },
-    "relieving_date": {
-      "patterns": [
-        "relieving date",
-        "date of relieving",
-        "when will you be relieved",
-        "expected relieving"
-      ],
-      "category": "notice_period",
-      "default": "Immediately",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Immediately",
-        "select": "Immediately",
-        "text": "Immediately",
-        "checkbox": "Immediately",
-        "date": "15 Aug 2025"
-      }
-    },
-    "joining_commitment": {
-      "patterns": [
-        "commit to joining",
-        "can you commit",
-        "will you join",
-        "commitment to join",
-        "sure to join"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes",
-        "date": "15 Aug 2025"
-      }
-    },
-    "full_time_only": {
-      "patterns": [
-        "full time",
-        "full-time",
-        "only full time",
-        "full time only",
-        "seeking full time",
-        "looking for full time",
-        "full time position",
-        "full time role"
-      ],
-      "category": "employment",
-      "default": "Full-time",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Full-time",
-        "select": "Full-time",
-        "text": "Full-time",
-        "checkbox": "Full-time"
-      }
-    },
-    "no_part_time": {
-      "patterns": [
-        "part time",
-        "part-time",
-        "willing to work part time",
-        "open to part time",
-        "part time availability",
-        "part time role"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "no_freelance": {
-      "patterns": [
-        "freelance",
-        "freelancing",
-        "contract work",
-        "contracting",
-        "open to freelance",
-        "willing to freelance"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "no_consulting": {
-      "patterns": [
-        "consulting",
-        "consultant",
-        "consultant role",
-        "open to consulting",
-        "willing to consult"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "permanent_role": {
-      "patterns": [
-        "permanent",
-        "permanent position",
-        "permanent role",
-        "permanent employment",
-        "looking for permanent"
-      ],
-      "category": "employment",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "no_contract": {
-      "patterns": [
-        "contract position",
-        "contract role",
-        "contractual",
-        "contract basis",
-        "open to contract",
-        "willing for contract"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "direct_hire": {
-      "patterns": [
-        "direct hire",
-        "direct employment",
-        "direct position",
-        "direct role",
-        "full time direct"
-      ],
-      "category": "employment",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "no_c2h": {
-      "patterns": [
-        "c2h",
-        "contract to hire",
-        "contract-to-hire",
-        "c2h position",
-        "c2h role",
-        "open to c2h"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "employment_type_preference": {
-      "patterns": [
-        "employment type",
-        "type of employment",
-        "preferred employment type",
-        "what type of employment",
-        "employment preference"
-      ],
-      "category": "employment",
-      "default": "Full-time Permanent",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Full-time Permanent",
-        "select": "Full-time Permanent",
-        "text": "Full-time Permanent",
-        "checkbox": "Full-time Permanent"
-      }
-    },
-    "no_internship": {
-      "patterns": [
-        "internship",
-        "intern",
-        "intern position",
-        "looking for internship",
-        "open to internship"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "no_apprenticeship": {
-      "patterns": [
-        "apprenticeship",
-        "apprentice",
-        "trainee",
-        "training program",
-        "open to apprenticeship"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "regular_employee": {
-      "patterns": [
-        "regular employee",
-        "permanent employee",
-        "full time employee",
-        "direct employee",
-        "on rolls"
-      ],
-      "category": "employment",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "payroll_type": {
-      "patterns": [
-        "payroll",
-        "on payroll",
-        "third party payroll",
-        "contractor payroll",
-        "payroll type",
-        "whose payroll"
-      ],
-      "category": "employment",
-      "default": "Company Payroll",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Company Payroll",
-        "select": "Company Payroll",
-        "text": "Company Payroll",
-        "checkbox": "Company Payroll"
-      }
-    },
-    "no_vendor": {
-      "patterns": [
-        "vendor",
-        "vendor position",
-        "through vendor",
-        "third party",
-        "vendor role",
-        "open to vendor"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "employment_commitment": {
-      "patterns": [
-        "commitment",
-        "time commitment",
-        "hours per week",
-        "working hours",
-        "full time commitment"
-      ],
-      "category": "employment",
-      "default": "Full-time",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Full-time",
-        "select": "Full-time",
-        "text": "Full-time",
-        "checkbox": "Full-time"
-      }
-    },
-    "relocation_us": {
-      "patterns": [
-        "relocate to us",
-        "move to us",
-        "willing to relocate us",
-        "work in us",
-        "us relocation"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_uk": {
-      "patterns": [
-        "relocate to uk",
-        "move to uk",
-        "willing to relocate uk",
-        "work in uk",
-        "uk relocation",
-        "london",
-        "manchester"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_canada": {
-      "patterns": [
-        "relocate to canada",
-        "move to canada",
-        "willing to relocate canada",
-        "work in canada",
-        "canada relocation",
-        "toronto",
-        "vancouver"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_australia": {
-      "patterns": [
-        "relocate to australia",
-        "move to australia",
-        "willing to relocate australia",
-        "work in australia",
-        "australia relocation",
-        "sydney",
-        "melbourne"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_singapore": {
-      "patterns": [
-        "relocate to singapore",
-        "move to singapore",
-        "willing to relocate singapore",
-        "work in singapore",
-        "singapore relocation"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_dubai": {
-      "patterns": [
-        "relocate to dubai",
-        "move to dubai",
-        "willing to relocate dubai",
-        "work in dubai",
-        "dubai relocation",
-        "uae"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_germany": {
-      "patterns": [
-        "relocate to germany",
-        "move to germany",
-        "willing to relocate germany",
-        "work in germany",
-        "germany relocation",
-        "berlin",
-        "munich"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_netherlands": {
-      "patterns": [
-        "relocate to netherlands",
-        "move to netherlands",
-        "willing to relocate netherlands",
-        "work in netherlands",
-        "netherlands relocation",
-        "amsterdam"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_ireland": {
-      "patterns": [
-        "relocate to ireland",
-        "move to ireland",
-        "willing to relocate ireland",
-        "work in ireland",
-        "ireland relocation",
-        "dublin"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_sweden": {
-      "patterns": [
-        "relocate to sweden",
-        "move to sweden",
-        "willing to relocate sweden",
-        "work in sweden",
-        "sweden relocation",
-        "stockholm"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_switzerland": {
-      "patterns": [
-        "relocate to switzerland",
-        "move to switzerland",
-        "willing to relocate switzerland",
-        "work in switzerland",
-        "switzerland relocation",
-        "zurich"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_france": {
-      "patterns": [
-        "relocate to france",
-        "move to france",
-        "willing to relocate france",
-        "work in france",
-        "france relocation",
-        "paris"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_japan": {
-      "patterns": [
-        "relocate to japan",
-        "move to japan",
-        "willing to relocate japan",
-        "work in japan",
-        "japan relocation",
-        "tokyo"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_malaysia": {
-      "patterns": [
-        "relocate to malaysia",
-        "move to malaysia",
-        "willing to relocate malaysia",
-        "work in malaysia",
-        "malaysia relocation",
-        "kuala lumpur"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_thailand": {
-      "patterns": [
-        "relocate to thailand",
-        "move to thailand",
-        "willing to relocate thailand",
-        "work in thailand",
-        "thailand relocation",
-        "bangkok"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_anywhere": {
-      "patterns": [
-        "relocate anywhere",
-        "move anywhere",
-        "willing to relocate anywhere",
-        "work anywhere",
-        "any location",
-        "open to any location",
-        "anywhere in the world"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "remote_any_country": {
-      "patterns": [
-        "remote from any country",
-        "work remotely from anywhere",
-        "remote anywhere",
-        "work from any country",
-        "any country remote"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "travel_percentage": {
-      "patterns": [
-        "travel percentage",
-        "how much travel",
-        "travel amount",
-        "travel percent",
-        "travel frequency",
-        "travel expectations"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relocation_expenses": {
-      "patterns": [
-        "relocation expenses",
-        "moving expenses",
-        "relocation reimbursement",
-        "relocation coverage",
-        "relocation costs"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "work_visa_sponsorship": {
-      "patterns": [
-        "will you sponsor visa",
-        "visa sponsorship",
-        "sponsor work visa",
-        "relocation visa",
-        "sponsorship for relocation"
-      ],
-      "category": "location",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "current_location_abroad": {
-      "patterns": [
-        "which country are you currently located",
-        "what country are you currently located in",
-        "which country do you currently reside in",
-        "country of residence",
-        "are you currently located outside india",
-        "currently living outside india",
-        "outside india"
-      ],
-      "category": "location",
-      "default": "India",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "India",
-        "select": "India",
-        "text": "India",
-        "checkbox": "India"
-      }
-    },
-    "remote_work_location": {
-      "patterns": [
-        "remote work location",
-        "where will you work remotely",
-        "remote location",
-        "work from home location"
-      ],
-      "category": "location",
-      "default": "Anywhere",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Anywhere",
-        "select": "Anywhere",
-        "text": "Anywhere",
-        "checkbox": "Anywhere"
-      }
-    },
-    "timezone_preference": {
-      "patterns": [
-        "preferred timezone",
-        "timezone preference",
-        "which timezone",
-        "what timezone",
-        "timezone you prefer"
-      ],
-      "category": "location",
-      "default": "Any",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Any",
-        "select": "Any",
-        "text": "Any",
-        "checkbox": "Any"
-      }
-    },
-    "confidentiality_agreement": {
-      "patterns": [
-        "confidentiality agreement",
-        "nda",
-        "non-disclosure",
-        "non disclosure agreement",
-        "do you have nda",
-        "bound by confidentiality"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "intellectual_property": {
-      "patterns": [
-        "intellectual property",
-        "ip rights",
-        "ip ownership",
-        "ip assignment",
-        "ip agreement",
-        "intellectual property rights"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "conflict_of_interest": {
-      "patterns": [
-        "conflict of interest",
-        "conflict of interests",
-        "any conflict",
-        "do you have conflict",
-        "conflict disclosure"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "previous_employer_obligations": {
-      "patterns": [
-        "previous employer obligations",
-        "past employer obligations",
-        "obligations to previous",
-        "commitments to previous employer"
-      ],
-      "category": "compliance",
-      "default": "None",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "None",
-        "select": "None",
-        "text": "None",
-        "checkbox": "None"
-      }
-    },
-    "garden_leave": {
-      "patterns": [
-        "garden leave",
-        "gardening leave",
-        "on garden leave",
-        "garden leave status"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "restraint_clause": {
-      "patterns": [
-        "restraint clause",
-        "restraint of trade",
-        "restraint agreement",
-        "restraint period",
-        "restraint conditions"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "solicitation_agreement": {
-      "patterns": [
-        "non-solicitation",
-        "non solicitation",
-        "solicitation agreement",
-        "no poaching agreement",
-        "anti-poaching"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "employment_bond": {
-      "patterns": [
-        "employment bond",
-        "service bond",
-        "bond agreement",
-        "bond period",
-        "training bond",
-        "do you have bond"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "legal_disputes": {
-      "patterns": [
-        "legal disputes",
-        "ongoing litigation",
-        "court cases",
-        "legal proceedings",
-        "involved in disputes",
-        "any legal issues"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "termination_clause": {
-      "patterns": [
-        "termination clause",
-        "termination conditions",
-        "notice of termination",
-        "termination terms",
-        "termination policy"
-      ],
-      "category": "compliance",
-      "default": "Standard",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Standard",
-        "select": "Standard",
-        "text": "Standard",
-        "checkbox": "Standard"
-      }
-    },
-    "background_check_clear": {
-      "patterns": [
-        "background check clear",
-        "clear background",
-        "background verification",
-        "bgv clear",
-        "background check status"
-      ],
-      "category": "compliance",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "reference_check_authorization": {
-      "patterns": [
-        "reference check",
-        "reference verification",
-        "contact references",
-        "authorize reference check",
-        "reference contact"
-      ],
-      "category": "compliance",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "documentation_complete": {
-      "patterns": [
-        "documentation complete",
-        "documents complete",
-        "all documents",
-        "paperwork complete",
-        "documentation ready"
-      ],
-      "category": "compliance",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "microservices_experience": {
-      "patterns": [
-        "microservices",
-        "micro services",
-        "microservice architecture",
-        "experience with microservices",
-        "years of experience with microservices"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "event_driven_experience": {
-      "patterns": [
-        "event driven",
-        "event-driven",
-        "event sourcing",
-        "cqrs",
-        "experience with event driven",
-        "years of experience with event driven"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "serverless_experience": {
-      "patterns": [
-        "serverless",
-        "serverless architecture",
-        "lambda",
-        "azure functions",
-        "experience with serverless",
-        "years of experience with serverless"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "blockchain_experience": {
-      "patterns": [
-        "blockchain",
-        "web3",
-        "smart contracts",
-        "ethereum",
-        "experience with blockchain",
-        "years of experience with blockchain"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "iot_experience": {
-      "patterns": [
-        "iot",
-        "internet of things",
-        "embedded systems",
-        "device programming",
-        "experience with iot",
-        "years of experience with iot"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ar_vr_experience": {
-      "patterns": [
-        "vr",
-        "augmented reality",
-        "virtual reality",
-        "mixed reality",
-        "experience with ar vr",
-        "years of experience with ar"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "game_dev_experience": {
-      "patterns": [
-        "game development",
-        "unity",
-        "unreal engine",
-        "game programming",
-        "experience with game dev",
-        "years of experience with games"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "data_engineering_experience": {
-      "patterns": [
-        "data engineering",
-        "data pipelines",
-        "etl",
-        "data warehouse",
-        "experience with data engineering",
-        "years of experience with data"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "data_science_experience": {
-      "patterns": [
-        "data science",
-        "data scientist",
-        "machine learning",
-        "ml",
-        "experience with data science",
-        "years of experience with ml"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "devops_experience": {
-      "patterns": [
-        "devops",
-        "devops engineer",
-        "devops practices",
-        "experience with devops",
-        "years of experience with devops"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "sre_experience": {
-      "patterns": [
-        "sre",
-        "site reliability",
-        "site reliability engineering",
-        "experience with sre",
-        "years of experience with sre"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "platform_engineering_experience": {
-      "patterns": [
-        "platform engineering",
-        "platform team",
-        "internal platform",
-        "experience with platform",
-        "years of experience with platform"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "security_engineering_experience": {
-      "patterns": [
-        "security engineering",
-        "application security",
-        "appsec",
-        "experience with security",
-        "years of experience with security"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "performance_engineering_experience": {
-      "patterns": [
-        "performance engineering",
-        "performance tuning",
-        "optimization",
-        "experience with performance",
-        "years of experience with performance"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "qa_automation_experience": {
-      "patterns": [
-        "qa automation",
-        "test automation",
-        "automated testing",
-        "experience with qa automation",
-        "years of experience with automation"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "technical_writing_experience": {
-      "patterns": [
-        "technical writing",
-        "documentation",
-        "technical documentation",
-        "experience with technical writing",
-        "years of experience with docs"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ui_ux_experience": {
-      "patterns": [
-        "ui ux",
-        "ui/ux",
-        "user interface",
-        "user experience",
-        "design",
-        "experience with ui ux",
-        "years of experience with design"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "product_management_experience": {
-      "patterns": [
-        "product management",
-        "product manager",
-        "pm",
-        "experience with product",
-        "years of experience with product"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "agile_experience": {
-      "patterns": [
-        "agile",
-        "scrum",
-        "kanban",
-        "experience with agile",
-        "years of experience with agile"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "leadership_experience": {
-      "patterns": [
-        "leadership",
-        "team lead",
-        "tech lead",
-        "engineering lead",
-        "experience with leadership",
-        "years of experience with leadership"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 8,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "salary_flexible": {
-      "patterns": [
-        "flexible on salary",
-        "salary flexible",
-        "negotiable salary",
-        "salary negotiable",
-        "open to negotiation",
-        "salary expectations flexible"
-      ],
-      "category": "salary",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "number": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "current_salary_usd": {
-      "patterns": [
-        "current salary usd",
-        "salary in usd",
-        "current compensation usd",
-        "ctc in usd",
-        "salary dollars"
-      ],
-      "category": "salary",
-      "default": "50000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "50000",
-        "select": "50000",
-        "text": "50000",
-        "number": "50000",
-        "checkbox": "50000"
-      }
-    },
-    "expected_salary_usd": {
-      "patterns": [
-        "expected salary usd",
-        "expected usd",
-        "salary expectation usd",
-        "expected compensation usd",
-        "expected in dollars"
-      ],
-      "category": "salary",
-      "default": "75000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "75000",
-        "select": "75000",
-        "text": "75000",
-        "number": "75000",
-        "checkbox": "75000"
-      }
-    },
-    "current_salary_eur": {
-      "patterns": [
-        "current salary eur",
-        "salary in eur",
-        "current compensation eur",
-        "ctc in eur",
-        "salary euros"
-      ],
-      "category": "salary",
-      "default": "45000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "45000",
-        "select": "45000",
-        "text": "45000",
-        "number": "45000",
-        "checkbox": "45000"
-      }
-    },
-    "expected_salary_eur": {
-      "patterns": [
-        "expected salary eur",
-        "expected eur",
-        "salary expectation eur",
-        "expected compensation eur",
-        "expected in euros"
-      ],
-      "category": "salary",
-      "default": "65000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "65000",
-        "select": "65000",
-        "text": "65000",
-        "number": "65000",
-        "checkbox": "65000"
-      }
-    },
-    "current_salary_gbp": {
-      "patterns": [
-        "current salary gbp",
-        "salary in gbp",
-        "current compensation gbp",
-        "ctc in gbp",
-        "salary pounds"
-      ],
-      "category": "salary",
-      "default": "40000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "40000",
-        "select": "40000",
-        "text": "40000",
-        "number": "40000",
-        "checkbox": "40000"
-      }
-    },
-    "expected_salary_gbp": {
-      "patterns": [
-        "expected salary gbp",
-        "expected gbp",
-        "salary expectation gbp",
-        "expected compensation gbp",
-        "expected in pounds"
-      ],
-      "category": "salary",
-      "default": "60000",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "60000",
-        "select": "60000",
-        "text": "60000",
-        "number": "60000",
-        "checkbox": "60000"
-      }
-    },
-    "stock_options_interest": {
-      "patterns": [
-        "stock options",
-        "esop",
-        "rsu",
-        "equity",
-        "interested in equity",
-        "stock compensation",
-        "equity compensation"
-      ],
-      "category": "salary",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "number": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "benefits_flexible": {
-      "patterns": [
-        "flexible on benefits",
-        "benefits flexible",
-        "open to benefits discussion",
-        "benefits negotiable"
-      ],
-      "category": "salary",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "number": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "compensation_package": {
-      "patterns": [
-        "compensation package",
-        "total compensation",
-        "compensation expectations",
-        "expected package",
-        "package expectations"
-      ],
-      "category": "salary",
-      "default": "Competitive",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Competitive",
-        "select": "Competitive",
-        "text": "Competitive",
-        "number": "Competitive",
-        "checkbox": "Competitive"
-      }
-    },
-    "bachelor_degree": {
-      "patterns": [
-        "bachelor degree",
-        "bachelors",
-        "b.tech",
-        "undergraduate",
-        "do you have bachelor",
-        "bachelor completed"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "master_degree": {
-      "patterns": [
-        "master degree",
-        "masters",
-        "m.tech",
-        "postgraduate",
-        "do you have master",
-        "master completed"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "computer_science_degree": {
-      "patterns": [
-        "computer science",
-        "cs degree",
-        "btech cs",
-        "computer science degree",
-        "cs background"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "certification_aws": {
-      "patterns": [
-        "aws certification",
-        "aws certified",
-        "aws solutions architect",
-        "aws developer",
-        "do you have aws cert"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "certification_azure": {
-      "patterns": [
-        "azure certification",
-        "azure certified",
-        "azure solutions",
-        "azure developer",
-        "do you have azure cert"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "certification_gcp": {
-      "patterns": [
-        "gcp certification",
-        "gcp certified",
-        "google cloud cert",
-        "google certified",
-        "do you have gcp cert"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "certification_kubernetes": {
-      "patterns": [
-        "kubernetes certification",
-        "cka",
-        "ckad",
-        "certified kubernetes",
-        "k8s certification"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "certification_scrum": {
-      "patterns": [
-        "scrum certification",
-        "scrum master",
-        "csm",
-        "psm",
-        "agile certification"
-      ],
-      "category": "education",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "ongoing_education": {
-      "patterns": [
-        "currently studying",
-        "pursuing degree",
-        "part time student",
-        "ongoing education",
-        "studying currently"
-      ],
-      "category": "education",
-      "default": "No",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "phd_degree": {
-      "patterns": [
-        "phd",
-        "doctorate",
-        "doctoral degree",
-        "do you have phd",
-        "phd completed"
-      ],
-      "category": "education",
-      "default": "No",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "team_player": {
-      "patterns": [
-        "team player",
-        "work in team",
-        "teamwork",
-        "collaborative",
-        "do you work well in teams"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "leadership_quality": {
-      "patterns": [
-        "leadership quality",
-        "lead skills",
-        "can you lead",
-        "leadership potential",
-        "leadership experience"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "communication_skills": {
-      "patterns": [
-        "communication skills",
-        "how do you communicate",
-        "communication ability",
-        "communication proficiency"
-      ],
-      "category": "soft_skills",
-      "default": "Excellent",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Excellent",
-        "select": "Excellent",
-        "text": "Excellent",
-        "textarea": "Excellent"
-      }
-    },
-    "problem_solving": {
-      "patterns": [
-        "problem solving",
-        "solve problems",
-        "problem solver",
-        "analytical skills",
-        "troubleshooting skills"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "adaptability": {
-      "patterns": [
-        "adaptable",
-        "adaptability",
-        "quick learner",
-        "fast learner",
-        "learn new technologies",
-        "adapt to change"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "stress_management": {
-      "patterns": [
-        "handle stress",
-        "work under pressure",
-        "stress management",
-        "deadline pressure",
-        "high pressure"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "time_management": {
-      "patterns": [
-        "time management",
-        "prioritize",
-        "meet deadlines",
-        "punctual",
-        "time management skills"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "attention_to_detail": {
-      "patterns": [
-        "attention to detail",
-        "detail oriented",
-        "meticulous",
-        "thorough",
-        "detail focused"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "creativity": {
-      "patterns": [
-        "creative",
-        "creativity",
-        "innovative",
-        "out of the box",
-        "creative thinking"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "critical_thinking": {
-      "patterns": [
-        "critical thinking",
-        "analytical thinking",
-        "logical thinking",
-        "reasoning skills"
-      ],
-      "category": "soft_skills",
-      "default": "Yes",
-      "priority": 7,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
-      }
-    },
-    "technical_interview_ready": {
-      "patterns": [
-        "ready for technical interview",
-        "prepared for interview",
-        "technical interview",
-        "coding interview"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "coding_test_ready": {
-      "patterns": [
-        "coding test",
-        "coding assessment",
-        "technical assessment",
-        "programming test",
-        "ready for coding"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "system_design_ready": {
-      "patterns": [
-        "system design",
-        "design interview",
-        "architecture interview",
-        "system design round"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "live_coding": {
-      "patterns": [
-        "live coding",
-        "pair programming",
-        "live programming",
-        "coding session",
-        "willing to code live"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "whiteboard_interview": {
-      "patterns": [
-        "whiteboard",
-        "whiteboard interview",
-        "whiteboard coding",
-        "whiteboard session"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "video_interview": {
-      "patterns": [
-        "video interview",
-        "zoom interview",
-        "virtual interview",
-        "online interview",
-        "video call"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "phone_interview": {
-      "patterns": [
-        "phone interview",
-        "phone screening",
-        "telephonic interview",
-        "call interview"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "in_person_interview": {
-      "patterns": [
-        "in person",
-        "in-person interview",
-        "onsite interview",
-        "face to face",
-        "physical interview"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "multiple_rounds": {
-      "patterns": [
-        "multiple rounds",
-        "how many rounds",
-        "interview rounds",
-        "willing for multiple rounds"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "pf_history": {
-      "patterns": [
-        "pf",
-        "provident fund",
-        "do you have pf",
-        "pf number",
-        "pf account",
-        "pf for all companies",
-        "pf for all companies which you have worked",
-        "provident fund for all companies"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "policy_opcodes": {
-      "patterns": [
-        "policy opcodes",
-        "opcodes",
-        "developed policy opcodes",
-        "policy configuration",
-        "have you developed policy opcodes"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "fresher_check": {
-      "patterns": [
-        "are you a fresher",
-        "fresher",
-        "fresher or experienced",
-        "fresher or experienced professional"
-      ],
-      "category": "yes_no",
-      "default": "No",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No, I have 4 years of professional experience",
-        "checkbox": "No"
-      }
-    },
-    "has_work_experience": {
-      "patterns": [
-        "do you have any work experience",
-        "have you ever worked",
-        "any prior work experience",
-        "any work experience"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "relatives_at_company": {
-      "patterns": [
-        "relatives working",
-        "family member working",
-        "family members working",
-        "anyone in your family",
-        "relative working with us"
-      ],
-      "category": "yes_no",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "ex_employee_check": {
-      "patterns": [
-        "worked for our company",
-        "ever worked with us",
-        "worked for us before",
-        "ex-employee of our company",
-        "previously employed with our company"
-      ],
-      "category": "yes_no",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "laid_off_check": {
-      "patterns": [
-        "laid off",
-        "terminated",
-        "fired",
-        "dismissed from"
-      ],
-      "category": "yes_no",
-      "default": "No",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "checkbox": "No"
-      }
-    },
-    "noc_relieving_letter": {
-      "patterns": [
-        "noc",
-        "no objection certificate",
-        "relieving letter",
-        "experience letter",
-        "service certificate"
-      ],
-      "category": "yes_no",
-      "default": "Yes, can provide",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes, can provide",
-        "select": "Yes, can provide",
-        "text": "Yes, can provide",
-        "checkbox": "Yes, can provide"
-      }
-    },
-    "laptop_availability": {
-      "patterns": [
-        "own laptop",
-        "personal laptop",
-        "laptop and internet",
-        "internet connection",
-        "do you have a laptop"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "expected_hike_percent": {
-      "patterns": [
-        "expected hike",
-        "salary hike",
-        "hike percentage",
-        "hike are you expecting",
-        "expected hike percentage"
-      ],
-      "category": "salary",
-      "default": "30%",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "30",
-        "select": "30%",
-        "text": "30%",
-        "number": "30",
-        "checkbox": "30%"
-      }
-    },
-    "salary_slips": {
-      "patterns": [
-        "salary slip",
-        "salary slips",
-        "payslip",
-        "pay slip",
-        "form 16",
-        "salary breakup"
-      ],
-      "category": "compliance",
-      "default": "Yes, can provide",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes, can provide",
-        "select": "Yes, can provide",
-        "text": "Yes, can provide",
-        "checkbox": "Yes, can provide"
-      }
-    },
-    "postgresql_experience": {
-      "patterns": [
-        "postgresql",
-        "experience with postgresql",
-        "years of experience with postgresql",
-        "postgresql experience"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "mysql_experience": {
-      "patterns": [
-        "mysql",
-        "experience with mysql",
-        "years of experience with mysql",
-        "mysql experience"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "mongodb_experience": {
-      "patterns": [
-        "mongodb",
-        "experience with mongodb",
-        "years of experience with mongodb",
-        "mongodb experience"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "sonarqube_experience": {
-      "patterns": [
-        "sonarqube",
-        "experience with sonarqube",
-        "years of experience with sonarqube",
-        "sonarqube experience"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "memcached_experience": {
-      "patterns": [
-        "memcached",
-        "experience with memcached",
-        "years of experience with memcached",
-        "memcached experience"
-      ],
-      "category": "experience",
-      "default": "4 Years",
-      "priority": 9,
-      "input_type_defaults": {
-        "text": "4 Years",
-        "number": "4",
-        "radio": "Yes",
-        "select": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "distributed_system_concepts": {
-      "patterns": [
-        "circuit breaker",
-        "idempotency",
-        "rate limiting",
-        "load testing",
-        "stress testing",
-        "retry mechanism",
-        "backpressure"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "redux_state_management": {
-      "patterns": [
-        "redux",
-        "redux toolkit",
-        "state management",
-        "state management library"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "oauth_jwt_sso": {
-      "patterns": [
-        "oauth",
-        "jwt",
-        "sso",
-        "single sign on",
-        "token based auth",
-        "token based authentication"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "feature_flags_ab_testing": {
-      "patterns": [
-        "feature flag",
-        "feature toggle",
-        "a/b testing",
-        "ab testing",
-        "experimentation platform"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "oncall_availability": {
-      "patterns": [
-        "on-call",
-        "oncall",
-        "on call",
-        "production support",
-        "24x7 support",
-        "available for on-call",
-        "available for on call",
-        "on-call support",
-        "on call support"
-      ],
-      "category": "availability",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "startup_comfort": {
-      "patterns": [
-        "startup",
-        "start-up",
-        "startup environment",
-        "fast-paced",
-        "fast paced environment"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "industry_domain_yes_no": {
-      "patterns": [
-        "insurance domain",
-        "healthcare domain",
-        "telecom domain",
-        "retail domain",
-        "insurance industry",
-        "healthcare industry",
-        "experience in the insurance domain",
-        "experience in the healthcare domain",
-        "experience in the telecom domain",
-        "experience in the retail domain",
-        "experience in the insurance industry"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "monolith_migration": {
-      "patterns": [
-        "monolith to microservices",
-        "monolithic to microservices",
-        "microservices migration",
-        "split monolith"
-      ],
-      "category": "yes_no",
-      "default": "Yes",
-      "priority": 8,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "site_visit_availability": {
-      "patterns": [
-        "site visit",
-        "client site",
-        "onsite visit",
-        "visit to client location",
-        "available for site visit",
-        "available for site visits",
-        "for site visits",
-        "site visits",
-        "available for onsite visit",
-        "available for onsite visits"
-      ],
-      "category": "location",
-      "default": "Yes",
-      "priority": 10,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
-    },
-    "terms_consent": {
-      "patterns": [
-        "terms and conditions",
-        "terms & conditions",
-        "accept the terms",
-        "privacy policy",
-        "data processing consent",
-        "candidate consent"
-      ],
-      "category": "compliance",
-      "default": "Yes",
-      "priority": 9,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "checkbox": "Yes"
-      }
     }
   },
   "categories": {

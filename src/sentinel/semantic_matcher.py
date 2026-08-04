@@ -48,10 +48,10 @@ class SemanticQuestionMatcher:
         },
         'notice_period': {
             'keywords': [
-                'notice period', 'when can you join', 'availability',
+                'notice period', 'when can you join',
                 'how soon can you', 'serving notice', 'notice period days',
                 'joining time', 'can join in', 'last working day', 'lwd',
-                'when are you available', 'serving notice period', 'np'
+                'serving notice period', 'np'
             ],
             'answer': 'Serving Notice Period',
             'category': 'notice'
@@ -102,6 +102,16 @@ class SemanticQuestionMatcher:
             'answer': 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Noida',
             'category': 'location'
         },
+        'interview_availability': {
+            'keywords': [
+                'available for interview', 'virtual interview', 'f2f interview',
+                'face to face interview', 'telephonic interview', 'video interview',
+                'when are you available for', 'interview availability',
+                'available for face to face', 'walkin drive', 'walk-in drive'
+            ],
+            'answer': 'Yes, available any day',
+            'category': 'availability'
+        },
         'company_current': {
             'keywords': [
                 'current company', 'present employer', 'working at',
@@ -142,9 +152,9 @@ class SemanticQuestionMatcher:
             'desired salary', 'salary you want', 'expected compensation'
         ],
         'notice': [
-            'notice period', 'when can you join', 'availability',
+            'notice period', 'when can you join',
             'how soon can you join', 'serving notice period',
-            'notice period in days', 'when are you available', 'joining time'
+            'notice period in days', 'joining time'
         ],
         'work_mode': [
             'work mode', 'remote or office', 'preferred working style',

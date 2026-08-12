@@ -15198,6 +15198,33 @@
         "text": "Not Applicable"
       },
       "priority": 10
+    },
+    "solo_developer_comfort": {
+      "patterns": [
+        "only developer working directly with a non-technical founder",
+        "only developer working directly with a non technical founder",
+        "what makes you comfortable with that setup",
+        "have you worked in a similar situation",
+        "only developer on the team",
+        "sole developer",
+        "working as the only developer",
+        "working with a non-technical founder",
+        "working with a non technical founder",
+        "solo developer role",
+        "independent developer role",
+        "comfortable being the only developer",
+        "comfortable working as the sole developer",
+        "comfortable working independently without a technical team"
+      ],
+      "category": "experience",
+      "default": "Yes, I am very comfortable working as the only developer alongside a non-technical founder. I have strong communication skills that allow me to translate technical concepts into business terms and vice versa. I take ownership of the entire development lifecycle from architecture to deployment, and I proactively keep stakeholders informed about progress, trade-offs, and timelines. I have experience working independently and making autonomous technical decisions while staying aligned with business goals.",
+      "input_type_defaults": {
+        "text": "Yes, I am very comfortable working as the only developer alongside a non-technical founder. I have strong communication skills that allow me to translate technical concepts into business terms and vice versa. I take ownership of the entire development lifecycle from architecture to deployment, and I proactively keep stakeholders informed about progress, trade-offs, and timelines. I have experience working independently and making autonomous technical decisions while staying aligned with business goals.",
+        "textarea": "Yes, I am very comfortable working as the only developer alongside a non-technical founder. I have strong communication skills that allow me to translate technical concepts into business terms and vice versa. I take ownership of the entire development lifecycle from architecture to deployment, and I proactively keep stakeholders informed about progress, trade-offs, and timelines. I have experience working independently and making autonomous technical decisions while staying aligned with business goals.",
+        "radio": "Yes",
+        "select": "Yes"
+      },
+      "priority": 8
     }
   },
   "categories": {

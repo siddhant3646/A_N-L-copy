@@ -8807,6 +8807,29 @@ class SentinelAgent:
                                         optLower.includes(answerLower) ||
                                         answerLower === 'yes' && (optLower === 'yes' || optLower.startsWith('yes'))
                                     );
+                                    // Numeric range matching for options like "0-1", "1-2", "2-3", "3+"
+                                    if (!shouldCheck) {
+                                        const ansNumMatch = groupAnswer.match(/(\d+(?:\.\d+)?)/);
+                                        if (ansNumMatch) {
+                                            const ansNum = parseFloat(ansNumMatch[1]);
+                                            // "X+" pattern (e.g., "3+" matches answer 4)
+                                            const plusMatch = optLower.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                            if (plusMatch && ansNum >= parseFloat(plusMatch[1])) {
+                                                shouldCheck = true;
+                                            }
+                                            // "X-Y" range pattern (e.g., "2-3" matches answer 2.5)
+                                            if (!shouldCheck) {
+                                                const rangeMatch = optLower.match(/(\d+(?:\.\d+)?)\s*[-\u2013]\s*(\d+(?:\.\d+)?)/);
+                                                if (rangeMatch) {
+                                                    const rMin = parseFloat(rangeMatch[1]);
+                                                    const rMax = parseFloat(rangeMatch[2]);
+                                                    if (ansNum >= rMin && ansNum < rMax) {
+                                                        shouldCheck = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 if (shouldCheck) {

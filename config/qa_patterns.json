@@ -15138,6 +15138,8 @@
     },
     "linkedin_microsoft_affiliation": {
       "patterns": [
+        "do you currently or have you previously worked at linkedin or microsoft in any capacity select all that apply",
+        "do you currently or have you previously worked at linkedin or microsoft in any capacity",
         "do you currently or have you previously worked at linkedin or microsoft",
         "worked at linkedin or microsoft",
         "currently or previously worked at linkedin",
@@ -15157,7 +15159,6 @@
       ],
       "category": "self_identification",
       "default": "Not Applicable",
-      "requires_exact_match": true,
       "input_type_defaults": {
         "radio": "Not Applicable",
         "checkbox": "Not Applicable",
@@ -15168,6 +15169,7 @@
     },
     "linkedin_microsoft_employment_type": {
       "patterns": [
+        "if you currently or previously worked at linkedin or microsoft please select the company and employment type select all that apply",
         "if you currently or previously worked at linkedin or microsoft please select the company and employment type",
         "select the company and employment type",
         "linkedin or microsoft company and employment type",
@@ -15184,23 +15186,11 @@
         "type of employment at microsoft",
         "linkedin employee type",
         "microsoft employee type",
-        "linkedin contingent worker",
-        "microsoft full time employee",
-        "microsoft fixed term contractor",
-        "microsoft agency temp",
-        "microsoft business guest",
-        "microsoft vendor contractor outsourced",
-        "microsoft intern",
-        "microsoft joint venture",
-        "linkedin intern employment",
-        "linkedin fixed term contract employee",
-        "linkedin employee",
         "company and employment type linkedin or microsoft",
         "company and employment type linkedin microsoft"
       ],
       "category": "self_identification",
       "default": "Not Applicable",
-      "requires_exact_match": true,
       "input_type_defaults": {
         "radio": "Not Applicable",
         "checkbox": "Not Applicable",

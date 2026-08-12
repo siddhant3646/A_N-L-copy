@@ -8785,6 +8785,7 @@ class SentinelAgent:
 
                             const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
                             let groupAllLabelsEmpty = true; // track if all option labels are undetectable
+                            let anyCheckedInGroup = false; // track if any checkbox was checked in this group
                             for (const cb of groupCbs) {
                                 handledCheckboxes.add(cb);
                                 if (!isVisible(cb) || cb.checked) continue;
@@ -8811,6 +8812,7 @@ class SentinelAgent:
                                 if (shouldCheck) {
                                     console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
                                     clickInput(cb);
+                                    anyCheckedInGroup = true;
                                     formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox' });
                                 } else {
                                     console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
@@ -8818,16 +8820,24 @@ class SentinelAgent:
                             }
 
                             // ===== NOT-APPLICABLE FALLBACK =====
-                            // If all option labels were undetectable (LinkedIn obfuscated DOM for
-                            // affiliation/employment-type fieldsets) AND no answer was resolved,
-                            // click the FIRST checkbox. On LinkedIn these fieldsets always list
-                            // "Not Applicable" first, so this safely unblocks the form.
-                            if (groupAllLabelsEmpty && !groupAnswer) {
-                                const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
-                                if (firstUnchecked) {
-                                    console.log('NOT-APPLICABLE FALLBACK: all labels empty + no answer → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
-                                    clickInput(firstUnchecked);
-                                    formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox' });
+                            // Click the FIRST checkbox when:
+                            //   1. All option labels were undetectable (LinkedIn obfuscated DOM) AND no
+                            //      answer was resolved, OR
+                            //   2. No checkbox was checked AND the resolved answer is "Not Applicable"
+                            //      (e.g., labels detectable but none matched "Not Applicable", or labels
+                            //      undetectable with answer resolved to "Not Applicable").
+                            // On LinkedIn these fieldsets always list "Not Applicable" first, so this
+                            // safely unblocks the form.
+                            if (!anyCheckedInGroup) {
+                                const isNotApplicable = groupAnswer && groupAnswer.toLowerCase() === 'not applicable';
+                                const noAnswer = !groupAnswer;
+                                if ((groupAllLabelsEmpty && noAnswer) || isNotApplicable) {
+                                    const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
+                                    if (firstUnchecked) {
+                                        console.log('NOT-APPLICABLE FALLBACK: no checkbox matched → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
+                                        clickInput(firstUnchecked);
+                                        formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox' });
+                                    }
                                 }
                             }
                         }

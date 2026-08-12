@@ -7178,10 +7178,24 @@ class SentinelAgent:
                             
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
-                            
+
+                            // GUARD: LinkedIn/Microsoft last-employment-date field must stay blank.
+                            // We never worked there, so any fuzzyMatch answer ('No', 'Yes', etc.)
+                            // would cause a date validation error and block the form.
+                            if (answer && lowerLabel.includes('last date of employment')) {
+                                console.log('LEAVE BLANK: last-employment-date field — discarding answer:', answer);
+                                answer = null;
+                            }
+                            // Also skip any text input whose placeholder signals a date format
+                            if (answer && (input.placeholder || '').toUpperCase().includes('MM/DD/YYYY')) {
+                                console.log('LEAVE BLANK: MM/DD/YYYY date field — discarding answer:', answer);
+                                answer = null;
+                            }
+
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15')
                             if (answer && (answer === 'Serving Notice Period' || /notice|np|lwd|days/i.test(labelText))) {
+
                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
                                     const match = answer.match(/(\d+)/);
@@ -8638,6 +8652,24 @@ class SentinelAgent:
                             if (legend && legend.innerText.trim().length > 3) return legend.innerText.trim();
                             const heading = fieldset.querySelector('[class*="label"], [class*="header"], [class*="question"], .artdeco-form-field__label, [data-test-form-element-label]');
                             if (heading && heading.innerText.trim().length > 3) return heading.innerText.trim();
+                            // EXTENDED: LinkedIn places question text OUTSIDE the fieldset as a preceding sibling.
+                            // Walk up to 3 ancestor levels looking at previous siblings.
+                            let ancestor = fieldset;
+                            for (let lvl = 0; lvl < 3; lvl++) {
+                                let sib = ancestor.previousElementSibling;
+                                while (sib) {
+                                    const t = (sib.innerText || '').trim();
+                                    if (t.length > 10 && t.length < 400 &&
+                                        !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
+                                        !t.toLowerCase().includes('this field is required')) {
+                                        console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
+                                        return t.replace(/\*$/, '').replace(/\* This field is required/gi, '').trim();
+                                    }
+                                    sib = sib.previousElementSibling;
+                                }
+                                if (!ancestor.parentElement) break;
+                                ancestor = ancestor.parentElement;
+                            }
                             return '';
                         }
 
@@ -8752,12 +8784,14 @@ class SentinelAgent:
                             console.log('Checkbox group answer:', groupAnswer);
 
                             const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
+                            let groupAllLabelsEmpty = true; // track if all option labels are undetectable
                             for (const cb of groupCbs) {
                                 handledCheckboxes.add(cb);
                                 if (!isVisible(cb) || cb.checked) continue;
 
                                 const optLabel = getOptionLabel(cb);
                                 console.log('Checkbox option label:', optLabel || '(none)');
+                                if (optLabel) groupAllLabelsEmpty = false;
 
                                 let shouldCheck = false;
 
@@ -8780,6 +8814,20 @@ class SentinelAgent:
                                     formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox' });
                                 } else {
                                     console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
+                                }
+                            }
+
+                            // ===== NOT-APPLICABLE FALLBACK =====
+                            // If all option labels were undetectable (LinkedIn obfuscated DOM for
+                            // affiliation/employment-type fieldsets) AND no answer was resolved,
+                            // click the FIRST checkbox. On LinkedIn these fieldsets always list
+                            // "Not Applicable" first, so this safely unblocks the form.
+                            if (groupAllLabelsEmpty && !groupAnswer) {
+                                const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
+                                if (firstUnchecked) {
+                                    console.log('NOT-APPLICABLE FALLBACK: all labels empty + no answer → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
+                                    clickInput(firstUnchecked);
+                                    formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox' });
                                 }
                             }
                         }

@@ -214,6 +214,42 @@
             default: '20 - 30 LPA',
             current_lpa: 23,
             expected_lpa: 30
+        },
+        // --- LinkedIn/Microsoft employment disclosure questions ---
+        linkedin_email_disclosure: {
+            // "Please provide your LinkedIn or Microsoft full email address, if applicable."
+            patterns: ['provide your linkedin or microsoft full email address', 'linkedin or microsoft full email address', 'user@linkedin.com or user@microsoft.com'],
+            default: 'N/A'
+        },
+        linkedin_last_employment_date: {
+            // "If you have previously worked at LinkedIn or Microsoft, please provide your approximate last date of employment. (MM/DD/YYYY)"
+            patterns: [
+                'previously worked at linkedin or microsoft, please provide your approximate last date',
+                'approximate last date of employment',
+                'last date of employment at linkedin',
+                'last date of employment at microsoft',
+                'last date of employment',
+                'previously worked at linkedin or microsoft'
+            ],
+            default: ''
+        },
+        linkedin_msft_affiliation_checkbox: {
+            // "Do you currently or have you previously worked at LinkedIn or Microsoft in any capacity?"
+            patterns: [
+                'currently or have you previously worked at linkedin or microsoft',
+                'worked at linkedin or microsoft in any capacity',
+                'previously worked at linkedin or microsoft'
+            ],
+            default: 'Not Applicable'
+        },
+        linkedin_msft_employment_type_checkbox: {
+            // "If you currently or previously worked at LinkedIn or Microsoft, please select company and employment type."
+            patterns: [
+                'previously worked at linkedin or microsoft, please select the company and employment type',
+                'select the company and employment type',
+                'company and employment type'
+            ],
+            default: 'Not Applicable'
         }
     };
     
@@ -326,6 +362,22 @@
             return data.default;
         }
         
+        // LinkedIn/Microsoft email disclosure: return N/A (not a real email)
+        if (category === 'linkedin_email_disclosure') {
+            return 'N/A';
+        }
+
+        // LinkedIn/Microsoft last-employment-date: should stay blank (never worked there)
+        // Return a sentinel so the caller knows to skip/clear the field
+        if (category === 'linkedin_last_employment_date') {
+            return '__LEAVE_BLANK__';
+        }
+
+        // LinkedIn/Microsoft affiliation checkbox groups: "Not Applicable"
+        if (category === 'linkedin_msft_affiliation_checkbox' || category === 'linkedin_msft_employment_type_checkbox') {
+            return data.default; // 'Not Applicable'
+        }
+
         // For education documents question, return Yes for dropdown/radio
         if (category === 'education_degree' && (fieldType === 'select' || fieldType === 'dropdown' || fieldType === 'radio')) {
             return 'Yes';
@@ -1289,6 +1341,16 @@
                     console.log('Pattern matched! Filling with:', fillValue);
                 }
                 
+                // Handle the LEAVE_BLANK sentinel: clear the field and skip
+                if (fillValue === '__LEAVE_BLANK__') {
+                    console.log('LEAVE_BLANK: Clearing field (not applicable):', labelText.substring(0, 60));
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    nativeInputValueSetter.call(input, '');
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    fillValue = null; // skip further processing
+                }
+                
                 // If it's a numeric input, extract just the number from the answer
                 if (fillValue && isNumericInput) {
                     const numericMatch = fillValue.match(/(\d+\.?\d*)/);
@@ -1441,11 +1503,37 @@
             console.log('Desired checkbox labels:', desiredLabels);
 
             const groupCheckboxes = fieldset.querySelectorAll('input[type="checkbox"]');
+            let groupLabelsEmpty = true; // track if ALL labels are empty (LinkedIn custom rendering)
             for (const cb of groupCheckboxes) {
                 handledCheckboxes.add(cb);
                 if (cb.checked) continue;
 
-                const cbLabel = (getLabelForInput(cb) || cb.getAttribute('aria-label') || cb.value || '').trim().toLowerCase();
+                // Enhanced label detection for LinkedIn's custom checkbox rendering:
+                // LinkedIn often renders checkboxes as <input> + adjacent <span> (not a <label for>)
+                let cbLabel = (getLabelForInput(cb) || cb.getAttribute('aria-label') || '').trim();
+                if (!cbLabel) {
+                    // Try next sibling span/label
+                    let sib = cb.nextElementSibling;
+                    while (sib) {
+                        const t = (sib.innerText || sib.textContent || '').trim();
+                        if (t && t.length > 1) { cbLabel = t; break; }
+                        sib = sib.nextElementSibling;
+                    }
+                }
+                if (!cbLabel) {
+                    // Try parent li/div innerText minus child inputs
+                    const li = cb.closest('li, .checkbox-option, [class*="checkbox"]');
+                    if (li) {
+                        const clone = li.cloneNode(true);
+                        clone.querySelectorAll('input').forEach(el => el.remove());
+                        cbLabel = (clone.innerText || clone.textContent || '').trim();
+                    }
+                }
+                if (!cbLabel) cbLabel = cb.value || '';
+                cbLabel = cbLabel.toLowerCase();
+                console.log('Checkbox option label (enhanced):', cbLabel || '(none)');
+                if (cbLabel) groupLabelsEmpty = false;
+
                 const shouldCheck = desiredLabels.some(desired =>
                     cbLabel.includes(desired) || desired.includes(cbLabel)
                 );
@@ -1456,6 +1544,18 @@
                     filledAny = true;
                 } else {
                     console.log('Skipping checkbox option:', cbLabel, '(not in desired:', desiredLabels.join(', '), ')');
+                }
+            }
+
+            // FALLBACK: If all labels were undetectable (LinkedIn obfuscated DOM) and the
+            // answer is "Not Applicable", click the FIRST checkbox (which is always
+            // "Not Applicable" in LinkedIn/Microsoft affiliation fieldsets).
+            if (groupLabelsEmpty && answer && answer.toLowerCase().includes('not applicable')) {
+                const firstCb = fieldset.querySelector('input[type="checkbox"]');
+                if (firstCb && !firstCb.checked) {
+                    firstCb.click();
+                    console.log('Fallback: Clicked first checkbox (Not Applicable) for group:', groupQuestion.substring(0, 60));
+                    filledAny = true;
                 }
             }
         }
@@ -1544,6 +1644,28 @@
             if (fallback && fallback.length > 3) {
                 return fallback.replace(/\* This field is required/gi, '').trim();
             }
+
+            // EXTENDED FALLBACK: LinkedIn often renders the question label OUTSIDE the
+            // fieldset as a preceding sibling or parent-sibling element.
+            // Walk up to 3 ancestor levels and look at previous siblings for question text.
+            let ancestor = group;
+            for (let lvl = 0; lvl < 3; lvl++) {
+                let sib = ancestor.previousElementSibling;
+                while (sib) {
+                    const sibText = (sib.innerText || '').trim();
+                    // Must look like a question (>10 chars, no checkbox/radio inputs inside)
+                    if (sibText.length > 10 && sibText.length < 400 &&
+                        !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
+                        !sibText.toLowerCase().includes('this field is required')) {
+                        console.log('extractQuestionTextFromGroup: found label in prev-sibling at level', lvl, ':', sibText.substring(0, 80));
+                        return sibText.replace(/\*$/, '').replace(/\* This field is required/gi, '').trim();
+                    }
+                    sib = sib.previousElementSibling;
+                }
+                if (!ancestor.parentElement) break;
+                ancestor = ancestor.parentElement;
+            }
+
             fallback = group.innerText.substring(0, 200);
             return fallback.replace(/\* This field is required/gi, '').replace(/\s*(Yes|No)\s*$/i, '').trim();
         }

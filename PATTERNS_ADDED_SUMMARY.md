@@ -1,7 +1,7 @@
 # QA Patterns Enhancement Summary
 
 ## Overview
-Successfully added **281 new patterns** to the QA patterns system, expanding from 473 to **746 total patterns**.
+Successfully added **283 new patterns** to the QA patterns system, expanding from 473 to **774 total patterns**.
 
 ## New Patterns Added by Category
 
@@ -239,7 +239,44 @@ Tested pattern matching with sample questions:
 
 ## Files Modified
 
-- `config/qa_patterns.json` - Added 281 new patterns
+- `config/qa_patterns.json` - Added 283 new patterns (281 original + 2 LinkedIn/Microsoft)
+
+---
+
+## 13. LinkedIn/Microsoft Affiliation Disclosure (2 patterns)
+**Category: self_identification | Priority: 10**
+
+These patterns handle the compliance disclosure questions asked by LinkedIn and Microsoft
+during job applications, where candidates must declare prior employment history with either company.
+
+### Pattern: `linkedin_microsoft_affiliation`
+Triggers on questions like:
+- *"Do you currently or have you previously worked at LinkedIn or Microsoft in any capacity?"*
+- Variants: "worked at linkedin or microsoft", "linkedin microsoft affiliation", etc.
+
+**Answer**: `Not Applicable` (for all input types: radio, checkbox, select, text)
+
+### Pattern: `linkedin_microsoft_employment_type`
+Triggers on questions like:
+- *"If you currently or previously worked at LinkedIn or Microsoft, please select the company and employment type."*
+- Specific employee type variants: "Microsoft - Full Time Employee", "LinkedIn - Intern", etc.
+
+**Answer**: `Not Applicable` (for all input types: radio, checkbox, select, text)
+
+**Covered employment types (via pattern strings):**
+| Company | Employment Types |
+|---------|----------------|
+| LinkedIn | Employee, Intern, Fixed Term Contract Employee, Contingent Worker |
+| Microsoft | Full Time Employee, Fixed Term Contractor, Agency Temp, Business Guest, Vendor/Contractor & Outsourced, Intern, Joint Venture |
+
+### Verification Results
+- ✅ "Do you currently or have you previously worked at LinkedIn or Microsoft?" → `Not Applicable` (0.98)
+- ✅ "If you currently or previously worked at LinkedIn or Microsoft, please select the company and employment type." → `Not Applicable` (0.98)
+- ✅ "Worked at LinkedIn or Microsoft" → `Not Applicable` (0.98)
+- ✅ "LinkedIn or Microsoft employment type" → `Not Applicable` (0.98)
+- ✅ "LinkedIn Microsoft affiliation" → `Not Applicable` (0.98)
+
+---
 
 ## Notes
 
@@ -250,3 +287,4 @@ Tested pattern matching with sample questions:
 5. All employment patterns indicate full-time only
 6. All compliance patterns indicate no legal restrictions
 7. Platform-specific formatting is handled automatically by the system
+8. LinkedIn/Microsoft affiliation patterns always return "Not Applicable" since applicant has no prior MSFT/LI employment

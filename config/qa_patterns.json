@@ -15135,6 +15135,79 @@
         "text": "Yes",
         "checkbox": "Yes"
       }
+    },
+    "linkedin_microsoft_affiliation": {
+      "patterns": [
+        "do you currently or have you previously worked at linkedin or microsoft",
+        "worked at linkedin or microsoft",
+        "currently or previously worked at linkedin",
+        "currently or previously worked at microsoft",
+        "linkedin or microsoft employment history",
+        "have you worked at linkedin",
+        "have you worked at microsoft",
+        "do you work at linkedin",
+        "do you work at microsoft",
+        "previous employment at linkedin",
+        "previous employment at microsoft",
+        "linkedin microsoft affiliation",
+        "employed at linkedin",
+        "employed at microsoft",
+        "linkedin microsoft in any capacity",
+        "worked at linkedin or microsoft in any capacity"
+      ],
+      "category": "self_identification",
+      "default": "Not Applicable",
+      "requires_exact_match": true,
+      "input_type_defaults": {
+        "radio": "Not Applicable",
+        "checkbox": "Not Applicable",
+        "select": "Not Applicable",
+        "text": "Not Applicable"
+      },
+      "priority": 10
+    },
+    "linkedin_microsoft_employment_type": {
+      "patterns": [
+        "if you currently or previously worked at linkedin or microsoft please select the company and employment type",
+        "select the company and employment type",
+        "linkedin or microsoft company and employment type",
+        "linkedin or microsoft employment type",
+        "linkedin microsoft employment type",
+        "employment type at linkedin or microsoft",
+        "employment type at linkedin",
+        "employment type at microsoft",
+        "which role did you hold at linkedin or microsoft",
+        "which role did you hold at linkedin",
+        "which role did you hold at microsoft",
+        "type of employment at linkedin or microsoft",
+        "type of employment at linkedin",
+        "type of employment at microsoft",
+        "linkedin employee type",
+        "microsoft employee type",
+        "linkedin contingent worker",
+        "microsoft full time employee",
+        "microsoft fixed term contractor",
+        "microsoft agency temp",
+        "microsoft business guest",
+        "microsoft vendor contractor outsourced",
+        "microsoft intern",
+        "microsoft joint venture",
+        "linkedin intern employment",
+        "linkedin fixed term contract employee",
+        "linkedin employee",
+        "company and employment type linkedin or microsoft",
+        "company and employment type linkedin microsoft"
+      ],
+      "category": "self_identification",
+      "default": "Not Applicable",
+      "requires_exact_match": true,
+      "input_type_defaults": {
+        "radio": "Not Applicable",
+        "checkbox": "Not Applicable",
+        "select": "Not Applicable",
+        "text": "Not Applicable"
+      },
+      "priority": 10
     }
   },
   "categories": {

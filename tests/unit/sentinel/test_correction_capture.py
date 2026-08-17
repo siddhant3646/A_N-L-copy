@@ -26,7 +26,7 @@ class TestCorrectionCaptureInit:
         cc = CorrectionCapture(store)
         assert cc.learning_store == store
         assert cc.propagate_to_similar is True
-        assert cc.corrections == []
+        assert list(cc.corrections) == []
         assert cc.last_failed_field is None
 
     def test_init_no_propagation(self):

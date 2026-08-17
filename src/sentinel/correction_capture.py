@@ -8,6 +8,7 @@ Captures manual corrections via multiple methods:
 """
 
 import re
+from collections import deque
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
@@ -34,7 +35,8 @@ class CorrectionCapture:
     def __init__(self, learning_store, propagate_to_similar=True):
         self.learning_store = learning_store
         self.propagate_to_similar = propagate_to_similar
-        self.corrections: List[Correction] = []
+        # Bounded corrections list (deque drops oldest when full)
+        self.corrections = deque(maxlen=100)
         self.last_failed_field = None
         self.last_failed_value = None
     

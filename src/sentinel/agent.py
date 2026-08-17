@@ -30,6 +30,7 @@ from src.sentinel.rate_limiter import RateLimiter
 from src.sentinel.form_state_validator import FormStateValidator
 from src.sentinel.session_manager import SessionManager
 from src.patterns.enhanced_answer_validator import EnhancedAnswerValidator
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 
 # Patterns are now loaded from config/qa_patterns.json (single source of truth)
@@ -84,6 +85,7 @@ class SentinelAgent:
         self._linkedin_scroll_attempted = False  # Track if we tried scrolling for null cards
         self._task_context = NAUKRI_TASK_CONTEXT
         self._steps_since_cleanup = 0  # Track steps for memory cleanup
+        self._injected_contexts = set()  # Track which browser contexts have patterns injected
         self._logged_questions = set()  # Track already logged questions to avoid duplicates
         self._all_logged_questions = set()  # Track questions logged to all_questions.log
         self._last_result = ""  # Track last result for loop detection
@@ -188,6 +190,94 @@ class SentinelAgent:
         return {
             'answers': patterns_dict,
             'with_defaults': patterns_with_defaults
+        }
+    
+    async def _inject_patterns_once(self) -> None:
+        """
+        Inject QA patterns into the browser context ONCE via add_init_script.
+        
+        This is the primary memory optimization: instead of re-serializing and
+        re-shipping ~12.3 MB of JSON to Chrome on every step (which caused
+        >500 MB/site memory usage), patterns are installed as window globals
+        on the context. All future pages in this context (including after hard
+        resets) automatically inherit them via the init script.
+        
+        Idempotent per context: tracks injected context IDs to avoid duplicate
+        init scripts. Safe across agent reuse (P1a) since each new context
+        gets its own injection.
+        """
+        if self._page is None:
+            return
+        context = self._page.context
+        ctx_id = id(context)
+        if ctx_id in self._injected_contexts:
+            return  # Already injected for this context
+        
+        patterns_for_js = self._get_patterns_for_js()
+        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
+        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
+        synonyms_json = json.dumps(SYNONYM_MAP)
+        stopwords_json = json.dumps(list(STOP_WORDS))
+        exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
+        exact_match_keys_json = json.dumps(exact_match_keys)
+        
+        init_script = (
+            f"window.__SENTINEL_PATTERNS__ = {patterns_json};\n"
+            f"window.__SENTINEL_PATTERNS_WITH_DEFAULTS__ = {patterns_with_defaults_json};\n"
+            f"window.__SENTINEL_SYNONYMS__ = {synonyms_json};\n"
+            f"window.__SENTINEL_STOPWORDS__ = {stopwords_json};\n"
+            f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
+        )
+        
+        # add_init_script applies to all current AND future pages in this context.
+        await context.add_init_script(init_script)
+        # Evaluate immediately so the CURRENT page (created before add_init_script) also has the globals.
+        await self._page.evaluate(init_script)
+        self._injected_contexts.add(ctx_id)
+    
+    def reset_per_task_state(self):
+        """Reset all per-task mutable state for agent reuse across tasks (P1a).
+        
+        Preserves: pattern matchers, fingerprint caches, learned patterns,
+        success tracker, self-healing state — these benefit from accumulating
+        knowledge across tasks.
+        
+        Resets: page/browser refs, step counters, loop-detection counters,
+        rate-limit flags, metrics, and injected-context tracking.
+        """
+        self._page = None
+        self.browser = None
+        self._console_listening = False
+        self._injected_contexts = set()
+        self._steps_since_cleanup = 0
+        self._logged_questions = set()
+        self._all_logged_questions = set()
+        self._last_result = ""
+        self._same_result_count = 0
+        self._instahyre_no_action_count = 0
+        self._linkedin_stuck_count = 0
+        self._linkedin_no_jobs_scroll_count = 0
+        self._naukri_no_progress_count = 0
+        self._naukri_last_batch_size = 0
+        self._linkedin_scroll_attempted = False
+        self._task_context = NAUKRI_TASK_CONTEXT
+        self._current_platform = "default"
+        self.linkedin_applications = 0
+        self.linkedin_rate_limit_until = None
+        self.naukri_rate_limit_until = None
+        self._error_detector = None
+        self._error_recovery = None
+        self.state = SentinelState()
+        self.metrics = {
+            'task_name': '',
+            'start_time': None,
+            'end_time': None,
+            'applications_submitted': 0,
+            'questions_answered': 0,
+            'errors_encountered': 0,
+            'login_prompts': 0,
+            'steps_taken': 0,
+            'success': False
         }
     
     def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
@@ -1481,22 +1571,15 @@ class SentinelAgent:
             return False
 
     async def _maybe_cleanup_memory(self):
-        """Periodic memory cleanup by refreshing page if needed."""
+        """Periodic memory cleanup. Hard page reset between tasks is handled
+        by browser.stop() in run.py. Within-task, just clear the console buffer
+        to prevent DevTools console from growing unbounded."""
         self._steps_since_cleanup += 1
         
         if self._steps_since_cleanup >= self.MEMORY_CLEANUP_INTERVAL:
-            print("   🧹 Memory cleanup: Refreshing page state...")
             try:
-                # Clear JS memory by running garbage collection hint
-                await self._page.evaluate("""() => {
-                    // Clear any stored data
-                    if (window.gc) window.gc();
-                    // Clear console
-                    console.clear();
-                    return 'CLEANUP_DONE';
-                }""")
+                await self._page.evaluate("console.clear()")
                 self._steps_since_cleanup = 0
-                print("   ✅ Memory cleanup complete")
             except Exception as e:
                 print(f"   ⚠️ Memory cleanup failed: {e}")
 
@@ -2265,8 +2348,52 @@ class SentinelAgent:
                     self._location_retrigger_count = retrigger_count
                     
                     if retrigger_count > 2:
+                        # Check if we've already tried fallback strategies for this location issue
+                        fallback_attempted = getattr(self, '_location_fallback_attempted', False)
+                        
+                        if fallback_attempted:
+                            # Fallback already tried and didn't work — break out and let stuck loop handler close modal
+                            print(f"⚠️ Location fallback already attempted (total retrigger: {retrigger_count}). Skipping this job...")
+                            # Reset counters for next job
+                            self._location_retrigger_count = 0
+                            self._location_fallback_attempted = False
+                            # Mark job as skipped
+                            try:
+                                await self._page.evaluate("""() => {
+                                    if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                    const urlParams = new URLSearchParams(window.location.search);
+                                    let currentJobId = urlParams.get('currentJobId');
+                                    if (!currentJobId) {
+                                        const activeCard = document.querySelector(
+                                            '.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                            document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                            document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                            document.querySelector('.active [data-job-id]');
+                                        if (activeCard) {
+                                            currentJobId = activeCard.getAttribute('data-job-id') ||
+                                                           activeCard.getAttribute('data-occludable-job-id');
+                                        }
+                                    }
+                                    if (currentJobId) {
+                                        window.__skippedJobIds.add(currentJobId);
+                                        console.log('Marked job as skipped (location fallback exhausted):', currentJobId);
+                                    }
+                                }""")
+                            except Exception as e:
+                                print(f"   ⚠️ Failed to mark job as skipped: {e}")
+                            # Close modal (will navigate away if close fails)
+                            closed = await self._close_linkedin_modal()
+                            if not closed:
+                                print("⚠️ Modal close failed — navigating to LinkedIn jobs search...")
+                                try:
+                                    await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                                    await asyncio.sleep(random.uniform(3, 5))
+                                except Exception as nav_e:
+                                    print(f"   ⚠️ Navigation fallback error: {nav_e}")
+                            continue
+                        
                         print(f"⚠️ Location dropdown not appearing after {retrigger_count} attempts. Trying fallback strategies...")
-                        self._location_retrigger_count = 0
+                        self._location_fallback_attempted = True
                         
                         # Strategy 1: Try clearing the location field entirely and see if that allows progress
                         print("   📝 Strategy 1: Clearing location field...")
@@ -2412,7 +2539,12 @@ class SentinelAgent:
                         }""")
                         
                         # Wait for potential dropdown to open
-                        await asyncio.sleep(0.4)
+                        # Use wait_for_selector to give the dropdown time to render (up to 4s)
+                        # instead of a fixed 0.4s sleep that was too short.
+                        try:
+                            await self._page.wait_for_selector('[role="option"]', timeout=4000, state='visible')
+                        except PlaywrightTimeoutError:
+                            pass  # No dropdown appeared, continue with fallback click logic
                         
                         # Step 2: Try to find and click dropdown option
                         click_result = await self._page.evaluate("""() => {
@@ -2492,6 +2624,7 @@ class SentinelAgent:
                         if click_result == 'CLICKED':
                             print("   ✅ Dropdown option clicked")
                             self._location_retrigger_count = 0
+                            self._location_fallback_attempted = False
                             await asyncio.sleep(1)
                         else:
                             # Fallback: Try using Playwright's locator to find and click the option
@@ -2503,6 +2636,7 @@ class SentinelAgent:
                                     await option_locator.first.click(timeout=2000)
                                     print("   ✅ Clicked option via Playwright locator")
                                     self._location_retrigger_count = 0
+                                    self._location_fallback_attempted = False
                                     await asyncio.sleep(1)
                                 else:
                                     # Try clicking any visible option
@@ -2511,6 +2645,7 @@ class SentinelAgent:
                                         await any_option.first.click(timeout=2000)
                                         print("   ✅ Clicked first option via Playwright")
                                         self._location_retrigger_count = 0
+                                        self._location_fallback_attempted = False
                                         await asyncio.sleep(1)
                                     else:
                                         print("   ⏳ No options found via Playwright either, will retry...")
@@ -2737,6 +2872,9 @@ class SentinelAgent:
                     transitioning_count = 0   # Track consecutive modal transitioning states
                     max_transitioning_attempts = 5  # Max waits for modal to transition
                     easy_apply_restart_count = 0  # Track Easy Apply re-clicks inside autopilot (modal restarted)
+                    # Reset location retry counters for each new job
+                    self._location_retrigger_count = 0
+                    self._location_fallback_attempted = False
                     
                     while True:
                         autopilot_iteration += 1
@@ -2850,8 +2988,39 @@ class SentinelAgent:
                             same_result_count += 1
                             if same_result_count >= 5:
                                 print("⚠️ Stuck in loop, skipping this job...")
+                                # Mark the current job as skipped so it's not re-selected
+                                try:
+                                    await self._page.evaluate("""() => {
+                                        if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                        const urlParams = new URLSearchParams(window.location.search);
+                                        let currentJobId = urlParams.get('currentJobId');
+                                        if (!currentJobId) {
+                                            const activeCard = document.querySelector(
+                                                '.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                                document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                                document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                                document.querySelector('.active [data-job-id]');
+                                            if (activeCard) {
+                                                currentJobId = activeCard.getAttribute('data-job-id') ||
+                                                               activeCard.getAttribute('data-occludable-job-id');
+                                            }
+                                        }
+                                        if (currentJobId) {
+                                            window.__skippedJobIds.add(currentJobId);
+                                            console.log('Marked job as skipped (stuck in loop):', currentJobId);
+                                        }
+                                    }""")
+                                except Exception as e:
+                                    print(f"   ⚠️ Failed to mark job as skipped: {e}")
                                 # Two-step close: X button then Discard confirmation
-                                await self._close_linkedin_modal()
+                                closed = await self._close_linkedin_modal()
+                                if not closed:
+                                    print("⚠️ Modal close failed — navigating to LinkedIn jobs search to escape...")
+                                    try:
+                                        await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                                        await asyncio.sleep(random.uniform(3, 5))
+                                    except Exception as nav_e:
+                                        print(f"   ⚠️ Navigation fallback error: {nav_e}")
                                 break
                         else:
                             same_result_count = 0
@@ -4124,11 +4293,10 @@ class SentinelAgent:
 
     async def _handle_chatbot_loop(self) -> "bool | str":
         """Handle Naukri chatbot questionnaire. Returns True if done, 'CONTINUE' for MCC popup, False on failure."""
-        # Use merged patterns from JSON config + legacy dict
-        patterns_for_js = self._get_patterns_for_js()
-        # Extract the flat answers for backward compatibility + with_defaults for input type support
-        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
-        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
+        # Inject patterns ONCE per context via add_init_script (window globals).
+        # Previously this re-interpolated ~12.3 MB of JSON into the f-string on
+        # each of 30 iterations, causing ~370 MB of string churn per chatbot loop.
+        await self._inject_patterns_once()
         max_iterations = 30
         previous_questions = []
         same_question_count = 0
@@ -4146,10 +4314,10 @@ class SentinelAgent:
                     return snackbar_result
             
             result = await self._page.evaluate(f"""async () => {{
-                // Flat answers for all logic
-                const KNOWN_PATTERNS = {patterns_json};
+                // Flat answers for all logic (from window globals set by add_init_script)
+                const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__;
                 // Full objects with input_type_defaults per pattern
-                const KNOWN_PATTERNS_WITH_DEFAULTS = {patterns_with_defaults_json};
+                const KNOWN_PATTERNS_WITH_DEFAULTS = window.__SENTINEL_PATTERNS_WITH_DEFAULTS__;
                 
                 // Helper: detect the input type present on the page
                 const detectInputType = (chatLayer) => {{
@@ -5771,27 +5939,22 @@ class SentinelAgent:
 
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
-        # Serialize patterns, synonyms, and stop words for JS injection
-        # Use merged patterns from JSON config + legacy dict
-        patterns_for_js = self._get_patterns_for_js()
-        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
-        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
-        synonyms_json = json.dumps(SYNONYM_MAP)
-        stopwords_json = json.dumps(list(STOP_WORDS))
-        exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
-        exact_match_keys_json = json.dumps(exact_match_keys)
+        # Inject patterns ONCE per context via add_init_script (window globals).
+        # Previously this re-serialized ~12.3 MB of JSON on every step, causing
+        # >500 MB/site memory usage. Now patterns are window globals.
+        await self._inject_patterns_once()
         
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
             # NOTE: This function must NOT use async/await - Playwright's evaluate handles timing via Python asyncio
             # Using a function expression (wrapped in parens) - function statements require a name in JS
             js_code = """(function() {
-                // 1. INJECTED KNOWLEDGE
-                const KNOWN_PATTERNS = __PATTERNS__;
-                const KNOWN_PATTERNS_WITH_DEFAULTS = __PATTERNS_WITH_DEFAULTS__;
-                const SYNONYMS = __SYNONYMS__;
-                const STOP_WORDS_SET = new Set(__STOPWORDS__);
-                const EXACT_MATCH_KEYS = new Set(__EXACT_MATCH_KEYS__);
+                // 1. INJECTED KNOWLEDGE (from window globals set by add_init_script)
+                const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__;
+                const KNOWN_PATTERNS_WITH_DEFAULTS = window.__SENTINEL_PATTERNS_WITH_DEFAULTS__;
+                const SYNONYMS = window.__SENTINEL_SYNONYMS__;
+                const STOP_WORDS_SET = new Set(window.__SENTINEL_STOPWORDS__);
+                const EXACT_MATCH_KEYS = new Set(window.__SENTINEL_EXACT_MATCH_KEYS__);
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {
@@ -11632,7 +11795,7 @@ class SentinelAgent:
                 }
 
                 return 'NO_ACTION';
-            })""".replace("__PATTERNS__", patterns_json).replace("__PATTERNS_WITH_DEFAULTS__", patterns_with_defaults_json).replace("__SYNONYMS__", synonyms_json).replace("__STOPWORDS__", stopwords_json).replace("__EXACT_MATCH_KEYS__", exact_match_keys_json)
+            })"""
 
             
             # Playwright automatically invokes the function expression

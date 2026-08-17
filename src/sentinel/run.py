@@ -144,13 +144,17 @@ class Browser:
         self.context = None
         self.browser = None
 
-    # Resource types to block for noise reduction
+    # Resource types to block for noise reduction.
+    # NOTE: 'stylesheet' is intentionally NOT blocked — LinkedIn/Naukri use CSS
+    # to toggle visibility of dropdowns/modals/hidden inputs; blocking CSS breaks
+    # form UI. 'other' is NOT blocked — it can catch XHR/fetch form submissions.
     BLOCKED_RESOURCE_TYPES = [
-        'image', 'stylesheet', 'font', 'media', 'other'
+        'image', 'font', 'media'
     ]
     
-    # URL patterns to block (tracking, analytics, ads)
+    # URL patterns to block (tracking, analytics, ads, heavy CDN media)
     BLOCKED_URL_PATTERNS = [
+        # Ads, Trackers, Telemetry
         'ads.linkedin.com',
         'analytics',
         'tracking',
@@ -164,6 +168,9 @@ class Browser:
         'mixpanel',
         'amplitude',
         'sentry.io',
+        'tealium',
+        'tiqcdn.com',
+        # Media CDNs (Naukri & LinkedIn)
         '*.gif',
         '*.png',
         '*.jpg',
@@ -173,7 +180,6 @@ class Browser:
         '*.woff2',
         '*.ttf',
         '*.eot',
-        '*.css',
     ]
     
     async def start(self):
@@ -181,8 +187,6 @@ class Browser:
         import glob
 
         # Reuse ONE shared temp wrapper per process run (created lazily).
-        # This replaces the old per-call tempfile.mkdtemp() that leaked a new
-        # sentinel_<rand> dir on every Browser.start().
         _ensure_tmp_root()
 
         self.playwright = await get_shared_playwright()
@@ -199,11 +203,19 @@ class Browser:
             '--disable-gpu',
             '--disable-extensions',
             '--no-first-run',
-            # Prevent Chrome from downloading its 4 GB on-device AI model
-            # (OptGuideOnDeviceModel) into the temp profile on every run.
-            # This model is useless for automation and was the primary cause
-            # of ~8 GB/run storage leak (4 GB download + 4 GB unpacked model).
-            '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide',
+            # Prevent Chrome from downloading on-device AI/ML models (Gemini Nano, Prompt API, OptGuide)
+            '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide,OptimizationGuideOnDeviceModel,PromptAPIForGeminiNano,LanguageDetectionModelDownloading,OptimizationHints,OptimizationHintsFetching,OptimizationTargetPrediction,Translate,MediaRouter,DialMediaRouteProvider,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,PrivacySandboxSettings4',
+            # --- NETWORK DATA SAVERS ---
+            '--disable-background-networking',          # All background networking
+            '--disable-component-update',               # Chrome component downloads
+            '--disable-sync',                           # Google account sync
+            '--disable-default-apps',                   # Default app installs
+            '--no-default-browser-check',               # Default browser checks
+            '--disable-domain-reliability',             # Domain reliability beacons
+            '--disable-client-side-phishing-detection', # Phishing list updates
+            '--disable-component-extensions-with-background-pages',
+            '--metrics-recording-only',                 # Telemetry
+            '--no-pings',
         ]
         
         final_user_data_dir = self.user_data_dir
@@ -338,31 +350,108 @@ class Browser:
         if self.context and self.context.pages:
             return self.context.pages[0]
         return None
-        
+
     async def new_page(self):
         if self.context:
             page = await self.context.new_page()
-            # Apply resource blocking to reduce console noise
-            await self._setup_resource_blocking(page)
+            # Context-level route blocking (set in start()) covers all pages,
+            # so no per-page handler is needed here.
             return page
         return None
     
+    async def _setup_context_resource_blocking(self, context):
+        """Setup resource blocking across the entire browser context (all tabs).
+
+        This is the primary network saver: it aborts requests for images,
+        fonts, and media before they hit the network, and blocks known
+        tracking/analytics URLs. Attached at the context level so it covers
+        the persistent-context default page (which new_page() never sees)
+        as well as any pages opened later.
+
+        Also tracks request counts by resource type for diagnostics — call
+        print_route_stats() at task end to see what was blocked vs allowed.
+        """
+        # Per-task counters for diagnostics
+        self._route_stats = {
+            'blocked_type': {},   # by resource_type (image/font/media)
+            'blocked_url': 0,     # by URL pattern
+            'allowed': {},        # by resource_type
+            'total_blocked': 0,
+            'total_allowed': 0,
+        }
+
+        async def handle_route(route, request):
+            rtype = request.resource_type
+
+            # Check if resource type should be blocked
+            if rtype in self.BLOCKED_RESOURCE_TYPES:
+                self._route_stats['blocked_type'][rtype] = self._route_stats['blocked_type'].get(rtype, 0) + 1
+                self._route_stats['total_blocked'] += 1
+                await route.abort()
+                return
+
+            # Check if URL matches blocked patterns (stripping query parameters for extension matching)
+            url = request.url.lower()
+            url_path = url.split('?')[0]
+            for pattern in self.BLOCKED_URL_PATTERNS:
+                pattern_lower = pattern.lower()
+                if pattern_lower.startswith('*.'):
+                    # Handle wildcard patterns like *.png (matching stripped path)
+                    suffix = pattern_lower[1:]  # Remove the *
+                    if url_path.endswith(suffix):
+                        self._route_stats['blocked_url'] += 1
+                        self._route_stats['total_blocked'] += 1
+                        await route.abort()
+                        return
+                elif pattern_lower in url:
+                    self._route_stats['blocked_url'] += 1
+                    self._route_stats['total_blocked'] += 1
+                    await route.abort()
+                    return
+
+            # Allow the request
+            self._route_stats['allowed'][rtype] = self._route_stats['allowed'].get(rtype, 0) + 1
+            self._route_stats['total_allowed'] += 1
+            await route.continue_()
+
+        # Apply the route handler to all requests across the whole context
+        await context.route("**/*", handle_route)
+        print("   🔇 Context-wide resource blocking enabled (images, fonts, media, trackers)")
+
+    def print_route_stats(self):
+        """Print a summary of blocked vs allowed requests for this task."""
+        stats = getattr(self, '_route_stats', None)
+        if not stats:
+            return
+        print(f"\n📊 Route stats: {stats['total_blocked']} blocked, {stats['total_allowed']} allowed")
+        if stats['blocked_type']:
+            print(f"   Blocked by type: {stats['blocked_type']}")
+        if stats['blocked_url']:
+            print(f"   Blocked by URL pattern: {stats['blocked_url']}")
+        if stats['allowed']:
+            # Sort by count descending for readability
+            allowed_sorted = sorted(stats['allowed'].items(), key=lambda x: -x[1])
+            print(f"   Allowed by type: {dict(allowed_sorted)}")
+
     async def _setup_resource_blocking(self, page):
-        """Setup resource blocking to reduce console noise and improve performance."""
+        """Setup resource blocking on a single page (legacy, kept for compatibility).
+
+        Prefer _setup_context_resource_blocking() which covers all tabs.
+        """
         async def handle_route(route, request):
             # Check if resource type should be blocked
             if request.resource_type in self.BLOCKED_RESOURCE_TYPES:
                 await route.abort()
                 return
             
-            # Check if URL matches blocked patterns
+            # Check if URL matches blocked patterns (stripping query params)
             url = request.url.lower()
+            url_path = url.split('?')[0]
             for pattern in self.BLOCKED_URL_PATTERNS:
                 pattern_lower = pattern.lower()
                 if pattern_lower.startswith('*.'):
-                    # Handle wildcard patterns like *.png
-                    suffix = pattern_lower[1:]  # Remove the *
-                    if url.endswith(suffix):
+                    suffix = pattern_lower[1:]
+                    if url_path.endswith(suffix):
                         await route.abort()
                         return
                 elif pattern_lower in url:
@@ -374,7 +463,7 @@ class Browser:
         
         # Apply the route handler to all requests
         await page.route("**/*", handle_route)
-        print("   🔇 Resource blocking enabled (images, stylesheets, fonts, trackers)")
+        print("   🔇 Resource blocking enabled (images, fonts, media, trackers)")
 
     # ------------------------------------------------------------------
     # Helpers
@@ -524,7 +613,7 @@ async def main():
     tasks = [
         # Priority 1 & 2: Job Applications (Naukri first)
         ("Naukri Application", "https://www.naukri.com/mnjuser/recommendedjobs", prompts.NAUKRI_JOB_APPLY_TASK),
-        ("LinkedIn Application", "https://www.linkedin.com/jobs/search-results/?f_AL=true&f_TPR=r18000&keywords=%22hiring%22%20AND%20(%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22)%20AND%20India&f_CS=F,G,H,I,J", prompts.LINKEDIN_JOB_APPLY_TASK),
+        ("LinkedIn Application", "https://www.linkedin.com/jobs/search-results/?currentJobId=4405875019&keywords=%22hiring%22%20AND%20(%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22)%20AND%20India&origin=SEMANTIC_SEARCH_HISTORY&geoId=102713980&distance=0.0", prompts.LINKEDIN_JOB_APPLY_TASK),
         # Other tasks
         ("Instahyre Search", "https://www.instahyre.com/candidate/opportunities/?matching=true", prompts.INSTAHYRE_SEARCH_TASK),
         ("Naukri Employment LWD +15", "https://www.naukri.com/mnjuser/profile?id=&altresid", prompts.NAUKRI_EMPLOYMENT_LWD_15_TASK),
@@ -548,6 +637,17 @@ async def main():
             '--disable-blink-features=AutomationControlled',
             '--disable-gpu', '--disable-extensions', '--no-first-run',
             '--start-maximized', '--ignore-certificate-errors',
+            '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide,OptimizationGuideOnDeviceModel,PromptAPIForGeminiNano,LanguageDetectionModelDownloading,OptimizationHints,OptimizationHintsFetching,OptimizationTargetPrediction,Translate,MediaRouter,DialMediaRouteProvider,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,PrivacySandboxSettings4',
+            '--disable-background-networking',
+            '--disable-component-update',
+            '--disable-sync',
+            '--disable-default-apps',
+            '--no-default-browser-check',
+            '--disable-domain-reliability',
+            '--disable-client-side-phishing-detection',
+            '--disable-component-extensions-with-background-pages',
+            '--metrics-recording-only',
+            '--no-pings',
         ]
         try:
             br = await pw.chromium.launch(
@@ -570,6 +670,12 @@ async def main():
     
     print("🔥 Warming up Playwright pipe...")
     await _warmup_playwright_pipe()
+    
+    # SINGLE agent instance reused across all tasks (P1a memory optimization).
+    # Previously a new agent was created per task, reloading the 3.6 MB
+    # qa_patterns.json and rebuilding pattern matchers/fingerprint caches
+    # each time (~15-20 MB/task). Now we create once and reset per-task state.
+    agent = create_agent()
     
     while True:  # INFINITE LOOP
         cycle_count += 1
@@ -608,8 +714,10 @@ async def main():
                 user_data_dir=CHROME_USER_DATA,
             )
             
-            # Create Agent for THIS task
-            agent = create_agent()
+            # Reuse the shared agent, resetting per-task state (P1a).
+            # This clears page/browser refs, counters, and injected-context
+            # tracking while preserving pattern matchers and learned knowledge.
+            agent.reset_per_task_state()
             
             try:
                 print("🌐 Launching Browser...")
@@ -710,12 +818,12 @@ async def main():
         print("⏳ [INTERSESSION] Waiting 15s for Chrome processes to fully exit...")
         await asyncio.sleep(15)
         
-        # Run Instahyre INTERSESSION task
+        # Run Instahyre INTERSESSION task (reuse the shared agent with reset state)
+        agent.reset_per_task_state()
         intersession_browser = Browser(
             headless=False,
             user_data_dir=CHROME_USER_DATA,
         )
-        intersession_agent = create_agent()
         
         try:
             print("🌐 [INTERSESSION] Launching Browser...")
@@ -730,11 +838,11 @@ async def main():
                           wait_until='domcontentloaded', timeout=30000)
             await asyncio.sleep(5)
             
-            intersession_agent._page = page
-            intersession_agent.browser = intersession_browser
+            agent._page = page
+            agent.browser = intersession_browser
             
             print("▶️  [INTERSESSION] Running Instahyre (20 jobs)...")
-            await intersession_agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
+            await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
             print("🎉 [INTERSESSION] Instahyre task completed!")
             
         except KeyboardInterrupt:

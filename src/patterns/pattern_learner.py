@@ -84,10 +84,13 @@ class PatternLearner:
     Main class for learning and managing patterns.
     """
     
+    MAX_PATTERN_CACHE_SIZE = 5000  # Cap fingerprint entries to prevent unbounded growth
+    
     def __init__(self):
         self.pattern_cache: Dict[str, Set[str]] = {}
         self.answer_index: Dict[str, List[str]] = {}
         self.option_learning_enabled = True
+        self._insertion_order: List[str] = []  # Track insertion order for LRU eviction
     
     def learn_from_success(
         self,
@@ -104,7 +107,13 @@ class PatternLearner:
         fingerprint = self._create_fingerprint(question)
         
         if fingerprint not in self.pattern_cache:
+            # Evict oldest entries to stay under the cap
+            if len(self.pattern_cache) >= self.MAX_PATTERN_CACHE_SIZE:
+                if self._insertion_order:
+                    oldest = self._insertion_order.pop(0)
+                    self.pattern_cache.pop(oldest, None)
             self.pattern_cache[fingerprint] = set()
+            self._insertion_order.append(fingerprint)
         
         for var in variations:
             self.pattern_cache[fingerprint].add(var.lower())

@@ -1492,6 +1492,57 @@
             const groupQuestion = extractQuestionTextFromGroup(fieldset);
             console.log('Checkbox group question:', JSON.stringify(groupQuestion));
 
+            const groupQuestionLower = groupQuestion.toLowerCase();
+            const isCityQuestion = groupQuestionLower.includes('city') || groupQuestionLower.includes('relocate') || groupQuestionLower.includes('location') || groupQuestionLower.includes('cities');
+
+            if (isCityQuestion) {
+                const groupCheckboxes = fieldset.querySelectorAll('input[type="checkbox"]');
+                let hasCityNames = false;
+                for (const cb of groupCheckboxes) {
+                    let cbLabel = (getLabelForInput(cb) || cb.getAttribute('aria-label') || '').trim();
+                    if (!cbLabel) {
+                        let sib = cb.nextElementSibling;
+                        while (sib) {
+                            const t = (sib.innerText || sib.textContent || '').trim();
+                            if (t && t.length > 1) { cbLabel = t; break; }
+                            sib = sib.nextElementSibling;
+                        }
+                    }
+                    if (!cbLabel) cbLabel = cb.value || '';
+                    const lower = cbLabel.toLowerCase();
+                    if (lower.includes('bangalore') || lower.includes('bengaluru') || lower.includes('mumbai') || lower.includes('delhi') || lower.includes('hyderabad') || lower.includes('pune') || lower.includes('chennai') || lower.includes('gurgaon') || lower.includes('noida') || lower.includes('kolkata') || lower.includes('ahmedabad')) {
+                        hasCityNames = true;
+                        break;
+                    }
+                }
+
+                if (hasCityNames) {
+                    console.log('City question detected - selecting ALL cities except Skip');
+                    for (const cb of groupCheckboxes) {
+                        if (cb.checked) continue;
+                        let cbLabel = (getLabelForInput(cb) || cb.getAttribute('aria-label') || '').trim();
+                        if (!cbLabel) {
+                            let sib = cb.nextElementSibling;
+                            while (sib) {
+                                const t = (sib.innerText || sib.textContent || '').trim();
+                                if (t && t.length > 1) { cbLabel = t; break; }
+                                sib = sib.nextElementSibling;
+                            }
+                        }
+                        if (!cbLabel) cbLabel = cb.value || '';
+                        const lower = cbLabel.toLowerCase();
+                        if (lower.includes('skip') || lower.includes('none') || lower.includes('not applicable')) {
+                            console.log('Skipping non-city option:', cbLabel);
+                            continue;
+                        }
+                        cb.click();
+                        console.log('Checked city option:', cbLabel);
+                        filledAny = true;
+                    }
+                    continue;
+                }
+            }
+
             const answer = getAnswerForQuestion(groupQuestion, 'checkbox');
             if (!answer) {
                 console.log('No answer found for checkbox group:', groupQuestion.substring(0, 60));

@@ -494,6 +494,13 @@ class PatternStats:
 class SuccessTracker:
     """Tracks success rates of question patterns."""
     
+    # Cap on the number of tracked (fingerprint:answer) stats entries to prevent
+    # unbounded growth over infinite-loop runs. Oldest entries are pruned first.
+    MAX_STATS_ENTRIES = 20000
+    # Batch disk writes: persist at most every N attempts instead of on every
+    # single attempt (which serialized the entire stats dict to disk each time).
+    SAVE_INTERVAL = 50
+    
     def __init__(self, storage_path: str = None):
         """
         Initialize the tracker.
@@ -506,6 +513,8 @@ class SuccessTracker:
         self.storage_path = storage_path
         self.stats: Dict[str, PatternStats] = {}
         self.fingerprint_index: Dict[str, List[str]] = {}  # fingerprint -> pattern keys
+        self._attempts_since_save = 0
+        self._dirty = False
         self._load()
     
     def _load(self):
@@ -549,6 +558,9 @@ class SuccessTracker:
         key = f"{fingerprint}:{answer}"
         
         if key not in self.stats:
+            # Cap stats entries to prevent unbounded growth over infinite-loop runs
+            if len(self.stats) >= self.MAX_STATS_ENTRIES:
+                self._prune_oldest_entries()
             self.stats[key] = PatternStats(
                 pattern=question,
                 fingerprint=fingerprint,
@@ -560,7 +572,18 @@ class SuccessTracker:
             self.fingerprint_index[fingerprint].append(key)
         
         self.stats[key].record_attempt(success, confidence)
-        self._save()
+        self._dirty = True
+        self._attempts_since_save += 1
+        if self._attempts_since_save >= self.SAVE_INTERVAL:
+            self._save()
+            self._attempts_since_save = 0
+            self._dirty = False
+    
+    def _prune_oldest_entries(self):
+        """Remove oldest 10% of entries to stay under the cap (fifo by insertion)."""
+        to_remove = list(self.stats.keys())[:self.MAX_STATS_ENTRIES // 10]
+        for key in to_remove:
+            del self.stats[key]
     
     def get_stats(self, question: str, answer: str) -> Optional[PatternStats]:
         """Get stats for a specific question/answer pair."""

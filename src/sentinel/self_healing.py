@@ -74,10 +74,33 @@ class FailureLogger:
         if log_path is None:
             log_path = os.path.expanduser("~/Desktop/sentinel_errors/failure_log.jsonl")
         self.log_path = log_path
+        # In-memory fingerprint -> records index. Avoids re-reading/parsing the
+        # entire log file on every get_similar_failures() call (which previously
+        # loaded all FailureRecord objects each time).
+        self._index: Dict[str, List[FailureRecord]] = {}
+        self._index_loaded = False
         self._ensure_dir()
     
     def _ensure_dir(self):
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+    
+    def _load_index(self):
+        """Load the failure log into the in-memory fingerprint index once."""
+        if self._index_loaded:
+            return
+        self._index_loaded = True
+        try:
+            if os.path.exists(self.log_path):
+                with open(self.log_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        try:
+                            data = json.loads(line)
+                            record = FailureRecord(**data)
+                            self._index.setdefault(record.fingerprint, []).append(record)
+                        except (json.JSONDecodeError, TypeError):
+                            continue
+        except Exception:
+            pass
     
     def log_failure(
         self,
@@ -103,6 +126,9 @@ class FailureLogger:
         try:
             with open(self.log_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(asdict(record)) + '\n')
+            # Update in-memory index if it has been loaded
+            if self._index_loaded:
+                self._index.setdefault(record.fingerprint, []).append(record)
         except Exception as e:
             print(f"⚠️ Failed to log failure: {e}")
         
@@ -113,20 +139,8 @@ class FailureLogger:
             re.sub(r'[^\w\s]', '', question.lower()).encode()
         ).hexdigest()[:16]
         
-        failures = []
-        try:
-            if os.path.exists(self.log_path):
-                with open(self.log_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        try:
-                            data = json.loads(line)
-                            if data.get('fingerprint') == fingerprint:
-                                failures.append(FailureRecord(**data))
-                        except json.JSONDecodeError:
-                            continue
-        except Exception:
-            pass
-        
+        self._load_index()
+        failures = self._index.get(fingerprint, [])
         return failures[-limit:]
 
 

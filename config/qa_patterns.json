@@ -189,6 +189,10 @@
         "expected salary",
         "ectc",
         "expected",
+        "excepted",
+        "excepted ctc",
+        "excepted salary",
+        "salary expectations",
         "notice period",
         "experience",
         "current employer",
@@ -218,7 +222,11 @@
         "expected salary in lakhs",
         "expected ctc inr",
         "expected annual ctc",
-        "salary expectations"
+        "salary expectations",
+        "excepted ctc",
+        "excepted salary",
+        "what is excepted ctc",
+        "what is your excepted ctc"
       ],
       "category": "salary",
       "default": "30 LPA",
@@ -253,11 +261,11 @@
         "notice period as per employment contract"
       ],
       "category": "preference",
-      "default": "My notice period is 30 days, and I can join immediately after that.",
+      "default": "15",
       "input_type_defaults": {
-        "text": "My notice period is 30 days, and I can join immediately after that.",
-        "textarea": "My notice period is 30 days, and I can join immediately after that.",
-        "select": "1 Month"
+        "text": "15",
+        "textarea": "15",
+        "select": "15 days"
       },
       "priority": 8
     },
@@ -2615,7 +2623,9 @@
         "share your ctc",
         "ctc ectc np",
         "ctc and np",
-        "ctc,ectc and np"
+        "ctc,ectc and np",
+        "what is your current and expected ctc",
+        "current and expected ctc"
       ],
       "category": "preference",
       "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable)",
@@ -4326,11 +4336,11 @@
         "profile summary"
       ],
       "category": "preference",
-      "default": "SDE-2 with 4 Years Experience at Fiserv",
+      "default": "SDE-2 with 4 Years Experience at Everbridge",
       "input_type_defaults": {
-        "radio": "SDE-2 with 4 Years Experience at Fiserv",
-        "select": "SDE-2 with 4 Years Experience at Fiserv",
-        "text": "SDE-2 with 4 Years Experience at Fiserv"
+        "radio": "SDE-2 with 4 Years Experience at Everbridge",
+        "select": "SDE-2 with 4 Years Experience at Everbridge",
+        "text": "SDE-2 with 4 Years Experience at Everbridge"
       },
       "priority": 7
     },
@@ -5457,12 +5467,12 @@
         "expected monthly gross"
       ],
       "category": "preference",
-      "default": "3000000",
+      "default": "250000",
       "input_type_defaults": {
-        "radio": "3000000",
-        "select": "3000000",
-        "text": "3000000",
-        "number": "3000000"
+        "radio": "250000",
+        "select": "250000",
+        "text": "250000",
+        "number": "250000"
       },
       "priority": 4
     },
@@ -128771,9 +128781,10 @@
     "first_name": {
       "category": "personal_info",
       "default": "Siddhant",
-      "priority": 10,
+      "priority": 11,
       "patterns": [
         "first name",
+        "first name?",
         "legal first name",
         "preferred first name",
         "given name",
@@ -128792,9 +128803,10 @@
     "last_name": {
       "category": "personal_info",
       "default": "Singh",
-      "priority": 10,
+      "priority": 11,
       "patterns": [
         "last name",
+        "last name?",
         "legal last name",
         "preferred last name",
         "surname",
@@ -129379,6 +129391,182 @@
         "radio": "Yes",
         "checkbox": "Yes"
       }
+    },
+    "immediate_or_serving_notice": {
+      "patterns": [
+        "are you an immediate joiner or serving notice period",
+        "immediate joiner or serving",
+        "immediate joiner or serving np",
+        "are you immediate joiner or serving notice period",
+        "immediate joiner or serving notice"
+      ],
+      "category": "notice_period",
+      "default": "Serving Notice Period",
+      "input_type_defaults": {
+        "text": "Serving Notice Period",
+        "textarea": "Serving Notice Period",
+        "select": "Serving Notice Period",
+        "radio": "Serving Notice Period"
+      },
+      "priority": 12
+    },
+    "screening_comma_remote_south": {
+      "patterns": [
+        "since this is a remote role, and for this role the client is not looking for south based candidates, so kindly don't apply if you are from southern states",
+        "since this is a remote role, and for this role the client is not looking for south based candidates"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_pf_deduction": {
+      "patterns": [
+        "this role is with a mnc based company, we need candidates who have pf deduction in all of the companies worked so far in their career",
+        "this role is with a mnc based company, we need candidates who have pf deduction in all of the companies worked so far"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_independently_worked": {
+      "patterns": [
+        "have you independently worked on a feature/module from requirement understanding through development, testing, and deployment"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_competitor": {
+      "patterns": [
+        "are you currently employed by a client, partner, or competitor of addepar",
+        "are you currently employed by a client, partner or competitor of addepar"
+      ],
+      "category": "screening",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "text": "No"
+      },
+      "priority": 12
+    },
+    "screening_comma_oauth": {
+      "patterns": [
+        "have you implemented oauth 2.0 flows in production, including token refresh",
+        "have you implemented oauth 2.0 flows in production"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_ai_tools": {
+      "patterns": [
+        "do you have a strong proficiency in ai coding tools such as cursor, codex, and claude",
+        "do you have a strong proficiency in ai coding tools such as cursor"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_js_ts": {
+      "patterns": [
+        "are you proficient in javascript and/or typescript, along with html and css",
+        "are you proficient in javascript and/or typescript"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_legacy_systems": {
+      "patterns": [
+        "have you integrated with on-premise or legacy enterprise systems such as sql server, oracle, file shares, or active directory"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "screening_comma_complydp": {
+      "patterns": [
+        "company description complydp is a dpdp compliance platform"
+      ],
+      "category": "screening",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes"
+      },
+      "priority": 12
+    },
+    "describe_production_platform": {
+      "patterns": [
+        "describe a production platform tool or automation you built using python, go, or java",
+        "describe a production platform tool or automation you built"
+      ],
+      "category": "experience",
+      "default": "4 Years",
+      "input_type_defaults": {
+        "text": "4 Years",
+        "textarea": "4 Years"
+      },
+      "priority": 10
+    },
+    "describe_backend_architecture": {
+      "patterns": [
+        "please describe your experience owning backend architecture, including apis, databases, deployment, and production support",
+        "please describe your experience owning backend architecture"
+      ],
+      "category": "experience",
+      "default": "4 Years",
+      "input_type_defaults": {
+        "text": "4 Years",
+        "textarea": "4 Years"
+      },
+      "priority": 10
     }
   },
   "categories": {

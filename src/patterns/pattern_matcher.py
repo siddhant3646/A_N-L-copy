@@ -187,6 +187,14 @@ class PatternMatcher:
 
         return None, 0.0
 
+    @staticmethod
+    def _resolve_dynamic(answer: Optional[str]) -> Optional[str]:
+        """Resolve the __DYNAMIC_LWD__ marker to today + 15 days (DD MMM YYYY)."""
+        if answer == '__DYNAMIC_LWD__':
+            lwd_date = datetime.now() + timedelta(days=15)
+            return lwd_date.strftime('%d %b %Y')
+        return answer
+
     def _get_answer(self, pattern_id: str, input_type: str = None) -> Optional[str]:
         pattern = self.patterns['patterns'].get(pattern_id)
         if not pattern:
@@ -195,21 +203,13 @@ class PatternMatcher:
             input_type = input_type.lower().strip()
             itd = pattern.get('input_type_defaults', {})
             if itd and input_type in itd:
-                answer = itd[input_type]
-                # Handle dynamic LWD marker
-                if answer == '__DYNAMIC_LWD__':
-                    lwd_date = datetime.now() + timedelta(days=15)
-                    return lwd_date.strftime('%d %b %Y')
-                return answer
+                return self._resolve_dynamic(itd[input_type])
             if input_type == 'number':
-                return pattern.get('numeric_default') or pattern.get('default')
-        
-        answer = pattern.get('default')
-        # Handle dynamic LWD marker
-        if answer == '__DYNAMIC_LWD__':
-            lwd_date = datetime.now() + timedelta(days=15)
-            return lwd_date.strftime('%d %b %Y')
-        return answer
+                return self._resolve_dynamic(
+                    pattern.get('numeric_default') or pattern.get('default')
+                )
+
+        return self._resolve_dynamic(pattern.get('default'))
 
     def match_with_details(self, question: str) -> Dict[str, Any]:
         answer, confidence = self.fuzzy_match(question)

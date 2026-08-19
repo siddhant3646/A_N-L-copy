@@ -2,6 +2,9 @@
 Tests for pattern_matcher module.
 """
 
+import os
+from datetime import datetime, timedelta
+
 import pytest
 from src.patterns.pattern_matcher import PatternMatcher, create_matcher
 
@@ -141,7 +144,7 @@ class TestFuzzyMatch:
         # This should match experience, not be confused with salary
         answer, confidence = matcher.fuzzy_match("years of experience")
         
-        assert answer == "4"
+        assert answer == "4.2"
         assert confidence > 0.7
 
 
@@ -282,3 +285,65 @@ class TestEdgeCases:
         answer3, _ = matcher.fuzzy_match("Current Salary")
         
         assert answer1 == answer2 == answer3
+
+
+class TestDynamicLWDMarker:
+    """Tests for __DYNAMIC_LWD__ marker resolution."""
+
+    def test_marker_resolved_to_today_plus_15(self, sample_qa_patterns):
+        """Marker in default should resolve to today + 15 days."""
+        patterns_data = {"patterns": sample_qa_patterns}
+        matcher = PatternMatcher(patterns_data)
+
+        answer, _ = matcher.fuzzy_match("what is your lwd")
+
+        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        assert answer == expected
+
+    def test_marker_resolved_for_text_input_type(self, sample_qa_patterns):
+        """Marker in input_type_defaults[text] should resolve correctly."""
+        patterns_data = {"patterns": sample_qa_patterns}
+        matcher = PatternMatcher(patterns_data)
+
+        answer, _ = matcher.fuzzy_match("last working date", input_type="text")
+
+        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        assert answer == expected
+
+    def test_marker_resolved_for_date_input_type(self, sample_qa_patterns):
+        """Marker in input_type_defaults[date] should resolve correctly."""
+        patterns_data = {"patterns": sample_qa_patterns}
+        matcher = PatternMatcher(patterns_data)
+
+        answer, _ = matcher.fuzzy_match("lwd date", input_type="date")
+
+        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        assert answer == expected
+
+    def test_marker_resolved_for_number_input_type(self, sample_qa_patterns):
+        """numeric_default fallback to default marker should resolve correctly."""
+        patterns_data = {"patterns": sample_qa_patterns}
+        matcher = PatternMatcher(patterns_data)
+
+        answer, _ = matcher.fuzzy_match("your lwd", input_type="number")
+
+        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        assert answer == expected
+
+    def test_no_stale_resolved_date_in_config(self):
+        """Guard: the real config must NOT contain resolved LWD date literals."""
+        config_path = os.path.join(
+            os.path.dirname(__file__), '..', '..', '..', 'config', 'qa_patterns.json'
+        )
+        if not os.path.exists(config_path):
+            pytest.skip("config/qa_patterns.json not found")
+
+        with open(config_path, 'r') as f:
+            content = f.read()
+
+        # No resolved LWD dates should be hardcoded
+        for stale in ('"20 Aug 2026"', '"02 Sep 2026"'):
+            assert stale not in content, f"Stale LWD date {stale} found in config"
+
+        # The marker must be present
+        assert '"__DYNAMIC_LWD__"' in content, "LWD marker missing from config"

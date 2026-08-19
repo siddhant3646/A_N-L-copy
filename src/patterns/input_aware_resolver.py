@@ -208,15 +208,21 @@ class InputAwareResolver:
         
         answer_num = self._extract_number(answer)
         if answer_num:
+            matching_ranges = []
             for opt in options:
                 range_info = self.range_matcher.extract_range(opt.label)
                 if range_info and self.range_matcher.value_in_range(float(answer_num), range_info):
-                    return MatchResult(
-                        matched_option=opt,
-                        confidence=0.95,
-                        match_type='numeric_range',
-                        original_answer=answer
-                    )
+                    min_val = range_info[0]
+                    distance_from_min = abs(float(answer_num) - min_val)
+                    matching_ranges.append((opt, distance_from_min))
+            if matching_ranges:
+                matching_ranges.sort(key=lambda x: x[1])
+                return MatchResult(
+                    matched_option=matching_ranges[0][0],
+                    confidence=0.95,
+                    match_type='numeric_range',
+                    original_answer=answer
+                )
         
         for opt in options:
             if self._is_synonym_match(answer_lower, opt.label.lower()):

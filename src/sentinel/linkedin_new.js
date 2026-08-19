@@ -103,7 +103,7 @@
             default: 'VIT Bhopal University'
         },
         education_cgpa: {
-            patterns: ['cgpa', 'percentage'],
+            patterns: ['cgpa', 'percentage', "bachelor's gpa", 'bachelors gpa', 'gpa on a /10 scale', 'gpa on a', 'gpa'],
             default: '8.51'
         },
         personal_dob: {
@@ -1286,6 +1286,9 @@
             // Special handling for location fields: even if they have text, we need to check for dropdown
             if (isLocationField && !isEmpty) {
                 console.log('Location field has text:', inputValue, '- checking if dropdown needs selection...');
+                
+                // Mark this input so the Python handler can find it via Playwright
+                input.setAttribute('data-sentinel-location', 'true');
                 
                 // Focus the field to trigger dropdown
                 input.focus();

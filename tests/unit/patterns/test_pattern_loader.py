@@ -165,7 +165,7 @@ class TestGetPatternAnswer:
         patterns = {"patterns": sample_qa_patterns}
         
         answer = get_pattern_answer(patterns, "experience")
-        assert answer == "4"
+        assert answer == "4.2"
     
     def test_get_nonexistent_answer(self, sample_qa_patterns):
         """Test getting answer for nonexistent pattern returns None."""

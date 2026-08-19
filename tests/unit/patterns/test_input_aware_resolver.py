@@ -173,6 +173,30 @@ class TestInputAwareResolver:
         assert result.matched_option is not None
         assert result.match_type == "numeric_range"
 
+    def test_resolve_numeric_range_tie_break_prefers_lower_bound(self):
+        """Answer 4 with ranges '2-4' and '4-6' should pick '4-6' (closer to min)."""
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="2-4", label="2-4 years"),
+            Option(value="4-6", label="4-6 years"),
+        ]
+        result = resolver.resolve("4", InputType.RADIO, options)
+        assert result.matched_option is not None
+        assert result.match_type == "numeric_range"
+        assert result.matched_option.label == "4-6 years"
+
+    def test_resolve_numeric_range_4_2_skips_2_4(self):
+        """Answer 4.2 should NOT match '2-4 years' (above upper bound)."""
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="2-4", label="2-4 years"),
+            Option(value="4-6", label="4-6 years"),
+        ]
+        result = resolver.resolve("4.2", InputType.RADIO, options)
+        assert result.matched_option is not None
+        assert result.match_type == "numeric_range"
+        assert result.matched_option.label == "4-6 years"
+
     def test_resolve_synonym_match(self):
         resolver = InputAwareResolver()
         options = [

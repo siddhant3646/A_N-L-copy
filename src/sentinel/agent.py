@@ -2343,7 +2343,7 @@ class SentinelAgent:
                     continue
                 
                 # LinkedIn: Location autocomplete dropdown needs to be clicked
-                if result in ('LINKEDIN_LOCATION_RETRIGGERED', 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN'):
+                if result in ('LINKEDIN_LOCATION_RETRIGGERED', 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN', 'LINKEDIN_LOCATION_TRIGGERED'):
                     retrigger_count = getattr(self, '_location_retrigger_count', 0) + 1
                     self._location_retrigger_count = retrigger_count
                     
@@ -2465,194 +2465,113 @@ class SentinelAgent:
                         
                         continue
                     
-                    print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/3)...")
+                    print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/2)...")
                     try:
-                        # Get diagnostic info about what's in the DOM
-                        diagnostics = await self._page.evaluate("""() => {
-                            const modal = document.querySelector('.jobs-easy-apply-modal, .artdeco-modal--is-open');
-                            if (!modal) return { error: 'No modal found' };
-                            
-                            // Find the Bangalore input
-                            const inputs = modal.querySelectorAll('input[type="text"], input[type="search"], textarea');
-                            let bangaloreInput = null;
-                            for (const inp of inputs) {
-                                const val = inp.value || '';
-                                if (val.includes('Bangalore') || val.includes('Bengaluru') || val.toLowerCase().includes('bangalore') || val.toLowerCase().includes('bengaluru')) {
-                                    bangaloreInput = inp;
-                                    break;
-                                }
-                            }
-                            
-                            if (!bangaloreInput) return { error: 'Bangalore input not found' };
-                            
-                            // Look for dropdown-related elements
-                            const dropdownLists = modal.querySelectorAll('[role="listbox"], .typeahead-input__dropdown-list, .artdeco-typeahead__results-list, [data-test-typeahead-results]');
-                            const dropdownItems = modal.querySelectorAll('[role="option"], .typeahead-input__dropdown-item, .artdeco-typeahead__result');
-                            
-                            // Look for any select elements
-                            const selects = modal.querySelectorAll('select');
-                            const selectOptions = selects.length > 0 ? Array.from(selects[0].querySelectorAll('option')).map(o => o.text) : [];
-                            
-                            // Look for buttons near the input
-                            const inputContainer = bangaloreInput.closest('.fb-dash-form-element') || bangaloreInput.parentElement;
-                            const buttonsNear = inputContainer ? inputContainer.querySelectorAll('button') : [];
-                            
-                            return {
-                                inputId: bangaloreInput.id,
-                                inputValue: bangaloreInput.value,
-                                dropdownListsFound: dropdownLists.length,
-                                dropdownItemsFound: dropdownItems.length,
-                                selectsFound: selects.length,
-                                selectOptions: selectOptions,
-                                buttonsNear: Array.from(buttonsNear).map(b => b.innerText),
-                                inputParentClass: inputContainer?.className
-                            };
-                        }""")
-                        
-                        print(f"   📋 Diagnostics: {diagnostics}")
-                        
-                        if diagnostics.get('error'):
-                            print(f"   ⚠️ {diagnostics['error']}")
-                        
-                        # Try strategy 1: Keyboard navigation (ArrowDown to select first option)
-                        print("   ↓ Trying keyboard navigation...")
-                        keyboard_result = await self._page.evaluate("""() => {
-                            const inputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type="hidden"])');
-                            let locationInput = null;
-                            for (const inp of inputs) {
-                                const val = inp.value || '';
-                                if (val.toLowerCase().includes('bangalore') || val.toLowerCase().includes('bengaluru')) {
-                                    locationInput = inp;
-                                    break;
-                                }
-                            }
-                            
-                            if (locationInput) {
-                                locationInput.focus();
-                                // Try ArrowDown to open dropdown
-                                locationInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
-                                locationInput.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
-                                // Wait briefly then try another ArrowDown to select first option
-                                return 'ARROW_DOWN_SENT';
-                            }
-                            return 'NOT_FOUND';
-                        }""")
-                        
-                        # Wait for potential dropdown to open
-                        # Use wait_for_selector to give the dropdown time to render (up to 4s)
-                        # instead of a fixed 0.4s sleep that was too short.
-                        try:
-                            await self._page.wait_for_selector('[role="option"]', timeout=4000, state='visible')
-                        except PlaywrightTimeoutError:
-                            pass  # No dropdown appeared, continue with fallback click logic
-                        
-                        # Step 2: Try to find and click dropdown option
-                        click_result = await self._page.evaluate("""() => {
-                            // First check if there are ANY visible elements that might be dropdown items
-                            const allDivs = document.querySelectorAll('[role="option"], li, div[class*="dropdown"], div[class*="option"], span[class*="option"]');
-                            console.log('Total potential dropdown elements:', allDivs.length);
-                            
-                            // Try all dropdown selectors with aggressive clicking
-                            const dropdownSelectors = [
-                                // Pismo-specific selectors (what we see in your form)
-                                'div[class*="typeahead"] [role="option"]',
-                                'div[class*="search-vertical"] [role="option"]',
-                                '.gqueried-content [role="option"]',
+                        # The main JS already marked the input with data-sentinel-location
+                        # before returning the signal. Use Playwright's locator() directly
+                        # because it pierces Shadow DOM boundaries (document.querySelector does not).
+                        loc = self._page.locator('input[data-sentinel-location="true"]').first
+                        loc_count = await loc.count()
+                        if loc_count == 0:
+                            # Fallback: location typeahead input has role="combobox"
+                            loc = self._page.locator('input[role="combobox"]').first
+                            loc_count = await loc.count()
+
+                        if loc_count > 0:
+                            # Cancel any JS-side scheduled dropdown click to prevent race condition
+                            # (scheduleLocationDropdownClick fires 500ms after JS returns, which
+                            # overlaps with Playwright's typing below and can click stale options)
+                            try:
+                                await self._page.evaluate("() => { window.__sentinelLocClickScheduled = false; }")
+                            except Exception:
+                                pass
+
+                            await loc.click()
+                            await asyncio.sleep(0.3)
+                            # Clear via real keyboard (React responds to this)
+                            await self._page.keyboard.press('ControlOrMeta+a')
+                            await self._page.keyboard.press('Backspace')
+                            await asyncio.sleep(0.3)
+                            # Type Bangalore with real keystrokes to trigger typeahead
+                            await self._page.keyboard.type('Bangalore', delay=60)
+                            await asyncio.sleep(0.8)
+
+                            # Wait for dropdown options to render
+                            option_selectors = [
                                 '[role="option"]',
-                                
-                                // LinkedIn-specific selectors
+                                '.basic-typeahead__selectable',
                                 '.typeahead-input__dropdown-item',
-                                '.typeahead-input__dropdown-list li',
-                                '[role="listbox"] [role="option"]',
                                 '.artdeco-typeahead__result',
+                                '[data-test-typeahead-item]',
                                 'li[class*="typeahead"]',
-                                'div[class*="dropdown"] li',
-                                'div[class*="option"] li'
-                            ];
-                            
-                            let clickedAny = false;
-                            for (const selector of dropdownSelectors) {
-                                const options = document.querySelectorAll(selector);
-                                console.log('Checking selector:', selector, '- found:', options.length);
-                                for (const option of options) {
-                                    // Check if option is visible and has content
-                                    if (option.offsetParent !== null) {
-                                        const text = (option.innerText || option.textContent || '').trim();
-                                        if (text && (text.toLowerCase().includes('bangalore') || text.toLowerCase().includes('bengaluru'))) {
-                                            console.log('Found Bangalore option, clicking:', text);
-                                            option.scrollIntoView({block: 'nearest'});
-                                            option.click();
-                                            option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                                            option.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                                            option.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
-                                            option.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
-                                            clickedAny = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (clickedAny) break;
-                            }
-                            
-                            if (!clickedAny) {
-                                // Try clicking any visible option as fallback
-                                for (const selector of dropdownSelectors) {
-                                    const options = document.querySelectorAll(selector);
-                                    for (const option of options) {
-                                        if (option.offsetParent !== null) {
-                                            const text = (option.innerText || option.textContent || '').trim();
-                                            if (text && text.length > 0 && !text.includes('select') && !text.includes('choose')) {
-                                                console.log('Fallback: clicking first visible option:', text);
-                                                option.scrollIntoView({block: 'nearest'});
-                                                option.click();
-                                                option.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                                                option.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                                                option.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
-                                                option.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
-                                                clickedAny = true;
-                                                break;
+                                '.artdeco-typeahead__results-list li'
+                            ]
+                            try:
+                                sel_combined = ', '.join(option_selectors)
+                                await self._page.wait_for_selector(sel_combined, timeout=5000, state='visible')
+                            except Exception:
+                                pass
+
+                            # Click the best matching option via JS (full mouse event sequence
+                            # needed for React typeahead — plain .click() alone doesn't register)
+                            clicked_text = await self._page.evaluate("""() => {
+                                const selectors = [
+                                    '.basic-typeahead__selectable',
+                                    '[role="option"]',
+                                    '.typeahead-input__dropdown-item',
+                                    '.artdeco-typeahead__result',
+                                    '[data-test-typeahead-item]',
+                                    'li[class*="typeahead"]',
+                                    '.artdeco-typeahead__results-list li'
+                                ];
+                                let allOpts = [];
+                                for (const sel of selectors) {
+                                    const items = document.querySelectorAll(sel);
+                                    for (const item of items) {
+                                        if (item.offsetParent !== null || item.getClientRects().length > 0) {
+                                            const txt = (item.innerText || item.textContent || '').trim();
+                                            if (txt.length > 1 && !txt.toLowerCase().includes('select')) {
+                                                allOpts.push({el: item, text: txt});
                                             }
                                         }
                                     }
-                                    if (clickedAny) break;
                                 }
-                            }
-                            
-                            return clickedAny ? 'CLICKED' : 'NOT_FOUND';
-                        }""")
-                        
-                        if click_result == 'CLICKED':
-                            print("   ✅ Dropdown option clicked")
-                            self._location_retrigger_count = 0
-                            self._location_fallback_attempted = False
-                            await asyncio.sleep(1)
+                                if (allOpts.length === 0) return null;
+                                // Prefer options containing "bangalore" or "bengaluru"
+                                let best = allOpts.find(o =>
+                                    o.text.toLowerCase().includes('bangalore') ||
+                                    o.text.toLowerCase().includes('bengaluru')
+                                );
+                                if (!best) best = allOpts[0];
+                                best.el.click();
+                                best.el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                best.el.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                best.el.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                return best.text;
+                            }""")
+                            if clicked_text:
+                                print(f"   ✅ Clicked location option: {clicked_text}")
+                            else:
+                                # Fallback: Playwright locator click
+                                found = False
+                                for sel in option_selectors:
+                                    try:
+                                        opt = self._page.locator(sel).first
+                                        if await opt.count() > 0 and await opt.is_visible():
+                                            await opt.click(force=True, timeout=2000)
+                                            print(f"   ✅ Clicked location typeahead option via locator: {sel}")
+                                            found = True
+                                            break
+                                    except Exception:
+                                        continue
+                                if not found:
+                                    print("   ⚠️ No location dropdown options found")
+
+                            await asyncio.sleep(0.5)
+                            continue
                         else:
-                            # Fallback: Try using Playwright's locator to find and click the option
-                            print("   📍 JavaScript click didn't work, trying Playwright locator...")
-                            try:
-                                # Try to find and click any option containing "Bangalore"
-                                option_locator = self._page.locator('[role="option"]:has-text("Bangalore")')
-                                if await option_locator.count() > 0:
-                                    await option_locator.first.click(timeout=2000)
-                                    print("   ✅ Clicked option via Playwright locator")
-                                    self._location_retrigger_count = 0
-                                    self._location_fallback_attempted = False
-                                    await asyncio.sleep(1)
-                                else:
-                                    # Try clicking any visible option
-                                    any_option = self._page.locator('[role="option"]')
-                                    if await any_option.count() > 0:
-                                        await any_option.first.click(timeout=2000)
-                                        print("   ✅ Clicked first option via Playwright")
-                                        self._location_retrigger_count = 0
-                                        self._location_fallback_attempted = False
-                                        await asyncio.sleep(1)
-                                    else:
-                                        print("   ⏳ No options found via Playwright either, will retry...")
-                                        await asyncio.sleep(0.5)
-                            except Exception as e:
-                                print(f"   ⚠️ Playwright click failed: {e}")
-                                await asyncio.sleep(0.5)
+                            print("   ⚠️ Location input not found (no marked input or combobox)")
+                            await asyncio.sleep(0.5)
                     except Exception as e:
                         print(f"   ⚠️ Error during selection: {e}")
                         await asyncio.sleep(0.5)
@@ -2967,6 +2886,148 @@ class SentinelAgent:
                         next_result = await self._handle_scripted_fallback()
                         print(f"   📜 Autopilot: {next_result}")
                         
+                        # LinkedIn: Location autocomplete dropdown — handle INSIDE autopilot
+                        # so the Playwright keyboard typing runs before the stuck-loop detector.
+                        # Without this, the autopilot just re-runs JS (which returns the same
+                        # location signal) until "Stuck in loop" skips the job.
+                        if next_result in ('LINKEDIN_LOCATION_RETRIGGERED', 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN', 'LINKEDIN_LOCATION_TRIGGERED'):
+                            # EXIT: If fallback already attempted, skip the job
+                            if getattr(self, '_location_fallback_attempted', False):
+                                print("⚠️ Location fallback already attempted. Skipping this job...")
+                                self._location_retrigger_count = 0
+                                self._location_fallback_attempted = False
+                                await self._close_linkedin_modal()
+                                break
+                            
+                            retrigger_count = getattr(self, '_location_retrigger_count', 0) + 1
+                            self._location_retrigger_count = retrigger_count
+                            
+                            if retrigger_count > 2:
+                                # Fallback: clear field and force-click Next
+                                print(f"⚠️ Location dropdown not appearing after {retrigger_count} attempts. Trying fallback...")
+                                self._location_fallback_attempted = True
+                                # Force-click Next/Review/Submit
+                                try:
+                                    for btn_text in ['Next', 'Review', 'Submit application', 'Continue']:
+                                        btn = self._page.locator(f'button:has-text("{btn_text}")').first
+                                        if await btn.count() > 0:
+                                            await btn.click(timeout=2000)
+                                            print(f"   ✅ Force-clicked {btn_text}")
+                                            break
+                                except Exception:
+                                    pass
+                                await asyncio.sleep(1)
+                                continue
+                            
+                            print(f"   🔍 Selecting location from dropdown (attempt {retrigger_count}/2)...")
+                            try:
+                                # The main JS already marked the input with data-sentinel-location
+                                # before returning the signal. Use Playwright's locator() directly
+                                # because it pierces Shadow DOM boundaries (document.querySelector does not).
+                                loc = self._page.locator('input[data-sentinel-location="true"]').first
+                                loc_count = await loc.count()
+                                if loc_count == 0:
+                                    # Fallback: location typeahead input has role="combobox"
+                                    loc = self._page.locator('input[role="combobox"]').first
+                                    loc_count = await loc.count()
+                                
+                                if loc_count > 0:
+                                    # Cancel any JS-side scheduled dropdown click to prevent race condition
+                                    try:
+                                        await self._page.evaluate("() => { window.__sentinelLocClickScheduled = false; }")
+                                    except Exception:
+                                        pass
+
+                                    await loc.click()
+                                    await asyncio.sleep(0.3)
+                                    # Clear via real keyboard (React responds to this)
+                                    await self._page.keyboard.press('ControlOrMeta+a')
+                                    await self._page.keyboard.press('Backspace')
+                                    await asyncio.sleep(0.3)
+                                    # Type Bangalore with real keystrokes to trigger typeahead
+                                    await self._page.keyboard.type('Bangalore', delay=60)
+                                    await asyncio.sleep(0.8)
+
+                                    # Wait for dropdown options to render
+                                    option_selectors = [
+                                        '[role="option"]',
+                                        '.basic-typeahead__selectable',
+                                        '.typeahead-input__dropdown-item',
+                                        '.artdeco-typeahead__result',
+                                        '[data-test-typeahead-item]',
+                                        'li[class*="typeahead"]',
+                                        '.artdeco-typeahead__results-list li'
+                                    ]
+                                    try:
+                                        sel_combined = ', '.join(option_selectors)
+                                        await self._page.wait_for_selector(sel_combined, timeout=5000, state='visible')
+                                    except Exception:
+                                        pass
+
+                                    # Click the best matching option via JS (full mouse event sequence
+                                    # needed for React typeahead — plain .click() alone doesn't register)
+                                    clicked_text = await self._page.evaluate("""() => {
+                                        const selectors = [
+                                            '.basic-typeahead__selectable',
+                                            '[role="option"]',
+                                            '.typeahead-input__dropdown-item',
+                                            '.artdeco-typeahead__result',
+                                            '[data-test-typeahead-item]',
+                                            'li[class*="typeahead"]',
+                                            '.artdeco-typeahead__results-list li'
+                                        ];
+                                        let allOpts = [];
+                                        for (const sel of selectors) {
+                                            const items = document.querySelectorAll(sel);
+                                            for (const item of items) {
+                                                if (item.offsetParent !== null || item.getClientRects().length > 0) {
+                                                    const txt = (item.innerText || item.textContent || '').trim();
+                                                    if (txt.length > 1 && !txt.toLowerCase().includes('select')) {
+                                                        allOpts.push({el: item, text: txt});
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (allOpts.length === 0) return null;
+                                        let best = allOpts.find(o =>
+                                            o.text.toLowerCase().includes('bangalore') ||
+                                            o.text.toLowerCase().includes('bengaluru')
+                                        );
+                                        if (!best) best = allOpts[0];
+                                        best.el.click();
+                                        best.el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                        best.el.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                        best.el.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                        return best.text;
+                                    }""")
+                                    if clicked_text:
+                                        print(f"   ✅ Clicked location option: {clicked_text}")
+                                    else:
+                                        # Fallback: Playwright locator click
+                                        found = False
+                                        for sel in option_selectors:
+                                            try:
+                                                opt = self._page.locator(sel).first
+                                                if await opt.count() > 0 and await opt.is_visible():
+                                                    await opt.click(force=True, timeout=2000)
+                                                    print(f"   ✅ Clicked location typeahead option via locator: {sel}")
+                                                    found = True
+                                                    break
+                                            except Exception:
+                                                continue
+                                        if not found:
+                                            print("   ⚠️ No location dropdown options found")
+
+                                    await asyncio.sleep(0.5)
+                                    continue
+                                else:
+                                    print("   ⚠️ Location input not found (no marked input or combobox)")
+                                    await asyncio.sleep(0.5)
+                            except Exception as e:
+                                print(f"   ⚠️ Error during location selection: {e}")
+                                await asyncio.sleep(0.5)
+                            continue
+                        
                         # Check for rate limit in result
                         if 'LINKEDIN_RATE_LIMITED' in next_result:
                             self.linkedin_rate_limit_until = datetime.now() + timedelta(hours=3)
@@ -3161,6 +3222,13 @@ class SentinelAgent:
                                     pass  # Silently handle parse errors
                             print("➡️ Form step continued")
                             submit_attempt_count = 0  # Progress made
+                            # Reset location retry counters — new form step means
+                            # previous location issue was resolved (or was on a
+                            # different step). Without this, the count carries over
+                            # from contact-info to work-experience step, causing
+                            # premature fallback after only 1 retrigger on the new step.
+                            self._location_retrigger_count = 0
+                            self._location_fallback_attempted = False
                             continue
                         elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result:
                             easy_apply_restart_count += 1
@@ -4380,33 +4448,48 @@ class SentinelAgent:
                     return bestMatch ? getAnswerForPattern(bestMatch, detectedType, KNOWN_PATTERNS[bestMatch]) : null;
                 }};
                 
+                // Resolve __DYNAMIC_LWD__ marker to today + 15 days (DD MMM YYYY)
+                const resolveDynamic = (val) => {{
+                    if (val === '__DYNAMIC_LWD__') {{
+                        const d = new Date();
+                        d.setDate(d.getDate() + 15);
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+                        return dd + ' ' + mon + ' ' + d.getFullYear();
+                    }}
+                    return val;
+                }};
+
                 // Get type-aware answer for a matched pattern
                 const getAnswerForPattern = (patternKey, inputType, defaultVal) => {{
                     const data = KNOWN_PATTERNS_WITH_DEFAULTS[patternKey];
-                    if (!data) return defaultVal;
+                    if (!data) return resolveDynamic(defaultVal);
                     const typeDefaults = data.input_type_defaults || {{}};
+                    let answer = defaultVal;
                     // Use input_type_defaults if present for this type
                     if (typeDefaults[inputType]) {{
-                        return typeDefaults[inputType];
+                        answer = typeDefaults[inputType];
                     }}
                     // Fallbacks for radio/checkbox when default is long text
-                    if (inputType === 'radio' || inputType === 'button') {{
-                        if (typeDefaults.radio) return typeDefaults.radio;
-                        if (typeDefaults.yes_no) return typeDefaults.yes_no;
-                        if (typeDefaults.checkbox) return typeDefaults.checkbox;
-                        // Normalize Yes/No from long answer - use word boundaries to avoid false matches like "Noida" containing "no"
-                        const answerLower = defaultVal.toLowerCase();
-                        if (/\\byes\\b/.test(answerLower) && !/\\bno\\b/.test(answerLower)) return 'Yes';
-                        if (/\\bno\\b/.test(answerLower)) return 'No';
+                    else if (inputType === 'radio' || inputType === 'button') {{
+                        if (typeDefaults.radio) answer = typeDefaults.radio;
+                        else if (typeDefaults.yes_no) answer = typeDefaults.yes_no;
+                        else if (typeDefaults.checkbox) answer = typeDefaults.checkbox;
+                        else {{
+                            // Normalize Yes/No from long answer - use word boundaries to avoid false matches like "Noida" containing "no"
+                            const answerLower = defaultVal.toLowerCase();
+                            if (/\\byes\\b/.test(answerLower) && !/\\bno\\b/.test(answerLower)) answer = 'Yes';
+                            else if (/\\bno\\b/.test(answerLower)) answer = 'No';
+                        }}
                     }}
-                    if (inputType === 'checkbox') {{
-                        if (typeDefaults.checkbox) return typeDefaults.checkbox;
-                        if (typeDefaults.yes_no) return typeDefaults.yes_no;
+                    else if (inputType === 'checkbox') {{
+                        if (typeDefaults.checkbox) answer = typeDefaults.checkbox;
+                        else if (typeDefaults.yes_no) answer = typeDefaults.yes_no;
                     }}
-                    if (inputType === 'select' && typeDefaults.select) {{
-                        return typeDefaults.select;
+                    else if (inputType === 'select' && typeDefaults.select) {{
+                        answer = typeDefaults.select;
                     }}
-                    return defaultVal;
+                    return resolveDynamic(answer);
                 }};
                 
                 // LinkedIn-specific overrides for the chatbot loop
@@ -5067,8 +5150,9 @@ class SentinelAgent:
                                 }}
                             }}
                             
-                            // Also try to match by looking for the number in the label
-                            if (!clickedRadio && labelLower.includes(String(answerNumeric))) {{
+                            // Substring match only for non-range labels; range labels are
+                            // collected in matchingRanges above and best-picked post-loop
+                            if (!clickedRadio && nums.length < 2 && labelLower.includes(String(answerNumeric))) {{
                                 if (!radio.checked) {{
                                     radio.click();
                                     clickedRadio = true;
@@ -6124,6 +6208,18 @@ class SentinelAgent:
                     return result;
                 };
 
+                // Resolve __DYNAMIC_LWD__ marker to today + 15 days (DD MMM YYYY)
+                const resolveDynamic = (val) => {
+                    if (val === '__DYNAMIC_LWD__') {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 15);
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+                        return dd + ' ' + mon + ' ' + d.getFullYear();
+                    }
+                    return val;
+                };
+
                 // Multi-pass Fuzzy Matcher implementation with robust pattern matching
                 const fuzzyMatch = (question) => {
                     if (!question) return null;
@@ -6138,7 +6234,7 @@ class SentinelAgent:
                     // --- PASS 1: Exact match (highest priority) ---
                     for (const [key, val] of sortedPatterns) {
                         const keyLower = key.toLowerCase();
-                        if (qLower === keyLower) return val;
+                        if (qLower === keyLower) return resolveDynamic(val);
                     }
                     
                     // --- PASS 2: Substring match (question contains entire pattern key) ---
@@ -6374,7 +6470,11 @@ class SentinelAgent:
                         const lowerLabel = label.toLowerCase();
                         let score = 0;
                         
-                        if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {
+                        // Skip substring shortcut for range labels (e.g. "2-4 years", "4-6 years")
+                        // to avoid "4" matching inside "2-4"; defer to range logic below which
+                        // correctly prefers the range whose lower bound the answer meets.
+                        const isRangeLabel = /\d+\s*[-–to]\s*\d+/.test(lowerLabel);
+                        if (!isRangeLabel && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
                             score = 100;
                         }
                         else if ((/\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving')) &&
@@ -6699,8 +6799,8 @@ class SentinelAgent:
                         }
                     }
                     
-                    return bestMatch;
-                };                
+return resolveDynamic(bestMatch);
+                };
                 
                 // Helper: Check if answer is affirmative
                 const isYes = (ans) => ans && ['yes', 'true', 'agree'].some(w => ans.toLowerCase().includes(w));
@@ -6995,7 +7095,7 @@ class SentinelAgent:
                         };
                         
                         // Helper: Safely fill React controlled inputs
-                        const fillReactInput = (element, value) => {
+                        const fillReactInput = (element, value, skipBlur = false) => {
                             if (!element) return false;
                             const previousValue = element.value;
                             
@@ -7012,18 +7112,81 @@ class SentinelAgent:
                                 element.value = value;
                             }
                             
-                            // 2. Dispatch events
-                            element.dispatchEvent(new Event('input', { bubbles: true }));
-                            element.dispatchEvent(new Event('change', { bubbles: true }));
-                            element.dispatchEvent(new Event('blur', { bubbles: true }));
+                            // 2. Dispatch events (each wrapped — dispatchEvent can throw
+                            // "TypeError: Illegal invocation" on some React-controlled elements,
+                            // and an uncaught error here crashes the entire page.evaluate)
+                            try { element.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+                            try { element.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+                            if (!skipBlur) {
+                                try { element.dispatchEvent(new Event('blur', { bubbles: true })); } catch(e) {}
+                            }
                             
                             // 3. Fallback for stubborn frameworks
                             if (element.value !== value && Reflect.has(element, 'value')) {
-                                Reflect.set(element, 'value', value);
-                                element.dispatchEvent(new Event('input', { bubbles: true }));
+                                try { Reflect.set(element, 'value', value); } catch(e) {}
+                                try { element.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
                             }
                             
                             return element.value !== previousValue || element.value === value;
+                        };
+
+                        // Helper: Schedule an async dropdown-option click (Instahyre pattern).
+                        // page.evaluate returns immediately; this setTimeout keeps running in the
+                        // browser so it can click the first option AFTER the typeahead renders.
+                        // Guards against double-scheduling via window.__sentinelLocClickScheduled.
+                        const scheduleLocationDropdownClick = (input, delayMs) => {
+                            if (window.__sentinelLocClickScheduled) {
+                                console.log('Location dropdown click already scheduled — skipping duplicate');
+                                return;
+                            }
+                            window.__sentinelLocClickScheduled = true;
+                            const locOptionSelectors = [
+                                '.basic-typeahead__selectable',
+                                '[role="option"]',
+                                '.typeahead-input__dropdown-item',
+                                '.artdeco-typeahead__result',
+                                '[data-test-typeahead-item]',
+                                'li[class*="typeahead"]'
+                            ];
+                            const tryClick = (attempt) => {
+                                // Re-focus the input so the dropdown stays open
+                                try { input.focus(); } catch(e) {}
+                                for (const sel of locOptionSelectors) {
+                                    const opts = document.querySelectorAll(sel);
+                                    for (const opt of opts) {
+                                        if (opt.offsetParent !== null || opt.getClientRects().length > 0) {
+                                            const text = (opt.innerText || opt.textContent || '').trim();
+                                            if (text && text.length > 2 &&
+                                                !text.toLowerCase().includes('select') &&
+                                                !text.toLowerCase().includes('choose')) {
+                                                console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', text);
+                                                opt.click();
+                                                opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                                opt.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                                                opt.dispatchEvent(new MouseEvent('mouseup',   { bubbles: true }));
+                                                window.__sentinelLocClickScheduled = false;
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
+                                return false;
+                            };
+                            setTimeout(() => {
+                                let clicked = tryClick(1);
+                                if (!clicked) {
+                                    // Retry a few times with increasing delays — typeahead
+                                    // options render async after a network request.
+                                    let retries = 0;
+                                    const retry = () => {
+                                        retries++;
+                                        if (tryClick(retries + 1)) return;
+                                        if (retries < 8) setTimeout(retry, 250);
+                                        else window.__sentinelLocClickScheduled = false;
+                                    };
+                                    setTimeout(retry, 300);
+                                }
+                            }, delayMs || 500);
                         };
 
                         // 0. FIRST: Check for visible autocomplete/typeahead dropdown options
@@ -7240,14 +7403,22 @@ class SentinelAgent:
                             // Special handling: Location fields that have text but show validation errors
                             // LinkedIn requires selecting from autocomplete dropdown, not just text
                             if (isLocationField && isFieldPreFilled(input) && isVisible(input)) {
-                                // Check if there's a visible validation error on this field
-                                const parentContainer = input.closest('.fb-dash-form-element') || input.closest('.jobs-easy-apply-form-section__question') || input.parentElement?.parentElement;
-                                const hasError = parentContainer && (parentContainer.querySelector('.artdeco-inline-feedback--error') || parentContainer.querySelector('.fb-dash-form-element__error-field'));
-                                const globalError = queryDeep('.artdeco-inline-feedback--error', modal);
+                                // Check if there's a visible validation error on THIS field specifically.
+                                // Do NOT use a global section check — if the error is on a different field,
+                                // re-triggering the location won't help and causes an infinite loop.
+                                const parentContainer = input.closest('.fb-dash-form-element') || input.closest('.artdeco-text-input--error') || input.parentElement;
+                                const hasLocationError = !!(
+                                    input.getAttribute('aria-invalid') === 'true' ||
+                                    input.classList.contains('artdeco-text-input--error') ||
+                                    (parentContainer && (parentContainer.querySelector('.artdeco-inline-feedback--error') || parentContainer.querySelector('.fb-dash-form-element__error-field')))
+                                );
                                 
-                                if (hasError || globalError) {
+                                if (hasLocationError) {
                                     console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
                                     const currentVal = input.value;
+                                    
+                                    // Mark this input so the Python handler can find it via Playwright
+                                    input.setAttribute('data-sentinel-location', 'true');
                                     
                                     // Try a different strategy: click the input field multiple times to open dropdown
                                     input.click();
@@ -7260,6 +7431,12 @@ class SentinelAgent:
                                     input.dispatchEvent(new Event('focus', { bubbles: true }));
                                     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
                                     input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true }));
+                                    
+                                    // Instahyre-style: schedule an async click on the first
+                                    // dropdown option so the browser clicks it once the typeahead
+                                    // re-renders (the validation error means the previous text
+                                    // wasn't a real selection — we need to pick from the dropdown).
+                                    scheduleLocationDropdownClick(input, 500);
                                     
                                     return 'LINKEDIN_LOCATION_RETRIGGERED';
                                 }
@@ -7310,17 +7487,54 @@ class SentinelAgent:
                                 continue;
                             }
                             
-                            // If field is pre-filled but HAS a validation error, re-trigger
-                            // the existing value to force React to recognize it
+                            // If field is pre-filled but HAS a validation error:
+                            // Try to resolve the real answer instead of repeating a broken value (like "Please provide")
                             if (isFieldPreFilled(input) && hasError) {
-                                const existingValue = readFieldValue(input);
-                                console.log('Re-triggering pre-filled field with error:', labelText, '=', existingValue);
-                                fillReactInput(input, existingValue);
-                                // Also try focus+blur to clear validation
-                                input.focus();
-                                input.dispatchEvent(new Event('focus', { bubbles: true }));
-                                input.dispatchEvent(new Event('blur', { bubbles: true }));
-                                formResults.push({ question: labelText || '(re-triggered)', answer: existingValue, inputType: 'text', retriggered: true });
+                                let existingValue = readFieldValue(input);
+                                const isObviousInvalid = !existingValue || /please provide|not applicable|unanswered/i.test(existingValue);
+                                let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
+                                if (!resolvedAnswer) {
+                                    if (/first\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
+                                    else if (/last\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
+                                    else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
+                                    else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
+                                    else if (/your\s*title|job\s*title|designation|role\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
+                                    else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
+                                }
+                                
+                                // Only overwrite the existing value if it is obviously invalid
+                                // (empty, "please provide", etc.). If the existing value looks valid,
+                                // the error is likely stale from a previous submission attempt —
+                                // keep the value and just dispatch focus/blur to clear validation.
+                                let finalValue;
+                                if (isObviousInvalid) {
+                                    finalValue = resolvedAnswer || existingValue;
+                                } else {
+                                    finalValue = existingValue;
+                                }
+                                console.log('Pre-filled field with error:', labelText, '| existing:', existingValue, '| isObviousInvalid:', isObviousInvalid, '-> final:', finalValue);
+                                
+                                // FIX: If the field id contains "numeric" or the value contains non-numeric
+                                // chars (like "LPA"), strip non-numeric characters (keep digits and decimal point).
+                                const fieldId = input.id || '';
+                                const isNumericField = /numeric/i.test(fieldId) || input.type === 'number';
+                                if (isNumericField && finalValue) {
+                                    const numericVal = finalValue.replace(/[^0-9.]/g, '');
+                                    if (numericVal && numericVal !== finalValue) {
+                                        console.log('Numeric field — stripping non-numeric chars:', finalValue, '->', numericVal);
+                                        finalValue = numericVal;
+                                    }
+                                }
+                                
+                                // Only call fillReactInput if we're actually changing the value
+                                if (finalValue !== existingValue) {
+                                    fillReactInput(input, finalValue);
+                                }
+                                // Dispatch focus/blur to clear stale validation errors
+                                try { input.focus(); } catch(e) {}
+                                try { input.dispatchEvent(new Event('focus', { bubbles: true })); } catch(e) {}
+                                try { input.dispatchEvent(new Event('blur', { bubbles: true })); } catch(e) {}
+                                formResults.push({ question: labelText || '(re-triggered)', answer: finalValue, inputType: 'text', retriggered: true });
                                 continue;
                             }
                             
@@ -7403,6 +7617,12 @@ class SentinelAgent:
                                     const isNeg = ynNegInd.some(p => combinedText.includes(p));
                                     answer = isNeg ? 'No' : 'Yes';
                                     console.log('LinkedIn form: Yes/no keyword fallback, answer:', answer, '| text:', combinedText.substring(0, 80));
+                                } else if (combinedText.includes('your title') || combinedText.includes('job title') || combinedText.includes('role title') || combinedText.includes('designation')) {
+                                    answer = 'Software Engineer';
+                                    console.log('Fallback: Filling job title');
+                                } else if (combinedText.includes('company name') || combinedText.includes('employer') || (combinedText.includes('company') && !combinedText.includes('relatives') && !combinedText.includes('worked with') && !combinedText.includes('associated with') && !combinedText.includes('promoted'))) {
+                                    answer = 'Everbridge';
+                                    console.log('Fallback: Filling company');
                                 } else if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
                                     answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
                                     console.log('Fallback: Filling skill set field');
@@ -7433,9 +7653,9 @@ class SentinelAgent:
                                 } else if (combinedText.includes('full name') || combinedText.includes('your name') || combinedText.includes('candidate name')) {
                                     answer = 'Siddhant Singh';
                                     console.log('Fallback: Filling name field');
-                                } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should') || combinedText.includes('why do you want') || combinedText.includes('tell us about') || combinedText.includes('anything else')) {
+                                } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should') || combinedText.includes('why do you want') || combinedText.includes('tell us about') || combinedText.includes('anything else') || combinedText.includes('description')) {
                                     answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
-                                    console.log('Fallback: Filling summary/cover letter');
+                                    console.log('Fallback: Filling summary/cover letter/description');
                                 } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('how soon')) {
                                     answer = '7';
                                     console.log('Fallback: Filling notice/join period');
@@ -7476,21 +7696,32 @@ class SentinelAgent:
                                 // hasError before the answer was known, which could leave a
                                 // field empty (and trigger "this field is required").
                                 if (hasError) {
-                                    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                                    if (nativeSetter) nativeSetter.call(input, '');
-                                    else input.value = '';
-                                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                                    input.dispatchEvent(new Event('change', { bubbles: true }));
-                                    console.log('Cleared invalid field before refill:', labelText);
+                                    try {
+                                        const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                        const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                                        if (nativeSetter) nativeSetter.call(input, '');
+                                        else input.value = '';
+                                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        console.log('Cleared invalid field before refill:', labelText);
+                                    } catch (clearErr) {
+                                        console.log('Non-critical error clearing field:', clearErr.message);
+                                    }
                                 }
                                 
-                                fillReactInput(input, answer);
+                                // Skip blur for location fields — blur closes the typeahead dropdown
+                                // before it can render options
+                                fillReactInput(input, answer, isLocationField);
                                 
                                 formResults.push({ question: labelText || '(unlabeled)', answer: answer, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text' });
                                 
                                 // If this is a location field, trigger autocomplete dropdown
                                 if (isLocationField) {
                                     console.log('Location field filled — triggering autocomplete dropdown...');
+                                    
+                                    // Mark this input so the Python handler can find it via Playwright
+                                    input.setAttribute('data-sentinel-location', 'true');
+                                    
                                     input.focus();
                                     input.dispatchEvent(new Event('input', { bubbles: true }));
                                     input.dispatchEvent(new Event('focus', { bubbles: true }));
@@ -7498,6 +7729,13 @@ class SentinelAgent:
                                     
                                     // Keep the input visible and focused for dropdown to appear
                                     input.scrollIntoView({block: 'center', behavior: 'instant'});
+                                    
+                                    // Instahyre-style: schedule an async click on the first
+                                    // dropdown option. This runs in the browser AFTER evaluate
+                                    // returns, so it catches the typeahead options once they
+                                    // render async (LinkedIn loads them via XHR). Removes the
+                                    // race against the Python-side retype fallback.
+                                    scheduleLocationDropdownClick(input, 500);
                                     
                                     return 'LINKEDIN_LOCATION_FILLED_WAITING_DROPDOWN';
                                 }
@@ -9298,23 +9536,70 @@ class SentinelAgent:
                             console.log('Scrolled modal content to bottom to reveal lazy buttons');
                         }
                         
+                        // Helper: Reject non-progression buttons like "Add", "Add more", "Cancel", "Back", etc.
+                        const isInvalidActionButton = (btn) => {
+                            if (!btn) return true;
+                            const txt = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                            const aria = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
+                            const combined = (txt + ' ' + aria).trim();
+                            
+                            // Explicitly reject any "Add" buttons (e.g. Add work experience, Add education, Add more, + Add)
+                            if (/\badd\b/i.test(combined) || combined.startsWith('+') || combined.includes('add more') || 
+                                combined.includes('add work') || combined.includes('add experience') || 
+                                combined.includes('add education') || combined.includes('add license') || 
+                                combined.includes('add position') || combined.includes('add certificate') ||
+                                combined.includes('add skill') || combined.includes('add resume')) {
+                                return true;
+                            }
+                            
+                            // Reject navigation/cancel/back buttons
+                            if (combined === 'back' || combined.includes('go back') || combined === 'cancel' || 
+                                combined === 'dismiss' || combined === 'close' || combined === 'discard' || 
+                                combined.includes('delete') || combined.includes('remove') || combined.includes('edit')) {
+                                return true;
+                            }
+                            
+                            return false;
+                        };
+
                         // Find action buttons (Review, Next, Submit)
                         // NOTE: 'review your application' (not just 'review') to avoid
                         // matching "Review job post" on the safety reminder modal.
                         console.log('Searching for primary action button...');
-                        const modalFooter = queryDeep('footer', modal);
-                        const primaryBtn = queryDeep('button[aria-label*="Review your application"]', modal) ||
-                                         queryDeep('button[aria-label*="Continue to next step"]', modal) ||
-                                         queryDeep('button[aria-label*="next step"]', modal) ||
-                                         queryDeep('button[aria-label*="Submit application"]', modal) ||
-                                         queryDeep('button[data-easy-apply-next-button]', modal) ||
-                                         queryDeep('button[data-live-test-easy-apply-next-button]', modal) ||
-                                         queryDeep('button[data-live-test-easy-apply-review-button]', modal) ||
-                                         queryDeep('.jobs-apply-button--primary', modal) ||
-                                         findByText('button', 'submit application', false, modal) ||
-                                         findByText('button', 'review your application', false, modal) ||
-                                         (modalFooter ? findByText('button', 'review', false, modalFooter) : null) ||
-                                         findByText('button', 'next', false, modal);
+                        const modalFooter = queryDeep('footer, .artdeco-modal__actionbar, .jobs-easy-apply-modal__actionbar', modal) || modal;
+                        const buttonCandidates = [
+                            queryDeep('button[aria-label*="Submit application"]', modalFooter),
+                            queryDeep('button[aria-label*="Review your application"]', modalFooter),
+                            queryDeep('button[aria-label*="Continue to next step"]', modalFooter),
+                            queryDeep('button[aria-label*="next step"]', modalFooter),
+                            queryDeep('button[data-easy-apply-next-button]', modalFooter),
+                            queryDeep('button[data-live-test-easy-apply-next-button]', modalFooter),
+                            queryDeep('button[data-live-test-easy-apply-review-button]', modalFooter),
+                            findByText('button', 'submit application', false, modalFooter),
+                            findByText('button', 'review your application', false, modalFooter),
+                            findByText('button', 'review', true, modalFooter),
+                            findByText('button', 'next', true, modalFooter),
+                            findByText('button', 'next', false, modalFooter),
+                            findByText('button', 'continue', false, modalFooter),
+                            queryDeep('button.artdeco-button--primary', modalFooter),
+                            queryDeep('.jobs-apply-button--primary', modalFooter),
+                            // Fallback to whole modal if not found in footer
+                            queryDeep('button[aria-label*="Submit application"]', modal),
+                            queryDeep('button[aria-label*="Review your application"]', modal),
+                            queryDeep('button[aria-label*="Continue to next step"]', modal),
+                            findByText('button', 'submit application', false, modal),
+                            findByText('button', 'review your application', false, modal),
+                            findByText('button', 'next', true, modal),
+                            findByText('button', 'next', false, modal)
+                        ];
+
+                        let primaryBtn = null;
+                        for (const cand of buttonCandidates) {
+                            if (cand && isVisible(cand) && !isInvalidActionButton(cand)) {
+                                primaryBtn = cand;
+                                break;
+                            }
+                        }
 
                         if (primaryBtn) {
                             // Only click if form is valid
@@ -9362,12 +9647,22 @@ class SentinelAgent:
                         // button phrasings. Never match generic 'next' globally — that matches the
                         // job search results pagination button and dismisses the modal.
                         console.log('No button found in modal, trying conservative global fallback (no generic next)...');
-                        const globalPrimaryBtn = queryDeep('button[aria-label*="Review your application"]') ||
-                                                 queryDeep('button[aria-label*="Submit application"]') ||
-                                                 queryDeep('button[data-live-test-easy-apply-review-button]') ||
-                                                 findByText('button', 'submit application') ||
-                                                 findByText('button', 'review your application') ||
-                                                 findByText('button', 'review');
+                        const globalCandidates = [
+                            queryDeep('button[aria-label*="Review your application"]'),
+                            queryDeep('button[aria-label*="Submit application"]'),
+                            queryDeep('button[data-live-test-easy-apply-review-button]'),
+                            findByText('button', 'submit application'),
+                            findByText('button', 'review your application'),
+                            findByText('button', 'review', true)
+                        ];
+                        let globalPrimaryBtn = null;
+                        for (const cand of globalCandidates) {
+                            if (cand && isVisible(cand) && !isInvalidActionButton(cand)) {
+                                globalPrimaryBtn = cand;
+                                break;
+                            }
+                        }
+
                         if (globalPrimaryBtn && isVisible(globalPrimaryBtn)) {
                             if (checkForErrors()) {
                                 // Same force-proceed logic as primary button
@@ -10321,13 +10616,123 @@ class SentinelAgent:
                             }
                         }
                         
-                        // Try dropdown
-                        const select = document.querySelector('select');
-                        if (select && select.offsetParent !== null && select.selectedIndex <= 0 && select.options.length > 1) {
-                            select.selectedIndex = 1;
+                        // ─── TYPEAHEAD / AUTOCOMPLETE LOCATION HANDLING ─────────────
+                        // Naukri chatbot can render location as a custom typeahead input
+                        // (input[role="combobox"] / aria-autocomplete="list") rather than a
+                        // native <select>. The old code only handled <select>, so these
+                        // location questions were never answered. Mirror the Instahyre
+                        // pattern: type the city, then schedule an async click on the
+                        // first dropdown option once it renders.
+                        const isNaukriLocQ = qLower.includes('city') || qLower.includes('location') ||
+                                              qLower.includes('relocate') || qLower.includes('preferred');
+                        if (isNaukriLocQ) {
+                            // Find a typeahead input inside the chatbot layer
+                            const chatLayerEl = document.querySelector('.chatbot_DrawerContentWrapper, .chatbot_Drawer, [class*="ChatbotContainer"]') || document;
+                            let typeaheadInput = chatLayerEl.querySelector('input[role="combobox"]') ||
+                                                 chatLayerEl.querySelector('input[aria-autocomplete="list"]') ||
+                                                 chatLayerEl.querySelector('input[type="text"][autocomplete="off"]');
+                            // Fallback: any visible text input that is NOT the contenteditable answer box
+                            if (!typeaheadInput) {
+                                const candidates = chatLayerEl.querySelectorAll('input[type="text"], input:not([type])');
+                                for (const c of candidates) {
+                                    if (c.offsetParent !== null && c !== inputDiv) { typeaheadInput = c; break; }
+                                }
+                            }
+                            if (typeaheadInput && typeaheadInput.offsetParent !== null) {
+                                const locAnswer = 'Bangalore';
+                                console.log('NAUKRI DEBUG: typeahead location input found, typing:', locAnswer);
+                                typeaheadInput.focus();
+                                typeaheadInput.click();
+                                const locSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                if (locSetter) locSetter.call(typeaheadInput, locAnswer);
+                                typeaheadInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                typeaheadInput.dispatchEvent(new Event('focus', { bubbles: true }));
+                                typeaheadInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+                                // Schedule async click on first dropdown option (Instahyre pattern)
+                                const nkLocSelectors = [
+                                    '[role="option"]', '.basic-typeahead__selectable',
+                                    'li[class*="option"]', '.search-suggestion',
+                                    '.dropdown-item', '.typeahead-item', '.suggestion-item',
+                                    '.selectize-dropdown .option', '.ui-menu-item'
+                                ];
+                                const nkTryClick = () => {
+                                    for (const sel of nkLocSelectors) {
+                                        const opts = document.querySelectorAll(sel);
+                                        for (const opt of opts) {
+                                            if (opt.offsetParent !== null || opt.getClientRects().length > 0) {
+                                                const t = (opt.innerText || opt.textContent || '').trim();
+                                                if (t && t.length > 2 && !t.toLowerCase().includes('select')) {
+                                                    console.log('NAUKRI DEBUG: clicking typeahead option:', t);
+                                                    opt.click();
+                                                    opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                                    // Click send button after a short delay
+                                                    setTimeout(() => {
+                                                        const sb = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                                        if (sb) sb.click();
+                                                    }, 300);
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    return false;
+                                };
+                                setTimeout(() => {
+                                    if (nkTryClick()) return;
+                                    let r = 0;
+                                    const retry = () => { r++; if (nkTryClick()) return; if (r < 8) setTimeout(retry, 250); };
+                                    setTimeout(retry, 300);
+                                }, 500);
+                                return 'NAUKRI_CHAT_LOCATION_TYPEAHEAD: ' + qText.slice(0, 40);
+                            }
+                        }
+
+                        // ─── NATIVE <select> DROPDOWN (smarter matching) ──────────────
+                        // Old code blindly picked selectedIndex=1 on the FIRST select. Now:
+                        // 1. Iterate ALL visible selects (chatbot can have multiple).
+                        // 2. Try to match option text against the answer (e.g. "Bangalore",
+                        //    "Serving Notice Period") via fuzzy/substring match.
+                        // 3. Fall back to index 1 only if no match found.
+                        const allSelects = document.querySelectorAll('select');
+                        for (const select of allSelects) {
+                            if (select.offsetParent === null) continue;
+                            if (select.options.length <= 1) continue;
+                            if (select.selectedIndex > 0) continue; // already chosen
+
+                            // Determine the target answer for this dropdown
+                            let selAnswer = fuzzyMatch(qText) || '';
+                            const isLocSelect = qLower.includes('city') || qLower.includes('location') || qLower.includes('relocate');
+                            if (isLocSelect) selAnswer = 'Bangalore';
+                            if (!selAnswer) selAnswer = answer || '';
+
+                            // Try to find a matching option
+                            let matched = null;
+                            if (selAnswer) {
+                                const aLower = selAnswer.toLowerCase();
+                                const aKey = aLower.split(/[\/,]/)[0].trim().split(' ')[0];
+                                for (let i = 1; i < select.options.length; i++) {
+                                    const oText = (select.options[i].text || '').toLowerCase();
+                                    if (oText.includes(aLower) || oText.includes(aKey)) { matched = select.options[i]; break; }
+                                }
+                                // Notice period special-case
+                                if (!matched && (qLower.includes('notice') || qLower.includes('serving'))) {
+                                    for (let i = 1; i < select.options.length; i++) {
+                                        const oText = (select.options[i].text || '').toLowerCase();
+                                        if (oText.includes('serving')) { matched = select.options[i]; break; }
+                                    }
+                                }
+                            }
+                            // Fallback: first real option (skip placeholder at index 0)
+                            if (!matched) matched = select.options[1];
+
+                            select.value = matched.value;
+                            if (select.value !== matched.value) select.selectedIndex = matched.index;
+                            select.dispatchEvent(new Event('input', { bubbles: true }));
                             select.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('NAUKRI DEBUG: select matched:', matched.text, 'for q:', qText.slice(0, 30));
                             const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                            if (saveBtn) { saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED'; }
+                            if (saveBtn) { saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED: ' + matched.text; }
                         }
                         
                         // Try radio buttons - enhanced logic with better matching

@@ -254,9 +254,9 @@ class TestExistingPatternsRegression(unittest.TestCase):
 
     def test_experience_years(self):
         ans, score = self.agent._fuzzy_match_question('How Many Years of work experience do you have')
-        # Default platform (Naukri-style) must return "4 Years", not bare "4".
+        # Default platform (Naukri-style) must return "4.2 Years", not bare "4.2".
         # LinkedIn platform override is tested separately in test_known_qa_reliability.
-        self.assertEqual(ans, '4 Years')
+        self.assertEqual(ans, '4.2 Years')
         self.assertGreater(score, 0.6)
 
 

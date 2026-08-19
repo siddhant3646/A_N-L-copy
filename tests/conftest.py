@@ -153,14 +153,24 @@ def sample_qa_patterns():
         "experience": {
             "patterns": ["years of experience", "total experience", "work experience"],
             "category": "experience",
-            "default": "4",
-            "numeric_default": "4"
+            "default": "4.2",
+            "numeric_default": "4.2"
         },
         "notice_period": {
             "patterns": ["notice period", "serving notice", "np"],
             "category": "notice_period",
             "default": "Serving Notice Period",
             "numeric_default": "30"
+        },
+        "last_working_date": {
+            "patterns": ["last working date", "what is your lwd", "lwd date"],
+            "category": "notice_period",
+            "default": "__DYNAMIC_LWD__",
+            "input_type_defaults": {
+                "text": "__DYNAMIC_LWD__",
+                "date": "__DYNAMIC_LWD__"
+            },
+            "priority": 13
         },
         "location": {
             "patterns": ["current location", "current city", "where are you located"],
@@ -175,11 +185,11 @@ def sample_questions():
     """Sample questions for testing pattern matching."""
     return [
         ("What is your current salary?", "13.5 LPA", "salary"),
-        ("How many years of experience do you have?", "4", "experience"),
+        ("How many years of experience do you have?", "4.2", "experience"),
         ("What is your notice period?", "Serving Notice Period", "notice_period"),
         ("Where are you currently located?", "Bangalore", "location"),
         ("Current CTC in LPA?", "13.5", "salary"),
-        ("Total years of experience", "4", "experience"),
+        ("Total years of experience", "4.2", "experience"),
     ]
 
 

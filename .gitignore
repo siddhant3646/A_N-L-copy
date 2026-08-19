@@ -55,3 +55,27 @@ coverage.xml
 
 # Pattern audit loop output
 audit/
+
+# Ruff linter cache
+.ruff_cache/
+
+# Graphify output
+graphify-out/
+src/graphify-out/
+tests/graphify-out/
+
+# Generated payloads
+new_patterns_payload.json
+
+# OpenCode node_modules
+.opencode/node_modules/
+
+# Agent framework (unrelated)
+.agent/
+
+# Accidental broken f-string output
+score=*
+
+# Config backups
+*.bak
+*.backup_*.json

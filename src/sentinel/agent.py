@@ -4507,14 +4507,14 @@ class SentinelAgent:
                             const v = KNOWN_PATTERNS[k];
                             if (v && typeof v === 'string') {{
                                 if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {{
-                                    const match = v.match(/(\d+)/);
+                                    const match = v.match(/(\\d+)/);
                                     KNOWN_PATTERNS[k] = match ? match[1] : '15';
                                     
                                     if (defaultObj.input_type_defaults) {{
                                         Object.keys(defaultObj.input_type_defaults).forEach(type => {{
                                             const typeVal = defaultObj.input_type_defaults[type];
                                             if (typeof typeVal === 'string' && typeVal.includes('days')) {{
-                                                const typeMatch = typeVal.match(/(\d+)/);
+                                                const typeMatch = typeVal.match(/(\\d+)/);
                                                 defaultObj.input_type_defaults[type] = typeMatch ? typeMatch[1] : '15';
                                             }}
                                         }});
@@ -4534,7 +4534,7 @@ class SentinelAgent:
                     noticeKeys.forEach(k => {{
                         const v = KNOWN_PATTERNS[k];
                         if (v && v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {{
-                            const match = v.match(/(\d+)/);
+                            const match = v.match(/(\\d+)/);
                             KNOWN_PATTERNS[k] = match ? match[1] : '15';
                         }} else if (KNOWN_PATTERNS[k]) {{
                             KNOWN_PATTERNS[k] = 'Serving Notice Period';
@@ -4557,15 +4557,15 @@ class SentinelAgent:
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (!defaultObj || defaultObj.category !== 'experience') return;
                         const flatVal = KNOWN_PATTERNS[k];
-                        if (typeof flatVal === 'string' && /\d+\s*Years?/i.test(flatVal)) {{
-                            const m = flatVal.match(/(\d+(?:\.\d+)?)/);
+                        if (typeof flatVal === 'string' && /\\d+\\s*Years?/i.test(flatVal)) {{
+                            const m = flatVal.match(/(\\d+(?:\\.\\d+)?)/);
                             KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
                         }}
                         if (defaultObj.input_type_defaults) {{
                             Object.keys(defaultObj.input_type_defaults).forEach(t => {{
                                 const tv = defaultObj.input_type_defaults[t];
-                                if (typeof tv === 'string' && /\d+\s*Years?/i.test(tv)) {{
-                                    const m = tv.match(/(\d+(?:\.\d+)?)/);
+                                if (typeof tv === 'string' && /\\d+\\s*Years?/i.test(tv)) {{
+                                    const m = tv.match(/(\\d+(?:\\.\\d+)?)/);
                                     defaultObj.input_type_defaults[t] = m ? m[1] : tv;
                                 }}
                             }});
@@ -4729,7 +4729,7 @@ class SentinelAgent:
                         // Override if answer is null, "1", starts with a digit (numeric result
                         // from generic "experience" pattern matching "Do you have experience..."),
                         // OR is a non-yes/no answer that's not a known exception
-                        const isNumericResult = answer && /^\d/.test(answer.trim());
+                        const isNumericResult = answer && /^\\d/.test(answer.trim());
                         const answerLowerYN = answer ? answer.toLowerCase().trim() : '';
                         // Use word-boundary regex to avoid false matches like "Noida" containing "no"
                         const hasYesOrNo = /\\byes\\b/.test(answerLowerYN) || /\\bno\\b/.test(answerLowerYN);
@@ -5027,7 +5027,7 @@ class SentinelAgent:
                     const answerLower = answer.toLowerCase();
                     
                     // Extract numeric value from answer (e.g., "4 Years" -> 4)
-                    const answerNumericMatch = answer.match(/(\d+\.?\d*)/);
+                    const answerNumericMatch = answer.match(/(\\d+\\.?\\d*)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
                     console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
                     
@@ -5061,7 +5061,7 @@ class SentinelAgent:
                         
                         // TEXT MATCH: for non-numeric answers, find best text overlap
                         if (!answerNumeric) {{
-                            const words = answerLower.split(/\s+/).filter(w => w.length > 2);
+                            const words = answerLower.split(/\\s+/).filter(w => w.length > 2);
                             let matchCount = 0;
                             for (const w of words) {{
                                 if (labelLower.includes(w)) matchCount++;
@@ -5088,7 +5088,7 @@ class SentinelAgent:
                         }}
                         // Match No for negative answers — guard: skip if label starts with "yes"
                         if ((/\\bno\\b/.test(answerLower) || answerLower.includes('false')) && 
-                            (labelLower === 'no' || labelLower.startsWith('no') || /(\bno\b|^no\b|\bno$)/.test(labelLower)) &&
+                            (labelLower === 'no' || labelLower.startsWith('no') || /(\\bno\\b|^no\\b|\\bno$)/.test(labelLower)) &&
                             !labelLower.startsWith('yes')) {{
                             if (!radio.checked) {{
                                 radio.click();
@@ -5102,7 +5102,7 @@ class SentinelAgent:
                         // Collect all matching ranges to pick the one where answer is closest to lower bound
                         if (answerNumeric !== null && !clickedRadio) {{
                             // Extract numbers from label (e.g., "3-5 years" -> [3, 5])
-                            const labelNumbers = labelLower.match(/(\d+\.?\d*)/g);
+                            const labelNumbers = labelLower.match(/(\\d+\\.?\\d*)/g);
                             if (labelNumbers) {{
                                 const nums = labelNumbers.map(n => parseFloat(n));
                                 // Check if answer falls within range
@@ -5114,8 +5114,8 @@ class SentinelAgent:
                                     }}
                                 }} else if (nums.length === 1) {{
                                     // Single number match — detect direction (text + symbol prefixes)
-                                    const isLess = /less\s+than|under|up\s+to|^<\s*\d/i.test(labelLower);
-                                    const isMore = /more\s+than|over|above|plus|^>\s*\d/i.test(labelLower);
+                                    const isLess = /less\\s+than|under|up\\s+to|^<\\s*\\d/i.test(labelLower);
+                                    const isMore = /more\\s+than|over|above|plus|^>\\s*\\d/i.test(labelLower);
                                     if (isLess) {{
                                         // "Less than X" → answer must be below X
                                         if (answerNumeric < nums[0]) {{
@@ -6095,7 +6095,7 @@ class SentinelAgent:
                             const v = KNOWN_PATTERNS[k];
                             if (v && typeof v === 'string') {
                                 if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
-                                    const match = v.match(/(\d+)/);
+                                    const match = v.match(/(\\d+)/);
                                     KNOWN_PATTERNS[k] = match ? match[1] : '15';
                                     
                                     // Also override the input_type_defaults if present
@@ -6103,7 +6103,7 @@ class SentinelAgent:
                                         Object.keys(defaultObj.input_type_defaults).forEach(type => {
                                             const typeVal = defaultObj.input_type_defaults[type];
                                             if (typeof typeVal === 'string' && typeVal.includes('days')) {
-                                                const typeMatch = typeVal.match(/(\d+)/);
+                                                const typeMatch = typeVal.match(/(\\d+)/);
                                                 defaultObj.input_type_defaults[type] = typeMatch ? typeMatch[1] : '15';
                                             }
                                         });
@@ -6145,7 +6145,7 @@ class SentinelAgent:
                     noticeKeys.forEach(k => {
                         const v = KNOWN_PATTERNS[k];
                         if (v && v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
-                            const match = v.match(/(\d+)/);
+                            const match = v.match(/(\\d+)/);
                             KNOWN_PATTERNS[k] = match ? match[1] : '15';
                         }
                     });
@@ -6171,15 +6171,15 @@ class SentinelAgent:
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (!defaultObj || defaultObj.category !== 'experience') return;
                         const flatVal = KNOWN_PATTERNS[k];
-                        if (typeof flatVal === 'string' && /\d+\s*Years?/i.test(flatVal)) {
-                            const m = flatVal.match(/(\d+(?:\.\d+)?)/);
+                        if (typeof flatVal === 'string' && /\\d+\\s*Years?/i.test(flatVal)) {
+                            const m = flatVal.match(/(\\d+(?:\\.\\d+)?)/);
                             KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
                         }
                         if (defaultObj.input_type_defaults) {
                             Object.keys(defaultObj.input_type_defaults).forEach(t => {
                                 const tv = defaultObj.input_type_defaults[t];
-                                if (typeof tv === 'string' && /\d+\s*Years?/i.test(tv)) {
-                                    const m = tv.match(/(\d+(?:\.\d+)?)/);
+                                if (typeof tv === 'string' && /\\d+\\s*Years?/i.test(tv)) {
+                                    const m = tv.match(/(\\d+(?:\\.\\d+)?)/);
                                     defaultObj.input_type_defaults[t] = m ? m[1] : tv;
                                 }
                             });
@@ -6196,7 +6196,7 @@ class SentinelAgent:
 
                 // Keyword extraction: normalize synonyms, strip stop words
                 const extractKeywords = (text) => {
-                    const words = text.replace(/[^\w\s]/g, ' ').toLowerCase().split(/\s+/);
+                    const words = text.replace(/[^\\w\\s]/g, ' ').toLowerCase().split(/\\s+/);
                     const normalized = words.map(w => SYNONYMS[w] || w);
                     return new Set(normalized.filter(w => !STOP_WORDS_SET.has(w) && w.length > 1));
                 };
@@ -6255,18 +6255,18 @@ class SentinelAgent:
                     // --- PASS 3: Contains-words match (all significant pattern words exist in question) ---
                     // This handles: "owned backend architecture end to end" pattern vs "Have you owned backend architecture end to end, from design to production deployment?"
                     if (!bestMatch) {
-                        const qWords = new Set(qLower.split(/\s+/));
+                        const qWords = new Set(qLower.split(/\\s+/));
                         for (const [key, val] of sortedPatterns) {
                             const keyLower = key.toLowerCase();
                             if (EXACT_MATCH_KEYS.has(keyLower)) continue;
-                            const keyWords = keyLower.split(/\s+/).filter(w => w.length > 2);
+                            const keyWords = keyLower.split(/\\s+/).filter(w => w.length > 2);
                             if (keyWords.length < 2) continue; // Only for multi-word patterns
                             
                             // Check if ALL significant words from pattern exist in question
                             const allWordsFound = keyWords.every(word => qWords.has(word) || qLower.includes(word));
                             if (allWordsFound) {
                                 // Score based on coverage ratio
-                                const score = keyWords.length / Math.max(qLower.split(/\s+/).length, keyWords.length);
+                                const score = keyWords.length / Math.max(qLower.split(/\\s+/).length, keyWords.length);
                                 if (score > bestScore || (score === bestScore && key.length > bestKeyLen)) {
                                     bestMatch = val;
                                     bestKeyLen = key.length;
@@ -6299,9 +6299,9 @@ class SentinelAgent:
                     // --- PASS 5: Smart type-based defaults (safety net) ---
                     if (!bestMatch) {
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
-                        const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
-                        const isYearsQ = /years\b/.test(qLower) && !isSalaryQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ;
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
+                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ;
                         // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
@@ -6329,8 +6329,8 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\byear\b|months|exp\.?\b/.test(qLower) && !isSalaryQ;
-                        const isNoticeQ = /notice\s*period|serving\s*notice|lwd/.test(qLower);
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ;
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
                         if (isSalaryQ) {
@@ -6344,12 +6344,12 @@ class SentinelAgent:
                             } else {
                                 bestMatch = '2300000';
                             }
-                        } else if (isExpQ && !/\d/.test(bestMatch)) {
-                            if (/how many|years|months|\bexp\b/i.test(qLower)) {
+                        } else if (isExpQ && !/\\d/.test(bestMatch)) {
+                            if (/how many|years|months|\\bexp\\b/i.test(qLower)) {
                                 // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
-                        } else if (isNoticeQ && !/\d/.test(bestMatch)) {
+                        } else if (isNoticeQ && !/\\d/.test(bestMatch)) {
                             bestMatch = '15';
                         }
                     }
@@ -6363,7 +6363,7 @@ class SentinelAgent:
                     const ans = answer.toLowerCase().trim();
                     
                     // Extract numeric value from answer for range matching
-                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     // Extract the integer part for exact matching (e.g., "4" -> 4)
                     const answerInt = Math.floor(answerNum);                    const MIN_MATCH_SCORE = 10; // Don't select if no meaningful match found
@@ -6376,7 +6376,7 @@ class SentinelAgent:
                         let score = 0;
                         
                         // Extract number from option text for numeric comparison
-                        const optNumMatch = text.match(/^(\d+(?:\.\d+)?)/);
+                        const optNumMatch = text.match(/^(\\d+(?:\\.\\d+)?)/);
                         const optNum = optNumMatch ? parseFloat(optNumMatch[1]) : -1;
                         const hasAnswerNum = numMatch !== null; // true if answer contains any number (including 0)
                         
@@ -6418,7 +6418,7 @@ class SentinelAgent:
                         else if (answerNum > 0) {
                             // Strip commas from option text to handle Indian/intl number formats
                             const textNoCommas = text.replace(/,/g, '');
-                            const rangeMatch = textNoCommas.match(/(\d+(?:\.\d+)?)\s*(?:[-–]|\bto\b)\s*(\d+(?:\.\d+)?)/);
+                            const rangeMatch = textNoCommas.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
                             if (rangeMatch) {
                                 const min = parseFloat(rangeMatch[1]);
                                 const max = parseFloat(rangeMatch[2]);
@@ -6431,7 +6431,7 @@ class SentinelAgent:
                             }
                             // Match "X+" patterns (e.g., answer='4' matches option='3+ years')
                             else {
-                                const plusMatch = text.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                const plusMatch = text.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
                                 if (plusMatch && answerNum >= parseFloat(plusMatch[1])) {
                                     score = 75;
                                 }
@@ -6462,7 +6462,7 @@ class SentinelAgent:
                     let bestRadio = null;
                     let bestScore = -1;
                     
-                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     
                     for (const radio of radios) {
@@ -6473,23 +6473,23 @@ class SentinelAgent:
                         // Skip substring shortcut for range labels (e.g. "2-4 years", "4-6 years")
                         // to avoid "4" matching inside "2-4"; defer to range logic below which
                         // correctly prefers the range whose lower bound the answer meets.
-                        const isRangeLabel = /\d+\s*[-–to]\s*\d+/.test(lowerLabel);
+                        const isRangeLabel = /\\d+\\s*[-–to]\\s*\\d+/.test(lowerLabel);
                         if (!isRangeLabel && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
                             score = 100;
                         }
-                        else if ((/\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving')) &&
-                                (/\byes\b/i.test(ans) || ans.includes('serving'))) {
+                        else if ((/\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving')) &&
+                                (/\\byes\\b/i.test(ans) || ans.includes('serving'))) {
                             score = 90;
                         }
-                        else if (/\bno\b/i.test(lowerLabel) && /\bno\b/i.test(ans)) {
+                        else if (/\\bno\\b/i.test(lowerLabel) && /\\bno\\b/i.test(ans)) {
                             score = 90;
                         }
                         else if (answerNum > 0) {
                             // Day-based matching (notice period questions)
-                            const dayRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)\s*days/i);
-                            const weekMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*weeks/i);
-                            const dayLessMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*days/i);
-                            const dayMoreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)\s*days/i);
+                            const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                            const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                            const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                            const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
                             
                             if (dayRangeMatch) {
                                 const min = parseFloat(dayRangeMatch[1]);
@@ -6521,7 +6521,7 @@ class SentinelAgent:
                             
                             // Year-based range matching - prefer ranges where value is closer to lower bound
                             if (score === 0) {
-                                const rangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (rangeMatch) {
                                     const min = parseFloat(rangeMatch[1]);
                                     const max = parseFloat(rangeMatch[2]);
@@ -6539,8 +6539,8 @@ class SentinelAgent:
                             
                             // Prefix-based range matching
                             if (score === 0) {
-                                const lessMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)/i);
-                                const moreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
+                                const lessMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                const moreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
                                 if (lessMatch) {
                                     const bound = parseFloat(lessMatch[1]);
                                     if (answerNum < bound) {
@@ -6564,7 +6564,7 @@ class SentinelAgent:
                             
                             // Single year/number match
                             if (score === 0) {
-                                const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
                                 if (plusMatch) {
                                     const radioVal = parseFloat(plusMatch[1]);
                                     if (answerNum >= radioVal) {
@@ -6574,7 +6574,7 @@ class SentinelAgent:
                                         score = Math.max(0, 85 - diff * 10);
                                     }
                                 } else {
-                                    const singleNumMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                    const singleNumMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)/);
                                     if (singleNumMatch) {
                                         const radioVal = parseFloat(singleNumMatch[1]);
                                         const diff = Math.abs(answerNum - radioVal);
@@ -6600,7 +6600,7 @@ class SentinelAgent:
                     let bestRadio = null;
                     let bestScore = -1;
                     
-                    const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     
                     for (const radio of radios) {
@@ -6628,11 +6628,11 @@ class SentinelAgent:
                             let unit = 'years';
                             
                             // Check for day-based labels first (notice period questions)
-                            const dayRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)\s*days/i);
-                            const weekMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*weeks/i);
-                            const dayLessMatch = lowerLabel.match(/(?:within|less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)\s*days/i);
-                            const dayMoreMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)\s*days/i);
-                            const immediateMatch = lowerLabel.match(/immediate|right away|0\s*days/i);
+                            const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                            const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                            const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                            const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                            const immediateMatch = lowerLabel.match(/immediate|right away|0\\s*days/i);
                             
                             if (dayRangeMatch) {
                                 radioMin = parseFloat(dayRangeMatch[1]);
@@ -6660,7 +6660,7 @@ class SentinelAgent:
                                 unit = 'days';
                             } else {
                                 // Year-based range matching (experience questions)
-                                const yearRangeMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                const yearRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (yearRangeMatch) {
                                     radioMin = parseFloat(yearRangeMatch[1]);
                                     radioMax = parseFloat(yearRangeMatch[2]);
@@ -6691,9 +6691,9 @@ class SentinelAgent:
                             
                             if (score === 0 && !isRange) {
                                 // Prefix-based matching for day units
-                                const lessDaysMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)/i);
-                                const moreDaysMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
-                                const lessWeeksMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to|within)\s+(\d+(?:\.\d+)?)\s*weeks/i);
+                                const lessDaysMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                const moreDaysMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                const lessWeeksMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
                                 
                                 if (lessWeeksMatch) {
                                     const boundDays = parseFloat(lessWeeksMatch[1]) * 7;
@@ -6711,8 +6711,8 @@ class SentinelAgent:
                                 
                                 // Year-based prefix matching
                                 if (score === 0) {
-                                    const lessYearMatch = lowerLabel.match(/(?:less\s+than|under|up\s+to)\s+(\d+(?:\.\d+)?)/i);
-                                    const moreYearMatch = lowerLabel.match(/(?:more\s+than|over|above)\s+(\d+(?:\.\d+)?)/i);
+                                    const lessYearMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                    const moreYearMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
                                     if (lessYearMatch) {
                                         const bound = parseFloat(lessYearMatch[1]);
                                         if (answerNum < bound) score = 85;
@@ -6726,13 +6726,13 @@ class SentinelAgent:
                             }
                             
                             if (score === 0) {
-                                const plusMatch = lowerLabel.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
                                 if (plusMatch) {
                                     const radioVal = parseFloat(plusMatch[1]);
                                     if (answerNum >= radioVal) score = 90;
                                     else score = Math.max(0, 85 - Math.abs(answerNum - radioVal) * 10);
                                 } else {
-                                    const singleNumMatch = lowerLabel.match(/(\d+(?:\.\d+)?)/);
+                                    const singleNumMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)/);
                                     if (singleNumMatch) {
                                         const radioVal = parseFloat(singleNumMatch[1]);
                                         const diff = Math.abs(answerNum - radioVal);
@@ -6769,7 +6769,7 @@ class SentinelAgent:
                     if (!answer || !options || options.length === 0) return null;
                     
                     // Extract numeric salary from answer (e.g., "15.3 LPA" → 15.3)
-                    const salaryMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                    const salaryMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     if (!salaryMatch) return null;
                     const salary = parseFloat(salaryMatch[1]);
                     
@@ -6780,7 +6780,7 @@ class SentinelAgent:
                         const text = (opt.text || opt.label || '').toLowerCase();
                         
                         // Match patterns like "0-5 Lacs", "10-15 Lacs Per Annum", "5 to 10 LPA"
-                        const rangeMatch = text.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                        const rangeMatch = text.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
                         if (rangeMatch) {
                             const min = parseFloat(rangeMatch[1]);
                             const max = parseFloat(rangeMatch[2]);
@@ -6810,7 +6810,7 @@ return resolveDynamic(bestMatch);
                 const isLikelyYesNoQuestion = (text) => {
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
-                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t) ||
+                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\\b/.test(t) ||
                            t.startsWith('apply only ') ||
                            t.includes('willing') ||
                            t.includes('comfortable') ||
@@ -7253,7 +7253,7 @@ return resolveDynamic(bestMatch);
                                     }
                                     if (!dpLabel) dpLabel = (input.getAttribute('placeholder') || '').trim();
                                 }
-                                const dpLabelLower = dpLabel.toLowerCase().replace(/\*+$/g, '').trim();
+                                const dpLabelLower = dpLabel.toLowerCase().replace(/\\*+$/g, '').trim();
                                 const isDob = dpLabelLower.includes('date of birth') || dpLabelLower.includes('dob') || dpLabelLower.includes('birth date');
                                 console.log('DATE PICKER label:', dpLabel, '| isDob:', isDob);
                                 
@@ -7393,7 +7393,7 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Clean up the label text (remove asterisks, "required" text, etc.)
-                            labelText = labelText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            labelText = labelText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
                             console.log('LABEL DETECTION for input:', input.tagName, input.type || 'textarea', '| Detected label:', JSON.stringify(labelText));
                             
@@ -7494,11 +7494,11 @@ return resolveDynamic(bestMatch);
                                 const isObviousInvalid = !existingValue || /please provide|not applicable|unanswered/i.test(existingValue);
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!resolvedAnswer) {
-                                    if (/first\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
-                                    else if (/last\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
+                                    if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
+                                    else if (/last\\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
-                                    else if (/your\s*title|job\s*title|designation|role\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
+                                    else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
                                 }
                                 
@@ -7575,17 +7575,17 @@ return resolveDynamic(bestMatch);
 
                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
-                                    const match = answer.match(/(\d+)/);
+                                    const match = answer.match(/(\\d+)/);
                                     answer = match ? match[1] : '15';
                                 } else if (/np|notice/i.test(labelText)) {
-                                    const match = answer.match(/(\d+)/);
+                                    const match = answer.match(/(\\d+)/);
                                     answer = match ? match[1] : '15';
                                 }
                             }
                             
                             // If it's a numeric input, extract just the number from the answer
                             if (answer && isNumericInput) {
-                                const numericMatch = answer.match(/(\d+\.?\d*)/);
+                                const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
                                 if (numericMatch) {
                                     let numVal = parseFloat(numericMatch[1]);
                                     // LinkedIn rejects decimals in experience fields — round up
@@ -7635,7 +7635,7 @@ return resolveDynamic(bestMatch);
                                 } else if (combinedText.includes('zip') || combinedText.includes('postal') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
                                     answer = '560034';
                                     console.log('Fallback: Filling zip/postal code');
-                                } else if (combinedText.match(/\bcity\b/) || combinedText.includes('town')) {
+                                } else if (combinedText.match(/\\bcity\\b/) || combinedText.includes('town')) {
                                     answer = 'Bangalore';
                                     console.log('Fallback: Filling city');
                                 } else if (combinedText.includes('state') || combinedText.includes('province')) {
@@ -7856,7 +7856,7 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Clean up
-                            labelText = labelText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            labelText = labelText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
                             console.log('SELECT LABEL DETECTION:', JSON.stringify(labelText), '| current value:', select.value);
                             
@@ -8046,7 +8046,7 @@ return resolveDynamic(bestMatch);
                                 if (!npMatch) {
                                     let shortestDays = Infinity;
                                     for (const opt of npOptions) {
-                                        const daysMatch = opt.text.match(/(\d+)\s*day/i);
+                                        const daysMatch = opt.text.match(/(\\d+)\\s*day/i);
                                         if (daysMatch) {
                                             const days = parseInt(daysMatch[1]);
                                             if (days < shortestDays) {
@@ -8100,7 +8100,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 // Extract numeric INR value from answer
-                                const ctcNumMatch = String(ctcAnswer).match(/(\d+(?:\.\d+)?)/);
+                                const ctcNumMatch = String(ctcAnswer).match(/(\\d+(?:\\.\\d+)?)/);
                                 const ctcValue = ctcNumMatch ? parseFloat(ctcNumMatch[1]) : 0;
                                 
                                 if (ctcValue > 0) {
@@ -8117,11 +8117,11 @@ return resolveDynamic(bestMatch);
                                         const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
                                         
                                         // Try multiple regex patterns for range matching
-                                        let rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:[-\u2013\u2014]|\bto\b)\s*(\d+(?:\.\d+)?)/);
+                                        let rangeMatch = cleaned.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-\u2013\u2014]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
                                         
                                         // Fallback: any two numbers separated by space(s)
                                         if (!rangeMatch) {
-                                            const numbers = cleaned.match(/(\d+(?:\.\d+)?)/g);
+                                            const numbers = cleaned.match(/(\\d+(?:\\.\\d+)?)/g);
                                             if (numbers && numbers.length >= 2) {
                                                 rangeMatch = [null, numbers[0], numbers[numbers.length - 1]];
                                             }
@@ -8270,7 +8270,7 @@ return resolveDynamic(bestMatch);
                                 if (!natMatch) {
                                     natMatch = natOptions.find(o => {
                                         const t = o.text.toLowerCase().trim();
-                                        return /\bindia\b/.test(t) && !t.includes('british') && !t.includes('ocean');
+                                        return /\\bindia\\b/.test(t) && !t.includes('british') && !t.includes('ocean');
                                     });
                                 }
                                 
@@ -8298,11 +8298,11 @@ return resolveDynamic(bestMatch);
                                 let jlMatch = null;
                                 
                                 // With 4 years experience, select Mid-Level > Senior > Experienced > Associate
-                                jlMatch = jlOptions.find(o => /\bmid[\s-]?level\b/i.test(o.text));
-                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bsenior\b/i.test(o.text) && !/\bsuper\b|\bstaff\b|\bprincipal\b/i.test(o.text));
-                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bexperienced\b/i.test(o.text));
-                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bassociate\b/i.test(o.text));
-                                if (!jlMatch) jlMatch = jlOptions.find(o => /\bprofessional\b/i.test(o.text));
+                                jlMatch = jlOptions.find(o => /\\bmid[\\s-]?level\\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\\bsenior\\b/i.test(o.text) && !/\\bsuper\\b|\\bstaff\\b|\\bprincipal\\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\\bexperienced\\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\\bassociate\\b/i.test(o.text));
+                                if (!jlMatch) jlMatch = jlOptions.find(o => /\\bprofessional\\b/i.test(o.text));
                                 
                                 // Fallback: first non-placeholder option
                                 if (!jlMatch) {
@@ -8336,11 +8336,11 @@ return resolveDynamic(bestMatch);
                                 let wpMatch = null;
                                 
                                 // Preference order: Hybrid > Any > Flexible > Remote > Onsite
-                                wpMatch = wpOptions.find(o => /\bhybrid\b/i.test(o.text));
-                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bany\b/i.test(o.text));
-                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bflexible\b/i.test(o.text));
-                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bremote\b/i.test(o.text));
-                                if (!wpMatch) wpMatch = wpOptions.find(o => /\bonsite\b|\bon[\s-]?site\b/i.test(o.text));
+                                wpMatch = wpOptions.find(o => /\\bhybrid\\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\\bany\\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\\bflexible\\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\\bremote\\b/i.test(o.text));
+                                if (!wpMatch) wpMatch = wpOptions.find(o => /\\bonsite\\b|\\bon[\\s-]?site\\b/i.test(o.text));
                                 
                                 // Fallback: first non-placeholder option
                                 if (!wpMatch) {
@@ -8430,11 +8430,11 @@ return resolveDynamic(bestMatch);
                                         if (isYesNo) {
                                             // Extract required years from question
                                             // Matches "3+ years", "minimum 3 years", "at least 3 years"
-                                            const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                            const reqMatch = labelText.match(/(\\d+)\\+?\\s*(?:years|yrs)/i);
                                             const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
                                             
                                             // Extract users years from answer
-                                            const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                            const ansMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                                             const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
                                             
                                             console.log(`Experience Logic: Required ${reqYears}, User ${ansYears}`);
@@ -8562,9 +8562,9 @@ return resolveDynamic(bestMatch);
                                 // SMART EXPERIENCE CHECK
                                 let calculatedShouldSelectYes = false;
                                 if (answer && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {
-                                    const reqMatch = labelText.match(/(\d+)\+?\s*(?:years|yrs)/i);
+                                    const reqMatch = labelText.match(/(\\d+)\\+?\\s*(?:years|yrs)/i);
                                     const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
-                                    const ansMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                                    const ansMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                                     const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
                                     if (ansYears >= reqYears) calculatedShouldSelectYes = true;
                                 }
@@ -8662,7 +8662,7 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            legend = legend.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            legend = legend.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             const radios = Array.from(fieldset.querySelectorAll('input[type="radio"]'));
                             
                             // Check if any radio is already checked (standard or LinkedIn aria-checked)
@@ -8793,7 +8793,7 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            questionText = questionText.replace(/\*+$/g, '').replace(/\s*This field is required/gi, '').trim();
+                            questionText = questionText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
                             const customRadios = Array.from(container.querySelectorAll(
                                 '[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]'
@@ -9064,7 +9064,7 @@ return resolveDynamic(bestMatch);
                                         !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
                                         !t.toLowerCase().includes('this field is required')) {
                                         console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
-                                        return t.replace(/\*$/, '').replace(/\* This field is required/gi, '').trim();
+                                        return t.replace(/\\*$/, '').replace(/\\* This field is required/gi, '').trim();
                                     }
                                     sib = sib.previousElementSibling;
                                 }
@@ -9210,17 +9210,17 @@ return resolveDynamic(bestMatch);
                                     );
                                     // Numeric range matching for options like "0-1", "1-2", "2-3", "3+"
                                     if (!shouldCheck) {
-                                        const ansNumMatch = groupAnswer.match(/(\d+(?:\.\d+)?)/);
+                                        const ansNumMatch = groupAnswer.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (ansNumMatch) {
                                             const ansNum = parseFloat(ansNumMatch[1]);
                                             // "X+" pattern (e.g., "3+" matches answer 4)
-                                            const plusMatch = optLower.match(/(\d+(?:\.\d+)?)\s*\+/);
+                                            const plusMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
                                             if (plusMatch && ansNum >= parseFloat(plusMatch[1])) {
                                                 shouldCheck = true;
                                             }
                                             // "X-Y" range pattern (e.g., "2-3" matches answer 2.5)
                                             if (!shouldCheck) {
-                                                const rangeMatch = optLower.match(/(\d+(?:\.\d+)?)\s*[-\u2013]\s*(\d+(?:\.\d+)?)/);
+                                                const rangeMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-\u2013]\\s*(\\d+(?:\\.\\d+)?)/);
                                                 if (rangeMatch) {
                                                     const rMin = parseFloat(rangeMatch[1]);
                                                     const rMax = parseFloat(rangeMatch[2]);
@@ -9544,7 +9544,7 @@ return resolveDynamic(bestMatch);
                             const combined = (txt + ' ' + aria).trim();
                             
                             // Explicitly reject any "Add" buttons (e.g. Add work experience, Add education, Add more, + Add)
-                            if (/\badd\b/i.test(combined) || combined.startsWith('+') || combined.includes('add more') || 
+                            if (/\\badd\\b/i.test(combined) || combined.startsWith('+') || combined.includes('add more') || 
                                 combined.includes('add work') || combined.includes('add experience') || 
                                 combined.includes('add education') || combined.includes('add license') || 
                                 combined.includes('add position') || combined.includes('add certificate') ||
@@ -9911,7 +9911,7 @@ return resolveDynamic(bestMatch);
                                 return { type: 'safety', element: dialog };
                             }
                             // Success modal
-                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /application\s+\w+\s+(sent|submitted)/i.test(text)) {
+                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /application\\s+\\w+\\s+(sent|submitted)/i.test(text)) {
                                 return { type: 'success', element: dialog };
                             }
                             // Easy Apply daily limit
@@ -10387,7 +10387,7 @@ return resolveDynamic(bestMatch);
                     const currentPageBtn = document.querySelector('button[aria-current="true"][aria-label^="Page"]');
                     if (currentPageBtn) {
                         const label = currentPageBtn.getAttribute('aria-label');
-                        const match = label && label.match(/Page (\d+)/);
+                        const match = label && label.match(/Page (\\d+)/);
                         if (match) {
                             const nextPageNum = parseInt(match[1]) + 1;
                             const nextPageBtn = document.querySelector('button[aria-label="Page ' + nextPageNum + '"]');
@@ -10482,7 +10482,7 @@ return resolveDynamic(bestMatch);
                     const successMsg = document.querySelector('span.apply-message');
                     if (isSuccessPage || (successMsg && successMsg.innerText.includes('successful'))) {
                         const bodyText = document.body.innerText || '';
-                        const match = bodyText.match(/(\d+)\s*out\s*of\s*(\d+)/);
+                        const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
                         if (match) {
                             const appliedThisRound = parseInt(match[1]);
                             // Get cumulative count from sessionStorage
@@ -10710,7 +10710,7 @@ return resolveDynamic(bestMatch);
                             let matched = null;
                             if (selAnswer) {
                                 const aLower = selAnswer.toLowerCase();
-                                const aKey = aLower.split(/[\/,]/)[0].trim().split(' ')[0];
+                                const aKey = aLower.split(/[\\/,]/)[0].trim().split(' ')[0];
                                 for (let i = 1; i < select.options.length; i++) {
                                     const oText = (select.options[i].text || '').toLowerCase();
                                     if (oText.includes(aLower) || oText.includes(aKey)) { matched = select.options[i]; break; }
@@ -11014,7 +11014,7 @@ return resolveDynamic(bestMatch);
                                     const labelLower = item.lowerLabel;
                                     
                                     // Look for year ranges like "3 - 5 years", "1-2 years", "5-6 years", etc.
-                                    const rangeMatch = labelLower.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                                    const rangeMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
                                     if (rangeMatch) {
                                         const min = parseFloat(rangeMatch[1]);
                                         const max = parseFloat(rangeMatch[2]);
@@ -11038,7 +11038,7 @@ return resolveDynamic(bestMatch);
                                     }
                                     // Handle open-ended formats: ">7 years", "7+ years", "more than 7", "above 7"
                                     else if (labelLower.match(/[>+]|more than|above|over/)) {
-                                        const numMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
+                                        const numMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (numMatch) {
                                             const threshold = parseFloat(numMatch[1]);
                                             // Target exceeds threshold — exact match
@@ -11057,7 +11057,7 @@ return resolveDynamic(bestMatch);
                                     }
                                     // Look for single year values like "3 years", "5 years"
                                     else {
-                                        const yearMatch = labelLower.match(/(\d+(?:\.\d+)?)/);
+                                        const yearMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (yearMatch) {
                                             const year = parseFloat(yearMatch[1]);
                                             const diff = Math.abs(targetExperience - year);

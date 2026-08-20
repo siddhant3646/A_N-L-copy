@@ -125,12 +125,13 @@ async def reset_shared_playwright():
 async def stop_shared_playwright():
     global _shared_playwright
     if _shared_playwright is not None:
-        try:
-            await _shared_playwright.stop()
-        except Exception as e:
-            print(f"⚠️ Error stopping shared Playwright: {e}")
+        pw = _shared_playwright
         _shared_playwright = None
-        print("🔧 Shared Playwright instance stopped")
+        try:
+            await pw.stop()
+            print("🔧 Shared Playwright instance stopped")
+        except Exception:
+            pass
 
 class Browser:
     def __init__(self, executable_path=None, headless=False, user_data_dir=None, **kwargs):
@@ -544,63 +545,75 @@ class Browser:
         except Exception:
             pass
 
-    async def stop(self):
+    async def stop(self, fast: bool = False):
         # 1. Close all pages first
         if self.context:
             try:
-                for page in self.context.pages:
-                    await page.close()
-            except Exception as e:
-                print(f"⚠️ Error closing pages: {e}")
+                for page in list(getattr(self.context, 'pages', [])):
+                    try:
+                        await page.close()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         # 2. Close context
         if self.context: 
             try:
                 await self.context.close()
-            except Exception as e:
-                print(f"⚠️ Error closing context: {e}")
+            except Exception:
+                pass
+            self.context = None
 
         # 3. Close browser
         if self.browser: 
             try:
                 await self.browser.close()
-            except Exception as e:
-                print(f"⚠️ Error closing browser: {e}")
+            except Exception:
+                pass
+            self.browser = None
 
         # 4. Do NOT stop Playwright here — it's a shared singleton managed separately
         
         # 5. Wait for Chrome processes with our temp profile to fully exit
         import subprocess
         profile_marker = f"sentinel_profile_{os.getpid()}"
-        for attempt in range(20):
-            try:
-                result = subprocess.run(
-                    ['pgrep', '-f', profile_marker],
-                    capture_output=True, text=True
-                )
-                if not result.stdout.strip():
-                    if attempt > 0:
-                        print(f"   ⏳ Chrome fully exited after {attempt * 0.5:.1f}s")
-                    break
-                await asyncio.sleep(0.5)
-            except:
-                await asyncio.sleep(0.5)
-                break
-        else:
-            # Processes didn't exit cleanly — forcibly kill them so the next
-            # task's launch_persistent_context is not blocked by a profile lock.
-            print("⚠️ Chrome still alive after 10s — force-killing...")
+        if fast:
+            # Fast-path during shutdown: kill immediately without 10s wait loop
             temp_dir = getattr(self, '_temp_dir', None)
             if temp_dir:
                 self._kill_chrome_holding_dir(temp_dir)
             else:
                 self._kill_chrome_holding_dir(profile_marker)
+        else:
+            for attempt in range(20):
+                try:
+                    result = subprocess.run(
+                        ['pgrep', '-f', profile_marker],
+                        capture_output=True, text=True
+                    )
+                    if not result.stdout.strip():
+                        if attempt > 0:
+                            print(f"   ⏳ Chrome fully exited after {attempt * 0.5:.1f}s")
+                        break
+                    await asyncio.sleep(0.5)
+                except (Exception, KeyboardInterrupt, asyncio.CancelledError):
+                    break
+            else:
+                # Processes didn't exit cleanly — forcibly kill them so the next
+                # task's launch_persistent_context is not blocked by a profile lock.
+                print("⚠️ Chrome still alive after 10s — force-killing...")
+                temp_dir = getattr(self, '_temp_dir', None)
+                if temp_dir:
+                    self._kill_chrome_holding_dir(temp_dir)
+                else:
+                    self._kill_chrome_holding_dir(profile_marker)
 
         # 6. Sweep Chrome's temp artifacts from the system temp dir.
-        # Chrome leaves behind .com.google.Chrome.* session files (~458 MB each)
-        # and chrome_chrome_url_fetcher_* download dirs when force-killed.
-        # Cleaning after every stop() keeps temp bounded across the infinite loop.
-        _sweep_chrome_temp()
+        try:
+            _sweep_chrome_temp()
+        except Exception:
+            pass
 
 from src.core.config import CHROME_USER_DATA
 from src.sentinel.agent import create_agent
@@ -625,6 +638,8 @@ async def main():
     cycle_count = 0
     linkedin_rate_limit_until = None  # Track rate limit at runner level
     naukri_rate_limit_until = None  # Track Naukri rate limit
+    current_browser = None
+    shutdown_requested = False
     
     async def _warmup_playwright_pipe():
         """Launch and immediately close a disposable NON-persistent Chrome to
@@ -657,6 +672,8 @@ async def main():
             )
             await br.close()
             print("🔥 Playwright warm-up complete (non-persistent)")
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            raise
         except Exception:
             await reset_shared_playwright()
             print("🔥 Playwright warm-up done (reset)")
@@ -668,204 +685,231 @@ async def main():
             pass
         await asyncio.sleep(3)
     
-    print("🔥 Warming up Playwright pipe...")
-    await _warmup_playwright_pipe()
-    
-    # SINGLE agent instance reused across all tasks (P1a memory optimization).
-    # Previously a new agent was created per task, reloading the 3.6 MB
-    # qa_patterns.json and rebuilding pattern matchers/fingerprint caches
-    # each time (~15-20 MB/task). Now we create once and reset per-task state.
-    agent = create_agent()
-    
-    while True:  # INFINITE LOOP
-        cycle_count += 1
-        print(f"\n\n{'#'*60}")
-        print(f"🔄 CYCLE {cycle_count} STARTED")
-        print(f"{'#'*60}")
+    try:
+        print("🔥 Warming up Playwright pipe...")
+        await _warmup_playwright_pipe()
         
-        for i, (task_name, start_url, task_prompt) in enumerate(tasks):
-            # Check LinkedIn rate limit
-            if task_name == "LinkedIn Application" and linkedin_rate_limit_until:
-                if datetime.datetime.now() < linkedin_rate_limit_until:
-                    remaining = (linkedin_rate_limit_until - datetime.datetime.now()).seconds // 60
-                    print(f"\n⏸️  Skipping LinkedIn (Rate Limited) - {remaining} mins remaining")
-                    continue
-                else:
-                    print("✅ LinkedIn rate limit expired, resuming...")
-                    linkedin_rate_limit_until = None
+        # SINGLE agent instance reused across all tasks (P1a memory optimization).
+        # Previously a new agent was created per task, reloading the 3.6 MB
+        # qa_patterns.json and rebuilding pattern matchers/fingerprint caches
+        # each time (~15-20 MB/task). Now we create once and reset per-task state.
+        agent = create_agent()
+        
+        while not shutdown_requested:  # INFINITE LOOP
+            cycle_count += 1
+            print(f"\n\n{'#'*60}")
+            print(f"🔄 CYCLE {cycle_count} STARTED")
+            print(f"{'#'*60}")
             
-            # Check Naukri rate limit
-            if task_name == "Naukri Application" and naukri_rate_limit_until:
-                if datetime.datetime.now() < naukri_rate_limit_until:
-                    remaining = (naukri_rate_limit_until - datetime.datetime.now()).seconds // 60
-                    print(f"\n⏸️  Skipping Naukri (Rate Limited) - {remaining} mins remaining")
-                    continue
-                else:
-                    print("✅ Naukri rate limit expired, resuming...")
-                    naukri_rate_limit_until = None
+            for i, (task_name, start_url, task_prompt) in enumerate(tasks):
+                if shutdown_requested:
+                    break
+
+                # Check LinkedIn rate limit
+                if task_name == "LinkedIn Application" and linkedin_rate_limit_until:
+                    if datetime.datetime.now() < linkedin_rate_limit_until:
+                        remaining = (linkedin_rate_limit_until - datetime.datetime.now()).seconds // 60
+                        print(f"\n⏸️  Skipping LinkedIn (Rate Limited) - {remaining} mins remaining")
+                        continue
+                    else:
+                        print("✅ LinkedIn rate limit expired, resuming...")
+                        linkedin_rate_limit_until = None
+                
+                # Check Naukri rate limit
+                if task_name == "Naukri Application" and naukri_rate_limit_until:
+                    if datetime.datetime.now() < naukri_rate_limit_until:
+                        remaining = (naukri_rate_limit_until - datetime.datetime.now()).seconds // 60
+                        print(f"\n⏸️  Skipping Naukri (Rate Limited) - {remaining} mins remaining")
+                        continue
+                    else:
+                        print("✅ Naukri rate limit expired, resuming...")
+                        naukri_rate_limit_until = None
+                
+                print(f"\n\n{'='*50}")
+                print(f"📜 [{cycle_count}] TASK {i+1}/{len(tasks)}: {task_name}")
+                print(f"{'='*50}")
+                
+                # Init Browser for THIS task (Fresh instance)
+                browser = Browser(
+                    headless=False,
+                    user_data_dir=CHROME_USER_DATA,
+                )
+                current_browser = browser
+                
+                # Reuse the shared agent, resetting per-task state (P1a).
+                # This clears page/browser refs, counters, and injected-context
+                # tracking while preserving pattern matchers and learned knowledge.
+                agent.reset_per_task_state()
+                
+                try:
+                    print("🌐 Launching Browser...")
+                    await browser.start()
+                    
+                    page = await browser.get_current_page()
+                    if not page:
+                        page = await browser.new_page()
+                        
+                    print(f"🔗 Navigating to {start_url}...")
+                    navigation_success = False
+                    for nav_attempt in range(3):
+                        try:
+                            await page.goto(start_url, wait_until='domcontentloaded', timeout=30000)
+                            await asyncio.sleep(5)
+                            try:
+                                title = await page.title()
+                                print(f"📄 [{title}] at {page.url}")
+                            except Exception:
+                                pass
+                            navigation_success = True
+                            break
+                        except (KeyboardInterrupt, asyncio.CancelledError):
+                            raise
+                        except Exception as e:
+                            wait_time = 5 * (nav_attempt + 1)  # 5s, 10s, 15s
+                            if nav_attempt < 2:
+                                print(f"⚠️ Navigation error (attempt {nav_attempt + 1}/3): {e}")
+                                print(f"   Retrying in {wait_time}s...")
+                                await asyncio.sleep(wait_time)
+                            else:
+                                print(f"❌ Navigation failed after 3 attempts: {e}")
+                    
+                    if not navigation_success:
+                        print(f"⏭️ Skipping task '{task_name}' due to navigation failure")
+                        continue
+                        
+                    agent._page = page
+                    agent.browser = browser
+                    
+                    print(f"▶️  Running Agent Task: {task_name}...")
+                    success = await agent.run(task_description=task_prompt)
+                    
+                    # Check if agent detected rate limit
+                    if hasattr(agent, 'linkedin_rate_limit_until') and agent.linkedin_rate_limit_until:
+                        linkedin_rate_limit_until = agent.linkedin_rate_limit_until
+                        print(f"⏸️  LinkedIn paused until {linkedin_rate_limit_until.strftime('%H:%M')}")
+                    
+                    # Check if agent detected Naukri rate limit
+                    if hasattr(agent, 'naukri_rate_limit_until') and agent.naukri_rate_limit_until:
+                        naukri_rate_limit_until = agent.naukri_rate_limit_until
+                        print(f"⏸️  Naukri paused until {naukri_rate_limit_until.strftime('%H:%M')}")
+                    
+                    if success:
+                        print(f"\n🎉 Task '{task_name}' Completed Successfully!")
+                    else:
+                        print(f"\n⚠️  Task '{task_name}' Incomplete.")
+                        
+                except (KeyboardInterrupt, asyncio.CancelledError):
+                    shutdown_requested = True
+                    raise
+                except RuntimeError as e:
+                    # Browser launch failures (profile locked, Playwright pipe stale, etc.)
+                    # are recoverable — just skip this task and move on to the next one.
+                    print(f"\n⚠️  Browser launch failed for '{task_name}': {e}")
+                    print("   ⏭️  Skipping task and continuing to next...")
+                except Exception as e:
+                    print(f"\n❌ Unexpected error in '{task_name}': {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Don't stop Playwright — let subsequent tasks attempt with the same instance.
+                    # Only pause briefly so we don't spin-loop on a persistent error.
+                    print("   ⏳ Pausing 60s before next task...")
+                    await asyncio.sleep(60)
+                finally:
+                    print(f"🔒 Closing browser for '{task_name}'...")
+                    await browser.stop(fast=shutdown_requested)
+                    current_browser = None
+                    if not shutdown_requested:
+                        # Reset the Playwright pipe after every task — a stale pipe is the
+                        # primary cause of 'Browser window not found' on the NEXT launch.
+                        self_pw = await reset_shared_playwright()  # noqa: F841 — side-effect only
+                        print("   🔄 Playwright pipe refreshed for next task")
+                        await asyncio.sleep(10)  # Cooldown — let macOS release GPU/display handles
             
-            print(f"\n\n{'='*50}")
-            print(f"📜 [{cycle_count}] TASK {i+1}/{len(tasks)}: {task_name}")
-            print(f"{'='*50}")
+            if shutdown_requested:
+                break
+
+            # Cycle complete - run INTERSESSION task during wait period
+            wait_mins = random.uniform(15, 20)  # Random 15-20 minutes total wait
+            print(f"\n\n{'#'*60}")
+            print(f"✅ CYCLE {cycle_count} COMPLETE - All {len(tasks)} tasks done!")
+            print(f"⏳ INTERSESSION: Running Instahyre (20 jobs) during {wait_mins:.1f} min wait...")
+            print(f"{'#'*60}")
             
-            # Init Browser for THIS task (Fresh instance)
-            browser = Browser(
+            # Track intersession start time
+            import time
+            intersession_start = time.time()
+            
+            # Give Chrome time to fully exit from the last task before starting a fresh
+            # persistent context — macOS can hold profile locks for several seconds after
+            # context.close(), causing 'Browser window not found' / exitCode=0 crashes.
+            print("⏳ [INTERSESSION] Waiting 15s for Chrome processes to fully exit...")
+            await asyncio.sleep(15)
+            
+            # Run Instahyre INTERSESSION task (reuse the shared agent with reset state)
+            agent.reset_per_task_state()
+            intersession_browser = Browser(
                 headless=False,
                 user_data_dir=CHROME_USER_DATA,
             )
-            
-            # Reuse the shared agent, resetting per-task state (P1a).
-            # This clears page/browser refs, counters, and injected-context
-            # tracking while preserving pattern matchers and learned knowledge.
-            agent.reset_per_task_state()
+            current_browser = intersession_browser
             
             try:
-                print("🌐 Launching Browser...")
-                await browser.start()
+                print("🌐 [INTERSESSION] Launching Browser...")
+                await intersession_browser.start()
                 
-                page = await browser.get_current_page()
+                page = await intersession_browser.get_current_page()
                 if not page:
-                    page = await browser.new_page()
+                    page = await intersession_browser.new_page()
                     
-                print(f"🔗 Navigating to {start_url}...")
-                navigation_success = False
-                for nav_attempt in range(3):
-                    try:
-                        await page.goto(start_url, wait_until='domcontentloaded', timeout=30000)
-                        await asyncio.sleep(5)
-                        try:
-                            title = await page.title()
-                            print(f"📄 [{title}] at {page.url}")
-                        except:
-                            pass
-                        navigation_success = True
-                        break
-                    except Exception as e:
-                        wait_time = 5 * (nav_attempt + 1)  # 5s, 10s, 15s
-                        if nav_attempt < 2:
-                            print(f"⚠️ Navigation error (attempt {nav_attempt + 1}/3): {e}")
-                            print(f"   Retrying in {wait_time}s...")
-                            await asyncio.sleep(wait_time)
-                        else:
-                            print(f"❌ Navigation failed after 3 attempts: {e}")
+                print("🔗 [INTERSESSION] Navigating to Instahyre...")
+                await page.goto("https://www.instahyre.com/candidate/opportunities/?matching=true", 
+                              wait_until='domcontentloaded', timeout=30000)
+                await asyncio.sleep(5)
                 
-                if not navigation_success:
-                    print(f"⏭️ Skipping task '{task_name}' due to navigation failure")
-                    continue
-                    
                 agent._page = page
-                agent.browser = browser
+                agent.browser = intersession_browser
                 
-                print(f"▶️  Running Agent Task: {task_name}...")
-                success = await agent.run(task_description=task_prompt)
+                print("▶️  [INTERSESSION] Running Instahyre (20 jobs)...")
+                await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
+                print("🎉 [INTERSESSION] Instahyre task completed!")
                 
-                # Check if agent detected rate limit
-                if hasattr(agent, 'linkedin_rate_limit_until') and agent.linkedin_rate_limit_until:
-                    linkedin_rate_limit_until = agent.linkedin_rate_limit_until
-                    print(f"⏸️  LinkedIn paused until {linkedin_rate_limit_until.strftime('%H:%M')}")
-                
-                # Check if agent detected Naukri rate limit
-                if hasattr(agent, 'naukri_rate_limit_until') and agent.naukri_rate_limit_until:
-                    naukri_rate_limit_until = agent.naukri_rate_limit_until
-                    print(f"⏸️  Naukri paused until {naukri_rate_limit_until.strftime('%H:%M')}")
-                
-                if success:
-                    print(f"\n🎉 Task '{task_name}' Completed Successfully!")
-                else:
-                    print(f"\n⚠️  Task '{task_name}' Incomplete.")
-                    
-            except KeyboardInterrupt:
-                print("\n🛑 Stopped by User (Ctrl+C)")
-                await stop_shared_playwright()
-                cleanup_tmp_root()
-                return  # Exit the entire program
-            except RuntimeError as e:
-                # Browser launch failures (profile locked, Playwright pipe stale, etc.)
-                # are recoverable — just skip this task and move on to the next one.
-                print(f"\n⚠️  Browser launch failed for '{task_name}': {e}")
-                print("   ⏭️  Skipping task and continuing to next...")
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                shutdown_requested = True
+                raise
             except Exception as e:
-                print(f"\n❌ Unexpected error in '{task_name}': {e}")
-                import traceback
-                traceback.print_exc()
-                # Don't stop Playwright — let subsequent tasks attempt with the same instance.
-                # Only pause briefly so we don't spin-loop on a persistent error.
-                print("   ⏳ Pausing 60s before next task...")
-                await asyncio.sleep(60)
+                print(f"⚠️  [INTERSESSION] Error: {e}")
             finally:
-                print(f"🔒 Closing browser for '{task_name}'...")
-                await browser.stop()
-                # Reset the Playwright pipe after every task — a stale pipe is the
-                # primary cause of 'Browser window not found' on the NEXT launch.
-                self_pw = await reset_shared_playwright()  # noqa: F841 — side-effect only
-                print("   🔄 Playwright pipe refreshed for next task")
-                await asyncio.sleep(10)  # Cooldown — let macOS release GPU/display handles
-        
-        # Cycle complete - run INTERSESSION task during wait period
-        wait_mins = random.uniform(15, 20)  # Random 15-20 minutes total wait
-        print(f"\n\n{'#'*60}")
-        print(f"✅ CYCLE {cycle_count} COMPLETE - All {len(tasks)} tasks done!")
-        print(f"⏳ INTERSESSION: Running Instahyre (20 jobs) during {wait_mins:.1f} min wait...")
-        print(f"{'#'*60}")
-        
-        # Track intersession start time
-        import time
-        intersession_start = time.time()
-        
-        # Give Chrome time to fully exit from the last task before starting a fresh
-        # persistent context — macOS can hold profile locks for several seconds after
-        # context.close(), causing 'Browser window not found' / exitCode=0 crashes.
-        print("⏳ [INTERSESSION] Waiting 15s for Chrome processes to fully exit...")
-        await asyncio.sleep(15)
-        
-        # Run Instahyre INTERSESSION task (reuse the shared agent with reset state)
-        agent.reset_per_task_state()
-        intersession_browser = Browser(
-            headless=False,
-            user_data_dir=CHROME_USER_DATA,
-        )
-        
-        try:
-            print("🌐 [INTERSESSION] Launching Browser...")
-            await intersession_browser.start()
+                await intersession_browser.stop(fast=shutdown_requested)
+                current_browser = None
             
-            page = await intersession_browser.get_current_page()
-            if not page:
-                page = await intersession_browser.new_page()
-                
-            print("🔗 [INTERSESSION] Navigating to Instahyre...")
-            await page.goto("https://www.instahyre.com/candidate/opportunities/?matching=true", 
-                          wait_until='domcontentloaded', timeout=30000)
-            await asyncio.sleep(5)
+            if shutdown_requested:
+                break
+
+            # Wait for remaining time (if any)
+            elapsed = time.time() - intersession_start
+            remaining_wait = (wait_mins * 60) - elapsed
+            if remaining_wait > 0:
+                print(f"⏳ Waiting {remaining_wait/60:.1f} more minutes...")
+                await asyncio.sleep(remaining_wait)
+            else:
+                print("⏩ Intersession took longer than wait time, starting next cycle immediately")
             
-            agent._page = page
-            agent.browser = intersession_browser
-            
-            print("▶️  [INTERSESSION] Running Instahyre (20 jobs)...")
-            await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
-            print("🎉 [INTERSESSION] Instahyre task completed!")
-            
-        except KeyboardInterrupt:
-            print("\n🛑 Stopped by User (Ctrl+C)")
-            await intersession_browser.stop()
-            await stop_shared_playwright()
-            cleanup_tmp_root()
-            return
-        except Exception as e:
-            print(f"⚠️  [INTERSESSION] Error: {e}")
-        finally:
-            await intersession_browser.stop()
-        
-        # Wait for remaining time (if any)
-        elapsed = time.time() - intersession_start
-        remaining_wait = (wait_mins * 60) - elapsed
-        if remaining_wait > 0:
-            print(f"⏳ Waiting {remaining_wait/60:.1f} more minutes...")
-            await asyncio.sleep(remaining_wait)
-        else:
-            print("⏩ Intersession took longer than wait time, starting next cycle immediately")
-        
-        print(f"\n🔄 Starting Cycle {cycle_count + 1}...")
+            print(f"\n🔄 Starting Cycle {cycle_count + 1}...")
+
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("\n🛑 Stopped by User (Ctrl+C)")
+    finally:
+        if current_browser:
+            try:
+                await current_browser.stop(fast=True)
+            except Exception:
+                pass
+            current_browser = None
+        await stop_shared_playwright()
+        cleanup_tmp_root()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

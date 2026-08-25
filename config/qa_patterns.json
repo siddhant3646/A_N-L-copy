@@ -951,16 +951,28 @@
         "are you over the age of 18",
         "are you 18 or older",
         "are you at least 18",
-        "over 18 years old"
+        "over 18 years old",
+        "are you at least 18 years of age or older",
+        "at least 18 years of age",
+        "18 years of age or older",
+        "at least 18 years of age or older?",
+        "legal age to work",
+        "18 years of age"
       ],
-      "category": "personal_info",
+      "category": "yes_no",
       "default": "Yes",
+      "priority": 15,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
-        "text": "Yes"
+        "text": "Yes",
+        "checkbox": "Yes"
       },
-      "priority": 7
+      "negative_patterns": [
+        "experience",
+        "years of experience",
+        "how many years"
+      ]
     },
     "job_change_reason": {
       "patterns": [
@@ -2135,17 +2147,21 @@
         "rsu value",
         "stock value yearly",
         "what is the stock",
-        "stock yearly"
+        "stock yearly",
+        "indicate your last rsu",
+        "please indicate your last rsu",
+        "last rsu",
+        "current rsu"
       ],
       "category": "compensation",
       "default": "0",
+      "priority": 15,
       "input_type_defaults": {
         "radio": "0",
         "select": "0",
         "text": "0",
         "number": "0"
-      },
-      "priority": 8
+      }
     },
     "message_to_hiring_manager": {
       "patterns": [
@@ -3017,21 +3033,17 @@
     },
     "tcs_registration": {
       "patterns": [
-        "tcs registration no",
-        "ep no",
-        "ep number",
-        "tcs registration",
-        "have u registered with tcs already please mention the mail id"
+        "pls mention tcs registration-ep no",
+        "tcs registration-ep no",
+        "have u registered with tcs already"
       ],
-      "category": "yes_no",
+      "category": "compliance",
       "default": "No",
+      "priority": 15,
       "input_type_defaults": {
-        "radio": "No",
-        "checkbox": "No",
-        "select": "No",
-        "text": "No"
-      },
-      "priority": 7
+        "text": "No",
+        "radio": "No"
+      }
     },
     "portfolio_url": {
       "patterns": [
@@ -12235,15 +12247,19 @@
         "citizen",
         "are you a citizen",
         "do you hold citizenship",
-        "citizenship status"
+        "citizenship status",
+        "indicate your citizenship",
+        "please indicate your citizenship",
+        "indicate your nationality",
+        "please indicate your nationality"
       ],
       "category": "work_authorization",
-      "default": "Yes",
-      "priority": 10,
+      "default": "Indian",
+      "priority": 15,
       "input_type_defaults": {
         "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
+        "select": "Indian",
+        "text": "Indian",
         "checkbox": "Yes"
       }
     },
@@ -13459,6 +13475,10 @@
     },
     "conflict_of_interest": {
       "patterns": [
+        "financial interest",
+        "competitor, supplier, or client",
+        "do you or a close family member have any financial interest",
+        "financial interest in an endava competitor",
         "conflict of interest",
         "conflict of interests",
         "any conflict",
@@ -13467,7 +13487,7 @@
       ],
       "category": "compliance",
       "default": "No",
-      "priority": 10,
+      "priority": 15,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -14844,7 +14864,7 @@
       ],
       "category": "yes_no",
       "default": "No",
-      "priority": 9,
+      "priority": 15,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -14862,7 +14882,7 @@
       ],
       "category": "yes_no",
       "default": "No",
-      "priority": 9,
+      "priority": 15,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -14879,7 +14899,7 @@
       ],
       "category": "yes_no",
       "default": "No",
-      "priority": 9,
+      "priority": 10,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -14897,7 +14917,7 @@
       ],
       "category": "yes_no",
       "default": "Yes, can provide",
-      "priority": 9,
+      "priority": 15,
       "input_type_defaults": {
         "radio": "Yes, can provide",
         "select": "Yes, can provide",
@@ -15443,12 +15463,9 @@
         "went the extra mile",
         "tell me about a time you exceeded expectations",
         "above and beyond at work",
-        "describe a situation where you did more than required",
         "how have you gone beyond your job description",
         "tell me about extra effort you put in",
         "describe when you took initiative",
-        "went beyond what was asked",
-        "exceeded job requirements",
         "took ownership beyond your role",
         "describe your initiative at work"
       ],
@@ -113481,7 +113498,6 @@
         "current annual gross salary",
         "current fixed annual salary",
         "current in hand salary",
-        "current pay",
         "current ctc",
         "current total compensation",
         "current gross salary",
@@ -113502,9 +113518,10 @@
         "number": "23"
       },
       "negative_patterns": [
-        "expected",
-        "ectc",
-        "desired"
+        "payroll",
+        "company",
+        "employer",
+        "name"
       ]
     },
     "expected_salary_phrases": {
@@ -114318,7 +114335,9 @@
     },
     "personal_age": {
       "patterns": [
-        "age"
+        "what is your age",
+        "your age in years",
+        "enter your age"
       ],
       "category": "personal_info",
       "default": "Please provide",
@@ -120899,14 +120918,17 @@
     },
     "career_aspirations": {
       "patterns": [
-        "what is your aspirations",
-        "describe your aspirations",
-        "tell us about your aspirations",
-        "explain your aspirations"
+        "tell us why you are interested in this job role. tell us your career aspirations",
+        "tell us why you are interested in this job role",
+        "career aspirations and where you see yourself"
       ],
-      "category": "preference",
-      "default": "Aiming to grow as a senior engineer, solve impactful problems, and lead initiatives.",
-      "priority": 5
+      "category": "technical_screening",
+      "default": "I am passionate about building resilient, large-scale distributed backend systems and microservices. I aim to deepen my architectural expertise, lead impactful engineering initiatives, and drive system reliability and developer productivity.",
+      "priority": 15,
+      "input_type_defaults": {
+        "textarea": "I am passionate about building resilient, large-scale distributed backend systems and microservices. I aim to deepen my architectural expertise, lead impactful engineering initiatives, and drive system reliability and developer productivity.",
+        "text": "I am passionate about building resilient, large-scale distributed backend systems and microservices."
+      }
     },
     "career_career_milestone": {
       "patterns": [
@@ -129008,19 +129030,21 @@
     },
     "facebook_url": {
       "category": "personal_info",
-      "default": "Not applicable",
-      "priority": 10,
+      "default": "__LEAVE_BLANK__",
+      "priority": 15,
       "patterns": [
+        "facebook",
         "facebook profile",
         "facebook url",
         "facebook profile url",
         "facebook profile link",
         "your facebook url",
         "facebook profile link here",
-        "enter facebook url"
+        "enter facebook url",
+        "facebook account"
       ],
       "input_type_defaults": {
-        "text": "Not applicable"
+        "text": "__LEAVE_BLANK__"
       }
     },
     "do_you_have_exp_yesno": {
@@ -129266,19 +129290,19 @@
       }
     },
     "current_payroll_company": {
-      "category": "employment",
-      "default": "Fiserv India Pvt Ltd",
-      "priority": 12,
       "patterns": [
-        "payroll company as per aadhar",
-        "current employer payroll",
-        "company payroll",
-        "current payroll company as per aadhar first name middle name last name",
-        "current payroll company as per aadhar"
+        "current payroll company",
+        "current payroll company? as per aadhar",
+        "payroll company",
+        "as per aadhar,first name:middle name: last name",
+        "as per aadhar, first name:middle name: last name"
       ],
+      "category": "employment",
+      "default": "Everbridge",
+      "priority": 15,
       "input_type_defaults": {
-        "text": "Fiserv India Pvt Ltd",
-        "select": "Fiserv India Pvt Ltd"
+        "text": "Everbridge",
+        "select": "Everbridge"
       }
     },
     "team_size_managed_specific": {
@@ -129896,10 +129920,10 @@
         "textarea": "Software Engineer"
       }
     },
-    "work_exp_company": {
+    "current_company": {
       "category": "experience",
       "default": "Everbridge",
-      "priority": 12,
+      "priority": 7,
       "patterns": [
         "company",
         "company name",
@@ -129914,9 +129938,48 @@
       },
       "negative_patterns": [
         "relatives in company",
+        "relatives",
+        "family",
         "worked with",
+        "worked for",
+        "ex-employee",
+        "ever worked",
         "associated with",
-        "promoted in current company"
+        "promoted in current company",
+        "noc",
+        "relieving letter",
+        "service certificate"
+      ]
+    },
+    "work_exp_company": {
+      "category": "experience",
+      "default": "Everbridge",
+      "priority": 7,
+      "patterns": [
+        "company",
+        "company name",
+        "employer",
+        "employer name",
+        "organization name",
+        "current employer"
+      ],
+      "input_type_defaults": {
+        "text": "Everbridge",
+        "textarea": "Everbridge"
+      },
+      "negative_patterns": [
+        "relatives in company",
+        "relatives",
+        "family",
+        "worked with",
+        "worked for",
+        "ex-employee",
+        "ever worked",
+        "associated with",
+        "promoted in current company",
+        "noc",
+        "relieving letter",
+        "service certificate"
       ]
     },
     "work_exp_description": {
@@ -129933,6 +129996,837 @@
       "input_type_defaults": {
         "text": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure",
         "textarea": "Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure"
+      }
+    },
+    "conflict_financial_interest": {
+      "patterns": [
+        "financial interest in an",
+        "financial interest in a competitor",
+        "close family member have any financial interest",
+        "financial interest in an endava competitor",
+        "personal or family relationships with employees",
+        "family relationships with employees",
+        "relatives employed at",
+        "relatives employed at clearwater"
+      ],
+      "category": "yes_no",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "relative_names_followup": {
+      "patterns": [
+        "name of your relative(s)",
+        "name of your relative",
+        "enter the name of your relative",
+        "if yes, please enter the name of your relative",
+        "names of relatives"
+      ],
+      "category": "compliance",
+      "default": "None",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "None",
+        "textarea": "None"
+      }
+    },
+    "dotnet_framework_vs_core": {
+      "patterns": [
+        "difference between .net framework and .net core",
+        "difference between .net and .net core",
+        "difference between dotnet framework and dotnet core",
+        ".net framework and .net core"
+      ],
+      "category": "technical",
+      "default": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic.",
+        "textarea": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic."
+      }
+    },
+    "azure_ad_authentication": {
+      "patterns": [
+        "azure ad authentication",
+        "implemented azure ad authentication",
+        "implemented azure ad",
+        "azure ad"
+      ],
+      "category": "technical",
+      "default": "Yes, implemented Azure AD OAuth 2.0 and OpenID Connect authentication with JWT token validation.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, implemented Azure AD OAuth 2.0 and OpenID Connect authentication with JWT token validation.",
+        "textarea": "Yes, implemented Azure AD OAuth 2.0 and OpenID Connect authentication with JWT token validation."
+      }
+    },
+    "aws_cloud_production": {
+      "patterns": [
+        "which ones have you used in production",
+        "experience with aws cloud services? if yes",
+        "hands-on experience with aws cloud services",
+        "aws cloud services in production",
+        "which aws services have you used in production"
+      ],
+      "category": "technical",
+      "default": "Yes, extensive production experience with AWS EC2, S3, Lambda, ECS, RDS, DynamoDB, API Gateway, CloudWatch, and SQS.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive production experience with AWS EC2, S3, Lambda, ECS, RDS, DynamoDB, API Gateway, CloudWatch, and SQS.",
+        "textarea": "Yes, extensive production experience with AWS EC2, S3, Lambda, ECS, RDS, DynamoDB, API Gateway, CloudWatch, and SQS."
+      }
+    },
+    "org_product_vs_service": {
+      "patterns": [
+        "organization is product based or service based",
+        "current organization is product based or service based",
+        "product based or service based",
+        "product or service based",
+        "product based company or service based"
+      ],
+      "category": "experience",
+      "default": "Product-based",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Product-based",
+        "select": "Product-based",
+        "text": "Product-based"
+      }
+    },
+    "motivation_and_aspirations": {
+      "patterns": [
+        "tell us why you are interested in this job role",
+        "tell us your career aspirations",
+        "career aspirations and where you see yourself",
+        "tell us your career aspirations and where you see yourself",
+        "motivation behind wanting to join",
+        "motivation behind wanting to join freshworks",
+        "talk to us about yourself, your story and what you know about"
+      ],
+      "category": "soft_skills",
+      "default": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and AWS, I look forward to contributing to impactful products, solving complex architectural challenges, and growing as a technical leader.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and AWS, I look forward to contributing to impactful products, solving complex architectural challenges, and growing as a technical leader.",
+        "textarea": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and AWS, I look forward to contributing to impactful products, solving complex architectural challenges, and growing as a technical leader."
+      }
+    },
+    "technical_vs_management_split": {
+      "patterns": [
+        "hands-on technical/architecture work vs people management",
+        "hands-on technical vs people management",
+        "technical/architecture work vs people management",
+        "% of your time goes into hands-on technical"
+      ],
+      "category": "experience",
+      "default": "80% hands-on technical architecture and engineering, 20% team mentorship, sprint planning, and code reviews.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "80% hands-on technical architecture and engineering, 20% team mentorship, sprint planning, and code reviews.",
+        "textarea": "80% hands-on technical architecture and engineering, 20% team mentorship, sprint planning, and code reviews."
+      }
+    },
+    "tools_platforms_proficient": {
+      "patterns": [
+        "which tools, platforms, or technologies are you proficient in",
+        "which tools platforms or technologies are you proficient in",
+        "tools, platforms, or technologies are you proficient in"
+      ],
+      "category": "technical",
+      "default": "Java, Spring Boot, React, Node.js, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Git, GitHub, Jira, Postman, CI/CD pipelines",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Java, Spring Boot, React, Node.js, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Git, GitHub, Jira, Postman, CI/CD pipelines",
+        "textarea": "Java, Spring Boot, React, Node.js, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Git, GitHub, Jira, Postman, CI/CD pipelines"
+      }
+    },
+    "avail_join_1_month": {
+      "patterns": [
+        "available to join within 1 month",
+        "join within 1 month",
+        "join us within 1 month",
+        "available to join within 4 weeks"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "hybrid_3_days_onsite": {
+      "patterns": [
+        "hybrid model that requires 3 days",
+        "3 days per week onsite",
+        "hybrid model that requires 3 days per week onsite"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "us_time_overlap": {
+      "patterns": [
+        "comfortable with us time overlaps",
+        "us time overlaps",
+        "us time overlap",
+        "overlap with us hours"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "bangalore_f2f_interview": {
+      "patterns": [
+        "interview mode is f2f",
+        "please apply only if you are currently in bangalore",
+        "currently in bangalore"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "disability_status": {
+      "patterns": [
+        "disability status",
+        "disability status required",
+        "do you have a disability",
+        "do you have or have a history record of having a disability",
+        "history record of having a disability",
+        "disability history",
+        "disability record",
+        "voluntary self-identification of disability",
+        "disability status:"
+      ],
+      "category": "compliance",
+      "default": "No, I don't have a disability",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No, I don't have a disability",
+        "select": "No, I don't have a disability",
+        "text": "No",
+        "checkbox": "Checked"
+      }
+    },
+    "visa_sponsorship_status": {
+      "patterns": [
+        "will you now or in the future require sponsorship",
+        "require sponsorship for employment visa status",
+        "require employment visa sponsorship",
+        "sponsorship for employment visa status",
+        "require sponsorship",
+        "will you now or at any point in the future require employment visa sponsorship",
+        "will you now or in the future require sponsorship."
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "salary_expectations_custom": {
+      "patterns": [
+        "what are your salary expectations",
+        "what is your salary expectation",
+        "what are your salary expectations in local currency",
+        "what's your ctc expectation",
+        "what is your expected compensation",
+        "what is your expected ctc",
+        "what is your expected ctc in lacs per annum",
+        "what is your expected ctc salary in lakh per annum",
+        "what is your expected ctc in lpa",
+        "what is your desired annual salary",
+        "what is your desired compensation",
+        "expected yearly gross total compensation"
+      ],
+      "category": "salary",
+      "default": "3000000",
+      "numeric_default": "30",
+      "inr_default": "3000000",
+      "lpa_default": "30",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "3000000",
+        "textarea": "3000000",
+        "select": "30 LPA",
+        "radio": "30",
+        "number": "30"
+      }
+    },
+    "notice_period_in_months": {
+      "patterns": [
+        "notice period/if any? (in months)",
+        "notice period in months",
+        "(in months)",
+        "notice period (in months)",
+        "notice period/if any (in months)"
+      ],
+      "category": "preference",
+      "default": "0.5",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0.5",
+        "number": "0.5",
+        "select": "0.5 month"
+      }
+    },
+    "last_working_day_date": {
+      "patterns": [
+        "what is your official last working day",
+        "if you are serving notice, what will be your official last working day",
+        "what is your notice period or last working date",
+        "what is your notice period/last working date",
+        "what is your lwd",
+        "what's your last working day",
+        "what is your last working day",
+        "what is your notice period/lwd",
+        "what is your notice period? if serving, mention your lwd"
+      ],
+      "category": "preference",
+      "default": "08 Sep 2026",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "08 Sep 2026",
+        "textarea": "08 Sep 2026",
+        "date": "2026-09-08"
+      }
+    },
+    "net_framework_vs_core": {
+      "patterns": [
+        "what is the difference between .net framework and .net core",
+        "difference between .net framework and .net core"
+      ],
+      "category": "technical_screening",
+      "default": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic.",
+        "textarea": ".NET Core is open-source, cross-platform (Windows, Linux, macOS), and modular with high performance, whereas .NET Framework is Windows-only and monolithic."
+      }
+    },
+    "azure_ad_auth": {
+      "patterns": [
+        "have you implemented azure ad authentication",
+        "implemented azure ad authentication"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, implemented Azure AD OAuth 2.0 and OpenID Connect authentication with JWT token validation.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, implemented Azure AD OAuth 2.0 and OpenID Connect authentication with JWT token validation.",
+        "radio": "Yes"
+      }
+    },
+    "freshworks_pitch": {
+      "patterns": [
+        "tell us your motivation behind wanting to join freshworks",
+        "take this opportunity to tell us your motivation behind wanting to join freshworks",
+        "motivation behind wanting to join freshworks"
+      ],
+      "category": "technical_screening",
+      "default": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to Freshworks' mission of delivering intuitive, world-class SaaS products.",
+      "priority": 15,
+      "input_type_defaults": {
+        "textarea": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to Freshworks' mission of delivering intuitive, world-class SaaS products.",
+        "text": "I am passionate about building scalable, high-performance distributed systems with Java, Spring Boot, React, and cloud architectures."
+      }
+    },
+    "backend_capability_story": {
+      "patterns": [
+        "describe a substantial production backend capability you owned",
+        "describe a substantial production backend"
+      ],
+      "category": "technical_screening",
+      "default": "Architected and deployed high-throughput event-driven microservices using Java, Spring Boot, and Kafka processing 10M+ daily transactions with automated retry mechanisms, circuit breakers, and distributed tracing.",
+      "priority": 15,
+      "input_type_defaults": {
+        "textarea": "Architected and deployed high-throughput event-driven microservices using Java, Spring Boot, and Kafka processing 10M+ daily transactions with automated retry mechanisms, circuit breakers, and distributed tracing.",
+        "text": "Architected and deployed high-throughput event-driven microservices using Java, Spring Boot, and Kafka processing 10M+ daily transactions."
+      }
+    },
+    "hands_on_vs_management": {
+      "patterns": [
+        "what % of your time goes into hands-on technical/architecture work vs people management",
+        "hands-on technical/architecture work vs people management"
+      ],
+      "category": "technical_screening",
+      "default": "80% hands-on technical architecture and engineering, 20% team mentorship and sprint planning.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "80% hands-on technical architecture and engineering, 20% team mentorship and sprint planning.",
+        "textarea": "80% hands-on technical architecture and engineering, 20% team mentorship and sprint planning."
+      }
+    },
+    "rating_scale_dsa": {
+      "patterns": [
+        "rate your proficiency with data structures, algorithms, and design patterns. (1–5 scale)",
+        "rate your proficiency with data structures",
+        "data structures, algorithms, and design patterns. (1–5 scale)"
+      ],
+      "category": "technical_screening",
+      "default": "5",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "5",
+        "textarea": "5",
+        "number": "5",
+        "radio": "5"
+      }
+    },
+    "rating_scale_communication": {
+      "patterns": [
+        "how would you rate your communication and stakeholder engagement skills? (scale of 1–5)",
+        "rate your communication and stakeholder engagement skills"
+      ],
+      "category": "technical_screening",
+      "default": "4",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "4",
+        "textarea": "4",
+        "number": "4",
+        "radio": "4"
+      }
+    },
+    "citizenship_country": {
+      "patterns": [
+        "please indicate your citizenship",
+        "indicate your citizenship",
+        "what is your citizenship"
+      ],
+      "category": "personal_info",
+      "default": "Indian",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Indian",
+        "select": "India",
+        "radio": "Indian"
+      }
+    },
+    "rsu_amount": {
+      "patterns": [
+        "please indicate your last rsu",
+        "indicate your last rsu",
+        "last rsu"
+      ],
+      "category": "salary",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0"
+      }
+    },
+    "strict_job_title": {
+      "patterns": [
+        "your title",
+        "current title",
+        "current job title",
+        "current designation"
+      ],
+      "category": "employment",
+      "default": "Software Engineer 2",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Software Engineer 2",
+        "select": "Software Engineer 2"
+      }
+    },
+    "social_facebook": {
+      "patterns": [
+        "facebook",
+        "facebook profile",
+        "facebook url"
+      ],
+      "category": "personal_info",
+      "default": "__LEAVE_BLANK__",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "__LEAVE_BLANK__"
+      }
+    },
+    "social_twitter": {
+      "patterns": [
+        "x (formerly twitter)",
+        "twitter",
+        "twitter profile",
+        "twitter url"
+      ],
+      "category": "personal_info",
+      "default": "__LEAVE_BLANK__",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "__LEAVE_BLANK__"
+      }
+    },
+    "skill_cad_fusion": {
+      "patterns": [
+        "how many years of work experience do you have in fusion/solidworks/inventor and other cad softwares",
+        "fusion/solidworks/inventor"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "radio": "0"
+      }
+    },
+    "skill_saviynt": {
+      "patterns": [
+        "how many years of experience do you have in saviynt development",
+        "do you have experience in saviynt security manager"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "skill_jml": {
+      "patterns": [
+        "how many years of experience do you have in jml"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "number": "0"
+      }
+    },
+    "skill_blazor": {
+      "patterns": [
+        "how many years of experience do you have in blazor"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "number": "0"
+      }
+    },
+    "skill_sitecore": {
+      "patterns": [
+        "how many years of experience do you have in sitecore cdp",
+        "how many years of experience do you have in sitecore personalization",
+        "how many years of experience do you have in sitecore xm/xp"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "number": "0"
+      }
+    },
+    "skill_php_laravel": {
+      "patterns": [
+        "how many years of experince do you have in php & laravel",
+        "what is your relavant experience in php or node.js"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0"
+      }
+    },
+    "skill_business_analyst": {
+      "patterns": [
+        "how many years of experience as a business analyst"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "number": "0"
+      }
+    },
+    "skill_semiconductor": {
+      "patterns": [
+        "do u have experience in semi conductor equipment ?? how many years",
+        "semi conductor equipment"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "number": "0",
+        "radio": "No"
+      }
+    },
+    "skill_go": {
+      "patterns": [
+        "how many years of work experience do you have with go (programming language)"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "radio": "0"
+      }
+    },
+    "skill_salesforce": {
+      "patterns": [
+        "how many years of work experience do you have with salesforce.com"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "radio": "0"
+      }
+    },
+    "join_within_1_month_boolean": {
+      "patterns": [
+        "are you available to join within 1 month",
+        "are you available to join within 1 month? required",
+        "are you available to join within 1 month?"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "adobe_target_exp": {
+      "patterns": [
+        "how many years of experience do you have in adobe target",
+        "adobe target",
+        "adobe target experience",
+        "years of experience in adobe target"
+      ],
+      "category": "experience",
+      "default": "4 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "4 Years",
+        "number": "4",
+        "radio": "4"
+      }
+    },
+    "do_you_code_languages": {
+      "patterns": [
+        "do you code? what languages",
+        "do you code",
+        "what languages do you code",
+        "which programming languages do you use",
+        "what programming languages do you code"
+      ],
+      "category": "skills",
+      "default": "Java, Python, JavaScript, TypeScript, SQL, HTML, CSS",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Java, Python, JavaScript, TypeScript, SQL, HTML, CSS",
+        "textarea": "Java, Python, JavaScript, TypeScript, SQL, HTML, CSS"
+      }
+    },
+    "highest_full_time_qualification": {
+      "patterns": [
+        "what is your highest full-time qualification",
+        "highest full-time qualification",
+        "highest full time qualification"
+      ],
+      "category": "education",
+      "default": "B.Tech in Computer Science and Engineering",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "B.Tech in Computer Science and Engineering",
+        "select": "B.Tech / B.E"
+      }
+    },
+    "cloud_technologies_which_ones": {
+      "patterns": [
+        "do you have experience with cloud technologies? which ones",
+        "do you have experience with cloud technologies",
+        "experience with cloud technologies",
+        "which cloud technologies"
+      ],
+      "category": "skills",
+      "default": "AWS (EC2, S3, Lambda, RDS, CloudWatch), Microsoft Azure, Docker, Kubernetes, Microservices architecture",
+      "priority": 15,
+      "input_type_defaults": {
+        "textarea": "AWS (EC2, S3, Lambda, RDS, CloudWatch), Microsoft Azure, Docker, Kubernetes, Microservices architecture",
+        "text": "AWS, Azure, Docker, Kubernetes"
+      }
+    },
+    "ectc_in_lakhs_and_inr": {
+      "patterns": [
+        "what is your ectc in lakhs per annum",
+        "what is your ectc in lakhs",
+        "what is your ectc",
+        "ectc in lakhs per annum",
+        "ectc in lakhs",
+        "ectc in lpa",
+        "what is your ctc expectation",
+        "ctc expectation",
+        "compensation requirements",
+        "what are your compensation requirements"
+      ],
+      "category": "salary",
+      "default": "3000000",
+      "numeric_default": "30",
+      "inr_default": "3000000",
+      "lpa_default": "30",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "3000000",
+        "text_lpa": "30",
+        "textarea": "3000000",
+        "number": "30",
+        "select": "30 LPA"
+      }
+    },
+    "months_of_software_experience": {
+      "patterns": [
+        "how many months of software development experience do you have",
+        "how many months of experience do you have",
+        "months of software development experience",
+        "total months of experience",
+        "experience in months"
+      ],
+      "category": "experience",
+      "default": "50",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "50",
+        "number": "50",
+        "select": "50"
+      }
+    },
+    "java_experience_years": {
+      "patterns": [
+        "do you have experience in java. if yes then please share number of years",
+        "do you have experience in java if yes then please share number of years",
+        "experience in java. if yes then please share number of years"
+      ],
+      "category": "skills",
+      "default": "Yes, 4.2 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes, 4.2 Years",
+        "textarea": "Yes, 4.2 Years"
+      }
+    },
+    "k8s_experience_years": {
+      "patterns": [
+        "do you have hands on exp in kubernetes, if yes then please share number of years of exp",
+        "do you have hands on exp in kubernetes if yes then please share number of years of exp",
+        "how much you have experience in kubernetes"
+      ],
+      "category": "skills",
+      "default": "Yes, 4 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes, 4 Years",
+        "textarea": "Yes, 4 Years"
+      }
+    },
+    "f5_certification": {
+      "patterns": [
+        "do you currently hold an active f5 big-ip administrator",
+        "f5 big-ip administrator",
+        "f5-ca",
+        "f5 certification"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "tcs_offer_letter": {
+      "patterns": [
+        "have you received tcs offer letter",
+        "tcs offer released",
+        "tcs offer letter"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "is_current_location_pune": {
+      "patterns": [
+        "is your current location pune",
+        "is your current location pune?",
+        "current location pune"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "work_from_hyderabad_mandatory": {
+      "patterns": [
+        "work from the office in hyderabad is mandatory, are you comfortable",
+        "work from the office in hyderabad is mandatory",
+        "mandatory work from hyderabad office"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
       }
     }
   },

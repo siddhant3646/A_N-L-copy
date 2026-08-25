@@ -49,9 +49,15 @@ class PatternMatcher:
 
     def _normalize(self, text: str) -> str:
         text = text.lower().strip()
+        # Preserve programming language symbols before stripping punctuation
+        text = re.sub(r'\bc\+\+\b', 'cpp', text)
+        text = re.sub(r'\bc#\b', 'csharp', text)
+        text = re.sub(r'\.net\b', 'dotnet', text)
+        # Strip common form label boilerplates
+        text = re.sub(r'\b(this field is required|required|optional)\b', '', text)
+        text = re.sub(r'[^\w\s]', ' ', text)
         text = ' '.join(text.split())
-        text = re.sub(r'[^\w\s]', '', text)
-        return text
+        return text.strip()
 
     def _similarity(self, a: str, b: str) -> float:
         return SequenceMatcher(None, a, b).ratio()
@@ -82,7 +88,7 @@ class PatternMatcher:
 
         normalized_q = self._normalize(question)
 
-        # Tier 1: Exact/substring match (fast, reliable)
+        # Tier 1: Exact/word-boundary match (fast, reliable)
         result = self._tier1_match(normalized_q, question, input_type)
         if result[0]:
             return result
@@ -106,13 +112,15 @@ class PatternMatcher:
                 continue
             for pstr in pattern_data.get('patterns', []):
                 norm_p = self._normalize(pstr)
+                if not norm_p:
+                    continue
                 if norm_p == normalized_q:
                     priority = pattern_data.get('priority', 5)
                     if priority > best_priority or (priority == best_priority and len(norm_p) > best_len):
                         best_id = pattern_id
                         best_priority = priority
                         best_len = len(norm_p)
-                elif norm_p in normalized_q:
+                elif re.search(rf"\b{re.escape(norm_p)}\b", normalized_q):
                     priority = pattern_data.get('priority', 5)
                     if priority > best_priority or (priority == best_priority and len(norm_p) > best_len):
                         best_id = pattern_id
@@ -145,8 +153,10 @@ class PatternMatcher:
                     continue
                 for pstr in pdata.get('patterns', []):
                     norm_p = self._normalize(pstr)
+                    if not norm_p:
+                        continue
                     sim = self._similarity(normalized_q, norm_p)
-                    if norm_p in normalized_q or normalized_q in norm_p:
+                    if re.search(rf"\b{re.escape(norm_p)}\b", normalized_q) or re.search(rf"\b{re.escape(normalized_q)}\b", norm_p):
                         sim = max(sim, 0.85)
                     if sim >= self.threshold:
                         priority = pdata.get('priority', 5)

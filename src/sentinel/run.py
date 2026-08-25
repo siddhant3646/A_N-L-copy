@@ -48,8 +48,14 @@ def _sweep_chrome_temp():
         ".com.google.Chrome.*",
     ]
     swept = 0
+    current_pid_marker = f"sentinel_profile_{os.getpid()}"
     for pattern in patterns:
         for path in glob.glob(os.path.join(_SYSTEM_TEMP, pattern)):
+            # Never delete active process temp wrapper or active profile
+            if _shared_tmp_root and (path == _shared_tmp_root or path.startswith(_shared_tmp_root)):
+                continue
+            if current_pid_marker in path:
+                continue
             try:
                 if os.path.isdir(path):
                     shutil.rmtree(path, ignore_errors=True)
@@ -69,7 +75,7 @@ def _ensure_tmp_root():
     Returns the shared profile directory path.
     """
     global _shared_tmp_root, _shared_profile_dir
-    if _shared_tmp_root is None:
+    if _shared_tmp_root is None or not os.path.exists(_shared_tmp_root):
         # Sweep stale Chrome temp from past force-killed runs first
         _sweep_chrome_temp()
         _shared_tmp_root = tempfile.mkdtemp(prefix="sentinel_")
@@ -346,6 +352,28 @@ class Browser:
                 ignore_default_args=["--enable-unsafe-swiftshader"]
             )
             self.context = await self.browser.new_context()
+
+        if self.context:
+            # 1. Close extra pages if Chrome opened multiple tabs/windows from restored session
+            if len(self.context.pages) > 1:
+                for extra_p in list(self.context.pages[1:]):
+                    try:
+                        await extra_p.close()
+                    except Exception:
+                        pass
+
+            # 2. Auto-close unexpected popups/new windows created during automation
+            async def _auto_close_popup(new_page):
+                try:
+                    await asyncio.sleep(0.3)
+                    if self.context and len(self.context.pages) > 1 and new_page != self.context.pages[0]:
+                        if not new_page.is_closed():
+                            print(f"   🔒 Automatically closed popup window: {new_page.url or 'about:blank'}")
+                            await new_page.close()
+                except Exception:
+                    pass
+
+            self.context.on("page", lambda p: asyncio.create_task(_auto_close_popup(p)))
 
     async def get_current_page(self):
         if self.context and self.context.pages:

@@ -245,11 +245,11 @@ GOAL: Configure job search filters on Instahyre and apply to 5 jobs.
 
 PHASE 1 - CONFIGURE SEARCH:
 1. Click "Search other jobs" dropdown to expand the filter panel
-2. Set Experience: 4 years
-3. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills (one by one): Java, JavaScript, HTML, CSS, SpringBoot, ReactJS, AWS
-5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
-6. Click "Show results" button after all configuration is complete
+# 2. Set Experience: 4 years (Disabled - uncomment to re-enable)
+2. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
+3. Add Skills (one by one): Java, JavaScript, HTML, CSS, SpringBoot, ReactJS, AWS
+4. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
+5. Click "Show results" button after all configuration is complete
 
 PHASE 2 - APPLY TO JOBS (Loop 5 times):
 1. On results page, click "View »" button on a job card
@@ -264,7 +264,7 @@ DOM Selectors:
 - Search Other Jobs Dropdown: Text "Search other jobs" or .filter-toggle
 - Skills Input: input#skills-selectized
 - Job Functions Input: input#job-functions-selectized
-- Experience Input: input#years
+# - Experience Input: input#years (Disabled - uncomment to re-enable)
 - Location Input: input#location-selectized
 - Show Results Button: button#show-results
 - View Button: button#interested-btn, button.button-interested.btn-success
@@ -279,11 +279,11 @@ GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 
 PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 1. If filters are already set, skip to Phase 2
-2. Otherwise: Set Experience: 4 years
-3. Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills: Java, JavaScript, SpringBoot, ReactJS
-5. Add Job Functions: Backend Development, Frontend Development
-6. Click "Show results"
+# 2. Otherwise: Set Experience: 4 years (Disabled - uncomment to re-enable)
+2. Otherwise: Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
+3. Add Skills: Java, JavaScript, SpringBoot, ReactJS
+4. Add Job Functions: Backend Development, Frontend Development
+5. Click "Show results"
 
 PHASE 2 - APPLY TO 20 JOBS (High Volume Session):
 1. On results page, click "View »" button on a job card

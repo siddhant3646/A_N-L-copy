@@ -51,6 +51,8 @@ def _validate_experience(answer: str, question: str) -> Tuple[bool, Optional[str
 def _validate_notice_period(answer: str, question: str) -> Tuple[bool, Optional[str]]:
     if not answer or not answer.strip():
         return False, "Empty notice period answer"
+    if ('in months' in question.lower() or '(in months)' in question.lower()) and answer.strip().isdigit() and int(answer.strip()) > 11:
+        return False, f"Notice period in months cannot exceed 12 months: {answer}"
     return True, None
 
 
@@ -83,6 +85,10 @@ def _validate_numeric(answer: str, question: str) -> Tuple[bool, Optional[str]]:
     has_number = bool(re.search(r'\d+\.?\d*', answer))
     if not has_number:
         return False, f"Numeric answer has no number: {answer}"
+    if ('1-5' in question or '1–5' in question or 'scale of 1-5' in question.lower() or 'scale of 1–5' in question.lower()):
+        match = re.search(r'(\d+)', answer)
+        if match and int(match.group(1)) > 5:
+            return False, f"Rating scale exceeds maximum 5: {answer}"
     return True, None
 
 
@@ -107,8 +113,13 @@ def _normalize_answer(answer: str, category: str, question: str, platform: str) 
     elif category == 'numeric':
         match = re.search(r'(\d+\.?\d*)', answer)
         if match:
-            return match.group(1)
+            val = match.group(1)
+            if ('1-5' in question or '1–5' in question) and int(float(val)) > 5:
+                return '5'
+            return val
     elif category == 'notice_period':
+        if 'in month' in question.lower() or '(in months)' in question.lower():
+            return '0.5'
         if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period'):
             return answer
         if platform == 'linkedin':

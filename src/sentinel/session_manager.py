@@ -20,6 +20,14 @@ class SessionManager:
         self.crashes = 0
         self.max_crashes = 3
 
+    def reset(self) -> None:
+        """Reset session tracking for a new task/cycle."""
+        self.start_time = time.monotonic()
+        self.last_url = None
+        self.last_title = None
+        self.last_activity = time.monotonic()
+        self.crashes = 0
+
     def record_activity(self, url: Optional[str] = None, title: Optional[str] = None) -> None:
         self.last_activity = time.monotonic()
         if url:
@@ -73,7 +81,14 @@ class SessionManager:
         if page is None or page.is_closed():
             return False
 
-        url_to_use = expected_url or self.last_url
+        current_page_url = None
+        try:
+            if page.url and page.url != "about:blank":
+                current_page_url = page.url
+        except Exception:
+            pass
+
+        url_to_use = expected_url or current_page_url or self.last_url
         try:
             await page.reload(timeout=10000)
             if url_to_use and page.url != url_to_use:

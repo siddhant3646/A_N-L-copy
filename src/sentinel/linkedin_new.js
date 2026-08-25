@@ -54,8 +54,8 @@
             default: 'Yes'
         },
         location_current: {
-            patterns: ['current location', 'current city', 'currently located', 'where are you located', 'where do you stay', 'stay currently'],
-            default: 'Bangalore'
+            patterns: ['current location', 'current city', 'currently located', 'where are you located', 'where do you stay', 'stay currently', 'where are you currently based'],
+            default: 'Noida'
         },
         location_preferred: {
             patterns: ['preferred location', 'preferred city', 'city preference', 'interview city', 'preferred location for work'],
@@ -191,19 +191,92 @@
         },
         city: {
             patterns: ['city', 'town', 'municipality'],
-            default: 'Bangalore'
+            default: 'Noida'
         },
         state: {
             patterns: ['state', 'state/province', 'province'],
-            default: 'Karnataka'
+            default: 'Uttar Pradesh'
         },
         zip_code: {
             patterns: ['zip', 'zip code', 'postal code', 'pincode', 'pin code', 'zip/postal code'],
-            default: '560001'
+            default: '201301'
         },
         country: {
             patterns: ['country', 'nation', 'country/region'],
             default: 'India'
+        },
+        citizenship: {
+            patterns: ['citizenship', 'please indicate your citizenship', 'indicate your citizenship'],
+            default: 'Indian'
+        },
+        last_rsu: {
+            patterns: ['last rsu', 'please indicate your last rsu', 'indicate your last rsu'],
+            default: '0'
+        },
+        strict_job_title: {
+            patterns: ['your title', 'current title', 'current job title', 'current designation'],
+            default: 'Software Engineer 2'
+        },
+        social_facebook: {
+            patterns: ['facebook', 'facebook url', 'facebook profile'],
+            default: '__LEAVE_BLANK__'
+        },
+        social_twitter: {
+            patterns: ['x (formerly twitter)', 'twitter', 'twitter url', 'twitter profile'],
+            default: '__LEAVE_BLANK__'
+        },
+        disability_status: {
+            patterns: ['disability status', 'disability status required', 'do you have a disability', 'disability'],
+            default: 'No'
+        },
+        conflict_of_interest: {
+            patterns: ['financial interest', 'competitor, supplier, or client', 'conflict of interest', 'endava competitor'],
+            default: 'No'
+        },
+        notice_period_months: {
+            patterns: ['notice period in months', 'notice period/if any? (in months)', '(in months)'],
+            default: '0.5'
+        },
+        last_working_day_date: {
+            patterns: ['last working day', 'last working date', 'official last working day', 'what is your lwd', 'lwd'],
+            default: '08 Sep 2026'
+        },
+        // Aug 25 QA Additions
+        adobe_target: {
+            patterns: ['adobe target', 'experience in adobe target', 'experience do you have in adobe target', 'how many years of experience do you have in adobe target'],
+            default: '4'
+        },
+        do_you_code_languages: {
+            patterns: ['do you code? what languages', 'do you code', 'what languages do you code', 'which programming languages do you use'],
+            default: 'Java, Python, JavaScript, TypeScript, SQL'
+        },
+        highest_full_time_qualification: {
+            patterns: ['what is your highest full-time qualification', 'highest full-time qualification', 'highest full time qualification'],
+            default: 'B.Tech in Computer Science and Engineering'
+        },
+        cloud_technologies: {
+            patterns: ['experience with cloud technologies', 'do you have experience with cloud technologies', 'which cloud technologies'],
+            default: 'AWS, Microsoft Azure, Docker, Kubernetes'
+        },
+        months_experience: {
+            patterns: ['months of software development experience', 'months of experience', 'how many months of software development experience'],
+            default: '50'
+        },
+        f5_certification: {
+            patterns: ['f5 big-ip administrator', 'f5 certification'],
+            default: 'No'
+        },
+        tcs_offer_letter: {
+            patterns: ['tcs offer letter', 'tcs offer released'],
+            default: 'No'
+        },
+        is_current_location_pune: {
+            patterns: ['is your current location pune', 'current location pune'],
+            default: 'No'
+        },
+        work_from_hyderabad_mandatory: {
+            patterns: ['work from the office in hyderabad is mandatory', 'mandatory work from hyderabad office'],
+            default: 'Yes'
         },
         team_size: {
             patterns: ['team size you have worked with', 'team size you worked with', 'what was the team size', 'size of the team', 'team size'],
@@ -237,10 +310,10 @@
             // "Do you currently or have you previously worked at LinkedIn or Microsoft in any capacity?"
             patterns: [
                 'currently or have you previously worked at linkedin or microsoft',
-                'worked at linkedin or microsoft in any capacity',
-                'previously worked at linkedin or microsoft'
+                'previously worked at linkedin or microsoft in any capacity',
+                'worked at linkedin or microsoft in any capacity'
             ],
-            default: 'Not Applicable'
+            default: 'No'
         },
         linkedin_msft_employment_type_checkbox: {
             // "If you currently or previously worked at LinkedIn or Microsoft, please select company and employment type."
@@ -256,7 +329,14 @@
     // Helper: Match question text against QA patterns
     // Uses longest-match-first to avoid short patterns shadowing more specific ones
     function matchQuestionToPattern(questionText) {
-        const lowerText = questionText.toLowerCase();
+        if (!questionText) return null;
+        const lowerText = questionText.toLowerCase().trim();
+        // Sanitize out common form boilerplates
+        const sanitizedText = lowerText
+            .replace(/\*?\s*(this field is required|required|optional)\s*\*?/gi, ' ')
+            .replace(/[\*\:\?]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
         
         let bestMatch = null;
         let bestPatternLength = 0;
@@ -264,7 +344,15 @@
         for (const [category, data] of Object.entries(QA_PATTERNS)) {
             for (const pattern of data.patterns) {
                 const lowerPattern = pattern.toLowerCase();
-                if (lowerText.includes(lowerPattern)) {
+                let isMatch = false;
+                if (lowerPattern.length <= 4) {
+                    const regex = new RegExp('\\b' + lowerPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+                    isMatch = regex.test(lowerText) || (sanitizedText && regex.test(sanitizedText));
+                } else {
+                    isMatch = lowerText.includes(lowerPattern) || (sanitizedText && sanitizedText.includes(lowerPattern));
+                }
+                
+                if (isMatch) {
                     // Prefer the longest (most specific) pattern match to avoid
                     // short patterns like 'role' matching 'current roles'
                     if (lowerPattern.length > bestPatternLength) {
@@ -716,32 +804,52 @@
             return true;
         }
 
-        // Heuristic 2: element with "X of Y pages" text AND a Next/Review/Submit button visible
+        // Heuristic 2: Standard modal/dialog container that is visible (excluding messaging & filter dropdowns)
+        const dialogSelectors = [
+            '.artdeco-modal__content',
+            '.artdeco-modal',
+            '.jobs-easy-apply-modal',
+            '[role="dialog"]',
+            '[class*="easy-apply-modal"]'
+        ];
+        for (const selector of dialogSelectors) {
+            const elements = document.querySelectorAll(selector);
+            for (const el of elements) {
+                if (el && el.offsetParent !== null) {
+                    const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                    const lowerCls = cls.toLowerCase();
+                    if (lowerCls.includes('msg-overlay') || lowerCls.includes('msg-convo') || 
+                        lowerCls.includes('msg-form') || lowerCls.includes('messaging') ||
+                        lowerCls.includes('dropdown-to-modal') || lowerCls.includes('filter__dropdown') ||
+                        lowerCls.includes('artdeco-dropdown')) {
+                        continue;
+                    }
+                    if (el.querySelector('input, select, textarea, button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]')) {
+                        console.log('Modal detected via active dialog container:', selector);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Heuristic 3: element with "X of Y pages" text AND inside a dialog
         const allTexts = Array.from(document.querySelectorAll('p, span, div'));
         for (const el of allTexts) {
             if (/\d+\s*\/\s*\d+\s*pages?/i.test(el.innerText) && el.offsetParent !== null) {
-                console.log('Modal detected via pages-text heuristic:', el.innerText.trim());
-                return true;
+                const parentModal = el.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, form');
+                if (parentModal) {
+                    console.log('Modal detected via pages-text heuristic:', el.innerText.trim());
+                    return true;
+                }
             }
         }
 
-        // Heuristic 3: componentkey attribute present (LinkedIn Easy Apply root div)
+        // Heuristic 4: componentkey attribute inside a dialog container ONLY
         const compKeyEl = document.querySelector('[componentkey]');
         if (compKeyEl && compKeyEl.offsetParent !== null) {
-            // Make sure it contains form-like elements
-            const hasInputs = compKeyEl.querySelector('input, select, textarea, button');
-            if (hasInputs) {
+            const parentModal = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
+            if (parentModal && compKeyEl.querySelector('input, select, textarea')) {
                 console.log('Modal detected via componentkey+inputs heuristic');
-                return true;
-            }
-        }
-
-        // Heuristic 4: role="dialog" (old LinkedIn, keep as fallback)
-        const dialog = document.querySelector('[role="dialog"]');
-        if (dialog && dialog.offsetParent !== null) {
-            const text = dialog.innerText.toLowerCase();
-            if (text.includes('next') || text.includes('submit') || text.includes('review') || text.includes('contact')) {
-                console.log('Modal detected via role=dialog heuristic');
                 return true;
             }
         }
@@ -765,8 +873,10 @@
                                       lowerCls.includes('filter__dropdown');
                                       
                 if (!isBlacklisted) {
+                    if (el.matches && (el.matches('.artdeco-modal__content') || lowerCls.includes('modal__content'))) {
+                        return el;
+                    }
                     if (el.tagName === 'FORM' || 
-                        el.hasAttribute('componentkey') || 
                         (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal')))) {
                         return el;
                     }
@@ -778,6 +888,7 @@
         // Strategy 2: Check standard modal container selectors next
         // Skip messaging overlays and background filter dropdowns
         const selectors = [
+            '.artdeco-modal__content',
             '.artdeco-modal',
             '.jobs-easy-apply-modal',
             '[role="dialog"]',
@@ -800,11 +911,7 @@
             }
         }
 
-        // Strategy 3: Try componentkey root
-        const compKeyEl = document.querySelector('[componentkey]');
-        if (compKeyEl) return compKeyEl;
-
-        // Strategy 4: Walk up from pages text element
+        // Strategy 3: Walk up from pages text element
         const allSpans = document.querySelectorAll('p, span, div');
         for (const el of allSpans) {
             if (/\d+\s*\/\s*\d+\s*pages?/i.test(el.innerText) && el.offsetParent !== null) {
@@ -820,7 +927,6 @@
                                           
                     if (!isBlacklisted) {
                         if (parent.tagName === 'FORM' || 
-                            parent.hasAttribute('componentkey') || 
                             (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal')))) {
                             return parent;
                         }
@@ -830,14 +936,11 @@
             }
         }
 
-        // Strategy 5: Look for any visible form element
-        const form = document.querySelector('form');
-        if (form && form.offsetParent !== null) {
-            const formId = form.getAttribute('data-id') || '';
-            const formClass = form.className || '';
-            if (!formId.includes('sign-in') && !formClass.includes('search') && !formClass.includes('sign-in')) {
-                return form;
-            }
+        // Strategy 4: Try componentkey element ONLY IF inside a dialog
+        const compKeyEl = document.querySelector('[componentkey]');
+        if (compKeyEl && compKeyEl.offsetParent !== null) {
+            const parentModal = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
+            if (parentModal) return compKeyEl;
         }
 
         // Fallback: Use dummy element rather than document.body to isolate queries
@@ -1137,7 +1240,10 @@
         
         for (const dropdown of dropdowns) {
             // Check if dropdown needs to be filled
-            const isEmpty = !dropdown.value || dropdown.value === '' || dropdown.innerText.toLowerCase().includes('select an option');
+            const dropVal = (dropdown.value || '').toLowerCase().trim();
+            const dropText = (dropdown.options ? (dropdown.options[dropdown.selectedIndex]?.text || '') : (dropdown.innerText || '')).toLowerCase().trim();
+            const isPlaceholder = !dropVal || dropVal === '' || dropVal === 'month' || dropVal === 'year' || dropVal === 'day' || dropVal === 'dd' || dropVal === 'mm' || dropVal === 'yyyy' || dropVal === '-1' || dropVal.includes('select') || dropVal.includes('choose') || dropText === 'month' || dropText === 'year' || dropText === 'day' || dropText === 'dd' || dropText === 'mm' || dropText === 'yyyy' || dropText.includes('select') || dropText.includes('choose');
+            const isEmpty = isPlaceholder;
             
             if (isEmpty) {
                 // Get label text to determine what to select
@@ -1178,6 +1284,22 @@
                     return 'LINKEDIN_FORM_FILLING_DROPDOWN';
                 }
                 
+                // Special Question Types
+                const isCTCQuestion = lowerLabel.includes('ctc') || 
+                                      lowerLabel.includes('salary') || 
+                                      lowerLabel.includes('compensation') ||
+                                      lowerLabel.includes('fixed pay') ||
+                                      lowerLabel.includes('yearly fixed') ||
+                                      lowerLabel.includes('annual fixed') ||
+                                      lowerLabel.includes('lpa') ||
+                                      lowerLabel.includes('remuneration') ||
+                                      (lowerLabel.includes('annual') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('range') || lowerLabel.includes('comp'))) ||
+                                      (lowerLabel.includes('current') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range'))) ||
+                                      (lowerLabel.includes('expected') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range')));
+
+                const isLanguageProficiencyQ = (lowerLabel.includes('proficiency in') || lowerLabel.includes('proficiency level') || lowerLabel.includes('level of proficiency') || lowerLabel.includes('proficiency with') || lowerLabel.includes('speak') || lowerLabel.includes('fluent in')) &&
+                    (lowerLabel.includes('english') || lowerLabel.includes('hindi') || lowerLabel.includes('tamil') || lowerLabel.includes('telugu') || lowerLabel.includes('kannada') || lowerLabel.includes('malayalam') || lowerLabel.includes('marathi') || lowerLabel.includes('bengali') || lowerLabel.includes('gujarati') || lowerLabel.includes('punjabi') || lowerLabel.includes('french') || lowerLabel.includes('german') || lowerLabel.includes('spanish') || lowerLabel.includes('japanese') || lowerLabel.includes('mandarin') || lowerLabel.includes('language'));
+
                 // Use QA patterns to determine the answer
                 let selectValue = getAnswerForQuestion(labelText, 'select');
                 let isCityDropdown = lowerLabel.includes('city') || lowerLabel.includes('cities') || lowerLabel.includes('location');
@@ -1193,6 +1315,8 @@
                         // For city/location dropdowns without pattern match, use Bangalore as default
                         console.log('City/location dropdown detected - using Bangalore as default');
                         selectValue = 'Bengaluru';
+                    } else if (isLanguageProficiencyQ) {
+                        selectValue = lowerLabel.includes('english') || lowerLabel.includes('hindi') ? 'Professional' : 'None';
                     } else {
                         // Default to Yes for unknown dropdowns
                         selectValue = 'Yes';
@@ -1201,13 +1325,65 @@
                 
                 // For native select elements, set value directly
                 if (dropdown.tagName.toLowerCase() === 'select') {
-                    const options = dropdown.querySelectorAll('option');
+                    const options = Array.from(dropdown.querySelectorAll('option'));
                     let selected = false;
                     
-                    if (selectValue) {
-                        // Try to match the selectValue
+                    // Priority 1: CTC Range Matching
+                    if (isCTCQuestion) {
+                        const rawCTC = 23; // user's default CTC 23 LPA
+                        const ctcInLakhs = rawCTC;
+                        const ctcInINR = rawCTC * 100000;
+                        let bestCTCOpt = null;
+                        
+                        for (const opt of options) {
+                            const optText = (opt.innerText || '').toLowerCase().trim();
+                            if (!optText || optText.includes('select') || optText.includes('choose') || optText === '--') continue;
+                            const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
+                            const rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:[-\u2013\u2014]|\bto\b)\s*(\d+(?:\.\d+)?)/);
+                            if (rangeMatch) {
+                                const minVal = parseFloat(rangeMatch[1]);
+                                const maxVal = parseFloat(rangeMatch[2]);
+                                const targetVal = minVal < 1000 ? ctcInLakhs : ctcInINR;
+                                if (targetVal >= minVal && targetVal <= maxVal) {
+                                    bestCTCOpt = opt;
+                                    break;
+                                }
+                            }
+                        }
+                        if (bestCTCOpt) {
+                            bestCTCOpt.selected = true;
+                            dropdown.value = bestCTCOpt.value;
+                            dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Directly selected CTC range:', bestCTCOpt.innerText);
+                            filledAny = true;
+                            selected = true;
+                        }
+                    }
+
+                    // Priority 2: Language Proficiency Matching
+                    if (!selected && isLanguageProficiencyQ) {
+                        let langMatch = null;
+                        if (lowerLabel.includes('english')) {
+                            langMatch = options.find(o => /professional|fluent|native|full|advanced/i.test(o.innerText));
+                        } else if (lowerLabel.includes('hindi')) {
+                            langMatch = options.find(o => /native|fluent|professional|full|conversational/i.test(o.innerText));
+                        } else {
+                            langMatch = options.find(o => /^none$/i.test(o.innerText.trim()) || /no proficiency|elementary|limited|basic/i.test(o.innerText));
+                        }
+                        if (langMatch) {
+                            langMatch.selected = true;
+                            dropdown.value = langMatch.value;
+                            dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Directly selected Language option:', langMatch.innerText);
+                            filledAny = true;
+                            selected = true;
+                        }
+                    }
+
+                    // Priority 3: Try to match selectValue text
+                    if (!selected && selectValue) {
                         for (const option of options) {
-                            if (option.innerText.toLowerCase().includes(selectValue)) {
+                            if (option.innerText.toLowerCase().includes(selectValue.toLowerCase())) {
                                 option.selected = true;
                                 dropdown.value = option.value;
                                 dropdown.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1219,15 +1395,15 @@
                         }
                     }
                     
-                    // If no match found or no selectValue, select first non-placeholder option
+                    // Priority 4 (Universal Fallback): select first non-placeholder option
                     if (!selected) {
                         for (const option of options) {
                             const text = option.innerText.toLowerCase().trim();
-                            if (text && !text.includes('select') && !text.includes('choose') && text.length > 2) {
+                            if (text && !text.includes('select') && !text.includes('choose') && text !== '--' && text.length > 0) {
                                 option.selected = true;
                                 dropdown.value = option.value;
                                 dropdown.dispatchEvent(new Event('change', { bubbles: true }));
-                                console.log('Selected first non-placeholder option:', option.innerText);
+                                console.log('Universal fallback selected option:', option.innerText);
                                 filledAny = true;
                                 break;
                             }
@@ -1328,14 +1504,14 @@
                         fillValue = 'Sector 137';
                         console.log('Fallback: Filling street address with: Sector 137');
                     } else if (combinedText.includes('city') || combinedText.includes('town')) {
-                        fillValue = 'Bangalore';
-                        console.log('Fallback: Filling city with: Bangalore');
+                        fillValue = 'Noida';
+                        console.log('Fallback: Filling city with: Noida');
                     } else if (combinedText.includes('state') || combinedText.includes('province')) {
-                        fillValue = 'Karnataka';
-                        console.log('Fallback: Filling state with: Karnataka');
+                        fillValue = 'Uttar Pradesh';
+                        console.log('Fallback: Filling state with: Uttar Pradesh');
                     } else if (combinedText.includes('zip') || combinedText.includes('postal code') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
-                        fillValue = '560001';
-                        console.log('Fallback: Filling zip/postal code with: 560001');
+                        fillValue = '201301';
+                        console.log('Fallback: Filling zip/postal code with: 201301');
                     } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                         fillValue = 'India';
                         console.log('Fallback: Filling country with: India');
@@ -1354,12 +1530,15 @@
                     fillValue = null; // skip further processing
                 }
                 
-                // If it's a numeric input, extract just the number from the answer
+                // If it's a numeric input, extract just the number from the answer (unless it's a date)
                 if (fillValue && isNumericInput) {
-                    const numericMatch = fillValue.match(/(\d+\.?\d*)/);
-                    if (numericMatch) {
-                        fillValue = numericMatch[1];
-                        console.log('Extracted numeric value for number field:', fillValue);
+                    const isDateValue = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(fillValue) || fillValue.includes('/') || (fillValue.includes('-') && fillValue.length > 5);
+                    if (!isDateValue) {
+                        const numericMatch = fillValue.match(/(\d+\.?\d*)/);
+                        if (numericMatch) {
+                            fillValue = numericMatch[1];
+                            console.log('Extracted numeric value for number field:', fillValue);
+                        }
                     }
                 }
                 
@@ -1646,6 +1825,13 @@
                                       questionLower.includes('agree') ||
                                       questionLower.includes('declare') ||
                                       questionLower.includes('i consent');
+            const isCurrentJob = questionLower.includes('currently work') ||
+                                 questionLower.includes('current role') ||
+                                 questionLower.includes('present role') ||
+                                 questionLower.includes('working here') ||
+                                 questionLower.includes('currently employed') ||
+                                 questionLower.includes('work in this role') ||
+                                 questionLower.includes('work here');
 
             if (answer && answer.toLowerCase() === 'yes') {
                 checkbox.click();
@@ -1654,6 +1840,10 @@
             } else if (isPrivacyOrConsent) {
                 checkbox.click();
                 console.log('Checked privacy/consent checkbox:', questionText.substring(0, 50));
+                filledAny = true;
+            } else if (isCurrentJob) {
+                checkbox.click();
+                console.log('Checked current job checkbox:', questionText.substring(0, 50));
                 filledAny = true;
             } else {
                 console.log('Skipping singleton checkbox - not matched:', questionText.substring(0, 50));
@@ -1816,9 +2006,12 @@
                             filledAny = true;
                             selected = true;
                         } else if (radioArray.length > 0) {
-                            radioArray[0].click();
-                            radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Selected first radio as last resort for:', questionText.substring(0, 50));
+                            const qLower = questionText.toLowerCase();
+                            const isNegativeByDefault = /sponsorship|visa|conflict|financial interest|competitor|criminal|convict|disciplinary|disability|felony/i.test(qLower);
+                            const idx = isNegativeByDefault && radioArray.length > 1 ? 1 : 0;
+                            radioArray[idx].click();
+                            radioArray[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Selected radio index', idx, 'as last resort for:', questionText.substring(0, 50));
                             filledAny = true;
                             selected = true;
                         }
@@ -1843,7 +2036,9 @@
                     
                     if (!selected) {
                         const cArr = Array.from(customRadios);
-                        const idx = answerLower === 'yes' ? 0 : Math.min(1, cArr.length - 1);
+                        const qLower = questionText.toLowerCase();
+                        const isNegativeByDefault = /sponsorship|visa|conflict|financial interest|competitor|criminal|convict|disciplinary|disability|felony/i.test(qLower);
+                        const idx = answerLower === 'yes' ? 0 : (isNegativeByDefault && cArr.length > 1 ? 1 : Math.min(1, cArr.length - 1));
                         if (cArr[idx]) {
                             cArr[idx].click();
                             cArr[idx].dispatchEvent(new Event('change', { bubbles: true }));
@@ -1855,19 +2050,47 @@
             }
             
             if (!answer) {
-                console.log('No pattern match for radio question, defaulting to Yes:', questionText.substring(0, 80));
+                const qLower = questionText.toLowerCase();
+                const isNegativeByDefault = /sponsorship|visa|conflict|financial interest|competitor|criminal|convict|disciplinary|disability|felony/i.test(qLower);
+                const safeAnswer = isNegativeByDefault ? 'no' : 'yes';
+                console.log('No pattern match for radio question, defaulting to safe option (' + safeAnswer + '):', questionText.substring(0, 80));
+                
                 if (hasRadios) {
                     const radioArray = Array.from(radios);
-                    if (radioArray.length > 0) {
-                        radioArray[0].click();
-                        radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
-                        console.log('Default-selected first radio for unmatched question');
-                        filledAny = true;
+                    let clicked = false;
+                    for (const r of radioArray) {
+                        const rLabel = (getLabelForInput(r) || r.value || '').toLowerCase();
+                        if ((safeAnswer === 'no' && (/\bno\b/.test(rLabel) || r.value === 'no' || r.value === 'false')) ||
+                            (safeAnswer === 'yes' && (rLabel.includes('yes') || r.value === 'yes' || r.value === 'true'))) {
+                            clickRadioReactAware(r);
+                            clicked = true;
+                            break;
+                        }
                     }
+                    if (!clicked && radioArray.length > 0) {
+                        const idx = safeAnswer === 'no' && radioArray.length > 1 ? 1 : 0;
+                        radioArray[idx].click();
+                        radioArray[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    filledAny = true;
                 } else if (hasCustomRadios) {
-                    customRadios[0].click();
-                    customRadios[0].dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('Default-selected first custom radio for unmatched question');
+                    const cArr = Array.from(customRadios);
+                    let clicked = false;
+                    for (const cr of cArr) {
+                        const crText = (cr.innerText || cr.getAttribute('aria-label') || cr.value || '').toLowerCase();
+                        if ((safeAnswer === 'no' && (/\bno\b/.test(crText) || cr.value === 'no' || cr.value === 'false')) ||
+                            (safeAnswer === 'yes' && (crText.includes('yes') || cr.value === 'yes' || cr.value === 'true'))) {
+                            cr.click();
+                            cr.dispatchEvent(new Event('change', { bubbles: true }));
+                            clicked = true;
+                            break;
+                        }
+                    }
+                    if (!clicked && cArr.length > 0) {
+                        const idx = safeAnswer === 'no' && cArr.length > 1 ? 1 : 0;
+                        cArr[idx].click();
+                        cArr[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                     filledAny = true;
                 }
             }

@@ -82,6 +82,18 @@ class TestResolveNaukriCompletion:
         result = await agent._resolve_naukri_completion()
         assert result == 'CHATBOT_NO_PROGRESS: 0/5'
 
+    @pytest.mark.asyncio
+    async def test_passes_fallback_batch_size_and_prev_total(self, agent):
+        """Embeds py_prev_total and fallback_batch_size in evaluate script."""
+        agent.metrics['applications_submitted'] = 2
+        agent._naukri_last_batch_size = 3
+        agent._page.evaluate = AsyncMock(return_value='CHATBOT_COMPLETE: 5/5')
+        result = await agent._resolve_naukri_completion()
+        assert result == 'CHATBOT_COMPLETE: 5/5'
+        call_arg = agent._page.evaluate.call_args.args[0]
+        assert 'pyPrevTotal = 2' in call_arg
+        assert 'fallbackBatchSize = 3' in call_arg
+
 
 # =============================================================================
 # _handle_naukri_post_apply — under target (continue)

@@ -1,0 +1,218 @@
+import unittest
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.patterns.pattern_matcher import create_matcher
+from src.patterns.answer_validator import AnswerValidator
+
+
+class TestQAAuditFixes(unittest.TestCase):
+    def setUp(self):
+        self.matcher = create_matcher()
+
+    # 1. EEOC Disability & STAR Cross-Contamination Fixes
+    def test_disability_status_not_behavioral_essay(self):
+        questions = [
+            'Disability Status \nRequired',
+            'Disability Status',
+            'Do you have a disability?',
+            'Voluntary self-identification of disability'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertIn("No", ans)
+            self.assertNotIn("API response times degraded", ans)
+            self.assertNotIn("latency", ans)
+
+    # 2. Compliance & Conflict of Interest Fixes
+    def test_conflict_of_interest_returns_no(self):
+        questions = [
+            'Do you or a close family member have any financial interest in an Endava competitor, supplier, or client? \nRequired',
+            'Do you have any conflict of interest?',
+            'Financial interest in a competitor'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertEqual(ans, 'No')
+            self.assertNotEqual(ans, '4.2')
+
+    # 3. Visa Sponsorship Fixes (Prevent Auto-Rejection)
+    def test_visa_sponsorship_returns_no(self):
+        questions = [
+            'Will you now or in the future require sponsorship for employment visa status? \nRequired\nYes\nNo',
+            'Will you now or in the future require sponsorship.',
+            'Will you now or at any point in the future require employment visa sponsorship?'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertEqual(ans, 'No')
+
+    # 4. Technical Screening & Essay Fixes (Not Digits or Placeholder URLs)
+    def test_net_framework_vs_core(self):
+        q = 'What is the difference between .NET Framework and .NET Core?'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertIn('.NET Core', ans)
+        self.assertNotEqual(ans, '4')
+
+    def test_azure_ad_auth(self):
+        q = 'Have you implemented Azure AD authentication?'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertTrue(ans.startswith('Yes'))
+        self.assertNotEqual(ans, '4')
+
+    def test_career_aspirations(self):
+        q = 'Tell us why you are interested in this job role. Tell us your career aspirations and where you see yourself in this domain a few years down the line.'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertIn('distributed', ans)
+        self.assertNotEqual(ans, '4')
+
+    def test_freshworks_elevator_pitch(self):
+        q = 'Take this opportunity to tell us your motivation behind wanting to join Freshworks. You can be as descriptive as you like.'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertIn('Freshworks', ans)
+        self.assertNotIn('example.com', ans)
+
+    def test_backend_capability_story(self):
+        q = 'Describe a substantial production backend capability you owned: what it did, why it was hard, how you tested it, and how failures were handled.'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertIn('microservices', ans)
+        self.assertNotEqual(ans, 'Yes')
+
+    def test_hands_on_vs_management_percentage(self):
+        q = 'What % of your time goes into hands-on technical/architecture work vs people management?'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertIn('80%', ans)
+
+    # 5. Compensation & Salary Expectation Fixes
+    def test_salary_expectations_return_expected_ctc(self):
+        questions = [
+            'What are your salary expectations?',
+            'What is your salary expectation?',
+            'What are your salary expectations in local currency?',
+            "What's your CTC expectation ? (Our maximum budget is 18 LPA, Please apply accordingly).",
+            'What is your expected compensation?',
+            'What is your expected CTC ?'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertIn(ans, ['3000000', '30 LPA', '30'])
+            self.assertNotIn(ans, ['2300000', '23 LPA', '23'])
+
+    # 6. Notice Period & Date Format Fixes
+    def test_notice_period_in_months(self):
+        questions = [
+            'Notice Period/If ANY? (in months)',
+            'Notice period in months',
+            'Notice period (in months)'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertEqual(ans, '0.5')
+            self.assertNotEqual(ans, '15')
+
+    def test_last_working_day_date_format(self):
+        questions = [
+            'If you are serving notice, what will be your official last working day?',
+            'What is your notice period or last working date?',
+            'What is your notice period/Last working date?',
+            'What is your official last working day'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"Failed to match {q}")
+            ans = res.get('answer', '')
+            self.assertIn('Sep', ans)
+            self.assertNotEqual(ans, '15')
+
+    def test_join_within_1_month(self):
+        q = 'Are you available to join within 1 month? \nRequired'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer', '')
+        self.assertEqual(ans, 'Yes')
+        self.assertNotEqual(ans, '15')
+
+    # 7. Non-Resume Skills Whitelisting (0 Years / No)
+    def test_non_resume_skills_return_zero(self):
+        cases = [
+            ('How many years of work experience do you have in Fusion/Solidworks/Inventor and other CAD softwares ?', '0'),
+            ('How many years of experience do you have in Saviynt Development?', '0'),
+            ('How many years of experience do you have in JML?', '0'),
+            ('How many years of experience do you have in Blazor?', '0'),
+            ('How many years of experience do you have in Sitecore CDP?', '0'),
+            ('How many years of experince do you have in PHP & Laravel?', '0'),
+            ('How many years of experience as a Business Analyst?', '0'),
+            ('Do u have experience in Semi conductor equipment ?? How many years ?', '0'),
+            ('How many years of work experience do you have with Go (Programming Language)?', '0'),
+            ('How many years of work experience do you have with Salesforce.com?', '0')
+        ]
+        for q, expected_val in cases:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res, f"For question '{q}'")
+            ans = str(res.get('answer', ''))
+            self.assertTrue(ans.startswith(expected_val), f"For question '{q}', expected '{expected_val}', got '{ans}'")
+
+    # 8. Profile & Identity Details
+    def test_citizenship_and_rsu(self):
+        q_cit = 'Please indicate your citizenship'
+        res_cit = self.matcher.match_with_details(q_cit)
+        self.assertIsNotNone(res_cit)
+        self.assertEqual(res_cit.get('answer'), 'Indian')
+
+        q_rsu = 'Please indicate your last RSU'
+        res_rsu = self.matcher.match_with_details(q_rsu)
+        self.assertIsNotNone(res_rsu)
+        self.assertEqual(res_rsu.get('answer'), '0')
+
+    def test_job_title_strict(self):
+        q = 'Your title'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        self.assertEqual(res.get('answer'), 'Software Engineer 2')
+
+    def test_social_links_blank_when_not_held(self):
+        for q in ['Facebook', 'X (formerly Twitter)']:
+            res = self.matcher.match_with_details(q)
+            self.assertIsNotNone(res)
+            self.assertEqual(res.get('answer'), '__LEAVE_BLANK__')
+
+    # 9. Rating Scale Bounds (1-5)
+    def test_rating_scale_bounds(self):
+        q = 'Rate your proficiency with data structures, algorithms, and design patterns. (1–5 scale)'
+        res = self.matcher.match_with_details(q)
+        self.assertIsNotNone(res)
+        ans = res.get('answer')
+        self.assertEqual(ans, '5')
+        self.assertNotEqual(ans, '9')
+
+        # Validator check
+        is_valid, err = AnswerValidator.validate('9', 'numeric', q)
+        self.assertFalse(is_valid)
+
+
+if __name__ == '__main__':
+    unittest.main()

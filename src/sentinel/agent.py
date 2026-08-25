@@ -194,24 +194,20 @@ class SentinelAgent:
     
     async def _inject_patterns_once(self) -> None:
         """
-        Inject QA patterns into the browser context ONCE via add_init_script.
+        Inject QA patterns into the active page window globals.
         
-        This is the primary memory optimization: instead of re-serializing and
-        re-shipping ~12.3 MB of JSON to Chrome on every step (which caused
-        >500 MB/site memory usage), patterns are installed as window globals
-        on the context. All future pages in this context (including after hard
-        resets) automatically inherit them via the init script.
-        
-        Idempotent per context: tracks injected context IDs to avoid duplicate
-        init scripts. Safe across agent reuse (P1a) since each new context
-        gets its own injection.
+        Evaluates directly on the active page, avoiding heavy global add_init_script
+        injection across dozens of third-party iframes/trackers.
         """
         if self._page is None:
             return
-        context = self._page.context
-        ctx_id = id(context)
-        if ctx_id in self._injected_contexts:
-            return  # Already injected for this context
+        
+        try:
+            is_defined = await self._page.evaluate("() => typeof window.__SENTINEL_PATTERNS__ !== 'undefined'")
+            if is_defined:
+                return
+        except Exception:
+            pass
         
         patterns_for_js = self._get_patterns_for_js()
         patterns_json = json.dumps(patterns_for_js.get('answers', {}))
@@ -229,11 +225,10 @@ class SentinelAgent:
             f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
         )
         
-        # add_init_script applies to all current AND future pages in this context.
-        await context.add_init_script(init_script)
-        # Evaluate immediately so the CURRENT page (created before add_init_script) also has the globals.
-        await self._page.evaluate(init_script)
-        self._injected_contexts.add(ctx_id)
+        try:
+            await self._page.evaluate(init_script)
+        except Exception:
+            pass
     
     def reset_per_task_state(self):
         """Reset all per-task mutable state for agent reuse across tasks (P1a).
@@ -267,6 +262,8 @@ class SentinelAgent:
         self.naukri_rate_limit_until = None
         self._error_detector = None
         self._error_recovery = None
+        if hasattr(self, '_session_manager') and self._session_manager:
+            self._session_manager.reset()
         self.state = SentinelState()
         self.metrics = {
             'task_name': '',
@@ -406,6 +403,43 @@ class SentinelAgent:
         skip_patterns = ['skip this question', 'try again', 'restart conversation', 'no worries', 'change your input']
         if any(skip in question_lower for skip in skip_patterns):
             return '', 1.0  # Return empty string to trigger skip
+        
+        # ==========================================
+        # PHASE 0.1: Critical Compliance & Specific Intent Intercepts
+        # These MUST be resolved before generic fingerprint/pattern matching
+        # ==========================================
+        # Relatives / Family / Conflict of interest in company
+        conflict_keywords = ['conflict of interest', 'close relative', 'family member', 
+                            'relative working', 'relatives working', 'relatives in', 'family in company', 'relatives in company', 'relatives working with us', 'relative working with us']
+        if any(kw in question_lower for kw in conflict_keywords) or ('relative' in question_lower and 'company' in question_lower):
+            return 'No', 0.98
+
+        # Ex-employee / Ever worked for company
+        ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|with|for)"
+        if re.search(ever_employed_pattern, question_lower):
+            if 'everbridge' in question_lower or 'fiserv' in question_lower:
+                return 'Yes', 0.98
+            return 'No', 0.98
+
+        # NOC / Relieving Letter / Experience Letter
+        if 'noc' in question_lower or 'relieving letter' in question_lower or 'experience letter' in question_lower:
+            return 'Yes', 0.95
+
+        # Commuting questions
+        if 'commuting' in question_lower or 'commute' in question_lower or 'commutable' in question_lower:
+            return 'Yes', 0.95
+
+        # Leadership questions
+        if 'leadership' in question_lower:
+            return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
+
+        # Highest qualification
+        if 'highest qualification' in question_lower or 'highest education' in question_lower:
+            return 'B.Tech in Computer Science', 0.95
+
+        # Relocation questions
+        if ('willing to relocate' in question_lower or question_lower.startswith('relocate') or question_lower == 'relocation') and not any(city in question_lower for city in ['mumbai', 'pune', 'chennai', 'hyderabad', 'delhi', 'noida', 'gurgaon']):
+            return 'Yes', 0.95
         
         # ==========================================
         # PHASE 0.5: Fingerprint Matching
@@ -616,17 +650,17 @@ class SentinelAgent:
         if re.search(currently_employed_pattern, question_lower):
             return 'No', 0.98
         
-        # Pattern 5: "Ever been employed by" or "Previously employed by"
-        ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed)\s+(?:by|at|with)"
+        # Pattern 5: "Ever been employed by" or "Previously employed by" / "Ever worked for"
+        ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|with|for)"
         if re.search(ever_employed_pattern, question_lower):
             # Check if it's asking about Everbridge or Fiserv specifically
             if 'everbridge' in question_lower or 'fiserv' in question_lower:
                 return 'Yes', 0.98
             return 'No', 0.98
         
-        # Pattern 6: "Conflict of interest" or "Family member" questions
+        # Pattern 6: "Conflict of interest" or "Family member" / "Relatives" questions
         conflict_keywords = ['conflict of interest', 'close relative', 'family member', 
-                            'relative working', 'family in company', 'relatives in company']
+                            'relative working', 'relatives working', 'relatives in', 'family in company', 'relatives in company', 'relative', 'relatives']
         is_conflict_question = any(kw in question_lower for kw in conflict_keywords)
         if is_conflict_question:
             return 'No', 0.98
@@ -750,6 +784,26 @@ class SentinelAgent:
                 return 'No, I am currently based in Bangalore. However, I am willing to relocate to Delhi/NCR.', 0.95
             return 'Bangalore', 0.95
         
+        # Commuting questions ("Are you comfortable commuting to this job's location?")
+        if 'commuting' in question_lower or 'commute' in question_lower or 'commutable' in question_lower:
+            return 'Yes', 0.95
+
+        # Relocation questions (simple yes/no)
+        if ('relocat' in question_lower or 'relocation' in question_lower) and not is_location_specific:
+            return 'Yes', 0.95
+
+        # Leadership questions
+        if 'leadership' in question_lower:
+            return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
+
+        # Highest qualification
+        if 'highest qualification' in question_lower or 'highest education' in question_lower:
+            return 'B.Tech in Computer Science', 0.95
+
+        # Relieving letter / NOC / Experience letter
+        if 'noc' in question_lower or 'relieving letter' in question_lower or 'experience letter' in question_lower:
+            return 'Yes', 0.95
+
         # Handle referral questions
         if is_referral_question:
             return 'No', 0.95
@@ -1539,7 +1593,8 @@ class SentinelAgent:
                 print("   🛑 Too many session crashes. Stopping task.")
                 self.state.task_complete = True
                 return False
-            recovered = await self._session_manager.recover(self._page)
+            expected_url = self._page.url if self._page else None
+            recovered = await self._session_manager.recover(self._page, expected_url=expected_url)
             if recovered:
                 print("   ✅ Session recovered via reload")
             else:
@@ -2159,6 +2214,22 @@ class SentinelAgent:
             except Exception as e:
                 print(f"   ⚠️ Could not enable browser console logging: {e}")
         
+        # Record initial activity for this task run
+        if self._page:
+            try:
+                self._session_manager.record_activity(url=self._page.url)
+            except Exception:
+                pass
+
+        # Close any lingering extra windows/tabs before starting step loop
+        if self._page and self._page.context and len(self._page.context.pages) > 1:
+            for extra_p in list(self._page.context.pages):
+                if extra_p != self._page:
+                    try:
+                        await extra_p.close()
+                    except Exception:
+                        pass
+
         while self.state.step_count < max_steps and not self.state.task_complete:
             self.state.step_count += 1
             print(f"\n📍 Step {self.state.step_count}/{max_steps}")
@@ -2172,7 +2243,8 @@ class SentinelAgent:
                 if self._session_manager.should_stop():
                     self.state.task_complete = True
                     break
-                recovered = await self._session_manager.recover(self._page)
+                expected_url = self._page.url if self._page else None
+                recovered = await self._session_manager.recover(self._page, expected_url=expected_url)
                 if not recovered:
                     print("   🛑 Session recovery failed. Stopping.")
                     self.state.task_complete = True
@@ -3198,6 +3270,10 @@ class SentinelAgent:
                         elif 'LINKEDIN_CHECKBOX_CHECKED' in next_result:
                             print("☑️ Checked Terms/Privacy checkbox")
                             continue
+                        elif 'LINKEDIN_INVALID_CARD_REMOVED' in next_result:
+                            print("🗑️ Removed invalid/duplicate card from review list")
+                            await asyncio.sleep(random.uniform(1.5, 2.5))
+                            continue
                         elif 'LINKEDIN_FORM_STUCK' in next_result:
                             print("⚠️ Form stuck (button not found or validation issue). Waiting for re-render...")
                             await asyncio.sleep(random.uniform(2, 4))
@@ -3789,15 +3865,20 @@ class SentinelAgent:
                     # Try to click apply immediately with robust logic and 2s monitoring
                     # NOTE: Using regular function expression for better Playwright compatibility
                     apply_result = await self._page.evaluate("""function() {
-                        const applyBtn = document.querySelector('.multi-apply-button');
+                        const applyBtn = document.querySelector(
+                            'button.multi-apply-button, .multi-apply-button, button.typ-16Bold, span.fright button, div.headSection button.multi-apply-button, button[class*="multi-apply"]'
+                        ) || Array.from(document.querySelectorAll('button')).find(b => 
+                            /apply\\s*\\d*\\s*jobs?/i.test(b.innerText || '') || (b.className && b.className.toString().includes('multi-apply'))
+                        );
                         if (applyBtn && applyBtn.offsetParent !== null) {
-                            applyBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            applyBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                            applyBtn.focus();
 
-                            applyBtn.click();
+                            applyBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
-                            applyBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.click();
 
                             // MONITOR: Check for error snackbar
                             // NOTE: Loop-based await removed - single check only, Python handles polling
@@ -3832,13 +3913,26 @@ class SentinelAgent:
                     }""")
                     
                     # Playwright fallback if JS click didn't trigger modal (and no error detected)
-                    if 'NO_APPLY_BUTTON' in apply_result or (apply_result == 'APPLY_CLICKED' and not await self._page.is_visible('.chatbot_DrawerContentWrapper')):
-                        print("⚠️ JS click failed or button not found, trying Playwright native click fallback...")
-                        try:
-                            await self._page.click('.multi-apply-button', timeout=3000)
-                            apply_result = 'APPLY_CLICKED_FALLBACK'
-                        except Exception as e:
-                            print(f"⚠️ Playwright fallback click also failed: {e}")
+                    if 'NO_APPLY_BUTTON' in apply_result or (apply_result == 'APPLY_CLICKED' and not await self._page.is_visible('.chatbot_DrawerContentWrapper, [class*="ChatbotContainer"], [class*="chatBotContainer"], ._chatBotContainer, .chatbot_Drawer')):
+                        print("⚠️ JS click did not open modal, trying Playwright native click fallback...")
+                        for selector in [
+                            'button.multi-apply-button',
+                            '.multi-apply-button',
+                            'button.multi-apply-button.typ-16Bold',
+                            'button.typ-16Bold',
+                            'span.fright button',
+                        ]:
+                            try:
+                                btn_el = await self._page.query_selector(selector)
+                                if btn_el and await btn_el.is_visible():
+                                    await btn_el.scroll_into_view_if_needed()
+                                    await btn_el.click(force=True, timeout=3000)
+                                    apply_result = 'APPLY_CLICKED_FALLBACK'
+                                    print(f"   🖱️ Clicked apply button via Playwright ({selector})")
+                                    await asyncio.sleep(random.uniform(2, 3))
+                                    break
+                            except Exception as e:
+                                pass
                     
                     print(f"   📜 Apply result: {apply_result}")
                     
@@ -3853,7 +3947,7 @@ class SentinelAgent:
                     
                     if 'APPLY_CLICKED' in apply_result:
                         print("⏳ Waiting for Naukri chatbot...")
-                        await asyncio.sleep(random.uniform(4, 8))
+                        await asyncio.sleep(random.uniform(2, 4))
                         chatbot_done = await self._handle_chatbot_loop()
                         if chatbot_done == 'CONTINUE':
                             # MCC popup detected, continue main loop for scripted fallback
@@ -3882,19 +3976,40 @@ class SentinelAgent:
                                 break
                             continue
                         else:
-                            # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
-                            print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
-                            try:
-                                await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
-                                await asyncio.sleep(random.uniform(4, 6))
-                                continue
-                            except Exception as e:
-                                print(f"   ⚠️ Navigation error: {e}")
+                            # Chatbot loop returned False / not open
+                            print("ℹ️ Chatbot was not open or no questions needed - checking page state...")
+                            if '/myapply/saveApply' in self._page.url:
+                                should_continue = await self._handle_naukri_post_apply(await self._resolve_naukri_completion())
+                                if not should_continue:
+                                    break
+                            continue
             
                 # Naukri Chatbot handling (for direct APPLY_CLICKED)
                 if 'APPLY_CLICKED' in result and 'LINKEDIN' not in result and 'naukri.com' in current_url:
                     print("⏳ Waiting for Naukri chatbot...")
-                    await asyncio.sleep(random.uniform(4, 8))
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    chatbot_visible = await self._page.is_visible(
+                        '.chatbot_DrawerContentWrapper, [class*="ChatbotContainer"], [class*="chatBotContainer"], ._chatBotContainer, .chatbot_Drawer'
+                    )
+                    if not chatbot_visible and '/myapply/saveApply' not in self._page.url:
+                        for selector in [
+                            'button.multi-apply-button',
+                            '.multi-apply-button',
+                            'button.multi-apply-button.typ-16Bold',
+                            'button.typ-16Bold',
+                            'span.fright button',
+                        ]:
+                            try:
+                                btn_el = await self._page.query_selector(selector)
+                                if btn_el and await btn_el.is_visible():
+                                    await btn_el.scroll_into_view_if_needed()
+                                    await btn_el.click(force=True, timeout=3000)
+                                    print(f"   🖱️ Clicked apply button via Playwright ({selector})")
+                                    await asyncio.sleep(random.uniform(2, 3))
+                                    break
+                            except Exception:
+                                pass
+                    
                     # Parse batch size from result (e.g., "NAUKRI_APPLY_CLICKED: 5 jobs selected")
                     self._naukri_last_batch_size = self._parse_naukri_batch_size(result)
                     chatbot_done = await self._handle_chatbot_loop()
@@ -3924,14 +4039,13 @@ class SentinelAgent:
                             break
                         continue
                     else:
-                        # Chatbot loop exhausted - navigate back to recommended jobs to try different jobs
-                        print("🔄 Chatbot exhausted - navigating back to recommended jobs...")
-                        try:
-                            await self._page.goto('https://www.naukri.com/mnjuser/recommendedjobs', timeout=30000)
-                            await asyncio.sleep(random.uniform(4, 6))
-                            continue
-                        except Exception as e:
-                            print(f"   ⚠️ Navigation error: {e}")
+                        # Chatbot not open or direct submission
+                        print("ℹ️ Chatbot was not open or no questions needed - checking page state...")
+                        if '/myapply/saveApply' in self._page.url:
+                            should_continue = await self._handle_naukri_post_apply(await self._resolve_naukri_completion())
+                            if not should_continue:
+                                break
+                        continue
                 
                 # Naukri: Chatbot detected by scripted fallback - trigger chatbot loop
                 if result == 'CHATBOT_DETECTED' and 'naukri.com' in current_url:
@@ -4114,14 +4228,13 @@ class SentinelAgent:
         Resolve how many Naukri jobs have been applied to cumulatively.
 
         Called when the chatbot loop detects a successful application. Parses the
-        "X out of Y" text on the Naukri success page, updates the cumulative
-        counter in sessionStorage (naukri_total_applied / naukri_remaining), and
-        returns a string of the form 'CHATBOT_COMPLETE: <newTotal>/5' so callers
+        "X out of Y" (or other success count) text on the Naukri success page, updates
+        the cumulative counter in sessionStorage (naukri_total_applied / naukri_remaining),
+        and returns a string of the form 'CHATBOT_COMPLETE: <newTotal>/5' so callers
         can branch on whether the 5-job target has been reached.
 
-        If no "X out of Y" text is found, returns 'CHATBOT_NO_PROGRESS: <prevTotal>/5'
-        (NOT 'CHATBOT_COMPLETE') so the caller can distinguish a real completion
-        from a stale-state false positive and break out of an infinite loop.
+        If no success text is found and no batch size is available, returns
+        'CHATBOT_NO_PROGRESS: <prevTotal>/5'.
 
         RETRY LOGIC: The success text may take a few seconds to appear on the
         page after the chatbot modal closes. This method retries up to 3 times
@@ -4131,21 +4244,55 @@ class SentinelAgent:
         if not self._page:
             return 'CHATBOT_NO_PROGRESS: 0/5'
 
-        check_js = """() => {
+        py_prev_total = self.metrics.get('applications_submitted', 0)
+        fallback_batch_size = getattr(self, '_naukri_last_batch_size', 0)
+
+        check_js = f"""() => {{
             const TARGET_JOBS = 5;
+            const pyPrevTotal = {py_prev_total};
+            const fallbackBatchSize = {fallback_batch_size};
             const bodyText = document.body.innerText || '';
-            const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
-            const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
-            if (!match) {
+            
+            let appliedThisRound = 0;
+            const matchOut = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/i);
+            const matchApplied = bodyText.match(/(?:applied\\s*(?:to)?|applied\\s*successfully\\s*to?)\\s*(\\d+)\\s*jobs?/i);
+            const matchJobsApplied = bodyText.match(/(\\d+)\\s*jobs?\\s*applied/i);
+            
+            if (matchOut) {{
+                appliedThisRound = parseInt(matchOut[1]);
+            }} else if (matchApplied) {{
+                appliedThisRound = parseInt(matchApplied[1]);
+            }} else if (matchJobsApplied) {{
+                appliedThisRound = parseInt(matchJobsApplied[1]);
+            }} else if (fallbackBatchSize > 0) {{
+                appliedThisRound = fallbackBatchSize;
+            }} else {{
+                const hasSuccessIndicator = [
+                    document.querySelector('.chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"], [class*="apply-message"]'),
+                    document.querySelector('.chatbot_MessageContainer .success, .chatbot_Drawer .success'),
+                    bodyText.includes('Application submitted'),
+                    bodyText.includes('Successfully applied'),
+                    bodyText.includes('applied successfully'),
+                    bodyText.includes('Interest shared successfully')
+                ].some(Boolean);
+                if (hasSuccessIndicator) {{
+                    appliedThisRound = 1;
+                }}
+            }}
+
+            const storagePrev = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
+            const prevTotal = Math.max(storagePrev, pyPrevTotal);
+
+            if (appliedThisRound <= 0) {{
                 return 'CHATBOT_NO_PROGRESS: ' + prevTotal + '/' + TARGET_JOBS;
-            }
-            const appliedThisRound = parseInt(match[1]);
+            }}
+
             const newTotal = prevTotal + appliedThisRound;
             sessionStorage.setItem('naukri_total_applied', newTotal.toString());
             const remaining = Math.max(0, TARGET_JOBS - newTotal);
             sessionStorage.setItem('naukri_remaining', remaining.toString());
             return 'CHATBOT_COMPLETE: ' + newTotal + '/' + TARGET_JOBS;
-        }"""
+        }}"""
 
         max_retries = 3
         for attempt in range(max_retries):
@@ -4164,9 +4311,9 @@ class SentinelAgent:
         # All retries exhausted — return the last result or safe default
         try:
             result = await self._page.evaluate(check_js)
-            return result if isinstance(result, str) else 'CHATBOT_NO_PROGRESS: 0/5'
+            return result if isinstance(result, str) else f'CHATBOT_NO_PROGRESS: {py_prev_total}/5'
         except Exception:
-            return 'CHATBOT_NO_PROGRESS: 0/5'
+            return f'CHATBOT_NO_PROGRESS: {py_prev_total}/5'
 
     async def _poll_naukri_error_snackbar(self, attempts: int = 4, interval: float = 1.5) -> str:
         """
@@ -4302,6 +4449,7 @@ class SentinelAgent:
             print(f"🎉 Naukri target reached ({new_total}/{TARGET_JOBS}). Task complete.")
             self.metrics['applications_submitted'] = new_total
             self._naukri_no_progress_count = 0
+            self._naukri_last_batch_size = 0
             self.state.task_complete = True
             return False
 
@@ -4318,6 +4466,7 @@ class SentinelAgent:
             )
             self.metrics['applications_submitted'] = new_total
             self._naukri_no_progress_count = 0
+            self._naukri_last_batch_size = 0
             self.state.task_complete = True
             return False
 
@@ -4334,6 +4483,7 @@ class SentinelAgent:
                 )
                 self.metrics['applications_submitted'] = new_total
                 self._naukri_no_progress_count = 0
+                self._naukri_last_batch_size = 0
                 self.state.task_complete = True
                 return False
             # Still navigate back and try once more — the success text may surface
@@ -4599,10 +4749,11 @@ class SentinelAgent:
                 }}
                 
                 const successIndicators = [
-                    document.querySelector('.chatbot_SuccessMsg'),
-                    document.querySelector('[class*="success"]'),
+                    document.querySelector('.chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"], [class*="apply-message"]'),
+                    document.querySelector('.chatbot_MessageContainer .success, .chatbot_Drawer .success'),
                     document.body.innerText.includes('Application submitted'),
-                    document.body.innerText.includes('Successfully applied')
+                    document.body.innerText.includes('Successfully applied'),
+                    document.body.innerText.includes('applied successfully')
                 ];
                 if (successIndicators.some(Boolean)) {{
                     return 'CHATBOT_COMPLETE';
@@ -4610,7 +4761,10 @@ class SentinelAgent:
                 
                 let chatLayer = document.querySelector('.chatbot_DrawerContentWrapper');
                 if (!chatLayer) {{
-                    chatLayer = document.querySelector('[class*="drawer"], [class*="modal"], [role="dialog"]');
+                    chatLayer = document.querySelector('div[class*="ChatbotContainer"], div[class*="chatBotContainer"], ._chatBotContainer, .chatbot_Drawer, div[class*="chatbot_Drawer"], div.chatbot_MessageContainer, div[class*="chatbot"]');
+                }}
+                if (chatLayer && (chatLayer.closest('.user-drawer, .profile-drawer, .right-section, .profile-section, .dashboard-right, .naukri-header') || chatLayer.classList.contains('user-drawer') || chatLayer.classList.contains('profile-drawer'))) {{
+                    chatLayer = null;
                 }}
                 const isVisible = (el) => {{
                     if (!el) return false;
@@ -4618,9 +4772,6 @@ class SentinelAgent:
                     return rect.width > 0 && rect.height > 0 && rect.top >= 0;
                 }};
                 if (!chatLayer || !isVisible(chatLayer)) {{
-                    if (document.body.innerText.includes('applied')) {{
-                        return 'CHATBOT_COMPLETE';
-                    }}
                     const errSnack = document.querySelector(
                         '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                         + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
@@ -4851,26 +5002,31 @@ class SentinelAgent:
                 }}
                 
                 // STEP 1.5: DETECT option buttons EARLY (must be checked before text inputs)
-                // Broad selector: chatbot option containers + any visible standalone buttons
-                // in the chat drawer (excluding Save/Send/Upload controls)
-                const optBtnSelector = '.chatbot_OptionContainer button, [class*="option"] button, ' +
-                    '.chatbot_DrawerContentWrapper button, .chatbot_Drawer button, ' +
-                    'li.botItem button, [class*="chatbot"] button, ' +
-                    '.chatbot_Chip, .chatbot_Chips div.chipItem, [class*="Chip"] div';
+                // TIGHT OPTION BUTTON / CHIP SELECTOR (quick replies only, never radio/checkbox containers)
+                const optBtnSelector = '.chatbot_OptionContainer button, .chatbot_OptionContainer div[role="button"], .chatbot_OptionContainer span[role="button"], ' +
+                    '.chatbot_Chip, .chatbot_Chips div.chipItem, .chatbot_Chips button, ' +
+                    '[class*="Chip"] button, [class*="chip"]:not([class*="radio"]):not([class*="select"]):not([class*="single"]), ' +
+                    '[class*="quickReply"], [class*="QuickReply"], [class*="quick-reply"], ' +
+                    '.chipItem, button.chip';
                 let optBtns = chatLayer ? Array.from(chatLayer.querySelectorAll(optBtnSelector)) : [];
-                // Filter out Save/Send/Upload buttons
+                // Filter out Save/Send/Upload buttons, container wrappers, and elements with empty text
                 optBtns = optBtns.filter(function(btn) {{
-                    const t = (btn.innerText || '').trim().toLowerCase();
-                    const cls = (btn.className || '').toLowerCase();
-                    if (t === 'save' || t === 'send' || t === 'submit' || t === 'next') return false;
-                    if (cls.includes('sendmsg') || cls.includes('upload') || cls.includes('file')) return false;
-                    if (btn.offsetParent === null) return false;
+                    if (btn.offsetParent === null && (!btn.getClientRects || btn.getClientRects().length === 0)) return false;
+                    const t = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                    if (!t || t.length === 0) return false;
+                    const cls = (btn.className || '').toString().toLowerCase();
+                    if (t === 'save' || t === 'send' || t === 'submit' || t === 'next' || t === 'close' || t === 'attach' || t === 'upload') return false;
+                    if (cls.includes('sendmsg') || cls.includes('upload') || cls.includes('close') || cls.includes('header') || cls.includes('botmsg') || cls.includes('drawer')) return false;
+                    if (t.length > 80) return false;
+                    // Exclude any element that is or contains radio/checkbox/dropdown/form controls
+                    if (btn.querySelector('input, select, textarea, button, [role="button"], .chipItem, .chatbot_Chip')) return false;
+                    if (btn.closest('.singleselect-radiobutton-container, .ssrc__radio-btn-container, [class*="radio"], [class*="Radio"], [class*="checkbox"], [class*="Checkbox"], fieldset, form')) return false;
+                    if (btn.tagName === 'LABEL' || btn.tagName === 'INPUT' || btn.tagName === 'SELECT' || btn.tagName === 'TEXTAREA') return false;
                     return true;
                 }});
                 const hasOptionBtns = optBtns.length > 0;
                 
                 // SKIP certain tool/skill-specific experience questions that don't match our profile
-                // Must be checked AFTER optBtns are populated so we can click the Skip button
                 const skipQuestionPatterns = [
                     'cypress', 'playwright', 'selenium', 'appium', 'test automation',
                     'cucumber', 'bdd', 'tdd', 'katalon', 'robot framework'
@@ -4899,103 +5055,37 @@ class SentinelAgent:
                             }}
                         }}
                     }}
-                    // No Skip button found - fall through to normal input handling
-                    // (contenteditable/text input) instead of returning unanswerable
-                    // which causes an infinite loop
                     console.log('Chatbot Debug - No skip button found for tool question, falling through to input handler');
                 }}
                 
-                // STEP 2: USE the first available input type (sequential detection)
-                // Order: Option Buttons -> Dropdown -> Radio -> Checkbox -> Text Input -> Contenteditable
+                // STEP 2: Sequential Input Handling:
+                // Order: Dropdown -> Radio -> Option Buttons/Chips -> Checkbox -> Text Input -> Contenteditable
                 
-                // HANDLE OPTION BUTTONS (highest priority — before text inputs to prevent typing button labels)
-                if (hasOptionBtns) {{
-                    console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
-                    
-                    const answerLower = answer.toLowerCase();
-                    let clickedBtn = null;
-                    
-                    // Try to match answer to button text
-                    for (const btn of optBtns) {{
-                        const btnText = btn.innerText.trim().toLowerCase();
-                        console.log('Chatbot Debug - Option button:', btnText);
-                        
-                        // Exact match
-                        if (btnText === answerLower) {{
-                            btn.click();
-                            clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked exact match option:', btn.innerText.trim());
-                            break;
-                        }}
-                        // Partial match (answer contains button text or vice versa)
-                        if (btnText.includes(answerLower) || answerLower.includes(btnText)) {{
-                            btn.click();
-                            clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked partial match option:', btn.innerText.trim());
-                            break;
-                        }}
-                        // Yes/No matching - use word boundaries to avoid false matches (e.g. "Noida" contains "no")
-                        if ((answerLower === 'yes' || /\\byes\\b/.test(answerLower)) && btnText === 'yes') {{
-                            btn.click();
-                            clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked Yes option');
-                            break;
-                        }}
-                        if ((answerLower === 'no' || /\\bno\\b/.test(answerLower)) && btnText === 'no') {{
-                            btn.click();
-                            clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked No option');
-                            break;
-                        }}
-                    }}
-                    
-                    // If no match found, check if a contenteditable input exists before falling back to first option
-                    if (!clickedBtn && optBtns.length > 0) {{
-                        const hasContentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
-                                                  document.querySelector('div[contenteditable="true"]');
-                        const allSkip = optBtns.every(b => (b.innerText || '').toLowerCase().includes('skip'));
-                        if (allSkip && hasContentEditable) {{
-                            console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
-                        }} else {{
-                            optBtns[0].click();
-                            clickedBtn = optBtns[0];
-                            console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
-                        }}
-                    }}
-                    
-                    if (clickedBtn) {{
-                        return 'CHATBOT_OPT_CLICKED: ' + clickedBtn.innerText.trim() + ' | Q: ' + qText.slice(0, 50);
-                    }}
-                }}
-                
-                // HANDLE DROPDOWN
+                // 1. HANDLE DROPDOWN
                 if (hasSelect) {{
                     const select = chatLayer.querySelector('select');
                     if (select && select.offsetParent !== null) {{
                         const selectOptions = Array.from(select.options);
                         console.log('Chatbot Debug - Found dropdown with', selectOptions.length, 'options');
                         
-                        // For salary questions, look for option containing the number
                         for (const opt of selectOptions) {{
                             const optText = opt.text.toLowerCase();
                             if (isSalaryQuestion) {{
-                                // Match if option contains our numeric answer
                                 if (optText.includes(answer) || 
                                     (answer === '30' && (optText.includes('30') || optText.includes('25-30') || optText.includes('23-30')))) {{
                                     select.value = opt.value;
                                     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
                                     return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text}});
                                 }}
                             }} else {{
-                                // Non-salary: try to match by answer text
                                 if (optText.includes(answer.toLowerCase())) {{
                                     select.value = opt.value;
                                     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
@@ -5004,11 +5094,10 @@ class SentinelAgent:
                             }}
                         }}
                         
-                        // Default: select second option if available
                         if (selectOptions.length > 1) {{
                             select.selectedIndex = 1;
                             select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg');
+                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
                             if (saveDiv && saveDiv.offsetParent !== null) {{
                                 saveDiv.click();
                                 return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text}});
@@ -5018,48 +5107,65 @@ class SentinelAgent:
                     }}
                 }}
                 
-                // HANDLE RADIO BUTTONS
+                // 2. HANDLE RADIO BUTTONS (handles .singleselect-radiobutton-container, .ssrc__radio, etc.)
                 if (hasRadio) {{
-                    const radios = chatLayer.querySelectorAll('input[type="radio"]');
+                    const radios = Array.from(chatLayer.querySelectorAll('input[type="radio"]'));
                     console.log('Chatbot Debug - Processing radio buttons:', radios.length);
+                    
+                    const selectRadio = (radioEl) => {{
+                        radioEl.checked = true;
+                        radioEl.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        radioEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        radioEl.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
+                        radioEl.click();
+                        radioEl.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true }}));
+                        
+                        if (radioEl.id) {{
+                            const lbl = chatLayer.querySelector('label[for="' + radioEl.id + '"]') || document.querySelector('label[for="' + radioEl.id + '"]');
+                            if (lbl) {{
+                                lbl.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
+                                lbl.click();
+                                lbl.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true }}));
+                            }}
+                        }}
+                        const parentBtnContainer = radioEl.closest('.ssrc__radio-btn-container, [class*="radio-btn"], [class*="radio"]') || radioEl.parentElement;
+                        if (parentBtnContainer && parentBtnContainer !== chatLayer) {{
+                            parentBtnContainer.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
+                            parentBtnContainer.click();
+                            parentBtnContainer.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true }}));
+                        }}
+                    }};
                     
                     let clickedRadio = false;
                     const answerLower = answer.toLowerCase();
-                    
-                    // Extract numeric value from answer (e.g., "4 Years" -> 4)
                     const answerNumericMatch = answer.match(/(\\d+\\.?\\d*)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
                     console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
                     
-                    // Collect all matching ranges to pick the best one (closest to lower bound)
                     const matchingRanges = [];
                     
-                    // Try to match answer to radio label
                     for (const radio of radios) {{
-                        // Improved label extraction: try label[for], aria-label, parent <label>, then fallback
                         let label = '';
                         if (radio.id) {{
-                            const labelEl = chatLayer.querySelector('label[for="' + radio.id + '"]');
+                            const labelEl = chatLayer.querySelector('label[for="' + radio.id + '"]') || document.querySelector('label[for="' + radio.id + '"]');
                             if (labelEl) label = labelEl.innerText.trim();
                         }}
                         if (!label && radio.getAttribute('aria-label')) {{
                             label = radio.getAttribute('aria-label');
                         }}
-                        if (!label) {{
-                            let parent = radio.parentElement;
-                            while (parent && parent.tagName !== 'LABEL' && parent !== chatLayer) {{
-                                parent = parent.parentElement;
-                            }}
-                            if (parent && parent.tagName === 'LABEL') {{
-                                label = parent.innerText.trim();
-                            }}
+                        if (!label && radio.value && radio.value !== 'on') {{
+                            label = radio.value;
                         }}
                         if (!label) {{
-                            label = radio.parentElement?.innerText || radio.nextSibling?.textContent || '';
+                            const container = radio.closest('.ssrc__radio-btn-container, [class*="radio-btn"], [class*="radio"]') || radio.parentElement;
+                            if (container) {{
+                                const lbl = container.querySelector('label, .ssrc__label, span');
+                                if (lbl) label = lbl.innerText.trim();
+                                else label = container.innerText.trim();
+                            }}
                         }}
                         const labelLower = label.toLowerCase();
                         
-                        // TEXT MATCH: for non-numeric answers, find best text overlap
                         if (!answerNumeric) {{
                             const words = answerLower.split(/\\s+/).filter(w => w.length > 2);
                             let matchCount = 0;
@@ -5067,115 +5173,83 @@ class SentinelAgent:
                                 if (labelLower.includes(w)) matchCount++;
                             }}
                             if (matchCount > 0 && matchCount >= words.length * 0.5) {{
-                                if (!radio.checked) {{
-                                    radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked text-match radio:', label, '| words matched:', matchCount, '/', words.length);
-                                }}
+                                selectRadio(radio);
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked text-match radio:', label, '| words matched:', matchCount, '/', words.length);
                                 break;
                             }}
                         }}
                         
-                        // Match Yes/Serving for positive answers - use word boundaries to avoid "Noida" matching "no"
                         if ((/\\byes\\b/.test(answerLower) || answerLower.includes('true')) && 
-                            (labelLower.includes('yes') || labelLower.includes('serving'))) {{
-                            if (!radio.checked) {{
-                                radio.click();
-                                clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked Yes radio:', label);
-                            }}
+                            (labelLower.includes('yes') || labelLower.includes('serving') || labelLower === 'yes' || radio.id === 'Yes' || radio.value === 'Yes')) {{
+                            selectRadio(radio);
+                            clickedRadio = true;
+                            console.log('Chatbot Debug - Clicked Yes radio:', label || radio.id);
                             break;
                         }}
-                        // Match No for negative answers — guard: skip if label starts with "yes"
                         if ((/\\bno\\b/.test(answerLower) || answerLower.includes('false')) && 
-                            (labelLower === 'no' || labelLower.startsWith('no') || /(\\bno\\b|^no\\b|\\bno$)/.test(labelLower)) &&
+                            (labelLower === 'no' || labelLower.startsWith('no') || /(\\bno\\b|^no\\b|\\bno$)/.test(labelLower) || radio.id === 'No' || radio.value === 'No') &&
                             !labelLower.startsWith('yes')) {{
-                            if (!radio.checked) {{
-                                radio.click();
-                                clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked No radio:', label);
-                            }}
+                            selectRadio(radio);
+                            clickedRadio = true;
+                            console.log('Chatbot Debug - Clicked No radio:', label || radio.id);
                             break;
                         }}
                         
-                        // Match numeric answers to experience ranges
-                        // Collect all matching ranges to pick the one where answer is closest to lower bound
                         if (answerNumeric !== null && !clickedRadio) {{
-                            // Extract numbers from label (e.g., "3-5 years" -> [3, 5])
                             const labelNumbers = labelLower.match(/(\\d+\\.?\\d*)/g);
                             if (labelNumbers) {{
                                 const nums = labelNumbers.map(n => parseFloat(n));
-                                // Check if answer falls within range
                                 if (nums.length >= 2) {{
                                     if (answerNumeric >= nums[0] && answerNumeric <= nums[1]) {{
-                                        // Store this match with distance from lower bound
                                         const distanceFromMin = Math.abs(answerNumeric - nums[0]);
                                         matchingRanges.push({{radio, label, distanceFromMin}});
                                     }}
                                 }} else if (nums.length === 1) {{
-                                    // Single number match — detect direction (text + symbol prefixes)
                                     const isLess = /less\\s+than|under|up\\s+to|^<\\s*\\d/i.test(labelLower);
                                     const isMore = /more\\s+than|over|above|plus|^>\\s*\\d/i.test(labelLower);
                                     if (isLess) {{
-                                        // "Less than X" → answer must be below X
                                         if (answerNumeric < nums[0]) {{
-                                            if (!radio.checked) {{
-                                                radio.click();
-                                                clickedRadio = true;
-                                                console.log('Chatbot Debug - Clicked numeric upper-bound radio:', label);
-                                            }}
+                                            selectRadio(radio);
+                                            clickedRadio = true;
+                                            console.log('Chatbot Debug - Clicked numeric upper-bound radio:', label);
                                             break;
                                         }}
                                     }} else if (isMore) {{
-                                        // "More than X" → answer must be at least X
                                         if (answerNumeric >= nums[0]) {{
-                                            if (!radio.checked) {{
-                                                radio.click();
-                                                clickedRadio = true;
-                                                console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
-                                            }}
+                                            selectRadio(radio);
+                                            clickedRadio = true;
+                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
                                             break;
                                         }}
                                     }} else {{
-                                        // No prefix — assume lower bound (e.g., "5+ years", "X years")
                                         if (answerNumeric >= nums[0]) {{
-                                            if (!radio.checked) {{
-                                                radio.click();
-                                                clickedRadio = true;
-                                                console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
-                                            }}
+                                            selectRadio(radio);
+                                            clickedRadio = true;
+                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
                                             break;
                                         }}
                                     }}
                                 }}
                             }}
                             
-                            // Substring match only for non-range labels; range labels are
-                            // collected in matchingRanges above and best-picked post-loop
                             if (!clickedRadio && nums.length < 2 && labelLower.includes(String(answerNumeric))) {{
-                                if (!radio.checked) {{
-                                    radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked exact numeric match radio:', label);
-                                }}
+                                selectRadio(radio);
+                                clickedRadio = true;
+                                console.log('Chatbot Debug - Clicked exact numeric match radio:', label);
                                 break;
                             }}
                         }}
                     }}
                     
-                    // After processing all radios, if we have multiple range matches, pick the best one
                     if (!clickedRadio && matchingRanges.length > 0) {{
-                        // Sort by distance from lower bound (ascending) - prefer ranges where answer is closer to min
                         matchingRanges.sort((a, b) => a.distanceFromMin - b.distanceFromMin);
                         const bestMatch = matchingRanges[0];
-                        if (!bestMatch.radio.checked) {{
-                            bestMatch.radio.click();
-                            clickedRadio = true;
-                            console.log('Chatbot Debug - Clicked best range radio:', bestMatch.label, '| distance from min:', bestMatch.distanceFromMin);
-                        }}
+                        selectRadio(bestMatch.radio);
+                        clickedRadio = true;
+                        console.log('Chatbot Debug - Clicked best range radio:', bestMatch.label);
                     }}
                     
-                    // Education-specific radio matching (before proficiency handler to prevent false matches)
                     const isEducationQ = qLower.includes('education') || qLower.includes('degree') ||
                         qLower.includes('qualification') || qLower.includes('academic') ||
                         qLower.includes('graduate') || qLower.includes('college') ||
@@ -5183,7 +5257,6 @@ class SentinelAgent:
                         qLower.includes('bachelor') || qLower.includes('master') ||
                         qLower.includes('doctorate') || qLower.includes('school');
                     if (!clickedRadio && isEducationQ) {{
-                        // Map answer keywords to radio label keywords for education-level questions
                         const eduAnswerMap = [
                             {{answerKws: ['b.tech', 'bachelor', 'b.e', 'b.sc', 'bca', 'undergraduate'], labelKws: ['bachelor']}},
                             {{answerKws: ['m.tech', 'master', 'm.sc', 'mca', 'mba', 'post graduate', 'postgraduate'], labelKws: ['master']}},
@@ -5200,183 +5273,143 @@ class SentinelAgent:
                             for (const radio of radios) {{
                                 const label = (radio.parentElement?.innerText || radio.nextSibling?.textContent || '').toLowerCase();
                                 if (mapping.labelKws.some(kw => label.includes(kw))) {{
-                                    if (!radio.checked) {{
-                                        radio.click();
-                                        clickedRadio = true;
-                                        console.log('Chatbot Debug - Clicked education radio:', label.trim());
-                                    }}
+                                    selectRadio(radio);
+                                    clickedRadio = true;
+                                    console.log('Chatbot Debug - Clicked education radio:', label.trim());
                                     break;
                                 }}
                             }}
                         }}
                     }}
                     
-                    // Map numeric rating to proficiency levels (Beginner/Intermediate/Advanced)
-                    if (!clickedRadio && answerNumeric !== null && !isEducationQ) {{
-                        const radioLabels = Array.from(radios).map(r =>
-                            (r.parentElement?.innerText || r.nextSibling?.textContent || '').toLowerCase().trim()
-                        );
-                        const profLevels = ['beginner', 'intermediate', 'advanced'];
-                        const hasProfLevels = profLevels.some(level =>
-                            radioLabels.some(label => label.includes(level))
-                        );
-                        if (hasProfLevels) {{
-                            let targetLevel;
-                            if (answerNumeric >= 7) targetLevel = 'advanced';
-                            else if (answerNumeric >= 4) targetLevel = 'intermediate';
-                            else targetLevel = 'beginner';
-                            for (const radio of radios) {{
-                                const label = (radio.parentElement?.innerText || radio.nextSibling?.textContent || '').toLowerCase();
-                                if (label.includes(targetLevel)) {{
-                                    if (!radio.checked) {{
-                                        radio.click();
-                                        clickedRadio = true;
-                                        console.log('Chatbot Debug - Clicked proficiency radio:', label.trim(), 'for rating', answerNumeric);
-                                    }}
-                                    break;
-                                }}
-                            }}
-                        }}
-                    }}
-                    
-                    // If no match found, use answer-aware fallback
                     if (!clickedRadio) {{
-                        // Collect all radio labels for smart fallback
-                        const allRadioInfo = Array.from(radios).filter(r => !r.checked).map(r => {{
-                            const label = r.parentElement?.innerText || r.nextSibling?.textContent || '';
+                        const allRadioInfo = radios.filter(r => !r.checked).map(r => {{
+                            const label = r.parentElement?.innerText || r.nextSibling?.textContent || r.id || r.value || '';
                             return {{ radio: r, label: label, labelLower: label.toLowerCase().trim() }};
                         }});
                         
-                        // When answer is "No"/"False", look for No radio FIRST, then decline
                         if (/\\bno\\b/.test(answerLower) || answerLower.includes('false')) {{
-                            // Priority 1: Find a radio whose label starts with "no" (most specific)
                             const noRadio = allRadioInfo.find(r => 
                                 r.labelLower === 'no' || r.labelLower.startsWith('no,') || 
-                                r.labelLower.startsWith('no ') || r.labelLower.startsWith('no.')
+                                r.labelLower.startsWith('no ') || r.labelLower.startsWith('no.') || r.radio.id === 'No'
                             );
                             if (noRadio) {{
-                                noRadio.radio.click();
+                                selectRadio(noRadio.radio);
                                 clickedRadio = true;
                                 console.log('Chatbot Debug - Clicked No radio (fallback):', noRadio.label);
                             }}
-                            
-                            // Priority 2: Labels with explicit decline keywords (not generic 'not to')
-                            if (!clickedRadio) {{
-                                const declineKeywords = ['decline', 'prefer not to', 'choose not to', 'none', 'n/a', 'not applicable', 'neither', "i don't"];
-                                const declineRadio = allRadioInfo.find(r => 
-                                    declineKeywords.some(kw => r.labelLower.includes(kw))
-                                );
-                                if (declineRadio) {{
-                                    declineRadio.radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked decline radio:', declineRadio.label);
-                                }}
-                            }}
-                            
-                            // Priority 3: Pick last non-Yes radio (safest negative in most UIs)
-                            if (!clickedRadio) {{
-                                const nonYesRadios = allRadioInfo.filter(r => 
-                                    !r.labelLower.startsWith('yes') && !r.labelLower.startsWith('i am') &&
-                                    !r.labelLower.startsWith('i have') && !r.labelLower.startsWith('i do')
-                                );
-                                if (nonYesRadios.length > 0) {{
-                                    const target = nonYesRadios[nonYesRadios.length - 1];
-                                    target.radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked last non-Yes radio for No answer:', target.label);
-                                }}
-                            }}
                         }}
-                        
-                        // When answer is "Yes", look for Yes radio or positive phrasing
-                        if (!clickedRadio && /\\byes\\b/.test(answerLower)) {{
-                            // Priority 1: Find a radio whose label starts with "yes" or contains "yes"
+                        if (!clickedRadio && (/\\byes\\b/.test(answerLower) || answerLower.includes('true'))) {{
                             const yesRadio = allRadioInfo.find(r => 
-                                r.labelLower.startsWith('yes') || r.labelLower.includes('yes')
+                                r.labelLower.startsWith('yes') || r.labelLower.includes('yes') || r.radio.id === 'Yes'
                             );
                             if (yesRadio) {{
-                                yesRadio.radio.click();
+                                selectRadio(yesRadio.radio);
                                 clickedRadio = true;
                                 console.log('Chatbot Debug - Clicked Yes radio (fallback):', yesRadio.label);
                             }}
-                            
-                            // Priority 2: Find positive phrasing — "I have", "I am", "I do" (but NOT "I don't" or "I am not")
-                            if (!clickedRadio) {{
-                                const positiveRadio = allRadioInfo.find(r => {{
-                                    const ll = r.labelLower;
-                                    return ((ll.startsWith('i have') && !ll.includes('not')) ||
-                                            (ll.startsWith('i am') && !ll.includes('not')) ||
-                                            (ll.startsWith('i do') && !ll.includes("n't") && !ll.includes(' not')));
-                                }});
-                                if (positiveRadio) {{
-                                    positiveRadio.radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked positive radio for Yes answer:', positiveRadio.label);
-                                }}
-                            }}
-                            
-                            // Priority 3: Avoid negative radios, pick first non-negative
-                            if (!clickedRadio) {{
-                                const nonNegativeRadios = allRadioInfo.filter(r => 
-                                    !r.labelLower.startsWith('no') && !r.labelLower.startsWith('never') &&
-                                    !r.labelLower.startsWith('i am not') && !r.labelLower.startsWith("i don't") &&
-                                    !r.labelLower.includes('decline') && !r.labelLower.includes('choose not to')
-                                );
-                                if (nonNegativeRadios.length > 0) {{
-                                    nonNegativeRadios[0].radio.click();
-                                    clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked first non-negative radio for Yes answer:', nonNegativeRadios[0].label);
-                                }}
-                            }}
                         }}
-                        
-                        // Generic fallback: click first non-"No experience" radio
-                        if (!clickedRadio) {{
-                            for (const info of allRadioInfo) {{
-                                if (info.labelLower.includes('no experience') || info.labelLower.includes('0 years')) {{
-                                    console.log('Chatbot Debug - Skipping "No experience" option');
-                                    continue;
-                                }}
-                                info.radio.click();
-                                clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked default radio:', info.label);
-                                break;
-                            }}
+                        if (!clickedRadio && allRadioInfo.length > 0) {{
+                            selectRadio(allRadioInfo[0].radio);
+                            clickedRadio = true;
+                            console.log('Chatbot Debug - Clicked first radio fallback:', allRadioInfo[0].label);
                         }}
                     }}
                     
                     // After selecting radio, click Save/Submit button
                     if (clickedRadio) {{
-                        await new Promise(r => setTimeout(r, 300));
+                        await new Promise(r => setTimeout(r, 400));
                         
-                        const naukSaveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, #sendMsg__vjhkrpzhhInputBox .sendMsg');
-                        if (naukSaveDiv && naukSaveDiv.offsetParent !== null) {{
-                            naukSaveDiv.click();
-                            console.log('Chatbot Debug - Save clicked after radio');
-                            const _chkRadio = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
-                            const _radLabel = _chkRadio ? (_chkRadio.parentElement?.innerText || _chkRadio.nextSibling?.textContent || _chkRadio.value || '').trim() : '';
-                            return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel || answer, t: 'radio', s: _radLabel || answer}});
-                        }}
+                        const sendSelectors = [
+                            '.sendMsg[tabindex]',
+                            'div.sendMsg',
+                            '.sendMsgbtn_container .sendMsg',
+                            '#sendMsg__vjhkrpzhhInputBox .sendMsg',
+                            '[class*="sendMsg"]',
+                            '.chatbot_DrawerContentWrapper button[type="submit"]',
+                            '.chatbot_Drawer button[type="submit"]',
+                            '.sendBtn',
+                            'button.send'
+                        ];
                         
-                        const allButtons = chatLayer ? 
-                            Array.from(chatLayer.querySelectorAll('button, div[tabindex], span[tabindex]')) : 
-                            Array.from(document.querySelectorAll('[role="dialog"] button, [class*="modal"] button'));
-                        
-                        for (const btn of allButtons) {{
-                            const btnText = btn.innerText.toLowerCase().trim();
-                            if ((btnText === 'save' || btnText === 'submit' || btnText === 'next') 
-                                && btn.offsetParent !== null) {{
-                                btn.click();
-                                console.log('Chatbot Debug - Save clicked after radio (fallback)');
-                                const _chkRadio2 = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
-                                const _radLabel2 = _chkRadio2 ? (_chkRadio2.parentElement?.innerText || _chkRadio2.nextSibling?.textContent || _chkRadio2.value || '').trim() : '';
-                                return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel2 || answer, t: 'radio', s: _radLabel2 || answer}});
+                        for (const sel of sendSelectors) {{
+                            const sendEl = document.querySelector(sel);
+                            if (sendEl && sendEl.offsetParent !== null && !sendEl.disabled && !sendEl.classList.contains('disabled')) {{
+                                sendEl.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
+                                sendEl.click();
+                                sendEl.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true }}));
+                                console.log('Chatbot Debug - Save/Send clicked after radio:', sel);
+                                break;
                             }}
                         }}
                         
-                        const _chkRadio3 = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
-                        const _radLabel3 = _chkRadio3 ? (_chkRadio3.parentElement?.innerText || _chkRadio3.nextSibling?.textContent || _chkRadio3.value || '').trim() : '';
-                        return 'CHATBOT_RADIO_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel3 || answer, t: 'radio', s: _radLabel3 || answer}});
+                        const _chkRadio = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
+                        const _radLabel = _chkRadio ? (_chkRadio.parentElement?.innerText || _chkRadio.nextSibling?.textContent || _chkRadio.value || _chkRadio.id || '').trim() : '';
+                        return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel || answer, t: 'radio', s: _radLabel || answer}});
+                    }}
+                }}
+                
+                // 3. HANDLE OPTION BUTTONS / CHIPS (standalone buttons/chips)
+                if (hasOptionBtns) {{
+                    console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
+                    
+                    const isPrivacyQ = qLower.includes('consent') || qLower.includes('privacy') || qLower.includes('terms') || qLower.includes('policy') || qLower.includes('agree');
+                    const answerLower = isPrivacyQ ? 'yes' : answer.toLowerCase();
+                    let clickedBtn = null;
+                    
+                    for (const btn of optBtns) {{
+                        const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                        if (!btnText) continue;
+                        console.log('Chatbot Debug - Option button:', btnText);
+                        
+                        if (btnText === answerLower) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked exact match option:', (btn.innerText || btn.textContent || '').trim());
+                            break;
+                        }}
+                        if (btnText.length >= 2 && answerLower.length >= 2 && (btnText.includes(answerLower) || answerLower.includes(btnText))) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked partial match option:', (btn.innerText || btn.textContent || '').trim());
+                            break;
+                        }}
+                        if ((answerLower === 'yes' || /\\byes\\b/.test(answerLower) || isPrivacyQ) && 
+                            (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked Yes/Consent option:', (btn.innerText || btn.textContent || '').trim());
+                            break;
+                        }}
+                        if ((answerLower === 'no' || /\\bno\\b/.test(answerLower)) && (btnText === 'no' || btnText.startsWith('no '))) {{
+                            btn.click();
+                            clickedBtn = btn;
+                            console.log('Chatbot Debug - Clicked No option');
+                            break;
+                        }}
+                    }}
+                    
+                    if (!clickedBtn && optBtns.length > 0) {{
+                        const hasContentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
+                                                  document.querySelector('div[contenteditable="true"]');
+                        const allSkip = optBtns.every(b => (b.innerText || '').toLowerCase().includes('skip'));
+                        const hasOtherInputs = hasCheckbox || !!textInput || !!hasContentEditable;
+                        if (allSkip && hasContentEditable) {{
+                            console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
+                        }} else if (!hasOtherInputs) {{
+                            optBtns[0].click();
+                            clickedBtn = optBtns[0];
+                            console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
+                        }} else {{
+                            console.log('Chatbot Debug - Option buttons did not match answer, falling through to other inputs');
+                        }}
+                    }}
+                    
+                    if (clickedBtn) {{
+                        await new Promise(r => setTimeout(r, 300));
+                        const sb = document.querySelector('div.sendMsg:not(.disabled), .sendMsgbtn_container .sendMsg');
+                        if (sb && sb.offsetParent !== null) sb.click();
+                        return 'CHATBOT_OPT_CLICKED: ' + clickedBtn.innerText.trim() + ' | Q: ' + qText.slice(0, 50);
                     }}
                 }}
                 
@@ -5882,10 +5915,17 @@ class SentinelAgent:
                 await asyncio.sleep(random.uniform(1, 2))
                 continue
             elif result == 'NO_CHATBOT':
-                # Chatbot modal closed — give page time to show success text
-                if iteration > 3:
-                    await asyncio.sleep(random.uniform(2, 3))
+                # If page is on saveApply, has success message, or we just answered questions, resolve completion
+                if self._page and ('/myapply/saveApply' in self._page.url):
                     return await self._resolve_naukri_completion()
+                if last_action_was_answer:
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    return await self._resolve_naukri_completion()
+                if iteration > 5:
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    if self._page and ('/myapply/saveApply' in self._page.url or await self._page.query_selector('.chatbot_SuccessMsg, [class*="success-msg"], [class*="apply-message"]')):
+                        return await self._resolve_naukri_completion()
+                    return False
                 continue
             elif 'CHATBOT_ANSWERED_AND_SAVE' in result:
                 # Wait longer after successful save to let UI update
@@ -6298,15 +6338,36 @@ class SentinelAgent:
                     
                     // --- PASS 5: Smart type-based defaults (safety net) ---
                     if (!bestMatch) {
+                        const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
+                        const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)/i.test(qLower);
+                        const isRelativeNameQ = /name\\s*of\\s*your\\s*relative/i.test(qLower);
+                        const isFacebookQ = /^facebook$/i.test(qLower.trim());
+                        const isCitizenshipQ = /citizenship|nationality/i.test(qLower);
+                        const isRsuQ = /rsu|stock/i.test(qLower);
+                        const isOrgProductQ = /product\\s*based\\s*or\\s*service|product\\s*or\\s*service/i.test(qLower);
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
-                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ;
+                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
                         // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
-                        if (isYearsQ) {
+                        if (isAgeQ) {
+                            bestMatch = 'Yes';
+                        } else if (isConflictQ) {
+                            bestMatch = 'No';
+                        } else if (isRelativeNameQ) {
+                            bestMatch = 'None';
+                        } else if (isFacebookQ) {
+                            bestMatch = 'Not applicable';
+                        } else if (isCitizenshipQ) {
+                            bestMatch = 'Indian';
+                        } else if (isRsuQ) {
+                            bestMatch = '0';
+                        } else if (isOrgProductQ) {
+                            bestMatch = 'Product-based';
+                        } else if (isYearsQ) {
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
                             bestMatch = '15'; // Default notice period
@@ -6328,12 +6389,15 @@ class SentinelAgent:
                     
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
+                        const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
                         const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
-                        if (isSalaryQ) {
+                        if (isAgeQ) {
+                            bestMatch = 'Yes';
+                        } else if (isSalaryQ) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
                             if (/monthly|per month/.test(qLower)) {
                                 bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
@@ -6466,7 +6530,28 @@ class SentinelAgent:
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     
                     for (const radio of radios) {
-                        const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                        let label = '';
+                        if (radio.id) {
+                            const lblEl = document.querySelector('label[for="' + radio.id + '"]');
+                            if (lblEl) label = lblEl.innerText.trim();
+                        }
+                        if (!label && radio.getAttribute('aria-label')) {
+                            label = radio.getAttribute('aria-label');
+                        }
+                        if (!label && radio.value && radio.value !== 'on') {
+                            label = radio.value;
+                        }
+                        if (!label) {
+                            const container = radio.closest('.ssrc__radio-btn-container, [class*="radio-btn"], [class*="radio"]') || radio.parentElement;
+                            if (container) {
+                                const lbl = container.querySelector('label, .ssrc__label, span');
+                                if (lbl) label = lbl.innerText.trim();
+                                else label = container.innerText.trim();
+                            }
+                        }
+                        if (!label) {
+                            label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                        }
                         const lowerLabel = label.toLowerCase();
                         let score = 0;
                         
@@ -6474,14 +6559,14 @@ class SentinelAgent:
                         // to avoid "4" matching inside "2-4"; defer to range logic below which
                         // correctly prefers the range whose lower bound the answer meets.
                         const isRangeLabel = /\\d+\\s*[-–to]\\s*\\d+/.test(lowerLabel);
-                        if (!isRangeLabel && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
+                        if (!isRangeLabel && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
                             score = 100;
                         }
-                        else if ((/\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving')) &&
-                                (/\\byes\\b/i.test(ans) || ans.includes('serving'))) {
+                        else if ((/\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes') &&
+                                (/\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true'))) {
                             score = 90;
                         }
-                        else if (/\\bno\\b/i.test(lowerLabel) && /\\bno\\b/i.test(ans)) {
+                        else if ((/\\bno\\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !lowerLabel.startsWith('yes')) {
                             score = 90;
                         }
                         else if (answerNum > 0) {
@@ -7077,9 +7162,32 @@ return resolveDynamic(bestMatch);
                             }
 
                             if (tagName === 'select') {
-                                // LinkedIn uses "Select an option" as placeholder.
+                                // LinkedIn uses "Select an option", "Month", "Year", etc. as placeholders.
                                 const value = element.value ? element.value.trim() : "";
-                                const isPlaceholder = !value || value === "" || value.toLowerCase().includes("select an option") || element.options[element.selectedIndex]?.text.toLowerCase().includes("select");
+                                const selectedText = (element.options[element.selectedIndex]?.text || "").toLowerCase().trim();
+                                const valueLower = value.toLowerCase();
+                                const isPlaceholder = (
+                                    !value ||
+                                    value === "" ||
+                                    valueLower === "month" ||
+                                    valueLower === "year" ||
+                                    valueLower === "day" ||
+                                    valueLower === "dd" ||
+                                    valueLower === "mm" ||
+                                    valueLower === "yyyy" ||
+                                    valueLower === "-1" ||
+                                    valueLower.includes("select") ||
+                                    valueLower.includes("choose") ||
+                                    selectedText === "month" ||
+                                    selectedText === "year" ||
+                                    selectedText === "day" ||
+                                    selectedText === "dd" ||
+                                    selectedText === "mm" ||
+                                    selectedText === "yyyy" ||
+                                    selectedText.includes("select") ||
+                                    selectedText.includes("choose") ||
+                                    (element.selectedIndex <= 0 && (selectedText.includes("select") || selectedText.includes("choose") || selectedText === "month" || selectedText === "year" || selectedText === "day"))
+                                );
                                 return !isPlaceholder;
                             }
                             
@@ -7491,7 +7599,11 @@ return resolveDynamic(bestMatch);
                             // Try to resolve the real answer instead of repeating a broken value (like "Please provide")
                             if (isFieldPreFilled(input) && hasError) {
                                 let existingValue = readFieldValue(input);
-                                const isObviousInvalid = !existingValue || /please provide|not applicable|unanswered/i.test(existingValue);
+                                const errorText = (inputParent?.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field')?.innerText || '').toLowerCase();
+                                const isNumberError = errorText.includes('number') || errorText.includes('decimal') || errorText.includes('numeric') || /numeric/i.test(input.id || '') || /numeric/i.test(input.name || '') || input.type === 'number';
+                                const isObviousInvalid = !existingValue || 
+                                                         /please provide|not applicable|unanswered/i.test(existingValue) ||
+                                                         (isNumberError && !/^\\d+(\\.\\d+)?$/.test((existingValue || '').trim()));
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!resolvedAnswer) {
                                     if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
@@ -7500,12 +7612,9 @@ return resolveDynamic(bestMatch);
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
                                     else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
+                                    else if (isNumberError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }
                                 
-                                // Only overwrite the existing value if it is obviously invalid
-                                // (empty, "please provide", etc.). If the existing value looks valid,
-                                // the error is likely stale from a previous submission attempt —
-                                // keep the value and just dispatch focus/blur to clear validation.
                                 let finalValue;
                                 if (isObviousInvalid) {
                                     finalValue = resolvedAnswer || existingValue;
@@ -7514,15 +7623,17 @@ return resolveDynamic(bestMatch);
                                 }
                                 console.log('Pre-filled field with error:', labelText, '| existing:', existingValue, '| isObviousInvalid:', isObviousInvalid, '-> final:', finalValue);
                                 
-                                // FIX: If the field id contains "numeric" or the value contains non-numeric
-                                // chars (like "LPA"), strip non-numeric characters (keep digits and decimal point).
+                                // FIX: If the field id contains "numeric" or input is number type,
+                                // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
                                 const fieldId = input.id || '';
-                                const isNumericField = /numeric/i.test(fieldId) || input.type === 'number';
-                                if (isNumericField && finalValue) {
-                                    const numericVal = finalValue.replace(/[^0-9.]/g, '');
-                                    if (numericVal && numericVal !== finalValue) {
-                                        console.log('Numeric field — stripping non-numeric chars:', finalValue, '->', numericVal);
+                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number';
+                                if (isNumericField) {
+                                    const numericVal = (finalValue || '').replace(/[^0-9.]/g, '');
+                                    if (numericVal) {
                                         finalValue = numericVal;
+                                    } else {
+                                        finalValue = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
+                                        console.log('Numeric field had non-numeric text — replaced with numeric default:', finalValue);
                                     }
                                 }
                                 
@@ -7547,6 +7658,8 @@ return resolveDynamic(bestMatch);
                             
                             // Check if input expects numeric values only
                             const isNumericInput = input.type === 'number' || 
+                                                  /numeric/i.test(input.id || '') ||
+                                                  /numeric/i.test(input.name || '') ||
                                                   input.getAttribute('inputmode') === 'numeric' ||
                                                   input.getAttribute('pattern')?.includes('\\d') ||
                                                   input.className?.toLowerCase().includes('number') ||
@@ -8069,15 +8182,19 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            // ===== CTC/SALARY SELECT HANDLER =====
-                            // Handles LinkedIn dropdowns with INR range options like "20,00,000 to 25,00,000 INR"
-                            // The generic findBestMatch fails on these because answer is in raw INR (2300000)
-                            // but options use Indian number format with commas
+                            // ===== CTC/SALARY/COMPENSATION SELECT HANDLER =====
+                            // Handles LinkedIn dropdowns with range options like "20 - 25 LPA", "20,00,000 to 25,00,000 INR", "5-10 Lakhs"
                             const isCTCQuestion = lowerLabel.includes('ctc') || 
                                                   lowerLabel.includes('salary') || 
-                                                  (lowerLabel.includes('annual') && lowerLabel.includes('inr')) ||
-                                                  (lowerLabel.includes('current') && lowerLabel.includes('inr')) ||
-                                                  (lowerLabel.includes('expected') && lowerLabel.includes('inr'));
+                                                  lowerLabel.includes('compensation') ||
+                                                  lowerLabel.includes('fixed pay') ||
+                                                  lowerLabel.includes('yearly fixed') ||
+                                                  lowerLabel.includes('annual fixed') ||
+                                                  lowerLabel.includes('lpa') ||
+                                                  lowerLabel.includes('remuneration') ||
+                                                  (lowerLabel.includes('annual') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('range') || lowerLabel.includes('comp'))) ||
+                                                  (lowerLabel.includes('current') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range'))) ||
+                                                  (lowerLabel.includes('expected') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range')));
                             
                             if (isCTCQuestion) {
                                 const ctcOptions = Array.from(select.options).map(o => ({ 
@@ -8086,10 +8203,7 @@ return resolveDynamic(bestMatch);
                                     index: o.index 
                                 }));
                                 
-                                // Get the answer - fuzzyMatch returns INR value like "2300000"
                                 let ctcAnswer = labelText ? fuzzyMatch(labelText) : null;
-                                
-                                // Fallback: detect expected vs current based on label
                                 if (!ctcAnswer) {
                                     if (lowerLabel.includes('expected') || lowerLabel.includes('ectc')) {
                                         ctcAnswer = '3000000';
@@ -8099,72 +8213,115 @@ return resolveDynamic(bestMatch);
                                     console.log('CTC Select: Using fallback answer', ctcAnswer, 'for', labelText.substring(0, 80));
                                 }
                                 
-                                // Extract numeric INR value from answer
-                                const ctcNumMatch = String(ctcAnswer).match(/(\\d+(?:\\.\\d+)?)/);
-                                const ctcValue = ctcNumMatch ? parseFloat(ctcNumMatch[1]) : 0;
+                                const ctcNumMatch = String(ctcAnswer).replace(/,/g, '').match(/(\\d+(?:\\.\\d+)?)/);
+                                const rawCTC = ctcNumMatch ? parseFloat(ctcNumMatch[1]) : 23;
+                                const ctcInLakhs = rawCTC >= 100000 ? rawCTC / 100000 : rawCTC;
+                                const ctcInINR = rawCTC < 1000 ? rawCTC * 100000 : rawCTC;
                                 
-                                if (ctcValue > 0) {
-                                    let bestCTCOpt = null;
-                                    let closestCTCOpt = null;
-                                    let minDistance = Infinity;
+                                let bestCTCOpt = null;
+                                let closestCTCOpt = null;
+                                let minDistance = Infinity;
+                                
+                                for (const opt of ctcOptions) {
+                                    const optText = (opt.text || '').toLowerCase().trim();
+                                    if (!optText || optText.includes('select') || optText.includes('choose') || optText === '--') continue;
                                     
-                                    for (const opt of ctcOptions) {
-                                        const optText = (opt.text || '').toLowerCase().trim();
-                                        if (!optText || optText.includes('select')) continue;
-                                        
-                                        // Robust range extraction: strip ALL non-digit chars except spaces, hyphens, "to"
-                                        // Handle formats: "20,00,000 to 25,00,000 INR", "2000000-2500000", etc.
-                                        const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
-                                        
-                                        // Try multiple regex patterns for range matching
-                                        let rangeMatch = cleaned.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-\u2013\u2014]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
-                                        
-                                        // Fallback: any two numbers separated by space(s)
-                                        if (!rangeMatch) {
-                                            const numbers = cleaned.match(/(\\d+(?:\\.\\d+)?)/g);
-                                            if (numbers && numbers.length >= 2) {
-                                                rangeMatch = [null, numbers[0], numbers[numbers.length - 1]];
-                                            }
-                                        }
-                                        
-                                        if (rangeMatch) {
-                                            const minVal = parseFloat(rangeMatch[1]);
-                                            const maxVal = parseFloat(rangeMatch[2]);
-                                            
-                                            // Check if exact match (value falls in range)
-                                            if (ctcValue >= minVal && ctcValue <= maxVal) {
-                                                bestCTCOpt = opt;
-                                                console.log('CTC Select: Exact range match -', opt.text, 'contains', ctcValue);
-                                                break; // Found exact match, stop searching
-                                            }
-                                            
-                                            // Track closest range (for fallback)
-                                            const distance = Math.min(
-                                                Math.abs(ctcValue - minVal), 
-                                                Math.abs(ctcValue - maxVal)
-                                            );
-                                            if (distance < minDistance) {
-                                                minDistance = distance;
-                                                closestCTCOpt = opt;
-                                            }
-                                        }
-                                    }
+                                    const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
+                                    let minVal = null, maxVal = null;
                                     
-                                    // Use exact match if found, otherwise closest range
-                                    const selectedOpt = bestCTCOpt || closestCTCOpt;
-                                    
-                                    if (selectedOpt) {
-                                        console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', ctcValue + ')');
-                                        select.value = selectedOpt.value;
-                                        if (select.value !== selectedOpt.value) select.selectedIndex = selectedOpt.index;
-                                        select.dispatchEvent(new Event('input', { bubbles: true }));
-                                        select.dispatchEvent(new Event('change', { bubbles: true }));
-                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
-                                        formResults.push({ question: labelText, answer: selectedOpt.text, inputType: 'select-ctc' });
-                                        continue;
+                                    const rangeMatch = cleaned.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-\\u2013\\u2014]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
+                                    if (rangeMatch) {
+                                        minVal = parseFloat(rangeMatch[1]);
+                                        maxVal = parseFloat(rangeMatch[2]);
+                                    } else if (/less\\s+than|under|up\\s+to|^<\\s*\\d+/i.test(cleaned)) {
+                                        const singleNum = cleaned.match(/(\\d+(?:\\.\\d+)?)/);
+                                        if (singleNum) { minVal = 0; maxVal = parseFloat(singleNum[1]); }
+                                    } else if (/more\\s+than|over|above|plus|^\\+?\\s*\\d+\\s*\\+/i.test(cleaned)) {
+                                        const singleNum = cleaned.match(/(\\d+(?:\\.\\d+)?)/);
+                                        if (singleNum) { minVal = parseFloat(singleNum[1]); maxVal = 999999999; }
                                     } else {
-                                        console.log('CTC Select: No matching range found for', ctcValue, '- falling through to generic handler');
+                                        const numbers = cleaned.match(/(\\d+(?:\\.\\d+)?)/g);
+                                        if (numbers && numbers.length >= 2) {
+                                            minVal = parseFloat(numbers[0]);
+                                            maxVal = parseFloat(numbers[numbers.length - 1]);
+                                        } else if (numbers && numbers.length === 1) {
+                                            minVal = parseFloat(numbers[0]);
+                                            maxVal = parseFloat(numbers[0]);
+                                        }
                                     }
+                                    
+                                    if (minVal !== null && maxVal !== null) {
+                                        const targetVal = minVal < 1000 ? ctcInLakhs : ctcInINR;
+                                        if (targetVal >= minVal && targetVal <= maxVal) {
+                                            bestCTCOpt = opt;
+                                            console.log('CTC Select: Exact range match -', opt.text, 'for', targetVal);
+                                            break;
+                                        }
+                                        const distance = Math.min(Math.abs(targetVal - minVal), Math.abs(targetVal - maxVal));
+                                        if (distance < minDistance) {
+                                            minDistance = distance;
+                                            closestCTCOpt = opt;
+                                        }
+                                    }
+                                }
+                                
+                                const selectedOpt = bestCTCOpt || closestCTCOpt || ctcOptions.find(o => !o.text.toLowerCase().includes('select') && o.text.trim().length > 0);
+                                
+                                if (selectedOpt) {
+                                    console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', rawCTC + ')');
+                                    select.value = selectedOpt.value;
+                                    if (select.value !== selectedOpt.value) select.selectedIndex = selectedOpt.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: selectedOpt.text, inputType: 'select-ctc' });
+                                    continue;
+                                }
+                            }
+                            
+                            // ===== LANGUAGE PROFICIENCY SELECT HANDLER =====
+                            // Handles questions like "What is your level of proficiency in Tamil?", "Proficiency in English?", "Proficiency in Hindi?", etc.
+                            const isLanguageProficiencyQ = (lowerLabel.includes('proficiency in') || lowerLabel.includes('proficiency level') || lowerLabel.includes('level of proficiency') || lowerLabel.includes('proficiency with') || lowerLabel.includes('speak') || lowerLabel.includes('fluent in')) &&
+                                (lowerLabel.includes('english') || lowerLabel.includes('hindi') || lowerLabel.includes('tamil') || lowerLabel.includes('telugu') || lowerLabel.includes('kannada') || lowerLabel.includes('malayalam') || lowerLabel.includes('marathi') || lowerLabel.includes('bengali') || lowerLabel.includes('gujarati') || lowerLabel.includes('punjabi') || lowerLabel.includes('french') || lowerLabel.includes('german') || lowerLabel.includes('spanish') || lowerLabel.includes('japanese') || lowerLabel.includes('mandarin') || lowerLabel.includes('language'));
+                            
+                            if (isLanguageProficiencyQ) {
+                                const langOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let langMatch = null;
+                                
+                                if (lowerLabel.includes('english')) {
+                                    langMatch = langOptions.find(o => {
+                                        const t = o.text.toLowerCase();
+                                        return t.includes('professional') || t.includes('fluent') || t.includes('native') || t.includes('full') || t.includes('advanced');
+                                    });
+                                } else if (lowerLabel.includes('hindi')) {
+                                    langMatch = langOptions.find(o => {
+                                        const t = o.text.toLowerCase();
+                                        return t.includes('native') || t.includes('fluent') || t.includes('professional') || t.includes('full') || t.includes('conversational');
+                                    });
+                                } else {
+                                    // Other languages: pick None, Elementary, Basic, or lowest valid option
+                                    langMatch = langOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t === 'none' || t.includes('no proficiency') || t.includes('elementary') || t.includes('limited') || t.includes('basic') || t.includes('beginner');
+                                    });
+                                }
+                                
+                                if (!langMatch) {
+                                    langMatch = langOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return t && !t.includes('select') && !t.includes('choose') && t !== '--';
+                                    });
+                                }
+                                
+                                if (langMatch) {
+                                    console.log('Language select match: Selecting', langMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = langMatch.value;
+                                    if (select.value !== langMatch.value) select.selectedIndex = langMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: langMatch.text, inputType: 'select-language' });
+                                    continue;
                                 }
                             }
                             
@@ -8362,6 +8519,88 @@ return resolveDynamic(bestMatch);
                                 continue;
                             }
                             
+                            // ===== WORK EXPERIENCE / EMPLOYMENT DATES SELECT HANDLER =====
+                            // Handles "Dates of employment", "Month of From", "Year of From", "Month of To", "Year of To",
+                            // "Start Date", "End Date" in LinkedIn Easy Apply experience section.
+                            const isExpDateSelect = lowerLabel.includes('dates of employment') ||
+                                                    lowerLabel.includes('month of from') ||
+                                                    lowerLabel.includes('year of from') ||
+                                                    lowerLabel.includes('month of to') ||
+                                                    lowerLabel.includes('year of to') ||
+                                                    lowerLabel.includes('start date') ||
+                                                    lowerLabel.includes('end date') ||
+                                                    lowerLabel.includes('from month') ||
+                                                    lowerLabel.includes('from year') ||
+                                                    lowerLabel.includes('to month') ||
+                                                    lowerLabel.includes('to year') ||
+                                                    lowerLabel.includes('date of employment');
+
+                            if (isExpDateSelect) {
+                                const dateOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                const isYearSelect = lowerLabel.includes('year') || dateOptions.some(o => /^\\d{4}$/.test(o.text.trim()) || /^\\d{4}$/.test(o.value.trim()));
+                                
+                                // Detect position among all date selects in this modal/container
+                                const allDateSelects = Array.from(nativeSelects).filter(s => {
+                                    const sLabel = (s.getAttribute('aria-label') || s.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || '').toLowerCase();
+                                    return sLabel.includes('dates of employment') || sLabel.includes('date') || sLabel.includes('from') || sLabel.includes('to') || sLabel.includes('month') || sLabel.includes('year');
+                                });
+                                const yearSelects = allDateSelects.filter(s => Array.from(s.options).some(o => /^\\d{4}$/.test(o.text.trim()) || /^\\d{4}$/.test(o.value.trim())));
+                                const monthSelects = allDateSelects.filter(s => !yearSelects.includes(s));
+                                const isFirstYear = yearSelects.indexOf(select) === 0;
+                                const isFirstMonth = monthSelects.indexOf(select) === 0;
+
+                                const isStart = lowerLabel.includes('from') || lowerLabel.includes('start') || lowerLabel.includes('begin') || lowerLabel.includes('vanaf') ||
+                                                (select.name && select.name.toLowerCase().includes('start')) || (select.id && select.id.toLowerCase().includes('start')) ||
+                                                (isYearSelect ? isFirstYear : isFirstMonth);
+                                const isEnd = lowerLabel.includes('to') || lowerLabel.includes('end') || lowerLabel.includes('eind') || lowerLabel.includes('tot') ||
+                                              (select.name && select.name.toLowerCase().includes('end')) || (select.id && select.id.toLowerCase().includes('end')) ||
+                                              (!isStart);
+                                
+                                let targetOpt = null;
+                                if (isYearSelect) {
+                                    if (isStart) {
+                                        // Start Year: 2022 (4 years experience before 2026)
+                                        targetOpt = dateOptions.find(o => o.text.trim() === '2022' || o.value.trim() === '2022') ||
+                                                    dateOptions.find(o => o.text.trim() === '2021' || o.text.trim() === '2023');
+                                    } else {
+                                        // End Year: 2026 (current year / LWD year)
+                                        targetOpt = dateOptions.find(o => o.text.trim() === '2026' || o.value.trim() === '2026') ||
+                                                    dateOptions.find(o => o.text.trim() === '2025');
+                                    }
+                                } else {
+                                    // Month select: multilingual support (English + Dutch + numeric values)
+                                    if (isStart) {
+                                        // Start Month: June / Juni / 6
+                                        targetOpt = dateOptions.find(o => /^(june|juni|jun|6|06)$/i.test(o.text.trim()) || o.value.trim() === '6' || o.value.trim() === '06') ||
+                                                    dateOptions.find(o => /^(july|juli|jul|7|07)$/i.test(o.text.trim()) || o.value.trim() === '7') ||
+                                                    dateOptions.find(o => /^(january|januari|jan|1|01)$/i.test(o.text.trim()) || o.value.trim() === '1');
+                                    } else {
+                                        // End Month: February / Februari / 2
+                                        targetOpt = dateOptions.find(o => /^(february|februari|feb|2|02)$/i.test(o.text.trim()) || o.value.trim() === '2' || o.value.trim() === '02') ||
+                                                    dateOptions.find(o => /^(january|januari|jan|1|01)$/i.test(o.text.trim()) || o.value.trim() === '1');
+                                    }
+                                }
+                                
+                                // Fallback: select first non-placeholder option
+                                if (!targetOpt) {
+                                    targetOpt = dateOptions.find(o => {
+                                        const t = (o.text || '').toLowerCase().trim();
+                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('kies') && !t.includes('month') && !t.includes('maand') && !t.includes('year') && !t.includes('jaar');
+                                    });
+                                }
+                                
+                                if (targetOpt) {
+                                    console.log('Work Experience Date Select: Selecting', targetOpt.text, 'for', labelText);
+                                    select.value = targetOpt.value;
+                                    if (select.value !== targetOpt.value) select.selectedIndex = targetOpt.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: targetOpt.text, inputType: 'select-experience-date' });
+                                    continue;
+                                }
+                            }
+                            
                             {
                                 let answer = labelText ? fuzzyMatch(labelText) : null;
                                 
@@ -8472,30 +8711,45 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
                                 
-                                // AGGRESSIVE FALLBACK 3: If select still not filled and has Yes/No options, default to Yes
-                                // SAFETY: Blacklist dangerous questions that should NOT default to Yes
+                                // UNIVERSAL SAFE FALLBACK FOR UNFILLED SELECTS:
+                                // Ensure no select is ever left at "Select an option" to prevent blocking form progression
                                 const dangerousYesPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member'];
                                 const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
                                 
-                                if (!isFieldPreFilled(select) && !isDangerousYes) {
+                                if (!isFieldPreFilled(select)) {
                                     const options = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    const hasYesNo = options.some(o => o.text.toLowerCase().includes('yes')) && 
-                                                     options.some(o => o.text.toLowerCase().includes('no'));
+                                    const realOptions = options.filter(o => {
+                                        const t = (o.text || '').toLowerCase().trim();
+                                        return t && !t.includes('select') && !t.includes('choose') && t !== '--';
+                                    });
                                     
-                                    if (hasYesNo) {
-                                        const yesOption = options.find(o => o.text.toLowerCase().includes('yes'));
-                                        if (yesOption) {
-                                            console.log('AGGRESSIVE FALLBACK: Defaulting to Yes for unfilled select:', labelText);
-                                            select.value = yesOption.value;
-                                            if (select.value !== yesOption.value) {
-                                                select.selectedIndex = yesOption.index;
+                                    if (realOptions.length > 0) {
+                                        let fallbackOpt = null;
+                                        if (!isDangerousYes) {
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'yes' || o.text.toLowerCase().includes('yes'));
+                                        }
+                                        if (!fallbackOpt && isDangerousYes) {
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'no' || o.text.toLowerCase().includes('no') || o.text.toLowerCase().includes('decline') || o.text.toLowerCase().includes('prefer not'));
+                                        }
+                                        if (!fallbackOpt && isLanguageProficiencyQ) {
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'none' || o.text.toLowerCase().includes('elementary') || o.text.toLowerCase().includes('limited') || o.text.toLowerCase().includes('basic'));
+                                        }
+                                        if (!fallbackOpt) {
+                                            fallbackOpt = realOptions[0];
+                                        }
+                                        
+                                        if (fallbackOpt) {
+                                            console.log('UNIVERSAL SELECT FALLBACK: Defaulting to', fallbackOpt.text, 'for unfilled select:', labelText);
+                                            select.value = fallbackOpt.value;
+                                            if (select.value !== fallbackOpt.value) {
+                                                select.selectedIndex = fallbackOpt.index;
                                             }
                                             
                                             select.dispatchEvent(new Event('input', { bubbles: true }));
                                             select.dispatchEvent(new Event('change', { bubbles: true }));
                                             select.dispatchEvent(new Event('blur', { bubbles: true }));
                                             
-                                            formResults.push({ question: labelText, answer: yesOption.text, inputType: 'select-aggressive' });
+                                            formResults.push({ question: labelText, answer: fallbackOpt.text, inputType: 'select-universal-fallback' });
                                         }
                                     }
                                 }
@@ -9397,7 +9651,38 @@ return resolveDynamic(bestMatch);
                                                      lowerLabel.includes('applicant data privacy') ||
                                                      lowerLabel.includes('job applicant data');
                             
+                            // Check if this is a "currently working here" checkbox in experience section
+                            const isCurrentJobCheckbox = lowerLabel.includes('currently work') ||
+                                                         lowerLabel.includes('current role') ||
+                                                         lowerLabel.includes('present role') ||
+                                                         lowerLabel.includes('working here') ||
+                                                         lowerLabel.includes('currently employed') ||
+                                                         lowerLabel.includes('work in this role') ||
+                                                         lowerLabel.includes('work here') ||
+                                                         lowerLabel.includes('huidige functie') ||
+                                                         lowerLabel.includes('ik werk hier');
+                            
                             let shouldCheck = isConsentCheckbox;
+                            if (isCurrentJobCheckbox) {
+                                // Find company name from any text input in this modal
+                                let companyVal = '';
+                                const allTextInps = queryAllDeep('input[type="text"], input:not([type]), input[type="search"]', modal);
+                                for (const inp of allTextInps) {
+                                    const lbl = (inp.getAttribute('aria-label') || inp.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || '').toLowerCase();
+                                    if (lbl.includes('company') || lbl.includes('employer') || lbl.includes('bedrijf') || lbl.includes('organisatie')) {
+                                        companyVal = (readFieldValue(inp) || inp.value || '').toLowerCase().trim();
+                                        break;
+                                    }
+                                }
+                                const isCurrentCompany = companyVal.includes('everbridge');
+                                if (isCurrentCompany) {
+                                    shouldCheck = true;
+                                    console.log('Current job checkbox: checking for current employer (Everbridge)');
+                                } else {
+                                    shouldCheck = false;
+                                    console.log('Current job checkbox: skipping for past/non-current employer:', companyVal || '(unspecified)');
+                                }
+                            }
                             
                             if (!shouldCheck && labelText) {
                                 const skillMatch = fuzzyMatch(labelText);
@@ -9562,9 +9847,46 @@ return resolveDynamic(bestMatch);
                             return false;
                         };
 
+                        // 1. If an inner sub-form (e.g. Work Experience / Education editor) has a Save/Opslaan button,
+                        // click Save to commit the entry before clicking footer Next.
+                        const innerSaveBtn = queryDeep('button[aria-label*="Save"], button[aria-label*="Opslaan"]', modal) ||
+                                             findByText('button', 'opslaan', true, modal) ||
+                                             findByText('button', 'save', true, modal) ||
+                                             findByText('button', 'opslaan', false, modal) ||
+                                             findByText('button', 'save', false, modal);
+                        
+                        if (innerSaveBtn && isVisible(innerSaveBtn) && !isInvalidActionButton(innerSaveBtn)) {
+                            console.log('Found sub-form Save/Opslaan button — clicking to commit entry:', innerSaveBtn.innerText || innerSaveBtn.getAttribute('aria-label'));
+                            try { innerSaveBtn.scrollIntoView({block: 'center', behavior: 'instant'}); } catch(e) {}
+                            innerSaveBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                            innerSaveBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                            innerSaveBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                            innerSaveBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                            innerSaveBtn.click();
+                            return 'LINKEDIN_FORM_STEP_CONTINUED' + (formResults.length > 0 ? '|' + JSON.stringify(formResults) : '');
+                        }
+
+                        // 2. If sitting on review summary list with an invalid card (red error) and no active editing input,
+                        // try to click Remove on the invalid card to unblock the form.
+                        const visibleErrorEl = queryDeep('.artdeco-inline-feedback--error', modal);
+                        const hasActiveInputs = queryAllDeep('input[type="text"], textarea', modal).some(i => isVisible(i) && !i.disabled);
+                        if (visibleErrorEl && !hasActiveInputs) {
+                            const errorCard = visibleErrorEl.closest('[class*="card"], [class*="item"], li, .jobs-easy-apply-form-section__grouping, div[data-test*="card"]');
+                            if (errorCard) {
+                                const removeBtn = findByText('button', 'remove', true, errorCard) ||
+                                                  findByText('button', 'verwijderen', true, errorCard) ||
+                                                  findByText('button', 'remove', false, errorCard) ||
+                                                  findByText('button', 'verwijderen', false, errorCard) ||
+                                                  queryDeep('button[aria-label*="Remove"], button[aria-label*="Verwijderen"]', errorCard);
+                                if (removeBtn && isVisible(removeBtn)) {
+                                    console.log('Found Remove button on invalid review card — clicking Remove to unblock Next:', removeBtn.innerText);
+                                    removeBtn.click();
+                                    return 'LINKEDIN_INVALID_CARD_REMOVED';
+                                }
+                            }
+                        }
+
                         // Find action buttons (Review, Next, Submit)
-                        // NOTE: 'review your application' (not just 'review') to avoid
-                        // matching "Review job post" on the safety reminder modal.
                         console.log('Searching for primary action button...');
                         const modalFooter = queryDeep('footer, .artdeco-modal__actionbar, .jobs-easy-apply-modal__actionbar', modal) || modal;
                         const buttonCandidates = [
@@ -9646,14 +9968,16 @@ return resolveDynamic(bestMatch);
                         // Conservative global fallback: search entire page ONLY for modal-specific
                         // button phrasings. Never match generic 'next' globally — that matches the
                         // job search results pagination button and dismisses the modal.
+                        // Conservative global fallback: search entire page ONLY for modal-specific
+                        // button phrasings. Never match generic 'next' or plain 'review' globally — that matches the
+                        // job search results filters or company reviews.
                         console.log('No button found in modal, trying conservative global fallback (no generic next)...');
                         const globalCandidates = [
                             queryDeep('button[aria-label*="Review your application"]'),
                             queryDeep('button[aria-label*="Submit application"]'),
                             queryDeep('button[data-live-test-easy-apply-review-button]'),
                             findByText('button', 'submit application'),
-                            findByText('button', 'review your application'),
-                            findByText('button', 'review', true)
+                            findByText('button', 'review your application')
                         ];
                         let globalPrimaryBtn = null;
                         for (const cand of globalCandidates) {
@@ -9760,24 +10084,48 @@ return resolveDynamic(bestMatch);
                             console.log('Modal detected via progressbar heuristic');
                             return true;
                         }
-                        // Heuristic 2: "X of Y pages" text visible anywhere
+                        // Heuristic 2: Standard modal/dialog container that is visible (excluding messaging & filter dropdowns)
+                        const dialogSelectors = [
+                            '.artdeco-modal__content',
+                            '.artdeco-modal',
+                            '.jobs-easy-apply-modal',
+                            '[role="dialog"]',
+                            '[class*="easy-apply-modal"]'
+                        ];
+                        for (const selector of dialogSelectors) {
+                            const elements = document.querySelectorAll(selector);
+                            for (const el of elements) {
+                                if (el && isVisible(el) && !isMessagingOverlay(el)) {
+                                    const cls = (el.className || '').toLowerCase();
+                                    if (cls.includes('dropdown-to-modal') || cls.includes('filter__dropdown') || cls.includes('artdeco-dropdown')) {
+                                        continue;
+                                    }
+                                    if (el.querySelector('input, select, textarea, button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]')) {
+                                        console.log('Modal detected via active dialog container:', selector);
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        // Heuristic 3: "X of Y pages" text visible inside a dialog/form
                         const allSpans = document.querySelectorAll('p, span, div');
                         for (const el of allSpans) {
                             if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {
-                                console.log('Modal detected via pages-text heuristic:', el.innerText.trim().substring(0, 30));
-                                return true;
+                                const parentDialog = el.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, form');
+                                if (parentDialog && !isMessagingOverlay(parentDialog)) {
+                                    console.log('Modal detected via pages-text heuristic in dialog:', el.innerText.trim().substring(0, 30));
+                                    return true;
+                                }
                             }
                         }
-                        // Heuristic 3: componentkey attribute + form inputs (LinkedIn Easy Apply root div)
-                        // GUARD: Require Easy Apply-specific indicators to prevent false positives
-                        // from job details panel or other page elements with [componentkey]
+                        // Heuristic 4: componentkey inside a dialog container ONLY
                         const compKeyEl = document.querySelector('[componentkey]');
-                        if (compKeyEl && isVisible(compKeyEl) && compKeyEl.querySelector('input, select, textarea') &&
-                            (compKeyEl.querySelector('svg[role="progressbar"]') ||
-                             compKeyEl.querySelector('button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]') ||
-                             /apply|application|resume|contact info/i.test((compKeyEl.innerText || '').substring(0, 500)))) {
-                            console.log('Modal detected via componentkey+inputs heuristic');
-                            return true;
+                        if (compKeyEl && isVisible(compKeyEl)) {
+                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
+                            if (parentDialog && !isMessagingOverlay(parentDialog) && compKeyEl.querySelector('input, select, textarea')) {
+                                console.log('Modal detected via componentkey inside dialog');
+                                return true;
+                            }
                         }
                         return false;
                     };
@@ -9847,11 +10195,7 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        // Strategy 3: Try componentkey element
-                        const compKeyEl = document.querySelector('[componentkey]');
-                        if (compKeyEl && isVisible(compKeyEl)) return compKeyEl;
-
-                        // Strategy 4: Walk up from pages text element
+                        // Strategy 3: Walk up from pages text element
                         const allSpans = document.querySelectorAll('p, span, div');
                         for (const el of allSpans) {
                             if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {
@@ -9867,7 +10211,6 @@ return resolveDynamic(bestMatch);
                                                           
                                     if (!isBlacklisted) {
                                         if (parent.tagName === 'FORM' || 
-                                            parent.hasAttribute('componentkey') || 
                                             (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal')))) {
                                             return parent;
                                         }
@@ -9877,14 +10220,11 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        // Strategy 5: Look for any visible form element
-                        const form = document.querySelector('form');
-                        if (form && isVisible(form)) {
-                            const formId = form.getAttribute('data-id') || '';
-                            const formClass = form.className || '';
-                            if (!formId.includes('sign-in') && !formClass.includes('search') && !formClass.includes('sign-in')) {
-                                return form;
-                            }
+                        // Strategy 4: Try componentkey element ONLY IF inside a dialog
+                        const compKeyEl = document.querySelector('[componentkey]');
+                        if (compKeyEl && isVisible(compKeyEl)) {
+                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
+                            if (parentDialog && !isMessagingOverlay(parentDialog)) return compKeyEl;
                         }
 
                         // Fallback: Use dummy element rather than document.body to isolate queries
@@ -9925,6 +10265,12 @@ return resolveDynamic(bestMatch);
                         // PRIORITY 2: Easy Apply form — heuristic check
                         if (checkEasyApplyModalOpen()) {
                             const modalEl = findEasyApplyModalEl();
+                            // If findEasyApplyModalEl returned dummy div (no real modal), do not report as form modal
+                            if (!modalEl || !modalEl.parentElement || modalEl.tagName === 'DIV' && !modalEl.className && !modalEl.id) {
+                                if (!modalEl || !modalEl.querySelector('input, select, textarea, button')) {
+                                    return null;
+                                }
+                            }
                             const text = (modalEl.innerText || '').toLowerCase();
                             // Double-check it's not a safety/success dialog (defense-in-depth)
                             if (text.includes('safety reminder') || text.includes('job search safety') ||
@@ -10112,13 +10458,32 @@ return resolveDynamic(bestMatch);
                     // Persistent skip-list across invocations (survives between evaluate calls)
                     if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
 
-                    // No modal open - handle job selection and clicking Easy Apply
-                    console.log('No modal detected. Checking for Easy Apply button...');
-                    const easyApplyBtn = findEasyApplyButton();
-                    if (easyApplyBtn) {
-                        console.log('Easy Apply button found, clicking...');
-                        easyApplyBtn.click();
-                        return 'LINKEDIN_EASY_APPLY_CLICKED';
+                    // Detect active job ID from URL parameter OR from active card in DOM
+                    const currentUrlParams = new URLSearchParams(window.location.search);
+                    let activeJobId = currentUrlParams.get('currentJobId');
+                    if (!activeJobId) {
+                        const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                          document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                          document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                          document.querySelector('.active [data-job-id]');
+                        if (activeCard) {
+                            activeJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                        }
+                    }
+
+                    const isCurrentJobSkipped = activeJobId && window.__skippedJobIds.has(activeJobId);
+
+                    if (!isCurrentJobSkipped) {
+                        // No modal open - handle job selection and clicking Easy Apply
+                        console.log('No modal detected. Checking for Easy Apply button...');
+                        const easyApplyBtn = findEasyApplyButton();
+                        if (easyApplyBtn) {
+                            console.log('Easy Apply button found, clicking...');
+                            easyApplyBtn.click();
+                            return 'LINKEDIN_EASY_APPLY_CLICKED';
+                        }
+                    } else {
+                        console.log('Current job ' + activeJobId + ' is already in skip list. Selecting next job from list...');
                     }
 
                     // ── NO EASY APPLY BUTTON FOUND ──
@@ -10519,7 +10884,8 @@ return resolveDynamic(bestMatch);
                         // Find the question
                         const questionEl = document.querySelector('.chatbot_MessageContainer li.botItem:last-of-type .botMsg') ||
                                           document.querySelector('.botMsg.msg') ||
-                                          document.querySelector('li.botItem .botMsg');
+                                          document.querySelector('li.botItem .botMsg') ||
+                                          document.querySelector('.chatbot_QuestionContainer, [class*="question"]');
                         
                         // Find the input - DOM inspection found: div.textArea[contenteditable="true"]
                         // Parent is .textAreaWrapper, placeholder is "Type message here..."
@@ -10534,8 +10900,13 @@ return resolveDynamic(bestMatch);
                         // Pre-match: LWD date questions
                         const isLwdQ = qLower.includes('ldw') || qLower.includes('lwd') || 
                                         qLower.includes('last working day');
+                        const isPrivacyQ = qLower.includes('consent') || qLower.includes('privacy') || 
+                                          qLower.includes('terms') || qLower.includes('policy') || 
+                                          qLower.includes('agree') || qLower.includes('permit') || 
+                                          qLower.includes('legal') || qLower.includes('authoriz') || 
+                                          qLower.includes('declare') || qLower.includes('acknowledge');
                         let answer;
-                        if (isLwdQ) {{
+                        if (isLwdQ) {
                             const lwd = new Date();
                             lwd.setDate(lwd.getDate() + 15);
                             const dd = String(lwd.getDate()).padStart(2, '0');
@@ -10543,9 +10914,12 @@ return resolveDynamic(bestMatch);
                             const yyyy = lwd.getFullYear();
                             answer = dd + ' ' + mon + ' ' + yyyy;
                             console.log('NAUKRI DEBUG: LWD question detected:', qText, '->', answer);
-                        }} else {{
+                        } else if (isPrivacyQ) {
+                            answer = 'Yes';
+                            console.log('NAUKRI DEBUG: Consent/Privacy question detected:', qText, '-> Yes');
+                        } else {
                             answer = fuzzyMatch(qText) || "4 Years";
-                        }}
+                        }
 
                         // ─── THREE-FIELD DATE PICKER (DD / MM / YYYY) ─────────────────────
                         // Naukri's date picker uses 3 separate input[type="number"] fields.
@@ -10584,38 +10958,107 @@ return resolveDynamic(bestMatch);
                         }
                         // ─────────────────────────────────────────────────────────────────────
 
-                        // Try contenteditable div (Naukri's actual implementation)
-                        if (inputDiv) {
-                            const currentText = inputDiv.textContent || inputDiv.innerText || '';
-                            if (!currentText.trim()) {
-                                inputDiv.focus();
-                                // Clear and set
-                                inputDiv.innerHTML = '';
-                                inputDiv.textContent = answer;
-                                inputDiv.dispatchEvent(new Event('input', { bubbles: true }));
-                                inputDiv.dispatchEvent(new Event('change', { bubbles: true }));
-                                inputDiv.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
-                                
-                                // CRITICAL: Save button is div.sendMsg, NOT a button element!
-                                // Structure: .sendMsgbtn_container > div.send > div.sendMsg
-                                const sendBtn = document.querySelector('div.sendMsg') ||
-                                               document.querySelector('.sendMsgbtn_container .sendMsg') ||
-                                               document.querySelector('[class*="sendMsg"]');
-                                
-                                console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 100));
-                                
-                                if (sendBtn) { 
-                                    sendBtn.click(); 
-                                    return 'NAUKRI_CHAT_ANSWERED_AND_SAVED: ' + qText.slice(0, 40); 
+                        // ─── OPTION BUTTONS / CHIPS / PILLS / QUICK REPLIES (EARLY DETECTION) ───
+                        const optBtnSelectors = [
+                            '.chatbot_OptionContainer button',
+                            '.chatbot_OptionContainer div[role="button"]',
+                            '.chatbot_OptionContainer span[role="button"]',
+                            '.chatbot_Chip',
+                            '.chatbot_Chips div.chipItem',
+                            '.chatbot_Chips button',
+                            '[class*="Chip"] button',
+                            '[class*="chip"]:not([class*="radio"]):not([class*="select"]):not([class*="single"])',
+                            '[class*="quickReply"]',
+                            '[class*="quick-reply"]',
+                            '[class*="QuickReply"]',
+                            '.chipItem',
+                            'button.chip'
+                        ];
+
+                        let optBtns = Array.from(document.querySelectorAll(optBtnSelectors.join(', ')));
+
+                        // Filter out non-option / control buttons, containers, and elements with empty text
+                        optBtns = optBtns.filter(function(btn) {
+                            if (btn.offsetParent === null && (!btn.getClientRects || btn.getClientRects().length === 0)) return false;
+                            const t = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                            if (!t || t.length === 0) return false;
+                            const cls = (btn.className || '').toString().toLowerCase();
+                            if (t === 'save' || t === 'send' || t === 'submit' || t === 'next' || t === 'close' || t === 'attach' || t === 'upload') return false;
+                            if (cls.includes('sendmsg') || cls.includes('upload') || cls.includes('close') || cls.includes('header') || cls.includes('botmsg') || cls.includes('drawer')) return false;
+                            if (t.length > 80) return false;
+                            if (btn.querySelector('input, select, textarea, button, [role="button"], .chipItem, .chatbot_Chip')) return false;
+                            if (btn.closest('.singleselect-radiobutton-container, .ssrc__radio-btn-container, [class*="radio"], [class*="Radio"], [class*="checkbox"], [class*="Checkbox"], fieldset, form')) return false;
+                            if (btn.tagName === 'LABEL' || btn.tagName === 'INPUT' || btn.tagName === 'SELECT' || btn.tagName === 'TEXTAREA') return false;
+                            return true;
+                        });
+
+                        // Also search chatbot container for standalone "Yes" / "No" / answer pill
+                        if (optBtns.length === 0) {
+                            const chatContainer = document.querySelector('.chatbot_MessageContainer, .chatbot_DrawerContentWrapper, .chatbot_Drawer, [class*="ChatbotContainer"]') || document.body;
+                            const clickables = chatContainer.querySelectorAll('button, [role="button"], div[tabindex], span, div, a');
+                            for (const el of clickables) {
+                                if (el.offsetParent === null && (!el.getClientRects || el.getClientRects().length === 0)) continue;
+                                const t = (el.innerText || el.textContent || '').trim().toLowerCase();
+                                if (!t || t.length === 0) continue;
+                                const cls = (el.className || '').toString().toLowerCase();
+                                if (cls.includes('sendmsg') || cls.includes('header') || cls.includes('botmsg') || cls.includes('drawer')) continue;
+                                if (el.querySelector('button, [role="button"], .chipItem, .chatbot_Chip')) continue;
+                                if (t === 'yes' || t === 'no' || t === 'i agree' || t === 'agree' || t === 'consent' || t === 'i consent' || t === 'accept' || t === 'confirm') {
+                                    optBtns.push(el);
                                 }
-                                
-                                // Fallback: try pressing Enter to submit
-                                inputDiv.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-                                inputDiv.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, bubbles: true }));
-                                return 'NAUKRI_CHAT_ANSWERED: ' + qText.slice(0, 40);
                             }
                         }
-                        
+
+                        if (optBtns.length > 0) {
+                            const optAnsLower = (answer || '').toLowerCase().trim();
+                            let clickedBtn = null;
+                            
+                            for (const btn of optBtns) {
+                                const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                                if (!btnText) continue;
+                                if (btnText === optAnsLower) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ) &&
+                                    (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if ((optAnsLower === 'no' || optAnsLower.startsWith('no')) && (btnText === 'no' || btnText.startsWith('no '))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if (optAnsLower && btnText.length >= 2 && optAnsLower.length >= 2 && (btnText.includes(optAnsLower) || optAnsLower.includes(btnText))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                            }
+                            
+                            if (!clickedBtn) {
+                                const allSkip = optBtns.every(b => (b.innerText || b.textContent || '').toLowerCase().includes('skip'));
+                                const hasOtherInputs = document.querySelector('input[type="radio"], input[type="checkbox"], select, div.textArea[contenteditable="true"]') !== null;
+                                if (!allSkip && !hasOtherInputs) {
+                                    clickedBtn = optBtns[0];
+                                }
+                            }
+                            
+                            if (clickedBtn) {
+                                const clickedText = (clickedBtn.innerText || clickedBtn.textContent || '').trim();
+                                clickedBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                clickedBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                                clickedBtn.click();
+                                clickedBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                                
+                                setTimeout(() => {
+                                    const sb = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
+                                    if (sb) sb.click();
+                                }, 200);
+                                
+                                return 'NAUKRI_CHAT_OPT_CLICKED: ' + clickedText;
+                            }
+                        }
+
                         // ─── TYPEAHEAD / AUTOCOMPLETE LOCATION HANDLING ─────────────
                         // Naukri chatbot can render location as a custom typeahead input
                         // (input[role="combobox"] / aria-autocomplete="list") rather than a
@@ -10744,7 +11187,7 @@ return resolveDynamic(bestMatch);
                                          document.querySelector('li.botItem .botMsg'))?.innerText || 'Unknown question';
                             
                             // First try fuzzy matching for radio button questions
-                            const fuzzyAnswer = fuzzyMatch(qText);
+                            const fuzzyAnswer = isPrivacyQ ? 'Yes' : fuzzyMatch(qText);
                             let bestRadio = null;
                             
                             if (fuzzyAnswer) {
@@ -10768,12 +11211,13 @@ return resolveDynamic(bestMatch);
                                 });
                                 const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                 
-                                if (isYesNo) {
+                                if (isYesNo || isPrivacyQ) {
                                     for (const radio of radios) {
                                         const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
                                         if (label.toLowerCase().includes('yes') || 
                                             label.toLowerCase().includes('serving') ||
-                                            label.toLowerCase().includes('currently')) {
+                                            label.toLowerCase().includes('currently') ||
+                                            label.toLowerCase().includes('agree')) {
                                             bestRadio = radio;
                                             break;
                                         }
@@ -10782,15 +11226,45 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Click the selected radio button
-                            if (bestRadio && !bestRadio.checked) { 
-                                bestRadio.click(); 
+                            if (bestRadio) { 
+                                bestRadio.checked = true;
+                                bestRadio.dispatchEvent(new Event('input', { bubbles: true }));
+                                bestRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                                bestRadio.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                                bestRadio.click();
+                                bestRadio.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                                
+                                if (bestRadio.id) {
+                                    const lbl = document.querySelector('label[for="' + bestRadio.id + '"]');
+                                    if (lbl) {
+                                        lbl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                                        lbl.click();
+                                        lbl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                                    }
+                                }
+                                const parentContainer = bestRadio.closest('.ssrc__radio-btn-container, [class*="radio-btn"], [class*="radio"]') || bestRadio.parentElement;
+                                if (parentContainer) {
+                                    parentContainer.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                                    parentContainer.click();
+                                    parentContainer.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                                }
                                 clicked = true; 
                             }
                             
                             if (clicked) {
-                                // Save button is div.sendMsg, not button element!
-                                const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                                if (saveBtn) { saveBtn.click(); return 'NAUKRI_CHAT_RADIO_SAVED'; }
+                                setTimeout(() => {
+                                    const sendSelectors = ['.sendMsg[tabindex]', 'div.sendMsg', '.sendMsgbtn_container .sendMsg', '#sendMsg__vjhkrpzhhInputBox .sendMsg', '[class*="sendMsg"]'];
+                                    for (const s of sendSelectors) {
+                                        const sb = document.querySelector(s);
+                                        if (sb && sb.offsetParent !== null && !sb.disabled && !sb.classList.contains('disabled')) {
+                                            sb.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                                            sb.click();
+                                            sb.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                                            break;
+                                        }
+                                    }
+                                }, 300);
+                                return 'NAUKRI_CHAT_RADIO_SAVED';
                             }
                         }
                         
@@ -10816,6 +11290,7 @@ return resolveDynamic(bestMatch);
                             const isNoticePeriodQuestion = qTextLower.includes('notice period');
                             const isProgrammingLanguageQuestion = qTextLower.includes('programming language') || qTextLower.includes('programming lang') || qTextLower.includes('coding language') || (qTextLower.includes('language') && (qTextLower.includes('experienced') || qTextLower.includes('proficient') || qTextLower.includes('skilled')));
                             const isExperienceQuestion = !isProgrammingLanguageQuestion && (qTextLower.includes('experience') || qTextLower.includes('years'));
+                            const isPrivacyCheckboxQ = isPrivacyQ || qTextLower.includes('privacy') || qTextLower.includes('consent') || qTextLower.includes('terms') || qTextLower.includes('policy');
                             const preferredCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'chennai', 'delhi', 'noida', 'gurgaon'];
                             
                             // FIRST: Check if this is a binary Yes/No question
@@ -10838,11 +11313,11 @@ return resolveDynamic(bestMatch);
                                     item.lowerLabel.includes('yes') || item.lowerLabel.includes('no')
                                 );
                             
-                            if (isBinaryYesNo) {
-                                // Find the Yes checkbox
+                            if (isBinaryYesNo || isPrivacyCheckboxQ) {
+                                // Find the Yes/Consent checkbox
                                 const yesCheckbox = checkboxLabels.find((item) => 
-                                    item.lowerLabel.includes('yes') && !item.lowerLabel.includes('not')
-                                );
+                                    (item.lowerLabel.includes('yes') || item.lowerLabel.includes('agree') || item.lowerLabel.includes('consent') || item.lowerLabel.includes('confirm') || isPrivacyCheckboxQ) && !item.lowerLabel.includes('not') && !item.lowerLabel.includes('no') && !item.lowerLabel.includes('skip')
+                                ) || checkboxLabels[0];
                                 
                                 if (yesCheckbox && !yesCheckbox.cb.checked) {
                                     yesCheckbox.cb.click();
@@ -10905,7 +11380,7 @@ return resolveDynamic(bestMatch);
                                     if (!yesCheckbox) {
                                         yesCheckbox = checkboxLabels.find((item) => 
                                             item.lowerLabel.includes('willing') || 
-                                            item.lowerLabel.includes('agree') ||
+                                            item.lowerLabel.includes('agree') || 
                                             item.lowerLabel.includes('confirm')
                                         );
                                     }
@@ -11196,39 +11671,49 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        // Try option buttons (with answer-aware matching)
-                        const optionBtns = document.querySelectorAll('.chatbot_OptionContainer button');
-                        if (optionBtns.length > 0) {
-                            // Get question text for answer matching
-                            const optQEl = document.querySelector('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
-                            const optQText = optQEl ? optQEl.innerText || '' : '';
-                            const optAnswer = fuzzyMatch(optQText) || '';
-                            const optAnsLower = optAnswer.toLowerCase();
+                        // ─── CONTENTEDITABLE / TEXT INPUT (Pure text questions) ──────────
+                        if (inputDiv) {
+                            inputDiv.focus();
+                            inputDiv.innerHTML = '';
+                            inputDiv.textContent = answer;
+                            inputDiv.dispatchEvent(new Event('input', { bubbles: true }));
+                            inputDiv.dispatchEvent(new Event('change', { bubbles: true }));
+                            inputDiv.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
                             
-                            let clickedOpt = false;
-                            for (const btn of optionBtns) {
-                                const btnText = btn.innerText.trim().toLowerCase();
-                                if (btnText === optAnsLower || 
-                                    btnText.includes(optAnsLower) || 
-                                    optAnsLower.includes(btnText) ||
-                                    ((optAnsLower === 'yes' || optAnsLower.includes('yes')) && btnText === 'yes') ||
-                                    ((optAnsLower === 'no' || optAnsLower.startsWith('no')) && btnText === 'no')) {
-                                    btn.click();
-                                    clickedOpt = true;
-                                    return 'NAUKRI_CHAT_OPT_CLICKED: ' + btn.innerText.trim();
-                                }
+                            // CRITICAL: Save button is div.sendMsg, NOT a button element!
+                            // Structure: .sendMsgbtn_container > div.send > div.sendMsg
+                            const sendBtn = document.querySelector('div.sendMsg') ||
+                                           document.querySelector('.sendMsgbtn_container .sendMsg') ||
+                                           document.querySelector('[class*="sendMsg"]');
+                            
+                            console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 100));
+                            
+                            if (sendBtn) { 
+                                sendBtn.click(); 
+                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED: ' + qText.slice(0, 40); 
                             }
-                            // Fallback: only click first option if it's not just "skip" and no contenteditable exists
-                            if (!clickedOpt) {
-                                const hasCE = document.querySelector('div[contenteditable="true"]');
-                                const allSkipBtns = Array.from(optionBtns).every(b => (b.innerText || '').toLowerCase().includes('skip'));
-                                if (allSkipBtns && hasCE) {
-                                    console.log('Naukri chat - Options are all skip, falling through to contenteditable');
-                                } else {
-                                    optionBtns[0].click();
-                                    return 'NAUKRI_CHAT_OPT_CLICKED: ' + optionBtns[0].innerText.trim() + ' (fallback)';
-                                }
-                            }
+                            
+                            // Fallback: try pressing Enter to submit
+                            inputDiv.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+                            inputDiv.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, bubbles: true }));
+                            return 'NAUKRI_CHAT_ANSWERED: ' + qText.slice(0, 40);
+                        }
+
+                        // Last resort fallback: check for any clickable Yes / Agree / Save
+                        const anyYes = Array.from(document.querySelectorAll('.chatbot_DrawerContentWrapper *, .chatbot_Drawer *, [class*="ChatbotContainer"] *')).find(el => {
+                            if (el.offsetParent === null && (!el.getClientRects || el.getClientRects().length === 0)) return false;
+                            const t = (el.innerText || el.textContent || '').trim().toLowerCase();
+                            return t === 'yes' || t === 'i agree' || t === 'agree' || t === 'consent';
+                        });
+                        if (anyYes) {
+                            anyYes.click();
+                            return 'NAUKRI_CHAT_OPT_CLICKED: ' + (anyYes.innerText || 'Yes') + ' (last-resort)';
+                        }
+
+                        const saveBtnFallback = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg:not(.disabled)');
+                        if (saveBtnFallback && saveBtnFallback.offsetParent !== null) {
+                            saveBtnFallback.click();
+                            return 'NAUKRI_CHAT_SAVE_CLICKED (last-resort)';
                         }
                         
                         // DOM INSPECTION on Wait
@@ -11239,17 +11724,31 @@ return resolveDynamic(bestMatch);
                     }
                     
                     // 2. Check if we're on the recommended jobs page
-                    const applyBtn = document.querySelector('button.multi-apply-button');
+                    const applyBtn = document.querySelector(
+                        'button.multi-apply-button, .multi-apply-button, button.typ-16Bold, span.fright button, div.headSection button.multi-apply-button, button[class*="multi-apply"]'
+                    ) || Array.from(document.querySelectorAll('button')).find(b => 
+                        /apply\\s*\\d*\\s*jobs?/i.test(b.innerText || '') || (b.className && b.className.toString().includes('multi-apply'))
+                    );
                     if (applyBtn) {
                         const remaining = parseInt(sessionStorage.getItem('naukri_remaining') || TARGET_JOBS);
                         let clickedCount = 0;
                         
-                        // Use the EXACT Naukri checkbox selector from DOM inspection
-                        // Unchecked: i.dspIB.naukicon.naukicon-ot-checkbox (without Checked class)
-                        // Checked: i.dspIB.naukicon.naukicon-ot-Checked
-                        const uncheckedBoxes = document.querySelectorAll(
-                            'i.naukicon.naukicon-ot-checkbox:not(.naukicon-ot-Checked)'
-                        );
+                        // Use accurate Naukri checkbox selectors only (no generic article icons)
+                        const uncheckedBoxes = Array.from(document.querySelectorAll(
+                            'i.dspIB.naukicon.naukicon-ot-checkbox:not(.naukicon-ot-Checked), ' +
+                            'i.naukicon-ot-checkbox:not(.naukicon-ot-Checked), ' +
+                            '.tuple-check-box i:not(.naukicon-ot-Checked):not(.checked), ' +
+                            'div.tuple-check-box:not(.checked) i, ' +
+                            '.saveJobContainer.tuple-check-box i:not(.naukicon-ot-Checked):not(.checked), ' +
+                            'input.tuple-check:not(:checked), ' +
+                            'input[type="checkbox"].tuple-check-box:not(:checked)'
+                        )).filter(cb => {
+                            if (!cb || cb.offsetParent === null) return false;
+                            // Ensure it's not a link or inside a target="_blank" anchor that would open a new window
+                            const parentAnchor = cb.closest('a');
+                            if (parentAnchor && parentAnchor.href && !parentAnchor.className.includes('tuple-check')) return false;
+                            return true;
+                        });
                         
                         // Only select from a section when it has at least TARGET_JOBS (5) jobs.
                         // If fewer, move to the next section. After cycling all tabs once
@@ -11311,7 +11810,10 @@ return resolveDynamic(bestMatch);
                         for (const checkbox of uncheckedBoxes) {
                             if (clickedCount >= remaining) break;
                             if (checkbox.offsetParent !== null) {
-                                checkbox.scrollIntoView({ block: 'center' });
+                                checkbox.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                // Stop propagation so clicking checkbox doesn't trigger card navigation or new window
+                                checkbox.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                checkbox.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
                                 checkbox.click();
                                 clickedCount++;
                             }
@@ -11323,10 +11825,13 @@ return resolveDynamic(bestMatch);
                             for (const article of articles) {
                                 if (clickedCount >= remaining) break;
                                 const checkbox = article.querySelector('i.naukicon-ot-checkbox:not(.naukicon-ot-Checked)') ||
-                                                article.querySelector('.tuple-check-box i:not(.checked)') ||
+                                                article.querySelector('.tuple-check-box i:not(.checked):not(.naukicon-ot-Checked)') ||
+                                                article.querySelector('div.tuple-check-box:not(.checked) i') ||
                                                 article.querySelector('input[type="checkbox"]:not(:checked)');
                                 if (checkbox && checkbox.offsetParent !== null) {
-                                    checkbox.scrollIntoView({ block: 'center' });
+                                    checkbox.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                    checkbox.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                    checkbox.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
                                     checkbox.click();
                                     clickedCount++;
                                 }
@@ -11335,14 +11840,15 @@ return resolveDynamic(bestMatch);
                         
                         // If we selected some jobs, click Apply with robustness
                         if (clickedCount > 0) {
-                            applyBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            applyBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                            applyBtn.focus();
                             
                             // Robust click sequence
-                            applyBtn.click();
+                            applyBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
-                            applyBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.click();
                             
                             // MONITOR: Check for error snackbar
                             // NOTE: Loop-based await removed - single check only, Python handles polling
@@ -11376,15 +11882,16 @@ return resolveDynamic(bestMatch);
                         // Check if there are already some checked.
                         // Only submit already-checked jobs when there are at least TARGET_JOBS,
                         // OR when in best-available mode (cycledOnce) — submit whatever is checked.
-                        const alreadyChecked = document.querySelectorAll('i.naukicon-ot-Checked, .tuple-check-box i.checked, input[type="checkbox"]:checked').length;
+                        const alreadyChecked = document.querySelectorAll('i.naukicon-ot-Checked, .tuple-check-box i.checked, div.tuple-check-box.checked, input[type="checkbox"]:checked').length;
                         if (alreadyChecked >= TARGET_JOBS || (cycledOnce && alreadyChecked > 0)) {
-                            applyBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                            // NOTE: await removed - Python handles delays between evaluate calls
+                            applyBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                            applyBtn.focus();
                             
-                            applyBtn.click();
+                            applyBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
                             applyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
-                            applyBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                            applyBtn.click();
                             
                             // MONITOR: Check for error snackbar
                             // NOTE: Loop-based await removed - single check only, Python handles polling
@@ -11558,7 +12065,7 @@ return resolveDynamic(bestMatch);
                         }
                         
                         // 2. Fill Details (Configuration) - One step at a time for reliability
-                        // ORDER: Skills -> Job Functions -> Location -> Experience
+                        // ORDER: Skills -> Job Functions -> Location
                         
                         // Helper function to get selectize instance
                         // NOTE: Instahyre uses custom <selectize> tags, NOT <select> tags
@@ -11766,22 +12273,21 @@ return resolveDynamic(bestMatch);
                             }
                         }
                         
-                        // D. Experience (LAST - after all selectize fields)
-                        if (expInput && expInput.value !== '4') {
-                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                            if (setter) setter.call(expInput, '4');
-                            expInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            expInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            return 'INSTAHYRE_SET_EXPERIENCE';
-                        }
+                        // D. Experience (Disabled - uncomment to re-enable)
+                        // if (expInput && expInput.value !== '4') {
+                        //     const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                        //     if (setter) setter.call(expInput, '4');
+                        //     expInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        //     expInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        //     return 'INSTAHYRE_SET_EXPERIENCE';
+                        // }
 
                         // 3. Click "Show Results" - Only after ALL fields are configured AND not already on results
                         // Use exact selector from DOM: button#show-results.btn.btn-primary.show-results
                         const showResultsBtn = document.querySelector('button#show-results.btn-primary.show-results') ||
                                               document.querySelector('button#show-results');
                         if (showResultsBtn && showResultsBtn.offsetParent !== null && isPanelOpen && !hasSearchParams) {
-                            // Verify ALL fields are configured before clicking
-                            const hasExp = expInput && expInput.value === '4';
+                            // const hasExp = expInput && expInput.value === '4'; // Uncomment if experience filter is required
                             
                             // Check location - use correct plural selector
                             const locInput = document.querySelector('input#locations-selectized');
@@ -11801,10 +12307,10 @@ return resolveDynamic(bestMatch);
                             const jobFuncContainerCheck = jobFuncCtrl ? jobFuncCtrl.querySelector('.selectize-input') : null;
                             const hasJobFuncs = jobFuncContainerCheck && jobFuncContainerCheck.querySelectorAll('.item').length >= 1;
                             
-                            console.log('Config check: Exp=' + hasExp + ', Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs);
+                            console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs);
                             
-                            // Only click Show Results if ALL fields are configured
-                            if (hasExp && hasLocation && hasSkills && hasJobFuncs) {
+                            // Only click Show Results if ALL fields are configured (add hasExp if re-enabling experience)
+                            if (hasLocation && hasSkills && hasJobFuncs) {
                                 showResultsBtn.scrollIntoView({ block: 'center' });
                                 showResultsBtn.click();
                                 sessionStorage.setItem('instahyre_results_clicked', Date.now().toString());
@@ -11814,7 +12320,7 @@ return resolveDynamic(bestMatch);
                                 if (!hasSkills) return 'INSTAHYRE_PENDING_SKILLS';
                                 if (!hasJobFuncs) return 'INSTAHYRE_PENDING_JOB_FUNCS';
                                 if (!hasLocation) return 'INSTAHYRE_PENDING_LOCATION';
-                                if (!hasExp) return 'INSTAHYRE_PENDING_EXPERIENCE';
+                                // if (!hasExp) return 'INSTAHYRE_PENDING_EXPERIENCE'; // Uncomment if experience filter is required
                             }
                         }
                     }

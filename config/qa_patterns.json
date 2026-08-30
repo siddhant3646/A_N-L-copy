@@ -277,67 +277,25 @@
     },
     "location_current": {
       "patterns": [
-        "currently located",
-        "stay currently",
-        "please select your current location",
-        "location",
         "current location",
-        "living in",
-        "base location",
-        "home address",
-        "where do you live",
-        "residence",
-        "residing in",
-        "where do you stay",
-        "located in",
-        "present location",
-        "where are you located",
         "current city",
-        "live in",
-        "based in",
+        "currently located",
+        "where are you located",
+        "where do you stay",
+        "stay currently",
         "where are you currently based",
         "where are you based",
-        "which city are you currently in",
-        "which city are you based in",
-        "current preferred location",
-        "current and preferred location",
-        "your current and preferred location",
-        "which is your current location",
-        "which work location do you prefer to work in",
-        "current & preferred location"
+        "where do you currently live",
+        "your current city",
+        "where do you reside"
       ],
       "category": "location",
-      "default": "Bangalore",
+      "default": "Bengaluru",
+      "priority": 15,
       "input_type_defaults": {
-        "radio": "Bangalore",
-        "checkbox": "Yes",
-        "select": "Bangalore",
-        "text": "Bangalore"
-      },
-      "priority": 11,
-      "negative_patterns": [
-        "preferred location",
-        "preferred city",
-        "relocate",
-        "available for",
-        "available on",
-        "face to face",
-        "f2f",
-        "inperson",
-        "in person",
-        "interview on",
-        "available for interview",
-        "hyderabad location",
-        "bangalore location",
-        "saturday",
-        "sunday",
-        "legally permitted",
-        "legal right to work",
-        "work authorization",
-        "problem statement",
-        "describe a problem",
-        "using your past experience describe"
-      ]
+        "text": "Bengaluru",
+        "select": "Bengaluru"
+      }
     },
     "location_preferred": {
       "patterns": [
@@ -664,12 +622,12 @@
         "do you currently have the legal right to work in the country where the job is based"
       ],
       "category": "yes_no",
-      "default": "Yes, I am a citizen.",
+      "default": "Yes",
       "input_type_defaults": {
         "radio": "Yes",
         "checkbox": "Yes",
-        "select": "Yes, I am a citizen.",
-        "text": "Yes"
+        "select": "Citizen (India)",
+        "text": "Yes, Indian Citizen"
       },
       "priority": 13
     },
@@ -1155,7 +1113,7 @@
         "please dont apply for this job if you can not come for an in-person interview and a"
       ],
       "category": "availability",
-      "default": "Yes, available any day",
+      "default": "Yes",
       "input_type_defaults": {
         "radio": "Yes",
         "checkbox": "Yes",
@@ -1473,12 +1431,13 @@
         "todays date"
       ],
       "category": "self_identification",
-      "default": "02/15/2026",
+      "default": "__DYNAMIC_TODAY_US__",
       "format": "mm/dd/yyyy",
       "input_type_defaults": {
-        "radio": "02/15/2026",
-        "select": "02/15/2026",
-        "text": "02/15/2026"
+        "text": "__DYNAMIC_TODAY_US__",
+        "date": "__DYNAMIC_TODAY_ISO__",
+        "radio": "__DYNAMIC_TODAY_US__",
+        "select": "__DYNAMIC_TODAY_US__"
       },
       "priority": 9
     },
@@ -2188,18 +2147,21 @@
     },
     "why_join_company": {
       "patterns": [
-        "why would you like to join",
+        "why do you want to be a part of",
+        "why do you want to be part of",
         "why do you want to join",
-        "what makes you interested in joining"
+        "why are you interested in joining",
+        "why do you want to join our company",
+        "why work for",
+        "why this company"
       ],
-      "category": "preference",
-      "default": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
+      "category": "behavioral",
+      "default": "I am excited about this opportunity as it aligns with my passion for building high-scale, resilient distributed systems. With 4+ years of hands-on experience in Java, Spring Boot, React, and AWS, I look forward to contributing to engineering excellence and rapid product growth.",
+      "priority": 20,
       "input_type_defaults": {
-        "radio": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java",
-        "select": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally.",
-        "text": "I am excited about this opportunity as it aligns with my career goals and technical expertise. With 4+ years of full-stack development experience in Java, Spring Boot, React, and AWS, I am confident I can contribute meaningfully to the team and grow professionally."
-      },
-      "priority": 5
+        "text": "I am excited about this opportunity as it aligns with my passion for building high-scale, resilient distributed systems. With 4+ years of hands-on experience in Java, Spring Boot, React, and AWS, I look forward to contributing to engineering excellence and rapid product growth.",
+        "textarea": "I am excited about this opportunity as it aligns with my passion for building high-scale, resilient distributed systems. With 4+ years of hands-on experience in Java, Spring Boot, React, and AWS, I look forward to contributing to engineering excellence and rapid product growth."
+      }
     },
     "what_can_you_bring": {
       "patterns": [
@@ -5034,8 +4996,8 @@
         "relocation",
         "relocate to",
         "willingness to travel",
-        "are you comfortable commuting to this job’s location",
-        "are you comfortable commuting to this job’s location?",
+        "are you comfortable commuting to this job\u2019s location",
+        "are you comfortable commuting to this job\u2019s location?",
         "comfortable relocating",
         "relocating",
         "relocating to",
@@ -8274,7 +8236,7 @@
     },
     "holding_offer": {
       "category": "preference",
-      "default": "No offer in hand currently. Actively looking for the right opportunity.",
+      "default": "No",
       "priority": 13,
       "patterns": [
         "holding offer",
@@ -8298,9 +8260,10 @@
         "do you have any offer in hand if yes please mention the amount"
       ],
       "input_type_defaults": {
-        "text": "No",
         "radio": "No",
-        "select": "No"
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
       },
       "negative_patterns": [
         "expected ctc",
@@ -9612,11 +9575,11 @@
         "can speak write and understand english"
       ],
       "category": "skills",
-      "default": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+      "default": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
       "input_type_defaults": {
-        "radio": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
-        "select": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
-        "text": "Advanced (C1/C2) – I can speak, write, and understand English fluently."
+        "radio": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "select": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "text": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently."
       },
       "priority": 10,
       "negative_patterns": [
@@ -12589,11 +12552,10 @@
       "default": "__DYNAMIC_LWD__",
       "priority": 10,
       "input_type_defaults": {
-        "radio": "__DYNAMIC_LWD__",
+        "text": "__DYNAMIC_LWD__",
+        "date": "__DYNAMIC_LWD__",
         "select": "__DYNAMIC_LWD__",
-        "text": "15",
-        "checkbox": "__DYNAMIC_LWD__",
-        "date": "__DYNAMIC_LWD__"
+        "radio": "Yes"
       }
     },
     "joining_date_flexible": {
@@ -129144,7 +129106,7 @@
     },
     "current_org_description": {
       "category": "preference",
-      "default": "Fiserv — a global fintech company specializing in financial services technology",
+      "default": "Fiserv \u2014 a global fintech company specializing in financial services technology",
       "priority": 8,
       "patterns": [
         "briefly describe the focus of your current or last organization",
@@ -129154,8 +129116,8 @@
         "current company focus"
       ],
       "input_type_defaults": {
-        "textarea": "Fiserv — a global fintech company specializing in financial services technology",
-        "text": "Fiserv — a global fintech company specializing in financial services technology"
+        "textarea": "Fiserv \u2014 a global fintech company specializing in financial services technology",
+        "text": "Fiserv \u2014 a global fintech company specializing in financial services technology"
       }
     },
     "kpi_last_roles": {
@@ -129201,7 +129163,7 @@
       ],
       "input_type_defaults": {
         "textarea": "I worked on an AI Document Intelligence Platform that automated data extraction from complex PDFs using OCR and LLMs, serving 50+ enterprise clients at Fiserv.",
-        "text": "AI Document Intelligence Platform at Fiserv — OCR + LLM for automated PDF data extraction"
+        "text": "AI Document Intelligence Platform at Fiserv \u2014 OCR + LLM for automated PDF data extraction"
       }
     },
     "production_incident": {
@@ -129291,19 +129253,26 @@
     },
     "current_payroll_company": {
       "patterns": [
-        "current payroll company",
-        "current payroll company? as per aadhar",
+        "name of your payroll organization",
         "payroll company",
-        "as per aadhar,first name:middle name: last name",
-        "as per aadhar, first name:middle name: last name"
+        "current payroll employer",
+        "who is your current payroll company",
+        "current payroll company name",
+        "current payroll company",
+        "payroll company name"
       ],
       "category": "employment",
       "default": "Everbridge",
-      "priority": 15,
       "input_type_defaults": {
-        "text": "Everbridge",
-        "select": "Everbridge"
-      }
+        "radio": "Everbridge",
+        "select": "Everbridge",
+        "text": "Everbridge"
+      },
+      "priority": 15,
+      "negative_patterns": [
+        "past payroll",
+        "previous payroll"
+      ]
     },
     "team_size_managed_specific": {
       "category": "preference",
@@ -129437,7 +129406,7 @@
     },
     "problem_statement": {
       "category": "preference",
-      "default": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+      "default": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
       "priority": 13,
       "patterns": [
         "using your past experience describe a problem statement you contributed to solving",
@@ -129446,7 +129415,7 @@
         "describe a problem you solved"
       ],
       "input_type_defaults": {
-        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
         "text": "Reduced manual document processing time by 70% with AI-powered OCR pipeline at Fiserv"
       }
     },
@@ -130312,12 +130281,14 @@
         "what is your notice period? if serving, mention your lwd"
       ],
       "category": "preference",
-      "default": "08 Sep 2026",
+      "default": "__DYNAMIC_LWD__",
       "priority": 15,
       "input_type_defaults": {
-        "text": "08 Sep 2026",
-        "textarea": "08 Sep 2026",
-        "date": "2026-09-08"
+        "text": "__DYNAMIC_LWD__",
+        "date": "__DYNAMIC_LWD__",
+        "select": "__DYNAMIC_LWD__",
+        "textarea": "__DYNAMIC_LWD__",
+        "radio": "Serving Notice Period"
       }
     },
     "net_framework_vs_core": {
@@ -130389,9 +130360,9 @@
     },
     "rating_scale_dsa": {
       "patterns": [
-        "rate your proficiency with data structures, algorithms, and design patterns. (1–5 scale)",
+        "rate your proficiency with data structures, algorithms, and design patterns. (1\u20135 scale)",
         "rate your proficiency with data structures",
-        "data structures, algorithms, and design patterns. (1–5 scale)"
+        "data structures, algorithms, and design patterns. (1\u20135 scale)"
       ],
       "category": "technical_screening",
       "default": "5",
@@ -130405,7 +130376,7 @@
     },
     "rating_scale_communication": {
       "patterns": [
-        "how would you rate your communication and stakeholder engagement skills? (scale of 1–5)",
+        "how would you rate your communication and stakeholder engagement skills? (scale of 1\u20135)",
         "rate your communication and stakeholder engagement skills"
       ],
       "category": "technical_screening",
@@ -130827,6 +130798,2065 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes"
+      }
+    },
+    "location_state": {
+      "patterns": [
+        "current state",
+        "state / province",
+        "state/province",
+        "home state",
+        "residence state",
+        "state of residence",
+        "which state do you live in",
+        "what state do you reside in",
+        "state"
+      ],
+      "category": "location",
+      "default": "Karnataka",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Karnataka",
+        "select": "Karnataka"
+      },
+      "negative_patterns": [
+        "state management",
+        "stateless",
+        "statement",
+        "real estate",
+        "redux",
+        "mobx",
+        "zustand",
+        "react state",
+        "flux",
+        "machine state",
+        "finite state",
+        "solid state"
+      ]
+    },
+    "location_zip": {
+      "patterns": [
+        "zip code",
+        "postal code",
+        "pincode",
+        "pin code",
+        "zip",
+        "postal"
+      ],
+      "category": "location",
+      "default": "560001",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "560001",
+        "number": "560001"
+      }
+    },
+    "current_preferred_location": {
+      "patterns": [
+        "current & preferred location",
+        "current & preferred location:",
+        "current and preferred location",
+        "current and preferred locations"
+      ],
+      "category": "location",
+      "default": "Bengaluru (Current), Open to Delhi NCR, Hyderabad, Pune, Mumbai, Gurgaon, Chennai",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Bengaluru (Current), Open to Delhi NCR, Hyderabad, Pune, Mumbai, Gurgaon, Chennai"
+      }
+    },
+    "city_presence_bangalore": {
+      "patterns": [
+        "are you currently in bangalore",
+        "are you currently based in bangalore",
+        "are you currently residing in bangalore",
+        "are you currently living in bangalore",
+        "are you presently available in bangalore",
+        "bangalore office location"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "relocation_universal_yes": {
+      "patterns": [
+        "are you currently in pune/ open to relocation to pune",
+        "are you currently in pune/ open to relocation to pune?",
+        "are you in pune/ open to relocation to pune",
+        "open to relocation to pune",
+        "are you currently living in or ready to relocate to gurugram",
+        "are you currently living in or ready to relocate to hyderabad",
+        "are you currently residing in gurugram, haryana or willing to relocate to gurugram, haryana",
+        "are you currently residing in hyderabad or willing to relocate to hyderabad",
+        "are you local to hyderabad",
+        "are you ok with the coimbatore, tamil nadu location",
+        "are you open to an onsite role in vapi, gujarat",
+        "will you be reliably able to commute or relocate to indiranagar, bengaluru",
+        "will you be reliably able to commute or relocate to indiranagar, bengaluru location for work form office",
+        "willing to relocate",
+        "open to relocate",
+        "are you willing to relocate",
+        "are you open to relocate",
+        "comfortable with relocation",
+        "ready to relocate",
+        "ready to relocate anywhere"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "payment_domain_exp": {
+      "patterns": [
+        "how many years of experience do you have in payment domain",
+        "how many years of experience you have in payment domain",
+        "experience in payment domain",
+        "payment domain experience",
+        "years of experience in payment domain"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "select": "4.2 Years"
+      }
+    },
+    "educational_percentage_above_50": {
+      "patterns": [
+        "whether your educational % is above 50 in the 10th std/12thstd/ug/pg",
+        "whether your educational % is above 50",
+        "educational % is above 50 in the 10th std/12thstd/ug/pg",
+        "educational % is above 50",
+        "is above 50 in the 10th std/12thstd/ug/pg",
+        "percentage is above 50",
+        "percentage is above 60",
+        "marks above 60"
+      ],
+      "category": "education",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "career_education_gaps": {
+      "patterns": [
+        "do you have any gaps in education/career? if having gap, mention the duration",
+        "do you have any gaps in education/career",
+        "gaps in education/career",
+        "any career or educational gap",
+        "career or educational gap if any",
+        "any career or educational gaps",
+        "any gaps in education",
+        "any gap in career",
+        "career gap",
+        "education gap",
+        "gap in education",
+        "gap in career"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "tcs_registration_interview_offer": {
+      "patterns": [
+        "have you registered/attended interview/received offer letter from tcs? mention the year and ep number",
+        "have you registered/attended interview/received offer letter from tcs",
+        "registered/attended interview/received offer letter from tcs",
+        "received offer letter from tcs",
+        "registered/attended interview from tcs"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "aws_cloud_experience_description": {
+      "patterns": [
+        "what is your experience in aws cloud",
+        "experience in aws cloud",
+        "tell us about your aws experience",
+        "what is your experience with aws cloud"
+      ],
+      "category": "skills",
+      "default": "4+ years of hands-on experience designing and deploying scalable services on AWS including EC2, S3, Lambda, RDS, ECS, CloudWatch, API Gateway, and SQS/SNS.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "4+ years of hands-on experience designing and deploying scalable services on AWS including EC2, S3, Lambda, RDS, ECS, CloudWatch, API Gateway, and SQS/SNS.",
+        "textarea": "4+ years of hands-on experience designing and deploying scalable services on AWS including EC2, S3, Lambda, RDS, ECS, CloudWatch, API Gateway, and SQS/SNS."
+      }
+    },
+    "auth_rbac_oauth_jwt_description": {
+      "patterns": [
+        "what is your implementing authentication and authorization mechanisms such as oauth2, jwt, and role-based access control",
+        "what is your implementing authentication and authorization mechanisms",
+        "implementing authentication and authorization mechanisms such as oauth2, jwt",
+        "implementing authentication and authorization mechanisms"
+      ],
+      "category": "skills",
+      "default": "Experienced in implementing OAuth 2.0, OpenID Connect, JWT token validation, refresh token rotation, and RBAC authorization policies with Spring Security and API Gateways.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Experienced in implementing OAuth 2.0, OpenID Connect, JWT token validation, refresh token rotation, and RBAC authorization policies with Spring Security and API Gateways.",
+        "textarea": "Experienced in implementing OAuth 2.0, OpenID Connect, JWT token validation, refresh token rotation, and RBAC authorization policies with Spring Security and API Gateways."
+      }
+    },
+    "how_much_annual_salary_expecting": {
+      "patterns": [
+        "how much annual salary are you expecting",
+        "annual salary are you expecting",
+        "what annual salary are you expecting",
+        "what annual salary are you looking for"
+      ],
+      "category": "salary",
+      "default": "3000000",
+      "numeric_default": "30",
+      "inr_default": "3000000",
+      "lpa_default": "30",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "3000000",
+        "text_lpa": "30",
+        "number": "30"
+      }
+    },
+    "current_ctc_in_lacs": {
+      "patterns": [
+        "what is your current ctc in lacs per annum",
+        "current ctc in lacs per annum",
+        "what is your current ctc in lakhs per annum",
+        "current ctc in lakhs per annum",
+        "what is your current ctc in lacs",
+        "what is your current ctc in lakhs",
+        "current ctc in lacs",
+        "current ctc in lakhs",
+        "what is your current ctc in lpa",
+        "current ctc in lpa"
+      ],
+      "category": "salary",
+      "default": "23",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "23",
+        "number": "23",
+        "select": "23 LPA"
+      }
+    },
+    "expected_ctc_in_lacs": {
+      "patterns": [
+        "what is your expected ctc in lacs per annum",
+        "expected ctc in lacs per annum",
+        "what is your expected ctc in lakhs per annum",
+        "expected ctc in lakhs per annum",
+        "what is your expected ctc in lacs",
+        "what is your expected ctc in lakhs",
+        "expected ctc in lacs",
+        "expected ctc in lakhs",
+        "what is your expected ctc in lpa",
+        "expected ctc in lpa",
+        "what is your ectc in lakhs per annum",
+        "what is your ectc in lacs per annum",
+        "ectc in lakhs per annum",
+        "ectc in lacs per annum",
+        "ectc in lakhs",
+        "ectc in lacs",
+        "ectc in lpa"
+      ],
+      "category": "salary",
+      "default": "30",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "30",
+        "number": "30",
+        "select": "30 LPA"
+      }
+    },
+    "current_and_expected_ctc_combined": {
+      "patterns": [
+        "current & expected ctc",
+        "current and expected ctc",
+        "current ctc and expected ctc",
+        "current and expected compensation"
+      ],
+      "category": "salary",
+      "default": "Current: 23 LPA, Expected: 30 LPA",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Current: 23 LPA, Expected: 30 LPA"
+      }
+    },
+    "niche_non_resume_skills": {
+      "patterns": [
+        "how many years of experience do you have in calypso",
+        "calypso",
+        "how many years of experience do you have in camunda bpm",
+        "camunda bpm",
+        "camunda",
+        "how many years of experience do you have in credit risk",
+        "credit risk",
+        "rel exp in incorta",
+        "incorta",
+        "experience in incorta",
+        "how many years of experience do you have in azure data factory",
+        "azure data factory",
+        "how many years of experience do you have in snowflake",
+        "snowflake",
+        "how many years of experience do you have in blockchain",
+        "blockchain",
+        "how many years of experience do you have in solana",
+        "solana",
+        "experience in calypso",
+        "experience in snowflake",
+        "experience in blockchain",
+        "experience in solana",
+        "experience in azure data factory"
+      ],
+      "category": "skills",
+      "default": "4.2 Years",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "Yes",
+        "select": "Yes"
+      }
+    },
+    "niche_non_resume_yn": {
+      "patterns": [
+        "do you have hands-on experience customizing frappe/erpnext",
+        "do you have experience customizing frappe/erpnext",
+        "experience customizing frappe/erpnext",
+        "frappe/erpnext",
+        "frappe",
+        "erpnext",
+        "do you have experience in incorta",
+        "have you worked on incorta",
+        "have you worked on calypso",
+        "have you worked on snowflake",
+        "have you worked on blockchain",
+        "have you worked on solana",
+        "have you worked on azure data factory"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "childhood_background": {
+      "patterns": [
+        "how's your childhood? explain it with one paragraph",
+        "how is your childhood? explain it with one paragraph",
+        "how's your childhood",
+        "how is your childhood",
+        "how was your childhood",
+        "describe your childhood",
+        "tell us about your childhood",
+        "tell me about your childhood",
+        "childhood background",
+        "explain your childhood",
+        "about your childhood"
+      ],
+      "category": "behavioral",
+      "default": "I had an active and curiosity-driven childhood in a supportive family environment that nurtured a deep fascination for technology and problem-solving early on. I spent much of my youth exploring computers, logic games, and mathematics, which naturally sparked my passion for computer science. Balancing academic curiosity with extracurricular activities instilled in me discipline, resilience, and a collaborative mindset, laying a strong foundation for my career as a software engineer.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "I had an active and curiosity-driven childhood in a supportive family environment that nurtured a deep fascination for technology and problem-solving early on. I spent much of my youth exploring computers, logic games, and mathematics, which naturally sparked my passion for computer science. Balancing academic curiosity with extracurricular activities instilled in me discipline, resilience, and a collaborative mindset, laying a strong foundation for my career as a software engineer.",
+        "textarea": "I had an active and curiosity-driven childhood in a supportive family environment that nurtured a deep fascination for technology and problem-solving early on. I spent much of my youth exploring computers, logic games, and mathematics, which naturally sparked my passion for computer science. Balancing academic curiosity with extracurricular activities instilled in me discipline, resilience, and a collaborative mindset, laying a strong foundation for my career as a software engineer."
+      }
+    },
+    "future_contact_consent": {
+      "patterns": [
+        "i am allowing valgenesis to contact me about future job opportunities for up to 2 years",
+        "contact me about future job opportunities for up to 2 years",
+        "contact me about future job opportunities",
+        "allowing us to contact you for future job opportunities",
+        "allow us to contact you for future opportunities",
+        "contact you about future opportunities",
+        "contact you regarding future opportunities"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      }
+    },
+    "cooling_period_past_application": {
+      "patterns": [
+        "have you applied to any of the roles with mphasis in the past 6 months",
+        "have you applied to any of the roles with .* in the past 6 months",
+        "have you applied to .* in the past 6 months",
+        "have you applied in the past 6 months",
+        "have you applied in the last 6 months",
+        "have you interviewed in the last 6 months",
+        "have you applied in the last 1 year",
+        "have you applied in the past 1 year",
+        "applied to any role in the past 6 months"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No"
+      }
+    },
+    "technical_lead_architect_experience": {
+      "patterns": [
+        "have you worked as a technical lead / architect",
+        "have you worked as a technical lead",
+        "have you worked as an architect",
+        "technical lead / architect",
+        "experience as technical lead",
+        "experience as architect"
+      ],
+      "category": "experience",
+      "default": "Yes, experienced in leading microservices architecture, HLD/LLD system design, code reviews, and mentoring junior engineers.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Yes, experienced in leading microservices architecture, HLD/LLD system design, code reviews, and mentoring junior engineers.",
+        "textarea": "Yes, experienced in leading microservices architecture, HLD/LLD system design, code reviews, and mentoring junior engineers.",
+        "radio": "Yes",
+        "select": "Yes"
+      }
+    },
+    "kafka_confluent_production_experience": {
+      "patterns": [
+        "have you worked with kafka/confluent in a production environment",
+        "have you worked with kafka in a production environment",
+        "have you worked with kafka/confluent",
+        "worked with kafka/confluent in a production environment",
+        "worked with kafka/confluent",
+        "experience with kafka/confluent"
+      ],
+      "category": "skills",
+      "default": "Yes, 4+ years hands-on experience with Apache Kafka designing high-throughput event-driven data streaming pipelines and consumer groups in production.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Yes, 4+ years hands-on experience with Apache Kafka designing high-throughput event-driven data streaming pipelines and consumer groups in production.",
+        "textarea": "Yes, 4+ years hands-on experience with Apache Kafka designing high-throughput event-driven data streaming pipelines and consumer groups in production.",
+        "radio": "Yes",
+        "select": "Yes"
+      }
+    },
+    "academic_60_criteria": {
+      "patterns": [
+        "have you scored 60% or above in 10th, 12th, and graduation",
+        "60% throughout academics (10th, 12th, graduation)",
+        "minimum 60% in 10th 12th and graduation",
+        "do you have 60% and above throughout academics (10th, 12th, b.tech)?",
+        "do you have 60% and above throughout academics",
+        "did you score 60% or above in 10th, 12th, and graduation",
+        "minimum 60 percent throughout academics",
+        "first class throughout academics",
+        "first class in 10th, 12th and graduation",
+        "60% and above in all academics"
+      ],
+      "category": "education",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "academic_backlogs": {
+      "patterns": [
+        "do you have any active backlogs",
+        "do you have any active backlogs?",
+        "do you have any standing arrears/backlogs",
+        "any live backlogs",
+        "history of backlogs/arrears",
+        "are there any active backlogs in graduation",
+        "active backlogs or arrears"
+      ],
+      "category": "education",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "academic_gap": {
+      "patterns": [
+        "do you have any educational gap",
+        "have you had any educational gap?",
+        "any gap in education or career",
+        "have you had any education gap",
+        "gap in graduation",
+        "more than 1 year education gap"
+      ],
+      "category": "education",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "education_mode_regular": {
+      "patterns": [
+        "is your graduation regular full time",
+        "is your graduation regular full time?",
+        "education mode regular or correspondence",
+        "is your degree regular / full-time",
+        "full time regular degree",
+        "was your b.tech full-time regular course"
+      ],
+      "category": "education",
+      "default": "Full-time Regular",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Full Time",
+        "text": "Full-time Regular"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "academic_percentage_10th": {
+      "patterns": [
+        "10th percentage",
+        "10th standard percentage/marks",
+        "percentage in 10th / ssc",
+        "10th aggregate percentage",
+        "what is your 10th / 12th percentage?",
+        "what is your 10th percentage"
+      ],
+      "category": "education",
+      "default": "88%",
+      "input_type_defaults": {
+        "radio": "88",
+        "select": "88%",
+        "text": "88%",
+        "number": "88"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "academic_percentage_12th": {
+      "patterns": [
+        "12th percentage",
+        "12th standard percentage/marks",
+        "percentage in 12th / hsc",
+        "12th aggregate percentage",
+        "what is your 12th percentage"
+      ],
+      "category": "education",
+      "default": "85%",
+      "input_type_defaults": {
+        "radio": "85",
+        "select": "85%",
+        "text": "85%",
+        "number": "85"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "academic_graduation_cgpa": {
+      "patterns": [
+        "graduation cgpa",
+        "b.tech cgpa or percentage",
+        "btech aggregate percentage",
+        "what was your graduation percentage/cgpa",
+        "what is your b.tech specialization?",
+        "college cgpa"
+      ],
+      "category": "education",
+      "default": "8.51 CGPA (85%)",
+      "input_type_defaults": {
+        "radio": "8.51",
+        "select": "8.51",
+        "text": "8.51 CGPA (85%)",
+        "number": "8.51"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "employment_type_permanent": {
+      "patterns": [
+        "are you a permanent employee or on third-party contract",
+        "are you a permanent employee or on third-party contract?",
+        "what is your employment type (permanent/contract)",
+        "what is your employment type (permanent/contract)?",
+        "nature of employment (permanent/contractual)",
+        "are you on direct company payroll",
+        "are you a permanent employee",
+        "employment type (full time / contract)"
+      ],
+      "category": "employment",
+      "default": "Permanent",
+      "input_type_defaults": {
+        "radio": "Permanent",
+        "select": "Permanent",
+        "text": "Permanent / Direct Payroll (Everbridge)"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "salary_fixed_variable_breakup": {
+      "patterns": [
+        "fixed ctc and variable ctc breakup",
+        "fixed and variable ctc breakup",
+        "what is your current fixed ctc and variable ctc",
+        "fixed vs variable component",
+        "what is your current fixed salary?",
+        "what is your current variable component?",
+        "breakup of current compensation"
+      ],
+      "category": "salary",
+      "default": "Fixed CTC: 21 LPA, Variable: 2 LPA",
+      "input_type_defaults": {
+        "radio": "21 LPA Fixed",
+        "select": "Fixed: 21 LPA, Variable: 2 LPA",
+        "text": "Fixed CTC: 21 LPA, Variable: 2 LPA"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "salary_monthly_take_home": {
+      "patterns": [
+        "monthly take-home salary",
+        "current monthly net pay",
+        "in-hand monthly salary",
+        "what is your monthly take home"
+      ],
+      "category": "salary",
+      "default": "160000",
+      "input_type_defaults": {
+        "radio": "160000",
+        "select": "1.6 Lakhs",
+        "text": "1,60,000 INR (1.6 Lakhs)",
+        "number": "160000"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "holding_offers_competing": {
+      "patterns": [
+        "do you have any offer in hand",
+        "do you have any offer in hand?",
+        "any holding offers",
+        "any holding offers?",
+        "what is your holding offer ctc?",
+        "holding offer ctc",
+        "do you have any existing offer",
+        "do you have any existing offer?",
+        "holding offer details if any",
+        "do you currently hold any other offer"
+      ],
+      "category": "salary",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No",
+        "number": "0"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "notice_period_buyout_negotiable": {
+      "patterns": [
+        "can you buy out your notice period if required",
+        "can you buy out your notice period if required?",
+        "can you buy out your notice period",
+        "can you buy out your notice period?",
+        "is your notice period negotiable",
+        "is your notice period negotiable?",
+        "what is your negotiated notice period?",
+        "can you join in 15 days or less",
+        "can you join in 15 days or less?",
+        "can you join in 15 days",
+        "are you open to buy out notice period",
+        "can you join within 15 days or less"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, notice period is negotiable and buyout is possible (serving notice with 15 days remaining)"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "shift_timings_rotational": {
+      "patterns": [
+        "are you open for rotational shifts",
+        "are you open for rotational shifts?",
+        "are you willing to work in rotational shifts",
+        "comfortable with 24/7 rotational shifts",
+        "are you willing to work in night shifts?",
+        "willing to work in night shifts",
+        "are you willing to work 24/7 rotational shifts?",
+        "are you open to night shifts",
+        "flexible with shift timings"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, flexible and comfortable with rotational/night shifts"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "shift_us_uk_timing": {
+      "patterns": [
+        "are you comfortable working in us shift / uk shift",
+        "are you comfortable working in us shift / uk shift?",
+        "comfortable with us shift",
+        "comfortable with uk shift",
+        "open to us working hours",
+        "apac or emea overlap hours",
+        "are you comfortable working in us time zone"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, comfortable with US/UK shift overlap"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "work_mode_wfo_hybrid": {
+      "patterns": [
+        "are you comfortable working from office 5 days a week",
+        "are you comfortable working from office 5 days a week?",
+        "comfortable with 5 days wfo",
+        "are you comfortable with 6 days working",
+        "are you comfortable with 6 days working?",
+        "willing to work from office full time",
+        "open for hybrid work model (2-3 days wfo)",
+        "work mode preference: remote/hybrid/onsite",
+        "comfortable with on-site work from office"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, open to Hybrid and Work From Office models"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "interview_f2f_availability": {
+      "patterns": [
+        "can you attend face to face interview in bangalore",
+        "can you attend face to face interview in bangalore?",
+        "can you attend face to face interview in noida",
+        "available for f2f interview",
+        "are you available for f2f interview this weekend?",
+        "are you available for in-person interview",
+        "available for face to face round"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, available for Face-to-Face (F2F) interview in Bangalore/Noida"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "interview_walkin_drive": {
+      "patterns": [
+        "are you available for walk-in interview on saturday",
+        "are you available for walk-in interview on saturday?",
+        "can you attend walk-in drive this weekend",
+        "available for weekend hiring drive",
+        "can you attend offline drive on saturday"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, available for walk-in / weekend hiring drive"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "interview_virtual_slot": {
+      "patterns": [
+        "preferred date and time for technical interview",
+        "preferred time slot for video interview",
+        "can you attend virtual interview tomorrow?",
+        "when are you available for technical assessment",
+        "availability for google meet / teams interview"
+      ],
+      "category": "availability",
+      "default": "Flexible on weekdays after 5 PM IST or weekends",
+      "input_type_defaults": {
+        "radio": "Weekdays after 5 PM",
+        "select": "Flexible",
+        "text": "Flexible on weekdays after 5:00 PM IST or anytime on weekends"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "eeo_legal_age_18": {
+      "patterns": [
+        "are you 18 years of age or older",
+        "are you 18 years of age or older?",
+        "are you at least 18 years old",
+        "are you 18 years old or older",
+        "are you legally an adult (18+)"
+      ],
+      "category": "self_identification",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "eeo_pronouns": {
+      "patterns": [
+        "what are your preferred pronouns",
+        "what are your preferred pronouns?",
+        "preferred pronouns",
+        "pronouns (he/him, she/her, they/them)",
+        "what pronouns do you use"
+      ],
+      "category": "self_identification",
+      "default": "He/Him/His",
+      "input_type_defaults": {
+        "radio": "He/Him",
+        "select": "He/Him/His",
+        "text": "He/Him/His"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "eeo_hispanic_latino": {
+      "patterns": [
+        "are you hispanic or latino",
+        "do you identify as hispanic/latino",
+        "hispanic or latino status"
+      ],
+      "category": "self_identification",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No, I am not Hispanic or Latino",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "eeo_race_ethnicity_asian": {
+      "patterns": [
+        "race / ethnicity",
+        "race and ethnicity",
+        "ethnic background",
+        "what is your race or ethnicity"
+      ],
+      "category": "self_identification",
+      "default": "Asian (Indian)",
+      "input_type_defaults": {
+        "radio": "Asian",
+        "select": "Asian (Indian)",
+        "text": "Asian (Indian)"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "compliance_cooling_period": {
+      "patterns": [
+        "have you applied to any roles with us in the past 6 months",
+        "have you applied to any of the roles with mphasis in the past 6 months?",
+        "have you interviewed with us in the last 6 months",
+        "cooling period check (applied in last 6 months)",
+        "have you applied to this company in the past 3 months",
+        "have you attended an interview with us in the last 6 months"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "compliance_non_compete": {
+      "patterns": [
+        "are you bound by any non-compete or confidentiality agreement",
+        "are you bound by any non-compete or confidentiality agreement?",
+        "are you subject to any non-compete clause",
+        "non-compete or non-solicitation agreement",
+        "do you have any post-employment restrictions"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "compliance_disciplinary": {
+      "patterns": [
+        "have you ever been terminated or asked to resign from a position",
+        "have you ever been terminated or asked to resign from a position?",
+        "have you ever been discharged or terminated from employment",
+        "are you currently subject to any disciplinary proceedings",
+        "history of termination for cause"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "compliance_bgv_drug_screening": {
+      "patterns": [
+        "are you willing to undergo background check and drug screening",
+        "are you willing to undergo background check and drug screening?",
+        "willing to undergo background verification (bgv)",
+        "consent to background check and drug test",
+        "agree to reference check and background verification"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "work_auth_india_citizenship": {
+      "patterns": [
+        "are you legally authorized to work in india",
+        "are you currently legally authorized to work in the country of this job",
+        "are you currently legally authorized to work in the country of this job?",
+        "are you an indian citizen",
+        "citizenship status in india",
+        "are you legally authorized to work in the country where this job is located"
+      ],
+      "category": "work_authorization",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Citizen (India)",
+        "text": "Yes, Indian Citizen"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "work_auth_no_sponsorship": {
+      "patterns": [
+        "will you require employer sponsorship now or in the future",
+        "will you require employer sponsorship now or in the future?",
+        "will you now or in the future require visa sponsorship",
+        "do you need visa sponsorship to work in india",
+        "require sponsorship for employment visa status"
+      ],
+      "category": "work_authorization",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No, I do not require sponsorship",
+        "text": "No"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "valid_passport_travel": {
+      "patterns": [
+        "do you have a valid indian passport",
+        "do you have a valid indian passport?",
+        "do you have a valid passport for travel",
+        "passport availability for international travel",
+        "willingness to travel on business"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, hold valid Indian passport"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "domain_bfsi_fintech": {
+      "patterns": [
+        "do you have experience in bfsi / banking domain",
+        "do you have experience in bfsi / banking domain?",
+        "do you have fintech domain experience",
+        "do you have fintech domain experience?",
+        "experience in banking, financial services or insurance (bfsi)",
+        "worked on payment systems or fintech platform",
+        "dispute management and transaction settlement experience"
+      ],
+      "category": "skills",
+      "default": "Yes, 4+ years in BFSI/Fintech building dispute resolution and transaction microservices at Everbridge.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, 4+ years of hands-on experience in BFSI/Fintech domain, architecting transaction settlement and dispute processing systems at Everbridge."
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "architecture_microservices_scale": {
+      "patterns": [
+        "have you worked on high-scale distributed systems",
+        "have you worked on high-scale distributed systems?",
+        "have you worked on system design and hld/lld",
+        "have you worked on system design and hld/lld?",
+        "experience building event-driven microservices",
+        "experience designing scalable backend microservices",
+        "handled 10m+ daily transactions"
+      ],
+      "category": "skills",
+      "default": "Yes, architected event-driven microservices handling 10M+ daily transactions using Spring Boot and Kafka.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, architected HLD/LLD for event-driven microservices handling 10M+ daily transactions using Java, Spring Boot, and Apache Kafka."
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "tech_kafka_event_streaming": {
+      "patterns": [
+        "have you worked with kafka event streaming",
+        "years of experience in apache kafka / event streaming",
+        "years of experience in apache kafka / event streaming?",
+        "experience in apache spark and apache flink",
+        "real-time streaming pipelines with kafka"
+      ],
+      "category": "skills",
+      "default": "Yes, engineered high-throughput Kafka streaming pipelines with Flink/Spark for real-time reporting.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, engineered high-throughput data pipelines integrating Apache Kafka with Apache Flink and Spark for real-time streaming analytics.",
+        "number": "4"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "support_production_oncall": {
+      "patterns": [
+        "do you have production on-call / l3 support experience",
+        "do you have production on-call / l3 support experience?",
+        "have you handled p1/p2 production incidents",
+        "have you handled p1/p2 production incidents?",
+        "experience diagnosing thread dumps and heap dumps in java",
+        "production support and root cause analysis (rca)"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience in L3 production support, on-call rotations, and diagnosing heap/thread dumps.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive experience handling P1/P2 production incidents, on-call rotations, RCA, and diagnosing JVM thread/heap dumps."
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "framework_versions_current": {
+      "patterns": [
+        "which version of java are you working on",
+        "current spring boot version",
+        "java and spring boot version currently using"
+      ],
+      "category": "skills",
+      "default": "Java 21, Spring Boot 3.x",
+      "input_type_defaults": {
+        "radio": "Java 21",
+        "select": "Java 21",
+        "text": "Java 21, Spring Boot 3.x"
+      },
+      "priority": 15,
+      "negative_patterns": []
+    },
+    "notice_resignation_submitted": {
+      "patterns": [
+        "have you formally submitted your resignation",
+        "have you submitted your resignation",
+        "has your resignation been submitted",
+        "resignation submitted",
+        "has your resignation been accepted by employer",
+        "is your resignation accepted"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, resignation submitted and accepted",
+        "checkbox": "Yes"
+      }
+    },
+    "notice_early_release": {
+      "patterns": [
+        "can you get early release from current company",
+        "is early release possible from your employer",
+        "can you request early release",
+        "possible to get early release"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, early release is possible",
+        "checkbox": "Yes"
+      }
+    },
+    "notice_joining_timeline": {
+      "patterns": [
+        "how soon can you join us if selected",
+        "how soon can you join if selected",
+        "how soon can you join",
+        "how early can you join us",
+        "earliest timeline to join"
+      ],
+      "category": "notice_period",
+      "default": "15 Days",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "15 Days",
+        "select": "15 Days",
+        "text": "15 Days",
+        "number": "15"
+      }
+    },
+    "salary_in_hand_monthly": {
+      "patterns": [
+        "what is your monthly in-hand / take home salary",
+        "what is your monthly in-hand salary",
+        "in hand monthly salary",
+        "net monthly salary in inr",
+        "take home salary per month",
+        "monthly take home in hand"
+      ],
+      "category": "salary",
+      "default": "160000",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "1.6 Lakhs",
+        "select": "1.6 Lakhs",
+        "text": "1,60,000 INR (1.6 Lakhs)",
+        "number": "160000"
+      }
+    },
+    "salary_gratuity_pf_inclusive": {
+      "patterns": [
+        "is your current ctc inclusive of pf and gratuity",
+        "is ctc inclusive of pf and gratuity",
+        "does your ctc include pf and gratuity",
+        "ctc includes pf and gratuity"
+      ],
+      "category": "salary",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, inclusive of PF and gratuity",
+        "checkbox": "Yes"
+      }
+    },
+    "salary_minimum_acceptable": {
+      "patterns": [
+        "what is the minimum ctc you would accept",
+        "minimum acceptable ctc floor",
+        "minimum expected salary",
+        "lowest acceptable ctc",
+        "minimum salary expectation"
+      ],
+      "category": "salary",
+      "default": "27 LPA",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "27 LPA",
+        "select": "27 LPA",
+        "text": "27 LPA (INR 2,700,000)",
+        "number": "2700000"
+      }
+    },
+    "salary_joining_bonus_expectation": {
+      "patterns": [
+        "are you expecting a joining bonus or retention bonus",
+        "are you expecting a joining bonus",
+        "joining bonus expectation",
+        "do you require a joining bonus"
+      ],
+      "category": "salary",
+      "default": "Open to standard company policy",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "Open to discussion",
+        "text": "Open to standard company compensation policy",
+        "checkbox": "No"
+      }
+    },
+    "location_bangalore_office_zones": {
+      "patterns": [
+        "comfortable working from our bangalore office in bellandur / whitefield / electronic city / koramangala / manyata / hsr layout",
+        "comfortable working from our bangalore office",
+        "comfortable commuting to whitefield / bellandur / electronic city",
+        "can you work from our office in bangalore",
+        "willing to work from bangalore office"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, fully comfortable working from Bangalore office locations",
+        "checkbox": "Yes"
+      }
+    },
+    "work_mode_3_days_wfo": {
+      "patterns": [
+        "are you comfortable with 3 days work from office and 2 days work from home",
+        "comfortable with 3 days wfo and 2 days wfh",
+        "comfortable with 3 days in office",
+        "hybrid 3 days office 2 days home"
+      ],
+      "category": "preference",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, comfortable with 3 days WFO / 2 days WFH hybrid schedule",
+        "checkbox": "Yes"
+      }
+    },
+    "commute_own_vehicle": {
+      "patterns": [
+        "do you have your own conveyance / vehicle for daily office commute",
+        "do you have your own conveyance",
+        "do you have your own vehicle for commute",
+        "own conveyance available"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, I have personal conveyance for daily commute",
+        "checkbox": "Yes"
+      }
+    },
+    "bgv_form16_payslips_available": {
+      "patterns": [
+        "can you provide form 16, last 3 months salary slips, and bank statement during bgv",
+        "can you provide form 16 and payslips for bgv",
+        "can you produce form 16 and bank statements",
+        "are form 16 and salary slips available for background verification"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, all Form 16, payslips, and bank statements are available for verification",
+        "checkbox": "Yes"
+      }
+    },
+    "bgv_uan_pf_account": {
+      "patterns": [
+        "do you have an active uan / pf account",
+        "do you have an active uan",
+        "do you have uan number",
+        "is uan generated from current company"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, active UAN/PF account is available",
+        "checkbox": "Yes"
+      }
+    },
+    "bgv_aadhaar_pan_linked": {
+      "patterns": [
+        "do you have a valid pan card and aadhaar card linked with active mobile number",
+        "is your pan card linked with aadhaar card",
+        "pan and aadhaar linked",
+        "valid aadhaar and pan available"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, valid PAN and Aadhaar are linked with active mobile number",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_distributed_caching": {
+      "patterns": [
+        "experience with distributed caching (redis / memcached) for session management and rate limiting",
+        "experience with distributed caching (redis / memcached)",
+        "experience with distributed caching using redis",
+        "have you implemented caching with redis",
+        "redis caching and session management experience"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience using Redis for distributed caching, session management, API rate limiting, and cache-aside patterns.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive experience using Redis for distributed caching, API rate limiting, and session management",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_distributed_transactions": {
+      "patterns": [
+        "have you implemented distributed transactions (saga pattern / 2pc / event choreography)",
+        "experience with distributed transactions (saga pattern / 2pc)",
+        "have you worked on saga pattern in microservices",
+        "distributed transactions with saga pattern",
+        "saga pattern event choreography"
+      ],
+      "category": "skills",
+      "default": "Yes, implemented Saga pattern with Kafka event orchestration for distributed financial transactions.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, implemented Saga pattern with Kafka event orchestration for distributed transaction consistency",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_query_optimization": {
+      "patterns": [
+        "experience in sql query optimization, indexing strategies, and database connection pooling",
+        "experience in sql query optimization and indexing",
+        "have you optimized slow sql queries and indexes",
+        "database query performance tuning and indexing"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience optimizing query execution plans (EXPLAIN ANALYZE), composite B-tree indexes, and HikariCP connection pooling in PostgreSQL/MySQL.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive experience in SQL query performance tuning, index optimization, and connection pooling",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_cloud_aws_depth": {
+      "patterns": [
+        "hands-on experience with aws cloud services (ec2, s3, rds, lambda, ecs, cloudwatch, iam)",
+        "hands on experience with aws cloud services",
+        "experience designing and deploying on aws (ec2, s3, rds, ecs)",
+        "aws cloud infrastructure experience (ec2, s3, rds, lambda)"
+      ],
+      "category": "skills",
+      "default": "Yes, 4+ years architecting and deploying containerized microservices on AWS (EC2, ECS, S3, RDS, Lambda, CloudWatch).",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, 4+ years hands-on experience designing and deploying microservices on AWS (EC2, ECS, S3, RDS, Lambda)",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_system_design_hld_lld": {
+      "patterns": [
+        "hands-on experience in high level design (hld) and low level design (lld) for scalable systems",
+        "experience in high level design (hld) and low level design (lld)",
+        "hands-on experience in hld and lld",
+        "system design experience in hld and lld"
+      ],
+      "category": "skills",
+      "default": "Yes, strong hands-on experience designing modular LLD (SOLID principles, Design Patterns) and high-throughput HLD architectures.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, hands-on experience designing robust LLD with SOLID principles and high-scale fault-tolerant HLD systems",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_spring_security_jwt": {
+      "patterns": [
+        "experience implementing spring security, jwt authentication, oauth2, and rbac",
+        "experience implementing spring security and jwt authentication",
+        "spring security with jwt and oauth2",
+        "authentication and authorization using jwt/oauth2 in spring boot"
+      ],
+      "category": "skills",
+      "default": "Yes, built secure auth modules with JWT token validation, Spring Security filters, and OAuth2 SSO.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, built enterprise auth modules using Spring Security, JWT token filters, and OAuth2 SSO",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_react_redux_depth": {
+      "patterns": [
+        "experience building responsive spas with react.js, typescript, redux toolkit, and next.js",
+        "experience in react.js, typescript, and redux toolkit",
+        "experience building web applications with react.js and typescript",
+        "react.js and typescript development experience"
+      ],
+      "category": "skills",
+      "default": "Yes, 4+ years developing responsive frontends with React 18, TypeScript, Redux Toolkit, and Next.js.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, 4+ years hands-on development in React 18, TypeScript, Redux Toolkit, and Next.js",
+        "checkbox": "Yes"
+      }
+    },
+    "culture_agile_scrum_sprints": {
+      "patterns": [
+        "experience working in agile/scrum with 2-week sprints, daily standups, and retrospectives",
+        "experience in agile/scrum with 2-week sprint cycles",
+        "worked in agile/scrum development methodology",
+        "experience in sprint planning, daily standups, and retrospectives"
+      ],
+      "category": "preference",
+      "default": "Yes, 4+ years working in Agile/Scrum environments with 2-week sprints and active sprint ceremonies.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, 4+ years working in fast-paced Agile/Scrum environments with 2-week sprints",
+        "checkbox": "Yes"
+      }
+    },
+    "culture_weekend_deployments": {
+      "patterns": [
+        "are you comfortable handling production release deployments on weekends/off-hours if scheduled",
+        "comfortable with weekend production deployments",
+        "comfortable with off-hours maintenance windows and deployments",
+        "available for off-hours production releases"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, comfortable supporting scheduled off-hours/weekend production releases",
+        "checkbox": "Yes"
+      }
+    },
+    "culture_job_change_reason": {
+      "patterns": [
+        "what is the primary reason for your job change",
+        "what is your reason for leaving current job",
+        "reason for looking for a job change",
+        "why are you looking for a change currently"
+      ],
+      "category": "preference",
+      "default": "Seeking career growth, new technical challenges, and opportunities to build larger-scale distributed systems.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Seeking career growth, new technical challenges, and opportunities to build larger-scale distributed systems.",
+        "select": "Career Growth / Better Opportunity"
+      }
+    },
+    "notice_resignation_acceptance_email": {
+      "patterns": [
+        "can you share resignation acceptance email from current hr",
+        "can you share resignation acceptance email",
+        "resignation acceptance email available",
+        "do you have resignation acceptance email from hr",
+        "can you provide resignation acceptance proof"
+      ],
+      "category": "notice_period",
+      "default": "Yes, resignation acceptance email from HR is available",
+      "priority": 15,
+      "negative_patterns": [
+        "your email address",
+        "what is your email"
+      ],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, official resignation acceptance email from current HR is available",
+        "checkbox": "Yes"
+      }
+    },
+    "compliance_driving_license": {
+      "patterns": [
+        "do you have a valid driving license",
+        "do you have a valid driving licence",
+        "valid driving license available",
+        "two wheeler or four wheeler driving license"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 15,
+      "negative_patterns": [
+        "software license",
+        "open source license"
+      ],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, valid driving license available",
+        "checkbox": "Yes"
+      }
+    },
+    "referral_source_channel": {
+      "patterns": [
+        "how did you hear about this position",
+        "how did you hear about this role",
+        "how did you hear about us",
+        "where did you hear about this job",
+        "source of application",
+        "application source"
+      ],
+      "category": "personal_info",
+      "default": "LinkedIn",
+      "priority": 15,
+      "negative_patterns": [
+        "current position",
+        "current role"
+      ],
+      "input_type_defaults": {
+        "radio": "LinkedIn",
+        "select": "LinkedIn",
+        "text": "LinkedIn",
+        "checkbox": "LinkedIn"
+      }
+    },
+    "salary_esops_rsus_held": {
+      "patterns": [
+        "do you currently hold any vested/unvested esops or rsus",
+        "do you hold any esops or rsus",
+        "any vested or unvested esops",
+        "esop or rsu holdings if any",
+        "do you have company shares/esops"
+      ],
+      "category": "salary",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No ESOPs or RSUs held",
+        "number": "0",
+        "checkbox": "No"
+      }
+    },
+    "bgv_salary_credit_matches_payslips": {
+      "patterns": [
+        "does your monthly salary credit match your payslips exactly",
+        "does your salary credit match payslips",
+        "salary credit in bank matches payslips",
+        "bank credit matches salary slip"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, monthly bank salary credit matches payslips exactly",
+        "checkbox": "Yes"
+      }
+    },
+    "compliance_dual_employment_moonlighting": {
+      "patterns": [
+        "are you engaged in any dual employment, freelancing, or moonlighting",
+        "are you engaged in any dual employment",
+        "any freelancing or moonlighting",
+        "do you do any dual employment or moonlighting"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No, not engaged in any dual employment or moonlighting",
+        "checkbox": "No"
+      }
+    },
+    "travel_international_client_visits": {
+      "patterns": [
+        "are you willing and eligible to travel internationally for client visits",
+        "willing and eligible to travel internationally",
+        "open to international travel for client projects",
+        "willing to travel abroad for work"
+      ],
+      "category": "preference",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, willing and eligible to travel internationally for client visits as needed",
+        "checkbox": "Yes"
+      }
+    },
+    "tools_work_os_preference": {
+      "patterns": [
+        "preference of work os (mac / linux / windows)",
+        "work operating system preference",
+        "preferred development os (mac/linux/windows)",
+        "preferred os for work"
+      ],
+      "category": "preference",
+      "default": "Mac / Linux",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Mac",
+        "select": "Mac",
+        "text": "Mac / Linux"
+      }
+    },
+    "tech_grpc_protobuf_architecture": {
+      "patterns": [
+        "experience building rpc services using grpc and protocol buffers",
+        "experience with grpc and protocol buffers",
+        "grpc microservices communication experience",
+        "protocol buffers protobuf experience"
+      ],
+      "category": "skills",
+      "default": "Yes, hands-on experience implementing high-performance microservice RPC communication with gRPC and Protobuf contracts.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, hands-on experience implementing high-performance microservice RPC communication with gRPC and Protobuf",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_graphql_apis_schemas": {
+      "patterns": [
+        "experience with graphql apis (schemas, resolvers, mutations)",
+        "experience with graphql apis",
+        "graphql schema and resolver design experience",
+        "have you built graphql apis"
+      ],
+      "category": "skills",
+      "default": "Yes, experience designing GraphQL schemas, type definitions, resolvers, and mutations for frontend aggregation services.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, experience designing GraphQL schemas, resolvers, and mutations for optimized data fetching",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_websockets_sse_realtime": {
+      "patterns": [
+        "experience building real-time event streaming with websockets / sse",
+        "experience building real-time event streaming with websockets",
+        "websockets and server-sent events experience",
+        "real-time push notifications using websockets or sse"
+      ],
+      "category": "skills",
+      "default": "Yes, built real-time WebSocket and SSE event streaming endpoints for live financial notifications and dispute status tracking.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, built real-time WebSocket and SSE endpoints for live event streaming and status updates",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_jvm_memory_gc_tuning": {
+      "patterns": [
+        "experience tuning jvm memory (heap, metaspace, gc tuning with g1gc/zgc)",
+        "experience tuning jvm memory and garbage collection",
+        "jvm heap and gc tuning experience (g1gc/zgc)",
+        "jvm memory tuning and garbage collector optimization"
+      ],
+      "category": "skills",
+      "default": "Yes, experience analyzing heap allocations, tuning JVM memory parameters (-Xms, -Xmx, Metaspace), and optimizing G1GC collector latency.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive experience tuning JVM heap/metaspace allocations and optimizing G1GC garbage collection performance",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_java_concurrency_completablefuture": {
+      "patterns": [
+        "experience with java concurrency utilities (completablefuture, executorservice)",
+        "experience with java concurrency utilities",
+        "java multithreading with completablefuture and threadpools",
+        "concurrent programming with java executorservice and lock utilities"
+      ],
+      "category": "skills",
+      "default": "Yes, deep expertise in Java concurrency using CompletableFuture, custom ThreadPoolExecutors, atomic references, and concurrent collections.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, deep expertise in Java concurrency using CompletableFuture, ThreadPoolExecutors, and lock-free data structures",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_thread_heap_dumps_profilers": {
+      "patterns": [
+        "experience analyzing thread dumps, heap dumps, or using jprofiler / visualvm",
+        "analyzing thread dumps and heap dumps in java",
+        "memory leak investigation using visualvm / jprofiler / mat",
+        "troubleshooting high cpu and memory with thread dumps"
+      ],
+      "category": "skills",
+      "default": "Yes, regularly diagnosed production memory leaks and thread deadlocks using Eclipse MAT, VisualVM, and thread dump analyzers (jstack).",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, regularly diagnosed production memory leaks, deadlocks, and high CPU using VisualVM, MAT, and thread dumps",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_kafka_consumer_partitions_offsets": {
+      "patterns": [
+        "experience managing kafka consumer groups, partition rebalancing, and commit offsets",
+        "kafka consumer groups and partition management experience",
+        "kafka offset commit and rebalancing strategies",
+        "tuning kafka consumers and partition keys"
+      ],
+      "category": "skills",
+      "default": "Yes, hands-on experience designing Kafka partition key strategies, tuning consumer poll timeouts, and managing offset commits.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, hands-on experience designing partition strategies, handling rebalancing, and tuning consumer offset commits in Kafka",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_dlq_retries_idempotency": {
+      "patterns": [
+        "have you implemented dlq, exponential backoff retries, and idempotency in message processing",
+        "dlq and exponential backoff retry implementation",
+        "message processing idempotency and dead letter queue (dlq)",
+        "handling poison pill messages with dlq and retries"
+      ],
+      "category": "skills",
+      "default": "Yes, implemented robust DLQ routing with exponential backoff and idempotency keys to ensure exactly-once processing semantics.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, implemented robust DLQ routing, exponential backoff retries, and idempotency keys in message consumers",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_hikari_connection_pooling": {
+      "patterns": [
+        "experience configuring database connection pooling (hikaricp / dbcp)",
+        "database connection pool tuning with hikaricp",
+        "hikaricp connection pool configuration and tuning",
+        "optimizing database connection pools for high throughput"
+      ],
+      "category": "skills",
+      "default": "Yes, tuned HikariCP connection pools (maxPoolSize, idleTimeout, leakDetectionThreshold) for high-throughput microservices.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, tuned HikariCP connection pool configurations for optimal throughput and connection lifecycle management",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_db_read_replicas_sharding": {
+      "patterns": [
+        "experience with database read replicas, master-slave replication, or sharding",
+        "database read replica routing and sharding experience",
+        "master slave database replication and read routing",
+        "horizontal database sharding and partitioning"
+      ],
+      "category": "skills",
+      "default": "Yes, implemented read/write DataSource routing for database read replicas and table partitioning for high-volume dispute records.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, implemented read-write replica routing and table partitioning for high-volume transactional databases",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_elasticsearch_opensearch_indexing": {
+      "patterns": [
+        "experience with elasticsearch / opensearch for full-text search",
+        "experience with elasticsearch / opensearch",
+        "elasticsearch indexing and search query experience",
+        "elk stack and full text search indexing"
+      ],
+      "category": "skills",
+      "default": "Yes, experience setting up Elasticsearch indices, mapping analyzers, and querying high-cardinality log/transaction data.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, experience designing Elasticsearch/OpenSearch indices, custom analyzers, and full-text search queries",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_k8s_ingress_helm_charts": {
+      "patterns": [
+        "experience with kubernetes resources (deployments, services, ingress, hpa) and helm",
+        "experience with kubernetes resources (deployments, services, ingress, hpa)",
+        "kubernetes deployments, ingress, hpa and helm experience",
+        "managing containerized apps on kubernetes with helm"
+      ],
+      "category": "skills",
+      "default": "Yes, 3+ years configuring Kubernetes Deployments, Services, Ingress routes, HPA autoscaling policies, and Helm deployment charts.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, 3+ years managing Kubernetes Deployments, Services, Ingress, HPA, and Helm charts in production",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_distributed_tracing_opentelemetry": {
+      "patterns": [
+        "experience with distributed tracing (opentelemetry, jaeger, zipkin)",
+        "distributed tracing with opentelemetry or jaeger",
+        "opentelemetry instrumentation and trace propagation",
+        "tracing latency across microservices with jaeger/zipkin"
+      ],
+      "category": "skills",
+      "default": "Yes, integrated OpenTelemetry and Jaeger distributed tracing for cross-service request propagation and latency profiling.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, integrated OpenTelemetry and Jaeger for distributed trace context propagation and latency troubleshooting",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_prometheus_grafana_micrometer": {
+      "patterns": [
+        "experience configuring prometheus metrics (micrometer) and grafana dashboards",
+        "prometheus metrics and grafana dashboard monitoring",
+        "micrometer metrics with prometheus and grafana",
+        "monitoring microservices with prometheus and grafana"
+      ],
+      "category": "skills",
+      "default": "Yes, configured Prometheus/Micrometer metrics in Spring Boot and built Grafana monitoring dashboards.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, instrumented custom Micrometer metrics in Spring Boot and built Grafana monitoring dashboards",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_apm_datadog_newrelic_splunk": {
+      "patterns": [
+        "experience using apm tools (datadog / new relic / dynatrace / splunk)",
+        "experience with apm tools (datadog, new relic, splunk)",
+        "apm monitoring with datadog or new relic",
+        "log aggregation and alerts using splunk / datadog"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience using Datadog/Splunk for APM transaction tracing, synthetic monitoring, and log-based alerting.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive experience using Datadog and Splunk for APM tracing, alerting, and production log analysis",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_secrets_vault_aws_secrets_manager": {
+      "patterns": [
+        "experience managing secrets with aws secrets manager or hashicorp vault",
+        "secrets management using aws secrets manager or vault",
+        "hashicorp vault or aws secrets manager experience",
+        "dynamic credential management with vault"
+      ],
+      "category": "skills",
+      "default": "Yes, integrated microservices with AWS Secrets Manager and HashiCorp Vault for dynamic secret rotation and secure credentials.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, integrated microservices with AWS Secrets Manager and HashiCorp Vault for secure credential management",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_owasp_top_10_app_security": {
+      "patterns": [
+        "experience addressing owasp top 10 vulnerabilities (sqli, xss, csrf, idor)",
+        "experience addressing owasp top 10 vulnerabilities",
+        "owasp top 10 secure coding practices",
+        "mitigating sql injection, xss, csrf, and idor vulnerabilities"
+      ],
+      "category": "skills",
+      "default": "Yes, strictly follow OWASP secure coding standards (parameterized queries, input sanitization, CSRF tokens, and RBAC authorization).",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, strictly follow OWASP secure coding standards (parameterized queries, input sanitization, CSRF, and RBAC)",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_sonarqube_quality_gates": {
+      "patterns": [
+        "experience setting up code quality gates with sonarqube",
+        "sonarqube static code analysis and quality gates",
+        "code quality analysis using sonarqube in cicd",
+        "sonarqube coverage and code smell remediation"
+      ],
+      "category": "skills",
+      "default": "Yes, enforced strict SonarQube quality gates (80%+ code coverage, zero critical security bugs, and maintainability rules) in CI/CD.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, enforced SonarQube quality gates (80%+ test coverage, zero security hotspots) in CI/CD pipelines",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_nextjs_ssr_frontend": {
+      "patterns": [
+        "experience with next.js (ssr, ssg, app router)",
+        "experience with next.js and server-side rendering",
+        "next.js app router and ssr development",
+        "building web applications with next.js and react"
+      ],
+      "category": "skills",
+      "default": "Yes, built high-performance SSR and SSG web applications using Next.js, React 18, and TypeScript.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, hands-on experience building SSR/SSG frontend applications with Next.js, React, and TypeScript",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_junit5_mockito_testcontainers": {
+      "patterns": [
+        "experience with junit 5, mockito, and testcontainers for integration tests",
+        "junit 5, mockito and testcontainers experience",
+        "integration testing with testcontainers and spring boot test",
+        "unit and integration testing in java using junit5 and mockito"
+      ],
+      "category": "skills",
+      "default": "Yes, wrote comprehensive unit tests with JUnit 5 & Mockito and spin up ephemeral PostgreSQL/Kafka instances using Testcontainers for integration testing.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, comprehensive unit and integration testing experience using JUnit 5, Mockito, and Testcontainers",
+        "checkbox": "Yes"
+      }
+    },
+    "tech_restassured_mockmvc_testing": {
+      "patterns": [
+        "experience with api testing using restassured or spring mockmvc",
+        "api automation testing using restassured",
+        "rest api testing with mockmvc and restassured",
+        "contract and integration testing of apis"
+      ],
+      "category": "skills",
+      "default": "Yes, authored automated REST API test suites using RestAssured and Spring MockMvc for regression validation.",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, authored automated REST API test suites using RestAssured and Spring MockMvc",
+        "checkbox": "Yes"
       }
     }
   },

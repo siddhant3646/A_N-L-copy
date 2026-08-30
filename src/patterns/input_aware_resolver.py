@@ -136,8 +136,12 @@ class InputAwareResolver:
         'hybrid': ['hybrid', 'flexible', 'mixed'],
         'onsite': ['onsite', 'work from office', 'wfo', 'in-office'],
         
-        "bachelor's": ["bachelor's", 'bachelors', 'b.tech', 'b.e', 'undergraduate'],
-        "master's": ["master's", 'masters', 'm.tech', 'm.e', 'postgraduate'],
+        'gender_male': ['male', 'man', 'he/him', 'he/him/his', 'cisgender male'],
+        'race_asian': ['asian', 'asian (indian)', 'south asian', 'asian indian', 'indian'],
+        'work_auth': ['citizen', 'citizen (india)', 'authorized', 'indian citizen', 'yes, authorized', 'yes, citizen', 'lawfully authorized'],
+        'employment_permanent': ['permanent', 'direct payroll', 'full-time regular', 'full-time', 'full time', 'regular'],
+        "bachelor's": ["bachelor's", 'bachelors', 'b.tech', 'b.e', 'undergraduate', 'bachelor of technology', 'bachelor of engineering', 'ug', 'graduate'],
+        "master's": ["master's", 'masters', 'm.tech', 'm.e', 'postgraduate', 'pg', 'post graduate'],
         'phd': ['phd', 'doctorate', 'doctoral'],
         
         'beginner': ['beginner', 'novice', 'entry', 'low', '1', '2', '3',
@@ -233,6 +237,38 @@ class InputAwareResolver:
                     original_answer=answer
                 )
         
+        # Check if options represent Yes/No choices and answer is numeric or proficiency
+        has_yes_opt = None
+        has_no_opt = None
+        for opt in options:
+            lbl = opt.label.lower().strip()
+            val = opt.value.lower().strip()
+            if lbl in ['yes', 'y', 'true', 'agree', 'accept'] or val in ['yes', 'y', 'true', 'agree', 'accept']:
+                has_yes_opt = opt
+            elif lbl in ['no', 'n', 'false', 'decline', 'reject'] or val in ['no', 'n', 'false', 'decline', 'reject']:
+                has_no_opt = opt
+
+        if has_yes_opt and has_no_opt:
+            if answer_num is not None:
+                try:
+                    val = float(answer_num)
+                    chosen = has_yes_opt if val > 0 else has_no_opt
+                    return MatchResult(
+                        matched_option=chosen,
+                        confidence=0.92,
+                        match_type='numeric_boolean',
+                        original_answer=answer
+                    )
+                except ValueError:
+                    pass
+            if any(p in answer_lower for p in ['advance', 'expert', 'proficient', 'fluent', 'intermediate', 'strong', 'good', 'experienced', 'native']):
+                return MatchResult(
+                    matched_option=has_yes_opt,
+                    confidence=0.92,
+                    match_type='proficiency_boolean',
+                    original_answer=answer
+                )
+        
         best_match = None
         best_score = 0.0
         all_scores = []
@@ -272,9 +308,16 @@ class InputAwareResolver:
         return match.group(1) if match else None
     
     def _is_synonym_match(self, answer: str, option: str) -> bool:
+        def match_syn(text: str, syn: str) -> bool:
+            if not text or not syn:
+                return False
+            if len(syn) <= 2:
+                return bool(re.search(r'\b' + re.escape(syn) + r'\b', text))
+            return syn == text or bool(re.search(r'\b' + re.escape(syn) + r'\b', text))
+
         for canonical, synonyms in self.OPTION_SYNONYMS.items():
-            answer_in_group = any(s in answer for s in synonyms)
-            option_in_group = any(s in option for s in synonyms)
+            answer_in_group = any(match_syn(answer, s) for s in synonyms)
+            option_in_group = any(match_syn(option, s) for s in synonyms)
             if answer_in_group and option_in_group:
                 return True
         return False

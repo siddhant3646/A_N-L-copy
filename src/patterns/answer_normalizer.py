@@ -120,6 +120,24 @@ class AnswerNormalizer:
                     return no_option
             return "No"
         
+        # Check if options represent Yes/No choices and answer is numeric or proficiency
+        if options:
+            has_yes = any(self._is_yes(o.lower()) for o in options)
+            has_no = any(self._is_no(o.lower()) for o in options)
+            if has_yes and has_no:
+                num_match = re.search(r'(\d+\.?\d*)', answer)
+                if num_match:
+                    try:
+                        val = float(num_match.group(1))
+                        target_syns = ['yes', 'true', 'agree', 'accept'] if val > 0 else ['no', 'false', 'decline', 'reject']
+                        matched_opt = self._find_matching_option(options, target_syns)
+                        return matched_opt or ("Yes" if val > 0 else "No")
+                    except ValueError:
+                        pass
+                if any(p in answer_lower for p in ['advance', 'expert', 'proficient', 'fluent', 'intermediate', 'strong', 'good', 'experienced', 'native']):
+                    matched_opt = self._find_matching_option(options, ['yes', 'true', 'agree', 'accept'])
+                    return matched_opt or "Yes"
+
         # For long answers, extract first sentence or key phrase
         if len(answer) > 50:
             # Try to extract key information

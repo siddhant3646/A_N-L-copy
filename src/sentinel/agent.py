@@ -48,7 +48,7 @@ NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'np', 'lwd', 'last working']
 LOCATION_KEYWORDS = ['location', 'city', 'relocate', 'preferred location']
 ASYNC_JOB_KEYWORDS = [
     'asynchronous programming', 'celery', 'asyncio', 'async io', 'background job',
-    'background task', 'task queue', 'message queue', 'rabbitmq', 'kafka',
+    'background task', 'task queue', 'message queue', 'rabbitmq',
     'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing',
 ]
 
@@ -414,6 +414,55 @@ class SentinelAgent:
         if any(kw in question_lower for kw in conflict_keywords) or ('relative' in question_lower and 'company' in question_lower):
             return 'No', 0.98
 
+        # Cooling period / Applied in past 6 months
+        cooling_keywords = ['past 6 months', 'last 6 months', 'past 3 months', 'last 3 months', 'cooling period', 'applied to any of the roles', 'applied to any roles', 'interviewed in the last']
+        if any(kw in question_lower for kw in cooling_keywords) and any(act in question_lower for act in ['applied', 'interviewed', 'roles', 'cooling']):
+            return 'No', 0.98
+
+        # Non-compete and Post-employment restrictions
+        if 'non-compete' in question_lower or 'non compete' in question_lower or 'non-solicitation' in question_lower or 'post-employment restriction' in question_lower:
+            return 'No', 0.98
+
+        # Disciplinary / Termination
+        if 'terminated or asked to resign' in question_lower or 'discharged or terminated' in question_lower or 'disciplinary proceedings' in question_lower:
+            return 'No', 0.98
+
+        # Holding offers
+        if 'offer in hand' in question_lower or 'holding offer' in question_lower or 'competing offer' in question_lower or 'existing offer' in question_lower:
+            return 'No', 0.98
+
+        # Academic eligibility (60%+ criteria)
+        if ('60%' in question_lower or '60 percent' in question_lower or 'first class' in question_lower) and any(kw in question_lower for kw in ['academic', '10th', '12th', 'graduation', 'throughout']):
+            return 'Yes', 0.98
+
+        # Academic backlogs and gaps
+        if 'backlog' in question_lower or 'backlogs' in question_lower or 'standing arrears' in question_lower:
+            return 'No', 0.98
+        if 'educational gap' in question_lower or 'education gap' in question_lower or 'gap in graduation' in question_lower:
+            return 'No', 0.98
+
+        # Shift flexibility (Rotational / Night / US / UK)
+        if any(kw in question_lower for kw in ['rotational shift', 'rotational shifts', '24/7', '24*7', 'night shift', 'night shifts', 'us shift', 'uk shift', 'us time zone', 'overlap hours']):
+            return 'Yes', 0.98
+
+        # Interview & Walk-in Availability (F2F, offline drive, Saturday)
+        if any(kw in question_lower for kw in ['face to face interview', 'f2f interview', 'in-person interview', 'walk-in interview', 'walk-in drive', 'offline drive']):
+            return 'Yes', 0.98
+
+        # Legal age requirement (18+)
+        if '18 years of age' in question_lower or '18 years old' in question_lower or 'at least 18' in question_lower:
+            return 'Yes', 0.98
+
+        # Pronouns
+        if 'preferred pronouns' in question_lower or 'what pronouns' in question_lower or 'pronouns (he/him' in question_lower:
+            return 'He/Him/His', 0.98
+
+        # Work Authorization in India
+        if ('authorized to work in india' in question_lower or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower:
+            return 'Yes', 0.98
+        if 'require sponsorship' in question_lower or 'require visa sponsorship' in question_lower or 'need visa sponsorship' in question_lower:
+            return 'No', 0.98
+
         # Ex-employee / Ever worked for company
         ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|with|for)"
         if re.search(ever_employed_pattern, question_lower):
@@ -725,6 +774,28 @@ class SentinelAgent:
         if is_ecommerce_question:
             return 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.', 0.98
         
+        # BFSI / Fintech domain experience
+        if ('bfsi' in question_lower or 'fintech' in question_lower or 'banking domain' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'knowledge' in question_lower):
+            return 'Yes, 4+ years in BFSI/Fintech building dispute resolution and transaction microservices at Everbridge.', 0.98
+
+        # Kafka / Event streaming experience
+        if ('kafka' in question_lower or 'flink' in question_lower or 'event streaming' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'production' in question_lower or 'streaming' in question_lower or 'pipeline' in question_lower):
+            return 'Yes, engineered high-throughput Kafka streaming pipelines with Flink/Spark for real-time reporting.', 0.98
+
+        # Production on-call / L3 / Incident support
+        if ('on-call' in question_lower or 'on call' in question_lower or 'l3 support' in question_lower or 'p1/p2' in question_lower or 'thread dump' in question_lower or 'heap dump' in question_lower):
+            return 'Yes, extensive experience in L3 production support, on-call rotations, and diagnosing heap/thread dumps.', 0.98
+
+        # Payroll company and employment type
+        if 'payroll company' in question_lower or 'payroll employer' in question_lower:
+            return 'Everbridge', 0.98
+        if ('permanent' in question_lower and 'contract' in question_lower) or 'direct company payroll' in question_lower or 'employment type (permanent' in question_lower:
+            return 'Permanent', 0.98
+
+        # Fixed vs Variable breakup
+        if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower:
+            return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
+
         if is_rating_question:
             return '9', 0.95
         
@@ -836,6 +907,10 @@ class SentinelAgent:
         
         # Priority patterns based on detected category
         if is_salary_question:
+            # Fixed vs Variable salary breakup
+            if 'fixed' in question_lower or 'variable' in question_lower or 'breakup' in question_lower:
+                return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
+
             # Monthly salary - MUST check before generic CTC handling
             # Annual CTC 2300000 / 3000000 -> monthly ~191667 / ~250000
             if 'monthly' in question_lower:
@@ -4598,14 +4673,46 @@ class SentinelAgent:
                     return bestMatch ? getAnswerForPattern(bestMatch, detectedType, KNOWN_PATTERNS[bestMatch]) : null;
                 }};
                 
-                // Resolve __DYNAMIC_LWD__ marker to today + 15 days (DD MMM YYYY)
+                // Resolve dynamic date markers
                 const resolveDynamic = (val) => {{
-                    if (val === '__DYNAMIC_LWD__') {{
-                        const d = new Date();
-                        d.setDate(d.getDate() + 15);
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-                        return dd + ' ' + mon + ' ' + d.getFullYear();
+                    if (typeof val !== 'string') return val;
+                    const d = new Date();
+                    const todayDd = String(d.getDate()).padStart(2, '0');
+                    const todayMon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+                    const todayMm = String(d.getMonth() + 1).padStart(2, '0');
+                    const todayYyyy = d.getFullYear();
+                    
+                    const d15 = new Date();
+                    d15.setDate(d15.getDate() + 15);
+                    const dd = String(d15.getDate()).padStart(2, '0');
+                    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d15.getMonth()];
+                    const mm = String(d15.getMonth() + 1).padStart(2, '0');
+                    const yyyy = d15.getFullYear();
+                    const yy = String(yyyy).slice(-2);
+                    
+                    if (val.includes('__DYNAMIC_LWD__')) {{
+                        val = val.replace(/__DYNAMIC_LWD__/g, dd + ' ' + mon + ' ' + yyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_LWD_SHORT__')) {{
+                        val = val.replace(/__DYNAMIC_LWD_SHORT__/g, dd + '-' + mon + '-' + yy);
+                    }}
+                    if (val.includes('__DYNAMIC_START_DATE__')) {{
+                        val = val.replace(/__DYNAMIC_START_DATE__/g, dd + '/' + mm + '/' + yyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_START_DATE_US__')) {{
+                        val = val.replace(/__DYNAMIC_START_DATE_US__/g, mm + '/' + dd + '/' + yyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_TODAY_US__')) {{
+                        val = val.replace(/__DYNAMIC_TODAY_US__/g, todayMm + '/' + todayDd + '/' + todayYyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_TODAY__')) {{
+                        val = val.replace(/__DYNAMIC_TODAY__/g, todayDd + '/' + todayMm + '/' + todayYyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_TODAY_ISO__')) {{
+                        val = val.replace(/__DYNAMIC_TODAY_ISO__/g, todayYyyy + '-' + todayMm + '-' + todayDd);
+                    }}
+                    if (val.includes('__DYNAMIC_TODAY_TEXT__')) {{
+                        val = val.replace(/__DYNAMIC_TODAY_TEXT__/g, todayDd + ' ' + todayMon + ' ' + todayYyyy);
                     }}
                     return val;
                 }};
@@ -4893,7 +5000,9 @@ class SentinelAgent:
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
                                 'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs',
-                                'military spouse'];
+                                'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
+                                'last 3 months', 'applied to any', 'applied in the past', 'non-compete', 'non compete',
+                                'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer'];
                             const isNegative = negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
                             console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
@@ -6248,14 +6357,46 @@ class SentinelAgent:
                     return result;
                 };
 
-                // Resolve __DYNAMIC_LWD__ marker to today + 15 days (DD MMM YYYY)
+                // Resolve dynamic date markers
                 const resolveDynamic = (val) => {
-                    if (val === '__DYNAMIC_LWD__') {
-                        const d = new Date();
-                        d.setDate(d.getDate() + 15);
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-                        return dd + ' ' + mon + ' ' + d.getFullYear();
+                    if (typeof val !== 'string') return val;
+                    const d = new Date();
+                    const todayDd = String(d.getDate()).padStart(2, '0');
+                    const todayMon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+                    const todayMm = String(d.getMonth() + 1).padStart(2, '0');
+                    const todayYyyy = d.getFullYear();
+                    
+                    const d15 = new Date();
+                    d15.setDate(d15.getDate() + 15);
+                    const dd = String(d15.getDate()).padStart(2, '0');
+                    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d15.getMonth()];
+                    const mm = String(d15.getMonth() + 1).padStart(2, '0');
+                    const yyyy = d15.getFullYear();
+                    const yy = String(yyyy).slice(-2);
+                    
+                    if (val.includes('__DYNAMIC_LWD__')) {
+                        val = val.replace(/__DYNAMIC_LWD__/g, dd + ' ' + mon + ' ' + yyyy);
+                    }
+                    if (val.includes('__DYNAMIC_LWD_SHORT__')) {
+                        val = val.replace(/__DYNAMIC_LWD_SHORT__/g, dd + '-' + mon + '-' + yy);
+                    }
+                    if (val.includes('__DYNAMIC_START_DATE__')) {
+                        val = val.replace(/__DYNAMIC_START_DATE__/g, dd + '/' + mm + '/' + yyyy);
+                    }
+                    if (val.includes('__DYNAMIC_START_DATE_US__')) {
+                        val = val.replace(/__DYNAMIC_START_DATE_US__/g, mm + '/' + dd + '/' + yyyy);
+                    }
+                    if (val.includes('__DYNAMIC_TODAY_US__')) {
+                        val = val.replace(/__DYNAMIC_TODAY_US__/g, todayMm + '/' + todayDd + '/' + todayYyyy);
+                    }
+                    if (val.includes('__DYNAMIC_TODAY__')) {
+                        val = val.replace(/__DYNAMIC_TODAY__/g, todayDd + '/' + todayMm + '/' + todayYyyy);
+                    }
+                    if (val.includes('__DYNAMIC_TODAY_ISO__')) {
+                        val = val.replace(/__DYNAMIC_TODAY_ISO__/g, todayYyyy + '-' + todayMm + '-' + todayDd);
+                    }
+                    if (val.includes('__DYNAMIC_TODAY_TEXT__')) {
+                        val = val.replace(/__DYNAMIC_TODAY_TEXT__/g, todayDd + ' ' + todayMon + ' ' + todayYyyy);
                     }
                     return val;
                 };

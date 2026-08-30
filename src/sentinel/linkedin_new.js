@@ -55,7 +55,7 @@
         },
         location_current: {
             patterns: ['current location', 'current city', 'currently located', 'where are you located', 'where do you stay', 'stay currently', 'where are you currently based'],
-            default: 'Noida'
+            default: 'Bengaluru'
         },
         location_preferred: {
             patterns: ['preferred location', 'preferred city', 'city preference', 'interview city', 'preferred location for work'],
@@ -185,21 +185,25 @@
             patterns: ['what could you bring', 'what can you bring', 'what value can you add', 'what do you bring'],
             default: 'I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews.'
         },
+        childhood_background: {
+            patterns: ["how's your childhood", 'how is your childhood', 'how was your childhood', 'describe your childhood', 'tell us about your childhood', 'explain your childhood', 'childhood background'],
+            default: 'I had an active and curiosity-driven childhood in a supportive family environment that nurtured a deep fascination for technology and problem-solving early on. I spent much of my youth exploring computers, logic games, and mathematics, which naturally sparked my passion for computer science. Balancing academic curiosity with extracurricular activities instilled in me discipline, resilience, and a collaborative mindset, laying a strong foundation for my career as a software engineer.'
+        },
         street_address: {
             patterns: ['street', 'street address', 'address line 1', 'address line1'],
             default: 'Sector 137'
         },
         city: {
             patterns: ['city', 'town', 'municipality'],
-            default: 'Noida'
+            default: 'Bengaluru'
         },
         state: {
             patterns: ['state', 'state/province', 'province'],
-            default: 'Uttar Pradesh'
+            default: 'Karnataka'
         },
         zip_code: {
             patterns: ['zip', 'zip code', 'postal code', 'pincode', 'pin code', 'zip/postal code'],
-            default: '201301'
+            default: '560001'
         },
         country: {
             patterns: ['country', 'nation', 'country/region'],
@@ -277,6 +281,22 @@
         work_from_hyderabad_mandatory: {
             patterns: ['work from the office in hyderabad is mandatory', 'mandatory work from hyderabad office'],
             default: 'Yes'
+        },
+        future_contact_consent: {
+            patterns: ['allowing valgenesis to contact me about future job opportunities', 'contact me about future job opportunities for up to 2 years', 'contact me about future job opportunities', 'allowing us to contact you for future job opportunities', 'allow us to contact you for future opportunities'],
+            default: 'Yes'
+        },
+        cooling_period_past_application: {
+            patterns: ['have you applied to any of the roles with mphasis in the past 6 months', 'applied to any of the roles with mphasis in the past 6 months', 'applied in the past 6 months', 'applied in the last 6 months', 'interviewed in the last 6 months'],
+            default: 'No'
+        },
+        technical_lead_architect: {
+            patterns: ['have you worked as a technical lead / architect', 'have you worked as a technical lead', 'have you worked as an architect', 'technical lead / architect'],
+            default: 'Yes, experienced in leading microservices architecture, HLD/LLD system design, code reviews, and mentoring junior engineers.'
+        },
+        kafka_confluent_prod: {
+            patterns: ['have you worked with kafka/confluent in a production environment', 'have you worked with kafka in a production environment', 'have you worked with kafka/confluent', 'worked with kafka/confluent in a production environment'],
+            default: 'Yes, 4+ years hands-on experience with Apache Kafka designing high-throughput event-driven data streaming pipelines and consumer groups in production.'
         },
         team_size: {
             patterns: ['team size you have worked with', 'team size you worked with', 'what was the team size', 'size of the team', 'team size'],
@@ -1504,14 +1524,14 @@
                         fillValue = 'Sector 137';
                         console.log('Fallback: Filling street address with: Sector 137');
                     } else if (combinedText.includes('city') || combinedText.includes('town')) {
-                        fillValue = 'Noida';
-                        console.log('Fallback: Filling city with: Noida');
+                        fillValue = 'Bengaluru';
+                        console.log('Fallback: Filling city with: Bengaluru');
                     } else if (combinedText.includes('state') || combinedText.includes('province')) {
-                        fillValue = 'Uttar Pradesh';
-                        console.log('Fallback: Filling state with: Uttar Pradesh');
+                        fillValue = 'Karnataka';
+                        console.log('Fallback: Filling state with: Karnataka');
                     } else if (combinedText.includes('zip') || combinedText.includes('postal code') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
-                        fillValue = '201301';
-                        console.log('Fallback: Filling zip/postal code with: 201301');
+                        fillValue = '560001';
+                        console.log('Fallback: Filling zip/postal code with: 560001');
                     } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                         fillValue = 'India';
                         console.log('Fallback: Filling country with: India');

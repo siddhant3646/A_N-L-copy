@@ -602,11 +602,21 @@ class QuestionClassifier:
         """Get yes/no answer with context awareness."""
         question_lower = question.lower()
         
-        # Questions that should be "No" - compliance and conflict of interest questions
+        # Questions that should be "No" - compliance, cooling period, backlogs, gaps, non-compete
         negative_indicators = [
             # Visa/Sponsorship
             "sponsorship", "referral", "referred", "registered", 
-            "medical condition", "disability", "criminal",
+            "medical condition", "disability", "criminal", "felony",
+            # Cooling period and past applications
+            "applied to any roles", "applied in the past", "interviewed in the last", "cooling period", "applied in past", "interviewed in past",
+            # Non-compete and restrictions
+            "non-compete", "non compete", "noncompete", "non-solicitation", "post-employment restriction",
+            # Disciplinary / Termination
+            "terminated", "asked to resign", "discharged", "disciplinary",
+            # Academics backlogs and gaps
+            "backlog", "backlogs", "arrears", "educational gap", "education gap", "career gap",
+            # Competing holding offers
+            "offer in hand", "holding offer", "competing offer",
             # Employment history with specific companies (Workday compliance)
             "worked with visa", "worked for visa", "employed by visa",
             "worked with navan", "worked for navan", "employed by navan",

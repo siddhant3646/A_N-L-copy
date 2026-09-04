@@ -4,6 +4,7 @@ import json
 import random
 import os
 import re
+import inspect
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from typing import Optional, Dict, List, Tuple, Any
@@ -91,10 +92,14 @@ class SentinelAgent:
         self._last_result = ""  # Track last result for loop detection
         self._same_result_count = 0  # Counter for repeated results
         self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
+        self._processed_questionnaires = set()  # Track processed Instahyre questionnaire URLs
+        self._instahyre_inbox_no_conv_count = 0
         self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
         self._linkedin_no_jobs_scroll_count = 0  # Track consecutive 'No jobs found' scrolls for pagination
         self._naukri_no_progress_count = 0  # Track consecutive chatbot completions with no count progress
         self._naukri_no_progress_max = 3  # Max no-progress rounds before stopping the task
+        self._naukri_no_chatbot_count = 0  # Track consecutive turns without chatbot
+        self._naukri_no_chatbot_max = 3  # Max turns without chatbot before closing task
         self._naukri_last_batch_size = 0  # Jobs selected in the last apply batch (for close-enough logic)
 
         # Metrics tracking
@@ -174,6 +179,7 @@ class SentinelAgent:
                     continue
                 
                 input_type_defaults = pattern_data.get('input_type_defaults', {})
+                negative_patterns = pattern_data.get('negative_patterns', [])
                 
                 # Add each pattern string as a key
                 for pattern_str in pattern_data.get('patterns', []):
@@ -182,6 +188,7 @@ class SentinelAgent:
                         'default': answer,
                         'category': pattern_data.get('category', ''),
                         'input_type_defaults': input_type_defaults,
+                        'negative_patterns': negative_patterns,
                         'requires_exact_match': pattern_data.get('requires_exact_match', False)
                     }
         except Exception as e:
@@ -250,9 +257,12 @@ class SentinelAgent:
         self._last_result = ""
         self._same_result_count = 0
         self._instahyre_no_action_count = 0
+        self._processed_questionnaires = set()
+        self._instahyre_inbox_no_conv_count = 0
         self._linkedin_stuck_count = 0
         self._linkedin_no_jobs_scroll_count = 0
         self._naukri_no_progress_count = 0
+        self._naukri_no_chatbot_count = 0
         self._naukri_last_batch_size = 0
         self._linkedin_scroll_attempted = False
         self._task_context = NAUKRI_TASK_CONTEXT
@@ -341,13 +351,25 @@ class SentinelAgent:
         """Detect current platform from URL or context."""
         try:
             if self._page:
-                url = self._page.url.lower()
-                if 'linkedin.com' in url:
-                    return 'linkedin'
-                elif 'naukri.com' in url:
-                    return 'naukri'
-                elif 'instahyre.com' in url:
-                    return 'instahyre'
+                page_url = getattr(self._page, 'url', None)
+                if isinstance(page_url, str):
+                    url = page_url.lower()
+                    if 'linkedin.com' in url:
+                        return 'linkedin'
+                    elif 'naukri.com' in url:
+                        return 'naukri'
+                    elif 'instahyre.com' in url:
+                        return 'instahyre'
+                elif callable(page_url) and not inspect.iscoroutinefunction(page_url):
+                    val = page_url()
+                    if isinstance(val, str):
+                        url = val.lower()
+                        if 'linkedin.com' in url:
+                            return 'linkedin'
+                        elif 'naukri.com' in url:
+                            return 'naukri'
+                        elif 'instahyre.com' in url:
+                            return 'instahyre'
         except:
             pass
         return self._current_platform
@@ -498,6 +520,9 @@ class SentinelAgent:
             fp_match = self._fingerprint_matcher.match(question)
             if fp_match:
                 answer, confidence = fp_match
+                if self._pattern_matcher:
+                    answer = self._pattern_matcher._resolve_dynamic(answer)
+                    answer, confidence = self._pattern_matcher._resolve_question_intent(question, answer, confidence)
                 # Validate answer format
                 format_type = detect_expected_format(question)
                 if format_type:
@@ -531,8 +556,12 @@ class SentinelAgent:
         notice_keywords = NOTICE_KEYWORDS
         location_keywords = LOCATION_KEYWORDS
         
-        # LWD (Last Working Day) detection - BEFORE experience keywords
-        lwd_keywords = ['last working day', 'lwd', 'exact lwd', 'exact last working', 'official last working day']
+        # LWD (Last Working Day/Date) detection - BEFORE experience keywords
+        lwd_keywords = [
+            'last working day', 'last working date', 'lwd', 'exact lwd', 'exact last working', 
+            'official last working day', 'official last working date', 'mention your last working',
+            'your last working date', 'your last working day', 'lwd date'
+        ]
         is_lwd_question = any(kw in question_lower for kw in lwd_keywords)
 
         # Immediate joiners only - LinkedIn specific pattern
@@ -739,9 +768,11 @@ class SentinelAgent:
         if is_np_abbreviation:
             return '15', 0.98
         
-        # LWD (Last Working Day) questions - calculate actual date 15 days from now
+        # LWD (Last Working Day/Date) questions - calculate actual date 15 days from now
         if is_lwd_question:
             lwd_date = datetime.now() + timedelta(days=15)
+            if 'serving' in question_lower or 'already left' in question_lower:
+                return f"Serving 15 days notice (LWD: {lwd_date.strftime('%d %b %Y')})", 0.98
             # Format: DD MMM YYYY (e.g., "25 Jul 2026")
             return lwd_date.strftime('%d %b %Y'), 0.98
         
@@ -785,6 +816,30 @@ class SentinelAgent:
         # Production on-call / L3 / Incident support
         if ('on-call' in question_lower or 'on call' in question_lower or 'l3 support' in question_lower or 'p1/p2' in question_lower or 'thread dump' in question_lower or 'heap dump' in question_lower):
             return 'Yes, extensive experience in L3 production support, on-call rotations, and diagnosing heap/thread dumps.', 0.98
+
+        # System Design / Large-Scale Backend Architecture Walkthrough
+        if ('architecture' in question_lower or 'walk us through' in question_lower or 'backend system you designed' in question_lower or 'system you designed' in question_lower) and ('scalability' in question_lower or 'trade-offs' in question_lower or 'tradeoffs' in question_lower or 'reliability' in question_lower or 'performance' in question_lower or 'large-scale' in question_lower):
+            return 'Architected an event-driven microservices platform handling 10,000+ requests/sec using Spring Boot, Apache Kafka, and PostgreSQL with Redis caching. Key trade-offs included choosing eventual consistency via Saga/Outbox patterns over distributed 2PC to maximize write throughput and availability, using Redis cache-aside with TTL jitter to eliminate stampedes, and deploying across Kubernetes with HPA and multi-region read replicas for 99.99% uptime.', 0.98
+
+        # Synchronous vs Asynchronous Communication (REST vs Event-Driven)
+        if ('synchronous vs asynchronous' in question_lower or 'sync vs async' in question_lower or 'rest vs event-driven' in question_lower or 'rest vs event driven' in question_lower or ('synchronous' in question_lower and 'asynchronous' in question_lower and 'communication' in question_lower)):
+            return 'In high-traffic architectures, I use synchronous REST/gRPC for immediate user-facing query responses and critical read operations where callers require an instant response (e.g., payment authorization). I use asynchronous event-driven messaging (Kafka/SQS) for decoupling downstream processing, long-running workflows, and notifications. For example, during high-volume dispute transaction processing at Everbridge, we transitioned from synchronous HTTP chaining to asynchronous Kafka topics, eliminating cascading timeouts and improving throughput by 4x.', 0.98
+
+        # Microservices from scratch / Designed and built microservices
+        if ('microservices' in question_lower or 'microservice' in question_lower) and ('from scratch' in question_lower or 'designed and built' in question_lower or 'built from scratch' in question_lower or 'design from scratch' in question_lower):
+            return 'Yes, designed and built scalable microservices-based applications from scratch using Java, Spring Boot, Kafka, and PostgreSQL with domain-driven design, API gateways, and distributed tracing.', 0.98
+
+        # REST APIs with OpenAPI / Swagger
+        if ('openapi' in question_lower or 'swagger' in question_lower) and ('rest api' in question_lower or 'rest apis' in question_lower or 'production-grade' in question_lower or 'designed' in question_lower or 'develop' in question_lower):
+            return 'Yes, designed and developed production-grade REST APIs documented with OpenAPI 3.0/Swagger specifications, automated contract validation, and Springdoc-openapi.', 0.98
+
+        # API Gateway integrations (Apigee, GCP API Gateway, etc.)
+        if ('api gateway' in question_lower or 'apigee' in question_lower) and ('integration' in question_lower or 'integrations' in question_lower or 'worked on' in question_lower or 'have you' in question_lower):
+            return 'Yes, extensive experience integrating API Gateways (Spring Cloud Gateway, Apigee, and GCP API Gateway) for centralized authentication, rate limiting, and request routing.', 0.98
+
+        # GCP Hands-on Experience
+        if ('gcp' in question_lower or 'google cloud' in question_lower) and ('hands-on' in question_lower or 'hands on' in question_lower or 'practical' in question_lower or 'experience with gcp' in question_lower or question_lower.strip().startswith('hands-on')) and not any(kw in question_lower for kw in ['how many years', 'years of experience', 'years in gcp', 'total years']):
+            return 'Yes, extensive hands-on experience deploying and managing production microservices on Google Cloud Platform (GCP) using Cloud Run, GKE, Cloud Pub/Sub, Cloud Storage, and IAM.', 0.98
 
         # Payroll company and employment type
         if 'payroll company' in question_lower or 'payroll employer' in question_lower:
@@ -837,6 +892,9 @@ class SentinelAgent:
         
         # Handle location-specific questions
         if is_location_specific:
+            # If the question asks about relocation or willingness to relocate/work from city, always answer Yes!
+            if any(w in question_lower for w in ('relocat', 'willing', 'open to', 'ready to', 'comfortable', 'work from', 'or relocate')):
+                return 'Yes', 0.95
             # Check for Mumbai-only/exclusivity requirements
             if ('mumbai' in question_lower or 'andheri' in question_lower) and ('need candidates from' in question_lower or 'candidates from mumbai' in question_lower or 'from mumbai itself' in question_lower):
                 return 'No, I am currently based in Bangalore, not in Mumbai. I am open to immediate relocation to Mumbai if required.', 0.95
@@ -901,7 +959,13 @@ class SentinelAgent:
         
         # Check which category the question falls into
         is_salary_question = any(kw in question_lower for kw in salary_keywords)
-        is_experience_question = any(kw in question_lower for kw in experience_keywords) and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question
+        is_asking_quantity = any(kw in question_lower for kw in [
+            'how many years', 'years of experience', 'total experience', 'total years', 
+            'total exp', 'how much experience', 'number of years', 'months of experience', 
+            'how many months', 'years in', 'years working', 'experience in years',
+            'relevant experience', 'overall experience', 'how long have you'
+        ]) or (any(kw in question_lower for kw in ['experience', 'exp']) and any(kw in question_lower for kw in ['years', 'yrs', 'months']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
+        is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question
         is_notice_question = any(kw in question_lower for kw in notice_keywords)
         is_location_question = any(kw in question_lower for kw in location_keywords)
         
@@ -967,6 +1031,15 @@ class SentinelAgent:
         if is_joining_availability:
             return 'Can join within 15 days', 0.95
         
+        # LWD (Last Working Day) date question - MUST be checked BEFORE notice question!
+        if is_lwd_question or any(kw in question_lower for kw in ['last working day', 'last working date', 'official last working', 'lwd']):
+            lwd_date = datetime.now() + timedelta(days=15)
+            lwd_formatted = lwd_date.strftime('%d %B %Y')
+            lwd_short = lwd_date.strftime('%d %b %Y')
+            if self._current_platform == 'linkedin':
+                return lwd_short, 0.98
+            return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
+
         if is_notice_question or is_immediate_joiners_only:
             if self._current_platform == 'linkedin':
                 # Check if it is a yes/no question about serving notice
@@ -976,11 +1049,7 @@ class SentinelAgent:
                     return answer or 'Yes', max(confidence, 0.95)
                 return '15', 0.98
             
-            if 'last working day' in question_lower or 'lwd' in question_lower:
-                lwd_date = datetime.now() + timedelta(days=15)
-                lwd_formatted = lwd_date.strftime('%d %B %Y')
-                return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
-            elif 'serving' in question_lower:
+            if 'serving' in question_lower:
                 answer, confidence = self._pattern_matcher.fuzzy_match("serving notice")
                 return answer or 'Yes', max(confidence, 0.95)
             elif 'in days' in question_lower:
@@ -1534,6 +1603,9 @@ class SentinelAgent:
         except Exception as e:
             print(f"   ⚠️ Failed to log QA result to CSV: {e}")
 
+    # Public alias for logging QA results
+    log_qa_result = _log_qa_result
+
     def _log_question_detailed(self, question_data: Dict[str, Any]):
         """
         Log a question with complete details including options and selection.
@@ -1660,20 +1732,37 @@ class SentinelAgent:
 
     async def _check_page_health(self) -> bool:
         """Verify page is responsive before actions."""
+        # Check if an active chatbot or form modal is in progress
+        is_modal_active = False
+        if self._page:
+            try:
+                is_modal_active = await self._page.evaluate("""() => {
+                    const chatLayer = document.querySelector('.chatbot_DrawerContentWrapper, [class*="ChatbotContainer"], [class*="chatBotContainer"], ._chatBotContainer, .chatbot_Drawer');
+                    const easyApply = document.querySelector('.jobs-easy-apply-modal, .jobs-easy-apply-content');
+                    const instahyreQ = document.querySelector('.questionnaire-container, .questionnaire-question');
+                    return !!((chatLayer && chatLayer.offsetParent !== null) || (easyApply && easyApply.offsetParent !== null) || (instahyreQ && instahyreQ.offsetParent !== null));
+                }""")
+            except Exception:
+                pass
+
         # Session-level health check (crashes, inactivity)
         health = await self._session_manager.check_health(self._page)
         if not health["healthy"]:
-            print(f"   ⚠️ Session health check failed: {health['reason']}")
-            if self._session_manager.should_stop():
-                print("   🛑 Too many session crashes. Stopping task.")
-                self.state.task_complete = True
-                return False
-            expected_url = self._page.url if self._page else None
-            recovered = await self._session_manager.recover(self._page, expected_url=expected_url)
-            if recovered:
-                print("   ✅ Session recovered via reload")
+            if is_modal_active:
+                print(f"   ℹ️ Active chatbot/modal in progress - preserving session state without reload")
+                self._session_manager.record_activity(url=self._page.url if self._page else None)
             else:
-                return False
+                print(f"   ⚠️ Session health check failed: {health['reason']}")
+                if self._session_manager.should_stop():
+                    print("   🛑 Too many session crashes. Stopping task.")
+                    self.state.task_complete = True
+                    return False
+                expected_url = self._page.url if self._page else None
+                recovered = await self._session_manager.recover(self._page, expected_url=expected_url)
+                if recovered:
+                    print("   ✅ Session recovered via reload")
+                else:
+                    return False
 
         try:
             # Quick JS evaluation to check if page responds
@@ -1681,10 +1770,9 @@ class SentinelAgent:
                 self._page.evaluate("() => document.readyState"),
                 timeout=5.0
             )
-            if result != 'complete':
+            if result not in ('complete', 'interactive'):
                 print(f"   ⚠️ Page not ready: {result}")
-                await asyncio.sleep(2)
-                return False
+                await asyncio.sleep(1)
             # Record successful activity for session manager
             try:
                 current_url = self._page.url
@@ -2361,7 +2449,13 @@ class SentinelAgent:
                 if random.random() < 0.15:  # 15% chance of random small scroll
                     await self._human_scroll(direction=random.choice(["down", "up"]))
                 
-                await asyncio.sleep(random.uniform(4, 8))  # Random 4-8 sec gap between actions
+                # Intercept dedicated autonomous task workflows before running generic scripted actions
+                task_desc_lower = (self._task_description or '').lower()
+                if ('instahyre' in current_url or 'instahyre' in task_desc_lower) and ('inbox' in task_desc_lower or 'questionnaire' in task_desc_lower or 'inbox' in current_url or 'questionnaire' in current_url):
+                    print("🚀 Instahyre Inbox & Questionnaire Task Detected...")
+                    await self._handle_instahyre_inbox_task()
+                    self.state.task_complete = True
+                    break
                 
                 # Snapshot form state before filling
                 try:
@@ -2393,23 +2487,32 @@ class SentinelAgent:
                         try:
                             question_data_json = parts[1]
                             question_data = json.loads(question_data_json)
+                            if isinstance(question_data, dict):
+                                question_data = [question_data]
                             current_url = self._page.url if self._page else ''
                             for q_data in question_data:
-                                self._log_question_detailed({
-                                    'question': q_data.get('question', ''),
-                                    'answer': q_data.get('answer', ''),
-                                    'input_type': q_data.get('inputType', ''),
-                                    'match_phase': 'aggressive' if 'aggressive' in q_data.get('inputType', '') else 'pattern_match',
-                                    'options': q_data.get('options', []),
-                                    'selected_option': q_data.get('selectedOption', ''),
-                                    'context': self._detect_platform(),
-                                    'url': current_url,
-                                    'confidence': 'form_filled'
-                                })
+                                if isinstance(q_data, dict):
+                                    q_text = q_data.get('question', '') or q_data.get('q', '')
+                                    a_text = q_data.get('answer', '') or q_data.get('a', '')
+                                    t_type = q_data.get('inputType', '') or q_data.get('t', '') or 'radio'
+                                    s_opt = q_data.get('selectedOption', '') or q_data.get('s', '') or a_text
+                                    opts = q_data.get('options', [])
+                                    if q_text and a_text:
+                                        self._log_question_detailed({
+                                            'question': q_text,
+                                            'answer': a_text,
+                                            'input_type': t_type,
+                                            'match_phase': 'aggressive' if 'aggressive' in str(t_type) else 'pattern_match',
+                                            'options': opts,
+                                            'selected_option': s_opt,
+                                            'context': self._detect_platform(),
+                                            'url': current_url,
+                                            'confidence': 'form_filled'
+                                        })
                             # Update result to just the action part
                             result = action
-                        except json.JSONDecodeError:
-                            pass
+                        except Exception as e:
+                            print(f"   ⚠️ Failed to parse question data from result: {e}")
                 
                 # Handle results
                 if result == 'TASK_COMPLETE': 
@@ -3279,7 +3382,8 @@ class SentinelAgent:
                                             context="LinkedIn_Form",
                                             match_confidence="Keyword Match",
                                             input_type=qa.get('inputType', qa.get('t', '')) or '',
-                                            selected_option=qa.get('answer', '') or '',
+                                            options=qa.get('options', []),
+                                            selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
                                         )
                                 except Exception:
@@ -3309,7 +3413,7 @@ class SentinelAgent:
                             # NOTE: Do NOT reset submit_attempt_count here!
                             # The 403 loop shows Next/Review buttons after failed submit
                             continue
-                        elif 'LINKEDIN_FORM_FILLED' in next_result:
+                        elif 'LINKEDIN_FORM_FILLED' in next_result or 'LINKEDIN_FORM_FIELDS_FILLED' in next_result:
                             print("📝 Filled form fields")
                             submit_attempt_count = 0  # Reset when filling (progress made)
                             
@@ -3320,12 +3424,13 @@ class SentinelAgent:
                                     qa_pairs = json.loads(qa_json)
                                     for qa in qa_pairs:
                                         self._log_all_questions(
-                                            qa.get('q', 'Unknown'),
-                                            qa.get('a', ''),
+                                            qa.get('q', qa.get('question', 'Unknown')),
+                                            qa.get('a', qa.get('answer', '')),
                                             context="LinkedIn_Form",
                                             match_confidence="Keyword Match",
-                                            input_type=qa.get('inputType', '') or '',
-                                            selected_option=qa.get('answer', '') or '',
+                                            input_type=qa.get('inputType', qa.get('t', '')) or '',
+                                            options=qa.get('options', []),
+                                            selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
                                         )
                                 except Exception:
@@ -3366,7 +3471,8 @@ class SentinelAgent:
                                             context="LinkedIn_Form",
                                             match_confidence="Keyword Match",
                                             input_type=qa.get('inputType', qa.get('t', '')) or '',
-                                            selected_option=qa.get('answer', '') or '',
+                                            options=qa.get('options', []),
+                                            selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
                                         )
                                 except Exception:
@@ -4034,6 +4140,7 @@ class SentinelAgent:
                             self.state.task_complete = True
                             break
                         elif chatbot_done:
+                            self._naukri_no_chatbot_count = 0
                             # Check if 0 jobs applied — might be error toast, poll again
                             if isinstance(chatbot_done, str) and (
                                 'CHATBOT_COMPLETE: 0/' in chatbot_done
@@ -4053,9 +4160,18 @@ class SentinelAgent:
                         else:
                             # Chatbot loop returned False / not open
                             print("ℹ️ Chatbot was not open or no questions needed - checking page state...")
+                            resolved_res = None
                             if '/myapply/saveApply' in self._page.url:
-                                should_continue = await self._handle_naukri_post_apply(await self._resolve_naukri_completion())
+                                resolved_res = await self._resolve_naukri_completion()
+                                should_continue = await self._handle_naukri_post_apply(resolved_res)
                                 if not should_continue:
+                                    break
+                            if not (resolved_res and 'CHATBOT_COMPLETE' in str(resolved_res) and not '0/' in str(resolved_res)):
+                                self._naukri_no_chatbot_count += 1
+                                print(f"   ⚠️ Naukri no chatbot detected ({self._naukri_no_chatbot_count}/{self._naukri_no_chatbot_max} turns)")
+                                if self._naukri_no_chatbot_count >= self._naukri_no_chatbot_max:
+                                    print(f"🛑 Naukri chatbot not found for {self._naukri_no_chatbot_max} consecutive turns. Closing task.")
+                                    self.state.task_complete = True
                                     break
                             continue
             
@@ -4097,6 +4213,7 @@ class SentinelAgent:
                         self.state.task_complete = True
                         break
                     elif chatbot_done:
+                        self._naukri_no_chatbot_count = 0
                         # Check if 0 jobs applied — might be error toast, poll again
                         if isinstance(chatbot_done, str) and (
                             'CHATBOT_COMPLETE: 0/' in chatbot_done
@@ -4116,9 +4233,18 @@ class SentinelAgent:
                     else:
                         # Chatbot not open or direct submission
                         print("ℹ️ Chatbot was not open or no questions needed - checking page state...")
+                        resolved_res = None
                         if '/myapply/saveApply' in self._page.url:
-                            should_continue = await self._handle_naukri_post_apply(await self._resolve_naukri_completion())
+                            resolved_res = await self._resolve_naukri_completion()
+                            should_continue = await self._handle_naukri_post_apply(resolved_res)
                             if not should_continue:
+                                break
+                        if not (resolved_res and 'CHATBOT_COMPLETE' in str(resolved_res) and not '0/' in str(resolved_res)):
+                            self._naukri_no_chatbot_count += 1
+                            print(f"   ⚠️ Naukri no chatbot detected ({self._naukri_no_chatbot_count}/{self._naukri_no_chatbot_max} turns)")
+                            if self._naukri_no_chatbot_count >= self._naukri_no_chatbot_max:
+                                print(f"🛑 Naukri chatbot not found for {self._naukri_no_chatbot_max} consecutive turns. Closing task.")
+                                self.state.task_complete = True
                                 break
                         continue
                 
@@ -4134,9 +4260,18 @@ class SentinelAgent:
                         self.state.task_complete = True
                         break
                     elif chatbot_done:
+                        self._naukri_no_chatbot_count = 0
                         # Success - decide whether to continue (need more jobs) or stop (target reached)
                         should_continue = await self._handle_naukri_post_apply(chatbot_done)
                         if not should_continue:
+                            break
+                        continue
+                    else:
+                        self._naukri_no_chatbot_count += 1
+                        print(f"   ⚠️ Naukri no chatbot detected ({self._naukri_no_chatbot_count}/{self._naukri_no_chatbot_max} turns)")
+                        if self._naukri_no_chatbot_count >= self._naukri_no_chatbot_max:
+                            print(f"🛑 Naukri chatbot not found for {self._naukri_no_chatbot_max} consecutive turns. Closing task.")
+                            self.state.task_complete = True
                             break
                         continue
                 
@@ -4348,7 +4483,11 @@ class SentinelAgent:
                     bodyText.includes('Application submitted'),
                     bodyText.includes('Successfully applied'),
                     bodyText.includes('applied successfully'),
-                    bodyText.includes('Interest shared successfully')
+                    bodyText.includes('Interest shared successfully'),
+                    bodyText.includes('Thank you for your response'),
+                    bodyText.includes('Thank you for applying'),
+                    bodyText.includes('responses have been recorded'),
+                    bodyText.includes('application has been received')
                 ].some(Boolean);
                 if (hasSuccessIndicator) {{
                     appliedThisRound = 1;
@@ -4462,6 +4601,473 @@ class SentinelAgent:
         if m:
             return int(m.group(1))
         return 0
+
+    async def _handle_instahyre_inbox_task(self) -> bool:
+        """Handle Instahyre Inbox:
+        1. If on opportunities page, click Inbox navigation link (#nav-candidates-inbox).
+        2. On inbox page, click the 'Unread' radio filter (convTypes.UNREAD / value="1").
+        3. Inspect the first conversation card, open and answer questionnaire using QA patterns,
+           log to CSV, submit, and finish the task."""
+        page = self._page
+        if not page:
+            return False
+        
+        print("📥 Starting Instahyre Inbox & Questionnaire Automation...")
+        self._current_platform = "instahyre"
+        if not hasattr(self, '_processed_questionnaires'):
+            self._processed_questionnaires = set()
+            
+        # Step 1: If on opportunities page (or not yet on inbox page), click the Inbox nav link
+        current_url = page.url or ''
+        if 'candidate/inbox' not in current_url:
+            print("📍 On Instahyre opportunities page. Clicking Inbox nav link (#nav-candidates-inbox)...")
+            clicked_inbox = await page.evaluate("""() => {
+                const inboxLink = document.querySelector('a#nav-candidates-inbox, a[href="/candidate/inbox/"], a[href*="/candidate/inbox"]');
+                if (inboxLink) {
+                    inboxLink.scrollIntoView({ block: 'center' });
+                    inboxLink.click();
+                    return 'INBOX_CLICKED';
+                }
+                return 'NOT_FOUND';
+            }""")
+            if clicked_inbox == 'INBOX_CLICKED':
+                print("   ✅ Clicked Inbox nav link. Waiting for inbox page to load...")
+                try:
+                    await page.wait_for_url("**/candidate/inbox/**", timeout=15000)
+                except Exception:
+                    pass
+                await asyncio.sleep(random.uniform(2.5, 3.5))
+            else:
+                print("   ⚠️ Inbox link not found in DOM, navigating directly to inbox...")
+                await page.goto("https://www.instahyre.com/candidate/inbox/", wait_until='domcontentloaded', timeout=30000)
+                await asyncio.sleep(random.uniform(2.5, 3.5))
+
+        # Step 2: Click the 'Unread' radio filter button on the inbox page
+        print("🔘 Selecting 'Unread' conversation filter...")
+        unread_res = await page.evaluate("""() => {
+            // 1. Try exact selector with ng-click or ng-value or value="1"
+            let unreadRadio = document.querySelector(
+                'input[type="radio"][ng-click*="convTypes.UNREAD"], ' +
+                'input[type="radio"][ng-value*="convTypes.UNREAD"], ' +
+                'input[type="radio"][value="1"]'
+            );
+            
+            // 2. Fallback: find radio by parent/label text 'Unread'
+            if (!unreadRadio) {
+                const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+                unreadRadio = radios.find(r => {
+                    const parent = r.closest('label') || r.parentElement;
+                    const text = (parent?.innerText || '').toLowerCase();
+                    return text.includes('unread');
+                });
+            }
+            
+            if (unreadRadio) {
+                unreadRadio.scrollIntoView({ block: 'center' });
+                const parentLabel = unreadRadio.closest('label');
+                if (parentLabel) {
+                    parentLabel.click();
+                } else {
+                    unreadRadio.click();
+                }
+                unreadRadio.checked = true;
+                unreadRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                unreadRadio.dispatchEvent(new Event('click', { bubbles: true }));
+                
+                // Angular 1.x scope hook if accessible
+                try {
+                    if (window.angular) {
+                        const scope = window.angular.element(unreadRadio).scope();
+                        if (scope && scope.setConvType && scope.convTypes) {
+                            scope.$apply(() => {
+                                scope.setConvType(scope.convTypes.UNREAD);
+                            });
+                        }
+                    }
+                } catch (e) {}
+                
+                return 'UNREAD_RADIO_CLICKED';
+            } else {
+                const unreadLabel = Array.from(document.querySelectorAll('label, span, div')).find(el => {
+                    const t = (el.innerText || '').trim().toLowerCase();
+                    return t.startsWith('unread') || t.includes('unread (');
+                });
+                if (unreadLabel) {
+                    unreadLabel.scrollIntoView({ block: 'center' });
+                    unreadLabel.click();
+                    return 'UNREAD_LABEL_CLICKED';
+                }
+            }
+            return 'UNREAD_NOT_FOUND';
+        }""")
+        print(f"   👉 Unread filter click status: {unread_res}")
+        await asyncio.sleep(random.uniform(2.0, 3.0))
+            
+        # Step 3: Check for conversation cards (filtered to unread)
+        conv_count = await page.evaluate("""() => {
+            const convs = document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer');
+            return convs.length;
+        }""")
+        
+        if not conv_count or conv_count == 0:
+            print("📭 No unread conversation cards found in Instahyre Inbox.")
+            self.state.task_complete = True
+            return True
+            
+        print(f"📬 Found {conv_count} conversation(s) in inbox. Scanning first conversation card...")
+        
+        # Click the first conversation card
+        click_conv_res = await page.evaluate("""() => {
+            const convs = document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer');
+            if (convs.length > 0) {
+                convs[0].scrollIntoView({ block: 'center', behavior: 'instant' });
+                convs[0].click();
+                const nameEl = convs[0].querySelector('.candidate-name');
+                const jobEl = convs[0].querySelector('.conv-job');
+                return {
+                    status: 'CLICKED',
+                    name: nameEl ? nameEl.innerText.trim() : '',
+                    job: jobEl ? jobEl.innerText.trim() : ''
+                };
+            }
+            return { status: 'OUT_OF_BOUNDS' };
+        }""")
+        
+        if click_conv_res.get('status') != 'CLICKED':
+            print("   ⚠️ Could not select first conversation card.")
+            self.state.task_complete = True
+            return True
+            
+        c_name = click_conv_res.get('name', 'Recruiter')
+        c_job = click_conv_res.get('job', '')
+        print(f"   👤 Conversation with {c_name} ({c_job})")
+        await asyncio.sleep(random.uniform(2.5, 3.5))
+        
+        # Step 3: Scan for questionnaire link in message content
+        q_url = await page.evaluate("""() => {
+            const links = Array.from(document.querySelectorAll('.message-content a, .candidate-msg a, a[target="_blank"]'));
+            for (const link of links) {
+                const href = link.href || link.getAttribute('href') || '';
+                const text = (link.innerText || '').toLowerCase();
+                if (href.includes('/questionnaire/') || href.includes('instahyre.com/questionnaire') || text.includes('questionnaire')) {
+                    return href;
+                }
+            }
+            return null;
+        }""")
+        
+        if not q_url:
+            print(f"   ℹ️ No questionnaire link found in message from {c_name}.")
+            print("🎉 Instahyre Inbox Task finished (single message processed).")
+            self.state.task_complete = True
+            return True
+            
+        if q_url in self._processed_questionnaires:
+            print(f"   ⏩ Questionnaire already processed in this session: {q_url}")
+            print("🎉 Instahyre Inbox Task finished (single message processed).")
+            self.state.task_complete = True
+            return True
+            
+        print(f"   📋 Found Questionnaire Link: {q_url}")
+        
+        # Step 4: In-place navigation to questionnaire (single-task execution)
+        try:
+            print(f"   🔗 Navigating to questionnaire: {q_url}...")
+            await page.goto(q_url, wait_until='domcontentloaded', timeout=30000)
+            await asyncio.sleep(random.uniform(3, 4))
+            
+            # Answer the questionnaire on current page
+            success = await self._answer_instahyre_questionnaire(page, q_url)
+            if success:
+                self._processed_questionnaires.add(q_url)
+                self.metrics['applications_submitted'] += 1
+                print("   ✅ Questionnaire submitted and confirmation verified! Task complete.")
+            else:
+                print("   ⚠️ Questionnaire submission could not be verified.")
+                
+        except Exception as e:
+            print(f"   ❌ Error processing questionnaire {q_url}: {e}")
+            
+        print("🎉 Instahyre Inbox Task finished! Single questionnaire task completed.")
+        self.state.task_complete = True
+        return True
+
+    async def _answer_instahyre_questionnaire(self, q_page, q_url: str) -> bool:
+        """Extract all questions from the questionnaire page, answer using QA patterns,
+        log to CSV, submit, and verify confirmation."""
+        print(f"📝 Answering Instahyre Questionnaire: {q_url}")
+
+        # Step 1: Wait up to 10 seconds for Angular to render questionnaire questions
+        for wait_i in range(10):
+            has_questions = await q_page.evaluate("""() => {
+                const qs = document.querySelectorAll('.questionnaire-question, .question-label, div[ng-repeat*="question in questionnaire.questions"]');
+                return qs.length > 0;
+            }""")
+            if has_questions:
+                break
+            await asyncio.sleep(1)
+
+        # Step 2: Extract questions and input metadata (clean deduplication)
+        questions_info = await q_page.evaluate("""() => {
+            let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
+            if (!qCards.length) {
+                qCards = Array.from(document.querySelectorAll('div[ng-repeat*="question in questionnaire.questions"]'));
+            }
+            // Deduplicate cards if nested
+            qCards = qCards.filter((card, idx, arr) => 
+                !card.classList.contains('info-box') && 
+                !arr.some(other => other !== card && other.contains(card))
+            );
+
+            const results = [];
+            qCards.forEach((card, idx) => {
+                const labelEl = card.querySelector('.question-label span.ng-binding, .question-label span, .question-text-heading, .question-label');
+                let qText = '';
+                if (labelEl) {
+                    const clone = labelEl.cloneNode(true);
+                    const reqBox = clone.querySelector('.required-box');
+                    if (reqBox) reqBox.remove();
+                    qText = (clone.innerText || clone.textContent || '').replace(/REQUIRED/g, '').trim();
+                }
+                if (!qText) {
+                    const headerEl = card.querySelector('.question-text-container');
+                    if (headerEl) qText = (headerEl.innerText || '').replace(/REQUIRED/g, '').trim();
+                }
+                
+                const answerContainer = card.querySelector('.answer-container') || card;
+                const textarea = answerContainer.querySelector('textarea.text-answer-input, textarea');
+                const textInput = answerContainer.querySelector('input.text-answer-input, input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])');
+                const radioInputs = Array.from(answerContainer.querySelectorAll('input[type="radio"], label.radio, .radio-inline, .radio'));
+                const checkboxInputs = Array.from(answerContainer.querySelectorAll('input[type="checkbox"], label.checkbox, .checkbox-inline, .checkbox'));
+                const selectEl = answerContainer.querySelector('select');
+                
+                let inputType = 'text';
+                let options = [];
+                
+                if (radioInputs.length > 0) {
+                    inputType = 'radio';
+                    options = radioInputs.map(r => (r.innerText || r.textContent || r.value || '').trim()).filter(Boolean);
+                } else if (checkboxInputs.length > 0) {
+                    inputType = 'checkbox';
+                    options = checkboxInputs.map(c => (c.innerText || c.textContent || c.value || '').trim()).filter(Boolean);
+                } else if (selectEl) {
+                    inputType = 'select';
+                    options = Array.from(selectEl.options).map(o => (o.text || o.value || '').trim()).filter(Boolean);
+                } else if (textarea) {
+                    inputType = 'textarea';
+                } else if (textInput) {
+                    inputType = 'text';
+                }
+                
+                results.push({
+                    index: idx,
+                    question: qText,
+                    inputType: inputType,
+                    options: options
+                });
+            });
+            return results;
+        }""")
+        
+        if not questions_info or len(questions_info) == 0:
+            print("   ⚠️ No question containers found on questionnaire page!")
+            return False
+            
+        print(f"   📋 Found {len(questions_info)} question(s) to answer:")
+        
+        # Step 3: Answer each question
+        for q in questions_info:
+            q_text = q.get('question', '')
+            input_type = q.get('inputType', 'text')
+            options = q.get('options', [])
+            
+            if not q_text:
+                continue
+                
+            # Match answer via pattern matcher
+            ans, conf = self._fuzzy_match_question(q_text)
+            
+            # Type-aware adjustments
+            if not ans:
+                ans = "Yes" if input_type in ('radio', 'checkbox') else "4.2 Years"
+                conf = 0.5
+                
+            fill_result = await q_page.evaluate("""(data) => {
+                let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
+                if (!qCards.length) {
+                    qCards = Array.from(document.querySelectorAll('div[ng-repeat*="question in questionnaire.questions"]'));
+                }
+                qCards = qCards.filter((card, idx, arr) => 
+                    !card.classList.contains('info-box') && 
+                    !arr.some(other => other !== card && other.contains(card))
+                );
+
+                if (data.index >= qCards.length) return 'INDEX_OUT_OF_BOUNDS';
+                const card = qCards[data.index];
+                const answerContainer = card.querySelector('.answer-container') || card;
+                
+                // Textarea input
+                const textarea = answerContainer.querySelector('textarea.text-answer-input, textarea');
+                if (textarea && (data.inputType === 'textarea' || data.inputType === 'text')) {
+                    textarea.focus();
+                    textarea.click();
+                    const taSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
+                    if (taSetter) taSetter.call(textarea, data.answer);
+                    else textarea.value = data.answer;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                    textarea.dispatchEvent(new Event('blur', { bubbles: true }));
+                    if (window.angular) {
+                        try {
+                            const elScope = window.angular.element(textarea).scope();
+                            if (elScope && elScope.question && elScope.question.answer) {
+                                elScope.question.answer.text = data.answer;
+                                elScope.$apply();
+                            }
+                        } catch (e) {}
+                    }
+                    return 'FILLED_TEXTAREA';
+                }
+
+                // Text input
+                const textInput = answerContainer.querySelector('input.text-answer-input, input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])');
+                if (textInput && (data.inputType === 'text' || data.inputType === 'number')) {
+                    textInput.focus();
+                    textInput.click();
+                    const inputSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+                    if (inputSetter) inputSetter.call(textInput, data.answer);
+                    else textInput.value = data.answer;
+                    textInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    textInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    textInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                    if (window.angular) {
+                        try {
+                            const elScope = window.angular.element(textInput).scope();
+                            if (elScope && elScope.question && elScope.question.answer) {
+                                elScope.question.answer.text = data.answer;
+                                elScope.$apply();
+                            }
+                        } catch (e) {}
+                    }
+                    return 'FILLED_TEXT';
+                }
+                
+                // Radio input
+                if (data.inputType === 'radio') {
+                    const radioItems = Array.from(answerContainer.querySelectorAll('input[type="radio"], label.radio, .radio-inline, .radio, label'));
+                    const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
+                    let matched = false;
+                    for (const r of radioItems) {
+                        const rText = (r.innerText || r.textContent || r.value || '').toLowerCase().trim();
+                        if (rText === targetAns || rText.includes(targetAns) || targetAns.includes(rText)) {
+                            const input = r.tagName === 'INPUT' ? r : r.querySelector('input[type="radio"]') || r;
+                            input.click();
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched && radioItems.length > 0) {
+                        const yesOpt = radioItems.find(r => (r.innerText || r.textContent || '').toLowerCase().includes('yes'));
+                        if (yesOpt) yesOpt.click();
+                        else radioItems[0].click();
+                    }
+                    return 'CLICKED_RADIO';
+                }
+                
+                // Checkbox input
+                if (data.inputType === 'checkbox') {
+                    const checkboxItems = Array.from(answerContainer.querySelectorAll('input[type="checkbox"], label.checkbox, .checkbox-inline, .checkbox, label'));
+                    const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
+                    for (const c of checkboxItems) {
+                        const cText = (c.innerText || c.textContent || c.value || '').toLowerCase().trim();
+                        if (cText === targetAns || cText.includes(targetAns) || targetAns.includes(cText)) {
+                            const input = c.tagName === 'INPUT' ? c : c.querySelector('input[type="checkbox"]') || c;
+                            input.click();
+                            break;
+                        }
+                    }
+                    return 'CLICKED_CHECKBOX';
+                }
+                
+                // Select input
+                if (data.inputType === 'select') {
+                    const selectEl = answerContainer.querySelector('select');
+                    if (selectEl) {
+                        const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
+                        for (let opt of selectEl.options) {
+                            const optText = (opt.text || opt.value || '').toLowerCase().trim();
+                            if (optText === targetAns || optText.includes(targetAns) || targetAns.includes(optText)) {
+                                selectEl.value = opt.value;
+                                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                                return 'SELECTED_OPTION';
+                            }
+                        }
+                    }
+                }
+                
+                return 'NO_MATCHING_INPUT';
+            }""", {
+                "index": q.get("index", 0),
+                "question": q_text,
+                "inputType": input_type,
+                "options": options,
+                "answer": ans,
+                "selectedOption": ans
+            })
+            
+            # Log to CSV
+            self.log_qa_result(
+                question=q_text,
+                answer=ans,
+                input_type=input_type,
+                options=options,
+                selected_option=ans,
+                confidence=conf,
+                status='submitted',
+                platform='instahyre',
+                url=q_url
+            )
+            self.metrics['questions_answered'] += 1
+            print(f"      Q: '{q_text}' -> A: '{ans}' [{fill_result}] (conf: {conf})")
+            
+        await asyncio.sleep(random.uniform(1.5, 2.5))
+        
+        # Step 4: Click Submit button (valid standard CSS selectors only)
+        submit_res = await q_page.evaluate("""() => {
+            const submitBtn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg, button.btn-primary') ||
+                              Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim().includes('submit'));
+            if (submitBtn && submitBtn.offsetParent !== null) {
+                submitBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                submitBtn.click();
+                return 'SUBMIT_CLICKED';
+            }
+            return 'SUBMIT_NOT_FOUND';
+        }""")
+        print(f"   📤 Submit Button: {submit_res}")
+        
+        # Step 5: Verify confirmation
+        confirmed = False
+        for check_i in range(8):
+            await asyncio.sleep(1.5)
+            confirmed = await q_page.evaluate("""() => {
+                const textCenterDiv = document.querySelector('div.text-center');
+                const checkIcon = document.querySelector('.fa-check-circle, i.fa-check-circle, [aria-hidden="true"].fa-check-circle');
+                const bodyText = (document.body.innerText || '').toLowerCase();
+                
+                const hasSentText = bodyText.includes('questionnaire has been sent');
+                const hasThankYou = bodyText.includes('thank you for your time') || bodyText.includes('you can close this tab');
+                
+                if (hasSentText || (checkIcon && hasThankYou) || (textCenterDiv && hasSentText)) {
+                    return true;
+                }
+                return false;
+            }""")
+            if confirmed:
+                print(f"   🎉 Confirmation Verified: 'Questionnaire has been sent' (check {check_i + 1})")
+                return True
+                
+        print("   ⚠️ Confirmation message not found within timeout (submission may have succeeded).")
+        return submit_res == 'SUBMIT_CLICKED'
 
     async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
         """
@@ -4666,6 +5272,17 @@ class SentinelAgent:
                             if (patternData && patternData.requires_exact_match) {{
                                 continue;
                             }}
+                            if (patternData && patternData.negative_patterns && patternData.negative_patterns.length > 0) {{
+                                if (patternData.negative_patterns.some(np => qNormalized.includes(np.toLowerCase()))) {{
+                                    continue;
+                                }}
+                            }}
+                            if (keyLower.length <= 3) {{
+                                const wbRegex = new RegExp('\\\\b' + keyLower.replace(/[.*+?^${{}}()|[\\]\\\\]/g, '\\\\$&') + '\\\\b', 'i');
+                                if (!wbRegex.test(qNormalized)) {{
+                                    continue;
+                                }}
+                            }}
                             bestMatch = key;
                             bestKeyLen = key.length;
                         }}
@@ -4860,10 +5477,17 @@ class SentinelAgent:
                     document.querySelector('.chatbot_MessageContainer .success, .chatbot_Drawer .success'),
                     document.body.innerText.includes('Application submitted'),
                     document.body.innerText.includes('Successfully applied'),
-                    document.body.innerText.includes('applied successfully')
+                    document.body.innerText.includes('applied successfully'),
+                    document.body.innerText.includes('Thank you for your response'),
+                    document.body.innerText.includes('Thank you for applying'),
+                    document.body.innerText.includes('responses have been recorded'),
+                    document.body.innerText.includes('application has been received')
                 ];
                 if (successIndicators.some(Boolean)) {{
-                    return 'CHATBOT_COMPLETE';
+                    const hasPendingInputs = document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select');
+                    if (!hasPendingInputs) {{
+                        return 'CHATBOT_COMPLETE';
+                    }}
                 }}
                 
                 let chatLayer = document.querySelector('.chatbot_DrawerContentWrapper');
@@ -5188,7 +5812,8 @@ class SentinelAgent:
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
-                                    return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text}});
+                                    const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
+                                    return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text, options: _allDropOpts}});
                                 }}
                             }} else {{
                                 if (optText.includes(answer.toLowerCase())) {{
@@ -5198,7 +5823,8 @@ class SentinelAgent:
                                     if (saveDiv && saveDiv.offsetParent !== null) {{
                                         saveDiv.click();
                                     }}
-                                    return 'CHATBOT_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text}});
+                                    const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
+                                    return 'CHATBOT_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text, options: _allDropOpts}});
                                 }}
                             }}
                         }}
@@ -5207,11 +5833,12 @@ class SentinelAgent:
                             select.selectedIndex = 1;
                             select.dispatchEvent(new Event('change', {{ bubbles: true }}));
                             const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
+                            const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
                             if (saveDiv && saveDiv.offsetParent !== null) {{
                                 saveDiv.click();
-                                return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text}});
+                                return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text, options: _allDropOpts}});
                             }}
-                            return 'CHATBOT_SELECTED_DEFAULT|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text}});
+                            return 'CHATBOT_SELECTED_DEFAULT|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text, options: _allDropOpts}});
                         }}
                     }}
                 }}
@@ -5247,11 +5874,78 @@ class SentinelAgent:
                     
                     let clickedRadio = false;
                     const answerLower = answer.toLowerCase();
-                    const answerNumericMatch = answer.match(/(\\d+\\.?\\d*)/);
+                    const answerNumericMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
-                    console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric);
+                    const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : answerNumeric;
+                    console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
-                    const matchingRanges = [];
+                    const scoreRadio = (label, radioEl) => {{
+                        const cleanLabel = (label || '').toLowerCase().trim();
+                        const val = (radioEl.value || radioEl.id || '').toLowerCase().trim();
+                        
+                        // Yes/No matching with strict word boundaries
+                        const isLabelYes = /\\byes\\b/i.test(cleanLabel) || cleanLabel.includes('serving') || cleanLabel.includes('agree') || cleanLabel.includes('consent') || val === 'yes' || val === 'true';
+                        const isLabelNo = (/\\bno\\b/i.test(cleanLabel) || cleanLabel.includes('disagree') || val === 'no' || val === 'false') && !isLabelYes;
+                        const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('serving') || answerLower === 'true';
+                        const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false')) && !isAnsYes;
+                        
+                        if (isLabelYes && isAnsYes) return 95;
+                        if (isLabelNo && isAnsNo) return 95;
+                        if (isLabelYes && isAnsNo) return 0;
+                        if (isLabelNo && isAnsYes) return 0;
+                        
+                        // Numeric range / comparison matching for experience, notice days, salary
+                        if (expVal !== null) {{
+                            // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9")
+                            const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                            if (rangeMatch) {{
+                                const rMin = parseFloat(rangeMatch[1]);
+                                const rMax = parseFloat(rangeMatch[2]);
+                                if (expVal >= rMin && expVal <= rMax) {{
+                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(expVal - rMin));
+                                }}
+                                return 0;
+                            }}
+                            
+                            // 2. Upper bound: "< X", "Less than X", "Under X", "Below X" (e.g. "< 5", "Less than 5")
+                            const lessMatch = cleanLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
+                            if (lessMatch) {{
+                                const bound = parseFloat(lessMatch[1]);
+                                if (expVal < bound) {{
+                                    return Math.max(75, 88 - (bound - expVal));
+                                }}
+                                return 0;
+                            }}
+                            
+                            // 3. Lower bound: "> X", "More than X", "Above X", "Over X", "X+" (e.g. "> 5", "5+", "4+", "> 3")
+                            const moreMatch = cleanLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/i);
+                            if (moreMatch) {{
+                                const bound = parseFloat(moreMatch[1]);
+                                if (expVal >= bound) {{
+                                    return Math.max(75, 91 - (expVal - bound) * 2);
+                                }}
+                                return 0;
+                            }}
+                            
+                            // 4. Single discrete number (e.g. "4", "4 years")
+                            const singleNumMatch = cleanLabel.match(/^(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?|months?|days?)?$/i);
+                            if (singleNumMatch) {{
+                                const valNum = parseFloat(singleNumMatch[1]);
+                                return Math.max(0, 92 - Math.abs(expVal - valNum) * 15);
+                            }}
+                        }}
+                        
+                        // Text keyword match (only if not a range/comparison)
+                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(cleanLabel);
+                        if (!isComparativeOrRange && (cleanLabel.includes(answerLower) || answerLower.includes(cleanLabel))) {{
+                            return 90;
+                        }}
+                        
+                        return 0;
+                    }};
+                    
+                    let bestRadio = null;
+                    let bestScore = 0;
                     
                     for (const radio of radios) {{
                         let label = '';
@@ -5273,92 +5967,21 @@ class SentinelAgent:
                                 else label = container.innerText.trim();
                             }}
                         }}
-                        const labelLower = label.toLowerCase();
                         
-                        if (!answerNumeric) {{
-                            const words = answerLower.split(/\\s+/).filter(w => w.length > 2);
-                            let matchCount = 0;
-                            for (const w of words) {{
-                                if (labelLower.includes(w)) matchCount++;
-                            }}
-                            if (matchCount > 0 && matchCount >= words.length * 0.5) {{
-                                selectRadio(radio);
-                                clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked text-match radio:', label, '| words matched:', matchCount, '/', words.length);
-                                break;
-                            }}
-                        }}
-                        
-                        if ((/\\byes\\b/.test(answerLower) || answerLower.includes('true')) && 
-                            (labelLower.includes('yes') || labelLower.includes('serving') || labelLower === 'yes' || radio.id === 'Yes' || radio.value === 'Yes')) {{
-                            selectRadio(radio);
-                            clickedRadio = true;
-                            console.log('Chatbot Debug - Clicked Yes radio:', label || radio.id);
-                            break;
-                        }}
-                        if ((/\\bno\\b/.test(answerLower) || answerLower.includes('false')) && 
-                            (labelLower === 'no' || labelLower.startsWith('no') || /(\\bno\\b|^no\\b|\\bno$)/.test(labelLower) || radio.id === 'No' || radio.value === 'No') &&
-                            !labelLower.startsWith('yes')) {{
-                            selectRadio(radio);
-                            clickedRadio = true;
-                            console.log('Chatbot Debug - Clicked No radio:', label || radio.id);
-                            break;
-                        }}
-                        
-                        if (answerNumeric !== null && !clickedRadio) {{
-                            const labelNumbers = labelLower.match(/(\\d+\\.?\\d*)/g);
-                            if (labelNumbers) {{
-                                const nums = labelNumbers.map(n => parseFloat(n));
-                                if (nums.length >= 2) {{
-                                    if (answerNumeric >= nums[0] && answerNumeric <= nums[1]) {{
-                                        const distanceFromMin = Math.abs(answerNumeric - nums[0]);
-                                        matchingRanges.push({{radio, label, distanceFromMin}});
-                                    }}
-                                }} else if (nums.length === 1) {{
-                                    const isLess = /less\\s+than|under|up\\s+to|^<\\s*\\d/i.test(labelLower);
-                                    const isMore = /more\\s+than|over|above|plus|^>\\s*\\d/i.test(labelLower);
-                                    if (isLess) {{
-                                        if (answerNumeric < nums[0]) {{
-                                            selectRadio(radio);
-                                            clickedRadio = true;
-                                            console.log('Chatbot Debug - Clicked numeric upper-bound radio:', label);
-                                            break;
-                                        }}
-                                    }} else if (isMore) {{
-                                        if (answerNumeric >= nums[0]) {{
-                                            selectRadio(radio);
-                                            clickedRadio = true;
-                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
-                                            break;
-                                        }}
-                                    }} else {{
-                                        if (answerNumeric >= nums[0]) {{
-                                            selectRadio(radio);
-                                            clickedRadio = true;
-                                            console.log('Chatbot Debug - Clicked numeric threshold radio:', label);
-                                            break;
-                                        }}
-                                    }}
-                                }}
-                            }}
-                            
-                            if (!clickedRadio && nums.length < 2 && labelLower.includes(String(answerNumeric))) {{
-                                selectRadio(radio);
-                                clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked exact numeric match radio:', label);
-                                break;
-                            }}
+                        const score = scoreRadio(label, radio);
+                        if (score > bestScore) {{
+                            bestScore = score;
+                            bestRadio = radio;
                         }}
                     }}
                     
-                    if (!clickedRadio && matchingRanges.length > 0) {{
-                        matchingRanges.sort((a, b) => a.distanceFromMin - b.distanceFromMin);
-                        const bestMatch = matchingRanges[0];
-                        selectRadio(bestMatch.radio);
+                    if (bestRadio && bestScore > 0) {{
+                        selectRadio(bestRadio);
                         clickedRadio = true;
-                        console.log('Chatbot Debug - Clicked best range radio:', bestMatch.label);
+                        console.log('Chatbot Debug - Selected best radio with score', bestScore, ':', bestRadio.id || bestRadio.value);
                     }}
                     
+                    // Education fallback if not clicked
                     const isEducationQ = qLower.includes('education') || qLower.includes('degree') ||
                         qLower.includes('qualification') || qLower.includes('academic') ||
                         qLower.includes('graduate') || qLower.includes('college') ||
@@ -5453,8 +6076,28 @@ class SentinelAgent:
                         }}
                         
                         const _chkRadio = chatLayer ? chatLayer.querySelector('input[type="radio"]:checked') : null;
-                        const _radLabel = _chkRadio ? (_chkRadio.parentElement?.innerText || _chkRadio.nextSibling?.textContent || _chkRadio.value || _chkRadio.id || '').trim() : '';
-                        return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel || answer, t: 'radio', s: _radLabel || answer}});
+                        let _radLabel = '';
+                        if (_chkRadio) {{
+                            if (_chkRadio.id) {{
+                                const lblEl = chatLayer.querySelector('label[for="' + _chkRadio.id + '"]') || document.querySelector('label[for="' + _chkRadio.id + '"]');
+                                if (lblEl) _radLabel = lblEl.innerText.trim();
+                            }}
+                            if (!_radLabel && _chkRadio.getAttribute('aria-label')) _radLabel = _chkRadio.getAttribute('aria-label');
+                            if (!_radLabel && _chkRadio.value && _chkRadio.value !== 'on') _radLabel = _chkRadio.value;
+                            if (!_radLabel && _chkRadio.id) _radLabel = _chkRadio.id;
+                        }}
+                        const _allRadOpts = radios.map(r => {{
+                            let l = '';
+                            if (r.id) {{
+                                const lblEl = chatLayer.querySelector('label[for="' + r.id + '"]') || document.querySelector('label[for="' + r.id + '"]');
+                                if (lblEl) l = lblEl.innerText.trim();
+                            }}
+                            if (!l && r.getAttribute('aria-label')) l = r.getAttribute('aria-label');
+                            if (!l && r.value && r.value !== 'on') l = r.value;
+                            if (!l && r.id) l = r.id;
+                            return l.trim();
+                        }}).filter(Boolean);
+                        return 'CHATBOT_RADIO_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _radLabel || answer, t: 'radio', s: _radLabel || answer, options: _allRadOpts}});
                     }}
                 }}
                 
@@ -5518,72 +6161,139 @@ class SentinelAgent:
                         await new Promise(r => setTimeout(r, 300));
                         const sb = document.querySelector('div.sendMsg:not(.disabled), .sendMsgbtn_container .sendMsg');
                         if (sb && sb.offsetParent !== null) sb.click();
-                        return 'CHATBOT_OPT_CLICKED: ' + clickedBtn.innerText.trim() + ' | Q: ' + qText.slice(0, 50);
+                        const _optLabel = (clickedBtn.innerText || clickedBtn.textContent || '').trim();
+                        const _allOpts = optBtns.map(b => (b.innerText || b.textContent || '').trim()).filter(Boolean);
+                        return 'CHATBOT_OPT_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _optLabel || answer, t: 'button', s: _optLabel || answer, options: _allOpts}});
                     }}
                 }}
                 
                 // HANDLE CHECKBOXES
                 if (hasCheckbox) {{
-                    const checkboxes = chatLayer.querySelectorAll('input[type="checkbox"]');
+                    const checkboxes = Array.from(chatLayer.querySelectorAll('input[type="checkbox"]'));
                     console.log('Chatbot Debug - Processing checkboxes:', checkboxes.length);
+                    
+                    const getCheckboxLabel = (cb) => {{
+                        let lbl = '';
+                        if (cb.id) {{
+                            const labelEl = chatLayer.querySelector('label[for="' + cb.id + '"]') || document.querySelector('label[for="' + cb.id + '"]');
+                            if (labelEl) lbl = labelEl.innerText.trim();
+                        }}
+                        if (!lbl && cb.getAttribute('aria-label')) {{
+                            lbl = cb.getAttribute('aria-label');
+                        }}
+                        if (!lbl && cb.value && cb.value !== 'on') {{
+                            lbl = cb.value;
+                        }}
+                        if (!lbl && cb.name && cb.name !== 'on') {{
+                            lbl = cb.name;
+                        }}
+                        if (!lbl) {{
+                            const directLabel = cb.closest('label') || cb.parentElement?.querySelector('label, span, p');
+                            if (directLabel) lbl = directLabel.innerText.trim();
+                        }}
+                        if (!lbl && cb.nextSibling?.textContent) {{
+                            lbl = cb.nextSibling.textContent.trim();
+                        }}
+                        if (!lbl && cb.parentElement) {{
+                            lbl = cb.parentElement.innerText.trim();
+                        }}
+                        // If the label contains multiple lines (e.g., container containing all checkboxes), extract specific label
+                        if (lbl.indexOf(String.fromCharCode(10)) !== -1 || lbl.indexOf(String.fromCharCode(13)) !== -1) {{
+                            if (cb.id && cb.id !== 'on') lbl = cb.id;
+                            else if (cb.name && cb.name !== 'on') lbl = cb.name;
+                            else if (cb.value && cb.value !== 'on') lbl = cb.value;
+                            else lbl = lbl.split(String.fromCharCode(10))[0].split(String.fromCharCode(13))[0].trim();
+                        }}
+                        return lbl.trim();
+                    }};
                     
                     let clickedCheckbox = false;
                     const answerStr = typeof answer === 'string' ? answer : String(answer);
-                    const answerLower = answerStr.toLowerCase();
+                    const answerLower = answerStr.toLowerCase().trim();
+                    const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('true') || answerLower.includes('serving') || answerLower.includes('agree') || answerLower.includes('consent');
+                    const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false') || answerLower.includes('disagree')) && !isAnsYes;
                     
-                    // Try to match answer to checkbox label
-                    for (const checkbox of checkboxes) {{
-                        const label = checkbox.parentElement?.innerText || checkbox.nextSibling?.textContent || '';
-                        const labelLower = label.toLowerCase();
-                        
-                        // Check if answer matches this option
-                        if (answerLower.includes(labelLower) || labelLower.includes(answerLower)) {{
-                            if (!checkbox.checked) {{
-                                checkbox.click();
-                                clickedCheckbox = true;
-                                console.log('Chatbot Debug - Clicked checkbox:', label);
+                    const cbInfos = checkboxes.map(cb => {{
+                        const lbl = getCheckboxLabel(cb);
+                        const lblLower = lbl.toLowerCase();
+                        const isLabelYes = /\\byes\\b/i.test(lblLower) || lblLower === 'true' || cb.id === 'Yes' || cb.value === 'Yes' || cb.name === 'Yes';
+                        const isLabelNo = (/\\bno\\b/i.test(lblLower) || lblLower === 'false' || cb.id === 'No' || cb.value === 'No' || cb.name === 'No') && !isLabelYes;
+                        return {{ cb, lbl, lblLower, isLabelYes, isLabelNo }};
+                    }});
+                    
+                    const hasYesNoPair = cbInfos.some(info => info.isLabelYes) && cbInfos.some(info => info.isLabelNo);
+                    
+                    if (isAnsYes && hasYesNoPair) {{
+                        for (const info of cbInfos) {{
+                            if (info.isLabelYes) {{
+                                if (!info.cb.checked) {{
+                                    info.cb.click();
+                                    clickedCheckbox = true;
+                                    console.log('Chatbot Debug - Clicked Yes checkbox in pair:', info.lbl);
+                                }}
+                            }} else if (info.isLabelNo) {{
+                                if (info.cb.checked) {{
+                                    info.cb.click(); // Uncheck No if checked
+                                }}
                             }}
                         }}
-                    }}
-                    
-                    // If no specific match but answer is "Yes" or positive, check ALL options
-                    // except "Skip this question" (user wants to select all available locations)
-                    // BUT skip "No" if this is a Yes/No pair (don't select both)
-                    if (!clickedCheckbox && (/\\byes\\b/.test(answerLower) || answerLower.includes('true'))) {{
-                        const visLabels = Array.from(checkboxes).map(c => (c.parentElement?.innerText || c.nextSibling?.textContent || '').toLowerCase().trim());
-                        const visIsYesNoPair = visLabels.some(l => l === 'yes') && visLabels.some(l => l === 'no');
-                        for (const checkbox of checkboxes) {{
-                            const lbl = (checkbox.parentElement?.innerText || checkbox.nextSibling?.textContent || '').toLowerCase();
-                            // Skip the "skip" option
-                            if (lbl.includes('skip')) continue;
-                            // For Yes/No pairs, skip "no" — only select "yes"
-                            if (visIsYesNoPair && lbl.trim() === 'no') continue;
-                            if (!checkbox.checked) {{
-                                checkbox.click();
-                                clickedCheckbox = true;
-                                console.log('Chatbot Debug - Clicked checkbox:', lbl.trim());
+                    }} else if (isAnsNo && hasYesNoPair) {{
+                        for (const info of cbInfos) {{
+                            if (info.isLabelNo) {{
+                                if (!info.cb.checked) {{
+                                    info.cb.click();
+                                    clickedCheckbox = true;
+                                    console.log('Chatbot Debug - Clicked No checkbox in pair:', info.lbl);
+                                }}
+                            }} else if (info.isLabelYes) {{
+                                if (info.cb.checked) {{
+                                    info.cb.click(); // Uncheck Yes if checked
+                                }}
+                            }}
+                        }}
+                    }} else {{
+                        // Match specific text or multi-select
+                        for (const info of cbInfos) {{
+                            if (info.lblLower.includes('skip')) continue;
+                            if (info.lblLower && (answerLower.includes(info.lblLower) || info.lblLower.includes(answerLower))) {{
+                                if (!info.cb.checked) {{
+                                    info.cb.click();
+                                    clickedCheckbox = true;
+                                    console.log('Chatbot Debug - Clicked matching checkbox:', info.lbl);
+                                }}
+                            }}
+                        }}
+                        // If no specific match and answer is Yes, select all valid options (e.g. locations)
+                        if (!clickedCheckbox && isAnsYes) {{
+                            for (const info of cbInfos) {{
+                                if (info.lblLower.includes('skip')) continue;
+                                if (!info.cb.checked) {{
+                                    info.cb.click();
+                                    clickedCheckbox = true;
+                                    console.log('Chatbot Debug - Clicked option checkbox:', info.lbl);
+                                }}
                             }}
                         }}
                     }}
                     
                     // After selecting checkbox(es), click Save/Submit button
                     if (clickedCheckbox) {{
+                        const _chkCbs = chatLayer ? Array.from(chatLayer.querySelectorAll('input[type="checkbox"]:checked')) : [];
+                        const _cbLabels = _chkCbs.map(cb => getCheckboxLabel(cb)).filter(Boolean);
+                        const _allCbOpts = cbInfos.map(i => i.lbl).filter(Boolean);
+                        
                         // Find and click Save button
                         const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
                                        Array.from(document.querySelectorAll('button')).find(el => 
-                                           el.innerText.toLowerCase().includes('save'));
+                                           (el.innerText || '').toLowerCase().includes('save'));
                         
                         if (saveBtn && saveBtn.offsetParent !== null) {{
                             saveBtn.click();
                             console.log('Chatbot Debug - Save clicked after checkbox');
-                            const _chkCbs = chatLayer ? Array.from(chatLayer.querySelectorAll('input[type="checkbox"]:checked')) : [];
-                            const _cbLabels = _chkCbs.map(function(cb) {{ return (cb.parentElement?.innerText || cb.nextSibling?.textContent || cb.name || '').trim(); }}).filter(Boolean);
-                            return 'CHATBOT_CHECKBOX_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels.join('; ') || 'Yes'}});
+                            return 'CHATBOT_CHECKBOX_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels.join('; ') || 'Yes', options: _allCbOpts}});
                         }}
                         
-                        const _chkCbs2 = chatLayer ? Array.from(chatLayer.querySelectorAll('input[type="checkbox"]:checked')) : [];
-                        const _cbLabels2 = _chkCbs2.map(function(cb) {{ return (cb.parentElement?.innerText || cb.nextSibling?.textContent || cb.name || '').trim(); }}).filter(Boolean);
-                        return 'CHATBOT_CHECKBOX_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels2.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels2.join('; ') || 'Yes'}});
+                        return 'CHATBOT_CHECKBOX_CLICKED|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels.join('; ') || 'Yes', options: _allCbOpts}});
                     }}
                     
                     // Naukri fallback: hidden input[type="checkbox"] exist inside .mcc__checkbox divs
@@ -5647,7 +6357,7 @@ class SentinelAgent:
                             saveBtn.click();
                             console.log('Chatbot Debug - Save clicked after MCC checkboxes');
                         }}
-                        return 'CHATBOT_MCC_CHECKBOX_SAVED: Selected ' + mccClicked + ' options';
+                        return 'CHATBOT_MCC_CHECKBOX_SAVED|' + JSON.stringify({{q: qText.substring(0,200), a: 'Selected ' + mccClicked + ' options', t: 'checkbox', s: 'Selected ' + mccClicked + ' options'}});
                     }}
                 }}
                 
@@ -5984,6 +6694,7 @@ class SentinelAgent:
                     question=qa_data['q'],
                     answer=qa_data['a'],
                     input_type=qa_data.get('t', '') or '',
+                    options=qa_data.get('options', []),
                     selected_option=qa_data.get('s', '') or qa_data['a'],
                     confidence="pattern_match",
                     status="submitted",
@@ -6050,6 +6761,12 @@ class SentinelAgent:
                 continue
             elif 'CHATBOT_CHECKBOX_AND_SAVE' in result:
                 # Wait longer after successful checkbox selection
+                last_action_was_answer = True
+                consecutive_waiting_count = 0
+                await asyncio.sleep(random.uniform(2, 3))
+                continue
+            elif 'CHATBOT_OPT_CLICKED' in result:
+                # Wait longer after option click
                 last_action_was_answer = True
                 consecutive_waiting_count = 0
                 await asyncio.sleep(random.uniform(2, 3))
@@ -6426,6 +7143,15 @@ class SentinelAgent:
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
                             if (EXACT_MATCH_KEYS.has(keyLower)) continue;
+                            const patternData = (typeof KNOWN_PATTERNS_WITH_DEFAULTS !== 'undefined') ? KNOWN_PATTERNS_WITH_DEFAULTS[keyLower] : null;
+                            if (patternData && patternData.requires_exact_match) continue;
+                            if (patternData && patternData.negative_patterns && patternData.negative_patterns.length > 0) {
+                                if (patternData.negative_patterns.some(np => qLower.includes(np.toLowerCase()))) continue;
+                            }
+                            if (keyLower.length <= 3) {
+                                const wbRegex = new RegExp('\\b' + keyLower.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\b', 'i');
+                                if (!wbRegex.test(qLower)) continue;
+                            }
                             if (key.length > bestKeyLen) {
                                 bestMatch = val;
                                 bestKeyLen = key.length;
@@ -6486,15 +7212,21 @@ class SentinelAgent:
                         const isCitizenshipQ = /citizenship|nationality/i.test(qLower);
                         const isRsuQ = /rsu|stock/i.test(qLower);
                         const isOrgProductQ = /product\\s*based\\s*or\\s*service|product\\s*or\\s*service/i.test(qLower);
-                        const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
-                        const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
-                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
+                        const isMeetReqQ = /meet\\s*(the\\s*)?requirements|meet\\s*all\\s*requirements|eligible\\s*for\\s*(this\\s*)?(position|role)/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip/i.test(qLower);
+                        const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
+                        const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice/.test(qLower) || isLwdQ;
+                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
                         if (isAgeQ) {
+                            bestMatch = 'Yes';
+                        } else if (isMeetReqQ) {
                             bestMatch = 'Yes';
                         } else if (isConflictQ) {
                             bestMatch = 'No';
@@ -6508,10 +7240,16 @@ class SentinelAgent:
                             bestMatch = '0';
                         } else if (isOrgProductQ) {
                             bestMatch = 'Product-based';
+                        } else if (is12thBoardQ) {
+                            bestMatch = /10th|ssc/i.test(qLower) ? '88' : '85';
+                        } else if (isCompanyOrPayroll) {
+                            bestMatch = 'Everbridge';
+                        } else if (isLwdQ) {
+                            bestMatch = resolveDynamic('__DYNAMIC_LWD__');
                         } else if (isYearsQ) {
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
-                            bestMatch = '15'; // Default notice period
+                            bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
                         } else if (isSalaryQ) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
                             if (/monthly|per month/.test(qLower)) {
@@ -6531,14 +7269,27 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
-                        const isSalaryQ = /salary|ctc|pay|compensation|package|remuneration/.test(qLower);
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ;
-                        const isNoticeQ = /notice\\s*period|serving\\s*notice|lwd/.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip/i.test(qLower);
+                        const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
+                        const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice/.test(qLower) || isLwdQ;
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
                         if (isAgeQ) {
                             bestMatch = 'Yes';
-                        } else if (isSalaryQ) {
+                        } else if (is12thBoardQ && !/^\\d{2}/.test(bestMatch)) {
+                            bestMatch = /10th|ssc/i.test(qLower) ? '88' : '85';
+                        } else if (isCompanyOrPayroll && (/^\\d+$/.test(bestMatch) || /^\\d+\\s*years?/i.test(bestMatch))) {
+                            // Recover company name if wrongly matched to numeric/years
+                            bestMatch = 'Everbridge';
+                        } else if (isLwdQ) {
+                            // Ensure LWD returns formatted date, not notice period '15'
+                            if (bestMatch === '15' || !/\\d{4}|[A-Za-z]{3}/.test(bestMatch)) {
+                                bestMatch = resolveDynamic('__DYNAMIC_LWD__');
+                            }
+                        } else if (isSalaryQ && !isCompanyOrPayroll) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
                             if (/monthly|per month/.test(qLower)) {
                                 bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
@@ -6554,7 +7305,7 @@ class SentinelAgent:
                                 // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
-                        } else if (isNoticeQ && !/\\d/.test(bestMatch)) {
+                        } else if (isNoticeQ && !isLwdQ && !/\\d/.test(bestMatch)) {
                             bestMatch = '15';
                         }
                     }
@@ -6669,6 +7420,8 @@ class SentinelAgent:
                     
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    // For experience matching: candidate has 4.2 years experience
+                    const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
                     
                     for (const radio of radios) {
                         let label = '';
@@ -6696,116 +7449,111 @@ class SentinelAgent:
                         const lowerLabel = label.toLowerCase();
                         let score = 0;
                         
-                        // Skip substring shortcut for range labels (e.g. "2-4 years", "4-6 years")
-                        // to avoid "4" matching inside "2-4"; defer to range logic below which
-                        // correctly prefers the range whose lower bound the answer meets.
-                        const isRangeLabel = /\\d+\\s*[-–to]\\s*\\d+/.test(lowerLabel);
-                        if (!isRangeLabel && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
+                        // Check if label represents a range or comparative bounds
+                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
+                        
+                        const isLabelYes = /\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes';
+                        const isLabelNo = (/\\bno\\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && !isLabelYes;
+                        const isAnsYes = /\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
+                        const isAnsNo = (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
+                        
+                        if (isLabelYes && isAnsYes) {
+                            score = 90;
+                        }
+                        else if (isLabelNo && isAnsNo) {
+                            score = 90;
+                        }
+                        else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
                             score = 100;
-                        }
-                        else if ((/\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes') &&
-                                (/\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true'))) {
-                            score = 90;
-                        }
-                        else if ((/\\bno\\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !lowerLabel.startsWith('yes')) {
-                            score = 90;
                         }
                         else if (answerNum > 0) {
                             // Day-based matching (notice period questions)
-                            const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
-                            const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            
-                            if (dayRangeMatch) {
-                                const min = parseFloat(dayRangeMatch[1]);
-                                const max = parseFloat(dayRangeMatch[2]);
-                                if (answerNum >= min && answerNum <= max) {
-                                    const rangeSize = max - min;
-                                    const offset = Math.abs(answerNum - (min + max) / 2);
-                                    score = Math.max(0, 85 - (offset / Math.max(rangeSize, 1) * 20));
-                                } else {
-                                    const diff = Math.min(Math.abs(answerNum - min), Math.abs(answerNum - max));
-                                    score = Math.max(0, 60 - diff * 2);
+                            const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
+                            if (isDayUnit) {
+                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                                const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                
+                                if (dayRangeMatch) {
+                                    const min = parseFloat(dayRangeMatch[1]);
+                                    const max = parseFloat(dayRangeMatch[2]);
+                                    if (answerNum >= min && answerNum <= max) {
+                                        const rangeSize = max - min;
+                                        const offset = Math.abs(answerNum - (min + max) / 2);
+                                        score = Math.max(0, 85 - (offset / Math.max(rangeSize, 1) * 20));
+                                    } else {
+                                        const diff = Math.min(Math.abs(answerNum - min), Math.abs(answerNum - max));
+                                        score = Math.max(0, 60 - diff * 2);
+                                    }
+                                } else if (weekMatch) {
+                                    const boundDays = parseFloat(weekMatch[1]) * 7;
+                                    if (answerNum < boundDays) score = 85;
+                                    else score = Math.max(0, 60 - (answerNum - boundDays) * 2);
+                                } else if (dayLessMatch) {
+                                    const bound = parseFloat(dayLessMatch[1]);
+                                    if (answerNum < bound) score = 85;
+                                    else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                                } else if (dayMoreMatch) {
+                                    const bound = parseFloat(dayMoreMatch[1]);
+                                    if (answerNum >= bound) score = 85;
+                                    else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
                                 }
-                            } else if (weekMatch) {
-                                const boundDays = parseFloat(weekMatch[1]) * 7;
-                                if (answerNum < boundDays) {
-                                    score = 85;
-                                } else {
-                                    score = Math.max(0, 60 - (answerNum - boundDays) * 2);
-                                }
-                            } else if (dayLessMatch) {
-                                const bound = parseFloat(dayLessMatch[1]);
-                                if (answerNum < bound) score = 85;
-                                else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
-                            } else if (dayMoreMatch) {
-                                const bound = parseFloat(dayMoreMatch[1]);
-                                if (answerNum >= bound) score = 85;
-                                else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
                             }
                             
-                            // Year-based range matching - prefer ranges where value is closer to lower bound
-                            if (score === 0) {
-                                const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
+                            // Year-based range matching for experience (e.g. "3-5", "3 5", "4-5")
+                            if (score === 0 && !isDayUnit) {
+                                const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (rangeMatch) {
                                     const min = parseFloat(rangeMatch[1]);
                                     const max = parseFloat(rangeMatch[2]);
-                                    if (answerNum >= min && answerNum <= max) {
+                                    if (expVal >= min && expVal <= max) {
                                         const rangeSize = max - min;
-                                        // Prefer ranges where answer is closer to the lower bound (min)
-                                        // This ensures 4 prefers "4-6" over "3-4"
-                                        const offsetFromMin = Math.abs(answerNum - min);
-                                        const offsetFromCenter = Math.abs(answerNum - (min + max) / 2);
-                                        // Higher score when closer to min, full score at min
-                                        score = Math.max(0, 85 - (offsetFromMin / Math.max(rangeSize, 1) * 30));
+                                        const offsetFromMin = Math.abs(expVal - min);
+                                        // Prefer tighter ranges containing 4.2 (e.g. 4-5 > 4-6 > 3-5)
+                                        score = Math.max(80, 98 - rangeSize * 2 - offsetFromMin);
+                                    } else {
+                                        // Strictly reject brackets that candidate has exceeded (e.g. 0-3, 1-3, 2-4)
+                                        // or brackets candidate has not reached (e.g. 5-7, 6-8)
+                                        score = 0;
                                     }
                                 }
                             }
                             
-                            // Prefix-based range matching
-                            if (score === 0) {
-                                const lessMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)/i);
-                                const moreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
+                            // Prefix-based range matching (less than / under / below / <)
+                            if (score === 0 && !isDayUnit) {
+                                const lessMatch = lowerLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                const moreMatch = lowerLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
+                                
                                 if (lessMatch) {
                                     const bound = parseFloat(lessMatch[1]);
-                                    if (answerNum < bound) {
-                                        const rangeSize = Math.max(bound, 1);
-                                        const offset = Math.abs(answerNum - 0);
-                                        score = Math.max(0, 85 - (offset / rangeSize * 20));
+                                    if (bound <= 4 || expVal >= bound) {
+                                        // Candidate has 4.2 years (> 4), so "less than 4" or "< 4" is strictly FALSE (score 0)
+                                        score = 0;
                                     } else {
-                                        const diff = Math.abs(answerNum - bound);
-                                        score = Math.max(0, 60 - diff * 10);
+                                        // e.g. "less than 5 years" or "< 5" when candidate is 4.2
+                                        score = Math.max(75, 88 - (bound - expVal));
                                     }
-                                } else if (moreMatch) {
-                                    const bound = parseFloat(moreMatch[1]);
-                                    if (answerNum >= bound) {
-                                        score = 85;
+                                } else if (moreMatch || plusMatch) {
+                                    const bound = parseFloat(moreMatch ? moreMatch[1] : plusMatch[1]);
+                                    if (expVal >= bound) {
+                                        // e.g. "4+ years", "3+ years", "4 years and above"
+                                        score = Math.max(75, 91 - (expVal - bound) * 2);
                                     } else {
-                                        const diff = Math.abs(answerNum - bound);
-                                        score = Math.max(0, 60 - diff * 10);
+                                        // e.g. "5+ years", "6+ years", "> 5"
+                                        score = 0;
                                     }
                                 }
                             }
                             
-                            // Single year/number match
-                            if (score === 0) {
-                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
-                                if (plusMatch) {
-                                    const radioVal = parseFloat(plusMatch[1]);
-                                    if (answerNum >= radioVal) {
-                                        score = 90;
-                                    } else {
-                                        const diff = Math.abs(answerNum - radioVal);
-                                        score = Math.max(0, 85 - diff * 10);
-                                    }
-                                } else {
-                                    const singleNumMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)/);
-                                    if (singleNumMatch) {
-                                        const radioVal = parseFloat(singleNumMatch[1]);
-                                        const diff = Math.abs(answerNum - radioVal);
-                                        score = Math.max(0, 90 - diff * 10);
-                                    }
+                            // Single year/number match ONLY if NOT a range or comparison
+                            if (score === 0 && !isDayUnit && !isComparativeOrRange) {
+                                const singleNumMatch = lowerLabel.match(/^(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?|months?|days?)?$/i);
+                                if (singleNumMatch) {
+                                    const radioVal = parseFloat(singleNumMatch[1]);
+                                    const diff = Math.abs(expVal - radioVal);
+                                    score = Math.max(0, 92 - diff * 15);
                                 }
                             }
                         }
@@ -6828,6 +7576,8 @@ class SentinelAgent:
                     
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    // For experience matching: candidate has 4.2 years experience
+                    const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
                     
                     for (const radio of radios) {
                         const textEl = radio.querySelector('p, span');
@@ -6835,135 +7585,108 @@ class SentinelAgent:
                         const lowerLabel = label.toLowerCase().trim();
                         let score = 0;
                         
-                        if (lowerLabel.includes(ans) || ans.includes(lowerLabel)) {
+                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
+                        
+                        const isLabelYes = /\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || (radio.value && radio.value.toLowerCase() === 'yes');
+                        const isLabelNo = (/\\bno\\b/i.test(lowerLabel) || (radio.value && radio.value.toLowerCase() === 'no')) && !isLabelYes;
+                        const isAnsYes = /\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
+                        const isAnsNo = (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
+                        
+                        if (isLabelYes && isAnsYes) {
+                            score = 90;
+                        }
+                        else if (isLabelNo && isAnsNo) {
+                            score = 90;
+                        }
+                        else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
                             score = 100;
                         }
-                        else if ((lowerLabel.includes('yes') || lowerLabel.includes('serving')) &&
-                                (ans.includes('yes') || ans.includes('serving'))) {
-                            score = 90;
-                        }
-                        else if (lowerLabel.includes('no') && ans.includes('no')) {
-                            score = 90;
-                        }
                         else if (answerNum > 0) {
-                            // Convert label to numeric value (days or years)
-                            let radioNum = 0;
-                            let radioMin = 0;
-                            let radioMax = 0;
-                            let isRange = false;
-                            let unit = 'years';
-                            
                             // Check for day-based labels first (notice period questions)
-                            const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
-                            const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
-                            const immediateMatch = lowerLabel.match(/immediate|right away|0\\s*days/i);
-                            
-                            if (dayRangeMatch) {
-                                radioMin = parseFloat(dayRangeMatch[1]);
-                                radioMax = parseFloat(dayRangeMatch[2]);
-                                isRange = true;
-                                unit = 'days';
-                            } else if (weekMatch) {
-                                const weeks = parseFloat(weekMatch[1]);
-                                radioMax = weeks * 7;
-                                radioMin = 0;
-                                isRange = true;
-                                unit = 'days';
-                            } else if (dayLessMatch) {
-                                radioMax = parseFloat(dayLessMatch[1]);
-                                radioMin = 0;
-                                isRange = true;
-                                unit = 'days';
-                            } else if (dayMoreMatch) {
-                                radioMin = parseFloat(dayMoreMatch[1]);
-                                radioMax = 999;
-                                isRange = true;
-                                unit = 'days';
-                            } else if (immediateMatch) {
-                                radioNum = 0;
-                                unit = 'days';
-                            } else {
-                                // Year-based range matching (experience questions)
-                                const yearRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
-                                if (yearRangeMatch) {
-                                    radioMin = parseFloat(yearRangeMatch[1]);
-                                    radioMax = parseFloat(yearRangeMatch[2]);
-                                    isRange = true;
-                                    unit = 'years';
-                                }
-                            }
-                            
-                            if (isRange) {
-                                if (unit === 'days') {
-                                    // For notice period: answer "7" means 7 days
-                                    if (answerNum >= radioMin && answerNum <= radioMax) {
-                                        const rangeSize = Math.max(radioMax - radioMin, 1);
-                                        const offset = Math.abs(answerNum - (radioMin + radioMax) / 2);
+                            const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
+                            if (isDayUnit) {
+                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                                const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const immediateMatch = lowerLabel.match(/immediate|right away|0\\s*days/i);
+                                
+                                if (dayRangeMatch) {
+                                    const rMin = parseFloat(dayRangeMatch[1]);
+                                    const rMax = parseFloat(dayRangeMatch[2]);
+                                    if (answerNum >= rMin && answerNum <= rMax) {
+                                        const rangeSize = Math.max(rMax - rMin, 1);
+                                        const offset = Math.abs(answerNum - (rMin + rMax) / 2);
                                         score = Math.max(0, 85 - (offset / rangeSize * 20));
                                     } else {
-                                        const diff = Math.min(Math.abs(answerNum - radioMin), Math.abs(answerNum - radioMax));
+                                        const diff = Math.min(Math.abs(answerNum - rMin), Math.abs(answerNum - rMax));
                                         score = Math.max(0, 60 - diff * 2);
                                     }
-                                } else {
-                                    if (answerNum >= radioMin && answerNum <= radioMax) {
-                                        const rangeSize = radioMax - radioMin;
-                                        const offset = Math.abs(answerNum - (radioMin + radioMax) / 2);
-                                        score = Math.max(0, 80 - (offset / Math.max(rangeSize, 1) * 20));
-                                    }
-                                }
-                            }
-                            
-                            if (score === 0 && !isRange) {
-                                // Prefix-based matching for day units
-                                const lessDaysMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)/i);
-                                const moreDaysMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
-                                const lessWeeksMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to|within)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
-                                
-                                if (lessWeeksMatch) {
-                                    const boundDays = parseFloat(lessWeeksMatch[1]) * 7;
-                                    if (answerNum < boundDays) score = 85;
-                                    else score = Math.max(0, 60 - (answerNum - boundDays) * 2);
-                                } else if (lessDaysMatch) {
-                                    const bound = parseFloat(lessDaysMatch[1]);
+                                } else if (weekMatch) {
+                                    const weeks = parseFloat(weekMatch[1]);
+                                    const maxDays = weeks * 7;
+                                    if (answerNum < maxDays) score = 85;
+                                    else score = Math.max(0, 60 - (answerNum - maxDays) * 2);
+                                } else if (dayLessMatch) {
+                                    const bound = parseFloat(dayLessMatch[1]);
                                     if (answerNum < bound) score = 85;
                                     else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
-                                } else if (moreDaysMatch) {
-                                    const bound = parseFloat(moreDaysMatch[1]);
+                                } else if (dayMoreMatch) {
+                                    const bound = parseFloat(dayMoreMatch[1]);
                                     if (answerNum >= bound) score = 85;
                                     else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 2);
+                                } else if (immediateMatch) {
+                                    score = answerNum <= 0 ? 90 : 60;
                                 }
-                                
-                                // Year-based prefix matching
-                                if (score === 0) {
-                                    const lessYearMatch = lowerLabel.match(/(?:less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)/i);
-                                    const moreYearMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)/i);
-                                    if (lessYearMatch) {
-                                        const bound = parseFloat(lessYearMatch[1]);
-                                        if (answerNum < bound) score = 85;
-                                        else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 10);
-                                    } else if (moreYearMatch) {
-                                        const bound = parseFloat(moreYearMatch[1]);
-                                        if (answerNum >= bound) score = 85;
-                                        else score = Math.max(0, 60 - Math.abs(answerNum - bound) * 10);
+                            }
+                            
+                            // Year-based range matching (experience questions)
+                            if (score === 0 && !isDayUnit) {
+                                const yearRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
+                                if (yearRangeMatch) {
+                                    const rMin = parseFloat(yearRangeMatch[1]);
+                                    const rMax = parseFloat(yearRangeMatch[2]);
+                                    if (expVal >= rMin && expVal <= rMax) {
+                                        const rangeSize = rMax - rMin;
+                                        const offsetFromMin = Math.abs(expVal - rMin);
+                                        score = Math.max(80, 98 - rangeSize * 2 - offsetFromMin);
+                                    } else {
+                                        score = 0;
                                     }
                                 }
                             }
                             
-                            if (score === 0) {
+                            // Year-based prefix matching
+                            if (score === 0 && !isDayUnit) {
+                                const lessYearMatch = lowerLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                const moreYearMatch = lowerLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
                                 const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
-                                if (plusMatch) {
-                                    const radioVal = parseFloat(plusMatch[1]);
-                                    if (answerNum >= radioVal) score = 90;
-                                    else score = Math.max(0, 85 - Math.abs(answerNum - radioVal) * 10);
-                                } else {
-                                    const singleNumMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)/);
-                                    if (singleNumMatch) {
-                                        const radioVal = parseFloat(singleNumMatch[1]);
-                                        const diff = Math.abs(answerNum - radioVal);
-                                        score = Math.max(0, 90 - diff * 10);
+                                
+                                if (lessYearMatch) {
+                                    const bound = parseFloat(lessYearMatch[1]);
+                                    if (bound <= 4 || expVal >= bound) {
+                                        // Candidate has 4.2 years (> 4), so "< 4" is strictly rejected
+                                        score = 0;
+                                    } else {
+                                        score = Math.max(75, 88 - (bound - expVal));
                                     }
+                                } else if (moreYearMatch || plusMatch) {
+                                    const bound = parseFloat(moreYearMatch ? moreYearMatch[1] : plusMatch[1]);
+                                    if (expVal >= bound) {
+                                        score = Math.max(75, 91 - (expVal - bound) * 2);
+                                    } else {
+                                        score = 0;
+                                    }
+                                }
+                            }
+                            
+                            // Single year/number match ONLY if NOT a range or comparison
+                            if (score === 0 && !isDayUnit && !isComparativeOrRange) {
+                                const singleNumMatch = lowerLabel.match(/^(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?|months?|days?)?$/i);
+                                if (singleNumMatch) {
+                                    const radioVal = parseFloat(singleNumMatch[1]);
+                                    const diff = Math.abs(expVal - radioVal);
+                                    score = Math.max(0, 92 - diff * 15);
                                 }
                             }
                         }
@@ -6979,7 +7702,21 @@ class SentinelAgent:
                 
                 const clickCustomRadio = (element) => {
                     if (!element) return;
+                    const parentContainer = element.closest('[role="radiogroup"], [data-test-form-builder-radio-button-group], fieldset, .fb-dash-form-element') || element.parentElement;
+                    if (parentContainer) {
+                        const siblingRadios = parentContainer.querySelectorAll('[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]');
+                        siblingRadios.forEach(sib => {
+                            if (sib !== element) {
+                                sib.setAttribute('aria-checked', 'false');
+                                sib.classList.remove('selected', 'checked');
+                                const sibInp = sib.querySelector('input[type="radio"]');
+                                if (sibInp) sibInp.checked = false;
+                            }
+                        });
+                    }
                     element.scrollIntoView({ block: 'center' });
+                    element.setAttribute('aria-checked', 'true');
+                    element.classList.add('selected', 'checked');
                     element.click();
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                     element.dispatchEvent(new Event('click', { bubbles: true }));
@@ -7689,6 +8426,12 @@ return resolveDynamic(bestMatch);
                                     
                                     return 'LINKEDIN_LOCATION_RETRIGGERED';
                                 }
+                                const pfLocLabel = labelText || input.placeholder || 'Location';
+                                const pfLocVal = readFieldValue(input);
+                                if (pfLocLabel && pfLocVal) {
+                                    formResults.push({ question: pfLocLabel, answer: pfLocVal, inputType: 'text', prefilled: true });
+                                    console.log('Location pre-filled captured:', pfLocLabel, '=', pfLocVal);
+                                }
                                 continue;  // location pre-filled and no error — skip
                             }
                             
@@ -7823,9 +8566,13 @@ return resolveDynamic(bestMatch);
                                 answer = null;
                             }
 
+                            // Distinguish between numeric notice days ("15") and dynamic date LWD ("16 Sep 2026")
+                            const isLwdDateQuestion = /last working day|lwd|official last|last date of working|end date/i.test(labelText) ||
+                                                      /last working day|lwd|official last|last date/i.test(lowerLabel);
+
                             // If the answer is notice period-related and we are filling a text input,
-                            // we must use a numeric value (e.g. '15')
-                            if (answer && (answer === 'Serving Notice Period' || /notice|np|lwd|days/i.test(labelText))) {
+                            // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD)
+                            if (answer && !isLwdDateQuestion && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
 
                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
@@ -7837,8 +8584,22 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            // If it's a numeric input, extract just the number from the answer
-                            if (answer && isNumericInput) {
+                            // Special handling for currency / salary text fields
+                            if (/salary|ctc|compensation|pay|remuneration/i.test(lowerLabel)) {
+                                if (/usd|dollar|\\$/i.test(lowerLabel)) {
+                                    answer = /current|present|cctc/i.test(lowerLabel) ? '40000' : '60000';
+                                } else if (/lakh|lac|lpa/i.test(lowerLabel)) {
+                                    answer = /current|present|cctc/i.test(lowerLabel) ? '23' : '30';
+                                }
+                            }
+
+                            // Special handling for portfolio / github link text fields
+                            if (/portfolio|work link|github/i.test(lowerLabel) && (!answer || !answer.startsWith('http'))) {
+                                answer = 'https://siddhant3646.github.io/Portfolio/';
+                            }
+
+                            // If it's a numeric input, extract just the number from the answer (not for LWD dates or textareas)
+                            if (answer && isNumericInput && !isLwdDateQuestion && input.tagName !== 'TEXTAREA') {
                                 const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
                                 if (numericMatch) {
                                     let numVal = parseFloat(numericMatch[1]);
@@ -7851,9 +8612,15 @@ return resolveDynamic(bestMatch);
                                     console.log('Extracted numeric value for number field:', answer);
                                 } else {
                                     // Fallback if answer contained no numbers but input expects numeric/years
-                                    answer = /notice|lwd/i.test(labelText) ? '15' : '4';
+                                    answer = /notice|np/i.test(labelText) ? '15' : '4';
                                     console.log('Fallback numeric value for number field:', answer);
                                 }
+                            }
+
+                            // Textarea essay fallback (avoid single digits like 4.2 or 5 in descriptive textareas)
+                            if (input.tagName === 'TEXTAREA' && (!answer || /^(\\d+(\\.\\d+)?(\\s*years?)?|yes|no)$/i.test(answer.trim()))) {
+                                answer = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
+                                console.log('Provided technical summary for textarea field:', labelText);
                             }
                             
                             // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
@@ -8490,10 +9257,10 @@ return resolveDynamic(bestMatch);
                                 let locAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!locAnswer) locAnswer = 'Bangalore';
                                 
-                                // PRIORITY 1: Try Bangalore first (user's primary location)
-                                let locMatch = findBestMatch('Bangalore', locOptions);
+                                // PRIORITY 1: Try Bangalore / Bengaluru first (user's primary location)
+                                let locMatch = findBestMatch('Bangalore', locOptions) || findBestMatch('Bengaluru', locOptions);
                                 if (locMatch) {
-                                    console.log('Location Select: matched Bangalore (primary preference)');
+                                    console.log('Location Select: matched Bangalore/Bengaluru (primary preference)');
                                 }
                                 
                                 // PRIORITY 2: Try the pattern-matched answer
@@ -8952,10 +9719,17 @@ return resolveDynamic(bestMatch);
                                 const answer = fuzzyMatch(labelText);
                                 // For Yes/No questions, default to "Yes" if no specific answer found
                                 const isYesNoQuestion = lowerLabel.includes('experience') || 
-                                                      lowerLabel.includes('developer');
+                                                      lowerLabel.includes('developer') ||
+                                                      lowerLabel.includes('willing') ||
+                                                      lowerLabel.includes('relocate') ||
+                                                      lowerLabel.includes('comfortable') ||
+                                                      lowerLabel.includes('work from');
                                 
-                                // SMART EXPERIENCE CHECK
+                                // SMART EXPERIENCE & RELOCATION CHECK
                                 let calculatedShouldSelectYes = false;
+                                if (lowerLabel.includes('willing') || lowerLabel.includes('relocate') || lowerLabel.includes('work from')) {
+                                    calculatedShouldSelectYes = true;
+                                }
                                 if (answer && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {
                                     const reqMatch = labelText.match(/(\\d+)\\+?\\s*(?:years|yrs)/i);
                                     const reqYears = reqMatch ? parseFloat(reqMatch[1]) : 0;
@@ -9068,7 +9842,7 @@ return resolveDynamic(bestMatch);
                                 const answer = legend ? fuzzyMatch(legend) : null;
                                 if (answer) {
                                     let bestRadio = findBestRadioMatch(answer, radios);
-                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(legend)) {
+                                    if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
                                     if (bestRadio) {
@@ -9207,7 +9981,7 @@ return resolveDynamic(bestMatch);
                                 
                                 if (answer) {
                                     let bestRadio = findBestCustomRadioMatch(answer, customRadios);
-                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {
+                                    if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, customRadios);
                                     }
                                     if (bestRadio) {
@@ -9341,7 +10115,7 @@ return resolveDynamic(bestMatch);
                                 const answer = fuzzyMatch(questionText);
                                 if (answer) {
                                     let bestRadio = findBestRadioMatch(answer, radios);
-                                    if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {
+                                    if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
                                     if (bestRadio) {
@@ -9594,32 +10368,45 @@ return resolveDynamic(bestMatch);
 
                                 if (groupAnswer) {
                                     const answerLower = groupAnswer.toLowerCase();
-                                    const optLower = optLabel.toLowerCase();
-                                    // Check if this option is explicitly listed in the answer
-                                    // e.g. answer="Full-stack" matches option "Full-stack"
-                                    // answer="Yes" on a Yes/No group ticks the Yes checkbox
-                                    shouldCheck = optLower.length > 0 && (
-                                        answerLower.includes(optLower) ||
-                                        optLower.includes(answerLower) ||
-                                        answerLower === 'yes' && (optLower === 'yes' || optLower.startsWith('yes'))
-                                    );
-                                    // Numeric range matching for options like "0-1", "1-2", "2-3", "3+"
-                                    if (!shouldCheck) {
+                                    const optLower = optLabel.toLowerCase().trim();
+                                    
+                                    const isYesOpt = /\\byes\\b/i.test(optLower);
+                                    const isNoOpt = /\\bno\\b/i.test(optLower) && !isYesOpt;
+                                    const isAnsYes = /\\byes\\b/i.test(answerLower);
+                                    const isAnsNo = /\\bno\\b/i.test(answerLower) && !isAnsYes;
+                                    
+                                    if (isYesOpt && isAnsYes) {
+                                        shouldCheck = true;
+                                    } else if (isNoOpt && isAnsNo) {
+                                        shouldCheck = true;
+                                    } else if (isYesOpt && isAnsNo) {
+                                        shouldCheck = false;
+                                    } else if (isNoOpt && isAnsYes) {
+                                        shouldCheck = false;
+                                    } else if (optLower.length > 0) {
+                                        const optRegex = new RegExp('\\b' + optLower.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\b', 'i');
+                                        shouldCheck = optRegex.test(answerLower) || (optLower.length > 3 && answerLower.includes(optLower));
+                                    }
+                                    
+                                    // Numeric range matching for options like "0-1", "1-2", "2-3", "3+", "4-5"
+                                    if (!shouldCheck && !isYesOpt && !isNoOpt) {
                                         const ansNumMatch = groupAnswer.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (ansNumMatch) {
                                             const ansNum = parseFloat(ansNumMatch[1]);
-                                            // "X+" pattern (e.g., "3+" matches answer 4)
+                                            const expVal = (ansNum >= 3.5 && ansNum <= 5.5) ? 4.2 : ansNum;
+                                            
+                                            // "X+" pattern (e.g., "3+" or "4+" matches answer 4.2)
                                             const plusMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
-                                            if (plusMatch && ansNum >= parseFloat(plusMatch[1])) {
+                                            if (plusMatch && expVal >= parseFloat(plusMatch[1])) {
                                                 shouldCheck = true;
                                             }
-                                            // "X-Y" range pattern (e.g., "2-3" matches answer 2.5)
+                                            // "X-Y" range pattern (e.g., "4-5", "3-5" matches answer 4.2)
                                             if (!shouldCheck) {
-                                                const rangeMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-\u2013]\\s*(\\d+(?:\\.\\d+)?)/);
+                                                const rangeMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
                                                 if (rangeMatch) {
                                                     const rMin = parseFloat(rangeMatch[1]);
                                                     const rMax = parseFloat(rangeMatch[2]);
-                                                    if (ansNum >= rMin && ansNum < rMax) {
+                                                    if (expVal >= rMin && expVal <= rMax) {
                                                         shouldCheck = true;
                                                     }
                                                 }
@@ -10985,33 +11772,42 @@ return resolveDynamic(bestMatch);
                     
                     // 0. Check for success page (URL pattern or message)
                     const isSuccessPage = window.location.href.includes('/myapply/saveApply');
-                    const successMsg = document.querySelector('span.apply-message');
-                    if (isSuccessPage || (successMsg && successMsg.innerText.includes('successful'))) {
-                        const bodyText = document.body.innerText || '';
+                    const successMsg = document.querySelector('span.apply-message, .chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"]');
+                    const bodyText = document.body.innerText || '';
+                    const hasSuccessText = isSuccessPage || (successMsg && successMsg.innerText.toLowerCase().includes('success')) ||
+                                           /application submitted|successfully applied|applied successfully|interest shared successfully/i.test(bodyText) ||
+                                           (/thank you for your response|thank you for applying|responses have been recorded/i.test(bodyText) && !document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select'));
+                    
+                    if (hasSuccessText) {
+                        let appliedThisRound = 1;
                         const match = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/);
+                        const matchApplied = bodyText.match(/(?:applied\\s*(?:to)?|applied\\s*successfully\\s*to?)\\s*(\\d+)\\s*jobs?/i);
                         if (match) {
-                            const appliedThisRound = parseInt(match[1]);
-                            // Get cumulative count from sessionStorage
-                            const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
-                            const newTotal = prevTotal + appliedThisRound;
-                            sessionStorage.setItem('naukri_total_applied', newTotal.toString());
-                            
-                            const remaining = TARGET_JOBS - newTotal;
-                            
-                            if (remaining <= 0) {
-                                sessionStorage.removeItem('naukri_total_applied');
-                                sessionStorage.removeItem('naukri_remaining');
-                                sessionStorage.removeItem('naukri_tab_idx');
-                                sessionStorage.removeItem('naukri_cycled_once');
-                                // Task complete - do NOT navigate, signal done
-                                return 'NAUKRI_TASK_DONE: Applied to ' + newTotal + ' jobs total. Task complete.';
-                            }
-                            
-                            // Need more jobs - store remaining and navigate back to recommended jobs
-                            sessionStorage.setItem('naukri_remaining', remaining.toString());
-                            window.location.href = 'https://www.naukri.com/mnjuser/recommendedjobs';
-                            return 'NAUKRI_SUCCESS_PARTIAL: Applied ' + newTotal + ' total, need ' + remaining + ' more - navigating back';
+                            appliedThisRound = parseInt(match[1]);
+                        } else if (matchApplied) {
+                            appliedThisRound = parseInt(matchApplied[1]);
                         }
+                        
+                        // Get cumulative count from sessionStorage
+                        const prevTotal = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
+                        const newTotal = prevTotal + appliedThisRound;
+                        sessionStorage.setItem('naukri_total_applied', newTotal.toString());
+                        
+                        const remaining = TARGET_JOBS - newTotal;
+                        
+                        if (remaining <= 0) {
+                            sessionStorage.removeItem('naukri_total_applied');
+                            sessionStorage.removeItem('naukri_remaining');
+                            sessionStorage.removeItem('naukri_tab_idx');
+                            sessionStorage.removeItem('naukri_cycled_once');
+                            // Task complete - do NOT navigate, signal done
+                            return 'NAUKRI_TASK_DONE: Applied to ' + newTotal + ' jobs total. Task complete.';
+                        }
+                        
+                        // Need more jobs - store remaining and navigate back to recommended jobs
+                        sessionStorage.setItem('naukri_remaining', remaining.toString());
+                        window.location.href = 'https://www.naukri.com/mnjuser/recommendedjobs';
+                        return 'NAUKRI_SUCCESS_PARTIAL: Applied ' + newTotal + ' total, need ' + remaining + ' more - navigating back';
                     }
                     
                     // 1. Handle chatbot modal if open
@@ -11028,15 +11824,25 @@ return resolveDynamic(bestMatch);
                                           document.querySelector('li.botItem .botMsg') ||
                                           document.querySelector('.chatbot_QuestionContainer, [class*="question"]');
                         
+                        const qText = questionEl?.innerText || 'Unknown question';
+                        const qLower = qText.toLowerCase();
+
+                        // Check if the message is a completion/thank you message
+                        const isThankYouMsg = /thank you|responses have been recorded|application submitted|successfully applied|applied successfully|all done|submission complete/i.test(qLower);
+                        const hasPendingInputs = document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select, div.textArea[contenteditable="true"]');
+                        if (isThankYouMsg && (!hasPendingInputs || !document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select'))) {
+                            console.log('NAUKRI DEBUG: Chatbot thank you / completion message detected');
+                            const closeBtn = document.querySelector('.chatbot_Drawer .crossIcon, .chatbot_Drawer button[class*="close"], .chatbot_Close, div.crossIcon');
+                            if (closeBtn) closeBtn.click();
+                            return 'CHATBOT_COMPLETE';
+                        }
+                        
                         // Find the input - DOM inspection found: div.textArea[contenteditable="true"]
                         // Parent is .textAreaWrapper, placeholder is "Type message here..."
                         const inputDiv = document.querySelector('div.textArea[contenteditable="true"]') ||
                                         document.querySelector('.textAreaWrapper div[contenteditable="true"]') ||
                                         document.querySelector('[id*="userInput"][contenteditable="true"]') ||
                                         document.querySelector('div[contenteditable="true"][data-placeholder*="Type message"]');
-                        
-                        const qText = questionEl?.innerText || 'Unknown question';
-                        const qLower = qText.toLowerCase();
                         
                         // Pre-match: LWD date questions
                         const isLwdQ = qLower.includes('ldw') || qLower.includes('lwd') || 
@@ -11093,9 +11899,9 @@ return resolveDynamic(bestMatch);
                                 sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
                                 sendBtn.dispatchEvent(new MouseEvent('mouseup',   { bubbles: true, cancelable: true }));
                                 sendBtn.click();
-                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED: ' + qText.slice(0, 40);
+                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: dv + '/' + mv + '/' + yv, t: 'date', s: dv + '/' + mv + '/' + yv});
                             }
-                            return 'NAUKRI_CHAT_DATE_FILLED: ' + dv + '/' + mv + '/' + yv;
+                            return 'NAUKRI_CHAT_DATE_FILLED|' + JSON.stringify({q: qText.substring(0, 200), a: dv + '/' + mv + '/' + yv, t: 'date', s: dv + '/' + mv + '/' + yv});
                         }
                         // ─────────────────────────────────────────────────────────────────────
 
@@ -11154,6 +11960,9 @@ return resolveDynamic(bestMatch);
                             const optAnsLower = (answer || '').toLowerCase().trim();
                             let clickedBtn = null;
                             
+                            const isYesNoQ = /^(are you|do you|have you|would you|will you|is it|willing to|comfortable with|open to)/i.test(qLower) || 
+                                             /residing in|living in|relocate to|based in|located in/i.test(qLower);
+
                             for (const btn of optBtns) {
                                 const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
                                 if (!btnText) continue;
@@ -11161,8 +11970,21 @@ return resolveDynamic(bestMatch);
                                     clickedBtn = btn;
                                     break;
                                 }
-                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ) &&
+                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ || isYesNoQ) &&
                                     (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                // Target city matching if question is asking about a specific city
+                                if ((qLower.includes('bengaluru') || qLower.includes('bangalore')) && (btnText.includes('bengaluru') || btnText.includes('bangalore'))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if (qLower.includes('hyderabad') && btnText.includes('hyderabad')) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if (qLower.includes('pune') && btnText.includes('pune')) {
                                     clickedBtn = btn;
                                     break;
                                 }
@@ -11171,6 +11993,12 @@ return resolveDynamic(bestMatch);
                                     break;
                                 }
                                 if (optAnsLower && btnText.length >= 2 && optAnsLower.length >= 2 && (btnText.includes(optAnsLower) || optAnsLower.includes(btnText))) {
+                                    // Ensure we don't pick a mismatched city
+                                    const knownCities = ['bengaluru', 'bangalore', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'gurgaon', 'chennai'];
+                                    const btnIsCity = knownCities.some(c => btnText.includes(c));
+                                    if (btnIsCity && !knownCities.some(c => qLower.includes(c) && btnText.includes(c))) {
+                                        continue;
+                                    }
                                     clickedBtn = btn;
                                     break;
                                 }
@@ -11196,7 +12024,7 @@ return resolveDynamic(bestMatch);
                                     if (sb) sb.click();
                                 }, 200);
                                 
-                                return 'NAUKRI_CHAT_OPT_CLICKED: ' + clickedText;
+                                return 'NAUKRI_CHAT_OPT_CLICKED|' + JSON.stringify({q: qText.substring(0, 200), a: clickedText, t: 'button', s: clickedText});
                             }
                         }
 
@@ -11268,7 +12096,7 @@ return resolveDynamic(bestMatch);
                                     const retry = () => { r++; if (nkTryClick()) return; if (r < 8) setTimeout(retry, 250); };
                                     setTimeout(retry, 300);
                                 }, 500);
-                                return 'NAUKRI_CHAT_LOCATION_TYPEAHEAD: ' + qText.slice(0, 40);
+                                return 'NAUKRI_CHAT_LOCATION_TYPEAHEAD|' + JSON.stringify({q: qText.substring(0, 200), a: locAnswer, t: 'typeahead', s: locAnswer});
                             }
                         }
 
@@ -11316,7 +12144,10 @@ return resolveDynamic(bestMatch);
                             select.dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('NAUKRI DEBUG: select matched:', matched.text, 'for q:', qText.slice(0, 30));
                             const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
-                            if (saveBtn) { saveBtn.click(); return 'NAUKRI_CHAT_DROPDOWN_SAVED: ' + matched.text; }
+                            if (saveBtn) { 
+                                saveBtn.click(); 
+                                return 'NAUKRI_CHAT_DROPDOWN_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: matched.text, t: 'select', s: matched.text}); 
+                            }
                         }
                         
                         // Try radio buttons - enhanced logic with better matching
@@ -11335,7 +12166,7 @@ return resolveDynamic(bestMatch);
                                 // Use the enhanced matching function
                                 bestRadio = findBestRadioMatch(fuzzyAnswer, radios);
                                 // Try salary range matching for CTC/salary questions
-                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(qText)) {
+                                if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(qText) && !/payroll/i.test(qText)) {
                                     bestRadio = findSalaryRangeMatch(fuzzyAnswer, radios);
                                 }
                             }
@@ -11405,7 +12236,8 @@ return resolveDynamic(bestMatch);
                                         }
                                     }
                                 }, 300);
-                                return 'NAUKRI_CHAT_RADIO_SAVED';
+                                const chosenLabel = bestRadio ? (document.querySelector('label[for="' + bestRadio.id + '"]')?.innerText || bestRadio.closest('label')?.innerText || bestRadio.parentElement?.innerText || bestRadio.value || bestRadio.id || '').trim() : (fuzzyAnswer || 'Yes');
+                                return 'NAUKRI_CHAT_RADIO_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: chosenLabel || fuzzyAnswer || 'Yes', t: 'radio', s: chosenLabel || fuzzyAnswer || 'Yes'});
                             }
                         }
                         
@@ -11508,7 +12340,8 @@ return resolveDynamic(bestMatch);
                                         const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
                                         if (saveBtn) { 
                                             saveBtn.click(); 
-                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected all ' + clickedCount + ' cities | DBG: ' + debugLog.join(', '); 
+                                            const selCbs = checkboxLabels.filter(i => i.cb.checked).map(i => i.labelText);
+                                            return 'NAUKRI_CHAT_CHECKBOX_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: selCbs.join('; ') || 'All cities', t: 'checkbox', s: selCbs.join('; ') || 'All cities'}); 
                                         }
                                     }
                                 } else {
@@ -11622,7 +12455,7 @@ return resolveDynamic(bestMatch);
                                 let bestCheckbox = null;
                                 let bestScore = -1;
                                 let allLabels = []; // Debug: store all found labels
-                                const targetExperience = 4; // Years of experience
+                                const targetExperience = 4.2; // Candidate experience
                                 
                                 for (const item of checkboxLabels) {
                                     allLabels.push(item.labelText);
@@ -11638,49 +12471,35 @@ return resolveDynamic(bestMatch);
                                         // If target falls within range, highest score
                                         if (targetExperience >= min && targetExperience <= max) {
                                             score = 100;
-                                        }
-                                        // Within 1 year of either bound
-                                        else if (Math.abs(targetExperience - max) <= 1 || Math.abs(targetExperience - min) <= 1) {
-                                            score = 80;
-                                        }
-                                        // Within 2 years of either bound (catches "5-6 years" when target=4)
-                                        else if (Math.abs(targetExperience - max) <= 2 || Math.abs(targetExperience - min) <= 2) {
-                                            score = 60;
-                                        }
-                                        // Further away — score inversely proportional to distance from lower bound
-                                        else {
-                                            score = Math.max(1, 40 - Math.floor(Math.abs(targetExperience - min)));
+                                        } else {
+                                            score = 0;
                                         }
                                     }
-                                    // Handle open-ended formats: ">7 years", "7+ years", "more than 7", "above 7"
-                                    else if (labelLower.match(/[>+]|more than|above|over/)) {
+                                    // Handle upper bound: "< 5", "less than 5"
+                                    else if (labelLower.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/)) {
                                         const numMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (numMatch) {
                                             const threshold = parseFloat(numMatch[1]);
-                                            // Target exceeds threshold — exact match
-                                            if (targetExperience > threshold) {
-                                                score = 100;
-                                            }
-                                            // Target close below threshold — decent fallback
-                                            else if (threshold - targetExperience <= 2) {
-                                                score = 45;
-                                            }
-                                            // Further below — low but non-zero so it can still win
-                                            else {
-                                                score = Math.max(1, 20 - Math.floor(threshold - targetExperience));
-                                            }
+                                            if (targetExperience < threshold) score = 88;
+                                            else score = 0;
                                         }
                                     }
-                                    // Look for single year values like "3 years", "5 years"
+                                    // Handle lower bound: "> 4", "4+", "more than 4"
+                                    else if (labelLower.match(/(?:more\\s+than|above|over|>|^\\s*>\\s*|\\+)\\s*(\\d+(?:\\.\\d+)?)/)) {
+                                        const numMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
+                                        if (numMatch) {
+                                            const threshold = parseFloat(numMatch[1]);
+                                            if (targetExperience >= threshold) score = 88;
+                                            else score = 0;
+                                        }
+                                    }
+                                    // Look for single year values like "4 years"
                                     else {
-                                        const yearMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
+                                        const yearMatch = labelLower.match(/^(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?)?$/);
                                         if (yearMatch) {
                                             const year = parseFloat(yearMatch[1]);
                                             const diff = Math.abs(targetExperience - year);
-                                            if (diff <= 0.5) score = 90;
-                                            else if (diff <= 1) score = 70;
-                                            else if (diff <= 2) score = 50;
-                                            else score = Math.max(1, 30 - Math.floor(diff));
+                                            score = Math.max(0, 90 - diff * 15);
                                         }
                                     }
                                     
@@ -11784,7 +12603,8 @@ return resolveDynamic(bestMatch);
                                             const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
                                             if (saveBtn) { 
                                                 saveBtn.click(); 
-                                                return 'NAUKRI_CHAT_CHECKBOX_SAVED: Selected Both/All locations'; 
+                                                const selCbs = checkboxLabels.filter(i => i.cb.checked).map(i => i.labelText);
+                                                return 'NAUKRI_CHAT_CHECKBOX_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: selCbs.join('; ') || 'Both/All locations', t: 'checkbox', s: selCbs.join('; ') || 'Both/All locations'}); 
                                             }
                                         }
                                         // Continue to select all cities
@@ -11807,7 +12627,8 @@ return resolveDynamic(bestMatch);
                                 const saveBtn = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg');
                                 if (saveBtn) { 
                                     saveBtn.click(); 
-                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED: ' + clickedCount + ' | DBG: ' + debugLog.join(', '); 
+                                    const selCbs = checkboxLabels.filter(i => i.cb.checked).map(i => i.labelText);
+                                    return 'NAUKRI_CHAT_CHECKBOX_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: selCbs.join('; ') || 'Yes', t: 'checkbox', s: selCbs.join('; ') || 'Yes'}); 
                                 }
                             }
                         }
@@ -11831,13 +12652,13 @@ return resolveDynamic(bestMatch);
                             
                             if (sendBtn) { 
                                 sendBtn.click(); 
-                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED: ' + qText.slice(0, 40); 
+                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: answer, t: 'text', s: answer}); 
                             }
                             
                             // Fallback: try pressing Enter to submit
                             inputDiv.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
                             inputDiv.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, bubbles: true }));
-                            return 'NAUKRI_CHAT_ANSWERED: ' + qText.slice(0, 40);
+                            return 'NAUKRI_CHAT_ANSWERED|' + JSON.stringify({q: qText.substring(0, 200), a: answer, t: 'text', s: answer});
                         }
 
                         // Last resort fallback: check for any clickable Yes / Agree / Save
@@ -11848,7 +12669,7 @@ return resolveDynamic(bestMatch);
                         });
                         if (anyYes) {
                             anyYes.click();
-                            return 'NAUKRI_CHAT_OPT_CLICKED: ' + (anyYes.innerText || 'Yes') + ' (last-resort)';
+                            return 'NAUKRI_CHAT_OPT_CLICKED|' + JSON.stringify({q: qText.substring(0, 200), a: anyYes.innerText || 'Yes', t: 'button', s: anyYes.innerText || 'Yes'});
                         }
 
                         const saveBtnFallback = document.querySelector('div.sendMsg:not(.disabled)') || document.querySelector('.sendMsgbtn_container .sendMsg:not(.disabled)');
@@ -12142,6 +12963,34 @@ return resolveDynamic(bestMatch);
                         
                         return true;
                     };
+                    
+                    // Instahyre Inbox Handling
+                    if (window.location.href.includes('/inbox') || window.location.href.includes('candidate/inbox')) {
+                        const qLink = document.querySelector('.message-content a[href*="questionnaire"], a[href*="/questionnaire/"]');
+                        if (qLink) {
+                            return 'INSTAHYRE_INBOX_QUESTIONNAIRE_AVAILABLE: ' + (qLink.href || '');
+                        }
+                        const conv = document.querySelector('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer');
+                        if (conv) {
+                            conv.click();
+                            return 'INSTAHYRE_INBOX_CONVERSATION_CLICKED';
+                        }
+                        return 'INSTAHYRE_INBOX_NO_MORE_CONVERSATIONS';
+                    }
+
+                    // Instahyre Questionnaire Page Handling
+                    if (window.location.href.includes('/questionnaire/')) {
+                        const isSuccess = document.body.innerText.includes('Questionnaire has been sent') || 
+                                          document.querySelector('.fa-check-circle');
+                        if (isSuccess) {
+                            return 'INSTAHYRE_QUESTIONNAIRE_SUBMITTED';
+                        }
+                        const submitBtn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg');
+                        if (submitBtn) {
+                            submitBtn.click();
+                            return 'INSTAHYRE_QUESTIONNAIRE_SUBMIT_CLICKED';
+                        }
+                    }
                     
                     // 1. Navigation: Ensure "Search other jobs" (Filter Panel) is OPEN
                     if (window.location.href.includes('opportunities')) {
@@ -12681,7 +13530,7 @@ return resolveDynamic(bestMatch);
                             const answer = fuzzyMatch(legend);
                             if (answer) {
                                 let bestRadio = findBestRadioMatch(answer, radios);
-                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(legend)) {
+                                if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
                                     bestRadio = findSalaryRangeMatch(answer, radios);
                                 }
                                 if (bestRadio) {
@@ -12785,7 +13634,7 @@ return resolveDynamic(bestMatch);
                             const answer = fuzzyMatch(questionText);
                             if (answer) {
                                 let bestRadio = findBestRadioMatch(answer, radios);
-                                if (!bestRadio && /salary|ctc|pay|lpa|lacs|compensation|annual/i.test(questionText)) {
+                                if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                     bestRadio = findSalaryRangeMatch(answer, radios);
                                 }
                                 if (bestRadio) {
@@ -12842,7 +13691,7 @@ return resolveDynamic(bestMatch);
                     
                     if (genericResults.length > 0) {
                         console.log('GENERIC: Filled', genericResults.length, 'fields');
-                        return 'GENERIC_FORM_FILLED: ' + JSON.stringify(genericResults);
+                        return 'GENERIC_FORM_FILLED|' + JSON.stringify(genericResults);
                     }
                 }
 

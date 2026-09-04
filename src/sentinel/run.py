@@ -652,7 +652,9 @@ async def main():
     
     # Define Tasks: (Task Name, Start URL, Prompt)
     tasks = [
-        # Priority 1 & 2: Job applications (Naukri first)
+        # Priority 1: Instahyre Inbox Questionnaire (Testing)
+        ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/opportunities/?matching=true", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
+        # Job applications
         ("Naukri Application", "https://www.naukri.com/mnjuser/recommendedjobs", prompts.NAUKRI_JOB_APPLY_TASK),
         ("LinkedIn Application", "https://www.linkedin.com/jobs/search-results/?currentJobId=4325424519&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=Qwth1ndwtouG0vtFGj%2Bpsg%3D%3D&geoId=102713980&distance=0.0&f_TPR=r86400&f_AL=true", prompts.LINKEDIN_JOB_APPLY_TASK),
         # Other tasks

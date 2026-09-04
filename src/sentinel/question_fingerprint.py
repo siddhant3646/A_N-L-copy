@@ -107,7 +107,6 @@ SYNONYM_MAP = {
     'tel': 'mobile',
     'telephone': 'mobile',
     'mail': 'email',
-    'id': 'email',
     
     # Company
     'employer': 'company',
@@ -671,6 +670,7 @@ VALIDATION_RULES = {
         'patterns': [
             r'^\d+$',  # Integer
             r'^\d+\.\d+$',  # Decimal
+            r'^\d+(\.\d+)?\s*(?:years?|yrs?|months?|lpa|lac|lakhs?|cr)?$',  # Number with optional units
         ],
         'message': 'Should be a number'
     },
@@ -699,6 +699,7 @@ VALIDATION_RULES = {
     'salary_lpa': {
         'patterns': [
             r'^\d+(\.\d+)?$',  # Numeric
+            r'^\d+(\.\d+)?\s*(?:lpa|lac|lakhs?|cr)?$',  # Numeric with LPA unit
         ],
         'range': (0, 100),
         'message': 'Salary should be numeric (in LPA)'
@@ -745,7 +746,7 @@ def detect_expected_format(question: str) -> Optional[str]:
     # Percentage/CGPA
     if any(x in q_lower for x in ['percentage', 'percent', '%']):
         return 'percentage'
-    if any(x in q_lower for x in ['cgpa', 'gpa', 'grade']):
+    if any(re.search(rf'(?<![-_\w]){re.escape(x)}(?![-_\w])', q_lower) for x in ['cgpa', 'gpa', 'grade point', 'academic grade']) or (re.search(r'(?<![-_\w])grade(?![-_\w])', q_lower) and not any(w in q_lower for w in ['production', 'enterprise', 'commercial', 'industry', 'industrial', 'server', 'client'])):
         return 'cgpa'
     
     # Salary
@@ -800,11 +801,13 @@ def validate_answer(answer: str, format_type: str) -> Tuple[bool, str]:
     # Check regex patterns
     if 'patterns' in rules:
         for pattern in rules['patterns']:
-            if re.match(pattern, answer.strip()):
+            if re.match(pattern, answer_clean):
                 # Check range if specified
                 if 'range' in rules:
                     try:
-                        value = float(answer.strip())
+                        # Extract leading float if value contains unit like '23 LPA'
+                        num_m = re.match(r'^(\d+(?:\.\d+)?)', answer_clean)
+                        value = float(num_m.group(1)) if num_m else float(answer_clean)
                         min_val, max_val = rules['range']
                         if not (min_val <= value <= max_val):
                             return False, f"Value should be between {min_val} and {max_val}"

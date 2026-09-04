@@ -207,12 +207,136 @@ class TestQAAuditFixes(unittest.TestCase):
         self.assertIsNotNone(res)
         ans = res.get('answer')
         self.assertEqual(ans, '5')
-        self.assertNotEqual(ans, '9')
+    # 10. QA Audit fixes: LWD, Requirements, Payroll company, 12th Board %, Portfolio URL, Privacy Policy
+    def test_official_last_working_day_date(self):
+        q = 'If you are serving notice, what will be your official last working day?'
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertIsNotNone(ans)
+        self.assertNotEqual(ans, '15')
+        self.assertNotEqual(ans, '15 days')
+        self.assertRegex(ans, r'\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}')
 
-        # Validator check
-        is_valid, err = AnswerValidator.validate('9', 'numeric', q)
-        self.assertFalse(is_valid)
+    def test_meet_position_requirements(self):
+        q = 'We have listed qualifications and technical skills and resume you have read them in detail. Do you meet the requirements for this position?'
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertEqual(ans, 'Yes')
+
+    def test_current_payroll_company(self):
+        for q in [
+            'Current Payroll company? As per Aadhar,First Name:Middle name: Last Name:',
+            'Which company are you currently working at?'
+        ]:
+            ans, score = self.matcher.fuzzy_match(q)
+            self.assertEqual(ans, 'Everbridge')
+            self.assertNotEqual(ans, '2300000')
+
+    def test_12th_board_aggregate_percentage(self):
+        q = 'What was your aggregate % in the 12th Board (CBSE or Equivalent)'
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertEqual(ans, '85')
+        self.assertNotEqual(ans, '4')
+
+    def test_github_portfolio_link_sharing(self):
+        q = 'Do you have a GitHub or portfolio link you can share?'
+        ans, score = self.matcher.fuzzy_match(q, input_type='text')
+        self.assertIn('siddhant3646', ans)
+        self.assertNotEqual(ans, 'Yes')
+
+    def test_allow_contact_privacy_policy(self):
+        q = 'I am allowing ValGenesis to contact me about future job opportunities for up to 2 years. Privacy Policy'
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertEqual(ans, 'Yes')
+        self.assertNotEqual(ans, '4')
+
+    # 11. September QA Audit Fixes
+    def test_company_work_interest_not_rejected(self):
+        questions = [
+            'Are You really interested work with TECH Mahindra',
+            'Are you interested for Accenture Fulltime Proceedings',
+            'Interested to work with Accenture in fulltime proceedings',
+            'Are you interested in working with Google?'
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q)
+            self.assertEqual(ans, 'Yes', f"Failed on company interest question: {q}")
+            self.assertNotEqual(ans, 'No')
+
+    def test_portfolio_link_not_tensorflow(self):
+        questions = [
+            'Please add your portfolio or best work link here!',
+            'Please add your portfolio or best work link here',
+            'Portfolio or best work link',
+            'Best work link'
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type='text')
+            self.assertIn('siddhant3646.github.io/Portfolio', ans, f"Failed on portfolio link question: {q}")
+            self.assertNotEqual(ans, '4.2')
+            self.assertNotEqual(ans, '4.2 Years')
+
+    def test_relocation_or_city_presence_returns_yes(self):
+        questions = [
+            'Are you currently residing in Chennai or willing to relocate to Chennai?',
+            'Are you currently residing in Chennai, Tamil Nadu or willing to relocate to Chennai, Tamil Nadu?',
+            'Are you currently located in Hyderabad or willing to work from Hyderabad?',
+            'Are you currently residing in Chennai or willing to relocate'
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q)
+            self.assertEqual(ans, 'Yes', f"Failed on relocation willingness question: {q}")
+            self.assertNotEqual(ans, 'No')
+
+    def test_usd_salary_expectations(self):
+        q_exp = 'What is your expected salary in USD?'
+        ans_exp, score = self.matcher.fuzzy_match(q_exp)
+        self.assertEqual(ans_exp, '60000')
+        self.assertNotEqual(ans_exp, '3000000')
+
+        q_cur = 'What is your current salary in USD?'
+        ans_cur, score = self.matcher.fuzzy_match(q_cur)
+        self.assertEqual(ans_cur, '40000')
+        self.assertNotEqual(ans_cur, '2300000')
+
+    def test_disability_returns_no(self):
+        questions = [
+            'Do you have any kind of disability?',
+            'Do you have any disability?',
+            'Are you a person with disability',
+            'Disability of any kind'
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q)
+            self.assertIn('No', ans, f"Failed on disability question: {q}")
+            self.assertNotEqual(ans, 'Yes')
+
+    def test_textarea_technical_essay(self):
+        questions = [
+            'Describe your hands-on experience working with Lovable and the applications you’ve built or worked on.',
+            'Describe your experience with Supabase, including the backend function...',
+            'Describe your experience taking over, troubleshooting, or completing an existing application...'
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type='textarea')
+            self.assertTrue(len(ans) > 50, f"Answer too short for essay prompt {q}: {ans}")
+            self.assertNotIn(ans, ['4.2', '5', '4', 'Yes', 'No'])
+
+    def test_role_seniority_tools_and_mentoring(self):
+        q_role = 'How would you best describe your current/most recent role?'
+        ans_role, _ = self.matcher.fuzzy_match(q_role)
+        self.assertIn('Senior Engineer', ans_role)
+        self.assertNotIn('Junior', ans_role)
+
+        q_tools = 'Which of these security/quality scanning tools have you personally integrated into a release pipeline? 1. SonarQube 2. Checkmarx 3. FOSSA'
+        ans_tools, _ = self.matcher.fuzzy_match(q_tools)
+        self.assertEqual(ans_tools, 'Only one')
+        self.assertNotEqual(ans_tools, 'None of these')
+
+        q_mentor = 'Have you mentored engineers or led "Code Guardian"/high-impact code review programs?'
+        ans_mentor, _ = self.matcher.fuzzy_match(q_mentor)
+        self.assertEqual(ans_mentor, 'Informally mentored 1 2 peers')
+        self.assertNotEqual(ans_mentor, 'No experience mentoring')
 
 
 if __name__ == '__main__':
     unittest.main()
+

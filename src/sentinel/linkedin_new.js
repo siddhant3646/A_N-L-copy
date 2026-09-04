@@ -82,7 +82,20 @@
             default: '8'
         },
         willing_relocate: {
-            patterns: ['open to relocate', 'are you open to relocate', 'willing to relocate', 'comfortable working in shift', 'comfortable working in an onsite', 'comfortable working onsite', 'comfortable working in', 'comfortable to work', 'shift timing', 'night shift', 'rotational shift', 'remote work', 'hybrid work', 'onsite setting', 'onsite', 'settle in abroad', 'relocate'],
+            patterns: [
+                'are you currently located in hyderabad or willing to work from hyderabad',
+                'are you currently residing in chennai or willing to relocate',
+                'willing to work from hyderabad',
+                'willing to work from chennai',
+                'willing to work from pune',
+                'willing to work from mumbai',
+                'willing to work from',
+                'open to relocate', 'are you open to relocate', 'willing to relocate',
+                'comfortable working in shift', 'comfortable working in an onsite',
+                'comfortable working onsite', 'comfortable working in', 'comfortable to work',
+                'shift timing', 'night shift', 'rotational shift', 'remote work',
+                'hybrid work', 'onsite setting', 'onsite', 'settle in abroad', 'relocate'
+            ],
             default: 'Yes'
         },
         authorization: {
@@ -242,8 +255,86 @@
             default: '0.5'
         },
         last_working_day_date: {
-            patterns: ['last working day', 'last working date', 'official last working day', 'what is your lwd', 'lwd'],
-            default: '08 Sep 2026'
+            patterns: [
+                'if you are serving notice, what will be your official last working day',
+                'if you are serving notice what will be your official last working day',
+                'what will be your official last working day',
+                'official last working day',
+                'official last working date',
+                'last working day',
+                'last working date',
+                'what is your lwd',
+                'lwd'
+            ],
+            default: '17 Sep 2026'
+        },
+        meet_requirements: {
+            patterns: [
+                'we have listed qualifications and technical skills and resume you have read them in detail. do you meet the requirements for this position',
+                'do you meet the requirements for this position',
+                'meet the requirements for this position',
+                'meet all the requirements',
+                'meet all requirements',
+                'meet the requirements',
+                'meet the qualifications',
+                'eligible for this position',
+                'meet requirements'
+            ],
+            default: 'Yes'
+        },
+        academic_percentage_12th: {
+            patterns: [
+                'what was your aggregate % in the 12th board',
+                'aggregate % in the 12th board (cbse or equivalent)',
+                'aggregate % in the 12th board',
+                '12th board',
+                '12th percentage',
+                '12th marks',
+                'percentage in 12th',
+                'hsc percentage',
+                '12th standard',
+                'intermediate percentage'
+            ],
+            default: '85',
+            numeric_default: '85'
+        },
+        academic_percentage_10th: {
+            patterns: [
+                'what was your aggregate % in the 10th board',
+                'aggregate % in the 10th board (cbse or equivalent)',
+                'aggregate % in the 10th board',
+                '10th board',
+                '10th percentage',
+                '10th marks',
+                'percentage in 10th',
+                'ssc percentage',
+                '10th standard'
+            ],
+            default: '88',
+            numeric_default: '88'
+        },
+        github_portfolio_url: {
+            patterns: [
+                'please add your portfolio or best work link here',
+                'portfolio or best work link',
+                'best work link',
+                'portfolio or work link',
+                'add your portfolio',
+                'portfolio link here',
+                'your portfolio or best work link',
+                'portfolio or best work link here',
+                'do you have a github or portfolio link you can share',
+                'github or portfolio link',
+                'online portfolio url',
+                'please enter your online portfolio url',
+                'portfolio url',
+                'portfolio link',
+                'github url',
+                'github profile'
+            ],
+            default: 'https://siddhant3646.github.io/Portfolio/',
+            text_default: 'https://siddhant3646.github.io/Portfolio/',
+            yes_no_default: 'Yes'
         },
         // Aug 25 QA Additions
         adobe_target: {
@@ -343,6 +434,20 @@
                 'company and employment type'
             ],
             default: 'Not Applicable'
+        },
+        technical_experience_description: {
+            patterns: [
+                'describe your hands-on experience',
+                'describe your hands on experience',
+                'describe your experience',
+                'hands-on experience working with',
+                'hands on experience working with',
+                'experience taking over',
+                'describe your technical experience',
+                'describe your background',
+                'tell us about your experience'
+            ],
+            default: '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.'
         }
     };
     
@@ -424,19 +529,47 @@
         const match = matchQuestionToPattern(questionText);
         
         if (!match) {
+            if (fieldType === 'textarea' && /describe|experience|projects?|architecture|background|overview|responsibilit/i.test(questionText)) {
+                return '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
+            }
             console.log('No pattern match found for question:', questionText);
             return null;
         }
         
         const { category, data } = match;
         
-        // Special handling for LinkedIn experience (numeric only)
+        // Special handling for LinkedIn experience (numeric only for inputs, essay for textareas)
         if (category === 'experience') {
+            if (fieldType === 'textarea' || /describe|tell us|overview|explain|hands-on/i.test(questionText)) {
+                return '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
+            }
             return data.linkedin_default || '4';
         }
+
+        // For location_current, if the question also asks about relocation or working from city, return Yes
+        if (category === 'location_current') {
+            const lowerQ = questionText.toLowerCase();
+            if (lowerQ.includes('relocate') || lowerQ.includes('willing') || lowerQ.includes('work from')) {
+                return 'Yes';
+            }
+            return data.default;
+        }
         
-        // For CTC/salary fields, on LinkedIn we should always return INR value (2300000 or 3000000)
+        // For CTC/salary fields, check USD vs INR
         if (category === 'current_salary' || category === 'expected_salary') {
+            const lowerQ = questionText.toLowerCase();
+            const isUsd = /usd|dollars?|\$/i.test(lowerQ);
+            const isInLakhs = /lakhs?|lacs?|lpa\b/i.test(lowerQ);
+
+            if (isUsd) {
+                if (fieldType === 'select' || fieldType === 'dropdown') {
+                    return category === 'current_salary' ? '$40,000' : '$60,000';
+                }
+                return category === 'current_salary' ? '40000' : '60000';
+            }
+            if (isInLakhs) {
+                return category === 'current_salary' ? '23' : '30';
+            }
             // For dropdown/select with LPA range options, pick the matching range
             if (fieldType === 'select' || fieldType === 'dropdown') {
                 const lpaValue = category === 'current_salary' ? 23 : 30;
@@ -470,6 +603,32 @@
             return data.default;
         }
         
+        // For Last Working Day / Date: return date string, NEVER numeric '15'
+        if (category === 'last_working_day_date') {
+            const lwd = new Date();
+            lwd.setDate(lwd.getDate() + 15);
+            const dd = String(lwd.getDate()).padStart(2, '0');
+            const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
+            const yyyy = lwd.getFullYear();
+            return dd + ' ' + mon + ' ' + yyyy;
+        }
+
+        // For meeting requirements/eligibility: always Yes
+        if (category === 'meet_requirements') {
+            return 'Yes';
+        }
+
+        // For academic percentages (12th / 10th board)
+        if (category === 'academic_percentage_12th' || category === 'academic_percentage_10th') {
+            return data.numeric_default || data.default;
+        }
+
+        // For GitHub / Portfolio URL
+        if (category === 'github_portfolio_url') {
+            if (fieldType === 'radio') return data.yes_no_default || 'Yes';
+            return data.text_default || 'https://siddhant3646.github.io/Portfolio/';
+        }
+
         // LinkedIn/Microsoft email disclosure: return N/A (not a real email)
         if (category === 'linkedin_email_disclosure') {
             return 'N/A';
@@ -1246,6 +1405,7 @@
         const errorMessages = modal.querySelectorAll('.artdeco-inline-feedback__message, [data-test-form-element-error-message], .jobs-easy-apply-form-element__error-message');
         let hasErrors = false;
         let filledAny = false;
+        const qaPairs = [];
         
         for (const error of errorMessages) {
             if (error.offsetParent !== null && error.innerText.trim()) {
@@ -1395,6 +1555,7 @@
                             dropdown.value = langMatch.value;
                             dropdown.dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Directly selected Language option:', langMatch.innerText);
+                            qaPairs.push({ q: labelText || 'Language Proficiency', a: langMatch.innerText.trim(), inputType: 'select', selectedOption: langMatch.innerText.trim() });
                             filledAny = true;
                             selected = true;
                         }
@@ -1408,6 +1569,7 @@
                                 dropdown.value = option.value;
                                 dropdown.dispatchEvent(new Event('change', { bubbles: true }));
                                 console.log('Directly selected', selectValue, 'for native select');
+                                qaPairs.push({ q: labelText || 'Dropdown', a: option.innerText.trim() || selectValue, inputType: 'select', selectedOption: option.innerText.trim() || selectValue });
                                 filledAny = true;
                                 selected = true;
                                 break;
@@ -1415,18 +1577,29 @@
                         }
                     }
                     
-                    // Priority 4 (Universal Fallback): select first non-placeholder option
+                    // Priority 4 (Universal Fallback): select first non-placeholder option (prefer Yes for requirements)
                     if (!selected) {
-                        for (const option of options) {
-                            const text = option.innerText.toLowerCase().trim();
-                            if (text && !text.includes('select') && !text.includes('choose') && text !== '--' && text.length > 0) {
-                                option.selected = true;
-                                dropdown.value = option.value;
-                                dropdown.dispatchEvent(new Event('change', { bubbles: true }));
-                                console.log('Universal fallback selected option:', option.innerText);
-                                filledAny = true;
-                                break;
+                        const isRequirementsQ = lowerLabel.includes('meet') && lowerLabel.includes('requirement');
+                        let fallbackOption = null;
+                        if (isRequirementsQ) {
+                            fallbackOption = options.find(o => /^yes$/i.test((o.innerText || '').trim()) || (o.innerText || '').toLowerCase().includes('yes'));
+                        }
+                        if (!fallbackOption) {
+                            for (const option of options) {
+                                const text = option.innerText.toLowerCase().trim();
+                                if (text && !text.includes('select') && !text.includes('choose') && text !== '--' && text.length > 0) {
+                                    fallbackOption = option;
+                                    break;
+                                }
                             }
+                        }
+                        if (fallbackOption) {
+                            fallbackOption.selected = true;
+                            dropdown.value = fallbackOption.value;
+                            dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Universal fallback selected option:', fallbackOption.innerText);
+                            qaPairs.push({ q: labelText || 'Dropdown', a: fallbackOption.innerText.trim(), inputType: 'select', selectedOption: fallbackOption.innerText.trim() });
+                            filledAny = true;
                         }
                     }
                 } else {
@@ -1435,14 +1608,16 @@
                     
                     // Wait a moment for options to appear
                     setTimeout(() => {
-                        if (selectValue) {
+                        const isRequirementsQ = lowerLabel.includes('meet') && lowerLabel.includes('requirement');
+                        const targetSelectValue = isRequirementsQ ? 'Yes' : selectValue;
+                        if (targetSelectValue) {
                             // Try to find and click specific option
-                            const option = findByText('span, li, div[role="option"]', selectValue, true) ||
-                                          findByText('span, li, div[role="option"]', selectValue);
+                            const option = findByText('span, li, div[role="option"]', targetSelectValue, true) ||
+                                          findByText('span, li, div[role="option"]', targetSelectValue);
                             
                             if (option) {
                                 option.click();
-                                console.log('Selected', selectValue, 'for dropdown');
+                                console.log('Selected', targetSelectValue, 'for dropdown');
                             }
                         } else {
                             // Fallback: try to select first non-placeholder option
@@ -1499,19 +1674,26 @@
                 console.log('Empty input found - Label:', JSON.stringify(labelText), '| Placeholder:', JSON.stringify(placeholder));
                 console.log('Input element:', input.tagName, input.type, input.className.substring(0, 50));
                 
+                const isTextarea = input.tagName.toLowerCase() === 'textarea';
+                
                 // Check if input expects numeric values only
-                const isNumericInput = input.type === 'number' || 
+                const isNumericInput = !isTextarea && (input.type === 'number' || 
                                       input.getAttribute('inputmode') === 'numeric' ||
                                       input.getAttribute('pattern')?.includes('\\d') ||
                                       input.className.toLowerCase().includes('number') ||
-                                      input.className.toLowerCase().includes('decimal');
+                                      input.className.toLowerCase().includes('decimal'));
+                
+                const fieldType = isTextarea ? 'textarea' : (isNumericInput ? 'number' : 'text');
                 
                 // Use QA patterns to get the answer
-                let fillValue = getAnswerForQuestion(labelText, 'text');
+                let fillValue = getAnswerForQuestion(labelText, fieldType);
                 
                 // If no pattern match, use smart fallback based on keywords
                 if (!fillValue) {
-                    if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {
+                    if (isTextarea && /describe|experience|project|responsibilit|background|stack|overview|hands-on/i.test(combinedText)) {
+                        fillValue = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
+                        console.log('Fallback: Filling textarea with technical experience summary');
+                    } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('join') || combinedText.includes('how soon')) {
                         fillValue = '7';
                         console.log('Fallback: Filling notice/join period with: 7');
                     } else if (combinedText.includes('phone') || combinedText.includes('mobile')) {
@@ -1543,8 +1725,13 @@
                 // Handle the LEAVE_BLANK sentinel: clear the field and skip
                 if (fillValue === '__LEAVE_BLANK__') {
                     console.log('LEAVE_BLANK: Clearing field (not applicable):', labelText.substring(0, 60));
-                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                    nativeInputValueSetter.call(input, '');
+                    const proto = isTextarea ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                    if (nativeInputValueSetter) {
+                        nativeInputValueSetter.call(input, '');
+                    } else {
+                        input.value = '';
+                    }
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                     fillValue = null; // skip further processing
@@ -1571,8 +1758,13 @@
                     }
 
                     // Use property setter for React inputs
-                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                    nativeInputValueSetter.call(input, fillValue);
+                    const proto = isTextarea ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+                    if (nativeInputValueSetter) {
+                        nativeInputValueSetter.call(input, fillValue);
+                    } else {
+                        input.value = fillValue;
+                    }
                     
                     // Trigger events to open autocomplete if needed
                     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1581,6 +1773,7 @@
                     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
                     
                     filledAny = true;
+                    qaPairs.push({ q: labelText || 'Text Field', a: fillValue, inputType: isNumericInput ? 'number' : 'text', selectedOption: fillValue });
                     console.log('Filled input successfully');
                     
                     // Check if this is a location/city field that might have autocomplete
@@ -1976,40 +2169,86 @@
                 const answerLower = answer.toLowerCase();
                 let selected = false;
                 
-                if (hasRadios) {
-                    for (const radio of radios) {
-                        const radioLabel = getLabelForInput(radio) || radio.value || '';
-                        const radioText = radioLabel.toLowerCase();
-                        
-                        if (radioText.includes(answerLower) || 
-                            (answerLower === 'yes' && (radioText.includes('yes') || radio.value === 'yes' || radio.value === 'true')) ||
-                            (answerLower === 'no' && (radioText.includes('no') || radio.value === 'no' || radio.value === 'false'))) {
-                            clickRadioReactAware(radio);
-                            console.log('Selected radio:', answer, 'for question:', questionText.substring(0, 50));
-                            filledAny = true;
-                            selected = true;
-                            break;
-                        }
-                    }
+                const numMatch = answer.match(/(\d+(?:\.\d+)?)/);
+                const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
+                
+                const scoreRadio = (text, val) => {
+                    const cleanText = (text || '').toLowerCase().trim();
+                    const cleanVal = (val || '').toLowerCase().trim();
+                    const isComparativeOrRange = /\d+\s*[-–to]\s*\d+|less\s+than|under|fewer\s+than|below|<|more\s+than|over|above|>|\+/i.test(cleanText);
                     
-                    if (!selected && (answerLower === 'yes' || answerLower === 'no')) {
-                        for (const radio of radios) {
-                            const radioLabel = getLabelForInput(radio) || radio.value || '';
-                            const radioText = radioLabel.toLowerCase();
-                            const val = (radio.value || '').toLowerCase();
-                            
-                            // Use word boundaries to avoid false matches like "Noida" containing "no"
-                            if ((answerLower === 'yes' && (radioText.includes('yes') || val === 'yes' || val === 'true')) ||
-                                (answerLower === 'no' && (/\bno\b/.test(radioText) || val === 'no' || val === 'false'))) {
-                                clickRadioReactAware(radio);
-                                console.log('Selected radio (fallback):', answer, 'for question:', questionText.substring(0, 50));
-                                filledAny = true;
-                                selected = true;
-                                break;
+                    const isLabelYes = /\byes\b/i.test(cleanText) || cleanText.includes('serving') || cleanVal === 'yes' || cleanVal === 'true';
+                    const isLabelNo = (/\bno\b/i.test(cleanText) || cleanVal === 'no' || cleanVal === 'false') && !isLabelYes;
+                    const isAnsYes = /\byes\b/i.test(answerLower) || answerLower.includes('serving') || answerLower === 'yes' || answerLower.includes('true');
+                    const isAnsNo = (/\bno\b/i.test(answerLower) || answerLower === 'no' || answerLower.includes('false')) && !isAnsYes;
+                    
+                    if (isLabelYes && isAnsYes) return 90;
+                    if (isLabelNo && isAnsNo) return 90;
+                    if (!isComparativeOrRange && (cleanText.includes(answerLower) || answerLower.includes(cleanText) || cleanVal === answerLower)) return 100;
+                    
+                    if (answerNum > 0) {
+                        const isDayUnit = /days?|weeks?|immediate/i.test(cleanText);
+                        if (isDayUnit) {
+                            const dayRangeMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)\s*days/i);
+                            if (dayRangeMatch) {
+                                const min = parseFloat(dayRangeMatch[1]);
+                                const max = parseFloat(dayRangeMatch[2]);
+                                if (answerNum >= min && answerNum <= max) return 85;
+                            }
+                        }
+                        if (!isDayUnit) {
+                            const rangeMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/);
+                            if (rangeMatch) {
+                                const min = parseFloat(rangeMatch[1]);
+                                const max = parseFloat(rangeMatch[2]);
+                                if (expVal >= min && expVal <= max) {
+                                    return Math.max(80, 98 - (max - min) * 2 - Math.abs(expVal - min));
+                                }
+                                return 0;
+                            }
+                            const lessMatch = cleanText.match(/(?:less\s+than|under|fewer\s+than|below|<)\s*(\d+(?:\.\d+)?)/i);
+                            const moreMatch = cleanText.match(/(?:more\s+than|over|above|>)\s*(\d+(?:\.\d+)?)/i);
+                            const plusMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*\+/);
+                            if (lessMatch) {
+                                const bound = parseFloat(lessMatch[1]);
+                                if (bound <= 4 || expVal >= bound) return 0;
+                                return 70;
+                            }
+                            if (moreMatch || plusMatch) {
+                                const bound = parseFloat(moreMatch ? moreMatch[1] : plusMatch[1]);
+                                if (expVal >= bound) return Math.max(75, 92 - (expVal - bound) * 5);
+                                return 0;
+                            }
+                            const singleNumMatch = cleanText.match(/(\d+(?:\.\d+)?)/);
+                            if (singleNumMatch) {
+                                const radioVal = parseFloat(singleNumMatch[1]);
+                                return Math.max(0, 90 - Math.abs(expVal - radioVal) * 10);
                             }
                         }
                     }
-
+                    return 0;
+                };
+                
+                if (hasRadios) {
+                    let bestRadio = null;
+                    let bestScore = 0;
+                    for (const radio of radios) {
+                        const radioLabel = getLabelForInput(radio) || radio.value || '';
+                        const score = scoreRadio(radioLabel, radio.value);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestRadio = radio;
+                        }
+                    }
+                    if (bestRadio && bestScore > 0) {
+                        clickRadioReactAware(bestRadio);
+                        console.log('Selected radio (score', bestScore, '):', answer, 'for question:', questionText.substring(0, 50));
+                        qaPairs.push({ q: questionText || 'Radio Question', a: answer || 'Yes', inputType: 'radio', selectedOption: answer || 'Yes' });
+                        filledAny = true;
+                        selected = true;
+                    }
+                    
                     if (!selected) {
                         console.log('Radio label matching failed, trying index-based selection for:', answer);
                         const radioArray = Array.from(radios);
@@ -2017,12 +2256,14 @@
                             radioArray[0].click();
                             radioArray[0].dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Selected first radio (Yes index) for:', questionText.substring(0, 50));
+                            qaPairs.push({ q: questionText || 'Radio Question', a: 'Yes', inputType: 'radio', selectedOption: 'Yes' });
                             filledAny = true;
                             selected = true;
                         } else if (answerLower === 'no' && radioArray.length >= 2) {
                             radioArray[1].click();
                             radioArray[1].dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Selected second radio (No index) for:', questionText.substring(0, 50));
+                            qaPairs.push({ q: questionText || 'Radio Question', a: 'No', inputType: 'radio', selectedOption: 'No' });
                             filledAny = true;
                             selected = true;
                         } else if (radioArray.length > 0) {
@@ -2032,6 +2273,7 @@
                             radioArray[idx].click();
                             radioArray[idx].dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Selected radio index', idx, 'as last resort for:', questionText.substring(0, 50));
+                            qaPairs.push({ q: questionText || 'Radio Question', a: idx === 1 ? 'No' : 'Yes', inputType: 'radio', selectedOption: idx === 1 ? 'No' : 'Yes' });
                             filledAny = true;
                             selected = true;
                         }
@@ -2039,19 +2281,23 @@
                 }
                 
                 if (hasCustomRadios && !selected) {
+                    let bestCRadio = null;
+                    let bestScore = 0;
                     for (const cRadio of customRadios) {
-                        const text = (cRadio.innerText || cRadio.getAttribute('aria-label') || cRadio.value || '').toLowerCase().trim();
-                        // Use word boundaries to avoid false matches like "Noida" containing "no"
-                        if (text.includes(answerLower) || 
-                            (answerLower === 'yes' && text.includes('yes')) ||
-                            (answerLower === 'no' && /\bno\b/.test(text))) {
-                            cRadio.click();
-                            cRadio.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Selected custom radio:', answer, 'for question:', questionText.substring(0, 50));
-                            filledAny = true;
-                            selected = true;
-                            break;
+                        const text = (cRadio.innerText || cRadio.getAttribute('aria-label') || cRadio.value || '').trim();
+                        const score = scoreRadio(text, cRadio.value);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestCRadio = cRadio;
                         }
+                    }
+                    if (bestCRadio && bestScore > 0) {
+                        bestCRadio.click();
+                        bestCRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log('Selected custom radio (score', bestScore, '):', answer, 'for question:', questionText.substring(0, 50));
+                        qaPairs.push({ q: questionText || 'Radio Question', a: answer || 'Yes', inputType: 'radio', selectedOption: answer || 'Yes' });
+                        filledAny = true;
+                        selected = true;
                     }
                     
                     if (!selected) {
@@ -2063,6 +2309,7 @@
                             cArr[idx].click();
                             cArr[idx].dispatchEvent(new Event('change', { bubbles: true }));
                             console.log('Selected custom radio by index:', idx, 'for:', questionText.substring(0, 50));
+                            qaPairs.push({ q: questionText || 'Radio Question', a: idx === 1 ? 'No' : 'Yes', inputType: 'radio', selectedOption: idx === 1 ? 'No' : 'Yes' });
                             filledAny = true;
                         }
                     }
@@ -2084,6 +2331,7 @@
                             (safeAnswer === 'yes' && (rLabel.includes('yes') || r.value === 'yes' || r.value === 'true'))) {
                             clickRadioReactAware(r);
                             clicked = true;
+                            qaPairs.push({ q: questionText || 'Radio Question', a: safeAnswer === 'no' ? 'No' : 'Yes', inputType: 'radio', selectedOption: safeAnswer === 'no' ? 'No' : 'Yes' });
                             break;
                         }
                     }
@@ -2091,6 +2339,7 @@
                         const idx = safeAnswer === 'no' && radioArray.length > 1 ? 1 : 0;
                         radioArray[idx].click();
                         radioArray[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                        qaPairs.push({ q: questionText || 'Radio Question', a: idx === 1 ? 'No' : 'Yes', inputType: 'radio', selectedOption: idx === 1 ? 'No' : 'Yes' });
                     }
                     filledAny = true;
                 } else if (hasCustomRadios) {
@@ -2103,6 +2352,7 @@
                             cr.click();
                             cr.dispatchEvent(new Event('change', { bubbles: true }));
                             clicked = true;
+                            qaPairs.push({ q: questionText || 'Radio Question', a: safeAnswer === 'no' ? 'No' : 'Yes', inputType: 'radio', selectedOption: safeAnswer === 'no' ? 'No' : 'Yes' });
                             break;
                         }
                     }
@@ -2110,6 +2360,7 @@
                         const idx = safeAnswer === 'no' && cArr.length > 1 ? 1 : 0;
                         cArr[idx].click();
                         cArr[idx].dispatchEvent(new Event('change', { bubbles: true }));
+                        qaPairs.push({ q: questionText || 'Radio Question', a: idx === 1 ? 'No' : 'Yes', inputType: 'radio', selectedOption: idx === 1 ? 'No' : 'Yes' });
                     }
                     filledAny = true;
                 }
@@ -2117,7 +2368,7 @@
         }
         
         if (filledAny) {
-            return 'LINKEDIN_FORM_FIELDS_FILLED';
+            return 'LINKEDIN_FORM_FILLED' + (qaPairs.length > 0 ? '|' + JSON.stringify(qaPairs) : '');
         }
         
         // CRITICAL: Check for visible dropdown options BEFORE clicking Next
@@ -2192,7 +2443,8 @@
         // Click next/submit
         console.log('Clicking next/submit button');
         nextBtn.click();
-        return 'LINKEDIN_FORM_SUBMITTED';
+        const isSubmit = (nextBtn.innerText || nextBtn.getAttribute('aria-label') || '').toLowerCase().includes('submit');
+        return (isSubmit ? 'LINKEDIN_SUBMITTED' : 'LINKEDIN_FORM_STEP_CONTINUED') + (qaPairs.length > 0 ? '|' + JSON.stringify(qaPairs) : '');
     }
     
     // Run automation

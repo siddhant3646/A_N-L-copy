@@ -298,3 +298,41 @@ DOM Selectors:
 - View Button: button#interested-btn, button.button-interested.btn-success
 - Apply Button: button.btn-primary.new-btn, button.btn-lg.btn-primary
 """
+
+INSTAHYRE_INBOX_QUESTIONNAIRE_TASK = COMMON_CONTEXT + """
+NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true immediately.
+
+GOAL: Navigate to Instahyre Opportunities, click Inbox navigation link, select Unread conversations filter, open recruiter questionnaires from unread messages, answer all questions using QA patterns, submit questionnaires, and log results to CSV.
+
+PHASE 1 - NAVIGATION & INBOX FILTER:
+1. Navigate to Instahyre Opportunities URL: https://www.instahyre.com/candidate/opportunities/?matching=true
+2. Click on the Inbox nav link (<a id="nav-candidates-inbox" href="/candidate/inbox/"><span>Inbox</span><span class="badge" id="unread-conv-count"></span></a>).
+3. Once on the inbox page, click on the Unread radio filter (<input type="radio" ng-click="setConvType(convTypes.UNREAD)" ng-checked="getConvType(convTypes.UNREAD)" ng-value="convTypes.UNREAD" value="1">).
+4. Inspect the first unread conversation card (<div class="conv-candidates"> -> <div class="conv-candidate">).
+
+PHASE 2 - MESSAGE & QUESTIONNAIRE HANDLING:
+1. Click the first unread conversation to view message content
+2. Find questionnaire link (<a href="https://www.instahyre.com/questionnaire/..." target="_blank">Click here to open questionnaire</a>)
+3. Navigate in-place to questionnaire
+4. For each question in <div class="questionnaire-question">:
+   - Read question text from <div class="question-label">
+   - Answer using QA patterns for text/radio/checkbox/dropdown inputs
+   - Log question and answer to qa_results.csv
+5. Click Submit button (<button class="btn btn-primary btn-lg" ng-click="submitQuestionnaire()">Submit</button>)
+6. Verify confirmation message (<div class="text-center"><i class="fa fa-check-circle"></i><h4>Questionnaire has been sent</h4><p>Thank you for your time. You can close this tab.</p></div>)
+7. Immediately complete task upon confirmation verification.
+
+TASK COMPLETE: When questionnaire is submitted and confirmation is verified.
+
+DOM Selectors:
+- Inbox Nav Link: a#nav-candidates-inbox, a[href="/candidate/inbox/"]
+- Unread Radio Filter: input[ng-click*="setConvType(convTypes.UNREAD)"], input[ng-value*="convTypes.UNREAD"], input[value="1"]
+- Candidate Conversations: .conv-candidates .conv-candidate, div[ng-click*="openConvCandidate"]
+- Message Questionnaire Link: .message-content a[href*="/questionnaire/"], a:has-text("Click here to open questionnaire")
+- Question Container: div.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]
+- Question Text: .question-label span, .question-text-heading
+- Answer Text Input: input.text-answer-input, input[ng-model*="question.answer"], textarea.text-answer-input
+- Submit Button: button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg
+- Confirmation: .text-center i.fa-check-circle, h4:has-text("Questionnaire has been sent")
+"""
+

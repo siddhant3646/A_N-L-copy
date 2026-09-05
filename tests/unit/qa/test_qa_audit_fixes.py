@@ -2,7 +2,7 @@ import unittest
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.patterns.pattern_matcher import create_matcher
 from src.patterns.answer_validator import AnswerValidator

@@ -26,7 +26,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.sentinel.self_healing import SelfHealingMatcher
-from src.patterns.pattern_learner import PatternLearner
 
 
 class SentinelCLI:
@@ -35,7 +34,6 @@ class SentinelCLI:
     def __init__(self):
         self.storage_dir = Path.home() / "Desktop" / "sentinel_errors"
         self.self_healing = SelfHealingMatcher(str(self.storage_dir))
-        self.pattern_learner = PatternLearner()
     
     def stats(self, detailed: bool = False, json_output: bool = False) -> str:
         """Show learning statistics."""
@@ -226,9 +224,6 @@ class SentinelCLI:
         if pattern:
             pattern.confidence = 0.8  # Higher confidence for manual entry
             self.self_healing.learning_store._save()
-        
-        # Also learn in pattern learner for semantic matching
-        self.pattern_learner.learn_from_success(question, answer)
         
         return f"✅ Pattern learned: '{question[:50]}...' -> '{answer}'\n   ID: {pattern_id}\n   Confidence: 0.80"
     

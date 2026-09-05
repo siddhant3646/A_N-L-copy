@@ -4,7 +4,6 @@ Test suite for input-type-aware answer generation.
 Tests the integration of:
 - PatternLoader with input_type_defaults
 - PatternMatcher with input type support
-- AnswerNormalizer for different input types
 - Agent integration
 """
 
@@ -14,13 +13,12 @@ import sys
 import os
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 from patterns.pattern_loader import (
     PatternLoader, 
     get_pattern_answer_for_input_type
 )
-from patterns.answer_normalizer import AnswerNormalizer, InputType, normalize_answer
 
 
 class TestPatternLoaderInputTypeDefaults(unittest.TestCase):
@@ -104,146 +102,6 @@ class TestPatternLoaderInputTypeDefaults(unittest.TestCase):
             get_pattern_answer_for_input_type(patterns, 'test_pattern', 'radio'),
             'Simple answer'
         )
-
-
-class TestAnswerNormalizer(unittest.TestCase):
-    """Test AnswerNormalizer functionality."""
-    
-    def setUp(self):
-        """Set up test fixtures."""
-        self.normalizer = AnswerNormalizer()
-    
-    def test_normalize_yes_no_for_radio(self):
-        """Test normalizing Yes/No answers for radio buttons."""
-        # Long Yes answer should become "Yes"
-        self.assertEqual(
-            self.normalizer.normalize("Yes, I have experience with that.", InputType.RADIO),
-            "Yes"
-        )
-        
-        # Short Yes should stay Yes
-        self.assertEqual(
-            self.normalizer.normalize("Yes", InputType.RADIO),
-            "Yes"
-        )
-        
-        # Long No answer should become "No"
-        self.assertEqual(
-            self.normalizer.normalize("No, I do not have experience with that.", InputType.RADIO),
-            "No"
-        )
-    
-    def test_normalize_for_checkbox(self):
-        """Test normalizing answers for checkboxes."""
-        # Yes should become "checked"
-        self.assertEqual(
-            self.normalizer.normalize("Yes", InputType.CHECKBOX),
-            "checked"
-        )
-        
-        # No should become "unchecked"
-        self.assertEqual(
-            self.normalizer.normalize("No", InputType.CHECKBOX),
-            "unchecked"
-        )
-        
-        # Long Yes should become "checked"
-        self.assertEqual(
-            self.normalizer.normalize("Yes, I agree to the terms.", InputType.CHECKBOX),
-            "checked"
-        )
-    
-    def test_normalize_for_number(self):
-        """Test extracting numbers from text."""
-        # Should extract number from text
-        self.assertEqual(
-            self.normalizer.normalize("I have 5 years of experience", InputType.NUMBER),
-            "5"
-        )
-        
-        # Should handle decimals
-        self.assertEqual(
-            self.normalizer.normalize("4 Years", InputType.NUMBER),
-            "4"
-        )
-        
-        # Should handle commas
-        self.assertEqual(
-            self.normalizer.normalize("1,500,000", InputType.NUMBER),
-            "1500000"
-        )
-    
-    def test_normalize_for_text(self):
-        """Test that text answers are minimally transformed."""
-        answer = "This is a detailed answer with multiple sentences."
-        self.assertEqual(
-            self.normalizer.normalize(answer, InputType.TEXT),
-            answer
-        )
-    
-    def test_normalize_with_options(self):
-        """Test normalizing with available options."""
-        options = ["Yes", "No", "Maybe"]
-        
-        # Should match to available option
-        result = self.normalizer.normalize(
-            "Yes, absolutely!",
-            InputType.RADIO,
-            options=options
-        )
-        self.assertEqual(result, "Yes")
-        
-        # Should match "No" option
-        result = self.normalizer.normalize(
-            "No, I don't think so.",
-            InputType.RADIO,
-            options=options
-        )
-        self.assertEqual(result, "No")
-    
-    def test_normalize_for_pattern_with_defaults(self):
-        """Test normalize_for_pattern with input_type_defaults."""
-        pattern_data = {
-            'default': 'Long detailed answer here.',
-            'input_type_defaults': {
-                'radio': 'Yes',
-                'checkbox': 'Yes'
-            }
-        }
-        
-        # Should use input_type_defaults
-        result = self.normalizer.normalize_for_pattern(
-            'Long detailed answer here.',
-            'radio',
-            pattern_data
-        )
-        self.assertEqual(result, 'Yes')
-        
-        # Should fallback to default for unknown type
-        result = self.normalizer.normalize_for_pattern(
-            'Long detailed answer here.',
-            'unknown',
-            pattern_data
-        )
-        self.assertEqual(result, 'Long detailed answer here.')
-
-
-class TestConvenienceFunction(unittest.TestCase):
-    """Test the normalize_answer convenience function."""
-    
-    def test_normalize_answer_function(self):
-        """Test the convenience function."""
-        # Test radio normalization
-        result = normalize_answer("Yes, I agree.", "radio")
-        self.assertEqual(result, "Yes")
-        
-        # Test checkbox normalization
-        result = normalize_answer("No", "checkbox")
-        self.assertEqual(result, "unchecked")
-        
-        # Test number extraction
-        result = normalize_answer("4 Years", "number")
-        self.assertEqual(result, "4")
 
 
 class TestJSONConfig(unittest.TestCase):

@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.patterns.pattern_matcher import create_matcher
 from src.patterns.input_aware_resolver import InputAwareResolver, Option, InputType as ResolverInputType

@@ -79,3 +79,6 @@ score=*
 # Config backups
 *.bak
 *.backup_*.json
+
+# JSON repair backups
+config/*.bak-*

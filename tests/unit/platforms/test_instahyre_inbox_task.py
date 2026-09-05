@@ -6,7 +6,7 @@ import csv
 import json
 from unittest.mock import MagicMock, AsyncMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.patterns.pattern_matcher import create_matcher
 from src.sentinel.agent import SentinelAgent
@@ -86,11 +86,15 @@ class TestInstahyreInboxTask(unittest.TestCase):
                     self.assertEqual(r["status"], "submitted")
 
     async def _async_test_inbox_flow_from_opportunities(self):
-        """Simulate workflow starting from opportunities URL -> click inbox link -> click unread radio -> questionnaire."""
+        """Simulate workflow starting from opportunities URL -> click inbox link -> click unread radio -> questionnaire -> ack."""
         mock_page = AsyncMock()
         mock_page.url = "https://www.instahyre.com/candidate/opportunities/?matching=true"
+        mock_editor = AsyncMock()
+        mock_locator = MagicMock()
+        mock_locator.first = mock_editor
+        mock_page.locator = MagicMock(return_value=mock_locator)
 
-        # Mock evaluate calls for opportunities -> inbox -> unread radio -> questionnaire flow:
+        # Mock evaluate calls for opportunities -> inbox -> unread radio -> questionnaire -> ack -> end:
         # 1. clicked inbox nav link -> 'INBOX_CLICKED'
         # 2. unread radio clicked -> 'UNREAD_RADIO_CLICKED'
         # 3. conv count -> 1
@@ -102,6 +106,12 @@ class TestInstahyreInboxTask(unittest.TestCase):
         # 9. fill question 2 -> 'FILLED_TEXT'
         # 10. submit button -> 'SUBMIT_CLICKED'
         # 11. confirmation -> True
+        # 12. _send_instahyre_ack: editor found -> True
+        # 13. _send_instahyre_ack: text verified in editor
+        # 14. _send_instahyre_ack: button state -> enabled
+        # 15. _send_instahyre_ack: click send -> None
+        # 16. loop turn 1: click next conv -> NO_MORE_UNREAD
+        # 17. scroll check -> False
         mock_page.evaluate.side_effect = [
             'INBOX_CLICKED',
             'UNREAD_RADIO_CLICKED',
@@ -116,17 +126,26 @@ class TestInstahyreInboxTask(unittest.TestCase):
             'FILLED_TEXT',
             'FILLED_TEXT',
             'SUBMIT_CLICKED',
-            True
+            True,
+            True,
+            "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.",
+            {'found': True, 'disabled': False},
+            None,
+            {'status': 'NO_MORE_UNREAD'},
+            False
         ]
 
         agent = SentinelAgent()
         agent._page = mock_page
 
-        result = await agent._handle_instahyre_inbox_task()
+        with patch("asyncio.sleep", AsyncMock()):
+            result = await agent._handle_instahyre_inbox_task()
+
         self.assertTrue(result)
         self.assertTrue(agent.state.task_complete)
         self.assertEqual(agent.metrics['applications_submitted'], 1)
         self.assertEqual(agent.metrics['questions_answered'], 2)
+        self.assertEqual(agent.metrics['instahyre_acks_sent'], 1)
         # Verify in-place goto call to questionnaire
         self.assertGreaterEqual(mock_page.goto.await_count, 1)
 
@@ -134,6 +153,53 @@ class TestInstahyreInboxTask(unittest.TestCase):
         """Run async inbox execution flow."""
         import asyncio
         asyncio.run(self._async_test_inbox_flow_from_opportunities())
+
+    async def _async_test_inbox_multiple_unread_conversations(self):
+        """Verify processing multiple unread messages: one with questionnaire, one without."""
+        mock_page = AsyncMock()
+        mock_page.url = "https://www.instahyre.com/candidate/inbox/"
+
+        # Mock evaluate calls:
+        # 1. unread radio clicked -> 'UNREAD_RADIO_CLICKED'
+        # 2. conv_count -> 2
+        # 3. turn 0: click card 1 -> {'status': 'CLICKED', 'id': 'card-1', 'name': 'Pallavi Naik', 'job': 'Infosys'}
+        # 4. turn 0: q_url scan -> 'https://www.instahyre.com/questionnaire/112329/6204425826'
+        # 5. turn 1: click card 2 -> {'status': 'CLICKED', 'id': 'card-2', 'name': 'Rohan Gupta', 'job': 'Google'}
+        # 6. turn 1: q_url scan -> None
+        # 7. turn 2: click card 3 -> {'status': 'NO_MORE_UNREAD'}
+        # 8. scroll check -> False
+        mock_page.evaluate.side_effect = [
+            'UNREAD_RADIO_CLICKED',
+            2,
+            {'status': 'CLICKED', 'id': 'card-1', 'name': 'Pallavi Naik', 'job': 'Infosys'},
+            'https://www.instahyre.com/questionnaire/112329/6204425826',
+            {'status': 'CLICKED', 'id': 'card-2', 'name': 'Rohan Gupta', 'job': 'Google'},
+            None,
+            {'status': 'NO_MORE_UNREAD'},
+            False
+        ]
+
+        agent = SentinelAgent()
+        agent._page = mock_page
+
+        with patch.object(agent, '_answer_instahyre_questionnaire', new=AsyncMock(return_value=True)) as mock_answer, \
+             patch.object(agent, '_send_instahyre_ack', new=AsyncMock(return_value=True)) as mock_ack, \
+             patch("asyncio.sleep", AsyncMock()):
+            result = await agent._handle_instahyre_inbox_task()
+
+        self.assertTrue(result)
+        self.assertTrue(agent.state.task_complete)
+        # Verify questionnaire answered for card 1
+        mock_answer.assert_called_once_with(mock_page, 'https://www.instahyre.com/questionnaire/112329/6204425826')
+        # Verify two acks sent: card 1 with has_questionnaire=True, card 2 with has_questionnaire=False
+        self.assertEqual(mock_ack.await_count, 2)
+        mock_ack.assert_any_await(mock_page, "https://www.instahyre.com/candidate/inbox/", "Pallavi Naik", has_questionnaire=True)
+        mock_ack.assert_any_await(mock_page, "https://www.instahyre.com/candidate/inbox/", "Rohan Gupta", has_questionnaire=False)
+
+    def test_inbox_multiple_unread_conversations(self):
+        """Run async multiple unread conversations execution flow."""
+        import asyncio
+        asyncio.run(self._async_test_inbox_multiple_unread_conversations())
 
 
 if __name__ == '__main__':

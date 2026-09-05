@@ -130,6 +130,10 @@ class PatternMatcher:
                 return ('40000' if is_current else '60000'), max(score, 0.98)
             elif is_in_lakhs:
                 return ('23' if is_current else '30'), max(score, 0.98)
+            elif ('expectation' in ql or 'expected' in ql or 'requirement' in ql):
+                lpa_m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*lpa', al, re.IGNORECASE)
+                if lpa_m:
+                    return lpa_m.group(1), max(score, 0.98)
 
         # 5. Textarea Technical Essay Handling (avoid short digits like 4.2 or 5 in essays)
         is_textarea_essay = (input_type == 'textarea' or bool(re.search(r'\b(describe your|tell us about|walk through|hands-on experience working with|experience taking over)\b', ql)))
@@ -155,7 +159,7 @@ class PatternMatcher:
 
         # 8. Detect company / payroll company questions vs numeric / salary false positives
         is_company_q = bool(re.search(r'\b(current company|payroll company|which company|working at|current payroll|current employer)\b', ql) and
-                           not re.search(r'\b(relative|family|experience|years|how many)\b', ql))
+                           not re.search(r'\b(relative|family|experience|years|how many|early release|resign|notice|buy ?out|negotiable)\b', ql))
         if is_company_q:
             if re.search(r'^\d+$', al) or al.lower() in ('yes', 'no', '4.2', '4.2 years', '4 years'):
                 return 'Everbridge', max(score, 0.98)
@@ -182,7 +186,7 @@ class PatternMatcher:
         )
 
         if is_num_years:
-            if al.lower() in ('yes', 'true', '1') or not re.search(r'\d', al):
+            if al.lower() in ('yes', 'true', '1') or (not re.search(r'\d', al) and len(al) <= 20):
                 return '4.2 Years', max(score, 0.95)
             return answer, score
 
@@ -196,7 +200,8 @@ class PatternMatcher:
                 if 'based' in ql or 'located' in ql or 'currently in' in ql or 'stay' in ql:
                     return 'Yes', max(score, 0.95)
 
-        if not is_yes_no and ('notice period' in ql or 'notice' in ql) and al.lower() in ('yes', 'true', '1') and not is_lwd:
+        if not is_yes_no and ('notice period' in ql or 'notice' in ql) and al.lower() in ('yes', 'true', '1') \
+                and not is_lwd and not re.search(r'\b(negotia|buy ?out|early release|resign)\w*', ql):
             return '15', max(score, 0.95)
 
         return answer, score

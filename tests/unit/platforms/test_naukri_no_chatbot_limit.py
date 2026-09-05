@@ -3,7 +3,7 @@ import os
 import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.sentinel.agent import SentinelAgent
 

@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from typing import Optional, Dict, List, Tuple, Any
 
+from src.core.profile_store import ProfileStore
 from src.sentinel.schemas import (
     SentinelState
 )
-from src.sentinel.prompts import NAUKRI_TASK_CONTEXT
 from src.sentinel.question_classifier import (
     QuestionClassifier, QuestionCategory
 )
@@ -25,7 +25,6 @@ from src.patterns.input_aware_resolver import (
     InputAwareResolver, InputType as ResolverInputType, Option
 )
 from src.sentinel.self_healing import SelfHealingMatcher
-from src.patterns.pattern_learner import PatternLearner
 from src.patterns.pattern_matcher import create_matcher
 from src.sentinel.rate_limiter import RateLimiter
 from src.sentinel.form_state_validator import FormStateValidator
@@ -56,8 +55,9 @@ ASYNC_JOB_KEYWORDS = [
 
 class SentinelAgent:
     """
-    Sentinel Agent - 100% Scripted Browser Automation.
-    Operates on DOM to control a browser without LLM calls.
+    Sentinel Agent - Hybrid Browser Automation.
+    Operates on DOM with local heuristics and type-aware patterns,
+    enhanced with Google AI Studio Gemma for intelligent questionnaire answering.
     """
     
     MAX_STEPS_LINKEDIN = 120  # LinkedIn tasks get more steps
@@ -69,11 +69,12 @@ class SentinelAgent:
     METRICS_LOG = os.path.expanduser("~/Desktop/sentinel_errors/metrics.jsonl")
     # Single consolidated sheet of every question answered or rejected.
     # Columns: timestamp, platform, url, question, answer, input_type, options,
-    # selected_option, confidence, status, error_message
+    # selected_option, confidence, status, error_message, source, job_id_or_url
     QA_RESULTS_CSV = os.path.join(SCREENSHOT_DIR, "qa_results.csv")
     QA_RESULTS_COLUMNS = [
         "timestamp", "platform", "url", "question", "answer", "input_type",
         "options", "selected_option", "confidence", "status", "error_message",
+        "source", "job_id_or_url",
     ]
     
     def __init__(self, browser=None):
@@ -83,8 +84,14 @@ class SentinelAgent:
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None  # Timestamp when LinkedIn can resume
         self.naukri_rate_limit_until = None  # Timestamp when Naukri can resume
+        self._current_job_url: str = ""  # Track active job URL / ID across platforms
+        self._llm_client = None  # Lazy-loaded Gemma LLM client
+        self.resume_file_path: str = os.getenv("RESUME_FILE_PATH", "/Users/siddhant/Desktop/Resume/SiddhantSinghResume2026.pdf")
+        if not os.path.exists(self.resume_file_path):
+            print(f"   ⚠️ [SentinelAgent] Warning: Resume file not found at {self.resume_file_path}")
+        else:
+            print(f"   📄 [SentinelAgent] Resume file validated: {self.resume_file_path}")
         self._linkedin_scroll_attempted = False  # Track if we tried scrolling for null cards
-        self._task_context = NAUKRI_TASK_CONTEXT
         self._steps_since_cleanup = 0  # Track steps for memory cleanup
         self._injected_contexts = set()  # Track which browser contexts have patterns injected
         self._logged_questions = set()  # Track already logged questions to avoid duplicates
@@ -110,7 +117,7 @@ class SentinelAgent:
             'applications_submitted': 0,
             'questions_answered': 0,
             'errors_encountered': 0,
-
+            'instahyre_acks_sent': 0,
             'login_prompts': 0,
             'steps_taken': 0,
             'success': False
@@ -133,9 +140,15 @@ class SentinelAgent:
         # NEW: Input-aware resolver and self-healing components
         self._input_resolver = InputAwareResolver()
         self._self_healing = SelfHealingMatcher()
-        self._pattern_learner = PatternLearner()
         self._error_detector = None  # Initialized when page is available
-        self._error_recovery = None
+
+        # Profile data (resume.json) - graceful fallback if missing
+        try:
+            self._profile_store = ProfileStore()
+            self._profile_store.load()
+        except Exception as e:
+            print(f"   ⚠️ ProfileStore unavailable: {e}")
+            self._profile_store = None
         
         # Resilience components
         self._rate_limiter = RateLimiter()
@@ -143,18 +156,23 @@ class SentinelAgent:
         self._session_manager = SessionManager()
         self._enhanced_validator = EnhancedAnswerValidator()
     
+    def _get_llm_client(self):
+        """Get or initialize the Gemma LLM client."""
+        if self._llm_client is None:
+            try:
+                from src.sentinel.llm_client import GemmaLLMClient
+                self._llm_client = GemmaLLMClient()
+            except Exception as e:
+                print(f"   ⚠️ Failed to initialize GemmaLLMClient: {e}")
+        return self._llm_client
+    
     def _init_error_detection(self):
         """Initialize error detection components when page is available."""
         if self._page:
-            from src.sentinel.ui_error_detector import UIErrorDetector, UIErrorRecovery
+            from src.sentinel.ui_error_detector import UIErrorDetector
             self._error_detector = UIErrorDetector(
                 page=self._page,
                 screenshot_dir=self.SCREENSHOT_DIR
-            )
-            self._error_recovery = UIErrorRecovery(
-                detector=self._error_detector,
-                self_healing_matcher=self._self_healing,
-                input_resolver=self._input_resolver
             )
     
     def _get_patterns_for_js(self) -> Dict[str, Any]:
@@ -223,13 +241,16 @@ class SentinelAgent:
         stopwords_json = json.dumps(list(STOP_WORDS))
         exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
         exact_match_keys_json = json.dumps(exact_match_keys)
+        profile_json = json.dumps(self._profile_store.to_js_dict()) if self._profile_store else '{}'
         
         init_script = (
+            f"window.__SENTINEL_DEBUG__ = {'true' if os.getenv('SENTINEL_JS_DEBUG') else 'false'};\n"
             f"window.__SENTINEL_PATTERNS__ = {patterns_json};\n"
             f"window.__SENTINEL_PATTERNS_WITH_DEFAULTS__ = {patterns_with_defaults_json};\n"
             f"window.__SENTINEL_SYNONYMS__ = {synonyms_json};\n"
             f"window.__SENTINEL_STOPWORDS__ = {stopwords_json};\n"
             f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
+            f"window.__SENTINEL_PROFILE__ = {profile_json};\n"
         )
         
         try:
@@ -265,13 +286,11 @@ class SentinelAgent:
         self._naukri_no_chatbot_count = 0
         self._naukri_last_batch_size = 0
         self._linkedin_scroll_attempted = False
-        self._task_context = NAUKRI_TASK_CONTEXT
         self._current_platform = "default"
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None
         self.naukri_rate_limit_until = None
         self._error_detector = None
-        self._error_recovery = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
         self.state = SentinelState()
@@ -282,6 +301,7 @@ class SentinelAgent:
             'applications_submitted': 0,
             'questions_answered': 0,
             'errors_encountered': 0,
+            'instahyre_acks_sent': 0,
             'login_prompts': 0,
             'steps_taken': 0,
             'success': False
@@ -1258,12 +1278,7 @@ class SentinelAgent:
         healed = self._self_healing.get_learned_answer(question)
         if healed and healed[1] >= 0.5:
             return healed
-        
-        # Check pattern learner
-        learned = self._pattern_learner.find_answer(question)
-        if learned and learned[1] >= 0.5:
-            return learned
-        
+
         return None
     
     async def _attempt_form_recovery(self) -> bool:
@@ -1301,6 +1316,8 @@ class SentinelAgent:
                 error_message=error.message or "",
                 url=self._page.url if self._page else "",
                 platform=error.platform.value if error.platform else "",
+                source="self_healing",
+                job_id_or_url=getattr(self, '_current_job_url', ''),
             )
 
             # Desync-first try: if the field already has a visible value but is
@@ -1498,6 +1515,8 @@ class SentinelAgent:
                 confidence="",
                 status="unknown",
                 platform=context,
+                source="unknown",
+                job_id_or_url=getattr(self, '_current_job_url', ''),
             )
 
             print("   📝 Logged unknown question to file")
@@ -1507,7 +1526,8 @@ class SentinelAgent:
     def _log_all_questions(self, question: str, answer: str, context: str = "", 
                            match_confidence: str = "", input_type: str = "",
                            options: List[str] = None, selected_option: str = "",
-                           prefilled: bool = False):
+                           prefilled: bool = False, source: str = "",
+                           job_id_or_url: str = ""):
         """Log ALL questions encountered during Naukri and LinkedIn tasks for analysis."""
         try:
             # Avoid duplicate logging (same question in same session)
@@ -1545,6 +1565,8 @@ class SentinelAgent:
                 status=status,
                 url=self._page.url if self._page else "",
                 platform=context or self._current_platform or "",
+                source=source or "pattern_match",
+                job_id_or_url=job_id_or_url or getattr(self, '_current_job_url', ''),
             )
             
             # Track in metrics
@@ -1556,7 +1578,7 @@ class SentinelAgent:
                        options: List[str] = None, selected_option: str = "",
                        confidence="", status: str = "submitted",
                        error_message: str = "", url: str = "",
-                       platform: str = ""):
+                       platform: str = "", source: str = "", job_id_or_url: str = ""):
         """
         Write a single row to the consolidated QA results CSV sheet.
 
@@ -1576,9 +1598,12 @@ class SentinelAgent:
             error_message: Validation error message if status is validation_error
             url: Page URL
             platform: Platform context (linkedin, naukri, instahyre)
+            source: Source of answer (llm_gemma, pattern_match, pattern_fallback, rule, etc.)
+            job_id_or_url: Job ID or application URL
         """
         try:
             os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
+            resolved_job_url = job_id_or_url or getattr(self, '_current_job_url', '') or url or (self._page.url if self._page else "")
             row = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "platform": platform or self._current_platform or "",
@@ -1591,6 +1616,8 @@ class SentinelAgent:
                 "confidence": str(confidence) if confidence != "" else "",
                 "status": status,
                 "error_message": error_message or "",
+                "source": source or "pattern_match",
+                "job_id_or_url": resolved_job_url,
             }
             write_header = not os.path.exists(self.QA_RESULTS_CSV)
             with open(self.QA_RESULTS_CSV, "a", encoding="utf-8", newline="") as f:
@@ -1683,6 +1710,8 @@ class SentinelAgent:
                 status="submitted",
                 url=url,
                 platform=context,
+                source=question_data.get("source", "pattern_match"),
+                job_id_or_url=question_data.get("job_id_or_url", getattr(self, '_current_job_url', '')),
             )
 
             print(f"   📝 Logged detailed question: {question[:50]}...")
@@ -2362,7 +2391,7 @@ class SentinelAgent:
             'applications_submitted': 0,
             'questions_answered': 0,
             'errors_encountered': 0,
-
+            'instahyre_acks_sent': 0,
             'login_prompts': 0,
             'steps_taken': 0,
             'success': False
@@ -2514,6 +2543,27 @@ class SentinelAgent:
                         except Exception as e:
                             print(f"   ⚠️ Failed to parse question data from result: {e}")
                 
+                # Handle script-level errors (e.g. "ERROR" / "ERROR: <detail>" from
+                # the scripted fallback) BEFORE any substring-based dispatch, so an
+                # exception message containing keywords like "SUCCESS" can never be
+                # misinterpreted as a success signal.
+                if isinstance(result, str) and (result == 'ERROR' or result.startswith('ERROR:')):
+                    self._script_error_count = getattr(self, '_script_error_count', 0) + 1
+                    print(f"   ⚠️ Script error ({self._script_error_count}/10): {result[:200]}")
+                    self.state.errors.append(result)
+                    self.metrics['errors_encountered'] += 1
+                    try:
+                        platform = self._detect_platform() or "default"
+                        self._rate_limiter.record_error(platform)
+                    except Exception:
+                        pass
+                    if self._script_error_count >= 10:
+                        print("🚨 Too many consecutive script errors. Stopping.")
+                        break
+                    await asyncio.sleep(random.uniform(2, 4))
+                    continue
+                self._script_error_count = 0
+                
                 # Handle results
                 if result == 'TASK_COMPLETE': 
                     print("🎉 Task Completed Successfully!")
@@ -2626,7 +2676,7 @@ class SentinelAgent:
                                     }
                                     if (currentJobId) {
                                         window.__skippedJobIds.add(currentJobId);
-                                        console.log('Marked job as skipped (location fallback exhausted):', currentJobId);
+                                        window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped (location fallback exhausted):', currentJobId);
                                     }
                                 }""")
                             except Exception as e:
@@ -2666,7 +2716,7 @@ class SentinelAgent:
                                     locationInput.dispatchEvent(new Event('input', { bubbles: true }));
                                     locationInput.dispatchEvent(new Event('change', { bubbles: true }));
                                     locationInput.dispatchEvent(new Event('blur', { bubbles: true }));
-                                    console.log('Location field cleared');
+                                    window.__SENTINEL_DEBUG__&&console.log('Location field cleared');
                                     return 'CLEARED';
                                 }
                                 return 'NOT_FOUND';
@@ -2697,7 +2747,7 @@ class SentinelAgent:
                                     for (const btn of buttons) {
                                         const text = btn.innerText.toLowerCase();
                                         if ((text.includes('next') || text.includes('continue')) && btn.offsetParent !== null) {
-                                            console.log('Force clicking button:', btn.innerText);
+                                            window.__SENTINEL_DEBUG__&&console.log('Force clicking button:', btn.innerText);
                                             btn.click();
                                             btn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                             btn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
@@ -3133,6 +3183,9 @@ class SentinelAgent:
                             await self._close_linkedin_modal()
                             break  # Skip to next job
                         
+                        # Handle resume upload before scripted fallback / next step
+                        await self._handle_linkedin_resume_upload(self._page)
+
                         next_result = await self._handle_scripted_fallback()
                         print(f"   📜 Autopilot: {next_result}")
                         
@@ -3318,7 +3371,7 @@ class SentinelAgent:
                                         }
                                         if (currentJobId) {
                                             window.__skippedJobIds.add(currentJobId);
-                                            console.log('Marked job as skipped (stuck in loop):', currentJobId);
+                                            window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped (stuck in loop):', currentJobId);
                                         }
                                     }""")
                                 except Exception as e:
@@ -3385,6 +3438,8 @@ class SentinelAgent:
                                             options=qa.get('options', []),
                                             selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
+                                            source=qa.get('source', 'keyword_match'),
+                                            job_id_or_url=getattr(self, '_current_job_url', ''),
                                         )
                                 except Exception:
                                     pass  # Silently handle parse errors
@@ -3432,6 +3487,8 @@ class SentinelAgent:
                                             options=qa.get('options', []),
                                             selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
+                                            source=qa.get('source', 'keyword_match'),
+                                            job_id_or_url=getattr(self, '_current_job_url', ''),
                                         )
                                 except Exception:
                                     pass  # Silently handle parse errors
@@ -3474,6 +3531,8 @@ class SentinelAgent:
                                             options=qa.get('options', []),
                                             selected_option=qa.get('selectedOption', qa.get('s', qa.get('a', qa.get('answer', '')))) or '',
                                             prefilled=qa.get('prefilled', False) or False,
+                                            source=qa.get('source', 'keyword_match'),
+                                            job_id_or_url=getattr(self, '_current_job_url', ''),
                                         )
                                 except Exception:
                                     pass  # Silently handle parse errors
@@ -3514,7 +3573,7 @@ class SentinelAgent:
                                         }
                                         if (currentJobId) {
                                             window.__skippedJobIds.add(currentJobId);
-                                            console.log('Marked job as skipped after modal restart failure:', currentJobId);
+                                            window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped after modal restart failure:', currentJobId);
                                         }
                                     }""")
                                 except Exception as e:
@@ -4642,6 +4701,8 @@ class SentinelAgent:
                 await page.goto("https://www.instahyre.com/candidate/inbox/", wait_until='domcontentloaded', timeout=30000)
                 await asyncio.sleep(random.uniform(2.5, 3.5))
 
+        inbox_base_url = "https://www.instahyre.com/candidate/inbox/"
+
         # Step 2: Click the 'Unread' radio filter button on the inbox page
         print("🔘 Selecting 'Unread' conversation filter...")
         unread_res = await page.evaluate("""() => {
@@ -4714,81 +4775,138 @@ class SentinelAgent:
             self.state.task_complete = True
             return True
             
-        print(f"📬 Found {conv_count} conversation(s) in inbox. Scanning first conversation card...")
-        
-        # Click the first conversation card
-        click_conv_res = await page.evaluate("""() => {
-            const convs = document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer');
-            if (convs.length > 0) {
-                convs[0].scrollIntoView({ block: 'center', behavior: 'instant' });
-                convs[0].click();
-                const nameEl = convs[0].querySelector('.candidate-name');
-                const jobEl = convs[0].querySelector('.conv-job');
-                return {
-                    status: 'CLICKED',
-                    name: nameEl ? nameEl.innerText.trim() : '',
-                    job: jobEl ? jobEl.innerText.trim() : ''
-                };
-            }
-            return { status: 'OUT_OF_BOUNDS' };
-        }""")
-        
-        if click_conv_res.get('status') != 'CLICKED':
-            print("   ⚠️ Could not select first conversation card.")
-            self.state.task_complete = True
-            return True
-            
-        c_name = click_conv_res.get('name', 'Recruiter')
-        c_job = click_conv_res.get('job', '')
-        print(f"   👤 Conversation with {c_name} ({c_job})")
-        await asyncio.sleep(random.uniform(2.5, 3.5))
-        
-        # Step 3: Scan for questionnaire link in message content
-        q_url = await page.evaluate("""() => {
-            const links = Array.from(document.querySelectorAll('.message-content a, .candidate-msg a, a[target="_blank"]'));
-            for (const link of links) {
-                const href = link.href || link.getAttribute('href') || '';
-                const text = (link.innerText || '').toLowerCase();
-                if (href.includes('/questionnaire/') || href.includes('instahyre.com/questionnaire') || text.includes('questionnaire')) {
-                    return href;
-                }
-            }
-            return null;
-        }""")
-        
-        if not q_url:
-            print(f"   ℹ️ No questionnaire link found in message from {c_name}.")
-            print("🎉 Instahyre Inbox Task finished (single message processed).")
-            self.state.task_complete = True
-            return True
-            
-        if q_url in self._processed_questionnaires:
-            print(f"   ⏩ Questionnaire already processed in this session: {q_url}")
-            print("🎉 Instahyre Inbox Task finished (single message processed).")
-            self.state.task_complete = True
-            return True
-            
-        print(f"   📋 Found Questionnaire Link: {q_url}")
-        
-        # Step 4: In-place navigation to questionnaire (single-task execution)
-        try:
-            print(f"   🔗 Navigating to questionnaire: {q_url}...")
-            await page.goto(q_url, wait_until='domcontentloaded', timeout=30000)
-            await asyncio.sleep(random.uniform(3, 4))
-            
-            # Answer the questionnaire on current page
-            success = await self._answer_instahyre_questionnaire(page, q_url)
-            if success:
-                self._processed_questionnaires.add(q_url)
-                self.metrics['applications_submitted'] += 1
-                print("   ✅ Questionnaire submitted and confirmation verified! Task complete.")
+        print(f"📬 Found {conv_count} unread conversation(s) in inbox. Processing all unread messages...")
+
+        processed_conv_ids = set()
+        messages_handled = 0
+        max_conv_turns = max(conv_count * 2, 40)
+
+        for turn in range(max_conv_turns):
+            # If not on inbox page, return to inbox
+            current_url = page.url or ''
+            if 'candidate/inbox' not in current_url:
+                print(f"   🔙 Returning to inbox: {inbox_base_url}")
+                try:
+                    await page.goto(inbox_base_url, wait_until='domcontentloaded', timeout=30000)
+                    await asyncio.sleep(random.uniform(2.0, 3.0))
+                except Exception:
+                    pass
+
+            # Click next unread conversation card
+            c_id = ""
+            try:
+                click_conv_res = await page.evaluate("""(processedIds) => {
+                    const convs = Array.from(document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer'));
+                    if (!convs.length) return { status: 'NO_MORE_UNREAD', totalCards: 0 };
+                    for (let i = 0; i < convs.length; i++) {
+                        const card = convs[i];
+                        const nameEl = card.querySelector('.candidate-name');
+                        const jobEl = card.querySelector('.conv-job');
+                        const name = nameEl ? nameEl.innerText.trim() : '';
+                        const job = jobEl ? jobEl.innerText.trim() : '';
+                        const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job + '::' + i);
+                        if (!processedIds.includes(cardId)) {
+                            card.scrollIntoView({ block: 'center', behavior: 'instant' });
+                            card.click();
+                            return {
+                                status: 'CLICKED',
+                                id: cardId,
+                                name: name || 'Recruiter',
+                                job: job || '',
+                                index: i,
+                                totalCards: convs.length
+                            };
+                        }
+                    }
+                    return { status: 'NO_MORE_UNREAD', totalCards: convs.length };
+                }""", list(processed_conv_ids))
+            except Exception as e:
+                print(f"   ℹ️ Card evaluation finished or unavailable: {e}")
+                break
+
+            if not click_conv_res or click_conv_res.get('status') == 'NO_MORE_UNREAD':
+                # Try scrolling conversation container to check if more cards load
+                try:
+                    scrolled = await page.evaluate("""() => {
+                        const container = document.querySelector('.conv-candidates, .inbox-conversations');
+                        if (container && container.scrollHeight > container.clientHeight) {
+                            const prev = container.scrollTop;
+                            container.scrollTop += 500;
+                            return container.scrollTop > prev;
+                        }
+                        return false;
+                    }""")
+                    if scrolled:
+                        await asyncio.sleep(1.5)
+                        continue
+                except Exception:
+                    pass
+                print(f"📭 No more unread conversations remaining. Handled {messages_handled} message(s).")
+                break
+
+            if click_conv_res.get('status') != 'CLICKED':
+                print("   ⚠️ Could not select conversation card.")
+                break
+
+            c_name = click_conv_res.get('name', 'Recruiter')
+            c_job = click_conv_res.get('job', '')
+            c_idx = click_conv_res.get('index', messages_handled)
+            c_total = click_conv_res.get('totalCards', conv_count)
+            c_id = click_conv_res.get('id', f"{c_name}::{c_job}::{c_idx}")
+
+            print(f"\n📩 [{messages_handled + 1}/{c_total}] Conversation with {c_name} ({c_job})")
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+
+            inbox_thread_url = page.url
+
+            # Scan for questionnaire link in message content
+            try:
+                q_url = await page.evaluate("""() => {
+                    const links = Array.from(document.querySelectorAll('.message-content a, .candidate-msg a, a[target="_blank"]'));
+                    for (const link of links) {
+                        const href = link.href || link.getAttribute('href') || '';
+                        const text = (link.innerText || '').toLowerCase();
+                        if (href.includes('/questionnaire/') || href.includes('instahyre.com/questionnaire') || text.includes('questionnaire')) {
+                            return href;
+                        }
+                    }
+                    return null;
+                }""")
+            except Exception as e:
+                print(f"   ⚠️ Error scanning for questionnaire link: {e}")
+                q_url = None
+
+            if q_url and q_url not in self._processed_questionnaires:
+                print(f"   📋 Found Questionnaire Link: {q_url}")
+                try:
+                    print(f"   🔗 Navigating to questionnaire: {q_url}...")
+                    await page.goto(q_url, wait_until='domcontentloaded', timeout=30000)
+                    await asyncio.sleep(random.uniform(2.5, 3.5))
+
+                    success = await self._answer_instahyre_questionnaire(page, q_url)
+                    if success:
+                        self._processed_questionnaires.add(q_url)
+                        self.metrics['applications_submitted'] += 1
+                        print("   ✅ Questionnaire submitted and confirmation verified!")
+                        # Send questionnaire acknowledgment in recruiter thread
+                        await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
+                    else:
+                        print("   ⚠️ Questionnaire submission could not be verified.")
+                except Exception as e:
+                    print(f"   ❌ Error processing questionnaire {q_url}: {e}")
+            elif q_url and q_url in self._processed_questionnaires:
+                print(f"   ⏩ Questionnaire already completed: {q_url}")
+                await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
             else:
-                print("   ⚠️ Questionnaire submission could not be verified.")
-                
-        except Exception as e:
-            print(f"   ❌ Error processing questionnaire {q_url}: {e}")
-            
-        print("🎉 Instahyre Inbox Task finished! Single questionnaire task completed.")
+                # No questionnaire link in this message — reply to candidate/recruiter thread directly
+                print(f"   ℹ️ No questionnaire link found in message from {c_name}. Replying with interest...")
+                await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=False)
+
+            processed_conv_ids.add(c_id)
+            messages_handled += 1
+            await asyncio.sleep(random.uniform(1.5, 2.5))
+
+        print(f"\n🎉 Instahyre Inbox Task finished! Successfully processed and replied to {messages_handled} unread conversation(s).")
         self.state.task_complete = True
         return True
 
@@ -4884,13 +5002,44 @@ class SentinelAgent:
             if not q_text:
                 continue
                 
-            # Match answer via pattern matcher
-            ans, conf = self._fuzzy_match_question(q_text)
-            
-            # Type-aware adjustments
+            # Match answer via pattern matcher first as context
+            ans_pattern, conf_pattern = self._fuzzy_match_question(q_text)
+            llm_client = self._get_llm_client()
+            ans = None
+            source = "pattern_fallback"
+            conf = conf_pattern
+
+            if llm_client:
+                pattern_ctx = f"Pattern suggestion: {ans_pattern} (confidence: {conf_pattern})" if ans_pattern else None
+                try:
+                    ans = await llm_client.answer_question(q_text, options=options, input_type=input_type, context=pattern_ctx)
+                    if ans:
+                        source = "llm_gemma"
+                        conf = 0.95
+                except Exception as e:
+                    print(f"      ⚠️ Gemma answering failed for '{q_text}': {e}")
+                    ans = None
+
+            if not ans:
+                ans = ans_pattern or ""
+                source = "pattern_fallback" if ans_pattern else "unmatched_fallback"
+                conf = conf_pattern if ans_pattern else 0.0
+
+            # Type-aware adjustments if still empty
             if not ans:
                 ans = "Yes" if input_type in ('radio', 'checkbox') else "4.2 Years"
                 conf = 0.5
+                source = "unmatched_fallback"
+
+            # For MCQ options matching: warn if chosen option not found in options
+            if options and input_type in ('radio', 'checkbox', 'select'):
+                matched_opt = next((o for o in options if o.strip().lower() == ans.strip().lower()), None)
+                if not matched_opt:
+                    matched_opt = next((o for o in options if ans.strip().lower() in o.strip().lower() or o.strip().lower() in ans.strip().lower()), None)
+                if matched_opt:
+                    ans = matched_opt
+                else:
+                    print(f"      ⚠️ Warning: answer '{ans}' not found in options {options}")
                 
             fill_result = await q_page.evaluate("""(data) => {
                 let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
@@ -5025,7 +5174,9 @@ class SentinelAgent:
                 confidence=conf,
                 status='submitted',
                 platform='instahyre',
-                url=q_url
+                url=q_url,
+                source=source,
+                job_id_or_url=q_url
             )
             self.metrics['questions_answered'] += 1
             print(f"      Q: '{q_text}' -> A: '{ans}' [{fill_result}] (conf: {conf})")
@@ -5068,6 +5219,114 @@ class SentinelAgent:
                 
         print("   ⚠️ Confirmation message not found within timeout (submission may have succeeded).")
         return submit_res == 'SUBMIT_CLICKED'
+
+    async def _send_instahyre_ack(self, page, inbox_url: str, c_name: str, has_questionnaire: bool = True) -> bool:
+        """
+        Navigate back to the Instahyre conversation thread and send a reply/acknowledgment
+        message in the Quill editor.
+        - If has_questionnaire=True: sends questionnaire completion acknowledgment.
+        - If has_questionnaire=False: sends general interest reply message.
+        Respects disabled send buttons (never force-clicks).
+        """
+        action_desc = "questionnaire completion acknowledgment" if has_questionnaire else "interest reply"
+        print(f"   💬 Sending {action_desc} to {c_name}...")
+        try:
+            # 1. Return to inbox thread
+            if inbox_url and inbox_url != page.url:
+                print(f"   🔙 Returning to conversation thread: {inbox_url}")
+                await page.goto(inbox_url, wait_until='domcontentloaded', timeout=30000)
+                await asyncio.sleep(random.uniform(2.5, 3.5))
+
+            # 2. Wait up to 10 seconds for Quill editor to be visible and editable
+            editor_selector = '.ql-editor[contenteditable="true"], .ql-editor.ql-blank[contenteditable="true"], .ql-editor'
+            editor_found = False
+            for _ in range(10):
+                has_editor = await page.evaluate(f"""() => {{
+                    const ed = document.querySelector('{editor_selector}');
+                    return ed && ed.offsetParent !== null;
+                }}""")
+                if has_editor:
+                    editor_found = True
+                    break
+                await asyncio.sleep(1.0)
+
+            if not editor_found:
+                print(f"   ⚠️ Quill editor not found or not editable for {c_name}.")
+                return False
+
+            # 3. Focus and click editor
+            editor_locator = page.locator(editor_selector).first
+            await editor_locator.click()
+            await asyncio.sleep(0.5)
+
+            # 4. Type acknowledgment/reply message via keyboard typing
+            if has_questionnaire:
+                ack_message = (
+                    "Hi, I'm interested in this opportunity and have completed the questionnaire. "
+                    "Looking forward to hearing from you."
+                )
+                expected_kw = "completed the questionnaire"
+            else:
+                ack_message = (
+                    "Hi, I'm interested in this opportunity. "
+                    "Looking forward to hearing from you."
+                )
+                expected_kw = "interested in this opportunity"
+
+            print(f"   ⌨️ Typing {action_desc} message...")
+            await page.keyboard.type(ack_message, delay=20)
+            await asyncio.sleep(1.0)
+
+            # 5. Verify text is present in the editor
+            text_in_editor = await page.evaluate(f"""() => {{
+                const ed = document.querySelector('{editor_selector}');
+                return ed ? (ed.innerText || ed.textContent || '') : '';
+            }}""")
+            if expected_kw not in text_in_editor:
+                print(f"   ⚠️ Message text ('{expected_kw}') could not be verified in Quill editor.")
+                return False
+
+            # 6. Check Send button state (respect disabled state!)
+            btn_state = await page.evaluate("""() => {
+                const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
+                                Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                if (!sendBtn || sendBtn.offsetParent === null) {
+                    return { found: false, disabled: true };
+                }
+                const isDisabled = sendBtn.disabled || 
+                                   sendBtn.classList.contains('disabled') || 
+                                   sendBtn.getAttribute('aria-disabled') === 'true' ||
+                                   sendBtn.hasAttribute('disabled');
+                return { found: true, disabled: isDisabled };
+            }""")
+
+            if not btn_state.get('found', False):
+                print(f"   ⚠️ Send button not found in conversation thread for {c_name}.")
+                return False
+
+            if btn_state.get('disabled', False):
+                print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click to prevent invalid dispatch.")
+                return False
+
+            # 7. Click Send button and verify dispatch
+            print("   📤 Clicking Send button...")
+            await page.evaluate("""() => {
+                const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
+                                Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                if (sendBtn) {
+                    sendBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    sendBtn.click();
+                }
+            }""")
+            await asyncio.sleep(2.0)
+
+            self.metrics['instahyre_acks_sent'] = self.metrics.get('instahyre_acks_sent', 0) + 1
+            print(f"   ✅ Instahyre {action_desc} message successfully sent to {c_name}!")
+            return True
+
+        except Exception as e:
+            print(f"   ⚠️ Error sending Instahyre message to {c_name}: {e}")
+            return False
 
     async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
         """
@@ -5546,10 +5805,10 @@ class SentinelAgent:
                     const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
                     const yyyy = lwd.getFullYear();
                     answer = dd + ' ' + mon + ' ' + yyyy;
-                    console.log('Chatbot Debug - LWD date question detected, answering:', answer);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - LWD date question detected, answering:', answer);
                 }} else if (qLower.includes('date of birth') || qLower.includes('dob') || qLower.includes('birth date')) {{
                     answer = '17/12/2000';
-                    console.log('Chatbot Debug - DOB question detected, answering:', answer);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - DOB question detected, answering:', answer);
                 }} else {{
                     answer = fuzzyMatch(qText, chatLayer) || 'Yes';
                     
@@ -5629,7 +5888,7 @@ class SentinelAgent:
                                 'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer'];
                             const isNegative = negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
-                            console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
                         }}
                     }}
                 }}
@@ -5650,14 +5909,14 @@ class SentinelAgent:
                 }}
                 
                 // DEBUG: Log what we detected
-                console.log('Chatbot Debug - Question:', qText.substring(0, 100), '| Answer:', answer);
+                window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Question:', qText.substring(0, 100), '| Answer:', answer);
                 
                 // DEBUG: Log all inputs found in chatLayer
                 if (chatLayer) {{
                     const debugInputs = chatLayer.querySelectorAll('input:not([type="hidden"]), textarea');
-                    console.log('Chatbot Debug - Inputs in chatLayer:', debugInputs.length);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Inputs in chatLayer:', debugInputs.length);
                     debugInputs.forEach((inp, i) => {{
-                        console.log('  Input[' + i + ']:', inp.type, inp.placeholder || inp.name || inp.id, 'visible:', inp.offsetParent !== null);
+                        window.__SENTINEL_DEBUG__&&console.log('  Input[' + i + ']:', inp.type, inp.placeholder || inp.name || inp.id, 'visible:', inp.offsetParent !== null);
                     }});
                 }}
                 
@@ -5669,7 +5928,7 @@ class SentinelAgent:
                 let contentEditableEarly = chatLayer.querySelector('div[contenteditable="true"]') || 
                                           document.querySelector('div[contenteditable="true"]');
                 
-                console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditableEarly}});
+                window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Available inputs:', {{select: hasSelect, radio: hasRadio, checkbox: hasCheckbox, text: !!textInput, editable: !!contentEditableEarly}});
                 
                 // EARLY COMPLETION PHRASE CHECK: If the question text itself contains
                 // a completion phrase, the application was submitted successfully
@@ -5687,7 +5946,7 @@ class SentinelAgent:
                         'thanks for your response'
                     ];
                     if (completionPhrases.some(p => qLowerForCompletion.includes(p))) {{
-                        console.log('Chatbot Debug - Completion phrase detected:', qText.substring(0, 100));
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Completion phrase detected:', qText.substring(0, 100));
                         return 'CHATBOT_COMPLETE';
                     }}
                 }}
@@ -5728,10 +5987,10 @@ class SentinelAgent:
                     // stale state, not completion — fall through to CHATBOT_WAITING so the
                     // Python no-progress guard can break the loop.
                     if (hasSuccessMsg || (!hasRealQuestion && !isShortQuestion)) {{
-                        console.log('Chatbot Debug - Completion detected: success message or empty chatLayer');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Completion detected: success message or empty chatLayer');
                         return 'CHATBOT_COMPLETE';
                     }}
-                    console.log('Chatbot Debug - Stale short text with no inputs and no success message, waiting instead of completing');
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Stale short text with no inputs and no success message, waiting instead of completing');
                 }}
                 
                 // STEP 1.5: DETECT option buttons EARLY (must be checked before text inputs)
@@ -5772,7 +6031,7 @@ class SentinelAgent:
                     }}
                 }}
                 if (shouldSkipQ) {{
-                    console.log('Chatbot Debug - Skipping tool-specific question:', qText.substring(0, 80));
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Skipping tool-specific question:', qText.substring(0, 80));
                     const skipOptBtn = optBtns.find(b => (b.innerText || '').toLowerCase().includes('skip'));
                     if (skipOptBtn) {{
                         skipOptBtn.click();
@@ -5788,7 +6047,7 @@ class SentinelAgent:
                             }}
                         }}
                     }}
-                    console.log('Chatbot Debug - No skip button found for tool question, falling through to input handler');
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - No skip button found for tool question, falling through to input handler');
                 }}
                 
                 // STEP 2: Sequential Input Handling:
@@ -5799,7 +6058,7 @@ class SentinelAgent:
                     const select = chatLayer.querySelector('select');
                     if (select && select.offsetParent !== null) {{
                         const selectOptions = Array.from(select.options);
-                        console.log('Chatbot Debug - Found dropdown with', selectOptions.length, 'options');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found dropdown with', selectOptions.length, 'options');
                         
                         for (const opt of selectOptions) {{
                             const optText = opt.text.toLowerCase();
@@ -5846,7 +6105,7 @@ class SentinelAgent:
                 // 2. HANDLE RADIO BUTTONS (handles .singleselect-radiobutton-container, .ssrc__radio, etc.)
                 if (hasRadio) {{
                     const radios = Array.from(chatLayer.querySelectorAll('input[type="radio"]'));
-                    console.log('Chatbot Debug - Processing radio buttons:', radios.length);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Processing radio buttons:', radios.length);
                     
                     const selectRadio = (radioEl) => {{
                         radioEl.checked = true;
@@ -5877,7 +6136,7 @@ class SentinelAgent:
                     const answerNumericMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
                     const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : answerNumeric;
-                    console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
                     const scoreRadio = (label, radioEl) => {{
                         const cleanLabel = (label || '').toLowerCase().trim();
@@ -5978,7 +6237,7 @@ class SentinelAgent:
                     if (bestRadio && bestScore > 0) {{
                         selectRadio(bestRadio);
                         clickedRadio = true;
-                        console.log('Chatbot Debug - Selected best radio with score', bestScore, ':', bestRadio.id || bestRadio.value);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Selected best radio with score', bestScore, ':', bestRadio.id || bestRadio.value);
                     }}
                     
                     // Education fallback if not clicked
@@ -6007,7 +6266,7 @@ class SentinelAgent:
                                 if (mapping.labelKws.some(kw => label.includes(kw))) {{
                                     selectRadio(radio);
                                     clickedRadio = true;
-                                    console.log('Chatbot Debug - Clicked education radio:', label.trim());
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked education radio:', label.trim());
                                     break;
                                 }}
                             }}
@@ -6028,7 +6287,7 @@ class SentinelAgent:
                             if (noRadio) {{
                                 selectRadio(noRadio.radio);
                                 clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked No radio (fallback):', noRadio.label);
+                                window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked No radio (fallback):', noRadio.label);
                             }}
                         }}
                         if (!clickedRadio && (/\\byes\\b/.test(answerLower) || answerLower.includes('true'))) {{
@@ -6038,13 +6297,13 @@ class SentinelAgent:
                             if (yesRadio) {{
                                 selectRadio(yesRadio.radio);
                                 clickedRadio = true;
-                                console.log('Chatbot Debug - Clicked Yes radio (fallback):', yesRadio.label);
+                                window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked Yes radio (fallback):', yesRadio.label);
                             }}
                         }}
                         if (!clickedRadio && allRadioInfo.length > 0) {{
                             selectRadio(allRadioInfo[0].radio);
                             clickedRadio = true;
-                            console.log('Chatbot Debug - Clicked first radio fallback:', allRadioInfo[0].label);
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked first radio fallback:', allRadioInfo[0].label);
                         }}
                     }}
                     
@@ -6070,7 +6329,7 @@ class SentinelAgent:
                                 sendEl.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true }}));
                                 sendEl.click();
                                 sendEl.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true }}));
-                                console.log('Chatbot Debug - Save/Send clicked after radio:', sel);
+                                window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save/Send clicked after radio:', sel);
                                 break;
                             }}
                         }}
@@ -6103,7 +6362,7 @@ class SentinelAgent:
                 
                 // 3. HANDLE OPTION BUTTONS / CHIPS (standalone buttons/chips)
                 if (hasOptionBtns) {{
-                    console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found', optBtns.length, 'option buttons');
                     
                     const isPrivacyQ = qLower.includes('consent') || qLower.includes('privacy') || qLower.includes('terms') || qLower.includes('policy') || qLower.includes('agree');
                     const answerLower = isPrivacyQ ? 'yes' : answer.toLowerCase();
@@ -6112,31 +6371,31 @@ class SentinelAgent:
                     for (const btn of optBtns) {{
                         const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
                         if (!btnText) continue;
-                        console.log('Chatbot Debug - Option button:', btnText);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Option button:', btnText);
                         
                         if (btnText === answerLower) {{
                             btn.click();
                             clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked exact match option:', (btn.innerText || btn.textContent || '').trim());
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked exact match option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
                         if (btnText.length >= 2 && answerLower.length >= 2 && (btnText.includes(answerLower) || answerLower.includes(btnText))) {{
                             btn.click();
                             clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked partial match option:', (btn.innerText || btn.textContent || '').trim());
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked partial match option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
                         if ((answerLower === 'yes' || /\\byes\\b/.test(answerLower) || isPrivacyQ) && 
                             (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {{
                             btn.click();
                             clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked Yes/Consent option:', (btn.innerText || btn.textContent || '').trim());
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked Yes/Consent option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
                         if ((answerLower === 'no' || /\\bno\\b/.test(answerLower)) && (btnText === 'no' || btnText.startsWith('no '))) {{
                             btn.click();
                             clickedBtn = btn;
-                            console.log('Chatbot Debug - Clicked No option');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked No option');
                             break;
                         }}
                     }}
@@ -6147,13 +6406,13 @@ class SentinelAgent:
                         const allSkip = optBtns.every(b => (b.innerText || '').toLowerCase().includes('skip'));
                         const hasOtherInputs = hasCheckbox || !!textInput || !!hasContentEditable;
                         if (allSkip && hasContentEditable) {{
-                            console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
                         }} else if (!hasOtherInputs) {{
                             optBtns[0].click();
                             clickedBtn = optBtns[0];
-                            console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - No match, clicked first option:', optBtns[0].innerText.trim());
                         }} else {{
-                            console.log('Chatbot Debug - Option buttons did not match answer, falling through to other inputs');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Option buttons did not match answer, falling through to other inputs');
                         }}
                     }}
                     
@@ -6170,7 +6429,7 @@ class SentinelAgent:
                 // HANDLE CHECKBOXES
                 if (hasCheckbox) {{
                     const checkboxes = Array.from(chatLayer.querySelectorAll('input[type="checkbox"]'));
-                    console.log('Chatbot Debug - Processing checkboxes:', checkboxes.length);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Processing checkboxes:', checkboxes.length);
                     
                     const getCheckboxLabel = (cb) => {{
                         let lbl = '';
@@ -6229,7 +6488,7 @@ class SentinelAgent:
                                 if (!info.cb.checked) {{
                                     info.cb.click();
                                     clickedCheckbox = true;
-                                    console.log('Chatbot Debug - Clicked Yes checkbox in pair:', info.lbl);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked Yes checkbox in pair:', info.lbl);
                                 }}
                             }} else if (info.isLabelNo) {{
                                 if (info.cb.checked) {{
@@ -6243,7 +6502,7 @@ class SentinelAgent:
                                 if (!info.cb.checked) {{
                                     info.cb.click();
                                     clickedCheckbox = true;
-                                    console.log('Chatbot Debug - Clicked No checkbox in pair:', info.lbl);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked No checkbox in pair:', info.lbl);
                                 }}
                             }} else if (info.isLabelYes) {{
                                 if (info.cb.checked) {{
@@ -6259,7 +6518,7 @@ class SentinelAgent:
                                 if (!info.cb.checked) {{
                                     info.cb.click();
                                     clickedCheckbox = true;
-                                    console.log('Chatbot Debug - Clicked matching checkbox:', info.lbl);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked matching checkbox:', info.lbl);
                                 }}
                             }}
                         }}
@@ -6270,7 +6529,7 @@ class SentinelAgent:
                                 if (!info.cb.checked) {{
                                     info.cb.click();
                                     clickedCheckbox = true;
-                                    console.log('Chatbot Debug - Clicked option checkbox:', info.lbl);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked option checkbox:', info.lbl);
                                 }}
                             }}
                         }}
@@ -6289,7 +6548,7 @@ class SentinelAgent:
                         
                         if (saveBtn && saveBtn.offsetParent !== null) {{
                             saveBtn.click();
-                            console.log('Chatbot Debug - Save clicked after checkbox');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save clicked after checkbox');
                             return 'CHATBOT_CHECKBOX_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _cbLabels.join('; ') || 'Yes', t: 'checkbox', s: _cbLabels.join('; ') || 'Yes', options: _allCbOpts}});
                         }}
                         
@@ -6302,24 +6561,24 @@ class SentinelAgent:
                     // Dump full DOM structure to understand relationship.
                     const mccCheckboxes = chatLayer.querySelectorAll('.mcc__checkbox');
                     const namedInputs = chatLayer.querySelectorAll('input[type="checkbox"][name]');
-                    console.log('Chatbot Debug - Naukri .mcc__checkbox fallback:', mccCheckboxes.length, '| named inputs:', namedInputs.length);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Naukri .mcc__checkbox fallback:', mccCheckboxes.length, '| named inputs:', namedInputs.length);
                     
                     // Dump structure of first mcc and first input
                     if (mccCheckboxes.length > 0) {{
-                        console.log('Chatbot Debug - MCC[0] tag:', mccCheckboxes[0].tagName, 'class:', mccCheckboxes[0].className, 'children:', mccCheckboxes[0].children.length, 'innerHTML[:200]:', mccCheckboxes[0].innerHTML.substring(0, 200));
-                        console.log('Chatbot Debug - MCC[0] parent tag:', mccCheckboxes[0].parentElement?.tagName, 'class:', mccCheckboxes[0].parentElement?.className);
-                        console.log('Chatbot Debug - MCC[0] outerHTML[:300]:', mccCheckboxes[0].outerHTML.substring(0, 300));
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC[0] tag:', mccCheckboxes[0].tagName, 'class:', mccCheckboxes[0].className, 'children:', mccCheckboxes[0].children.length, 'innerHTML[:200]:', mccCheckboxes[0].innerHTML.substring(0, 200));
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC[0] parent tag:', mccCheckboxes[0].parentElement?.tagName, 'class:', mccCheckboxes[0].parentElement?.className);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC[0] outerHTML[:300]:', mccCheckboxes[0].outerHTML.substring(0, 300));
                     }}
                     if (namedInputs.length > 0) {{
-                        console.log('Chatbot Debug - Input[0] name:', namedInputs[0].name, 'parent:', namedInputs[0].parentElement?.tagName, 'class:', namedInputs[0].parentElement?.className);
-                        console.log('Chatbot Debug - Input[0] grandparent:', namedInputs[0].parentElement?.parentElement?.tagName, 'class:', namedInputs[0].parentElement?.parentElement?.className);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Input[0] name:', namedInputs[0].name, 'parent:', namedInputs[0].parentElement?.tagName, 'class:', namedInputs[0].parentElement?.className);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Input[0] grandparent:', namedInputs[0].parentElement?.parentElement?.tagName, 'class:', namedInputs[0].parentElement?.parentElement?.className);
                         // Check if input is inside or next to any .mcc__checkbox
                         const closestMcc = namedInputs[0].closest('.mcc__checkbox');
-                        console.log('Chatbot Debug - Input[0] closest .mcc__checkbox:', closestMcc ? 'FOUND' : 'NOT FOUND');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Input[0] closest .mcc__checkbox:', closestMcc ? 'FOUND' : 'NOT FOUND');
                         // Check siblings
                         const siblings = namedInputs[0].parentElement?.children;
                         if (siblings) {{
-                            console.log('Chatbot Debug - Input[0] sibling tags:', Array.from(siblings).map(s => s.tagName + '.' + s.className.substring(0, 30)).join(', '));
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Input[0] sibling tags:', Array.from(siblings).map(s => s.tagName + '.' + s.className.substring(0, 30)).join(', '));
                         }}
                     }}
                     
@@ -6330,7 +6589,7 @@ class SentinelAgent:
                     const mccHasNo = mccInputNames.some(n => n === 'no');
                     const mccIsYesNoPair = mccHasYes && mccHasNo;
                     if (mccIsYesNoPair) {{
-                        console.log('Chatbot Debug - MCC Yes/No pair detected, will only click Yes');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC Yes/No pair detected, will only click Yes');
                     }}
                     let mccClicked = 0;
                     const skipNames = [];
@@ -6339,14 +6598,14 @@ class SentinelAgent:
                         const isSkip = inputName.includes('skip') || inputName.includes('skip this');
                         // For Yes/No pairs, skip "no" — only select "yes"
                         const isNoInPair = mccIsYesNoPair && inputName === 'no';
-                        console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
                         if (isSkip || isNoInPair) {{
                             skipNames.push(inputName);
                             continue;
                         }}
                         mccCheckboxes[i].click();
                         mccClicked++;
-                        console.log('Chatbot Debug - MCC clicked index:', i, 'name:', inputName);
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC clicked index:', i, 'name:', inputName);
                     }}
                     
                     if (mccClicked > 0) {{
@@ -6355,7 +6614,7 @@ class SentinelAgent:
                                        document.querySelector('.sendMsgbtn_container .sendMsg');
                         if (saveBtn) {{
                             saveBtn.click();
-                            console.log('Chatbot Debug - Save clicked after MCC checkboxes');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save clicked after MCC checkboxes');
                         }}
                         return 'CHATBOT_MCC_CHECKBOX_SAVED|' + JSON.stringify({{q: qText.substring(0,200), a: 'Selected ' + mccClicked + ' options', t: 'checkbox', s: 'Selected ' + mccClicked + ' options'}});
                     }}
@@ -6394,7 +6653,7 @@ class SentinelAgent:
                         el.dispatchEvent(new KeyboardEvent('keyup', {{ bubbles: true }}));
                     }});
                     
-                    console.log('Chatbot Debug - Date filled: ' + dd + '/' + mm + '/' + yyyy);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Date filled: ' + dd + '/' + mm + '/' + yyyy);
                     
                     const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
                                    chatLayer.querySelector('button');
@@ -6402,7 +6661,7 @@ class SentinelAgent:
                         saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mouseup',   {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
-                        console.log('Chatbot Debug - Save clicked after date fill');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save clicked after date fill');
                         const _dateVal = dd + '/' + mm + '/' + yyyy;
                         return 'CHATBOT_ANSWERED_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: _dateVal, t: 'date', s: _dateVal}});
                     }}
@@ -6446,7 +6705,7 @@ class SentinelAgent:
                 }}
                 
                 if (contentEditable) {{
-                    console.log('Chatbot Debug - Found contenteditable div:', contentEditable.className);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found contenteditable div:', contentEditable.className);
                     
                     // Clear existing content
                     contentEditable.innerHTML = '';
@@ -6470,7 +6729,7 @@ class SentinelAgent:
                     sel.removeAllRanges();
                     sel.addRange(range);
                     
-                    console.log('Chatbot Debug - Contenteditable set to:', contentEditable.innerText);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Contenteditable set to:', contentEditable.innerText);
                     
                     // Wait for UI to update
                     await new Promise(r => setTimeout(r, 500));
@@ -6491,11 +6750,11 @@ class SentinelAgent:
                             el.innerText.toLowerCase().includes('save'));
                     }}
                     
-                    console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
                     
                     if (saveBtn) {{
                         if (saveBtn.disabled) {{
-                            console.log('Chatbot Debug - Save button is disabled');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button is disabled');
                             return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
                         }}
                         
@@ -6504,7 +6763,7 @@ class SentinelAgent:
                         saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         
-                        console.log('Chatbot Debug - Save button clicked');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button clicked');
                         
                         // Wait for UI to process
                         await new Promise(r => setTimeout(r, 300));
@@ -6520,7 +6779,7 @@ class SentinelAgent:
                             if (errorMsg && errorMsg.offsetParent !== null && errorMsg.innerText.trim()) {{
                                 const errText = errorMsg.innerText.trim();
                                 if (errText.length > 0 && errText.length < 200) {{
-                                    console.log('Chatbot Debug - Error found:', errText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Error found:', errText);
                                     return 'CHATBOT_SUBMISSION_ERROR: ' + errText;
                                 }}
                             }}
@@ -6543,13 +6802,13 @@ class SentinelAgent:
                         qText.toLowerCase().includes('in lakhs') ||
                         qText.toLowerCase().includes('in lacs');
                     
-                    console.log('Chatbot Debug - Found input:', input.type, input.placeholder, 'Numeric:', isNumericInput);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found input:', input.type, input.placeholder, 'Numeric:', isNumericInput);
                     
                     if (isNumericInput && answer) {{
                         const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
                         if (numericMatch) {{
                             answer = numericMatch[1];
-                            console.log('Chatbot Debug - Extracted numeric:', answer);
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Extracted numeric:', answer);
                         }}
                     }}
                     
@@ -6558,7 +6817,7 @@ class SentinelAgent:
                     input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                     input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                     
-                    console.log('Chatbot Debug - Input value set to:', input.value);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Input value set to:', input.value);
                     
                     // Verify the value was set correctly
                     if (input.value !== answer) {{
@@ -6593,11 +6852,11 @@ class SentinelAgent:
                             el.innerText.toLowerCase().includes('save'));
                     }}
                     
-                    console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
                     
                     if (saveBtn) {{
                         if (saveBtn.disabled) {{
-                            console.log('Chatbot Debug - Save button is disabled');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button is disabled');
                             return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
                         }}
                         
@@ -6606,7 +6865,7 @@ class SentinelAgent:
                         saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         
-                        console.log('Chatbot Debug - Save button clicked');
+                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button clicked');
                         
                         // Wait for UI to process
                         await new Promise(r => setTimeout(r, 300));
@@ -6622,7 +6881,7 @@ class SentinelAgent:
                             if (errorMsg && errorMsg.offsetParent !== null && errorMsg.innerText.trim()) {{
                                 const errText = errorMsg.innerText.trim();
                                 if (errText.length > 0 && errText.length < 200) {{
-                                    console.log('Chatbot Debug - Error found:', errText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Error found:', errText);
                                     return 'CHATBOT_SUBMISSION_ERROR: ' + errText;
                                 }}
                             }}
@@ -6700,6 +6959,8 @@ class SentinelAgent:
                     status="submitted",
                     url=self._page.url if self._page else "",
                     platform="naukri",
+                    source=qa_data.get('source', 'naukri_chatbot_pattern'),
+                    job_id_or_url=getattr(self, '_current_job_url', '') or (self._page.url if self._page else ""),
                 )
                 self.metrics['questions_answered'] += 1
             
@@ -6800,6 +7061,97 @@ class SentinelAgent:
             return await self._resolve_naukri_completion()
         return False
 
+    async def _handle_linkedin_resume_upload(self, page) -> bool:
+        """
+        Handle LinkedIn Easy Apply resume file upload step if present.
+        Uses 4-stage logging:
+          Stage 1: Detect visible/active file input or upload container
+          Stage 2: Set input files via Playwright set_input_files
+          Stage 3: Dispatch change & input events to notify React/Angular
+          Stage 4: Verify uploaded document/filename in the UI
+        """
+        if not page:
+            return False
+        if not self.resume_file_path or not os.path.exists(self.resume_file_path):
+            return False
+
+        try:
+            # Check if there is an Easy Apply modal and a file input
+            has_file_input = await page.evaluate("""() => {
+                const modal = document.querySelector('.jobs-easy-apply-modal, [data-test-modal], [role="dialog"]');
+                if (!modal) return false;
+                // Check if already has a selected/uploaded resume
+                const existingDoc = modal.querySelector(
+                    '.jobs-document-upload-redesign__file-name, ' +
+                    '.jobs-document-upload-redesign__resume-card--selected, ' +
+                    '.ui-attachment--file, ' +
+                    '[class*="uploaded-document"], ' +
+                    '[class*="resume-card--selected"]'
+                );
+                if (existingDoc) {
+                    return false; // Already attached
+                }
+                const fileInp = modal.querySelector(
+                    '.jobs-easy-apply-modal input[type="file"], ' +
+                    '.jobs-document-upload-redesign__container input[type="file"], ' +
+                    'input[type="file"]'
+                );
+                return !!fileInp;
+            }""")
+            
+            if not has_file_input:
+                return False
+
+            print("   📄 [Stage 1] LinkedIn resume upload field detected in modal.")
+            file_input_selector = (
+                '.jobs-easy-apply-modal input[type="file"], '
+                '.jobs-document-upload-redesign__container input[type="file"], '
+                'input[type="file"]'
+            )
+            
+            file_input = page.locator(file_input_selector).first
+            if not await file_input.count():
+                return False
+
+            print(f"   📄 [Stage 2] Setting input files: {self.resume_file_path}")
+            await file_input.set_input_files(self.resume_file_path)
+            await asyncio.sleep(1.0)
+
+            print("   📄 [Stage 3] Dispatching change/input events on file input.")
+            await page.evaluate("""() => {
+                const modal = document.querySelector('.jobs-easy-apply-modal, [data-test-modal], [role="dialog"]');
+                const fileInp = modal ? modal.querySelector('input[type="file"]') : document.querySelector('input[type="file"]');
+                if (fileInp) {
+                    fileInp.dispatchEvent(new Event('input', { bubbles: true }));
+                    fileInp.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }""")
+            await asyncio.sleep(1.5)
+
+            # Stage 4: Verification
+            resume_basename = os.path.basename(self.resume_file_path)
+            verified = await page.evaluate("""(resumeBaseName) => {
+                const modal = document.querySelector('.jobs-easy-apply-modal, [data-test-modal], [role="dialog"]');
+                if (!modal) return false;
+                const fileInp = modal.querySelector('input[type="file"]');
+                if (fileInp && fileInp.files && fileInp.files.length > 0) return true;
+                const docText = (modal.innerText || '').toLowerCase();
+                return docText.includes(resumeBaseName.toLowerCase()) || 
+                       docText.includes('.pdf') || 
+                       !!modal.querySelector('.jobs-document-upload-redesign__file-name, .ui-attachment');
+            }""", resume_basename)
+
+            if verified:
+                print(f"   ✅ [Stage 4] Resume upload verified in UI: {resume_basename}")
+                return True
+            else:
+                print("   ⚠️ [Stage 4] Resume upload could not be verified in UI.")
+                return False
+
+        except Exception as e:
+            print(f"   ⚠️ Error during LinkedIn resume upload: {e}")
+            return False
+
     async def _close_linkedin_modal(self) -> bool:
         """
         Close the LinkedIn Easy Apply modal with a two-step close:
@@ -6894,6 +7246,9 @@ class SentinelAgent:
         # >500 MB/site memory usage. Now patterns are window globals.
         await self._inject_patterns_once()
         
+        if self._page and 'linkedin' in (self._page.url or ''):
+            await self._handle_linkedin_resume_upload(self._page)
+
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
             # NOTE: This function must NOT use async/await - Playwright's evaluate handles timing via Python asyncio
@@ -7400,11 +7755,11 @@ class SentinelAgent:
                         }
                     }
                     
-                    console.log('findBestMatch: answer=', answer, '-> selected:', bestOpt?.text, 'score:', bestScore);
+                    window.__SENTINEL_DEBUG__&&console.log('findBestMatch: answer=', answer, '-> selected:', bestOpt?.text, 'score:', bestScore);
                     // Minimum score gate: don't select if no meaningful match found
                     // Score 0 means no pattern matched at all — selecting would be random garbage
                     if (bestScore < MIN_MATCH_SCORE) {
-                        console.log('findBestMatch: score too low (' + bestScore + '), skipping selection');
+                        window.__SENTINEL_DEBUG__&&console.log('findBestMatch: score too low (' + bestScore + '), skipping selection');
                         return null;
                     }
                     return bestOpt;
@@ -7832,21 +8187,24 @@ return resolveDynamic(bestMatch);
                 // Handles obfuscated classes and dynamic DOM structure
                 // ============================================================
                 if (isLinkedIn) {
-                    console.log('=== LINKEDIN AUTOMATION STARTED ===');
+                    window.__SENTINEL_DEBUG__&&console.log('=== LINKEDIN AUTOMATION STARTED ===');
                     
+                    // Helper: Normalize text (collapse whitespace, lowercase, trim)
+                    const normText = (s) => (s || '').toLowerCase().replace(/\\s+/g, ' ').trim();
+
                     // Helper: Find elements by text content (Shadow aware)
                     const findByText = (selector, text, exact = false, root = document) => {
                         const elements = queryAllDeep(selector, root);
-                        const searchText = text.toLowerCase();
+                        const searchText = normText(text);
                         return Array.from(elements).find(el => {
-                            const elText = el.innerText.toLowerCase();
+                            const elText = normText(el.innerText || el.textContent);
                             return exact ? elText === searchText : elText.includes(searchText);
                         });
                     };
                     
                     // Helper: Find Easy Apply button on job details page
                     const findEasyApplyButton = () => {
-                        console.log('Looking for Easy Apply button...');
+                        window.__SENTINEL_DEBUG__&&console.log('Looking for Easy Apply button...');
                         // 1. By class and id (most reliable - verified 2026)
                         let btn = queryDeep('button.jobs-apply-button') || queryDeep('#jobs-apply-button-id');
                         if (btn && isVisible(btn)) return btn;
@@ -7868,7 +8226,7 @@ return resolveDynamic(bestMatch);
 
                     // Helper: Fill LinkedIn form fields
                     const handleLinkedInForm = (modal) => {
-                        console.log('Filling LinkedIn form fields (Shadow aware)...');
+                        window.__SENTINEL_DEBUG__&&console.log('Filling LinkedIn form fields (Shadow aware)...');
 
                         // ──────────────────────────────────────────────────
                         // SAFETY GUARD: If this modal is actually a safety
@@ -7877,21 +8235,40 @@ return resolveDynamic(bestMatch);
                         // This is the last line of defense.
                         // ──────────────────────────────────────────────────
                         {
-                            const modalText = (modal.innerText || '').toLowerCase();
-                            // Also check ancestor dialog text (modal may be a sub-container)
+                            const modalText = normText(modal.innerText || modal.textContent);
                             const dialogAncestor = modal.closest('[role="dialog"], .artdeco-modal, [class*="modal"]');
-                            const ancestorText = dialogAncestor ? (dialogAncestor.innerText || '').toLowerCase() : '';
+                            const ancestorText = dialogAncestor ? normText(dialogAncestor.innerText || dialogAncestor.textContent) : '';
                             const combinedText = modalText + ' ' + ancestorText;
-                            const safetyKeywords = ['safety reminder', 'job search safety', 'research the company', 'report suspicious', 'review job post', 'continue applying'];
-                            if (safetyKeywords.some(kw => combinedText.includes(kw))) {
-                                console.log('SAFETY GUARD (form handler): Modal is a safety reminder popup. Looking for "Continue applying" button...');
+                            const titleEl = (dialogAncestor || modal).querySelector('h2, .artdeco-modal__title, [data-test-modal-header], header');
+                            const titleText = titleEl ? normText(titleEl.innerText || titleEl.textContent) : '';
+
+                            const isSafetyReminder = (
+                                titleText.includes('job search safety reminder') ||
+                                titleText.includes('safety reminder') ||
+                                (combinedText.includes('research the company') && (combinedText.includes('report suspicious jobs') || combinedText.includes('report suspicious'))) ||
+                                combinedText.includes('job search safety reminder') ||
+                                combinedText.includes('safety reminder') ||
+                                combinedText.includes('continue applying')
+                            );
+
+                            if (isSafetyReminder) {
+                                window.__SENTINEL_DEBUG__&&console.log('SAFETY GUARD (form handler): Modal is a safety reminder popup. Looking for "Continue applying" button...');
                                 const btns = Array.from(queryAllDeep('button, span[role="button"]', modal));
                                 const allBtns = dialogAncestor ? btns.concat(Array.from(queryAllDeep('button, span[role="button"]', dialogAncestor))) : btns;
-                                const continueBtn = allBtns.find(b => (b.innerText || '').toLowerCase().includes('continue applying')) ||
-                                                   allBtns.find(b => (b.innerText || '').toLowerCase().trim() === 'continue') ||
-                                                   allBtns[allBtns.length - 1];  // fallback: last button
+                                const rootContainer = dialogAncestor || modal;
+                                const continueBtn = (
+                                    rootContainer.querySelector('[data-test-dialog-primary-btn], [data-control-name="continue_applying"], [data-test-continue-applying-btn], [data-easy-apply-next-button]') ||
+                                    rootContainer.querySelector('.artdeco-button--primary') ||
+                                    findByText('button', 'continue applying', false, rootContainer) ||
+                                    findByText('button', 'continue', false, rootContainer) ||
+                                    allBtns.find(b => {
+                                        const t = normText(b.innerText || b.getAttribute('aria-label'));
+                                        return t.includes('continue applying') || t === 'continue';
+                                    }) ||
+                                    allBtns[allBtns.length - 1]
+                                );
                                 if (continueBtn) {
-                                    console.log('SAFETY GUARD: Clicking "Continue applying":', continueBtn.innerText);
+                                    window.__SENTINEL_DEBUG__&&console.log('SAFETY GUARD: Clicking "Continue applying":', normText(continueBtn.innerText || continueBtn.getAttribute('aria-label')));
                                     continueBtn.scrollIntoView({block: 'center'});
                                     continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                     continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -7900,7 +8277,7 @@ return resolveDynamic(bestMatch);
                                     continueBtn.click();
                                     return 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED';
                                 }
-                                console.log('SAFETY GUARD: Safety modal detected but no "Continue applying" button found.');
+                                window.__SENTINEL_DEBUG__&&console.log('SAFETY GUARD: Safety modal detected but no "Continue applying" button found.');
                                 return 'LINKEDIN_FORM_STUCK: Safety modal detected, no continue button';
                             }
                         }
@@ -7942,7 +8319,7 @@ return resolveDynamic(bestMatch);
                             // LinkedIn: click the <div role="radio"> container
                             const roleRadioParent = input.closest('[role="radio"]');
                             if (roleRadioParent) {
-                                console.log('Clicking role=radio container:', roleRadioParent.innerText);
+                                window.__SENTINEL_DEBUG__&&console.log('Clicking role=radio container:', roleRadioParent.innerText);
                                 roleRadioParent.scrollIntoView({ block: 'center' });
                                 roleRadioParent.click();
                                 input.checked = true;
@@ -7962,11 +8339,11 @@ return resolveDynamic(bestMatch);
                             }
                             
                             if (label) {
-                                console.log('Clicking input label:', label.innerText || label.textContent);
+                                window.__SENTINEL_DEBUG__&&console.log('Clicking input label:', label.innerText || label.textContent);
                                 label.scrollIntoView({ block: 'center' });
                                 label.click();
                             } else {
-                                console.log('Clicking input directly:', input.id || input.name);
+                                window.__SENTINEL_DEBUG__&&console.log('Clicking input directly:', input.id || input.name);
                                 input.scrollIntoView({ block: 'center' });
                                 input.click();
                             }
@@ -8122,7 +8499,7 @@ return resolveDynamic(bestMatch);
                         // Guards against double-scheduling via window.__sentinelLocClickScheduled.
                         const scheduleLocationDropdownClick = (input, delayMs) => {
                             if (window.__sentinelLocClickScheduled) {
-                                console.log('Location dropdown click already scheduled — skipping duplicate');
+                                window.__SENTINEL_DEBUG__&&console.log('Location dropdown click already scheduled — skipping duplicate');
                                 return;
                             }
                             window.__sentinelLocClickScheduled = true;
@@ -8145,7 +8522,7 @@ return resolveDynamic(bestMatch);
                                             if (text && text.length > 2 &&
                                                 !text.toLowerCase().includes('select') &&
                                                 !text.toLowerCase().includes('choose')) {
-                                                console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', text);
+                                                window.__SENTINEL_DEBUG__&&console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', text);
                                                 opt.click();
                                                 opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
                                                 opt.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
@@ -8181,13 +8558,13 @@ return resolveDynamic(bestMatch);
                         {
                             const dropdownSelectors = '.typeahead-input__dropdown-item, [role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable';
                             const allDropdownOpts = document.querySelectorAll(dropdownSelectors);
-                            console.log('Pre-check: scanning for visible autocomplete options:', allDropdownOpts.length);
+                            window.__SENTINEL_DEBUG__&&console.log('Pre-check: scanning for visible autocomplete options:', allDropdownOpts.length);
                             
                             for (const option of allDropdownOpts) {
                                 if (option.offsetParent !== null) {
                                     const text = option.innerText.trim();
                                     if (text && text.length > 2 && !text.toLowerCase().includes('select')) {
-                                        console.log('CLICKING VISIBLE AUTOCOMPLETE OPTION:', text);
+                                        window.__SENTINEL_DEBUG__&&console.log('CLICKING VISIBLE AUTOCOMPLETE OPTION:', text);
                                         option.click();
                                         return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: text, inputType: 'typeahead'}]);
                                     }
@@ -8208,7 +8585,7 @@ return resolveDynamic(bestMatch);
                             // LinkedIn text field. Calendar-clicking "open then retry" caused an infinite
                             // loop (same result 5x -> "Stuck in loop" abort). Fixes the Step-6 loop bug.
                             if (input.getAttribute('data-testid') === 'date-picker-input' && isVisible(input)) {
-                                console.log('DATE PICKER detected, filling via direct text input...');
+                                window.__SENTINEL_DEBUG__&&console.log('DATE PICKER detected, filling via direct text input...');
                                 
                                 // Detect this field's label so we can pick the right date value.
                                 // Reuses the same heuristics as the main label detector below, kept
@@ -8241,7 +8618,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 const dpLabelLower = dpLabel.toLowerCase().replace(/\\*+$/g, '').trim();
                                 const isDob = dpLabelLower.includes('date of birth') || dpLabelLower.includes('dob') || dpLabelLower.includes('birth date');
-                                console.log('DATE PICKER label:', dpLabel, '| isDob:', isDob);
+                                window.__SENTINEL_DEBUG__&&console.log('DATE PICKER label:', dpLabel, '| isDob:', isDob);
                                 
                                 // LinkedIn date-picker-input displays MM/DD/YYYY (the wrong value
                                 // 07/25/2026 seen in the field was today+15 in MM/DD/YYYY, proving
@@ -8264,7 +8641,7 @@ return resolveDynamic(bestMatch);
                                               String(targetYear);
                                     dpQuestion = 'Earliest start date';
                                 }
-                                console.log('Target date:', dateStr);
+                                window.__SENTINEL_DEBUG__&&console.log('Target date:', dateStr);
                                 
                                 // Type the date directly via the React-aware native value setter
                                 // (fillReactInput, defined above in this IIFE). Uses
@@ -8275,9 +8652,9 @@ return resolveDynamic(bestMatch);
                                 const filled = fillReactInput(input, dateStr);
                                 if (filled) {
                                     formResults.push({ question: dpQuestion, answer: dateStr, inputType: 'date' });
-                                    console.log('DATE PICKER: filled with', dateStr);
+                                    window.__SENTINEL_DEBUG__&&console.log('DATE PICKER: filled with', dateStr);
                                 } else {
-                                    console.log('DATE PICKER: direct fill did not change value:', dateStr);
+                                    window.__SENTINEL_DEBUG__&&console.log('DATE PICKER: direct fill did not change value:', dateStr);
                                 }
                                 continue; // Skip normal text fill for date pickers
                             }
@@ -8381,7 +8758,7 @@ return resolveDynamic(bestMatch);
                             // Clean up the label text (remove asterisks, "required" text, etc.)
                             labelText = labelText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
-                            console.log('LABEL DETECTION for input:', input.tagName, input.type || 'textarea', '| Detected label:', JSON.stringify(labelText));
+                            window.__SENTINEL_DEBUG__&&console.log('LABEL DETECTION for input:', input.tagName, input.type || 'textarea', '| Detected label:', JSON.stringify(labelText));
                             
                             const lowerLabel = labelText.toLowerCase();
                             const isLocationField = lowerLabel.includes('location') || lowerLabel.includes('city');
@@ -8400,7 +8777,7 @@ return resolveDynamic(bestMatch);
                                 );
                                 
                                 if (hasLocationError) {
-                                    console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
+                                    window.__SENTINEL_DEBUG__&&console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
                                     const currentVal = input.value;
                                     
                                     // Mark this input so the Python handler can find it via Playwright
@@ -8430,7 +8807,7 @@ return resolveDynamic(bestMatch);
                                 const pfLocVal = readFieldValue(input);
                                 if (pfLocLabel && pfLocVal) {
                                     formResults.push({ question: pfLocLabel, answer: pfLocVal, inputType: 'text', prefilled: true });
-                                    console.log('Location pre-filled captured:', pfLocLabel, '=', pfLocVal);
+                                    window.__SENTINEL_DEBUG__&&console.log('Location pre-filled captured:', pfLocLabel, '=', pfLocVal);
                                 }
                                 continue;  // location pre-filled and no error — skip
                             }
@@ -8474,7 +8851,7 @@ return resolveDynamic(bestMatch);
                                 const pfVal = readFieldValue(input);
                                 if (pfLabel && pfVal) {
                                     formResults.push({ question: pfLabel, answer: pfVal, inputType: input.tagName === 'TEXTAREA' ? 'textarea' : 'text', prefilled: true });
-                                    console.log('Pre-filled field captured:', pfLabel, '=', pfVal);
+                                    window.__SENTINEL_DEBUG__&&console.log('Pre-filled field captured:', pfLabel, '=', pfVal);
                                 }
                                 continue;
                             }
@@ -8505,7 +8882,7 @@ return resolveDynamic(bestMatch);
                                 } else {
                                     finalValue = existingValue;
                                 }
-                                console.log('Pre-filled field with error:', labelText, '| existing:', existingValue, '| isObviousInvalid:', isObviousInvalid, '-> final:', finalValue);
+                                window.__SENTINEL_DEBUG__&&console.log('Pre-filled field with error:', labelText, '| existing:', existingValue, '| isObviousInvalid:', isObviousInvalid, '-> final:', finalValue);
                                 
                                 // FIX: If the field id contains "numeric" or input is number type,
                                 // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
@@ -8517,7 +8894,7 @@ return resolveDynamic(bestMatch);
                                         finalValue = numericVal;
                                     } else {
                                         finalValue = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
-                                        console.log('Numeric field had non-numeric text — replaced with numeric default:', finalValue);
+                                        window.__SENTINEL_DEBUG__&&console.log('Numeric field had non-numeric text — replaced with numeric default:', finalValue);
                                     }
                                 }
                                 
@@ -8557,12 +8934,12 @@ return resolveDynamic(bestMatch);
                             // We never worked there, so any fuzzyMatch answer ('No', 'Yes', etc.)
                             // would cause a date validation error and block the form.
                             if (answer && lowerLabel.includes('last date of employment')) {
-                                console.log('LEAVE BLANK: last-employment-date field — discarding answer:', answer);
+                                window.__SENTINEL_DEBUG__&&console.log('LEAVE BLANK: last-employment-date field — discarding answer:', answer);
                                 answer = null;
                             }
                             // Also skip any text input whose placeholder signals a date format
                             if (answer && (input.placeholder || '').toUpperCase().includes('MM/DD/YYYY')) {
-                                console.log('LEAVE BLANK: MM/DD/YYYY date field — discarding answer:', answer);
+                                window.__SENTINEL_DEBUG__&&console.log('LEAVE BLANK: MM/DD/YYYY date field — discarding answer:', answer);
                                 answer = null;
                             }
 
@@ -8606,21 +8983,21 @@ return resolveDynamic(bestMatch);
                                     // LinkedIn rejects decimals in experience fields — round up
                                     if (numVal % 1 !== 0 && /experience|years/i.test(labelText)) {
                                         numVal = Math.ceil(numVal);
-                                        console.log('Rounded up experience:', numericMatch[1], '->', numVal);
+                                        window.__SENTINEL_DEBUG__&&console.log('Rounded up experience:', numericMatch[1], '->', numVal);
                                     }
                                     answer = String(numVal);
-                                    console.log('Extracted numeric value for number field:', answer);
+                                    window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
                                 } else {
                                     // Fallback if answer contained no numbers but input expects numeric/years
                                     answer = /notice|np/i.test(labelText) ? '15' : '4';
-                                    console.log('Fallback numeric value for number field:', answer);
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                 }
                             }
 
                             // Textarea essay fallback (avoid single digits like 4.2 or 5 in descriptive textareas)
                             if (input.tagName === 'TEXTAREA' && (!answer || /^(\\d+(\\.\\d+)?(\\s*years?)?|yes|no)$/i.test(answer.trim()))) {
                                 answer = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
-                                console.log('Provided technical summary for textarea field:', labelText);
+                                window.__SENTINEL_DEBUG__&&console.log('Provided technical summary for textarea field:', labelText);
                             }
                             
                             // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
@@ -8637,77 +9014,77 @@ return resolveDynamic(bestMatch);
                                     const ynNegInd = ['sponsorship', 'visa', 'require sponsorship'];
                                     const isNeg = ynNegInd.some(p => combinedText.includes(p));
                                     answer = isNeg ? 'No' : 'Yes';
-                                    console.log('LinkedIn form: Yes/no keyword fallback, answer:', answer, '| text:', combinedText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('LinkedIn form: Yes/no keyword fallback, answer:', answer, '| text:', combinedText.substring(0, 80));
                                 } else if (combinedText.includes('your title') || combinedText.includes('job title') || combinedText.includes('role title') || combinedText.includes('designation')) {
                                     answer = 'Software Engineer';
-                                    console.log('Fallback: Filling job title');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling job title');
                                 } else if (combinedText.includes('company name') || combinedText.includes('employer') || (combinedText.includes('company') && !combinedText.includes('relatives') && !combinedText.includes('worked with') && !combinedText.includes('associated with') && !combinedText.includes('promoted'))) {
                                     answer = 'Everbridge';
-                                    console.log('Fallback: Filling company');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling company');
                                 } else if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
                                     answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
-                                    console.log('Fallback: Filling skill set field');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling skill set field');
                                 } else if (combinedText.includes('location') || (combinedText.includes('city') && !combinedText.includes('street'))) {
                                     answer = 'Bangalore';
-                                    console.log('Fallback: Filling location/city field');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling location/city field');
                                 } else if (combinedText.includes('street') || combinedText.includes('address line')) {
                                     answer = 'Koramangala';
-                                    console.log('Fallback: Filling street address');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling street address');
                                 } else if (combinedText.includes('zip') || combinedText.includes('postal') || combinedText.includes('pincode') || combinedText.includes('pin code')) {
                                     answer = '560034';
-                                    console.log('Fallback: Filling zip/postal code');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling zip/postal code');
                                 } else if (combinedText.match(/\\bcity\\b/) || combinedText.includes('town')) {
                                     answer = 'Bangalore';
-                                    console.log('Fallback: Filling city');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling city');
                                 } else if (combinedText.includes('state') || combinedText.includes('province')) {
                                     answer = 'Karnataka';
-                                    console.log('Fallback: Filling state/province');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling state/province');
                                 } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                                     answer = 'India';
-                                    console.log('Fallback: Filling country');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling country');
                                 } else if (combinedText.includes('phone') || combinedText.includes('mobile') || combinedText.includes('contact number')) {
                                     answer = '7905828880';
-                                    console.log('Fallback: Filling phone/mobile');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling phone/mobile');
                                 } else if (combinedText.includes('email')) {
                                     answer = 'siddhant3646@gmail.com';
-                                    console.log('Fallback: Filling email');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling email');
                                 } else if (combinedText.includes('full name') || combinedText.includes('your name') || combinedText.includes('candidate name')) {
                                     answer = 'Siddhant Singh';
-                                    console.log('Fallback: Filling name field');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling name field');
                                 } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should') || combinedText.includes('why do you want') || combinedText.includes('tell us about') || combinedText.includes('anything else') || combinedText.includes('description')) {
                                     answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
-                                    console.log('Fallback: Filling summary/cover letter/description');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling summary/cover letter/description');
                                 } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('how soon')) {
                                     answer = '7';
-                                    console.log('Fallback: Filling notice/join period');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling notice/join period');
                                 } else if (combinedText.includes('linkedin') || combinedText.includes('profile url')) {
                                     answer = 'https://www.linkedin.com/in/siddhant-singh';
-                                    console.log('Fallback: Filling LinkedIn URL');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling LinkedIn URL');
                                 } else if (combinedText.includes('github') || combinedText.includes('portfolio')) {
                                     answer = 'https://github.com/siddhant3646';
-                                    console.log('Fallback: Filling GitHub/portfolio URL');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling GitHub/portfolio URL');
                                 } else if (combinedText.includes('certification') || combinedText.includes('certificate')) {
                                     answer = 'AWS Certified, Java Certified';
-                                    console.log('Fallback: Filling certifications');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling certifications');
                                 } else if (combinedText.includes('reason') || combinedText.includes('seeking') || combinedText.includes('looking for a change')) {
                                     answer = 'Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals';
-                                    console.log('Fallback: Filling reason for change');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling reason for change');
                                 }
                                 
                                 // "How many X" fallback: always fill with a number for any unmatched "how many" question
                                 if (!answer && /how many/i.test(combinedText)) {
                                     answer = '3';
-                                    console.log('Fallback: Filling how-many question with numeric default 3');
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling how-many question with numeric default 3');
                                 }
                             }
                             
                             if (answer) {
-                                console.log('Filling text field:', labelText || '(unlabeled)', 'with:', answer);
+                                window.__SENTINEL_DEBUG__&&console.log('Filling text field:', labelText || '(unlabeled)', 'with:', answer);
                                 
                                 if (input.hasAttribute('maxlength')) {
                                     const maxLen = parseInt(input.getAttribute('maxlength'), 10);
                                     if (!isNaN(maxLen) && answer.length > maxLen) {
-                                        console.log(`Truncating answer from ${answer.length} to maxlength ${maxLen}`);
+                                        window.__SENTINEL_DEBUG__&&console.log(`Truncating answer from ${answer.length} to maxlength ${maxLen}`);
                                         answer = answer.substring(0, maxLen);
                                     }
                                 }
@@ -8724,9 +9101,9 @@ return resolveDynamic(bestMatch);
                                         else input.value = '';
                                         input.dispatchEvent(new Event('input', { bubbles: true }));
                                         input.dispatchEvent(new Event('change', { bubbles: true }));
-                                        console.log('Cleared invalid field before refill:', labelText);
+                                        window.__SENTINEL_DEBUG__&&console.log('Cleared invalid field before refill:', labelText);
                                     } catch (clearErr) {
-                                        console.log('Non-critical error clearing field:', clearErr.message);
+                                        window.__SENTINEL_DEBUG__&&console.log('Non-critical error clearing field:', clearErr.message);
                                     }
                                 }
                                 
@@ -8738,7 +9115,7 @@ return resolveDynamic(bestMatch);
                                 
                                 // If this is a location field, trigger autocomplete dropdown
                                 if (isLocationField) {
-                                    console.log('Location field filled — triggering autocomplete dropdown...');
+                                    window.__SENTINEL_DEBUG__&&console.log('Location field filled — triggering autocomplete dropdown...');
                                     
                                     // Mark this input so the Python handler can find it via Playwright
                                     input.setAttribute('data-sentinel-location', 'true');
@@ -8762,7 +9139,7 @@ return resolveDynamic(bestMatch);
                                 }
                             } else if (!labelText && isVisible(input) && !isFieldPreFilled(input)) {
                                 // LAST RESORT: Completely unlabeled field — log it for debugging
-                                console.log('WARNING: Completely unlabeled empty input found, tag:', input.tagName, 'type:', input.type, 'placeholder:', input.placeholder, 'class:', (input.className || '').substring(0, 80));
+                                window.__SENTINEL_DEBUG__&&console.log('WARNING: Completely unlabeled empty input found, tag:', input.tagName, 'type:', input.type, 'placeholder:', input.placeholder, 'class:', (input.className || '').substring(0, 80));
                             }
                         }
 
@@ -8791,7 +9168,7 @@ return resolveDynamic(bestMatch);
                                 const pfOpt = select.options[select.selectedIndex];
                                 if (pfOpt && pfLabel) {
                                     formResults.push({ question: pfLabel, answer: pfOpt.text, inputType: 'select', prefilled: true });
-                                    console.log('Pre-filled select captured:', pfLabel, '=', pfOpt.text);
+                                    window.__SENTINEL_DEBUG__&&console.log('Pre-filled select captured:', pfLabel, '=', pfOpt.text);
                                 }
                                 continue;
                             }
@@ -8879,7 +9256,7 @@ return resolveDynamic(bestMatch);
                             // Clean up
                             labelText = labelText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
-                            console.log('SELECT LABEL DETECTION:', JSON.stringify(labelText), '| current value:', select.value);
+                            window.__SENTINEL_DEBUG__&&console.log('SELECT LABEL DETECTION:', JSON.stringify(labelText), '| current value:', select.value);
                             
                             const lowerLabel = labelText.toLowerCase();
                             
@@ -8891,7 +9268,7 @@ return resolveDynamic(bestMatch);
                                                         lowerLabel.includes('source');
                             
                             if (isLearnAboutQuestion) {
-                                console.log('Learn about question detected in native select - selecting first non-placeholder option');
+                                window.__SENTINEL_DEBUG__&&console.log('Learn about question detected in native select - selecting first non-placeholder option');
                                 const options = Array.from(select.options);
                                 // Skip first option if it's a placeholder
                                 const firstRealOption = options.find(o => {
@@ -8905,7 +9282,7 @@ return resolveDynamic(bestMatch);
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
                                     select.dispatchEvent(new Event('change', { bubbles: true }));
                                     select.dispatchEvent(new Event('blur', { bubbles: true }));
-                                    console.log('Selected first option:', firstRealOption.text);
+                                    window.__SENTINEL_DEBUG__&&console.log('Selected first option:', firstRealOption.text);
                                     formResults.push({ question: labelText, answer: firstRealOption.text, inputType: 'select' });
                                 }
                                 continue;
@@ -8922,7 +9299,7 @@ return resolveDynamic(bestMatch);
                                     return (t.includes('citizen') && !t.includes('non') && !t.includes('select'));
                                 });
                                 if (citizenMatch) {
-                                    console.log('Citizenship match: Selecting', citizenMatch.text, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Citizenship match: Selecting', citizenMatch.text, 'for', labelText.substring(0, 80));
                                     select.value = citizenMatch.value;
                                     if (select.value !== citizenMatch.value) select.selectedIndex = citizenMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -8989,7 +9366,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (selfIdOpt) {
-                                    console.log('Self-ID match: Selecting', selfIdOpt.text, 'for:', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Self-ID match: Selecting', selfIdOpt.text, 'for:', labelText.substring(0, 80));
                                     select.value = selfIdOpt.value;
                                     if (select.value !== selfIdOpt.value) select.selectedIndex = selfIdOpt.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -8997,7 +9374,7 @@ return resolveDynamic(bestMatch);
                                     select.dispatchEvent(new Event('blur', { bubbles: true }));
                                     formResults.push({ question: labelText, answer: selfIdOpt.text, inputType: 'select-self-id' });
                                 } else {
-                                    console.log('Self-ID: No match found for:', labelText.substring(0, 80), '— skipping (optional)');
+                                    window.__SENTINEL_DEBUG__&&console.log('Self-ID: No match found for:', labelText.substring(0, 80), '— skipping (optional)');
                                 }
                                 continue;
                             }
@@ -9009,7 +9386,7 @@ return resolveDynamic(bestMatch);
                                 const noticeOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 const yesOpt = noticeOptions.find(o => o.text.toLowerCase().trim() === 'yes');
                                 if (yesOpt) {
-                                    console.log('Notice serving: Selecting Yes');
+                                    window.__SENTINEL_DEBUG__&&console.log('Notice serving: Selecting Yes');
                                     select.value = yesOpt.value;
                                     if (select.value !== yesOpt.value) select.selectedIndex = yesOpt.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9026,7 +9403,7 @@ return resolveDynamic(bestMatch);
                                 const partnerOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 const noOpt = partnerOptions.find(o => o.text.toLowerCase().trim() === 'no');
                                 if (noOpt) {
-                                    console.log('Employer partner: Selecting No');
+                                    window.__SENTINEL_DEBUG__&&console.log('Employer partner: Selecting No');
                                     select.value = noOpt.value;
                                     if (select.value !== noOpt.value) select.selectedIndex = noOpt.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9079,7 +9456,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (npMatch) {
-                                    console.log('Notice Period Select: Selecting', npMatch.text, 'for', labelText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Notice Period Select: Selecting', npMatch.text, 'for', labelText);
                                     select.value = npMatch.value;
                                     if (select.value !== npMatch.value) select.selectedIndex = npMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9118,7 +9495,7 @@ return resolveDynamic(bestMatch);
                                     } else {
                                         ctcAnswer = '2300000';
                                     }
-                                    console.log('CTC Select: Using fallback answer', ctcAnswer, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('CTC Select: Using fallback answer', ctcAnswer, 'for', labelText.substring(0, 80));
                                 }
                                 
                                 const ctcNumMatch = String(ctcAnswer).replace(/,/g, '').match(/(\\d+(?:\\.\\d+)?)/);
@@ -9162,7 +9539,7 @@ return resolveDynamic(bestMatch);
                                         const targetVal = minVal < 1000 ? ctcInLakhs : ctcInINR;
                                         if (targetVal >= minVal && targetVal <= maxVal) {
                                             bestCTCOpt = opt;
-                                            console.log('CTC Select: Exact range match -', opt.text, 'for', targetVal);
+                                            window.__SENTINEL_DEBUG__&&console.log('CTC Select: Exact range match -', opt.text, 'for', targetVal);
                                             break;
                                         }
                                         const distance = Math.min(Math.abs(targetVal - minVal), Math.abs(targetVal - maxVal));
@@ -9176,7 +9553,7 @@ return resolveDynamic(bestMatch);
                                 const selectedOpt = bestCTCOpt || closestCTCOpt || ctcOptions.find(o => !o.text.toLowerCase().includes('select') && o.text.trim().length > 0);
                                 
                                 if (selectedOpt) {
-                                    console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', rawCTC + ')');
+                                    window.__SENTINEL_DEBUG__&&console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', rawCTC + ')');
                                     select.value = selectedOpt.value;
                                     if (select.value !== selectedOpt.value) select.selectedIndex = selectedOpt.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9222,7 +9599,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (langMatch) {
-                                    console.log('Language select match: Selecting', langMatch.text, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Language select match: Selecting', langMatch.text, 'for', labelText.substring(0, 80));
                                     select.value = langMatch.value;
                                     if (select.value !== langMatch.value) select.selectedIndex = langMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9260,7 +9637,7 @@ return resolveDynamic(bestMatch);
                                 // PRIORITY 1: Try Bangalore / Bengaluru first (user's primary location)
                                 let locMatch = findBestMatch('Bangalore', locOptions) || findBestMatch('Bengaluru', locOptions);
                                 if (locMatch) {
-                                    console.log('Location Select: matched Bangalore/Bengaluru (primary preference)');
+                                    window.__SENTINEL_DEBUG__&&console.log('Location Select: matched Bangalore/Bengaluru (primary preference)');
                                 }
                                 
                                 // PRIORITY 2: Try the pattern-matched answer
@@ -9274,7 +9651,7 @@ return resolveDynamic(bestMatch);
                                     for (const part of parts) {
                                         locMatch = findBestMatch(part, locOptions);
                                         if (locMatch) {
-                                            console.log('Location Select: matched comma part:', part);
+                                            window.__SENTINEL_DEBUG__&&console.log('Location Select: matched comma part:', part);
                                             break;
                                         }
                                     }
@@ -9293,11 +9670,11 @@ return resolveDynamic(bestMatch);
                                                !t.includes('an option') &&
                                                !t.includes('skip');
                                     });
-                                    console.log('Location Select: no match for', locAnswer, '- defaulting to first option:', locMatch?.text);
+                                    window.__SENTINEL_DEBUG__&&console.log('Location Select: no match for', locAnswer, '- defaulting to first option:', locMatch?.text);
                                 }
                                 
                                 if (locMatch) {
-                                    console.log('Location Select: Selecting', locMatch.text, 'for', labelText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Location Select: Selecting', locMatch.text, 'for', labelText);
                                     select.value = locMatch.value;
                                     if (select.value !== locMatch.value) select.selectedIndex = locMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9340,7 +9717,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (natMatch) {
-                                    console.log('Nationality match: Selecting', natMatch.text, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Nationality match: Selecting', natMatch.text, 'for', labelText.substring(0, 80));
                                     select.value = natMatch.value;
                                     if (select.value !== natMatch.value) select.selectedIndex = natMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9378,7 +9755,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (jlMatch) {
-                                    console.log('Job Level match: Selecting', jlMatch.text, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Job Level match: Selecting', jlMatch.text, 'for', labelText.substring(0, 80));
                                     select.value = jlMatch.value;
                                     if (select.value !== jlMatch.value) select.selectedIndex = jlMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9416,7 +9793,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (wpMatch) {
-                                    console.log('Workplace Type match: Selecting', wpMatch.text, 'for', labelText.substring(0, 80));
+                                    window.__SENTINEL_DEBUG__&&console.log('Workplace Type match: Selecting', wpMatch.text, 'for', labelText.substring(0, 80));
                                     select.value = wpMatch.value;
                                     if (select.value !== wpMatch.value) select.selectedIndex = wpMatch.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9498,7 +9875,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (targetOpt) {
-                                    console.log('Work Experience Date Select: Selecting', targetOpt.text, 'for', labelText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Work Experience Date Select: Selecting', targetOpt.text, 'for', labelText);
                                     select.value = targetOpt.value;
                                     if (select.value !== targetOpt.value) select.selectedIndex = targetOpt.index;
                                     select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -9516,13 +9893,13 @@ return resolveDynamic(bestMatch);
                                 if (!answer && lowerLabel) {
                                     if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work')) {
                                         answer = '4';
-                                        console.log('Fallback: Using 4 for years of experience select');
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 4 for years of experience select');
                                     } else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience')) {
                                         answer = '0';
-                                        console.log('Fallback: Using 0 for months of experience select');
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 0 for months of experience select');
                                     } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {
                                         answer = '15';
-                                        console.log('Fallback: Using 15 for notice period select');
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 15 for notice period select');
                                     }
                                 }
                                 
@@ -9553,7 +9930,7 @@ return resolveDynamic(bestMatch);
                                         select.dispatchEvent(new Event('input', { bubbles: true }));
                                         select.dispatchEvent(new Event('change', { bubbles: true }));
                                         select.dispatchEvent(new Event('blur', { bubbles: true }));
-                                        console.log('Education match: Selected', eduMatch.text, 'for', labelText);
+                                        window.__SENTINEL_DEBUG__&&console.log('Education match: Selected', eduMatch.text, 'for', labelText);
                                         formResults.push({ question: labelText, answer: eduMatch.text, inputType: 'select-education' });
                                         continue;
                                     }
@@ -9584,7 +9961,7 @@ return resolveDynamic(bestMatch);
                                             const ansMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                                             const ansYears = ansMatch ? parseFloat(ansMatch[1]) : 0;
                                             
-                                            console.log(`Experience Logic: Required ${reqYears}, User ${ansYears}`);
+                                            window.__SENTINEL_DEBUG__&&console.log(`Experience Logic: Required ${reqYears}, User ${ansYears}`);
                                             
                                             if (ansYears >= reqYears) {
                                                 bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
@@ -9599,11 +9976,11 @@ return resolveDynamic(bestMatch);
                                     // Fallback 2: Implicit Yes/No for Developer/Experience questions where fuzzyMatch returned null
                                     if (!bestOpt && !answer && isYesNoQuestion) {
                                          bestOpt = options.find(o => o.text.toLowerCase().includes('yes'));
-                                         if (bestOpt) console.log('Defaulting native select to Yes for:', labelText);
+                                         if (bestOpt) window.__SENTINEL_DEBUG__&&console.log('Defaulting native select to Yes for:', labelText);
                                     }
 
                                     if (bestOpt) {
-                                        console.log('Selecting native dropdown:', labelText, 'with:', bestOpt.text);
+                                        window.__SENTINEL_DEBUG__&&console.log('Selecting native dropdown:', labelText, 'with:', bestOpt.text);
                                         
                                         // Robust selection logic
                                         select.value = bestOpt.value;
@@ -9647,7 +10024,7 @@ return resolveDynamic(bestMatch);
                                         }
                                         
                                         if (fallbackOpt) {
-                                            console.log('UNIVERSAL SELECT FALLBACK: Defaulting to', fallbackOpt.text, 'for unfilled select:', labelText);
+                                            window.__SENTINEL_DEBUG__&&console.log('UNIVERSAL SELECT FALLBACK: Defaulting to', fallbackOpt.text, 'for unfilled select:', labelText);
                                             select.value = fallbackOpt.value;
                                             if (select.value !== fallbackOpt.value) {
                                                 select.selectedIndex = fallbackOpt.index;
@@ -9675,7 +10052,7 @@ return resolveDynamic(bestMatch);
                                                !dropdown.getAttribute('aria-expanded');
                             
                             if (!isUnselected) {
-                                // console.log('Skipping pre-filled custom dropdown:', dropdownText);
+                                // window.__SENTINEL_DEBUG__&&console.log('Skipping pre-filled custom dropdown:', dropdownText);
                                 continue;
                             }
                             
@@ -9695,7 +10072,7 @@ return resolveDynamic(bestMatch);
                                                         lowerLabel.includes('source');
                             
                             if (isLearnAboutQuestion) {
-                                console.log('Learn about question detected - selecting first available option');
+                                window.__SENTINEL_DEBUG__&&console.log('Learn about question detected - selecting first available option');
                                 dropdown.click();
                                 
                                 setTimeout(() => {
@@ -9704,7 +10081,7 @@ return resolveDynamic(bestMatch);
                                         const text = option.innerText.trim();
                                         const lowerText = text.toLowerCase();
                                         if (text && !lowerText.includes('select') && !lowerText.includes('choose') && text.length > 2) {
-                                            console.log('Selected first option for learn about question:', text);
+                                            window.__SENTINEL_DEBUG__&&console.log('Selected first option for learn about question:', text);
                                             option.click();
                                             formResults.push({ question: labelText, answer: text, inputType: 'custom-dropdown' });
                                             break;
@@ -9741,7 +10118,7 @@ return resolveDynamic(bestMatch);
                                 const shouldSelectYes = calculatedShouldSelectYes || (isYesNoQuestion && (!answer || answer.toLowerCase().includes('yes')));
                                 
                                 if (answer || shouldSelectYes) {
-                                    console.log('Clicking custom dropdown:', labelText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Clicking custom dropdown:', labelText);
                                     dropdown.click();
                                     
                                     // Wait briefly for dropdown options to appear
@@ -9752,15 +10129,15 @@ return resolveDynamic(bestMatch);
                                                         findByText('span', 'no', true);
                                         
                                         if (shouldSelectYes && yesOption) {
-                                            console.log('Selecting Yes for:', labelText);
+                                            window.__SENTINEL_DEBUG__&&console.log('Selecting Yes for:', labelText);
                                             yesOption.click();
                                             formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' });
                                         } else if (!shouldSelectYes && answer && answer.toLowerCase().includes('no') && noOption) {
-                                            console.log('Selecting No for:', labelText);
+                                            window.__SENTINEL_DEBUG__&&console.log('Selecting No for:', labelText);
                                             noOption.click();
                                             formResults.push({ question: labelText, answer: 'No', inputType: 'custom-dropdown' });
                                         } else if (yesOption) {
-                                            console.log('Defaulting to Yes for:', labelText);
+                                            window.__SENTINEL_DEBUG__&&console.log('Defaulting to Yes for:', labelText);
                                             yesOption.click();
                                             formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' });
                                         }
@@ -9776,7 +10153,7 @@ return resolveDynamic(bestMatch);
                             const isCustomDangerousYes = customDangerousPatterns.some(p => lowerLabel.includes(p));
                             
                             if (stillUnselected && labelText && !isCustomDangerousYes) {
-                                console.log('AGGRESSIVE FALLBACK: Checking custom dropdown for Yes/No:', labelText);
+                                window.__SENTINEL_DEBUG__&&console.log('AGGRESSIVE FALLBACK: Checking custom dropdown for Yes/No:', labelText);
                                 dropdown.click();
                                 
                                 setTimeout(() => {
@@ -9795,7 +10172,7 @@ return resolveDynamic(bestMatch);
                                     }
                                     
                                     if (hasYes && hasNo && yesOption) {
-                                        console.log('AGGRESSIVE FALLBACK: Selecting Yes for custom dropdown:', labelText);
+                                        window.__SENTINEL_DEBUG__&&console.log('AGGRESSIVE FALLBACK: Selecting Yes for custom dropdown:', labelText);
                                         yesOption.click();
                                         formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown-aggressive' });
                                     }
@@ -9839,6 +10216,7 @@ return resolveDynamic(bestMatch);
                                 Array.from(fieldset.querySelectorAll('[role="radio"]')).some(el => el.getAttribute('aria-checked') === 'true');
                             
                             if (radios.length > 0 && !hasCheckedRadio) {
+                                const radioOptions = radios.map(r => (getInputLabelText(r) || r.value || '').trim()).filter(Boolean);
                                 const answer = legend ? fuzzyMatch(legend) : null;
                                 if (answer) {
                                     let bestRadio = findBestRadioMatch(answer, radios);
@@ -9846,9 +10224,9 @@ return resolveDynamic(bestMatch);
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
                                     if (bestRadio) {
-                                        console.log('Clicking radio:', legend, 'with:', bestRadio.id);
+                                        window.__SENTINEL_DEBUG__&&console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         clickInput(bestRadio);
-                                        formResults.push({ question: legend, answer: answer, inputType: 'radio' });
+                                        formResults.push({ question: legend, answer: answer, inputType: 'radio', options: radioOptions, selectedOption: answer, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
                                         // Check: (1) has yes+no radio options with few radios, OR (2) question text is a Yes/No question pattern
@@ -9873,9 +10251,9 @@ return resolveDynamic(bestMatch);
                                                 return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
                                             if (targetRadio) {
-                                                console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, legend.substring(0, 50));
+                                                window.__SENTINEL_DEBUG__&&console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, legend.substring(0, 50));
                                                 clickInput(targetRadio);
-                                                formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                                formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: radioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                             }
                                         }
                                     }
@@ -9903,9 +10281,9 @@ return resolveDynamic(bestMatch);
                                             return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
                                         if (targetRadio) {
-                                            console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'} in fieldset:`, legend.substring(0, 50));
+                                            window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'} in fieldset:`, legend.substring(0, 50));
                                             clickInput(targetRadio);
-                                            formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                            formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: radioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     }
                                 }
@@ -9976,8 +10354,9 @@ return resolveDynamic(bestMatch);
                             );
                             
                             if (customRadios.length > 0 && !hasSelected) {
+                                const customRadioOptions = customRadios.map(r => (r.innerText || r.getAttribute('aria-label') || '').trim()).filter(Boolean);
                                 const answer = questionText ? fuzzyMatch(questionText) : null;
-                                console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
+                                window.__SENTINEL_DEBUG__&&console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
                                 
                                 if (answer) {
                                     let bestRadio = findBestCustomRadioMatch(answer, customRadios);
@@ -9985,9 +10364,9 @@ return resolveDynamic(bestMatch);
                                         bestRadio = findSalaryRangeMatch(answer, customRadios);
                                     }
                                     if (bestRadio) {
-                                        console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
+                                        window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
-                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio' });
+                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio', options: customRadioOptions, selectedOption: answer, source: 'pattern_match' });
                                     } else {
                                         const hasYes = customRadios.some(r => {
                                             const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
@@ -10007,9 +10386,9 @@ return resolveDynamic(bestMatch);
                                                 return t === targetValue || t.includes(targetValue);
                                             });
                                             if (targetRadio) {
-                                                console.log(`Defaulting custom radio to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
+                                                window.__SENTINEL_DEBUG__&&console.log(`Defaulting custom radio to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
                                                 clickCustomRadio(targetRadio);
-                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: customRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                             }
                                         }
                                     }
@@ -10033,9 +10412,9 @@ return resolveDynamic(bestMatch);
                                             return t === targetValue || t.includes(targetValue);
                                         });
                                         if (targetRadio) {
-                                            console.log(`Defaulting custom Yes/No to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
+                                            window.__SENTINEL_DEBUG__&&console.log(`Defaulting custom Yes/No to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
                                             clickCustomRadio(targetRadio);
-                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: customRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     }
                                 }
@@ -10107,10 +10486,11 @@ return resolveDynamic(bestMatch);
                             // Try to get text from name attribute if all else fails
                             if (!questionText && name && !name.match(/^[0-9]+$/)) {
                                 questionText = name.replace(/[_-]/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
-                                console.log('Inferred question text from radio name:', questionText);
+                                window.__SENTINEL_DEBUG__&&console.log('Inferred question text from radio name:', questionText);
                             }
                             
                             // Try to find answer for this question
+                            const standaloneRadioOptions = radios.map(r => (getInputLabelText(r) || r.value || '').trim()).filter(Boolean);
                             if (questionText) {
                                 const answer = fuzzyMatch(questionText);
                                 if (answer) {
@@ -10119,9 +10499,9 @@ return resolveDynamic(bestMatch);
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
                                     if (bestRadio) {
-                                        console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
+                                        window.__SENTINEL_DEBUG__&&console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
                                         clickInput(bestRadio);
-                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio' });
+                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio', options: standaloneRadioOptions, selectedOption: answer, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
                                         const hasYes = radios.some(r => {
@@ -10145,9 +10525,9 @@ return resolveDynamic(bestMatch);
                                                 return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
                                             if (targetRadio) {
-                                                console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, questionText.substring(0, 50));
+                                                window.__SENTINEL_DEBUG__&&console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, questionText.substring(0, 50));
                                                 clickInput(targetRadio);
-                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                                formResults.push({ question: questionText.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                             }
                                         }
                                     }
@@ -10175,9 +10555,9 @@ return resolveDynamic(bestMatch);
                                             return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
                                         if (targetRadio) {
-                                            console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50) || 'Unknown question');
+                                            window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50) || 'Unknown question');
                                             clickInput(targetRadio);
-                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio' });
+                                            formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     }
                                 }
@@ -10202,9 +10582,9 @@ return resolveDynamic(bestMatch);
                                         return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
                                     });
                                     if (yesRadio && !yesRadio.checked) {
-                                        console.log('Selecting Yes for unlabeled Yes/No question');
+                                        window.__SENTINEL_DEBUG__&&console.log('Selecting Yes for unlabeled Yes/No question');
                                         clickInput(yesRadio);
-                                        formResults.push({ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio' });
+                                        formResults.push({ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: 'Yes', source: 'default_rule' });
                                     }
                                 }
                             }
@@ -10214,7 +10594,7 @@ return resolveDynamic(bestMatch);
                         // Phase 1 (Group): Multi-checkbox fieldsets → look up parent question → check matching options only
                         // Phase 2 (Singleton): Remaining single consent/privacy checkboxes → old logic
                         const checkboxes = queryAllDeep('input[type="checkbox"], .fb-form-element__checkbox', modal);
-                        console.log('Found', checkboxes.length, 'checkboxes in modal');
+                        window.__SENTINEL_DEBUG__&&console.log('Found', checkboxes.length, 'checkboxes in modal');
 
                         // Helper: get the question text for a group/fieldset (legend or heading)
                         function getGroupQuestionText(fieldset) {
@@ -10232,7 +10612,7 @@ return resolveDynamic(bestMatch);
                                     if (t.length > 10 && t.length < 400 &&
                                         !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
                                         !t.toLowerCase().includes('this field is required')) {
-                                        console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
+                                        window.__SENTINEL_DEBUG__&&console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
                                         return t.replace(/\\*$/, '').replace(/\\* This field is required/gi, '').trim();
                                     }
                                     sib = sib.previousElementSibling;
@@ -10287,11 +10667,11 @@ return resolveDynamic(bestMatch);
                             modal.querySelectorAll('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field')
                         ).filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
 
-                        console.log('Found', multiCheckboxFieldsets.length, 'multi-checkbox fieldsets');
+                        window.__SENTINEL_DEBUG__&&console.log('Found', multiCheckboxFieldsets.length, 'multi-checkbox fieldsets');
 
                         for (const fieldset of multiCheckboxFieldsets) {
                             const groupQuestion = getGroupQuestionText(fieldset);
-                            console.log('Checkbox group question:', groupQuestion.substring(0, 80));
+                            window.__SENTINEL_DEBUG__&&console.log('Checkbox group question:', groupQuestion.substring(0, 80));
 
                             // ===== NATIONALITY CHECKBOX DETECTION =====
                             // LinkedIn Avaloq-style: 187 checkboxes with country demonyms (Afghan, Albanian, ...Indian...)
@@ -10300,7 +10680,7 @@ return resolveDynamic(bestMatch);
                                                      groupQuestion.toLowerCase().includes('citizenship');
                             
                             if (isNationalityGroup) {
-                                console.log('Nationality checkbox group detected, looking for Indian...');
+                                window.__SENTINEL_DEBUG__&&console.log('Nationality checkbox group detected, looking for Indian...');
                                 const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
                                 let found = false;
                                 for (const cb of groupCbs) {
@@ -10308,13 +10688,14 @@ return resolveDynamic(bestMatch);
                                     if (found || !isVisible(cb) || cb.checked) continue;
                                     const optLabel = getOptionLabel(cb);
                                     if (optLabel.toLowerCase() === 'indian') {
-                                        console.log('Nationality: Selecting Indian checkbox');
+                                        window.__SENTINEL_DEBUG__&&console.log('Nationality: Selecting Indian checkbox');
                                         clickInput(cb);
-                                        formResults.push({ question: groupQuestion || 'Nationality', answer: 'Indian', inputType: 'checkbox-nationality' });
+                                        const natOpts = Array.from(groupCbs).map(c => getOptionLabel(c).trim()).filter(Boolean);
+                                        formResults.push({ question: groupQuestion || 'Nationality', answer: 'Indian', inputType: 'checkbox-nationality', options: natOpts, selectedOption: 'Indian', source: 'rule' });
                                         found = true;
                                     }
                                 }
-                                if (!found) console.log('Nationality: Could not find Indian option');
+                                if (!found) window.__SENTINEL_DEBUG__&&console.log('Nationality: Could not find Indian option');
                                 continue;
                             }
 
@@ -10332,28 +10713,29 @@ return resolveDynamic(bestMatch);
                                 const looksLikeNationality = sampleLabels.filter(l => nationalityHints.some(h => l.includes(h))).length >= 2;
                                 
                                 if (looksLikeNationality) {
-                                    console.log('Detected unlabeled nationality checkbox group (heuristic), looking for Indian...');
+                                    window.__SENTINEL_DEBUG__&&console.log('Detected unlabeled nationality checkbox group (heuristic), looking for Indian...');
                                     let found = false;
                                     for (const cb of groupCbsAll) {
                                         handledCheckboxes.add(cb);
                                         if (found || !isVisible(cb) || cb.checked) continue;
                                         const optLabel = getOptionLabel(cb);
                                         if (optLabel.toLowerCase() === 'indian') {
-                                            console.log('Nationality (heuristic): Selecting Indian checkbox');
+                                            window.__SENTINEL_DEBUG__&&console.log('Nationality (heuristic): Selecting Indian checkbox');
                                             clickInput(cb);
-                                            formResults.push({ question: 'Nationality (detected)', answer: 'Indian', inputType: 'checkbox-nationality' });
+                                            formResults.push({ question: 'Nationality (detected)', answer: 'Indian', inputType: 'checkbox-nationality', options: sampleLabels, selectedOption: 'Indian', source: 'rule' });
                                             found = true;
                                         }
                                     }
-                                    if (!found) console.log('Nationality (heuristic): Could not find Indian option');
+                                    if (!found) window.__SENTINEL_DEBUG__&&console.log('Nationality (heuristic): Could not find Indian option');
                                     continue;
                                 }
                             }
 
                             const groupAnswer = groupQuestion ? fuzzyMatch(groupQuestion) : null;
-                            console.log('Checkbox group answer:', groupAnswer);
+                            window.__SENTINEL_DEBUG__&&console.log('Checkbox group answer:', groupAnswer);
 
                             const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
+                            const groupOptions = Array.from(groupCbs).map(c => getOptionLabel(c).trim()).filter(Boolean);
                             let groupAllLabelsEmpty = true; // track if all option labels are undetectable
                             let anyCheckedInGroup = false; // track if any checkbox was checked in this group
                             for (const cb of groupCbs) {
@@ -10361,7 +10743,7 @@ return resolveDynamic(bestMatch);
                                 if (!isVisible(cb) || cb.checked) continue;
 
                                 const optLabel = getOptionLabel(cb);
-                                console.log('Checkbox option label:', optLabel || '(none)');
+                                window.__SENTINEL_DEBUG__&&console.log('Checkbox option label:', optLabel || '(none)');
                                 if (optLabel) groupAllLabelsEmpty = false;
 
                                 let shouldCheck = false;
@@ -10416,12 +10798,12 @@ return resolveDynamic(bestMatch);
                                 }
 
                                 if (shouldCheck) {
-                                    console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
+                                    window.__SENTINEL_DEBUG__&&console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
                                     clickInput(cb);
                                     anyCheckedInGroup = true;
-                                    formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox' });
+                                    formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox', options: groupOptions, selectedOption: optLabel, source: 'pattern_match' });
                                 } else {
-                                    console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
+                                    window.__SENTINEL_DEBUG__&&console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
                                 }
                             }
 
@@ -10440,9 +10822,9 @@ return resolveDynamic(bestMatch);
                                 if ((groupAllLabelsEmpty && noAnswer) || isNotApplicable) {
                                     const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
                                     if (firstUnchecked) {
-                                        console.log('NOT-APPLICABLE FALLBACK: no checkbox matched → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
+                                        window.__SENTINEL_DEBUG__&&console.log('NOT-APPLICABLE FALLBACK: no checkbox matched → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
                                         clickInput(firstUnchecked);
-                                        formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox' });
+                                        formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox', options: groupOptions, selectedOption: 'Not Applicable (auto)', source: 'default_rule' });
                                     }
                                 }
                             }
@@ -10537,14 +10919,14 @@ return resolveDynamic(bestMatch);
                                         ctLower.includes('for employment') || ctLower.includes('acknowledge') ||
                                         ctLower.includes('processing of my') || ctLower.includes('personal data')) {
                                         const overrideText = containerText.substring(0, 500);
-                                        console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
+                                        window.__SENTINEL_DEBUG__&&console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
                                         labelText = overrideText;
                                         break;
                                     }
                                 }
                             }
                             
-                            console.log('Checkbox label text found:', labelText.substring(0, 100));
+                            window.__SENTINEL_DEBUG__&&console.log('Checkbox label text found:', labelText.substring(0, 100));
                             const lowerLabel = labelText.toLowerCase();
                             
                             // Check if this is a privacy/consent/acknowledge/confirm checkbox
@@ -10605,10 +10987,10 @@ return resolveDynamic(bestMatch);
                                 const isCurrentCompany = companyVal.includes('everbridge');
                                 if (isCurrentCompany) {
                                     shouldCheck = true;
-                                    console.log('Current job checkbox: checking for current employer (Everbridge)');
+                                    window.__SENTINEL_DEBUG__&&console.log('Current job checkbox: checking for current employer (Everbridge)');
                                 } else {
                                     shouldCheck = false;
-                                    console.log('Current job checkbox: skipping for past/non-current employer:', companyVal || '(unspecified)');
+                                    window.__SENTINEL_DEBUG__&&console.log('Current job checkbox: skipping for past/non-current employer:', companyVal || '(unspecified)');
                                 }
                             }
                             
@@ -10619,16 +11001,16 @@ return resolveDynamic(bestMatch);
                                     skillMatch.toLowerCase().includes(labelText.toLowerCase())
                                 )) {
                                     shouldCheck = true;
-                                    console.log('Skill found for checkbox:', labelText, 'matched as:', skillMatch);
+                                    window.__SENTINEL_DEBUG__&&console.log('Skill found for checkbox:', labelText, 'matched as:', skillMatch);
                                 }
                             }
                             
                             if (shouldCheck) {
-                                console.log('Checking checkbox:', labelText.substring(0, 50));
+                                window.__SENTINEL_DEBUG__&&console.log('Checking checkbox:', labelText.substring(0, 50));
                                 clickInput(checkbox);
-                                formResults.push({ question: labelText, answer: 'Checked', inputType: 'checkbox' });
+                                formResults.push({ question: labelText, answer: 'Checked', inputType: 'checkbox', options: [labelText], selectedOption: 'Checked', source: 'rule' });
                             } else {
-                                console.log('Skipping checkbox - not consent/privacy related or no matching skill:', labelText.substring(0, 50));
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping checkbox - not consent/privacy related or no matching skill:', labelText.substring(0, 50));
                             }
                         }
                         
@@ -10641,7 +11023,7 @@ return resolveDynamic(bestMatch);
                                 if (option.offsetParent !== null) {
                                     const text = option.innerText.trim();
                                     if (text && text.length > 2 && !text.toLowerCase().includes('select')) {
-                                        console.log('Post-fill: clicking autocomplete option:', text);
+                                        window.__SENTINEL_DEBUG__&&console.log('Post-fill: clicking autocomplete option:', text);
                                         option.click();
                                         return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: text, inputType: 'typeahead'}]);
                                     }
@@ -10711,13 +11093,13 @@ return resolveDynamic(bestMatch);
                             if (hasVisibleError) {
                                 const errorEls = queryAllDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
                                 errorEls.forEach((el, i) => {
-                                    console.log('ERROR[' + i + '] text:', el.innerText, '| id:', el.id, '| class:', el.className);
+                                    window.__SENTINEL_DEBUG__&&console.log('ERROR[' + i + '] text:', el.innerText, '| id:', el.id, '| class:', el.className);
                                     const errorParent = el.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question');
                                     if (errorParent) {
                                         const label = errorParent.querySelector('label, legend');
                                         const input = errorParent.querySelector('input, select, textarea');
-                                        console.log('ERROR[' + i + '] field label:', label?.innerText?.substring(0, 100));
-                                        console.log('ERROR[' + i + '] field value:', input?.value, input?.type);
+                                        window.__SENTINEL_DEBUG__&&console.log('ERROR[' + i + '] field label:', label?.innerText?.substring(0, 100));
+                                        window.__SENTINEL_DEBUG__&&console.log('ERROR[' + i + '] field value:', input?.value, input?.type);
                                     }
                                 });
                             }
@@ -10727,12 +11109,12 @@ return resolveDynamic(bestMatch);
                             allInputs.forEach((inp, i) => {
                                 if (isVisible(inp) && inp.value) {
                                     const lbl = inp.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || inp.getAttribute('aria-label') || '';
-                                    console.log('FIELD[' + i + ']:', inp.type, '| label:', lbl.substring(0, 60), '| value:', inp.value);
+                                    window.__SENTINEL_DEBUG__&&console.log('FIELD[' + i + ']:', inp.type, '| label:', lbl.substring(0, 60), '| value:', inp.value);
                                 }
                             });
                             
                             if (hasEmptyInput || hasEmptySelect || hasEmptyRadio || hasUncheckedCheckbox || hasVisibleError) {
-                                console.log('Validation Error detected:', { hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasUncheckedCheckbox, hasVisibleError });
+                                window.__SENTINEL_DEBUG__&&console.log('Validation Error detected:', { hasEmptyInput, hasEmptySelect, hasEmptyRadio, hasUncheckedCheckbox, hasVisibleError });
                                 return true;
                             }
                             return false;
@@ -10746,7 +11128,7 @@ return resolveDynamic(bestMatch);
                                                   modal.querySelector('form') || modal;
                         if (scrollableContent && scrollableContent.scrollHeight > scrollableContent.clientHeight) {
                             scrollableContent.scrollTop = scrollableContent.scrollHeight;
-                            console.log('Scrolled modal content to bottom to reveal lazy buttons');
+                            window.__SENTINEL_DEBUG__&&console.log('Scrolled modal content to bottom to reveal lazy buttons');
                         }
                         
                         // Helper: Reject non-progression buttons like "Add", "Add more", "Cancel", "Back", etc.
@@ -10784,7 +11166,7 @@ return resolveDynamic(bestMatch);
                                              findByText('button', 'save', false, modal);
                         
                         if (innerSaveBtn && isVisible(innerSaveBtn) && !isInvalidActionButton(innerSaveBtn)) {
-                            console.log('Found sub-form Save/Opslaan button — clicking to commit entry:', innerSaveBtn.innerText || innerSaveBtn.getAttribute('aria-label'));
+                            window.__SENTINEL_DEBUG__&&console.log('Found sub-form Save/Opslaan button — clicking to commit entry:', innerSaveBtn.innerText || innerSaveBtn.getAttribute('aria-label'));
                             try { innerSaveBtn.scrollIntoView({block: 'center', behavior: 'instant'}); } catch(e) {}
                             innerSaveBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                             innerSaveBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -10807,7 +11189,7 @@ return resolveDynamic(bestMatch);
                                                   findByText('button', 'verwijderen', false, errorCard) ||
                                                   queryDeep('button[aria-label*="Remove"], button[aria-label*="Verwijderen"]', errorCard);
                                 if (removeBtn && isVisible(removeBtn)) {
-                                    console.log('Found Remove button on invalid review card — clicking Remove to unblock Next:', removeBtn.innerText);
+                                    window.__SENTINEL_DEBUG__&&console.log('Found Remove button on invalid review card — clicking Remove to unblock Next:', removeBtn.innerText);
                                     removeBtn.click();
                                     return 'LINKEDIN_INVALID_CARD_REMOVED';
                                 }
@@ -10815,7 +11197,7 @@ return resolveDynamic(bestMatch);
                         }
 
                         // Find action buttons (Review, Next, Submit)
-                        console.log('Searching for primary action button...');
+                        window.__SENTINEL_DEBUG__&&console.log('Searching for primary action button...');
                         const modalFooter = queryDeep('footer, .artdeco-modal__actionbar, .jobs-easy-apply-modal__actionbar', modal) || modal;
                         const buttonCandidates = [
                             queryDeep('button[aria-label*="Submit application"]', modalFooter),
@@ -10863,10 +11245,22 @@ return resolveDynamic(bestMatch);
                                     .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
                                 
                                 if (allInputsFilled && allSelectsFilled) {
-                                    console.log('All fields filled but visible errors remain — force-clicking Next to re-trigger validation');
+                                    // Guard against empty file input / missing resume upload: block force-click
+                                    const fileInputs = queryAllDeep('input[type="file"]', modal);
+                                    const hasEmptyRequiredFile = fileInputs.some(inp => {
+                                        if (!inp) return false;
+                                        const container = inp.closest('.jobs-document-upload-redesign__container, [class*="resume"], [class*="document-upload"]') || modal;
+                                        const hasExistingDoc = !!container.querySelector('.jobs-document-upload-redesign__file-name, [class*="uploaded-document"], [class*="file-name"], .ui-attachment');
+                                        return (inp.required || inp.getAttribute('aria-required') === 'true') && (!inp.files || inp.files.length === 0) && !hasExistingDoc;
+                                    });
+                                    if (hasEmptyRequiredFile) {
+                                        window.__SENTINEL_DEBUG__&&console.log('Resume/file upload required but no file attached — blocking force-click Next');
+                                        return 'LINKEDIN_FORM_STUCK: Resume not attached';
+                                    }
+                                    window.__SENTINEL_DEBUG__&&console.log('All fields filled but visible errors remain — force-clicking Next to re-trigger validation');
                                     // Don't return FORM_STUCK, fall through to click the button
                                 } else {
-                                    console.log('Form has errors or missing required fields. Waiting for resolution...');
+                                    window.__SENTINEL_DEBUG__&&console.log('Form has errors or missing required fields. Waiting for resolution...');
                                     return 'LINKEDIN_FORM_STUCK: Validation errors or required fields missing';
                                 }
                             }
@@ -10875,12 +11269,12 @@ return resolveDynamic(bestMatch);
                             // where the footer/Next button is scrolled out of view)
                             try {
                                 primaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});
-                                console.log('Scrolled primary button into view');
+                                window.__SENTINEL_DEBUG__&&console.log('Scrolled primary button into view');
                             } catch (e) {
-                                console.log('scrollIntoView failed (non-critical):', e.message);
+                                window.__SENTINEL_DEBUG__&&console.log('scrollIntoView failed (non-critical):', e.message);
                             }
                             
-                            console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
+                            window.__SENTINEL_DEBUG__&&console.log('Clicking modal primary button:', primaryBtn.innerText || primaryBtn.getAttribute('aria-label'));
                             primaryBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                             primaryBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
                             primaryBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
@@ -10899,7 +11293,7 @@ return resolveDynamic(bestMatch);
                         // Conservative global fallback: search entire page ONLY for modal-specific
                         // button phrasings. Never match generic 'next' or plain 'review' globally — that matches the
                         // job search results filters or company reviews.
-                        console.log('No button found in modal, trying conservative global fallback (no generic next)...');
+                        window.__SENTINEL_DEBUG__&&console.log('No button found in modal, trying conservative global fallback (no generic next)...');
                         const globalCandidates = [
                             queryDeep('button[aria-label*="Review your application"]'),
                             queryDeep('button[aria-label*="Submit application"]'),
@@ -10923,15 +11317,15 @@ return resolveDynamic(bestMatch);
                                 const allSelectsFilled2 = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
                                 if (!(allInputsFilled2 && allSelectsFilled2)) {
-                                    console.log('Form has errors. Waiting...');
+                                    window.__SENTINEL_DEBUG__&&console.log('Form has errors. Waiting...');
                                     return 'LINKEDIN_FORM_STUCK: Validation errors';
                                 }
-                                console.log('All fields filled but visible errors remain (global fallback) — force-clicking');
+                                window.__SENTINEL_DEBUG__&&console.log('All fields filled but visible errors remain (global fallback) — force-clicking');
                             }
                             try {
                                 globalPrimaryBtn.scrollIntoView({block: 'center', behavior: 'instant'});
                             } catch (e) {}
-                            console.log('Found button via global fallback:', globalPrimaryBtn.innerText || globalPrimaryBtn.getAttribute('aria-label'));
+                            window.__SENTINEL_DEBUG__&&console.log('Found button via global fallback:', globalPrimaryBtn.innerText || globalPrimaryBtn.getAttribute('aria-label'));
                             globalPrimaryBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                             globalPrimaryBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
                             globalPrimaryBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
@@ -10972,7 +11366,7 @@ return resolveDynamic(bestMatch);
                             const txt = (btn.innerText || '').toLowerCase().trim();
                             // Match "Continue applying" button directly
                             if (txt.includes('continue applying') && isVisible(btn)) {
-                                console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
+                                window.__SENTINEL_DEBUG__&&console.log('FIRST-PASS SAFETY INTERCEPT: Found "Continue applying" button, clicking...');
                                 btn.scrollIntoView({block: 'center'});
                                 btn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                 btn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -10987,7 +11381,7 @@ return resolveDynamic(bestMatch);
                                 if (dialogAncestor) {
                                     const dialogText = (dialogAncestor.innerText || '').toLowerCase();
                                     if (safetyKeywords.some(kw => dialogText.includes(kw)) && txt.includes('continue')) {
-                                        console.log('FIRST-PASS SAFETY INTERCEPT: Found continue button inside safety dialog, clicking...');
+                                        window.__SENTINEL_DEBUG__&&console.log('FIRST-PASS SAFETY INTERCEPT: Found continue button inside safety dialog, clicking...');
                                         btn.scrollIntoView({block: 'center'});
                                         btn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                         btn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -10999,7 +11393,7 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                         }
-                        console.log('FIRST-PASS SAFETY INTERCEPT: Scanned', scanned, 'buttons, no "Continue applying" found.');
+                        window.__SENTINEL_DEBUG__&&console.log('FIRST-PASS SAFETY INTERCEPT: Scanned', scanned, 'buttons, no "Continue applying" found.');
                     }
 
                     // Helper: Check if LinkedIn Easy Apply modal is visible (heuristic-based)
@@ -11009,7 +11403,7 @@ return resolveDynamic(bestMatch);
                         // Heuristic 1: visible SVG role="progressbar" with aria-valuenow (% complete bar)
                         const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
                         if (pb && isVisible(pb)) {
-                            console.log('Modal detected via progressbar heuristic');
+                            window.__SENTINEL_DEBUG__&&console.log('Modal detected via progressbar heuristic');
                             return true;
                         }
                         // Heuristic 2: Standard modal/dialog container that is visible (excluding messaging & filter dropdowns)
@@ -11029,7 +11423,7 @@ return resolveDynamic(bestMatch);
                                         continue;
                                     }
                                     if (el.querySelector('input, select, textarea, button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]')) {
-                                        console.log('Modal detected via active dialog container:', selector);
+                                        window.__SENTINEL_DEBUG__&&console.log('Modal detected via active dialog container:', selector);
                                         return true;
                                     }
                                 }
@@ -11041,7 +11435,7 @@ return resolveDynamic(bestMatch);
                             if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {
                                 const parentDialog = el.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, form');
                                 if (parentDialog && !isMessagingOverlay(parentDialog)) {
-                                    console.log('Modal detected via pages-text heuristic in dialog:', el.innerText.trim().substring(0, 30));
+                                    window.__SENTINEL_DEBUG__&&console.log('Modal detected via pages-text heuristic in dialog:', el.innerText.trim().substring(0, 30));
                                     return true;
                                 }
                             }
@@ -11051,7 +11445,7 @@ return resolveDynamic(bestMatch);
                         if (compKeyEl && isVisible(compKeyEl)) {
                             const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
                             if (parentDialog && !isMessagingOverlay(parentDialog) && compKeyEl.querySelector('input, select, textarea')) {
-                                console.log('Modal detected via componentkey inside dialog');
+                                window.__SENTINEL_DEBUG__&&console.log('Modal detected via componentkey inside dialog');
                                 return true;
                             }
                         }
@@ -11162,7 +11556,7 @@ return resolveDynamic(bestMatch);
 
                     // Check for modals (safety FIRST, then success, limit, then Easy Apply form)
                     const checkModals = () => {
-                        console.log('Checking for active Easy Apply modal (heuristic-based)...');
+                        window.__SENTINEL_DEBUG__&&console.log('Checking for active Easy Apply modal (heuristic-based)...');
 
                         // PRIORITY 1: Scan all visible dialogs for safety/success/limit modals
                         // This runs BEFORE the Easy Apply heuristic to prevent the componentkey
@@ -11171,15 +11565,25 @@ return resolveDynamic(bestMatch);
                         for (const dialog of dialogs) {
                             if (!isVisible(dialog)) continue;
                             if (isMessagingOverlay(dialog)) continue;
-                            const text = (dialog.innerText || '').toLowerCase();
-                            // Safety reminder modal — check FIRST (broad keyword set)
-                            if (text.includes('safety reminder') || text.includes('job search safety') ||
-                                text.includes('research the company') || text.includes('report suspicious') ||
-                                text.includes('review job post') || text.includes('continue applying')) {
+                            const text = normText(dialog.innerText || dialog.textContent);
+                            const titleEl = dialog.querySelector('h2, .artdeco-modal__title, [data-test-modal-header], header');
+                            const titleText = titleEl ? normText(titleEl.innerText || titleEl.textContent) : '';
+
+                            // Safety reminder modal — check FIRST (explicit title & body matcher)
+                            const isSafetyModal = (
+                                titleText.includes('job search safety reminder') ||
+                                titleText.includes('safety reminder') ||
+                                (text.includes('research the company') && (text.includes('report suspicious jobs') || text.includes('report suspicious'))) ||
+                                text.includes('job search safety reminder') ||
+                                text.includes('safety reminder') ||
+                                text.includes('continue applying')
+                            );
+
+                            if (isSafetyModal) {
                                 return { type: 'safety', element: dialog };
                             }
                             // Success modal
-                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /application\\s+\\w+\\s+(sent|submitted)/i.test(text)) {
+                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /\\bapplication\\s+\\w+\\s+(sent|submitted)/i.test(text) || text.includes('application sent') || text.includes('application submitted')) {
                                 return { type: 'success', element: dialog };
                             }
                             // Easy Apply daily limit
@@ -11188,6 +11592,10 @@ return resolveDynamic(bestMatch);
                                 (text.includes('apply tomorrow') && text.includes('limit'))) {
                                 return { type: 'easy_apply_limit', element: dialog };
                             }
+
+                            // Diagnostic logging for visible unclassified dialogs
+                            const btns = Array.from(dialog.querySelectorAll('button')).map(b => normText(b.innerText || b.getAttribute('aria-label'))).filter(Boolean);
+                            window.__SENTINEL_DEBUG__&&console.log(`[Diagnostic] Visible unclassified dialog detected: Title="${titleText}", Buttons=[${btns.join(', ')}]`);
                         }
 
                         // PRIORITY 2: Easy Apply form — heuristic check
@@ -11235,14 +11643,16 @@ return resolveDynamic(bestMatch);
                         const allVisibleDialogs = queryAllDeep('.artdeco-modal, [role="dialog"], [class*="modal"]');
                         for (const d of allVisibleDialogs) {
                             if (!isVisible(d) || isMessagingOverlay(d)) continue;
-                            const dText = (d.innerText || '').toLowerCase();
+                            const dText = normText(d.innerText || d.textContent);
+                            const titleEl = d.querySelector('h2, .artdeco-modal__title, [data-test-modal-header], header');
+                            const titleText = titleEl ? normText(titleEl.innerText || titleEl.textContent) : '';
 
                             // Easy Apply limit check on any visible dialog
                             if (dText.includes('easy apply limit') || dText.includes('you reached today') ||
                                 (dText.includes('apply tomorrow') && dText.includes('limit'))) {
-                                console.log('LINKEDIN: Easy Apply limit popup detected via dialog scan. Clicking Got it...');
+                                window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Easy Apply limit popup detected via dialog scan. Clicking Got it...');
                                 const btns = Array.from(queryAllDeep('button', d));
-                                const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
+                                const gotItBtn = btns.find(b => normText(b.innerText) === 'got it') || btns[btns.length - 1];
                                 if (gotItBtn) {
                                     gotItBtn.scrollIntoView({block: 'center'});
                                     gotItBtn.click();
@@ -11250,17 +11660,32 @@ return resolveDynamic(bestMatch);
                                 return 'LINKEDIN_RATE_LIMITED: Easy Apply daily limit reached (scan)';
                             }
 
-                            if (dText.includes('safety reminder') || dText.includes('job search safety') ||
-                                dText.includes('research the company') || dText.includes('report suspicious') ||
-                                dText.includes('review job post') || dText.includes('continue applying')) {
-                                console.log('LINKEDIN: Safety reminder popup detected via intercept (pre-checkModals).');
-                                // Find "Continue applying" button inside this element (shadow-DOM aware)
+                            const isSafetyReminder = (
+                                titleText.includes('job search safety reminder') ||
+                                titleText.includes('safety reminder') ||
+                                (dText.includes('research the company') && (dText.includes('report suspicious jobs') || dText.includes('report suspicious'))) ||
+                                dText.includes('job search safety reminder') ||
+                                dText.includes('safety reminder') ||
+                                dText.includes('continue applying')
+                            );
+
+                            if (isSafetyReminder) {
+                                window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Safety reminder popup detected via intercept (pre-checkModals).');
+                                // Find "Continue applying" button inside this element (data-test -> .artdeco-button--primary -> normalized text match -> last button)
                                 const btns = Array.from(queryAllDeep('button, span[role="button"]', d));
-                                const continueBtn = btns.find(b => (b.innerText || '').toLowerCase().includes('continue applying')) ||
-                                                   btns.find(b => (b.innerText || '').toLowerCase().includes('continue')) ||
-                                                   btns[btns.length - 1];  // fallback: last button
+                                const continueBtn = (
+                                    d.querySelector('[data-test-dialog-primary-btn], [data-control-name="continue_applying"], [data-test-continue-applying-btn], [data-easy-apply-next-button]') ||
+                                    d.querySelector('.artdeco-button--primary') ||
+                                    findByText('button', 'continue applying', false, d) ||
+                                    findByText('button', 'continue', false, d) ||
+                                    btns.find(b => {
+                                        const t = normText(b.innerText || b.getAttribute('aria-label'));
+                                        return t.includes('continue applying') || t === 'continue';
+                                    }) ||
+                                    btns[btns.length - 1]
+                                );
                                 if (continueBtn) {
-                                    console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', continueBtn.innerText);
+                                    window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Clicking "Continue applying" (intercept path):', normText(continueBtn.innerText || continueBtn.getAttribute('aria-label')));
                                     continueBtn.scrollIntoView({block: 'center'});
                                     continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                     continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -11275,13 +11700,13 @@ return resolveDynamic(bestMatch);
 
                     const modal = checkModals();
                     if (modal) {
-                        console.log('Active Modal detected:', modal.type);
+                        window.__SENTINEL_DEBUG__&&console.log('Active Modal detected:', modal.type);
                         if (modal.type === 'success') {
                             const closeBtn = modal.element.querySelector('button[aria-label="Dismiss"]') || 
                                            modal.element.querySelector('.artdeco-modal__dismiss') || 
                                            modal.element.querySelector('button');
                             if (closeBtn) {
-                                console.log('Closing success modal...');
+                                window.__SENTINEL_DEBUG__&&console.log('Closing success modal...');
                                 closeBtn.click();
                                 return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
                             }
@@ -11289,7 +11714,7 @@ return resolveDynamic(bestMatch);
                         
                         // Easy Apply Daily Limit — click "Got it" and signal rate limit
                         if (modal.type === 'easy_apply_limit') {
-                            console.log('LINKEDIN: Easy Apply daily limit dialog detected. Clicking Got it...');
+                            window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Easy Apply daily limit dialog detected. Clicking Got it...');
                             const gotItBtn = findByText('button', 'got it', true) ||
                                             findByText('button', 'got it') ||
                                             modal.element.querySelector('[data-testid="dialog-content"] button') ||
@@ -11307,14 +11732,21 @@ return resolveDynamic(bestMatch);
                         }
                         
                         if (modal.type === 'safety') {
-                            // Look for "Continue applying" button — try by text first, then last button
-                            const continueBtn = findByText('button', 'continue applying', true) ||
-                                               findByText('button', 'continue applying') ||
-                                               findByText('button', 'continue') ||
-                                               modal.element.querySelector('button:last-child') ||
-                                               modal.element.querySelector('.artdeco-button--primary');
+                            // Find primary "Continue applying" (data-test -> .artdeco-button--primary -> normalized text match -> last button)
+                            const btns = Array.from(queryAllDeep('button, span[role="button"]', modal.element));
+                            const continueBtn = (
+                                modal.element.querySelector('[data-test-dialog-primary-btn], [data-control-name="continue_applying"], [data-test-continue-applying-btn], [data-easy-apply-next-button]') ||
+                                modal.element.querySelector('.artdeco-button--primary') ||
+                                findByText('button', 'continue applying', false, modal.element) ||
+                                findByText('button', 'continue', false, modal.element) ||
+                                btns.find(b => {
+                                    const t = normText(b.innerText || b.getAttribute('aria-label'));
+                                    return t.includes('continue applying') || t === 'continue';
+                                }) ||
+                                btns[btns.length - 1]
+                            );
                             if (continueBtn) {
-                                console.log('LINKEDIN: Clicking "Continue applying" on safety reminder popup');
+                                window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Clicking "Continue applying" on safety reminder popup:', normText(continueBtn.innerText || continueBtn.getAttribute('aria-label')));
                                 continueBtn.scrollIntoView({block: 'center'});
                                 continueBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
                                 continueBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -11339,7 +11771,7 @@ return resolveDynamic(bestMatch);
                     if (easyApplyLimitDlg && isVisible(easyApplyLimitDlg)) {
                         const dlgText = (easyApplyLimitDlg.innerText || '').toLowerCase();
                         if (dlgText.includes('easy apply limit') || dlgText.includes('you reached today') || dlgText.includes('apply tomorrow')) {
-                            console.log('LINKEDIN: Easy Apply limit dialog detected via intercept. Clicking Got it...');
+                            window.__SENTINEL_DEBUG__&&console.log('LINKEDIN: Easy Apply limit dialog detected via intercept. Clicking Got it...');
                             const btns = Array.from(easyApplyLimitDlg.querySelectorAll('button'));
                             const gotItBtn = btns.find(b => (b.innerText || '').trim().toLowerCase() === 'got it') || btns[btns.length - 1];
                             if (gotItBtn) {
@@ -11372,14 +11804,14 @@ return resolveDynamic(bestMatch);
                         const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent;
                         
                         if (isVisible(anyModal) && hasInteractiveElements) {
-                            console.log('Unknown modal detected via deep query. Handling as generic form...');
+                            window.__SENTINEL_DEBUG__&&console.log('Unknown modal detected via deep query. Handling as generic form...');
                             return handleLinkedInForm(anyModal);
                         } else if (isLikelyEasyApplyModal && (isVisible(anyModal) || hasInteractiveElements)) {
-                            console.log('Easy Apply modal is loading or transitioning. Waiting...');
+                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply modal is loading or transitioning. Waiting...');
                             return 'LINKEDIN_MODAL_TRANSITIONING';
                         } else {
                             // Not an Easy Apply modal or it's stale - proceed to look for Easy Apply button
-                            console.log('Modal found but not an Easy Apply modal. Proceeding to look for Easy Apply button...');
+                            window.__SENTINEL_DEBUG__&&console.log('Modal found but not an Easy Apply modal. Proceeding to look for Easy Apply button...');
                         }
                     }
 
@@ -11403,15 +11835,15 @@ return resolveDynamic(bestMatch);
 
                     if (!isCurrentJobSkipped) {
                         // No modal open - handle job selection and clicking Easy Apply
-                        console.log('No modal detected. Checking for Easy Apply button...');
+                        window.__SENTINEL_DEBUG__&&console.log('No modal detected. Checking for Easy Apply button...');
                         const easyApplyBtn = findEasyApplyButton();
                         if (easyApplyBtn) {
-                            console.log('Easy Apply button found, clicking...');
+                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply button found, clicking...');
                             easyApplyBtn.click();
                             return 'LINKEDIN_EASY_APPLY_CLICKED';
                         }
                     } else {
-                        console.log('Current job ' + activeJobId + ' is already in skip list. Selecting next job from list...');
+                        window.__SENTINEL_DEBUG__&&console.log('Current job ' + activeJobId + ' is already in skip list. Selecting next job from list...');
                     }
 
                     // ── NO EASY APPLY BUTTON FOUND ──
@@ -11441,7 +11873,7 @@ return resolveDynamic(bestMatch);
                                               window.location.href.includes('eBP=NOT_ELIGIBLE') ||
                                               window.location.search.includes('eBP=NOT');
                         if (isNotEligible && currentJobId && !window.__skippedJobIds.has(currentJobId)) {
-                            console.log('Job ' + currentJobId + ' is NOT_ELIGIBLE_FOR_CHARGING (URL signal). Marking as skipped.');
+                            window.__SENTINEL_DEBUG__&&console.log('Job ' + currentJobId + ' is NOT_ELIGIBLE_FOR_CHARGING (URL signal). Marking as skipped.');
                             window.__skippedJobIds.add(currentJobId);
                             return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — job closed (URL signal)';
                         }
@@ -11463,7 +11895,7 @@ return resolveDynamic(bestMatch);
                             const hasNoApplySignal = noApplySignals.some(sig => detailText.includes(sig));
                             // Also skip if we simply can't find an Easy Apply button after selecting this job
                             if (hasNoApplySignal || !findEasyApplyButton()) {
-                                console.log('Job ' + currentJobId + ' has no Easy Apply button (closed/expired). Marking as skipped.');
+                                window.__SENTINEL_DEBUG__&&console.log('Job ' + currentJobId + ' has no Easy Apply button (closed/expired). Marking as skipped.');
                                 window.__skippedJobIds.add(currentJobId);
                                 return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — ' + (hasNoApplySignal ? 'job closed' : 'button not found');
                             }
@@ -11478,14 +11910,14 @@ return resolveDynamic(bestMatch);
                                             detailText.includes('no longer available') ||
                                             detailText.includes('application closed');
                             if (isClosed && !findEasyApplyButton()) {
-                                console.log('Job with no ID appears closed (URL/detail signal). Skipping...');
+                                window.__SENTINEL_DEBUG__&&console.log('Job with no ID appears closed (URL/detail signal). Skipping...');
                                 // Track by title to avoid re-selecting
                                 const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, h1');
                                 const title = titleEl ? titleEl.innerText.trim().substring(0, 80) : '';
                                 if (title) {
                                     if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
                                     window.__skippedJobTitles.add(title);
-                                    console.log('Added to skipped titles:', title);
+                                    window.__SENTINEL_DEBUG__&&console.log('Added to skipped titles:', title);
                                 }
                                 return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — closed job (no ID)';
                             }
@@ -11493,16 +11925,16 @@ return resolveDynamic(bestMatch);
                         
                         // Even without a job ID, if we still can't find Easy Apply, return skip
                         if (!currentJobId && !findEasyApplyButton()) {
-                            console.log('No Easy Apply button and could not identify job ID. Skipping...');
+                            window.__SENTINEL_DEBUG__&&console.log('No Easy Apply button and could not identify job ID. Skipping...');
                             return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — unknown job';
                         }
                     }
 
                     // Navigation logic if needed
-                    console.log('Looking for jobs in list...');
+                    window.__SENTINEL_DEBUG__&&console.log('Looking for jobs in list...');
                     // 3. If no Easy Apply button and no modal, we might be on the search page
                     // We need to select the next job from the list
-                    console.log('Looking for jobs in list...');
+                    window.__SENTINEL_DEBUG__&&console.log('Looking for jobs in list...');
                     
                     // Find the sidebar with extreme robust fallbacks
                     // Priority 1: .jobs-search-results-list (standard)
@@ -11522,7 +11954,7 @@ return resolveDynamic(bestMatch);
                     }
                     
                     if (!sidebar) {
-                         console.log('Sidebar not found by selector, trying geometry...');
+                         window.__SENTINEL_DEBUG__&&console.log('Sidebar not found by selector, trying geometry...');
                          // Find any div that is scrollable and on the left
                          const allDivs = queryAllDeep('div');
                          for (const div of allDivs) {
@@ -11537,7 +11969,7 @@ return resolveDynamic(bestMatch);
                     }
 
                     if (!sidebar) {
-                        console.log('Sidebar ABSOLUTELY not found, attempting global scroll...');
+                        window.__SENTINEL_DEBUG__&&console.log('Sidebar ABSOLUTELY not found, attempting global scroll...');
                         window.scrollBy(0, 800);
                         return 'LINKEDIN_SCROLLED: No jobs found (Legacy)';
                     }
@@ -11592,20 +12024,20 @@ return resolveDynamic(bestMatch);
                                          card.getAttribute('data-occludable-job-id') ||
                                          card.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id');
                         if (cardJobId && window.__skippedJobIds && window.__skippedJobIds.has(cardJobId)) {
-                            console.log('Skipping previously-skipped job ID:', cardJobId);
+                            window.__SENTINEL_DEBUG__&&console.log('Skipping previously-skipped job ID:', cardJobId);
                             return false;
                         }
                         
                         // Check explicit "Applied" status
                         if (text.includes('applied')) {
-                            // console.log('Skipping applied job:', text.split('\\n')[0]);
+                            // window.__SENTINEL_DEBUG__&&console.log('Skipping applied job:', text.split('\\n')[0]);
                             return false;
                         }
                         
                         // User requirement: Must be "Easy Apply"
                         // Note: Some cards might say "Easy Apply" in hidden text, so strict check is good
                         if (!text.includes('easy apply')) {
-                            // console.log('Skipping non-Easy Apply job:', text.split('\\n')[0]);
+                            // window.__SENTINEL_DEBUG__&&console.log('Skipping non-Easy Apply job:', text.split('\\n')[0]);
                             return false;
                         }
                         
@@ -11627,9 +12059,9 @@ return resolveDynamic(bestMatch);
                         // it means clicking it did not advance state. Skip it.
                         if (window.__lastClickedJobTitle === nextJobTitle) {
                             window.__lastClickedJobSameCount = (window.__lastClickedJobSameCount || 0) + 1;
-                            console.log('Same job selected again (' + window.__lastClickedJobSameCount + 'x): ' + nextJobTitle);
+                            window.__SENTINEL_DEBUG__&&console.log('Same job selected again (' + window.__lastClickedJobSameCount + 'x): ' + nextJobTitle);
                             if (window.__lastClickedJobSameCount >= 2) {
-                                console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip list');
+                                window.__SENTINEL_DEBUG__&&console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip list');
                                 if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
                                 window.__skippedJobTitles.add(nextJobTitle);
                                 window.__lastClickedJobTitle = null;
@@ -11643,13 +12075,13 @@ return resolveDynamic(bestMatch);
                         }
                         window.__lastClickedJobTitle = nextJobTitle;
                         
-                        console.log('Clicking next job:', nextJobTitle);
+                        window.__SENTINEL_DEBUG__&&console.log('Clicking next job:', nextJobTitle);
                         nextJob.click();
                         nextJob.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return 'LINKEDIN_JOB_SELECTED';
                     } else if (candidates.length > 0) {
                         // All candidates were filtered by title skip list — scroll to load more
-                        console.log('All visible candidates are in skip list, scrolling sidebar...');
+                        window.__SENTINEL_DEBUG__&&console.log('All visible candidates are in skip list, scrolling sidebar...');
                         if (sidebar) sidebar.scrollBy(0, 400);
                         return 'LINKEDIN_SCROLLED: All candidates skipped';
                     }
@@ -11659,18 +12091,18 @@ return resolveDynamic(bestMatch);
                     
                     if (!isAtBottom) {
                         // Still have room to scroll in sidebar
-                        console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
+                        window.__SENTINEL_DEBUG__&&console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
                         sidebar.scrollBy(0, 800);
                         return 'LINKEDIN_SCROLLED: No jobs found';
                     }
                     
                     // At bottom of sidebar — try to click next page pagination button
-                    console.log('Sidebar fully scrolled. Looking for next page pagination button...');
+                    window.__SENTINEL_DEBUG__&&console.log('Sidebar fully scrolled. Looking for next page pagination button...');
                     
                     // Strategy 1: data-testid based (most reliable)
                     const nextBtnByTestId = document.querySelector('button[data-testid="pagination-controls-next-button-visible"]');
                     if (nextBtnByTestId) {
-                        console.log('Found Next button via data-testid, clicking...');
+                        window.__SENTINEL_DEBUG__&&console.log('Found Next button via data-testid, clicking...');
                         nextBtnByTestId.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         nextBtnByTestId.click();
                         return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
@@ -11685,7 +12117,7 @@ return resolveDynamic(bestMatch);
                             const nextPageNum = parseInt(match[1]) + 1;
                             const nextPageBtn = document.querySelector('button[aria-label="Page ' + nextPageNum + '"]');
                             if (nextPageBtn) {
-                                console.log('Found Page ' + nextPageNum + ' button, clicking...');
+                                window.__SENTINEL_DEBUG__&&console.log('Found Page ' + nextPageNum + ' button, clicking...');
                                 nextPageBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 nextPageBtn.click();
                                 return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
@@ -11702,14 +12134,14 @@ return resolveDynamic(bestMatch);
                         return hasNext && hasChevron && isVisible;
                     });
                     if (nextChevronBtn) {
-                        console.log('Found Next button via chevron match, clicking...');
+                        window.__SENTINEL_DEBUG__&&console.log('Found Next button via chevron match, clicking...');
                         nextChevronBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         nextChevronBtn.click();
                         return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
                     }
                     
                     // No pagination found — might be last page
-                    console.log('No pagination button found — possibly last page. Scrolling sidebar as fallback...');
+                    window.__SENTINEL_DEBUG__&&console.log('No pagination button found — possibly last page. Scrolling sidebar as fallback...');
                     sidebar.scrollBy(0, 800);
                     return 'LINKEDIN_SCROLLED: No jobs found';
                 }
@@ -11831,7 +12263,7 @@ return resolveDynamic(bestMatch);
                         const isThankYouMsg = /thank you|responses have been recorded|application submitted|successfully applied|applied successfully|all done|submission complete/i.test(qLower);
                         const hasPendingInputs = document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select, div.textArea[contenteditable="true"]');
                         if (isThankYouMsg && (!hasPendingInputs || !document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select'))) {
-                            console.log('NAUKRI DEBUG: Chatbot thank you / completion message detected');
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Chatbot thank you / completion message detected');
                             const closeBtn = document.querySelector('.chatbot_Drawer .crossIcon, .chatbot_Drawer button[class*="close"], .chatbot_Close, div.crossIcon');
                             if (closeBtn) closeBtn.click();
                             return 'CHATBOT_COMPLETE';
@@ -11860,10 +12292,10 @@ return resolveDynamic(bestMatch);
                             const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
                             const yyyy = lwd.getFullYear();
                             answer = dd + ' ' + mon + ' ' + yyyy;
-                            console.log('NAUKRI DEBUG: LWD question detected:', qText, '->', answer);
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: LWD question detected:', qText, '->', answer);
                         } else if (isPrivacyQ) {
                             answer = 'Yes';
-                            console.log('NAUKRI DEBUG: Consent/Privacy question detected:', qText, '-> Yes');
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Consent/Privacy question detected:', qText, '-> Yes');
                         } else {
                             answer = fuzzyMatch(qText) || "4 Years";
                         }
@@ -11890,11 +12322,11 @@ return resolveDynamic(bestMatch);
                                 el.dispatchEvent(new Event('change', { bubbles: true }));
                                 el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
                             });
-                            console.log('NAUKRI DEBUG: date filled', dv + '/' + mv + '/' + yv);
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: date filled', dv + '/' + mv + '/' + yv);
                             const sendBtn = document.querySelector('div.sendMsg') ||
                                            document.querySelector('.sendMsgbtn_container .sendMsg') ||
                                            document.querySelector('[class*="sendMsg"]');
-                            console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 80));
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 80));
                             if (sendBtn && !sendBtn.disabled) {
                                 sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
                                 sendBtn.dispatchEvent(new MouseEvent('mouseup',   { bubbles: true, cancelable: true }));
@@ -12052,7 +12484,7 @@ return resolveDynamic(bestMatch);
                             }
                             if (typeaheadInput && typeaheadInput.offsetParent !== null) {
                                 const locAnswer = 'Bangalore';
-                                console.log('NAUKRI DEBUG: typeahead location input found, typing:', locAnswer);
+                                window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: typeahead location input found, typing:', locAnswer);
                                 typeaheadInput.focus();
                                 typeaheadInput.click();
                                 const locSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
@@ -12075,7 +12507,7 @@ return resolveDynamic(bestMatch);
                                             if (opt.offsetParent !== null || opt.getClientRects().length > 0) {
                                                 const t = (opt.innerText || opt.textContent || '').trim();
                                                 if (t && t.length > 2 && !t.toLowerCase().includes('select')) {
-                                                    console.log('NAUKRI DEBUG: clicking typeahead option:', t);
+                                                    window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: clicking typeahead option:', t);
                                                     opt.click();
                                                     opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
                                                     // Click send button after a short delay
@@ -12142,7 +12574,7 @@ return resolveDynamic(bestMatch);
                             if (select.value !== matched.value) select.selectedIndex = matched.index;
                             select.dispatchEvent(new Event('input', { bubbles: true }));
                             select.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('NAUKRI DEBUG: select matched:', matched.text, 'for q:', qText.slice(0, 30));
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: select matched:', matched.text, 'for q:', qText.slice(0, 30));
                             const saveBtn = document.querySelector('div.sendMsg') || document.querySelector('.sendMsgbtn_container .sendMsg');
                             if (saveBtn) { 
                                 saveBtn.click(); 
@@ -12648,7 +13080,7 @@ return resolveDynamic(bestMatch);
                                            document.querySelector('.sendMsgbtn_container .sendMsg') ||
                                            document.querySelector('[class*="sendMsg"]');
                             
-                            console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 100));
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 100));
                             
                             if (sendBtn) { 
                                 sendBtn.click(); 
@@ -12736,7 +13168,7 @@ return resolveDynamic(bestMatch);
                             }
                             
                             const nextTabId = tabOrder[nextIdx];
-                            console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId, '(section had', uncheckedBoxes.length, 'jobs <', TARGET_JOBS + ')');
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId, '(section had', uncheckedBoxes.length, 'jobs <', TARGET_JOBS + ')');
                             
                             // Try multiple selectors to find the tab
                             let nextTab = document.querySelector(`#${nextTabId} .tab-list-item`);
@@ -12748,18 +13180,18 @@ return resolveDynamic(bestMatch);
                                     if (tabText.includes(nextTabId.replace('_', ' ')) || 
                                         tabText.includes(nextTabId.replace('_', ''))) {
                                         nextTab = tab;
-                                        console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                        window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
                                         break;
                                     }
                                 }
                             }
                             
                             if (nextTab) {
-                                console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
+                                window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
                                 nextTab.click();
                                 return 'NAUKRI_NAVIGATING_TO_TAB (' + uncheckedBoxes.length + ' jobs < ' + TARGET_JOBS + '): ' + nextTabId;
                             } else {
-                                console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
+                                window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
                                 return 'NAUKRI_NO_JOBS_LEFT: All tabs exhausted';
                             }
                         }
@@ -12904,7 +13336,7 @@ return resolveDynamic(bestMatch);
                         }
                         
                         const nextTabId = tabOrder[nextIdx];
-                        console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId);
+                        window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Cycle step', nextIdx, '- navigating to:', nextTabId);
                         
                         // Try multiple selectors to find the tab
                         let nextTab = document.querySelector(`#${nextTabId} .tab-list-item`);
@@ -12916,18 +13348,18 @@ return resolveDynamic(bestMatch);
                                 if (tabText.includes(nextTabId.replace('_', ' ')) || 
                                     tabText.includes(nextTabId.replace('_', ''))) {
                                     nextTab = tab;
-                                    console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
+                                    window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Found tab by text match:', tabText);
                                     break;
                                 }
                             }
                         }
                         
                         if (nextTab) {
-                            console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Clicking tab:', nextTab.innerText?.substring(0, 30));
                             nextTab.click();
                             return 'NAUKRI_NAVIGATING_TO_TAB: ' + nextTabId;
                         } else {
-                            console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Could not find tab element for:', nextTabId);
                             return 'NAUKRI_NO_CHECKBOX_IN_SECTION: All tabs exhausted';
                         }
                     }
@@ -13015,7 +13447,7 @@ return resolveDynamic(bestMatch);
                             // PRIORITY 1: Target the exact Instahyre class for "Search other jobs"
                             const jobSearchHeading = document.querySelector('.job-search-heading');
                             if (jobSearchHeading) {
-                                console.log('Clicking job-search-heading:', jobSearchHeading.innerText);
+                                window.__SENTINEL_DEBUG__&&console.log('Clicking job-search-heading:', jobSearchHeading.innerText);
                                 // Use MouseEvent dispatch for Angular ng-click compatibility
                                 const clickEvent = new MouseEvent('click', {
                                     bubbles: true, cancelable: true, view: window
@@ -13029,7 +13461,7 @@ return resolveDynamic(bestMatch);
                             if (sidebarSection) {
                                 const heading = sidebarSection.querySelector('div[ng-click]');
                                 if (heading) {
-                                    console.log('Clicking sidebar section heading');
+                                    window.__SENTINEL_DEBUG__&&console.log('Clicking sidebar section heading');
                                     const clickEvent = new MouseEvent('click', {
                                         bubbles: true, cancelable: true, view: window
                                     });
@@ -13044,7 +13476,7 @@ return resolveDynamic(bestMatch);
                             );
                             for (const trigger of searchTriggers) {
                                 if (trigger && trigger.offsetParent !== null) {
-                                    console.log('Clicking Search Trigger (text match):', trigger);
+                                    window.__SENTINEL_DEBUG__&&console.log('Clicking Search Trigger (text match):', trigger);
                                     const clickEvent = new MouseEvent('click', {
                                         bubbles: true, cancelable: true, view: window
                                     });
@@ -13297,7 +13729,7 @@ return resolveDynamic(bestMatch);
                             const jobFuncContainerCheck = jobFuncCtrl ? jobFuncCtrl.querySelector('.selectize-input') : null;
                             const hasJobFuncs = jobFuncContainerCheck && jobFuncContainerCheck.querySelectorAll('.item').length >= 1;
                             
-                            console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs);
+                            window.__SENTINEL_DEBUG__&&console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs);
                             
                             // Only click Show Results if ALL fields are configured (add hasExp if re-enabling experience)
                             if (hasLocation && hasSkills && hasJobFuncs) {
@@ -13473,7 +13905,7 @@ return resolveDynamic(bestMatch);
                 // Reuses the same helpers: fuzzyMatch, findBestRadioMatch, findSalaryRangeMatch, etc.
                 // ============================================================
                 if (!isLinkedIn && !isNaukri && !isInstahyre) {
-                    console.log('=== GENERIC PLATFORM FORM FILLING ===');
+                    window.__SENTINEL_DEBUG__&&console.log('=== GENERIC PLATFORM FORM FILLING ===');
                     const genericResults = [];
                     
                     // 1. Handle text/number/textarea inputs
@@ -13490,7 +13922,7 @@ return resolveDynamic(bestMatch);
                         const answer = fuzzyMatch(label);
                         if (answer && !input.value.trim()) {
                             fillReactInput(input, answer);
-                            console.log('GENERIC: Filled input', label.substring(0, 40), 'with:', answer.substring(0, 30));
+                            window.__SENTINEL_DEBUG__&&console.log('GENERIC: Filled input', label.substring(0, 40), 'with:', answer.substring(0, 30));
                             genericResults.push({ question: label.substring(0, 80), answer: answer, inputType: 'text' });
                         }
                     }
@@ -13514,7 +13946,7 @@ return resolveDynamic(bestMatch);
                                 if (select.value !== bestOpt.value) select.selectedIndex = bestOpt.index;
                                 select.dispatchEvent(new Event('change', { bubbles: true }));
                                 select.dispatchEvent(new Event('blur', { bubbles: true }));
-                                console.log('GENERIC: Selected dropdown', label.substring(0, 40), ':', bestOpt.text);
+                                window.__SENTINEL_DEBUG__&&console.log('GENERIC: Selected dropdown', label.substring(0, 40), ':', bestOpt.text);
                                 genericResults.push({ question: label.substring(0, 80), answer: bestOpt.text, inputType: 'select' });
                             }
                         }
@@ -13535,7 +13967,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 if (bestRadio) {
                                     clickInput(bestRadio);
-                                    console.log('GENERIC: Clicked fieldset radio', legend.substring(0, 40), ':', answer);
+                                    window.__SENTINEL_DEBUG__&&console.log('GENERIC: Clicked fieldset radio', legend.substring(0, 40), ':', answer);
                                     genericResults.push({ question: legend.substring(0, 80), answer: answer, inputType: 'radio' });
                                 } else {
                                     const hasYes = radios.some(r => {
@@ -13558,7 +13990,7 @@ return resolveDynamic(bestMatch);
                                         });
                                         if (yesRadio) {
                                             clickInput(yesRadio);
-                                            console.log('GENERIC: Selected Yes for Yes/No question:', legend.substring(0, 40));
+                                            window.__SENTINEL_DEBUG__&&console.log('GENERIC: Selected Yes for Yes/No question:', legend.substring(0, 40));
                                             genericResults.push({ question: legend.substring(0, 80), answer: 'Yes', inputType: 'radio' });
                                         }
                                     }
@@ -13584,7 +14016,7 @@ return resolveDynamic(bestMatch);
                                     });
                                     if (yesRadio) {
                                         clickInput(yesRadio);
-                                        console.log('GENERIC: Selected Yes for unlabeled Yes/No question');
+                                        window.__SENTINEL_DEBUG__&&console.log('GENERIC: Selected Yes for unlabeled Yes/No question');
                                         genericResults.push({ question: 'Yes/No question (no label)', answer: 'Yes', inputType: 'radio' });
                                     }
                                 }
@@ -13639,7 +14071,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 if (bestRadio) {
                                     clickInput(bestRadio);
-                                    console.log('GENERIC: Clicked standalone radio', questionText.substring(0, 40), ':', answer);
+                                    window.__SENTINEL_DEBUG__&&console.log('GENERIC: Clicked standalone radio', questionText.substring(0, 40), ':', answer);
                                     genericResults.push({ question: questionText.substring(0, 80), answer: answer, inputType: 'radio' });
                                 } else {
                                     const hasYes = radios.some(r => {
@@ -13662,7 +14094,7 @@ return resolveDynamic(bestMatch);
                                         });
                                         if (yesRadio) {
                                             clickInput(yesRadio);
-                                            console.log('GENERIC: Selected Yes for Yes/No:', questionText.substring(0, 40));
+                                            window.__SENTINEL_DEBUG__&&console.log('GENERIC: Selected Yes for Yes/No:', questionText.substring(0, 40));
                                             genericResults.push({ question: questionText.substring(0, 80), answer: 'Yes', inputType: 'radio' });
                                         }
                                     }
@@ -13684,13 +14116,13 @@ return resolveDynamic(bestMatch);
                             lowerLabel.includes('declaration') || lowerLabel.includes('confirm')) {
                             cb.click();
                             cb.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('GENERIC: Checked consent checkbox:', label.substring(0, 40));
+                            window.__SENTINEL_DEBUG__&&console.log('GENERIC: Checked consent checkbox:', label.substring(0, 40));
                             genericResults.push({ question: label.substring(0, 80), answer: 'Checked', inputType: 'checkbox' });
                         }
                     }
                     
                     if (genericResults.length > 0) {
-                        console.log('GENERIC: Filled', genericResults.length, 'fields');
+                        window.__SENTINEL_DEBUG__&&console.log('GENERIC: Filled', genericResults.length, 'fields');
                         return 'GENERIC_FORM_FILLED|' + JSON.stringify(genericResults);
                     }
                 }

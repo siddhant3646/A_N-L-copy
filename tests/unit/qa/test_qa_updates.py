@@ -3,7 +3,7 @@ import os
 import unittest
 
 # Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.sentinel.agent import SentinelAgent
 

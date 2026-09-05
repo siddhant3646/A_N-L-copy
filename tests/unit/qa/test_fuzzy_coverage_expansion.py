@@ -6,7 +6,7 @@ import sys
 import os
 import unittest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.sentinel.agent import SentinelAgent
 
@@ -249,7 +249,9 @@ class TestExistingPatternsRegression(unittest.TestCase):
 
     def test_location(self):
         ans, score = self.agent._fuzzy_match_question('current location')
-        self.assertIn('Bangalore', ans)
+        # Dedup promoted the higher-priority location_current group (default
+        # 'Bengaluru'); accept the city under either spelling.
+        self.assertTrue('Bangalore' in ans or 'Bengaluru' in ans, f"got {ans!r}")
         self.assertGreater(score, 0.6)
 
     def test_experience_years(self):

@@ -3,7 +3,7 @@ import os
 import unittest
 import re
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.patterns.pattern_matcher import create_matcher
 from src.patterns.answer_validator import AnswerValidator
@@ -638,29 +638,29 @@ class TestAutoLearningScript(unittest.TestCase):
     """Tests for the import_qa_results.py auto-learning script."""
 
     def test_extract_pattern_strings_returns_variants(self):
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts'))
         from import_qa_results import extract_pattern_strings, categorize_question, generate_pattern_id
         variants = extract_pattern_strings('What is your current salary?')
         self.assertGreaterEqual(len(variants), 2)
         self.assertIn('what is your current salary', variants[0])
 
     def test_categorize_question_salary(self):
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts'))
         from import_qa_results import categorize_question
         self.assertEqual(categorize_question('What is your current salary?', '23 LPA'), 'salary')
 
     def test_categorize_question_experience(self):
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts'))
         from import_qa_results import categorize_question
         self.assertEqual(categorize_question('How many years of experience?', '4 Years'), 'experience')
 
     def test_categorize_question_notice(self):
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts'))
         from import_qa_results import categorize_question
         self.assertEqual(categorize_question('What is your notice period?', '15 days'), 'notice_period')
 
     def test_generate_pattern_id_unique(self):
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts'))
         from import_qa_results import generate_pattern_id
         existing = {'current_salary': {}}
         pid = generate_pattern_id('What is your current salary?', existing)

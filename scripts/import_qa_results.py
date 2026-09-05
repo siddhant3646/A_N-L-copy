@@ -25,7 +25,9 @@ import csv
 import json
 import os
 import re
+import shutil
 import sys
+import time
 from collections import defaultdict
 from difflib import SequenceMatcher
 
@@ -33,11 +35,38 @@ DEFAULT_CSV = os.path.expanduser("~/Desktop/sentinel_errors/qa_results.csv")
 PATTERNS_FILE = os.path.join(os.path.dirname(__file__), "..", "config", "qa_patterns.json")
 MIN_FREQUENCY = 3
 MIN_CONFIDENCE = 0.80
+MATCH_THRESHOLD = 0.65
+LEARNED_PRIORITY = 16
+
+
+def build_input_type_defaults(answer):
+    """Derive input-type defaults from the answer shape."""
+    al = answer.strip().lower()
+    defaults = {"text": answer, "textarea": answer}
+    if al in ("yes", "no"):
+        defaults.update({"radio": answer, "checkbox": answer, "select": answer})
+    elif re.fullmatch(r"\d+", answer):
+        defaults.update({"number": answer, "radio": answer, "select": answer})
+    else:
+        defaults.update({"select": answer, "radio": answer})
+    return defaults
 
 
 def load_patterns(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def atomic_write_json(path, data):
+    backup = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
+    shutil.copy2(path, backup)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+    return backup
 
 
 def load_csv(path):
@@ -62,9 +91,14 @@ def load_csv(path):
 
 
 def question_matches_existing(question, patterns_data):
-    """Check if a question matches any existing pattern (fuzzy)."""
+    """Check if a question matches any existing pattern (fuzzy).
+
+    Returns (matched, best_score, best_category). A containment hit counts as
+    matched; otherwise the best fuzzy ratio is compared against MATCH_THRESHOLD.
+    """
     ql = question.lower().strip()
     best_score = 0.0
+    best_cat = None
     for cat_id, pdata in patterns_data["patterns"].items():
         for pat in pdata.get("patterns", []):
             pl = pat.lower().strip()
@@ -74,7 +108,7 @@ def question_matches_existing(question, patterns_data):
             if ratio > best_score:
                 best_score = ratio
                 best_cat = cat_id
-    return False, best_score, best_cat if best_score > 0 else None
+    return best_score >= MATCH_THRESHOLD, best_score, best_cat
 
 
 def categorize_question(question, answer):
@@ -252,19 +286,22 @@ def main():
             "patterns": p["proposed_patterns"],
             "category": p["category"],
             "default": p["answer"],
-            "input_type_defaults": {
-                "text": p["answer"],
-            },
-            "priority": 5,
+            "input_type_defaults": build_input_type_defaults(p["answer"]),
+            "priority": LEARNED_PRIORITY,
             "auto_learned": True,
         }
         patterns_data["patterns"][p["id"]] = entry
         added += 1
 
-    with open(args.output, "w", encoding="utf-8") as f:
-        json.dump(patterns_data, f, indent=2)
+    backup = atomic_write_json(args.output, patterns_data)
 
-    print(f"Added {added} new pattern categories to {args.output}")
+    reloaded = load_patterns(args.output)
+    if len(reloaded.get("patterns", {})) != len(patterns_data["patterns"]):
+        print(f"ERROR: post-write validation failed; restoring backup {backup}", file=sys.stderr)
+        shutil.copy2(backup, args.output)
+        sys.exit(1)
+
+    print(f"Added {added} new pattern categories to {args.output} (backup: {backup})")
     print(f"Total categories now: {len(patterns_data['patterns'])}")
 
 

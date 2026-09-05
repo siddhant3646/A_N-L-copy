@@ -33,7 +33,6 @@ from .page_utils import (
 )
 
 from .profile_manager import ProfileManager
-from .js_loader import JSLoader, load_js
 
 __all__ = [
     # Human behavior
@@ -63,8 +62,4 @@ __all__ = [
     
     # Profile management
     'ProfileManager',
-    
-    # JS loading
-    'JSLoader',
-    'load_js',
 ]

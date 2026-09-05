@@ -670,7 +670,7 @@ VALIDATION_RULES = {
         'patterns': [
             r'^\d+$',  # Integer
             r'^\d+\.\d+$',  # Decimal
-            r'^\d+(\.\d+)?\s*(?:years?|yrs?|months?|lpa|lac|lakhs?|cr)?$',  # Number with optional units
+            r'^\d+(\.\d+)?\s*(?:years?|yrs?|months?)?$',  # Number with optional time units
         ],
         'message': 'Should be a number'
     },

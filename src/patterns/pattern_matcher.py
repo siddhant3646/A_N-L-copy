@@ -121,8 +121,12 @@ class PatternMatcher:
             return 'Yes', max(score, 0.98)
 
         # 4. Currency and Unit Detection for Salary / CTC questions
+        is_multi_topic = bool(re.search(r'\b(notice|location|fintech|managerial|mentoring|lead modules)\b', ql) and re.search(r'\b(experience|years)\b', ql))
         is_salary_q = bool(re.search(r'\b(salary|ctc|compensation|pay|package|remuneration)\b', ql))
-        if is_salary_q:
+        if is_salary_q and not is_multi_topic:
+            is_combined_ctc = bool(re.search(r'\b(current|present|cctc)\b', ql) and re.search(r'\b(expected|expectation|ectc)\b', ql))
+            if is_combined_ctc:
+                return 'Current CTC: 23 LPA, Expected CTC: 30 LPA', max(score, 0.98)
             is_usd = bool(re.search(r'\b(usd|dollars?|\$)\b', ql))
             is_in_lakhs = bool(re.search(r'\b(lakhs?|lacs?|lpa)\b', ql))
             is_current = bool(re.search(r'\b(current|present|cctc)\b', ql))
@@ -135,9 +139,10 @@ class PatternMatcher:
                 if lpa_m:
                     return lpa_m.group(1), max(score, 0.98)
 
-        # 5. Textarea Technical Essay Handling (avoid short digits like 4.2 or 5 in essays)
-        is_textarea_essay = (input_type == 'textarea' or bool(re.search(r'\b(describe your|tell us about|walk through|hands-on experience working with|experience taking over)\b', ql)))
-        if is_textarea_essay and (al in ('4', '4.2', '5', '4.2 Years', 'Yes', 'No') or len(al) < 15):
+        # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits like 4.2 or 5 in essays)
+        is_conceptual_q = bool(re.search(r'\b(explain|architecture|design an?|how does|what steps|stabilize and scale|internal working|trade-offs)\b', ql))
+        is_textarea_essay = (input_type == 'textarea' or is_conceptual_q or bool(re.search(r'\b(describe your|tell us about|walk through|hands-on experience working with|experience taking over)\b', ql)))
+        if is_textarea_essay and (al in ('4', '4.2', '5', '9', '10', '4.2 Years', '5 Years', 'Yes', 'No') or len(al) < 15):
             tech_summary = (
                 "4+ years of professional full-stack software engineering experience specializing in distributed systems, "
                 "RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), "
@@ -290,6 +295,7 @@ class PatternMatcher:
         best_id = None
         best_score = 0.0
         best_priority = -1
+        q_words = set(normalized_q.split())
 
         for cat, cat_score in detected_cats:
             pattern_ids = self._category_index.get(cat, [])
@@ -298,6 +304,9 @@ class PatternMatcher:
                     continue
                 pdata = self.patterns['patterns'].get(pid, {})
                 for norm_p in self._norm_pattern_cache.get(pid, []):
+                    p_words = set(norm_p.split())
+                    if not (q_words & p_words) and norm_p not in normalized_q and normalized_q not in norm_p:
+                        continue
                     sim = self._similarity(normalized_q, norm_p)
                     if len(norm_p) >= 4 and (f" {norm_p} " in f" {normalized_q} " or re.search(rf"\b{re.escape(norm_p)}\b", normalized_q)):
                         coverage = len(norm_p) / max(len(normalized_q), 1)
@@ -322,12 +331,16 @@ class PatternMatcher:
         best_id = None
         best_score = 0.0
         best_priority = -1
+        q_words = set(normalized_q.split())
 
         for pattern_id, norm_patterns in self._norm_pattern_cache.items():
             if not self._passes_negative(pattern_id, question_lower):
                 continue
             pattern_data = self.patterns['patterns'].get(pattern_id, {})
             for norm_p in norm_patterns:
+                p_words = set(norm_p.split())
+                if not (q_words & p_words) and norm_p not in normalized_q and normalized_q not in norm_p:
+                    continue
                 sim = self._similarity(normalized_q, norm_p)
                 if len(norm_p) >= 4 and (f" {norm_p} " in f" {normalized_q} " or re.search(rf"\b{re.escape(norm_p)}\b", normalized_q)):
                     coverage = len(norm_p) / max(len(normalized_q), 1)

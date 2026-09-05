@@ -592,9 +592,12 @@ class SentinelAgent:
         np_keywords = ['your np', 'what is your np', 'mention np', 'np?']
         is_np_abbreviation = any(kw in question_lower for kw in np_keywords)
         
+        # Conceptual/architecture check to prevent rating/numeric short-circuits
+        is_conceptual_tech = any(kw in question_lower for kw in ['design', 'explain', 'approach', 'how does', 'what steps', 'trade-off', 'tradeoffs', 'stabilize', 'implementing', 'architecture'])
+
         # Rating/Proficiency questions (1-10 scale) - CHECK BEFORE EXPERIENCE
         rating_keywords = ['rate proficiency', 'rate yourself', 'rate your', 'on a scale', '1-10', '1 to 10', 'proficiency in']
-        is_rating_question = any(kw in question_lower for kw in rating_keywords)
+        is_rating_question = any(kw in question_lower for kw in rating_keywords) and not is_conceptual_tech
         
         # Preferred position questions
         position_keywords = ['preferred position', 'frontend/backend', 'frontend or backend', 'preferred role', 'which role']
@@ -606,7 +609,7 @@ class SentinelAgent:
         
         # DSA questions
         dsa_keywords = ['dsa', 'data structures', 'algorithms', 'how good are you']
-        is_dsa_question = any(kw in question_lower for kw in dsa_keywords)
+        is_dsa_question = any(kw in question_lower for kw in dsa_keywords) and not is_conceptual_tech
         
         # Async/Background job questions - MUST BE BEFORE generic experience check
         is_async_job_question = any(kw in question_lower for kw in ASYNC_JOB_KEYWORDS)
@@ -614,7 +617,7 @@ class SentinelAgent:
         # Tech stacks / Python libraries questions - MUST CHECK BEFORE EXPERIENCE
         tech_stack_keywords = ['tech stack', 'tech-stack', 'technologies worked', 'worked upon', 'major tech']
         python_lib_keywords = ['python libraries', 'python library', 'python libs', 'python packages', 'which python']
-        is_tech_question = any(kw in question_lower for kw in tech_stack_keywords)
+        is_tech_question = any(kw in question_lower for kw in tech_stack_keywords) and not is_conceptual_tech
         is_python_lib_question = any(kw in question_lower for kw in python_lib_keywords)
         
         # Database NAME questions (not experience) - CHECK BEFORE EXPERIENCE
@@ -991,6 +994,14 @@ class SentinelAgent:
         
         # Priority patterns based on detected category
         if is_salary_question:
+            # Combined Current and Expected CTC - MUST check before individual current or expected
+            is_both_curr_and_exp = (
+                ('current' in question_lower or 'present' in question_lower or 'cctc' in question_lower) and
+                ('expected' in question_lower or 'expect' in question_lower or 'ectc' in question_lower or 'desired' in question_lower)
+            )
+            if is_both_curr_and_exp:
+                return 'Current CTC: 23 LPA, Expected CTC: 30 LPA', 0.98
+
             # Fixed vs Variable salary breakup
             if 'fixed' in question_lower or 'variable' in question_lower or 'breakup' in question_lower:
                 return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
@@ -4851,7 +4862,7 @@ class SentinelAgent:
             c_name = click_conv_res.get('name', 'Recruiter')
             c_job = click_conv_res.get('job', '')
             c_idx = click_conv_res.get('index', messages_handled)
-            c_total = click_conv_res.get('totalCards', conv_count)
+            c_total = max(click_conv_res.get('totalCards', conv_count), messages_handled + 1, conv_count)
             c_id = click_conv_res.get('id', f"{c_name}::{c_job}::{c_idx}")
 
             print(f"\n📩 [{messages_handled + 1}/{c_total}] Conversation with {c_name} ({c_job})")
@@ -6511,25 +6522,86 @@ class SentinelAgent:
                             }}
                         }}
                     }} else {{
-                        // Match specific text or multi-select
-                        for (const info of cbInfos) {{
-                            if (info.lblLower.includes('skip')) continue;
-                            if (info.lblLower && (answerLower.includes(info.lblLower) || info.lblLower.includes(answerLower))) {{
-                                if (!info.cb.checked) {{
-                                    info.cb.click();
-                                    clickedCheckbox = true;
-                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked matching checkbox:', info.lbl);
-                                }}
-                            }}
-                        }}
-                        // If no specific match and answer is Yes, select all valid options (e.g. locations)
-                        if (!clickedCheckbox && isAnsYes) {{
+                        // Check if options represent mutually exclusive ranges or numeric bounds
+                        const hasRangeOptions = cbInfos.some(info => 
+                            /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(info.lblLower) ||
+                            info.lblLower.includes('no experience')
+                        );
+                        
+                        if (hasRangeOptions) {{
+                            // Find single best range matching the answer (e.g. 4.2 years)
+                            const numM = answerStr.match(/(\\d+(?:\\.\\d+)?)/);
+                            const answerNum = numM ? parseFloat(numM[1]) : 4.2;
+                            let bestInfo = null;
+                            
                             for (const info of cbInfos) {{
                                 if (info.lblLower.includes('skip')) continue;
-                                if (!info.cb.checked) {{
-                                    info.cb.click();
+                                const lbl = info.lblLower;
+                                const rangeM = lbl.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/i);
+                                const lessM = lbl.match(/(?:<|less\\s+than|under|fewer\\s+than|below|up\\s+to)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                const moreM = lbl.match(/(?:>|more\\s+than|over|above|\\+)\\s*(\\d+(?:\\.\\d+)?)/i) || lbl.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/i);
+                                
+                                if (rangeM) {{
+                                    const min = parseFloat(rangeM[1]);
+                                    const max = parseFloat(rangeM[2]);
+                                    if (answerNum >= min && answerNum <= max) {{
+                                        bestInfo = info;
+                                        break;
+                                    }}
+                                }} else if (lessM) {{
+                                    const max = parseFloat(lessM[1]);
+                                    if (answerNum < max) {{
+                                        bestInfo = info;
+                                        break;
+                                    }}
+                                }} else if (moreM) {{
+                                    const min = parseFloat(moreM[1]);
+                                    if (answerNum >= min) {{
+                                        bestInfo = info;
+                                        break;
+                                    }}
+                                }}
+                            }}
+                            
+                            // If no range explicitly bounded 4.2 (e.g. < 2.5 vs 6-8), pick closest non-zero range
+                            if (!bestInfo) {{
+                                for (const info of cbInfos) {{
+                                    if (info.lblLower.includes('skip') || info.lblLower.includes('no experience')) continue;
+                                    if (/\\d+/.test(info.lblLower)) {{
+                                        bestInfo = info;
+                                        break;
+                                    }}
+                                }}
+                            }}
+                            
+                            if (bestInfo) {{
+                                if (!bestInfo.cb.checked) {{
+                                    bestInfo.cb.click();
                                     clickedCheckbox = true;
-                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked option checkbox:', info.lbl);
+                                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked best range checkbox:', bestInfo.lbl);
+                                }}
+                            }}
+                        }} else {{
+                            // Match specific text or multi-select
+                            for (const info of cbInfos) {{
+                                if (info.lblLower.includes('skip')) continue;
+                                if (info.lblLower && (answerLower.includes(info.lblLower) || info.lblLower.includes(answerLower))) {{
+                                    if (!info.cb.checked) {{
+                                        info.cb.click();
+                                        clickedCheckbox = true;
+                                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked matching checkbox:', info.lbl);
+                                    }}
+                                }}
+                            }}
+                            // If no specific match and answer is Yes, select all valid options (e.g. locations)
+                            if (!clickedCheckbox && isAnsYes) {{
+                                for (const info of cbInfos) {{
+                                    if (info.lblLower.includes('skip')) continue;
+                                    if (!info.cb.checked) {{
+                                        info.cb.click();
+                                        clickedCheckbox = true;
+                                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked option checkbox:', info.lbl);
+                                    }}
                                 }}
                             }}
                         }}
@@ -6588,24 +6660,64 @@ class SentinelAgent:
                     const mccHasYes = mccInputNames.some(n => n === 'yes');
                     const mccHasNo = mccInputNames.some(n => n === 'no');
                     const mccIsYesNoPair = mccHasYes && mccHasNo;
+                    const mccHasRange = mccInputNames.some(name => 
+                        /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(name) ||
+                        name.includes('no experience')
+                    );
+                    
                     if (mccIsYesNoPair) {{
                         window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC Yes/No pair detected, will only click Yes');
                     }}
                     let mccClicked = 0;
                     const skipNames = [];
-                    for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
-                        const inputName = (namedInputs[i].name || '').toLowerCase().trim();
-                        const isSkip = inputName.includes('skip') || inputName.includes('skip this');
-                        // For Yes/No pairs, skip "no" — only select "yes"
-                        const isNoInPair = mccIsYesNoPair && inputName === 'no';
-                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
-                        if (isSkip || isNoInPair) {{
-                            skipNames.push(inputName);
-                            continue;
+                    
+                    if (mccHasRange) {{
+                        const numM = answerStr.match(/(\\d+(?:\\.\\d+)?)/);
+                        const answerNum = numM ? parseFloat(numM[1]) : 4.2;
+                        let bestIdx = -1;
+                        for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
+                            const name = (namedInputs[i].name || '').toLowerCase().trim();
+                            if (name.includes('skip')) continue;
+                            const rangeM = name.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/i);
+                            const lessM = name.match(/(?:<|less\\s+than|under|fewer\\s+than|below|up\\s+to)\\s*(\\d+(?:\\.\\d+)?)/i);
+                            const moreM = name.match(/(?:>|more\\s+than|over|above|\\+)\\s*(\\d+(?:\\.\\d+)?)/i) || name.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/i);
+                            
+                            if (rangeM && answerNum >= parseFloat(rangeM[1]) && answerNum <= parseFloat(rangeM[2])) {{
+                                bestIdx = i; break;
+                            }} else if (lessM && answerNum < parseFloat(lessM[1])) {{
+                                bestIdx = i; break;
+                            }} else if (moreM && answerNum >= parseFloat(moreM[1])) {{
+                                bestIdx = i; break;
+                            }}
                         }}
-                        mccCheckboxes[i].click();
-                        mccClicked++;
-                        window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC clicked index:', i, 'name:', inputName);
+                        if (bestIdx === -1) {{
+                            for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
+                                const name = (namedInputs[i].name || '').toLowerCase().trim();
+                                if (!name.includes('skip') && !name.includes('no experience') && /\\d+/.test(name)) {{
+                                    bestIdx = i; break;
+                                }}
+                            }}
+                        }}
+                        if (bestIdx !== -1) {{
+                            mccCheckboxes[bestIdx].click();
+                            mccClicked++;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC clicked best range index:', bestIdx, 'name:', namedInputs[bestIdx].name);
+                        }}
+                    }} else {{
+                        for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
+                            const inputName = (namedInputs[i].name || '').toLowerCase().trim();
+                            const isSkip = inputName.includes('skip') || inputName.includes('skip this');
+                            // For Yes/No pairs, skip "no" — only select "yes"
+                            const isNoInPair = mccIsYesNoPair && inputName === 'no';
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
+                            if (isSkip || isNoInPair) {{
+                                skipNames.push(inputName);
+                                continue;
+                            }}
+                            mccCheckboxes[i].click();
+                            mccClicked++;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC clicked index:', i, 'name:', inputName);
+                        }}
                     }}
                     
                     if (mccClicked > 0) {{
@@ -13510,8 +13622,16 @@ return resolveDynamic(bestMatch);
                             }
                         }
                         
+                        // A0. Company Size - One-shot: select "Large" (value 2) before skills
+                        const companySizeSelect = document.querySelector('select#company-size');
+                        if (companySizeSelect && companySizeSelect.value !== '2') {
+                            companySizeSelect.value = '2';
+                            companySizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            return 'INSTAHYRE_SET_COMPANY_SIZE: Large';
+                        }
+                        
                         // A. Skills - Add one skill at a time (FIRST)
-                        const skillsToAdd = ['Java', 'JavaScript', 'HTML', 'CSS', 'SpringBoot', 'ReactJS', 'AWS'];
+                        const skillsToAdd = ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
                         const skillsSelectize = getSelectize('skills');
                         const skillsInput = document.querySelector('input#skills-selectized');
                         if (skillsInput) {
@@ -13729,16 +13849,21 @@ return resolveDynamic(bestMatch);
                             const jobFuncContainerCheck = jobFuncCtrl ? jobFuncCtrl.querySelector('.selectize-input') : null;
                             const hasJobFuncs = jobFuncContainerCheck && jobFuncContainerCheck.querySelectorAll('.item').length >= 1;
                             
-                            window.__SENTINEL_DEBUG__&&console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs);
+                            // Check company size (value '2' = Large; treat as OK if the select is not in the DOM)
+                            const csSelect = document.querySelector('select#company-size');
+                            const hasCompanySize = !csSelect || csSelect.value === '2';
+                            
+                            window.__SENTINEL_DEBUG__&&console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs + ', CompanySize=' + hasCompanySize);
                             
                             // Only click Show Results if ALL fields are configured (add hasExp if re-enabling experience)
-                            if (hasLocation && hasSkills && hasJobFuncs) {
+                            if (hasLocation && hasSkills && hasJobFuncs && hasCompanySize) {
                                 showResultsBtn.scrollIntoView({ block: 'center' });
                                 showResultsBtn.click();
                                 sessionStorage.setItem('instahyre_results_clicked', Date.now().toString());
                                 return 'INSTAHYRE_SHOW_RESULTS_CLICKED';
                             } else {
                                 // Return status indicating which field is pending
+                                if (!hasCompanySize) return 'INSTAHYRE_PENDING_COMPANY_SIZE';
                                 if (!hasSkills) return 'INSTAHYRE_PENDING_SKILLS';
                                 if (!hasJobFuncs) return 'INSTAHYRE_PENDING_JOB_FUNCS';
                                 if (!hasLocation) return 'INSTAHYRE_PENDING_LOCATION';

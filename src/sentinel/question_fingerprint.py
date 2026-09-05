@@ -731,6 +731,27 @@ def detect_expected_format(question: str) -> Optional[str]:
     """
     q_lower = question.lower()
     
+    # 0. Conceptual / Architecture / Essay question guard - do not force format constraints
+    if any(w in q_lower for w in [
+        'explain', 'architecture', 'design', 'approach', 'stabilize', 'scale', 
+        'walk us through', 'how does', 'what steps', 'trade-off', 'tradeoffs', 
+        'describe', 'difference between', 'internal working', 'how to', 'how would you',
+        'principles', 'scenario', 'methodology'
+    ]):
+        return None
+
+    # 0.1 Combined / Multi-topic question guard
+    is_combined_salary = (
+        ('current' in q_lower or 'cctc' in q_lower or 'present' in q_lower) and
+        ('expected' in q_lower or 'ectc' in q_lower or 'desired' in q_lower)
+    )
+    is_breakup = ('fixed' in q_lower and 'variable' in q_lower) or 'breakup' in q_lower
+    is_composite_hr = 'ctc' in q_lower and ('np' in q_lower or 'notice' in q_lower)
+    is_profile_summary = ('email' in q_lower and 'experience' in q_lower) or ('name' in q_lower and 'experience' in q_lower)
+
+    if is_combined_salary or is_breakup or is_composite_hr or is_profile_summary:
+        return None
+
     # Phone/Mobile
     if any(x in q_lower for x in ['phone', 'mobile', 'contact number', 'cell']):
         return 'phone'
@@ -749,23 +770,21 @@ def detect_expected_format(question: str) -> Optional[str]:
     if any(re.search(rf'(?<![-_\w]){re.escape(x)}(?![-_\w])', q_lower) for x in ['cgpa', 'gpa', 'grade point', 'academic grade']) or (re.search(r'(?<![-_\w])grade(?![-_\w])', q_lower) and not any(w in q_lower for w in ['production', 'enterprise', 'commercial', 'industry', 'industrial', 'server', 'client'])):
         return 'cgpa'
     
-    # Salary
+    # Salary - default to salary_lpa to accept numeric and LPA-suffixed strings (0-100 range)
     if any(x in q_lower for x in ['ctc', 'salary']):
-        if any(x in q_lower for x in ['lakhs', 'lpa', 'lakh']):
-            return 'salary_lpa'
-        return 'numeric'
+        return 'salary_lpa'
     
     # Date
-    if any(x in q_lower for x in ['when', 'dob', 'birth']) or re.search(r'\bdate\b', q_lower):
+    if any(x in q_lower for x in ['dob', 'date of birth', 'birth date']) or (re.search(r'\bdate\b', q_lower) and not any(w in q_lower for w in ['working', 'lwd', 'start', 'join', 'notice'])):
         return 'date'
     
     # Experience (numeric)
     if any(x in q_lower for x in ['years', 'experience', 'how many']):
-        if 'year' in q_lower or 'month' in q_lower:
+        if ('year' in q_lower or 'month' in q_lower) and not any(w in q_lower for w in ['summarize', 'profile', 'domain', 'relevant', 'stack']):
             return 'numeric'
     
     # Yes/No
-    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving']):
+    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving']) and not any(w in q_lower for w in ['days', 'months', 'lwd', 'date']):
         return 'yes_no'
     
     # Default to text

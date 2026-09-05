@@ -160,6 +160,46 @@ class TestGemmaLLMClient(unittest.IsolatedAsyncioTestCase):
             )
             self.assertIsNone(ans)
 
+    async def test_filters_out_thought_parts_and_returns_clean_answer(self):
+        """When response contains thought: True part and non-thought part, returns ONLY clean non-thought answer."""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={
+            "candidates": [{
+                "content": {
+                    "parts": [
+                        {
+                            "text": "* Role: Job applicant (Siddhant Singh).\n* Constraint 1: First-person voice.\n* Current CTC: 23 LPA.",
+                            "thought": True
+                        },
+                        {
+                            "text": "23 LPA"
+                        }
+                    ]
+                }
+            }]
+        })
+
+        mock_session = MagicMock()
+        post_cm = MagicMock()
+        post_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        post_cm.__aexit__ = AsyncMock(return_value=None)
+        mock_session.post.return_value = post_cm
+        mock_session.closed = False
+        mock_session.close = AsyncMock()
+
+        self.client._session = mock_session
+        self.client._selected_model = "gemma-4-31b-it"
+        self.client._discovery_completed = True
+
+        ans = await self.client.answer_question(
+            question="What is your current ctc?",
+            input_type="text"
+        )
+        self.assertEqual(ans, "23 LPA")
+        self.assertNotIn("Role:", ans)
+        self.assertNotIn("Constraint", ans)
+
 
 if __name__ == "__main__":
     unittest.main()

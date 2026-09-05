@@ -60,6 +60,171 @@
     }
   },
   "patterns": {
+    "published_app_store_play_store": {
+      "patterns": [
+        "published apps on the app store or google play store",
+        "published apps on the app store",
+        "published apps on google play store",
+        "published app on the app store",
+        "app store or google play store",
+        "apps on the app store or google play store",
+        "any app you have worked on which is published apps on the app store or google play store",
+        "published mobile app",
+        "published app store play store"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, built and maintained production mobile/web applications published and distributed via app stores and enterprise deployments.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "designed_implemented_rest_apis_java_spring_boot": {
+      "patterns": [
+        "designed and implemented rest apis using java/spring boot",
+        "designed and implemented rest apis using java spring boot",
+        "designed and implemented rest apis",
+        "have you designed and implemented rest apis using java/spring boot",
+        "have you designed and implemented rest apis using java spring boot",
+        "implemented rest apis using java spring boot",
+        "designed and implemented rest api",
+        "rest apis using java spring boot",
+        "rest apis using java/spring boot",
+        "rest api development using java spring boot"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, extensive experience designing and implementing scalable, secure RESTful APIs using Java and Spring Boot with robust authentication, rate limiting, and JPA/Hibernate database persistence.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "concurrenthashmap_thread_safety_explanation": {
+      "patterns": [
+        "how does concurrenthashmap achieve thread safety without locking the entire map",
+        "concurrenthashmap achieve thread safety without locking the entire map",
+        "concurrenthashmap achieve thread safety",
+        "how does concurrenthashmap achieve thread safety",
+        "explain internal working and trade-offs concurrenthashmap",
+        "concurrenthashmap thread safety and trade offs"
+      ],
+      "category": "skills",
+      "default": "ConcurrentHashMap in Java 8+ achieves thread safety without locking the entire map by using fine-grained bucket-level synchronization (CAS compare-and-swap for initial table/node allocation and synchronized locking on the specific bucket head node during collisions/updates). Trade-offs: Lock-free high-throughput concurrent reads via volatile val/next pointers, at the cost of eventual consistency for aggregate methods like size() and isEmpty() without locking the entire table.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "ConcurrentHashMap in Java 8+ achieves thread safety without locking the entire map by using fine-grained bucket-level synchronization (CAS compare-and-swap for initial table/node allocation and synchronized locking on the specific bucket head node during collisions/updates). Trade-offs: Lock-free high-throughput concurrent reads via volatile val/next pointers, at the cost of eventual consistency for aggregate methods like size() and isEmpty() without locking the entire table.",
+        "textarea": "ConcurrentHashMap in Java 8+ achieves thread safety without locking the entire map by using fine-grained bucket-level synchronization (CAS compare-and-swap for initial table/node allocation and synchronized locking on the specific bucket head node during collisions/updates). Trade-offs: Lock-free high-throughput concurrent reads via volatile val/next pointers, at the cost of eventual consistency for aggregate methods like size() and isEmpty() without locking the entire table.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "spring_boot_architecture_and_annotations_explanation": {
+      "patterns": [
+        "explain spring boot architecture and key advantages over spring mvc",
+        "spring boot architecture and key advantages over spring mvc",
+        "difference between @component, @service, @repository, @controller",
+        "how does dependency injection work in spring",
+        "what is spring boot auto-configuration",
+        "spring boot architecture advantages over spring mvc",
+        "difference between component service repository controller"
+      ],
+      "category": "skills",
+      "default": "Spring Boot simplifies Spring development via opinionated auto-configuration (@EnableAutoConfiguration), embedded servlet containers (Tomcat/Jetty), and starter dependencies. Key advantages over Spring MVC include zero XML config and production-ready actuators. Stereotypes: @Component (generic managed bean), @Service (business logic/transactions), @Repository (DAO/data access with exception translation), @Controller/@RestController (HTTP handling/REST APIs). Dependency Injection is managed by ApplicationContext via constructor/field injection from the IoC container. Auto-configuration evaluates classpath JARs and conditional annotations (@ConditionalOnClass, @ConditionalOnMissingBean) to instantiate datasources, web servers, and security without manual XML/Java configurations.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Spring Boot simplifies Spring development via opinionated auto-configuration (@EnableAutoConfiguration), embedded servlet containers (Tomcat/Jetty), and starter dependencies. Key advantages over Spring MVC include zero XML config and production-ready actuators. Stereotypes: @Component (generic managed bean), @Service (business logic/transactions), @Repository (DAO/data access with exception translation), @Controller/@RestController (HTTP handling/REST APIs). Dependency Injection is managed by ApplicationContext via constructor/field injection from the IoC container. Auto-configuration evaluates classpath JARs and conditional annotations (@ConditionalOnClass, @ConditionalOnMissingBean) to instantiate datasources, web servers, and security without manual XML/Java configurations.",
+        "textarea": "Spring Boot simplifies Spring development via opinionated auto-configuration (@EnableAutoConfiguration), embedded servlet containers (Tomcat/Jetty), and starter dependencies. Key advantages over Spring MVC include zero XML config and production-ready actuators. Stereotypes: @Component (generic managed bean), @Service (business logic/transactions), @Repository (DAO/data access with exception translation), @Controller/@RestController (HTTP handling/REST APIs). Dependency Injection is managed by ApplicationContext via constructor/field injection from the IoC container. Auto-configuration evaluates classpath JARs and conditional annotations (@ConditionalOnClass, @ConditionalOnMissingBean) to instantiate datasources, web servers, and security without manual XML/Java configurations.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "design_lru_cache_o1_explanation": {
+      "patterns": [
+        "design an lru cache with o(1) get and put operations",
+        "design an lru cache with o(1)",
+        "design an lru cache",
+        "lru cache with o(1) get and put",
+        "briefly explain your approach and data structures used lru cache",
+        "lru cache get and put operations"
+      ],
+      "category": "skills",
+      "default": "An LRU Cache with O(1) get and put operations is built using a Hash Map and a Doubly Linked List. The Hash Map stores key-to-node references enabling O(1) key lookups. The Doubly Linked List tracks usage order with dummy Head (Most Recently Used) and Tail (Least Recently Used) sentinels. On get(key): fetch node from map and move to head in O(1). On put(key, value): if key exists, update value and move node to head; if key is new and cache is at capacity, remove the tail node from list and map, then insert new node at head in O(1).",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "An LRU Cache with O(1) get and put operations is built using a Hash Map and a Doubly Linked List. The Hash Map stores key-to-node references enabling O(1) key lookups. The Doubly Linked List tracks usage order with dummy Head (Most Recently Used) and Tail (Least Recently Used) sentinels. On get(key): fetch node from map and move to head in O(1). On put(key, value): if key exists, update value and move node to head; if key is new and cache is at capacity, remove the tail node from list and map, then insert new node at head in O(1).",
+        "textarea": "An LRU Cache with O(1) get and put operations is built using a Hash Map and a Doubly Linked List. The Hash Map stores key-to-node references enabling O(1) key lookups. The Doubly Linked List tracks usage order with dummy Head (Most Recently Used) and Tail (Least Recently Used) sentinels. On get(key): fetch node from map and move to head in O(1). On put(key, value): if key exists, update value and move node to head; if key is new and cache is at capacity, remove the tail node from list and map, then insert new node at head in O(1).",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "service_10x_traffic_stabilize_scale_triage": {
+      "patterns": [
+        "your service is receiving 10x traffic suddenly and starts failing",
+        "service is receiving 10x traffic suddenly",
+        "receiving 10x traffic suddenly and starts failing",
+        "what steps would you take to stabilize and scale it",
+        "service receiving 10x traffic stabilize and scale"
+      ],
+      "category": "skills",
+      "default": "To stabilize and scale a service experiencing a sudden 10x traffic spike: 1) Mitigate immediate outage: Enable rate limiting/load shedding and circuit breakers (Resilience4j) to protect core services, serving cached/gracefully degraded responses. 2) Horizontal scaling: Auto-scale service replicas via Kubernetes HPA and spin up additional database read replicas. 3) Cache & Buffer: Offload database reads to Redis/Memcached and decouple write spikes using asynchronous message queues (Kafka/RabbitMQ). 4) Bottleneck analysis: Inspect APM/Grafana metrics, DB connection pool saturation, and slow queries to optimize slow endpoints and add DB connection pooling.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "To stabilize and scale a service experiencing a sudden 10x traffic spike: 1) Mitigate immediate outage: Enable rate limiting/load shedding and circuit breakers (Resilience4j) to protect core services, serving cached/gracefully degraded responses. 2) Horizontal scaling: Auto-scale service replicas via Kubernetes HPA and spin up additional database read replicas. 3) Cache & Buffer: Offload database reads to Redis/Memcached and decouple write spikes using asynchronous message queues (Kafka/RabbitMQ). 4) Bottleneck analysis: Inspect APM/Grafana metrics, DB connection pool saturation, and slow queries to optimize slow endpoints and add DB connection pooling.",
+        "textarea": "To stabilize and scale a service experiencing a sudden 10x traffic spike: 1) Mitigate immediate outage: Enable rate limiting/load shedding and circuit breakers (Resilience4j) to protect core services, serving cached/gracefully degraded responses. 2) Horizontal scaling: Auto-scale service replicas via Kubernetes HPA and spin up additional database read replicas. 3) Cache & Buffer: Offload database reads to Redis/Memcached and decouple write spikes using asynchronous message queues (Kafka/RabbitMQ). 4) Bottleneck analysis: Inspect APM/Grafana metrics, DB connection pool saturation, and slow queries to optimize slow endpoints and add DB connection pooling.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "current_and_expected_ctc_combined": {
+      "patterns": [
+        "current & expected ctc",
+        "current and expected ctc",
+        "current ctc and expected ctc",
+        "current and expected compensation"
+      ],
+      "category": "salary",
+      "default": "Current: 23 LPA, Expected: 30 LPA",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Current: 23 LPA, Expected: 30 LPA",
+        "textarea": "Current: 23 LPA, Expected: 30 LPA",
+        "radio": "Current: 23 LPA, Expected: 30 ",
+        "select": "Current: 23 LPA, Expected: 30 LPA",
+        "checkbox": "Yes",
+        "number": "2330"
+      }
+    },
+    "instahyre_multipart_profile_summary": {
+      "patterns": [
+        "total years of experience in java backend development? current ctc, expected ctc, and notice period",
+        "total years of experience in java backend development",
+        "current ctc, expected ctc, and notice period? current location",
+        "willingness to work from gurgaon (hybrid)? have you worked in fintech",
+        "experience working in high-scale / high-transaction systems"
+      ],
+      "category": "personal_info",
+      "default": "Total Experience: 4.2 Years in Java Backend & Full-Stack Development. Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Serving notice). Current Location: Bengaluru (Willing to relocate / Open to Gurgaon Hybrid). Hands-on with distributed microservices, REST APIs, Spring Boot, PostgreSQL, Kafka, AWS, with 90% hands-on coding and 10% module ownership/mentoring.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Total Experience: 4.2 Years in Java Backend & Full-Stack Development. Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Serving notice). Current Location: Bengaluru (Willing to relocate / Open to Gurgaon Hybrid). Hands-on with distributed microservices, REST APIs, Spring Boot, PostgreSQL, Kafka, AWS, with 90% hands-on coding and 10% module ownership/mentoring.",
+        "textarea": "Total Experience: 4.2 Years in Java Backend & Full-Stack Development. Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Serving notice). Current Location: Bengaluru (Willing to relocate / Open to Gurgaon Hybrid). Hands-on with distributed microservices, REST APIs, Spring Boot, PostgreSQL, Kafka, AWS, with 90% hands-on coding and 10% module ownership/mentoring.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
     "experience": {
       "patterns": [
         "years of work experience do you have",
@@ -9188,15 +9353,15 @@
         "retention bonus component"
       ],
       "category": "salary",
-      "default": "Fixed: 20 LPA, Variable: 3 LPA",
+      "default": "Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)",
       "priority": 2,
       "input_type_defaults": {
-        "radio": "Fixed: 20 LPA, Variable: 3 LPA",
-        "select": "Fixed: 20 LPA, Variable: 3 LPA",
-        "text": "Fixed: 20 LPA, Variable: 3 LPA",
-        "textarea": "Fixed: 20 LPA, Variable: 3 LPA",
+        "radio": "Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)",
+        "select": "Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)",
+        "text": "Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)",
+        "textarea": "Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)",
         "checkbox": "Yes",
-        "number": "203"
+        "number": "230"
       }
     },
     "stock_options_equity": {
@@ -85270,25 +85435,6 @@
         "textarea": "30",
         "radio": "30",
         "checkbox": "Yes"
-      }
-    },
-    "current_and_expected_ctc_combined": {
-      "patterns": [
-        "current & expected ctc",
-        "current and expected ctc",
-        "current ctc and expected ctc",
-        "current and expected compensation"
-      ],
-      "category": "salary",
-      "default": "Current: 23 LPA, Expected: 30 LPA",
-      "priority": 15,
-      "input_type_defaults": {
-        "text": "Current: 23 LPA, Expected: 30 LPA",
-        "textarea": "Current: 23 LPA, Expected: 30 LPA",
-        "radio": "Current: 23 LPA, Expected: 30 ",
-        "select": "Current: 23 LPA, Expected: 30 LPA",
-        "checkbox": "Yes",
-        "number": "2330"
       }
     },
     "niche_non_resume_skills": {

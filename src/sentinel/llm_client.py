@@ -28,18 +28,30 @@ DEFAULT_GEMMA_MODELS = [
     "gemma-2-2b-it"
 ]
 
-CANDIDATE_FACTS = """Candidate Profile:
+def get_candidate_facts() -> str:
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    today_str = now.strftime('%d/%m/%Y')
+    today_verbose = now.strftime('%d %b %Y')
+    lwd_dt = now + timedelta(days=15)
+    lwd_str = lwd_dt.strftime('%d/%m/%Y')
+    lwd_verbose = lwd_dt.strftime('%d %b %Y')
+
+    return f"""Candidate Profile:
 - Name: Siddhant Singh
 - Email: siddhant3646@gmail.com
 - Phone: 7905828880
 - Current Role: Software Engineer 2 at Everbridge
-- Total Experience: 4 Years (48 months total)
-- Key Skills: Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes, Microservices, REST APIs, System Design, CI/CD
-- Current CTC / Salary: 23 LPA (23,00,000 INR per annum, ~1,91,667 INR/month)
-- Expected CTC / Salary: 30 LPA (30,00,000 INR per annum, ~2,50,000 INR/month)
+- Total Experience: 4.2 Years (50 months total)
+- Key Skills: Java, Spring, Spring Boot, Hibernate, Apache Kafka, Apache Flink, Apache Spark, Redis, Microservices, System Design, REST APIs, AWS (EC2, S3, RDS, Lambda), Docker, Kubernetes, PostgreSQL, MongoDB, ReactJS, Python, CI/CD
+- Current CTC / Salary: 23 LPA (23,00,000 INR per annum, 100% Fixed salary, No variable component)
+  * Breakdown: Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)
+- Expected CTC / Salary: 30 LPA (30,00,000 INR per annum, 100% Fixed)
+  * Breakdown: Fixed: 30 LPA, Variable: 0 LPA (100% Fixed)
+- Today's Date: {today_str} ({today_verbose})
 - Notice Period: 15 days (Serving Notice Period)
-- Last Working Day (LWD): Feb 03, 2026 (03/02/2026)
-- Immediate Joiner: Yes, can join immediately or within 15 days
+- Last Working Day (LWD): {lwd_str} ({lwd_verbose}) [Calculated as exactly 15 days from today: {today_str} + 15 days]
+- Immediate Joiner: Yes, serving notice period with LWD on {lwd_str}
 - Current Location: Bangalore, Karnataka, India
 - Relocation: Willing to relocate (Yes)
 - Preferred Locations: Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
@@ -49,16 +61,37 @@ CANDIDATE_FACTS = """Candidate Profile:
 - 10th / SSC: Completed in 2016, Percentage: 70%
 - Citizenship: Indian (Citizen and Resident of India)
 - Visa / Sponsorship: Authorized to work in India; do not require visa sponsorship
+- Technical Experience & System Design Highlights:
+  * Designed and built scalable event-driven Java/Spring Boot microservices processing 10M+ daily transactions at Everbridge.
+  * Integrated Apache Kafka, Flink, and Spark for high-throughput distributed data streaming, improving settlement reporting reliability by 40% and eliminating ledger inconsistencies.
+  * Managed inter-service communication via asynchronous Kafka messaging and resilient REST APIs; ensured distributed data consistency across services using Idempotent Consumers, Transactional Outbox, and Saga patterns.
+  * Migrated high-traffic backend services from Java 8 to Java 21 with Virtual Threads and Spring Reactive stacks, accelerating dispute processing under 2s and improving throughput by 15%.
+  * Deployed and managed containerized microservices on AWS (EC2, EKS, RDS, S3, Lambda) with automated CI/CD and Fortify security pipelines.
 """
 
-SYSTEM_INSTRUCTIONS = """You are answering job application questions on behalf of yourself as a job applicant.
-Strict rules:
+SYSTEM_INSTRUCTIONS = """You are answering job application questions on behalf of yourself as a job applicant (Siddhant Singh).
+Strict uniformity rules:
 1. Always speak in the first-person candidate voice ("I", "my").
 2. NEVER mention or disclose that you are an AI, a language model, Gemma, an assistant, or automation.
-3. NEVER include any hedging, disclaimers, explanations, or meta-commentary (e.g., do NOT say "Based on my background", "Here is my answer", "As a candidate", "I would select").
-4. If options are provided (Multiple Choice, Radio, Select, Checkbox): You MUST output ONLY the EXACT string of one of the options verbatim. Do not alter casing, do not add prefixes like "Option A:" or quotes.
-5. If the question asks for a numeric value (e.g. years of experience, notice period in days, salary in LPA or INR), output ONLY the concise numeric or unit answer (e.g. "4", "4 Years", "23", "23 LPA", "15", "03/02/2026").
-6. If the question is Yes/No, answer with "Yes" or "No".
+3. NEVER include any introductory filler, meta-commentary, or hedging (do NOT say "My answer is", "As a candidate", "Based on my resume", "My current CTC is..."). Output ONLY the direct answer.
+4. If options are provided (Multiple Choice, Radio, Select, Checkbox): You MUST output ONLY the EXACT string of one of the options verbatim. Do not alter casing, do not add quotes.
+5. STANDARDIZED UNIFORM FORMATS FOR COMMON FIELDS:
+   - Current CTC: "23 LPA" (if breakdown explicitly requested: "23 LPA (Fixed: 23 LPA, Variable: 0 LPA)" or "23 LPA (100% Fixed)")
+   - Expected CTC: "30 LPA" (if breakdown explicitly requested: "30 LPA (100% Fixed)")
+   - Combined Current & Expected CTC: "Current CTC: 23 LPA, Expected CTC: 30 LPA"
+   - Total Experience / Java Experience / Relevant Experience: "4.2 Years" (or "4.2" if numeric field)
+   - Notice Period: "15 days" (or "15" if numeric field)
+   - Last Working Day (LWD): Output the exact computed date: "{lwd_str}" (calculated as today + 15 days)
+   - Combined Notice & LWD: "15 days, LWD: {lwd_str}"
+   - Current Location: "Bangalore, Karnataka, India"
+   - Preferred Locations: "Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad"
+   - Holding Other Offers: "No"
+   - Serving Notice Period: "Yes"
+   - Relocation: "Yes"
+   - Deployment / Cloud Experience: "Yes, 4.2 years with AWS" (or "AWS, 4.2 Years")
+   - Simple Yes/No questions: "Yes" or "No"
+6. OPEN-ENDED TECHNICAL & ARCHITECTURAL QUESTIONS (e.g. describing high-scale systems designed, technical challenges, microservices communication, data consistency):
+   - Provide a concise, highly substantive, professional answer (1-2 clear paragraphs) in first person describing your real-world experience at Everbridge with Java 21, Spring Boot, Kafka, Microservices, and System Design based on your Candidate Profile.
 7. Output ONLY the final answer text and nothing else.
 """
 
@@ -69,7 +102,7 @@ class GemmaLLMClient:
     API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or GOOGLE_AI_API_KEY
+        self.api_key = api_key if api_key is not None else GOOGLE_AI_API_KEY
         self._discovered_models: List[str] = []
         self._selected_model: Optional[str] = None
         self._fallback_chain: List[str] = list(DEFAULT_GEMMA_MODELS)
@@ -82,7 +115,7 @@ class GemmaLLMClient:
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20))
+            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=120))
         return self._session
 
     async def close(self):
@@ -179,9 +212,10 @@ class GemmaLLMClient:
     def _build_prompt(self, question: str, options: Optional[List[str]] = None,
                       input_type: str = "text", context: Optional[str] = None) -> str:
         """Construct candidate-aligned prompt for Gemma."""
+        facts = get_candidate_facts()
         prompt_parts = [
             f"{SYSTEM_INSTRUCTIONS}\n",
-            f"{CANDIDATE_FACTS}\n",
+            f"{facts}\n",
         ]
 
         if context:
@@ -235,6 +269,74 @@ class GemmaLLMClient:
         # Return the original raw answer if no match found
         return raw_answer.strip()
 
+    def _normalize_uniform_answer(self, answer: str, question: str) -> str:
+        """Post-process short field answers to enforce strict uniformity across questionnaires."""
+        if not answer:
+            return answer
+        
+        q_lower = question.lower().strip()
+        ans_trimmed = answer.strip().strip("\"'`")
+
+        # Skip multi-part questions (e.g. experience + ctc + notice period + location)
+        has_exp = "experience" in q_lower or "years" in q_lower or "exp" in q_lower
+        has_ctc = "ctc" in q_lower or "salary" in q_lower or "compensation" in q_lower or "cctc" in q_lower or "ectc" in q_lower
+        has_np = "notice" in q_lower or "lwd" in q_lower or "last working day" in q_lower
+        has_loc = "location" in q_lower or "city" in q_lower or "based" in q_lower
+
+        # If 3 or more aspects are combined in the question, don't collapse to a single field
+        combined_aspects = sum([1 if has_exp else 0, 1 if has_ctc else 0, 1 if has_np else 0, 1 if has_loc else 0])
+        if combined_aspects >= 3:
+            return ans_trimmed
+
+        is_current = "current" in q_lower or "cctc" in q_lower or "present" in q_lower
+        is_expected = "expected" in q_lower or "ectc" in q_lower or "expecting" in q_lower
+
+        # 1. Salary / CTC Uniformity
+        if is_current and is_expected and has_ctc:
+            return "Current CTC: 23 LPA, Expected CTC: 30 LPA"
+        elif is_current and has_ctc and not is_expected:
+            if "breakdown" not in q_lower and "fixed" not in q_lower and "variable" not in q_lower:
+                match = re.search(r"23\s*LPA", ans_trimmed, re.IGNORECASE)
+                if match:
+                    return "23 LPA"
+            else:
+                match = re.search(r"23\s*LPA", ans_trimmed, re.IGNORECASE)
+                if match and ("fixed" in ans_trimmed.lower() or "variable" in ans_trimmed.lower() or "breakdown" in q_lower):
+                    return "23 LPA (Fixed: 23 LPA, Variable: 0 LPA)"
+        elif is_expected and has_ctc and not is_current:
+            if "breakdown" not in q_lower and "fixed" not in q_lower and "variable" not in q_lower:
+                match = re.search(r"30\s*LPA", ans_trimmed, re.IGNORECASE)
+                if match:
+                    return "30 LPA"
+            else:
+                match = re.search(r"30\s*LPA", ans_trimmed, re.IGNORECASE)
+                if match:
+                    return "30 LPA (100% Fixed)"
+
+        # 2. Experience Uniformity
+        if ("how many years" in q_lower or "total experience" in q_lower or "work experience" in q_lower or "years of experience" in q_lower) and "deployment" not in q_lower and not has_ctc and not has_np:
+            match = re.search(r"4(?:\.2)?\s*years?", ans_trimmed, re.IGNORECASE)
+            if match:
+                return "4.2 Years"
+
+        # 3. Location Uniformity
+        if "current location" in q_lower and not has_ctc and not has_exp:
+            if "bangalore" in ans_trimmed.lower() or "bengaluru" in ans_trimmed.lower():
+                return "Bangalore, Karnataka, India"
+
+        # 4. Notice Period Uniformity
+        if "last working day" in q_lower and "notice period" not in q_lower and not has_ctc:
+            # Extract date if present
+            date_match = re.search(r"\b\d{2}/\d{2}/\d{4}\b", ans_trimmed)
+            if date_match:
+                return date_match.group(0)
+
+        # 5. Clean trailing periods on short single-line values
+        if len(ans_trimmed.split("\n")) == 1 and len(ans_trimmed) < 40 and ans_trimmed.endswith("."):
+            ans_trimmed = ans_trimmed[:-1].strip()
+
+        return ans_trimmed
+
     async def answer_question(self, question: str, options: Optional[List[str]] = None,
                               input_type: str = "text", context: Optional[str] = None) -> Optional[str]:
         """
@@ -270,7 +372,7 @@ class GemmaLLMClient:
                 ],
                 "generationConfig": {
                     "temperature": 0.1,
-                    "maxOutputTokens": 256,
+                    "maxOutputTokens": 16000,
                     "topK": 20,
                     "topP": 0.8
                 }
@@ -279,7 +381,7 @@ class GemmaLLMClient:
             for attempt in range(3):
                 start_time = time.time()
                 try:
-                    async with session.post(endpoint, json=payload, timeout=20) as resp:
+                    async with session.post(endpoint, json=payload, timeout=120) as resp:
                         elapsed = time.time() - start_time
                         if resp.status == 200:
                             data = await resp.json()
@@ -287,12 +389,36 @@ class GemmaLLMClient:
                             if candidates and len(candidates) > 0:
                                 parts = candidates[0].get("content", {}).get("parts", [])
                                 if parts and len(parts) > 0:
-                                    raw_text = parts[0].get("text", "").strip()
+                                    # 1. Separate thought parts from actual output parts
+                                    non_thought_parts = [p.get("text", "") for p in parts if not p.get("thought", False)]
+                                    raw_text = "".join(non_thought_parts).strip()
+
+                                    # 2. Fallback if all parts were marked or unmarked
+                                    if not raw_text:
+                                        all_text = "".join(p.get("text", "") for p in parts).strip()
+                                        # Strip <thought>...</thought> or <think>...</think> tags
+                                        stripped = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", all_text, flags=re.DOTALL).strip()
+                                        if stripped and not stripped.startswith(("*   Role:", "*   User wants", "*   Constraint")):
+                                            raw_text = stripped
+
+                                    if not raw_text:
+                                        print(f"   ⚠️ [Gemma LLM] No non-thought answer produced by {clean_model}. Falling back...")
+                                        break
+
                                     cleaned_text = re.sub(r"^```[a-zA-Z]*\n?", "", raw_text)
                                     cleaned_text = re.sub(r"\n?```$", "", cleaned_text).strip()
+                                    cleaned_text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", cleaned_text, flags=re.DOTALL).strip()
                                     cleaned_text = cleaned_text.strip("\"'` ")
 
-                                    final_answer = self._match_chosen_option(cleaned_text, options) if options else cleaned_text
+                                    # Guard: if the text still looks like thinking/reasoning bullet points, reject it
+                                    if cleaned_text.startswith(("*   Role:", "*   User wants", "*   Constraint", "Role: Job applicant")):
+                                        print(f"   ⚠️ [Gemma LLM] Detected reasoning spillover in output from {clean_model}. Falling back...")
+                                        break
+
+                                    if options:
+                                        final_answer = self._match_chosen_option(cleaned_text, options)
+                                    else:
+                                        final_answer = self._normalize_uniform_answer(cleaned_text, question)
 
                                     print(f"   🤖 [Gemma LLM] Model: {clean_model} | Latency: {elapsed:.2f}s | Q: '{question[:40]}...' -> A: '{final_answer}'")
                                     return final_answer

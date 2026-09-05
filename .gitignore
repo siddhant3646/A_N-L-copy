@@ -80,5 +80,8 @@ score=*
 *.bak
 *.backup_*.json
 
+# Secrets / local env
+.env
+
 # JSON repair backups
 config/*.bak-*

@@ -104,6 +104,46 @@ class PatternMatcher:
             if al in ('15', '15 days', 'yes', 'no') or not re.search(r'\d{4}|[A-Za-z]{3}', al):
                 return lwd_formatted, max(score, 0.98)
 
+        # 0a. Privacy & Data Consent safety guard (prevent number hijacking e.g. "for up to 2 years")
+        is_privacy_consent = bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities)\b', ql))
+        if is_privacy_consent:
+            return ('Yes' if (input_type in ('radio', 'checkbox', 'select') or al in ('4', '4.2', '5', '50', '2')) else answer), max(score, 0.98)
+
+        # 0b. Offers in Hand safety guard (prevent current CTC hijacking e.g. "mention if any with CTC offered")
+        is_offers_in_hand = bool(re.search(r'\b(offers? in hand|competing offers?|other offers?)\b', ql))
+        if is_offers_in_hand:
+            if al in ('23', '23 LPA', '2300000', '30', '30 LPA') or al.isdigit():
+                return ('None' if input_type in ('text', 'textarea', None) else 'No'), max(score, 0.98)
+
+        # 0c. Industry / Domain Project inquiry (prevent CTC hijacking)
+        is_industry_project = bool(re.search(r'\b(industry|domain)\b', ql) and re.search(r'\b(life science|banking|insurance|finance|telecom|retail)\b', ql) and re.search(r'\b(project|projects|mention name)\b', ql))
+        if is_industry_project:
+            return 'BFSI - Dispute Expert Toolkit & Real-time Settlement Reporting System (Everbridge)', max(score, 0.98)
+
+        # 0d. Salary cut below minimum acceptable threshold guardrail (e.g. "ok with 12 to 13 lpa")
+        is_low_salary_offer = bool(re.search(r'\b(ok with|comfortable with|accept)\b.*?\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql))
+        if is_low_salary_offer:
+            m = re.search(r'\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql)
+            if m and float(m.group(2)) < 20:
+                return 'No', max(score, 0.98)
+
+        # 0e. Fresher / Graduation in 2025/2026 guardrail
+        is_fresher_grad = bool(re.search(r'\b(completing|graduating|bachelor\'?s?)\b', ql) and re.search(r'\b(2025|2026)\b', ql))
+        if is_fresher_grad:
+            return 'No', max(score, 0.98)
+
+        # 0f. System Design - URL shortener (TinyURL) high-level architecture
+        if bool(re.search(r'\b(tinyurl|url shortener)\b', ql)):
+            tinyurl_ans = (
+                "A high-level URL shortener system (TinyURL) comprises: "
+                "1) API: POST /api/v1/shorten (accepts longURL, returns shortURL) and GET /{shortCode} (HTTP 301/302 redirect). "
+                "2) Short Code Generation: Base62 encoding (using unique 64-bit distributed IDs from Snowflake/Zookeeper) or MurmurHash3 truncated to 7 characters (handling collisions via DB lookup/salt). "
+                "3) Storage: Distributed NoSQL/Key-Value store (DynamoDB/Cassandra) or PostgreSQL (sharded by shortCode hash) storing {short_code, original_url, user_id, created_at, expires_at}. "
+                "4) High-Throughput Read Caching: Redis cluster caching top 20% most accessed URLs with LRU eviction. "
+                "5) Scalability & Availability: Stateless application servers behind an API Gateway with rate limiting (Token Bucket), Kafka for asynchronous analytics/click-tracking ingestion, and global CDN caching."
+            )
+            return tinyurl_ans, max(score, 0.98)
+
         # 1. Disability safety guard: Candidate has NO disability
         if 'disability' in ql:
             if al.lower() in ('yes', 'true', '1') or 'do you have' in ql or 'any kind of disability' in ql:
@@ -172,14 +212,15 @@ class PatternMatcher:
         # 9. Detect GitHub / portfolio link in text inputs
         is_portfolio_link = bool(re.search(r'\b(github|portfolio link|portfolio url|online portfolio|repo link|portfolio or best work|best work link|add your portfolio|work link)\b', ql))
         if is_portfolio_link:
-            if input_type in ('text', 'textarea', None) and (al.lower() in ('yes', 'true', '4', '4.2', '4.2 years', '5') or not al.startswith('http')):
-                return 'https://siddhant3646.github.io/Portfolio/', max(score, 0.98)
-            elif input_type in ('radio', 'checkbox') and al.startswith('http'):
+            if input_type in ('radio', 'checkbox'):
                 return 'Yes', max(score, 0.98)
+            if al.lower() in ('yes', 'true', '4', '4.2', '4.2 years', '5') or not al.startswith('http'):
+                return 'https://siddhant3646.github.io/Portfolio/', max(score, 0.98)
+            return al, max(score, 0.98)
 
         # 10. Detect if the question is asking for numeric years of experience
         is_num_years = bool(re.search(
-            r'\b(how many years|how many yrs|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you)\b',
+            r'\b(how many years|how many yrs|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp)\b',
             ql
         ))
 
@@ -190,15 +231,27 @@ class PatternMatcher:
             (input_type in ('radio', 'checkbox') and not is_num_years)
         )
 
+        is_purely_numeric = bool(re.fullmatch(r'\s*([<>]?\s*\d+(?:\.\d+)?(?:\s*-\s*\d+)?|\d+\+?)\s*(?:years?|yrs?|months?|days?)?\s*', al, re.IGNORECASE))
+
         if is_num_years:
             if al.lower() in ('yes', 'true', '1') or (not re.search(r'\d', al) and len(al) <= 20):
                 return '4.2 Years', max(score, 0.95)
             return answer, score
 
-        if is_yes_no and not is_num_years:
-            # If answer is a numeric experience (e.g. "4.2", "4.2 Years") or notice period days ("15")
-            if re.match(r'^\d+(\.\d+)?(\s*years?)?$', al, re.IGNORECASE):
+        if input_type in ('radio', 'checkbox'):
+            if is_purely_numeric:
+                num_m = re.search(r'\d+(\.\d+)?', al)
+                val = float(num_m.group(0)) if num_m else 0.0
+                return ('Yes' if val > 0 else 'No'), max(score, 0.95)
+            if al.lower() not in ('yes', 'no') and (al.startswith('http') or len(al) > 20):
                 return 'Yes', max(score, 0.95)
+
+        if is_yes_no and not is_num_years:
+            # If answer is purely numeric experience (e.g. "4.2", "4.2 Years", "<5 years", "4-5 years") or notice period days ("15")
+            if is_purely_numeric:
+                num_m = re.search(r'\d+(\.\d+)?', al)
+                val = float(num_m.group(0)) if num_m else 0.0
+                return ('Yes' if val > 0 else 'No'), max(score, 0.95)
             if al == '15' and 'notice' in ql and not is_lwd:
                 return 'Yes', max(score, 0.95)
             if 'bangalore' in ql or 'bengaluru' in ql:

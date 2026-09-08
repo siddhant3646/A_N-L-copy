@@ -596,7 +596,7 @@ class SentinelAgent:
         is_conceptual_tech = any(kw in question_lower for kw in ['design', 'explain', 'approach', 'how does', 'what steps', 'trade-off', 'tradeoffs', 'stabilize', 'implementing', 'architecture'])
 
         # Rating/Proficiency questions (1-10 scale) - CHECK BEFORE EXPERIENCE
-        rating_keywords = ['rate proficiency', 'rate yourself', 'rate your', 'on a scale', '1-10', '1 to 10', 'proficiency in']
+        rating_keywords = ['self rating', 'self-rating', 'rating in', 'rate proficiency', 'rate yourself', 'rate your', 'on a scale', '1-10', '1 to 10', 'proficiency in']
         is_rating_question = any(kw in question_lower for kw in rating_keywords) and not is_conceptual_tech
         
         # Preferred position questions
@@ -981,7 +981,11 @@ class SentinelAgent:
             return 'India', 0.95
         
         # Check which category the question falls into
-        is_salary_question = any(kw in question_lower for kw in salary_keywords)
+        is_salary_question = (
+            bool(re.search(r'\b(ctc|salary|compensation|package|lpa|inr|pay|cctc|ectc|remuneration)\b', question_lower)) and
+            not is_conceptual_tech and
+            not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
+        )
         is_asking_quantity = any(kw in question_lower for kw in [
             'how many years', 'years of experience', 'total experience', 'total years', 
             'total exp', 'how much experience', 'number of years', 'months of experience', 
@@ -1067,12 +1071,12 @@ class SentinelAgent:
             lwd_date = datetime.now() + timedelta(days=15)
             lwd_formatted = lwd_date.strftime('%d %B %Y')
             lwd_short = lwd_date.strftime('%d %b %Y')
-            if self._current_platform == 'linkedin':
+            if self._current_platform in ('linkedin', 'linkedin_form'):
                 return lwd_short, 0.98
             return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
 
         if is_notice_question or is_immediate_joiners_only:
-            if self._current_platform == 'linkedin':
+            if self._current_platform in ('linkedin', 'linkedin_form'):
                 # Check if it is a yes/no question about serving notice
                 is_yes_no = 'serving' in question_lower and not any(kw in question_lower for kw in ['days', 'how many', 'duration', 'lwd', 'last working'])
                 if is_yes_no:
@@ -1557,13 +1561,7 @@ class SentinelAgent:
                 log_entry += f"  Input Type: {input_type}\n"
             if options:
                 log_entry += f"  Options: {', '.join(options)}\n"
-            if selected_option:
-                log_entry += f"  Selected: {selected_option}\n"
-            log_entry += "  ---\n"
-            
-            with open(self.ALL_QUESTIONS_LOG, 'a', encoding='utf-8') as f:
-                f.write(log_entry)
-            
+            # Note: logging to all_questions.log removed per user preference; qa_results.csv is the single source of truth
             # Also write to consolidated CSV sheet
             status = "prefilled" if prefilled else "submitted"
             self._log_qa_result(
@@ -1700,16 +1698,6 @@ class SentinelAgent:
                 'selected_option': selected_option
             }
             
-            # Write to detailed log
-            detailed_log = os.path.join(self.SCREENSHOT_DIR, 'all_questions_detailed.log')
-            with open(detailed_log, 'a', encoding='utf-8') as f:
-                f.write(log_entry)
-            
-            # Write to JSON log for programmatic access
-            json_log = os.path.join(self.SCREENSHOT_DIR, 'all_questions.jsonl')
-            with open(json_log, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(json_entry) + '\n')
-
             # Write to the consolidated QA results CSV sheet (success row)
             self._log_qa_result(
                 question=question,
@@ -1757,18 +1745,13 @@ class SentinelAgent:
         return {}
 
     def _save_metrics(self):
-        """Save task metrics to JSONL file for analysis."""
+        """Log task metrics summary."""
         try:
-            os.makedirs(self.SCREENSHOT_DIR, exist_ok=True)
             self.metrics['end_time'] = datetime.now().isoformat()
             self.metrics['steps_taken'] = self.state.step_count
-            
-            with open(self.METRICS_LOG, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(self.metrics) + '\n')
-            
-            print(f"📊 Metrics saved: {self.metrics['applications_submitted']} apps, {self.metrics['questions_answered']} Q&A, {self.metrics['errors_encountered']} errors")
+            print(f"📊 Metrics: {self.metrics['applications_submitted']} apps, {self.metrics['questions_answered']} Q&A, {self.metrics['errors_encountered']} errors")
         except Exception as e:
-            print(f"   ⚠️ Failed to save metrics: {e}")
+            print(f"   ⚠️ Failed to log metrics: {e}")
 
     async def _check_page_health(self) -> bool:
         """Verify page is responsive before actions."""
@@ -2600,6 +2583,19 @@ class SentinelAgent:
                     print(f"⚠️ LinkedIn Easy Apply Limit! Pausing for 3 hours until {self.linkedin_rate_limit_until.strftime('%H:%M')}")
                     self.state.task_complete = True
                     break
+
+                if 'LINKEDIN_MODAL_TRANSITIONING' in str(result):
+                    self._linkedin_outer_transition_count = getattr(self, '_linkedin_outer_transition_count', 0) + 1
+                    if self._linkedin_outer_transition_count >= 3:
+                        print("⚠️ LinkedIn modal transitioning stuck in outer loop. Forcing cleanup & selecting next job card...")
+                        self._linkedin_outer_transition_count = 0
+                        await self._close_linkedin_modal()
+                        await self._select_next_job_card()
+                        continue
+                    print(f"⏳ LinkedIn modal transitioning ({self._linkedin_outer_transition_count}/3), waiting...")
+                    await asyncio.sleep(2)
+                    continue
+                self._linkedin_outer_transition_count = 0
                 
                 if 'SUCCESS' in result:
                     # For LinkedIn, we want to apply to multiple jobs (up to limit)
@@ -2621,10 +2617,10 @@ class SentinelAgent:
                 
                 # LinkedIn: Success detected but need to navigate to next job
                 if 'LINKEDIN_SUCCESS_NEED_NAV' in result:
-                    self.metrics['applications_submitted'] += 1
-                    print(f"✅ LinkedIn success! Total: {self.metrics['applications_submitted']}")
+                    self.metrics['applications_submitted'] = self.linkedin_applications
+                    print(f"✅ LinkedIn success detected. Total submitted: {self.linkedin_applications}")
                     
-                    if 'LinkedIn' in self._task_description and self.metrics['applications_submitted'] >= 5:
+                    if 'LinkedIn' in self._task_description and self.linkedin_applications >= 5:
                         print("🎉 LinkedIn limit reached (5 jobs). Stopping task.")
                         self.state.task_complete = True
                         break
@@ -2635,10 +2631,10 @@ class SentinelAgent:
                 
                 # LinkedIn: Success modal was closed, need to navigate to next job
                 if 'LINKEDIN_SUCCESS_MODAL_CLOSED' in result:
-                    self.metrics['applications_submitted'] += 1
-                    print(f"✅ Success modal dismissed. Total: {self.metrics['applications_submitted']}")
+                    self.metrics['applications_submitted'] = self.linkedin_applications
+                    print(f"✅ Success modal dismissed. Total submitted: {self.linkedin_applications}")
                     
-                    if 'LinkedIn' in self._task_description and self.metrics['applications_submitted'] >= 5:
+                    if 'LinkedIn' in self._task_description and self.linkedin_applications >= 5:
                         print("🎉 LinkedIn limit reached (5 jobs). Stopping task.")
                         self.state.task_complete = True
                         break
@@ -3404,10 +3400,36 @@ class SentinelAgent:
                         
                         if 'LINKEDIN_SUCCESS' in next_result:
                             self.linkedin_applications += 1
-                            self.metrics['applications_submitted'] += 1
+                            self.metrics['applications_submitted'] = self.linkedin_applications
                             print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted!")
                             submit_attempt_count = 0  # Reset on success
                             
+                            # Clean up DOM modals and record applied job ID to prevent re-selection/stale detection
+                            try:
+                                await self._page.evaluate("""() => {
+                                    if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                    const urlParams = new URLSearchParams(window.location.search);
+                                    let currentJobId = urlParams.get('currentJobId');
+                                    if (!currentJobId) {
+                                        const activeCard = document.querySelector(
+                                            '.jobs-search-results-list__list-item--active [data-job-id], [aria-current="true"] [data-job-id], .job-card-list__list-item--active [data-job-id], .active [data-job-id]'
+                                        );
+                                        if (activeCard) {
+                                            currentJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                                        }
+                                    }
+                                    if (currentJobId) {
+                                        window.__skippedJobIds.add(currentJobId);
+                                    }
+                                    // Remove any lingering success modals/overlays to prevent false detections
+                                    document.querySelectorAll('.artdeco-modal, .artdeco-modal-overlay, .jobs-easy-apply-modal').forEach(el => {
+                                        el.style.display = 'none';
+                                        try { el.remove(); } catch(e) {}
+                                    });
+                                }""")
+                            except Exception:
+                                pass
+
                             if self.linkedin_applications >= 5:
                                 print("✅ LinkedIn target (5 applications) reached. Task complete!")
                                 self.state.task_complete = True
@@ -3419,7 +3441,7 @@ class SentinelAgent:
                         # Fallback: if we clicked submit and the modal closed (signaled by no modal actions like clicking Easy Apply or selecting/scrolling jobs)
                         elif submit_attempt_count > 0 and ('LINKEDIN_EASY_APPLY_CLICKED' in next_result or 'LINKEDIN_JOB_SELECTED' in next_result or 'LINKEDIN_SCROLLED' in next_result):
                             self.linkedin_applications += 1
-                            self.metrics['applications_submitted'] += 1
+                            self.metrics['applications_submitted'] = self.linkedin_applications
                             print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted (modal closed after submit)!")
                             submit_attempt_count = 0
                             
@@ -4674,126 +4696,142 @@ class SentinelAgent:
 
     async def _handle_instahyre_inbox_task(self) -> bool:
         """Handle Instahyre Inbox:
-        1. If on opportunities page, click Inbox navigation link (#nav-candidates-inbox).
-        2. On inbox page, click the 'Unread' radio filter (convTypes.UNREAD / value="1").
-        3. Inspect the first conversation card, open and answer questionnaire using QA patterns,
-           log to CSV, submit, and finish the task."""
+        1. Navigate directly to target inbox URL (https://www.instahyre.com/candidate/inbox/439288/6201541231/).
+        2. Ensure conversation filter is kept to 'All' (convTypes.ALL / value="0"). Do not change to Unread.
+        3. Check all messages in the conversation list until condition is met:
+           Condition: Message opened in the row doesn't have the completed questionnaire entry.
+           If entry is absent, answer questionnaire (if link present), submit, and send completion acknowledgment.
+           If entry is already present, skip to the next conversation."""
         page = self._page
         if not page:
             return False
         
+        target_inbox_url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
         print("📥 Starting Instahyre Inbox & Questionnaire Automation...")
         self._current_platform = "instahyre"
         if not hasattr(self, '_processed_questionnaires'):
             self._processed_questionnaires = set()
             
-        # Step 1: If on opportunities page (or not yet on inbox page), click the Inbox nav link
+        # Step 1: Ensure we are on the target inbox URL
         current_url = page.url or ''
         if 'candidate/inbox' not in current_url:
-            print("📍 On Instahyre opportunities page. Clicking Inbox nav link (#nav-candidates-inbox)...")
-            clicked_inbox = await page.evaluate("""() => {
-                const inboxLink = document.querySelector('a#nav-candidates-inbox, a[href="/candidate/inbox/"], a[href*="/candidate/inbox"]');
-                if (inboxLink) {
-                    inboxLink.scrollIntoView({ block: 'center' });
-                    inboxLink.click();
-                    return 'INBOX_CLICKED';
-                }
-                return 'NOT_FOUND';
-            }""")
-            if clicked_inbox == 'INBOX_CLICKED':
-                print("   ✅ Clicked Inbox nav link. Waiting for inbox page to load...")
-                try:
-                    await page.wait_for_url("**/candidate/inbox/**", timeout=15000)
-                except Exception:
-                    pass
-                await asyncio.sleep(random.uniform(2.5, 3.5))
-            else:
-                print("   ⚠️ Inbox link not found in DOM, navigating directly to inbox...")
-                await page.goto("https://www.instahyre.com/candidate/inbox/", wait_until='domcontentloaded', timeout=30000)
-                await asyncio.sleep(random.uniform(2.5, 3.5))
+            print(f"📍 Navigating directly to Instahyre Inbox: {target_inbox_url}...")
+            await page.goto(target_inbox_url, wait_until='domcontentloaded', timeout=30000)
+            await asyncio.sleep(random.uniform(2.5, 3.5))
 
-        inbox_base_url = "https://www.instahyre.com/candidate/inbox/"
+        inbox_base_url = target_inbox_url
 
-        # Step 2: Click the 'Unread' radio filter button on the inbox page
-        print("🔘 Selecting 'Unread' conversation filter...")
-        unread_res = await page.evaluate("""() => {
-            // 1. Try exact selector with ng-click or ng-value or value="1"
-            let unreadRadio = document.querySelector(
-                'input[type="radio"][ng-click*="convTypes.UNREAD"], ' +
-                'input[type="radio"][ng-value*="convTypes.UNREAD"], ' +
-                'input[type="radio"][value="1"]'
+        # Step 2: Ensure filter is kept to 'All' (convTypes.ALL / value="0") - Do NOT change to Unread!
+        print("🔘 Ensuring conversation filter is set to 'All'...")
+        all_filter_res = await page.evaluate("""() => {
+            // 1. Locate 'All' radio filter element
+            let allRadio = document.querySelector(
+                'input[type="radio"][ng-click*="convTypes.ALL"], ' +
+                'input[type="radio"][ng-value*="convTypes.ALL"], ' +
+                'input[type="radio"][value="0"]'
             );
             
-            // 2. Fallback: find radio by parent/label text 'Unread'
-            if (!unreadRadio) {
+            // 2. Fallback: find radio by parent/label text 'All'
+            if (!allRadio) {
                 const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
-                unreadRadio = radios.find(r => {
+                allRadio = radios.find(r => {
                     const parent = r.closest('label') || r.parentElement;
-                    const text = (parent?.innerText || '').toLowerCase();
-                    return text.includes('unread');
+                    const text = (parent?.innerText || '').toLowerCase().trim();
+                    return text === 'all' || text.startsWith('all');
                 });
             }
             
-            if (unreadRadio) {
-                unreadRadio.scrollIntoView({ block: 'center' });
-                const parentLabel = unreadRadio.closest('label');
-                if (parentLabel) {
-                    parentLabel.click();
-                } else {
-                    unreadRadio.click();
+            if (allRadio) {
+                if (!allRadio.checked) {
+                    allRadio.scrollIntoView({ block: 'center' });
+                    const parentLabel = allRadio.closest('label');
+                    if (parentLabel) {
+                        parentLabel.click();
+                    } else {
+                        allRadio.click();
+                    }
+                    allRadio.checked = true;
+                    allRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                    allRadio.dispatchEvent(new Event('click', { bubbles: true }));
                 }
-                unreadRadio.checked = true;
-                unreadRadio.dispatchEvent(new Event('change', { bubbles: true }));
-                unreadRadio.dispatchEvent(new Event('click', { bubbles: true }));
                 
-                // Angular 1.x scope hook if accessible
+                // Angular 1.x scope hook to ensure model state is convTypes.ALL
                 try {
                     if (window.angular) {
-                        const scope = window.angular.element(unreadRadio).scope();
+                        const scope = window.angular.element(allRadio).scope();
                         if (scope && scope.setConvType && scope.convTypes) {
                             scope.$apply(() => {
-                                scope.setConvType(scope.convTypes.UNREAD);
+                                scope.setConvType(scope.convTypes.ALL);
                             });
                         }
                     }
                 } catch (e) {}
                 
-                return 'UNREAD_RADIO_CLICKED';
+                return 'ALL_RADIO_CONFIRMED';
             } else {
-                const unreadLabel = Array.from(document.querySelectorAll('label, span, div')).find(el => {
+                const allLabel = Array.from(document.querySelectorAll('label.conv-type, label, span, div')).find(el => {
                     const t = (el.innerText || '').trim().toLowerCase();
-                    return t.startsWith('unread') || t.includes('unread (');
+                    return t === 'all' || t.startsWith('all (');
                 });
-                if (unreadLabel) {
-                    unreadLabel.scrollIntoView({ block: 'center' });
-                    unreadLabel.click();
-                    return 'UNREAD_LABEL_CLICKED';
+                if (allLabel) {
+                    allLabel.scrollIntoView({ block: 'center' });
+                    allLabel.click();
+                    return 'ALL_LABEL_CLICKED';
                 }
             }
-            return 'UNREAD_NOT_FOUND';
+            return 'ALL_FILTER_DEFAULT';
         }""")
-        print(f"   👉 Unread filter click status: {unread_res}")
-        await asyncio.sleep(random.uniform(2.0, 3.0))
+        print(f"   👉 'All' filter status: {all_filter_res}")
+        await asyncio.sleep(random.uniform(1.5, 2.5))
             
-        # Step 3: Check for conversation cards (filtered to unread)
-        conv_count = await page.evaluate("""() => {
-            const convs = document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer');
-            return convs.length;
-        }""")
+        # Step 3: Wait for conversation cards to be loaded and rendered in Angular / DOM
+        print("⏳ Waiting for Instahyre conversations to load...")
+        conv_count = 0
+        for _wait_turn in range(30):
+            eval_res = await page.evaluate("""() => {
+                try {
+                    if (window.angular) {
+                        const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                        if (sc && sc.candidatesConv && sc.candidatesConv.length > 0 && !sc.loadingConvs) {
+                            return sc.candidatesConv.length;
+                        }
+                    }
+                    const cards = document.querySelectorAll(
+                        '.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate:not(.more-conv), .conv-candidate.cursor-pointer'
+                    );
+                    const spinner = document.querySelector('.inbox-loading, .loading, #messageSpinner:not(.ng-hide)');
+                    if (cards.length > 0 && !spinner) {
+                        return cards.length;
+                    }
+                    const text = (document.body ? document.body.innerText : '') || '';
+                    const hasEmptyState = text.includes('No conversations') || text.includes('No messages');
+                    if (hasEmptyState && !spinner) {
+                        return 0;
+                    }
+                } catch(e) {}
+                return -1; // Still loading
+            }""")
+            if isinstance(eval_res, (int, float, bool)) and int(eval_res) >= 0:
+                conv_count = int(eval_res)
+                break
+            await asyncio.sleep(1.0)
+            
+        if conv_count == -1:
+            conv_count = 0
         
         if not conv_count or conv_count == 0:
-            print("📭 No unread conversation cards found in Instahyre Inbox.")
+            print("📭 No conversation cards found in Instahyre Inbox.")
             self.state.task_complete = True
             return True
             
-        print(f"📬 Found {conv_count} unread conversation(s) in inbox. Processing all unread messages...")
+        print(f"📬 Found {conv_count} conversation card(s) in inbox. Checking messages...")
 
         processed_conv_ids = set()
         messages_handled = 0
-        max_conv_turns = max(conv_count * 2, 40)
+        max_conv_turns = max(conv_count * 3, 60)
 
         for turn in range(max_conv_turns):
-            # If not on inbox page, return to inbox
+            # If navigated away from inbox, return to target inbox URL
             current_url = page.url or ''
             if 'candidate/inbox' not in current_url:
                 print(f"   🔙 Returning to inbox: {inbox_base_url}")
@@ -4803,16 +4841,54 @@ class SentinelAgent:
                 except Exception:
                     pass
 
-            # Click next unread conversation card
+            # Step 3a: Select and open the next unprocessed conversation card
             c_id = ""
             try:
                 click_conv_res = await page.evaluate("""(processedIds) => {
-                    const convs = Array.from(document.querySelectorAll('.conv-candidates .conv-candidate, .conv-candidate.cursor-pointer'));
-                    if (!convs.length) return { status: 'NO_MORE_UNREAD', totalCards: 0 };
-                    for (let i = 0; i < convs.length; i++) {
-                        const card = convs[i];
-                        const nameEl = card.querySelector('.candidate-name');
-                        const jobEl = card.querySelector('.conv-job');
+                    try {
+                        if (window.angular) {
+                            const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                            if (sc && sc.candidatesConv && sc.candidatesConv.length > 0) {
+                                for (let i = 0; i < sc.candidatesConv.length; i++) {
+                                    const conv = sc.candidatesConv[i];
+                                    const name = conv.recruiter_name || conv.name || (conv.recruiter ? conv.recruiter.name : 'Recruiter');
+                                    const job = conv.job_title || conv.job || '';
+                                    const cardId = String(conv.id || (name + '::' + job + '::' + i));
+                                    if (!processedIds.includes(cardId)) {
+                                        sc.lockCandidateProfileRequests = 0;
+                                        if (sc.openConvCandidate) {
+                                            sc.$apply(() => {
+                                                sc.openConvCandidate(conv);
+                                            });
+                                        }
+                                        return {
+                                            status: 'CLICKED',
+                                            id: cardId,
+                                            name: name,
+                                            job: job,
+                                            index: i,
+                                            totalCards: sc.candidatesConv.length
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {}
+
+                    // Fallback: DOM wrappers
+                    let wrappers = Array.from(document.querySelectorAll(
+                        '.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate:not(.more-conv)'
+                    ));
+                    if (!wrappers.length) {
+                        wrappers = Array.from(document.querySelectorAll('.conv-candidate.cursor-pointer, .conv-candidate:not(.more-conv)'));
+                    }
+                    if (!wrappers.length) return { status: 'NO_MORE_CONVERSATIONS', totalCards: 0 };
+                    
+                    for (let i = 0; i < wrappers.length; i++) {
+                        const wrapper = wrappers[i];
+                        const card = wrapper.querySelector('.conv-candidate') || wrapper;
+                        const nameEl = card.querySelector('.candidate-name, .conv-name');
+                        const jobEl = card.querySelector('.conv-job, .candidate-job');
                         const name = nameEl ? nameEl.innerText.trim() : '';
                         const job = jobEl ? jobEl.innerText.trim() : '';
                         const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job + '::' + i);
@@ -4825,21 +4901,21 @@ class SentinelAgent:
                                 name: name || 'Recruiter',
                                 job: job || '',
                                 index: i,
-                                totalCards: convs.length
+                                totalCards: wrappers.length
                             };
                         }
                     }
-                    return { status: 'NO_MORE_UNREAD', totalCards: convs.length };
+                    return { status: 'NO_MORE_CONVERSATIONS', totalCards: wrappers.length };
                 }""", list(processed_conv_ids))
             except Exception as e:
                 print(f"   ℹ️ Card evaluation finished or unavailable: {e}")
                 break
 
-            if not click_conv_res or click_conv_res.get('status') == 'NO_MORE_UNREAD':
+            if not isinstance(click_conv_res, dict) or click_conv_res.get('status') == 'NO_MORE_CONVERSATIONS':
                 # Try scrolling conversation container to check if more cards load
                 try:
                     scrolled = await page.evaluate("""() => {
-                        const container = document.querySelector('.conv-candidates, .inbox-conversations');
+                        const container = document.querySelector('.conv-candidates, .inbox-conversations, .candidates-list, .conv-candidates-list');
                         if (container && container.scrollHeight > container.clientHeight) {
                             const prev = container.scrollTop;
                             container.scrollTop += 500;
@@ -4852,7 +4928,7 @@ class SentinelAgent:
                         continue
                 except Exception:
                     pass
-                print(f"📭 No more unread conversations remaining. Handled {messages_handled} message(s).")
+                print(f"📭 Checked all available conversations in the list. Handled {messages_handled} message(s).")
                 break
 
             if click_conv_res.get('status') != 'CLICKED':
@@ -4861,31 +4937,118 @@ class SentinelAgent:
 
             c_name = click_conv_res.get('name', 'Recruiter')
             c_job = click_conv_res.get('job', '')
-            c_idx = click_conv_res.get('index', messages_handled)
-            c_total = max(click_conv_res.get('totalCards', conv_count), messages_handled + 1, conv_count)
+            c_idx = click_conv_res.get('index', turn)
+            c_total = max(click_conv_res.get('totalCards', conv_count), len(processed_conv_ids) + 1, conv_count)
             c_id = click_conv_res.get('id', f"{c_name}::{c_job}::{c_idx}")
 
-            print(f"\n📩 [{messages_handled + 1}/{c_total}] Conversation with {c_name} ({c_job})")
+            print(f"\n📩 [{len(processed_conv_ids) + 1}/{c_total}] Checking conversation with {c_name} ({c_job})")
             await asyncio.sleep(random.uniform(2.0, 3.0))
-
             inbox_thread_url = page.url
 
-            # Scan for questionnaire link in message content
+            # Step 3b: Inspect opened conversation messages for completion acknowledgment entry
+            # Condition check: Does the message opened in the row have the entry:
+            # "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you."
             try:
-                q_url = await page.evaluate("""() => {
-                    const links = Array.from(document.querySelectorAll('.message-content a, .candidate-msg a, a[target="_blank"]'));
-                    for (const link of links) {
-                        const href = link.href || link.getAttribute('href') || '';
-                        const text = (link.innerText || '').toLowerCase();
-                        if (href.includes('/questionnaire/') || href.includes('instahyre.com/questionnaire') || text.includes('questionnaire')) {
-                            return href;
+                msg_inspection = await page.evaluate("""() => {
+                    const TARGET_PHRASE = "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.";
+                    const TARGET_KEYWORD = "interested in this opportunity and have completed the questionnaire";
+
+                    const rightPane = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container');
+                    
+                    // Check Angular scope messages
+                    let scopeMessages = [];
+                    try {
+                        if (window.angular) {
+                            const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                            if (sc && sc.messagesToShow) {
+                                scopeMessages = sc.messagesToShow.map(m => ({
+                                    id: m.id,
+                                    sender: m.sender_name || (m.is_candidate ? 'Candidate' : 'Recruiter'),
+                                    is_candidate: m.is_candidate,
+                                    text: (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim(),
+                                    html: m.content_html || m.content || ''
+                                }));
+                            }
+                        }
+                    } catch(e) {}
+
+                    // Check DOM messages in right pane (excluding editor / compose box)
+                    let domMessages = [];
+                    if (rightPane) {
+                        const rows = Array.from(rightPane.querySelectorAll(
+                            '.message.conv-email-row .message-content, ' +
+                            '#messages-tab .message-content:not(.ql-editor), ' +
+                            'div[ng-repeat*="messagesToShow"] .message-content:not(.ql-editor), ' +
+                            'div[ng-if*="!message.is_automated_message"]:not(.ql-editor), ' +
+                            'div[ng-bind-html*="message.content_html"]:not(.ql-editor)'
+                        )).filter(n => !n.closest('.ql-editor') && !n.closest('.quill-editor') && !n.closest('#add-message-block'));
+                        
+                        domMessages = rows.map(r => (r.innerText || r.textContent || '').replace(/\\s+/g, ' ').trim());
+                    } else {
+                        const rows = Array.from(document.querySelectorAll(
+                            '.message-content:not(.ql-editor):not([contenteditable="true"]), ' +
+                            'div[ng-if*="!message.is_automated_message"]:not(.ql-editor), ' +
+                            'div[ng-bind-html*="message.content_html"]:not(.ql-editor)'
+                        )).filter(n => !n.closest('.conv-candidates-list') && !n.closest('.conv-candidate') && !n.closest('.ql-editor') && !n.closest('#add-message-block'));
+                        domMessages = rows.map(r => (r.innerText || r.textContent || '').replace(/\\s+/g, ' ').trim());
+                    }
+
+                    const allTexts = [...domMessages, ...scopeMessages.map(m => m.text)];
+                    const hasCompletedAckEntry = allTexts.some(t => t.includes(TARGET_KEYWORD) || t.includes(TARGET_PHRASE));
+
+                    // Questionnaire URL
+                    let qUrl = null;
+                    for (const m of scopeMessages) {
+                        const match = m.html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
+                        if (match) {
+                            qUrl = match[1];
+                            break;
                         }
                     }
-                    return null;
+                    if (!qUrl) {
+                        const searchScope = rightPane || document;
+                        const links = Array.from(searchScope.querySelectorAll(
+                            '.message.conv-email-row a, #messages-tab .message-content a, div[ng-repeat*="messagesToShow"] a, a[href*="questionnaire"]'
+                        )).filter(l => !l.closest('.conv-candidates-list') && !l.closest('#add-message-block') && !l.closest('.ql-editor'));
+
+                        for (const link of links) {
+                            const href = link.href || link.getAttribute('href') || '';
+                            const text = (link.innerText || '').toLowerCase();
+                            if (href.includes('/questionnaire/') || href.includes('instahyre.com/questionnaire') || text.includes('questionnaire')) {
+                                qUrl = href;
+                                break;
+                            }
+                        }
+                    }
+
+                    return {
+                        hasCompletedAckEntry: hasCompletedAckEntry,
+                        qUrl: qUrl
+                    };
                 }""")
             except Exception as e:
-                print(f"   ⚠️ Error scanning for questionnaire link: {e}")
+                print(f"   ⚠️ Error inspecting conversation message content: {e}")
+                msg_inspection = {'hasCompletedAckEntry': False, 'qUrl': None}
+
+            if isinstance(msg_inspection, bool):
+                has_ack_entry = msg_inspection
                 q_url = None
+            elif isinstance(msg_inspection, dict):
+                has_ack_entry = msg_inspection.get('hasCompletedAckEntry', False)
+                q_url = msg_inspection.get('qUrl', None)
+            else:
+                has_ack_entry = False
+                q_url = None
+
+            # Condition: If message opened in the row ALREADY has this entry -> Skip it
+            if has_ack_entry:
+                print(f"   ⏩ Conversation with {c_name} already contains questionnaire completed acknowledgment entry. Skipping...")
+                processed_conv_ids.add(c_id)
+                await asyncio.sleep(random.uniform(1.0, 1.5))
+                continue
+
+            # Condition satisfied: Message opened does NOT have this entry -> Process it!
+            print(f"   ✨ Condition Satisfied: No completed questionnaire entry in thread with {c_name}. Processing...")
 
             if q_url and q_url not in self._processed_questionnaires:
                 print(f"   📋 Found Questionnaire Link: {q_url}")
@@ -4902,7 +5065,7 @@ class SentinelAgent:
                         # Send questionnaire acknowledgment in recruiter thread
                         await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
                     else:
-                        print("   ⚠️ Questionnaire submission could not be verified.")
+                        print("   ⚠️ Questionnaire submission could not be verified. Skipping acknowledgment.")
                 except Exception as e:
                     print(f"   ❌ Error processing questionnaire {q_url}: {e}")
             elif q_url and q_url in self._processed_questionnaires:
@@ -4915,41 +5078,85 @@ class SentinelAgent:
 
             processed_conv_ids.add(c_id)
             messages_handled += 1
-            await asyncio.sleep(random.uniform(1.5, 2.5))
 
-        print(f"\n🎉 Instahyre Inbox Task finished! Successfully processed and replied to {messages_handled} unread conversation(s).")
+            # Terminate immediately on the first conversation that fulfills the condition (prevent race conditions)
+            print(f"\n🎉 Instahyre Inbox Task finished! Successfully handled matching conversation with {c_name}.")
+            self.state.task_complete = True
+            return True
+
+        print(f"\n📭 Instahyre Inbox Task finished: Checked all available conversations. No unhandled messages found.")
         self.state.task_complete = True
         return True
 
     async def _answer_instahyre_questionnaire(self, q_page, q_url: str) -> bool:
         """Extract all questions from the questionnaire page, answer using QA patterns,
-        log to CSV, submit, and verify confirmation."""
+        update Angular scope and DOM inputs, submit via Angular controller, and verify confirmation."""
         print(f"📝 Answering Instahyre Questionnaire: {q_url}")
 
-        # Step 1: Wait up to 10 seconds for Angular to render questionnaire questions
+        # Step 1: Wait up to 10 seconds for Angular to render questionnaire questions or confirmation
         for wait_i in range(10):
-            has_questions = await q_page.evaluate("""() => {
+            state_info = await q_page.evaluate("""() => {
+                const text = (document.body ? document.body.innerText : '') || '';
+                const hasSentText = text.includes('Questionnaire has been sent') || 
+                                    text.includes('Thank you for your time') ||
+                                    text.includes('already completed') ||
+                                    text.includes('already submitted');
+                const hasCheck = !!document.querySelector('.fa-check-circle, .confirmation-icon');
+                if (hasSentText || hasCheck) {
+                    return 'ALREADY_SENT';
+                }
+                if (window.angular) {
+                    const qCtrl = document.querySelector('.candidate-questionnaire');
+                    const sc = window.angular.element(qCtrl || document.body).scope();
+                    if (sc && sc.questionnaire && sc.questionnaire.questions && sc.questionnaire.questions.length > 0) {
+                        return 'HAS_QUESTIONS';
+                    }
+                }
                 const qs = document.querySelectorAll('.questionnaire-question, .question-label, div[ng-repeat*="question in questionnaire.questions"]');
-                return qs.length > 0;
+                if (qs.length > 0) {
+                    return 'HAS_QUESTIONS';
+                }
+                return 'WAITING';
             }""")
-            if has_questions:
+            if state_info == 'ALREADY_SENT':
+                print("   🎉 Questionnaire has already been submitted ('Questionnaire has been sent').")
+                return True
+            if state_info in ('HAS_QUESTIONS', True):
                 break
             await asyncio.sleep(1)
 
-        # Step 2: Extract questions and input metadata (clean deduplication)
+        # Step 2: Extract questions metadata from Angular scope and DOM
         questions_info = await q_page.evaluate("""() => {
+            if (window.angular) {
+                const qCtrl = document.querySelector('.candidate-questionnaire');
+                const sc = window.angular.element(qCtrl || document.body).scope();
+                if (sc && sc.questionnaire && sc.questionnaire.questions && sc.questionnaire.questions.length > 0) {
+                    return sc.questionnaire.questions.map((q, idx) => ({
+                        index: idx,
+                        id: q.id,
+                        question: (q.text || '').replace(/REQUIRED/g, '').trim(),
+                        type: q.type,
+                        minValue: q.min_value !== undefined ? q.min_value : null,
+                        maxValue: q.max_value !== undefined ? q.max_value : null,
+                        choiceOptions: (q.choice_options || []).map(co => ({
+                            id: co.id,
+                            label: (co.label || co.text || co.name || co.option_text || '').trim()
+                        }))
+                    }));
+                }
+            }
+
+            // Fallback: DOM query
             let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
             if (!qCards.length) {
                 qCards = Array.from(document.querySelectorAll('div[ng-repeat*="question in questionnaire.questions"]'));
             }
-            // Deduplicate cards if nested
             qCards = qCards.filter((card, idx, arr) => 
                 !card.classList.contains('info-box') && 
                 !arr.some(other => other !== card && other.contains(card))
             );
 
-            const results = [];
-            qCards.forEach((card, idx) => {
+            return qCards.map((card, idx) => {
                 const labelEl = card.querySelector('.question-label span.ng-binding, .question-label span, .question-text-heading, .question-label');
                 let qText = '';
                 if (labelEl) {
@@ -4962,40 +5169,16 @@ class SentinelAgent:
                     const headerEl = card.querySelector('.question-text-container');
                     if (headerEl) qText = (headerEl.innerText || '').replace(/REQUIRED/g, '').trim();
                 }
-                
-                const answerContainer = card.querySelector('.answer-container') || card;
-                const textarea = answerContainer.querySelector('textarea.text-answer-input, textarea');
-                const textInput = answerContainer.querySelector('input.text-answer-input, input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])');
-                const radioInputs = Array.from(answerContainer.querySelectorAll('input[type="radio"], label.radio, .radio-inline, .radio'));
-                const checkboxInputs = Array.from(answerContainer.querySelectorAll('input[type="checkbox"], label.checkbox, .checkbox-inline, .checkbox'));
-                const selectEl = answerContainer.querySelector('select');
-                
-                let inputType = 'text';
-                let options = [];
-                
-                if (radioInputs.length > 0) {
-                    inputType = 'radio';
-                    options = radioInputs.map(r => (r.innerText || r.textContent || r.value || '').trim()).filter(Boolean);
-                } else if (checkboxInputs.length > 0) {
-                    inputType = 'checkbox';
-                    options = checkboxInputs.map(c => (c.innerText || c.textContent || c.value || '').trim()).filter(Boolean);
-                } else if (selectEl) {
-                    inputType = 'select';
-                    options = Array.from(selectEl.options).map(o => (o.text || o.value || '').trim()).filter(Boolean);
-                } else if (textarea) {
-                    inputType = 'textarea';
-                } else if (textInput) {
-                    inputType = 'text';
-                }
-                
-                results.push({
+                return {
                     index: idx,
+                    id: idx,
                     question: qText,
-                    inputType: inputType,
-                    options: options
-                });
+                    type: 0,
+                    minValue: null,
+                    maxValue: null,
+                    choiceOptions: []
+                };
             });
-            return results;
         }""")
         
         if not questions_info or len(questions_info) == 0:
@@ -5004,16 +5187,19 @@ class SentinelAgent:
             
         print(f"   📋 Found {len(questions_info)} question(s) to answer:")
         
-        # Step 3: Answer each question
+        # Step 3: Match answers for each question
+        answers_payload = []
         for q in questions_info:
+            q_idx = q.get('index', 0)
             q_text = q.get('question', '')
-            input_type = q.get('inputType', 'text')
-            options = q.get('options', [])
+            q_type = q.get('type', 0)
+            choice_options = q.get('choiceOptions', [])
+            min_val = q.get('minValue')
+            max_val = q.get('maxValue')
             
             if not q_text:
                 continue
                 
-            # Match answer via pattern matcher first as context
             ans_pattern, conf_pattern = self._fuzzy_match_question(q_text)
             llm_client = self._get_llm_client()
             ans = None
@@ -5022,13 +5208,16 @@ class SentinelAgent:
 
             if llm_client:
                 pattern_ctx = f"Pattern suggestion: {ans_pattern} (confidence: {conf_pattern})" if ans_pattern else None
+                opts_labels = [co.get('label', '') for co in choice_options]
                 try:
-                    ans = await llm_client.answer_question(q_text, options=options, input_type=input_type, context=pattern_ctx)
+                    ans = await asyncio.wait_for(
+                        llm_client.answer_question(q_text, options=opts_labels, context=pattern_ctx),
+                        timeout=35.0
+                    )
                     if ans:
                         source = "llm_gemma"
-                        conf = 0.95
+                        conf = 0.98
                 except Exception as e:
-                    print(f"      ⚠️ Gemma answering failed for '{q_text}': {e}")
                     ans = None
 
             if not ans:
@@ -5036,152 +5225,42 @@ class SentinelAgent:
                 source = "pattern_fallback" if ans_pattern else "unmatched_fallback"
                 conf = conf_pattern if ans_pattern else 0.0
 
-            # Type-aware adjustments if still empty
             if not ans:
-                ans = "Yes" if input_type in ('radio', 'checkbox') else "4.2 Years"
+                ans = "Yes" if q_type in (2, 3) else "4.2 Years"
                 conf = 0.5
                 source = "unmatched_fallback"
 
-            # For MCQ options matching: warn if chosen option not found in options
-            if options and input_type in ('radio', 'checkbox', 'select'):
-                matched_opt = next((o for o in options if o.strip().lower() == ans.strip().lower()), None)
-                if not matched_opt:
-                    matched_opt = next((o for o in options if ans.strip().lower() in o.strip().lower() or o.strip().lower() in ans.strip().lower()), None)
-                if matched_opt:
-                    ans = matched_opt
+            # Handle type-specific conversions
+            # Angular question types: 0=SINGLE_LINE, 1=MULTIPLE_LINE, 2=SINGLE_CHOICE, 3=MULTIPLE_CHOICE, 9=NUMERIC_INPUT
+            numeric_val = None
+            if q_type == 9:
+                num_match = re.search(r'(\d+(?:\.\d+)?)', str(ans))
+                if num_match:
+                    numeric_val = float(num_match.group(1))
                 else:
-                    print(f"      ⚠️ Warning: answer '{ans}' not found in options {options}")
-                
-            fill_result = await q_page.evaluate("""(data) => {
-                let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
-                if (!qCards.length) {
-                    qCards = Array.from(document.querySelectorAll('div[ng-repeat*="question in questionnaire.questions"]'));
-                }
-                qCards = qCards.filter((card, idx, arr) => 
-                    !card.classList.contains('info-box') && 
-                    !arr.some(other => other !== card && other.contains(card))
-                );
+                    numeric_val = 4.2
+                if min_val is not None and numeric_val < min_val:
+                    numeric_val = float(min_val)
+                if max_val is not None and numeric_val > max_val:
+                    numeric_val = float(max_val)
 
-                if (data.index >= qCards.length) return 'INDEX_OUT_OF_BOUNDS';
-                const card = qCards[data.index];
-                const answerContainer = card.querySelector('.answer-container') || card;
-                
-                // Textarea input
-                const textarea = answerContainer.querySelector('textarea.text-answer-input, textarea');
-                if (textarea && (data.inputType === 'textarea' || data.inputType === 'text')) {
-                    textarea.focus();
-                    textarea.click();
-                    const taSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
-                    if (taSetter) taSetter.call(textarea, data.answer);
-                    else textarea.value = data.answer;
-                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                    textarea.dispatchEvent(new Event('change', { bubbles: true }));
-                    textarea.dispatchEvent(new Event('blur', { bubbles: true }));
-                    if (window.angular) {
-                        try {
-                            const elScope = window.angular.element(textarea).scope();
-                            if (elScope && elScope.question && elScope.question.answer) {
-                                elScope.question.answer.text = data.answer;
-                                elScope.$apply();
-                            }
-                        } catch (e) {}
-                    }
-                    return 'FILLED_TEXTAREA';
-                }
-
-                // Text input
-                const textInput = answerContainer.querySelector('input.text-answer-input, input[type="text"], input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])');
-                if (textInput && (data.inputType === 'text' || data.inputType === 'number')) {
-                    textInput.focus();
-                    textInput.click();
-                    const inputSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-                    if (inputSetter) inputSetter.call(textInput, data.answer);
-                    else textInput.value = data.answer;
-                    textInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    textInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    textInput.dispatchEvent(new Event('blur', { bubbles: true }));
-                    if (window.angular) {
-                        try {
-                            const elScope = window.angular.element(textInput).scope();
-                            if (elScope && elScope.question && elScope.question.answer) {
-                                elScope.question.answer.text = data.answer;
-                                elScope.$apply();
-                            }
-                        } catch (e) {}
-                    }
-                    return 'FILLED_TEXT';
-                }
-                
-                // Radio input
-                if (data.inputType === 'radio') {
-                    const radioItems = Array.from(answerContainer.querySelectorAll('input[type="radio"], label.radio, .radio-inline, .radio, label'));
-                    const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
-                    let matched = false;
-                    for (const r of radioItems) {
-                        const rText = (r.innerText || r.textContent || r.value || '').toLowerCase().trim();
-                        if (rText === targetAns || rText.includes(targetAns) || targetAns.includes(rText)) {
-                            const input = r.tagName === 'INPUT' ? r : r.querySelector('input[type="radio"]') || r;
-                            input.click();
-                            matched = true;
-                            break;
-                        }
-                    }
-                    if (!matched && radioItems.length > 0) {
-                        const yesOpt = radioItems.find(r => (r.innerText || r.textContent || '').toLowerCase().includes('yes'));
-                        if (yesOpt) yesOpt.click();
-                        else radioItems[0].click();
-                    }
-                    return 'CLICKED_RADIO';
-                }
-                
-                // Checkbox input
-                if (data.inputType === 'checkbox') {
-                    const checkboxItems = Array.from(answerContainer.querySelectorAll('input[type="checkbox"], label.checkbox, .checkbox-inline, .checkbox, label'));
-                    const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
-                    for (const c of checkboxItems) {
-                        const cText = (c.innerText || c.textContent || c.value || '').toLowerCase().trim();
-                        if (cText === targetAns || cText.includes(targetAns) || targetAns.includes(cText)) {
-                            const input = c.tagName === 'INPUT' ? c : c.querySelector('input[type="checkbox"]') || c;
-                            input.click();
-                            break;
-                        }
-                    }
-                    return 'CLICKED_CHECKBOX';
-                }
-                
-                // Select input
-                if (data.inputType === 'select') {
-                    const selectEl = answerContainer.querySelector('select');
-                    if (selectEl) {
-                        const targetAns = (data.selectedOption || data.answer || '').toLowerCase();
-                        for (let opt of selectEl.options) {
-                            const optText = (opt.text || opt.value || '').toLowerCase().trim();
-                            if (optText === targetAns || optText.includes(targetAns) || targetAns.includes(optText)) {
-                                selectEl.value = opt.value;
-                                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-                                return 'SELECTED_OPTION';
-                            }
-                        }
-                    }
-                }
-                
-                return 'NO_MATCHING_INPUT';
-            }""", {
-                "index": q.get("index", 0),
+            answers_payload.append({
+                "index": q_idx,
                 "question": q_text,
-                "inputType": input_type,
-                "options": options,
-                "answer": ans,
-                "selectedOption": ans
+                "type": q_type,
+                "answer": str(ans),
+                "numericValue": numeric_val,
+                "source": source,
+                "confidence": conf
             })
-            
+
             # Log to CSV
             self.log_qa_result(
                 question=q_text,
-                answer=ans,
-                input_type=input_type,
-                options=options,
-                selected_option=ans,
+                answer=str(numeric_val if numeric_val is not None else ans),
+                input_type='numeric' if numeric_val is not None else 'text',
+                options=[co.get('label', '') for co in choice_options],
+                selected_option=str(numeric_val if numeric_val is not None else ans),
                 confidence=conf,
                 status='submitted',
                 platform='instahyre',
@@ -5190,12 +5269,106 @@ class SentinelAgent:
                 job_id_or_url=q_url
             )
             self.metrics['questions_answered'] += 1
-            print(f"      Q: '{q_text}' -> A: '{ans}' [{fill_result}] (conf: {conf})")
-            
+            print(f"      Q [{q_idx+1}]: '{q_text}' -> A: '{numeric_val if numeric_val is not None else ans}' (conf: {conf})")
+
+        # Step 4: Inject answers into Angular models and DOM elements
+        fill_res = await q_page.evaluate("""(answers) => {
+            if (window.angular) {
+                const qCtrl = document.querySelector('.candidate-questionnaire');
+                const sc = window.angular.element(qCtrl || document.body).scope();
+                if (sc && sc.questionnaire && sc.questionnaire.questions) {
+                    const questions = sc.questionnaire.questions;
+                    for (const item of answers) {
+                        if (item.index >= questions.length) continue;
+                        const q = questions[item.index];
+                        if (!q.answer) q.answer = {};
+
+                        // NUMERIC_INPUT (9)
+                        if (q.type === sc.QUESTION_TYPES.NUMERIC_INPUT || item.numericValue !== null) {
+                            q.answer.numeric_value = item.numericValue !== null ? item.numericValue : parseFloat(item.answer);
+                        }
+                        // SINGLE_LINE (0) / MULTIPLE_LINE (1)
+                        else if (q.type === sc.QUESTION_TYPES.SINGLE_LINE || q.type === sc.QUESTION_TYPES.MULTIPLE_LINE) {
+                            q.answer.text = item.answer;
+                        }
+                        // MULTIPLE_CHOICE (3)
+                        else if (q.type === sc.QUESTION_TYPES.MULTIPLE_CHOICE) {
+                            if (q.choice_options && q.choice_options.length > 0) {
+                                const target = (item.answer || '').toLowerCase().trim();
+                                for (let co of q.choice_options) {
+                                    const lbl = (co.label || co.text || co.name || co.option_text || '').toLowerCase().trim();
+                                    if (lbl === target || lbl.includes(target) || target.includes(lbl) || 
+                                        (target.includes('15') && (lbl.includes('immediate') || lbl.includes('30')))) {
+                                        co.selected = true;
+                                    } else {
+                                        co.selected = false;
+                                    }
+                                }
+                                if (!q.choice_options.some(co => co.selected)) {
+                                    q.choice_options[0].selected = true;
+                                }
+                            }
+                        }
+                        // SINGLE_CHOICE (2) / DROPDOWN
+                        else if (q.type === sc.QUESTION_TYPES.SINGLE_CHOICE || q.type === sc.QUESTION_TYPES.DROPDOWN) {
+                            if (q.choice_options && q.choice_options.length > 0) {
+                                const target = (item.answer || '').toLowerCase().trim();
+                                let chosen = q.choice_options.find(co => {
+                                    const lbl = (co.label || co.text || co.name || co.option_text || '').toLowerCase().trim();
+                                    return lbl === target || lbl.includes(target) || target.includes(lbl);
+                                });
+                                if (!chosen) {
+                                    chosen = q.choice_options.find(co => (co.label || '').toLowerCase().includes('yes')) || q.choice_options[0];
+                                }
+                                q.answer.choice = chosen;
+                            }
+                        }
+                        // RATING_SCALE
+                        else if (q.type === sc.QUESTION_TYPES.RATING_SCALE) {
+                            q.answer.rating_scale_value = item.numericValue !== null ? item.numericValue : parseInt(item.answer) || 9;
+                        }
+                    }
+
+                    sc.$apply();
+                }
+            }
+
+            // Sync native DOM inputs & trigger change events
+            const domCards = document.querySelectorAll('.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]');
+            domCards.forEach((card, idx) => {
+                if (idx >= answers.length) return;
+                const item = answers[idx];
+                const textInput = card.querySelector('input[type="text"], input[type="number"], input.text-answer-input');
+                const textarea = card.querySelector('textarea');
+                if (textarea) {
+                    textarea.value = item.answer;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                } else if (textInput) {
+                    textInput.value = item.numericValue !== null ? String(item.numericValue) : item.answer;
+                    textInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    textInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+
+            return 'FILLED_ALL';
+        }""", answers_payload)
+        
         await asyncio.sleep(random.uniform(1.5, 2.5))
         
-        # Step 4: Click Submit button (valid standard CSS selectors only)
+        # Step 5: Submit questionnaire
+        print("   📤 Submitting questionnaire...")
         submit_res = await q_page.evaluate("""() => {
+            if (window.angular) {
+                const qCtrl = document.querySelector('.candidate-questionnaire');
+                const sc = window.angular.element(qCtrl || document.body).scope();
+                if (sc && sc.submitQuestionnaire) {
+                    try {
+                        sc.submitQuestionnaire();
+                        return 'SUBMITTED_VIA_SCOPE';
+                    } catch(e) {}
+                }
+            }
             const submitBtn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg, button.btn-primary') ||
                               Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim().includes('submit'));
             if (submitBtn && submitBtn.offsetParent !== null) {
@@ -5205,21 +5378,31 @@ class SentinelAgent:
             }
             return 'SUBMIT_NOT_FOUND';
         }""")
-        print(f"   📤 Submit Button: {submit_res}")
+        print(f"   📤 Submit Button Result: {submit_res}")
         
-        # Step 5: Verify confirmation
+        # Step 6: Verify confirmation
         confirmed = False
-        for check_i in range(8):
+        for check_i in range(10):
             await asyncio.sleep(1.5)
             confirmed = await q_page.evaluate("""() => {
                 const textCenterDiv = document.querySelector('div.text-center');
                 const checkIcon = document.querySelector('.fa-check-circle, i.fa-check-circle, [aria-hidden="true"].fa-check-circle');
                 const bodyText = (document.body.innerText || '').toLowerCase();
                 
-                const hasSentText = bodyText.includes('questionnaire has been sent');
+                const hasSentText = bodyText.includes('questionnaire has been sent') || 
+                                    bodyText.includes('already completed') || 
+                                    bodyText.includes('already submitted');
                 const hasThankYou = bodyText.includes('thank you for your time') || bodyText.includes('you can close this tab');
                 
-                if (hasSentText || (checkIcon && hasThankYou) || (textCenterDiv && hasSentText)) {
+                let isSubmittedState = false;
+                if (window.angular) {
+                    const sc = window.angular.element(document.querySelector('.candidate-questionnaire') || document.body).scope();
+                    if (sc && sc.CANDIDATE_QUESTIONNAIRE_STATE) {
+                        isSubmittedState = sc.showQuestionnaire === sc.CANDIDATE_QUESTIONNAIRE_STATE.SUBMITTED;
+                    }
+                }
+                
+                if (hasSentText || (checkIcon && hasThankYou) || isSubmittedState || (textCenterDiv && hasSentText)) {
                     return true;
                 }
                 return false;
@@ -5228,8 +5411,8 @@ class SentinelAgent:
                 print(f"   🎉 Confirmation Verified: 'Questionnaire has been sent' (check {check_i + 1})")
                 return True
                 
-        print("   ⚠️ Confirmation message not found within timeout (submission may have succeeded).")
-        return submit_res == 'SUBMIT_CLICKED'
+        print("   ⚠️ Confirmation message not found within timeout.")
+        return False
 
     async def _send_instahyre_ack(self, page, inbox_url: str, c_name: str, has_questionnaire: bool = True) -> bool:
         """
@@ -5293,7 +5476,7 @@ class SentinelAgent:
                 const ed = document.querySelector('{editor_selector}');
                 return ed ? (ed.innerText || ed.textContent || '') : '';
             }}""")
-            if expected_kw not in text_in_editor:
+            if isinstance(text_in_editor, str) and text_in_editor and expected_kw not in text_in_editor:
                 print(f"   ⚠️ Message text ('{expected_kw}') could not be verified in Quill editor.")
                 return False
 
@@ -5311,13 +5494,14 @@ class SentinelAgent:
                 return { found: true, disabled: isDisabled };
             }""")
 
-            if not btn_state.get('found', False):
-                print(f"   ⚠️ Send button not found in conversation thread for {c_name}.")
-                return False
+            if isinstance(btn_state, dict):
+                if not btn_state.get('found', False):
+                    print(f"   ⚠️ Send button not found in conversation thread for {c_name}.")
+                    return False
 
-            if btn_state.get('disabled', False):
-                print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click to prevent invalid dispatch.")
-                return False
+                if btn_state.get('disabled', False):
+                    print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click to prevent invalid dispatch.")
+                    return False
 
             # 7. Click Send button and verify dispatch
             print("   📤 Clicking Send button...")
@@ -7919,16 +8103,29 @@ class SentinelAgent:
                         // Check if label represents a range or comparative bounds
                         const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
-                        const isLabelYes = /\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes';
-                        const isLabelNo = (/\\bno\\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && !isLabelYes;
-                        const isAnsYes = /\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
-                        const isAnsNo = (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
+                        const isLabelYes = /\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes';
+                        const isLabelNo = (/\bno\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && !isLabelYes;
+                        const isAnsYes = /\byes\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
+                        const isAnsNo = (/\bno\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
                         
+                        const hasYesRadio = Array.from(radios).some(r => {
+                            const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
+                            return /\byes\b/.test(lbl);
+                        });
+                        const hasNoRadio = Array.from(radios).some(r => {
+                            const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
+                            return /\bno\b/.test(lbl);
+                        });
+
                         if (isLabelYes && isAnsYes) {
                             score = 90;
                         }
                         else if (isLabelNo && isAnsNo) {
                             score = 90;
+                        }
+                        else if (hasYesRadio && hasNoRadio && !isComparativeOrRange && answerNum > 0) {
+                            if (isLabelYes) score = 95;
+                            else if (isLabelNo) score = 0;
                         }
                         else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
                             score = 100;
@@ -8059,11 +8256,24 @@ class SentinelAgent:
                         const isAnsYes = /\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
                         const isAnsNo = (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
                         
+                        const hasYesRadio = Array.from(radios).some(r => {
+                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '').toLowerCase();
+                            return /\\byes\\b/.test(lbl);
+                        });
+                        const hasNoRadio = Array.from(radios).some(r => {
+                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '').toLowerCase();
+                            return /\\bno\\b/.test(lbl);
+                        });
+
                         if (isLabelYes && isAnsYes) {
                             score = 90;
                         }
                         else if (isLabelNo && isAnsNo) {
                             score = 90;
+                        }
+                        else if (hasYesRadio && hasNoRadio && !isComparativeOrRange && answerNum > 0) {
+                            if (isLabelYes) score = 95;
+                            else if (isLabelNo) score = 0;
                         }
                         else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
                             score = 100;
@@ -10338,7 +10548,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         clickInput(bestRadio);
-                                        formResults.push({ question: legend, answer: answer, inputType: 'radio', options: radioOptions, selectedOption: answer, source: 'pattern_match' });
+                                        const selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        formResults.push({ question: legend, answer: selectedVal, inputType: 'radio', options: radioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
                                         // Check: (1) has yes+no radio options with few radios, OR (2) question text is a Yes/No question pattern
@@ -10478,7 +10689,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
-                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio', options: customRadioOptions, selectedOption: answer, source: 'pattern_match' });
+                                        const selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || answer).trim();
+                                        formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: customRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         const hasYes = customRadios.some(r => {
                                             const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
@@ -10613,7 +10825,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
                                         clickInput(bestRadio);
-                                        formResults.push({ question: questionText.substring(0, 100), answer: answer, inputType: 'radio', options: standaloneRadioOptions, selectedOption: answer, source: 'pattern_match' });
+                                        const selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
                                         const hasYes = radios.some(r => {
@@ -11695,7 +11908,17 @@ return resolveDynamic(bestMatch);
                                 return { type: 'safety', element: dialog };
                             }
                             // Success modal
-                            if (text.includes('success') || dialog.querySelector('[data-test-icon="signal-success"]') || /\\bapplication\\s+\\w+\\s+(sent|submitted)/i.test(text) || text.includes('application sent') || text.includes('application submitted')) {
+                            const isSuccessModal = (
+                                dialog.querySelector('[data-test-icon="signal-success"]') !== null ||
+                                dialog.querySelector('li-icon[type="success-pebble-icon"]') !== null ||
+                                dialog.querySelector('.artdeco-inline-feedback--success') !== null ||
+                                /\\bapplication\\s+(was\\s+)?(sent|submitted)\\b/i.test(text) ||
+                                /\\byour\\s+application\\s+(has\\s+been|was)?\\s*(sent|submitted)\\b/i.test(text) ||
+                                titleText.includes('application sent') ||
+                                titleText.includes('application submitted') ||
+                                (text.includes('application') && (text.includes('sent to') || text.includes('submitted to')))
+                            );
+                            if (isSuccessModal) {
                                 return { type: 'success', element: dialog };
                             }
                             // Easy Apply daily limit
@@ -11814,14 +12037,57 @@ return resolveDynamic(bestMatch);
                     if (modal) {
                         window.__SENTINEL_DEBUG__&&console.log('Active Modal detected:', modal.type);
                         if (modal.type === 'success') {
-                            const closeBtn = modal.element.querySelector('button[aria-label="Dismiss"]') || 
-                                           modal.element.querySelector('.artdeco-modal__dismiss') || 
-                                           modal.element.querySelector('button');
-                            if (closeBtn) {
-                                window.__SENTINEL_DEBUG__&&console.log('Closing success modal...');
-                                closeBtn.click();
-                                return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
+                            const btns = Array.from(modal.element.querySelectorAll('button, span[role="button"]'));
+                            const closeBtn = (
+                                modal.element.querySelector('button[aria-label*="Dismiss" i]') ||
+                                modal.element.querySelector('button[aria-label*="dismiss" i]') ||
+                                modal.element.querySelector('button[aria-label*="Close" i]') ||
+                                modal.element.querySelector('button[aria-label*="close" i]') ||
+                                modal.element.querySelector('button[data-test-modal-close-btn]') ||
+                                modal.element.querySelector('.artdeco-modal__dismiss') ||
+                                btns.find(b => {
+                                    const t = normText(b.innerText || b.getAttribute('aria-label') || '');
+                                    return ['done', 'dismiss', 'close', 'not now', 'got it'].includes(t);
+                                }) ||
+                                modal.element.querySelector('button')
+                            );
+
+                            // Mark active job ID as skipped/applied so we don't re-select it
+                            if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                            const currentUrlParams = new URLSearchParams(window.location.search);
+                            let currentJobId = currentUrlParams.get('currentJobId');
+                            if (!currentJobId) {
+                                const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                                  document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                                  document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                                  document.querySelector('.active [data-job-id]');
+                                if (activeCard) {
+                                    currentJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                                }
                             }
+                            if (currentJobId) {
+                                window.__skippedJobIds.add(currentJobId);
+                            }
+
+                            if (closeBtn) {
+                                window.__SENTINEL_DEBUG__&&console.log('Closing success modal with full event dispatch...');
+                                closeBtn.scrollIntoView({block: 'center'});
+                                closeBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
+                                closeBtn.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                closeBtn.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+                                closeBtn.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                closeBtn.click();
+                            }
+
+                            // Clean up modal element and overlays
+                            try {
+                                if (modal.element && modal.element.parentNode) {
+                                    modal.element.style.display = 'none';
+                                }
+                                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => { o.style.display = 'none'; });
+                            } catch(e) {}
+
+                            return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
                         }
                         
                         // Easy Apply Daily Limit — click "Got it" and signal rate limit
@@ -11900,7 +12166,7 @@ return resolveDynamic(bestMatch);
                     // Must exclude messaging overlays which also match [role="dialog"]
                     // IMPROVED: Also check if it's actually an Easy Apply modal by checking for specific indicators
                     const modals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"]');
-                    const anyModal = Array.from(modals).find(m => !isMessagingOverlay(m));
+                    const anyModal = Array.from(modals).find(m => isVisible(m) && !isMessagingOverlay(m));
                     if (anyModal) {
                         const hasInteractiveElements = queryDeep('input, select, textarea, button', anyModal) !== null;
                         
@@ -11915,10 +12181,10 @@ return resolveDynamic(bestMatch);
                         // Only wait for transitioning if it looks like an actual Easy Apply modal
                         const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent;
                         
-                        if (isVisible(anyModal) && hasInteractiveElements) {
+                        if (hasInteractiveElements) {
                             window.__SENTINEL_DEBUG__&&console.log('Unknown modal detected via deep query. Handling as generic form...');
                             return handleLinkedInForm(anyModal);
-                        } else if (isLikelyEasyApplyModal && (isVisible(anyModal) || hasInteractiveElements)) {
+                        } else if (isLikelyEasyApplyModal) {
                             window.__SENTINEL_DEBUG__&&console.log('Easy Apply modal is loading or transitioning. Waiting...');
                             return 'LINKEDIN_MODAL_TRANSITIONING';
                         } else {

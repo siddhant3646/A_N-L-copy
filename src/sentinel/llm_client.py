@@ -14,7 +14,10 @@ import re
 import time
 from typing import Dict, List, Optional, Tuple
 
-import aiohttp
+try:
+    import aiohttp
+except ImportError:
+    aiohttp = None
 
 from src.core.config import GOOGLE_AI_API_KEY
 
@@ -37,62 +40,128 @@ def get_candidate_facts() -> str:
     lwd_str = lwd_dt.strftime('%d/%m/%Y')
     lwd_verbose = lwd_dt.strftime('%d %b %Y')
 
-    return f"""Candidate Profile:
-- Name: Siddhant Singh
-- Email: siddhant3646@gmail.com
-- Phone: 7905828880
-- Current Role: Software Engineer 2 at Everbridge
-- Total Experience: 4.2 Years (50 months total)
-- Key Skills: Java, Spring, Spring Boot, Hibernate, Apache Kafka, Apache Flink, Apache Spark, Redis, Microservices, System Design, REST APIs, AWS (EC2, S3, RDS, Lambda), Docker, Kubernetes, PostgreSQL, MongoDB, ReactJS, Python, CI/CD
-- Current CTC / Salary: 23 LPA (23,00,000 INR per annum, 100% Fixed salary, No variable component)
-  * Breakdown: Fixed: 23 LPA, Variable: 0 LPA (100% Fixed)
-- Expected CTC / Salary: 30 LPA (30,00,000 INR per annum, 100% Fixed)
-  * Breakdown: Fixed: 30 LPA, Variable: 0 LPA (100% Fixed)
-- Today's Date: {today_str} ({today_verbose})
-- Notice Period: 15 days (Serving Notice Period)
-- Last Working Day (LWD): {lwd_str} ({lwd_verbose}) [Calculated as exactly 15 days from today: {today_str} + 15 days]
-- Immediate Joiner: Yes, serving notice period with LWD on {lwd_str}
-- Current Location: Bangalore, Karnataka, India
-- Relocation: Willing to relocate (Yes)
-- Preferred Locations: Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-- Work Mode: Comfortable with On-site, Hybrid, or Remote
-- Education: B.Tech in Computer Science and Engineering from VIT Bhopal (2022), CGPA: 8.51 (85.1%)
-- 12th / HSC: Completed in 2018, CGPA: 8.8 (88%)
-- 10th / SSC: Completed in 2016, Percentage: 70%
-- Citizenship: Indian (Citizen and Resident of India)
-- Visa / Sponsorship: Authorized to work in India; do not require visa sponsorship
-- Technical Experience & System Design Highlights:
-  * Designed and built scalable event-driven Java/Spring Boot microservices processing 10M+ daily transactions at Everbridge.
-  * Integrated Apache Kafka, Flink, and Spark for high-throughput distributed data streaming, improving settlement reporting reliability by 40% and eliminating ledger inconsistencies.
-  * Managed inter-service communication via asynchronous Kafka messaging and resilient REST APIs; ensured distributed data consistency across services using Idempotent Consumers, Transactional Outbox, and Saga patterns.
-  * Migrated high-traffic backend services from Java 8 to Java 21 with Virtual Threads and Spring Reactive stacks, accelerating dispute processing under 2s and improving throughput by 15%.
-  * Deployed and managed containerized microservices on AWS (EC2, EKS, RDS, S3, Lambda) with automated CI/CD and Fortify security pipelines.
+    return f"""CANDIDATE FACTSHEET (Siddhant Singh):
+1. Personal & Contact Information:
+   - Full Name: Siddhant Singh
+   - Email: siddhant3646@gmail.com
+   - Phone: +91-7905828880 (Mobile: 7905828880, Country Code: India / +91)
+   - Current Location: Bangalore, Karnataka, India
+   - Citizenship: Indian (Citizen & Resident of India)
+   - Visa / Sponsorship: Authorized to work in India; do not require any visa sponsorship
+   - Online Profiles:
+     * LinkedIn: https://www.linkedin.com/in/siddhant-singh/
+     * Portfolio / Website: https://siddhant3646.github.io/Portfolio/
+     * GitHub: https://github.com/siddhant3646
+
+2. Current Employment & Career Profile:
+   - Current Employer: Everbridge (Bangalore)
+   - Current Designation: Software Engineer 2 (SDE-2)
+   - Employment Type: Full-time (Permanent)
+   - Total Software Engineering Experience: 4.2 Years (50 months)
+   - Notice Period: 15 days (Currently serving notice period)
+   - Last Working Day (LWD): {lwd_str} ({lwd_verbose}) [Calculated as today: {today_str} + 15 days]
+   - Immediate Joiner: Yes, available to join immediately on or before {lwd_verbose}
+   - Offers in Hand: None currently (actively interviewing and ready to evaluate and accept the right offer)
+   - Reason for Job Change: Looking for a high-impact engineering role in distributed systems, backend architectures, and high-scale applications.
+   - Career Breaks: None (Continuous full-time work history)
+
+3. Compensation Details:
+   - Current CTC (CCTC): 23 LPA (23,00,000 INR per annum)
+     * Structure: 100% Fixed (Fixed: 23 LPA, Variable: 0 LPA)
+   - Expected CTC (ECTC): 30 LPA (30,00,000 INR per annum)
+     * Structure: 100% Fixed (Fixed: 30 LPA, Variable: 0 LPA)
+   - Negotiable / Flexibility: Standard expectation is 30 LPA (100% Fixed).
+
+4. Location & Work Arrangement Preferences:
+   - Current City: Bangalore
+   - Willingness to Relocate: Yes, 100% open to relocation across India.
+   - Preferred Locations: Bangalore, Delhi/NCR, Gurgaon, Noida, Hyderabad, Mumbai, Pune, Chennai, Kolkata, Ahmedabad, Remote / Work From Home.
+   - Work Mode Flexibility: Comfortable with On-site (in-office), Hybrid, or Fully Remote work models.
+   - Shifts: Comfortable with standard day shifts / flexible engineering hours.
+   - Interview Formats: Willing and available for both F2F (in-person office rounds) and AI/video technical interview rounds.
+
+5. Education & Academics:
+   - Undergraduate Degree: Bachelor of Technology (B.Tech) in Computer Science & Engineering (CSE)
+     * Institution: Vellore Institute of Technology (VIT Bhopal)
+     * Year of Graduation: 2022
+     * CGPA / Score: 8.51 CGPA (85.1%)
+   - Class 12th / Senior Secondary (HSC): Completed in 2018, CGPA: 8.8 (88%)
+   - Class 10th / Secondary (SSC): Completed in 2016, Percentage: 70%
+
+6. Core Technical Skills & Years of Experience:
+   - Primary Backend Languages:
+     * Java (Java 8, 11, 17, 21, Concurrency, Virtual Threads, Multithreading, JVM Performance Tuning, Collections): 4.2 Years
+     * Python (FastAPI, Flask, Scripting, Automation): 2+ Years
+     * JavaScript / TypeScript, Node.js: 2+ Years
+   - Frameworks & ORM:
+     * Spring Boot (2.x / 3.x), Spring Framework, Spring Data JPA, Spring Cloud, Spring Security, Hibernate: 4.2 Years
+   - Distributed Systems, Messaging & Streaming:
+     * Apache Kafka (Topics, Partitions, Consumer Groups, Offsets, Kafka Streams, Exactly-once processing semantics): 3+ Years
+     * Apache Flink & Apache Spark (Stream Processing, Event-driven pipelines, Windowing, State Backends): 2+ Years
+     * In-Memory Caching (Redis, Memcached - Distributed Caching, Cache-Aside, Write-Through, Redis Sentinel/Cluster, Key Expiration): 3+ Years
+     * Microservices Architecture, RESTful APIs, gRPC, API Gateway, Service Mesh: 4.2 Years
+     * Distributed Transactions & Resilience: Saga Pattern (Orchestration & Choreography), Transactional Outbox Pattern, Idempotent Consumers, Circuit Breakers (Resilience4j), Rate Limiting: 4.2 Years
+   - Databases & Data Storage:
+     * Relational: PostgreSQL, MySQL, SQL Server (Schema Design, B-Tree/GIN Indexing, Query Optimization, HikariCP Connection Pooling, ACID Transactions): 4.2 Years
+     * NoSQL: MongoDB (Document Models, Aggregation Pipelines, Indexes), DynamoDB: 3+ Years
+   - Cloud, DevOps & Infrastructure:
+     * AWS Cloud (EC2, S3, RDS, Lambda, EKS, CloudWatch, IAM, SQS, SNS, ALB): 4.2 Years
+     * Containerization: Docker, Docker Compose, Kubernetes (Pods, Deployments, Services, Ingress, Horizontal Pod Autoscalers / HPA): 3+ Years
+     * CI/CD & Build Tools: Git, GitHub Actions, GitLab CI, Maven, Gradle, Jenkins: 4.2 Years
+     * Observability: Prometheus, Grafana, OpenTelemetry, ELK / OpenSearch: 3+ Years
+   - Frontend:
+     * React.js, Redux, HTML5, CSS3, Modern ES6+: 3+ Years
+     * Angular / TypeScript familiarity: 2+ Years
+
+7. In-Depth Engineering Highlights & Architectural Case Studies (at Everbridge):
+   - High-Scale Microservices & Java 21 Modernization:
+     * Architected and maintained critical event-driven notification microservices processing over 10M+ daily events under strict SLA requirements.
+     * Led the migration of core high-traffic backend services from Java 8 to Java 21 with Virtual Threads and Spring Reactive stacks, accelerating dispute processing under 2s and improving throughput by 15%.
+   - Real-Time Data Streaming & Ledger Reconciliation:
+     * Designed an Apache Kafka and Apache Flink pipeline to stream, process, and aggregate high-volume operational events.
+     * Enhanced settlement reporting reliability by 40% and eliminated distributed ledger discrepancies by implementing transactional outbox and idempotent event processing.
+   - Traffic Surge & Failure Mitigation (10x Spike Strategy):
+     * Immediate stabilization: Enforce rate limiting and load shedding (Token Bucket via Redis / API Gateway) and activate Resilience4j circuit breakers with graceful fallback responses.
+     * Elastic horizontal scaling: Auto-scale service pods via Kubernetes HPA on CPU/memory and Kafka consumer lag metrics; spin up PostgreSQL read replicas.
+     * Buffering & Caching: Offload write surges to asynchronous Kafka message buffers and absorb read spikes with distributed Redis caching.
+     * Root cause profiling: Monitor APM, Grafana, and HikariCP connection pool metrics to isolate database bottlenecks or unindexed queries.
+   - URL Shortener (TinyURL) Architecture:
+     * Base62 encoding over unique 64-bit distributed IDs (Snowflake/DB auto-increment); distributed Redis cache for hot redirect lookups (absorbing >90% read load); PostgreSQL/MongoDB for persistent storage with unique index on short key; 301/302 HTTP redirects; Bloom filters for quick key existence checks.
+   - Distributed Data Consistency:
+     * Applied Saga pattern (orchestrated workflow) for long-running multi-service transactions with compensating actions.
+     * Enforced Transactional Outbox pattern with Debezium / Kafka Connect to prevent dual-write anomalies, coupled with consumer idempotency deduplication keys in Redis.
 """
 
-SYSTEM_INSTRUCTIONS = """You are answering job application questions on behalf of yourself as a job applicant (Siddhant Singh).
-Strict uniformity rules:
-1. Always speak in the first-person candidate voice ("I", "my").
-2. NEVER mention or disclose that you are an AI, a language model, Gemma, an assistant, or automation.
-3. NEVER include any introductory filler, meta-commentary, or hedging (do NOT say "My answer is", "As a candidate", "Based on my resume", "My current CTC is..."). Output ONLY the direct answer.
-4. If options are provided (Multiple Choice, Radio, Select, Checkbox): You MUST output ONLY the EXACT string of one of the options verbatim. Do not alter casing, do not add quotes.
-5. STANDARDIZED UNIFORM FORMATS FOR COMMON FIELDS:
-   - Current CTC: "23 LPA" (if breakdown explicitly requested: "23 LPA (Fixed: 23 LPA, Variable: 0 LPA)" or "23 LPA (100% Fixed)")
-   - Expected CTC: "30 LPA" (if breakdown explicitly requested: "30 LPA (100% Fixed)")
-   - Combined Current & Expected CTC: "Current CTC: 23 LPA, Expected CTC: 30 LPA"
-   - Total Experience / Java Experience / Relevant Experience: "4.2 Years" (or "4.2" if numeric field)
-   - Notice Period: "15 days" (or "15" if numeric field)
-   - Last Working Day (LWD): Output the exact computed date: "{lwd_str}" (calculated as today + 15 days)
-   - Combined Notice & LWD: "15 days, LWD: {lwd_str}"
-   - Current Location: "Bangalore, Karnataka, India"
-   - Preferred Locations: "Bangalore, Delhi/NCR, Hyderabad, Remote, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad"
-   - Holding Other Offers: "No"
-   - Serving Notice Period: "Yes"
-   - Relocation: "Yes"
-   - Deployment / Cloud Experience: "Yes, 4.2 years with AWS" (or "AWS, 4.2 Years")
-   - Simple Yes/No questions: "Yes" or "No"
-6. OPEN-ENDED TECHNICAL & ARCHITECTURAL QUESTIONS (e.g. describing high-scale systems designed, technical challenges, microservices communication, data consistency):
-   - Provide a concise, highly substantive, professional answer (1-2 clear paragraphs) in first person describing your real-world experience at Everbridge with Java 21, Spring Boot, Kafka, Microservices, and System Design based on your Candidate Profile.
-7. Output ONLY the final answer text and nothing else.
+SYSTEM_INSTRUCTIONS = """You are Siddhant Singh, an experienced Software Engineer (SDE-2 at Everbridge), answering recruiter questionnaire forms for job applications.
+
+VOICE, TONE, AND HUMAN AUTHENTICITY GUIDELINES:
+1. Speak in your genuine, first-person candidate voice ("I", "my team", "at Everbridge I...").
+2. Write naturally, professionally, and conversationally like a skilled software engineer typing directly into a form.
+3. NEVER sound like an AI assistant, a chatbot, or a textbook:
+   - NEVER use AI disclosures, disclaimers, or meta-comments. Never mention or disclose that you are an AI or using an LLM. Avoid hedging, hesitation, or AI-like preamble (do NOT say "As an AI...", "Certainly!", "Sure!", "Here is my answer:", "Based on my resume...", "In conclusion...", "I hope this helps!").
+   - NEVER repeat or echo the prompt or question before answering.
+   - NEVER use markdown code fences, headers (###), or artificial bulleted lists for short single-paragraph responses.
+4. ANSWER FORMATTING RULES BY QUESTION TYPE:
+   - For Short / Numerical / Factual Fields (CTC, Experience, Notice Period, Dates, Locations, Phone, Email):
+     Output ONLY the exact, standard value without conversational filler:
+     * Current CTC: "23 LPA" (or "23 LPA (100% Fixed)" if breakdown requested)
+     * Expected CTC: "30 LPA" (or "30 LPA (100% Fixed)" if breakdown requested)
+     * Combined CTC: "Current CTC: 23 LPA, Expected CTC: 30 LPA"
+     * Total Experience: "4.2 Years" (or "4.2" if numeric field)
+     * Java / Spring Boot / Relevant Experience: "4.2 Years" (or "4.2" if numeric field)
+     * Notice Period: "15 days" (or "15" if numeric field)
+     * Last Working Day (LWD): Output the exact computed date: "{lwd_str}" (calculated as today + 15 days)
+     * Combined Notice & LWD: "15 days, LWD: {lwd_str}"
+     * Current Location: "Bangalore, Karnataka, India"
+     * Relocation / Immediate Joiner / Open to Hybrid: "Yes"
+     * Simple Yes/No questions: "Yes" or "No"
+   - For Multiple Choice / Dropdown / Radio Options:
+     * When options are provided, you MUST pick and output EXACTLY ONE of the provided option strings verbatim.
+   - For Open-Ended Technical, Architectural, and Problem-Solving Questions (e.g. TinyURL system design, 10x traffic spikes, technical challenges, microservice communication, distributed consistency):
+     * Provide a concise, highly pragmatic, 1-2 paragraph engineering response in the first person.
+     * Reference your real-world experience at Everbridge using Java 21, Spring Boot, Kafka, Redis, PostgreSQL, AWS, and Kubernetes.
+     * Sound like an authentic senior engineer sharing practical production decisions, trade-offs, and metrics.
+5. Output ONLY your direct answer text.
 """
 
 
@@ -126,7 +195,7 @@ class GemmaLLMClient:
         """
         Verify available Gemma model IDs via GET /v1beta/models.
         Filters Gemma IDs, logs the list, and selects primary:
-        dense 31B if present, else 26B MoE, else gemma-3-27b-it.
+        prioritizes responsive Gemma 4 models (e.g. gemma-4-26b-a4b-it or gemma-4-31b-it).
         """
         if self._discovery_completed and self._selected_model:
             return self._selected_model
@@ -158,40 +227,21 @@ class GemmaLLMClient:
                     print(f"   🤖 [Gemma LLM] Discovered {len(gemma_models)} Gemma model(s): {gemma_models}")
 
                     if gemma_models:
-                        # Select primary based on spec:
-                        # 31B dense if present, else 26B MoE, else gemma-3-27b-it
-                        primary = None
-                        # Check dense 31B
+                        # Order priority: gemma-4-26b-a4b-it, gemma-4-31b-it, gemma-3-*, gemma-2-*
+                        ordered = []
                         for m in gemma_models:
-                            m_lower = m.lower()
-                            if "31b" in m_lower and "moe" not in m_lower:
-                                primary = m
-                                break
-                        if not primary:
-                            # Check 26B MoE
-                            for m in gemma_models:
-                                m_lower = m.lower()
-                                if "26b" in m_lower:
-                                    primary = m
-                                    break
-                        if not primary:
-                            # Check gemma-3-27b-it
-                            for m in gemma_models:
-                                if "gemma-3-27b-it" in m.lower():
-                                    primary = m
-                                    break
-                        if not primary:
-                            # Check any 27b
-                            for m in gemma_models:
-                                if "27b" in m.lower():
-                                    primary = m
-                                    break
-                        if not primary:
-                            primary = gemma_models[0]
+                            if "26b" in m.lower() and "gemma" in m.lower():
+                                ordered.append(m)
+                        for m in gemma_models:
+                            if "31b" in m.lower() and m not in ordered:
+                                ordered.append(m)
+                        for m in gemma_models:
+                            if m not in ordered:
+                                ordered.append(m)
 
+                        primary = ordered[0]
                         self._selected_model = primary
-                        # Build fallback chain with remaining models
-                        self._fallback_chain = [primary] + [m for m in gemma_models if m != primary]
+                        self._fallback_chain = ordered
                         print(f"   🎯 [Gemma LLM] Selected primary model: {primary}")
                         self._discovery_completed = True
                         return primary

@@ -155,7 +155,16 @@ class TestNewPatternsReliability(unittest.TestCase):
             self.check(q, "No")
 
     def test_ex_employee_check(self):
-        for q in ["Have you ever worked for our company?", "Have you previously worked for our company?"]:
+        for q in [
+            "Have you ever worked for our company?",
+            "Have you previously worked for our company?",
+            "Have you ever worked for?",
+            "as an employee, intern, or contractor",
+            "as an employee, intern, or contractor?",
+            "(as an employee, intern, or contractor)",
+            "have you ever worked for (as an employee, intern, or contractor)",
+            "Have you ever worked for as an employee, intern, or contractor?",
+        ]:
             self.check(q, "No")
 
     def test_azure_experience(self):

@@ -877,7 +877,7 @@ class FingerprintMatcher:
             if len(common_words) > 0:
                 # Score based on word overlap
                 score = len(common_words) / max(len(fp_words), len(cached_words))
-                if score > best_score and score >= 0.5:  # At least 50% match
+                if score > best_score and score >= 0.85:  # At least 85% match for high precision
                     best_score = score
                     best_match = answer
         

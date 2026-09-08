@@ -308,34 +308,38 @@ DOM Selectors:
 """
 
 INSTAHYRE_INBOX_QUESTIONNAIRE_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true immediately.
+NAVIGATE to https://www.instahyre.com/candidate/inbox/439288/6201541231/ immediately.
 
-GOAL: Navigate to Instahyre Opportunities, click Inbox navigation link, select Unread conversations filter, open recruiter questionnaires from unread messages, answer all questions using QA patterns, submit questionnaires, and log results to CSV.
+GOAL: Open Instahyre Inbox thread, ensure filter is kept to All conversations, check all messages in the list until finding conversations without the questionnaire completed acknowledgment, answer all questions using QA patterns, submit questionnaires, and send acknowledgments.
 
 PHASE 1 - NAVIGATION & INBOX FILTER:
-1. Navigate to Instahyre Opportunities URL: https://www.instahyre.com/candidate/opportunities/?matching=true
-2. Click on the Inbox nav link (<a id="nav-candidates-inbox" href="/candidate/inbox/"><span>Inbox</span><span class="badge" id="unread-conv-count"></span></a>).
-3. Once on the inbox page, click on the Unread radio filter (<input type="radio" ng-click="setConvType(convTypes.UNREAD)" ng-checked="getConvType(convTypes.UNREAD)" ng-value="convTypes.UNREAD" value="1">).
-4. Inspect the first unread conversation card (<div class="conv-candidates"> -> <div class="conv-candidate">).
+1. Navigate directly to Instahyre Inbox URL: https://www.instahyre.com/candidate/inbox/439288/6201541231/
+2. Ensure conversation filter is set to "All" (<label class="conv-type ng-binding"><input type="radio" ng-click="setConvType(convTypes.ALL)" ng-checked="getConvType(convTypes.ALL)" ng-value="convTypes.ALL" value="0" checked="checked">All</label>). Do NOT change filter to Unread.
+3. Inspect conversation cards in the list (<div class="conv-candidates"> -> <div class="conv-candidate">).
 
-PHASE 2 - MESSAGE & QUESTIONNAIRE HANDLING:
-1. Click the first unread conversation to view message content
-2. Find questionnaire link (<a href="https://www.instahyre.com/questionnaire/..." target="_blank">Click here to open questionnaire</a>)
-3. Navigate in-place to questionnaire
-4. For each question in <div class="questionnaire-question">:
-   - Read question text from <div class="question-label">
-   - Answer using QA patterns for text/radio/checkbox/dropdown inputs
-   - Log question and answer to qa_results.csv
-5. Click Submit button (<button class="btn btn-primary btn-lg" ng-click="submitQuestionnaire()">Submit</button>)
-6. Verify confirmation message (<div class="text-center"><i class="fa fa-check-circle"></i><h4>Questionnaire has been sent</h4><p>Thank you for your time. You can close this tab.</p></div>)
-7. Immediately complete task upon confirmation verification.
+PHASE 2 - MESSAGE CHECKING CONDITION & WORKFLOW:
+1. Iterate through conversation cards and click each card to view its message thread.
+2. Check if the opened message thread already contains the questionnaire completed acknowledgment:
+   `<div ng-if="!message.is_automated_message" class="message-content ng-binding ng-scope" ng-bind-html="message.content_html | emojiuni | parseUrl"><div>Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you. </div></div>`
+3. Condition: If the opened message thread DOES NOT have this entry:
+   - Check for questionnaire link (<a href="https://www.instahyre.com/questionnaire/..." target="_blank">Click here to open questionnaire</a>).
+   - If questionnaire link exists:
+     - Navigate in-place to questionnaire.
+     - Answer each question in <div class="questionnaire-question"> using QA patterns / LLM.
+     - Click Submit button (<button class="btn btn-primary btn-lg" ng-click="submitQuestionnaire()">Submit</button>).
+     - Verify confirmation message (<div class="text-center"><i class="fa fa-check-circle"></i><h4>Questionnaire has been sent</h4>).
+     - Return to thread and send acknowledgment reply ("Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.").
+   - If no questionnaire link exists:
+     - Send interest reply ("Hi, I'm interested in this opportunity. Looking forward to hearing from you.").
+4. If the opened message thread ALREADY has this entry, skip to the next conversation card.
 
-TASK COMPLETE: When questionnaire is submitted and confirmation is verified.
+TASK COMPLETE: Immediately after finding and completing the first conversation in the list that meets the condition (or when all conversations have been checked).
 
 DOM Selectors:
-- Inbox Nav Link: a#nav-candidates-inbox, a[href="/candidate/inbox/"]
-- Unread Radio Filter: input[ng-click*="setConvType(convTypes.UNREAD)"], input[ng-value*="convTypes.UNREAD"], input[value="1"]
+- Inbox Target URL: https://www.instahyre.com/candidate/inbox/439288/6201541231/
+- All Radio Filter: input[ng-click*="setConvType(convTypes.ALL)"], input[ng-value*="convTypes.ALL"], input[value="0"], label.conv-type
 - Candidate Conversations: .conv-candidates .conv-candidate, div[ng-click*="openConvCandidate"]
+- Completed Questionnaire Ack Entry: .message-content:has-text("completed the questionnaire")
 - Message Questionnaire Link: .message-content a[href*="/questionnaire/"], a:has-text("Click here to open questionnaire")
 - Question Container: div.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]
 - Question Text: .question-label span, .question-text-heading
@@ -343,4 +347,5 @@ DOM Selectors:
 - Submit Button: button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg
 - Confirmation: .text-center i.fa-check-circle, h4:has-text("Questionnaire has been sent")
 """
+
 

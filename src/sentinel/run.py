@@ -202,8 +202,13 @@ class Browser:
         
         args = [
             '--disable-blink-features=AutomationControlled',
+            '--test-type',                              # Suppress "unsupported command-line flag" warning bar
+            '--disable-infobars',                       # Suppress Chrome infobars
+            '--window-position=0,0',                    # Start at top-left
+            '--window-size=1920,1080',                  # Full width to eliminate borders
             '--start-maximized',
-            '--disable-session-crashed-bubble',
+            '--disable-session-crashed-bubble',          # Suppress "Restore pages?" bubble
+            '--hide-crash-restore-bubble',               # Hide crash restore bubble
             '--no-restore-session-state',
             '--ignore-certificate-errors',
             '--ignore-ssl-errors',
@@ -230,6 +235,7 @@ class Browser:
         if self.user_data_dir:
             import shutil
             import glob
+            import json
             
             # Reuse the single shared profile dir for the whole process run
             # instead of sentinel_profile_<pid>_<taskid> per task (which leaked).
@@ -279,6 +285,35 @@ class Browser:
                         shutil.copy2(local_state_src, os.path.join(temp_dir, "Local State"))
                         print("  📁 Copied: Local State")
                     
+                    # Patch Preferences to suppress crash restore bubbles ("Restore pages?")
+                    prefs_file = os.path.join(dst_default, "Preferences")
+                    if os.path.exists(prefs_file):
+                        try:
+                            with open(prefs_file, 'r', encoding='utf-8') as pf:
+                                prefs_data = json.load(pf)
+                            if 'profile' not in prefs_data:
+                                prefs_data['profile'] = {}
+                            prefs_data['profile']['exit_type'] = 'Normal'
+                            prefs_data['profile']['exited_cleanly'] = True
+                            if 'session' in prefs_data:
+                                prefs_data['session']['restore_on_startup'] = 4
+                            with open(prefs_file, 'w', encoding='utf-8') as pf:
+                                json.dump(prefs_data, pf)
+                        except Exception:
+                            pass
+
+                    local_state_dst = os.path.join(temp_dir, "Local State")
+                    if os.path.exists(local_state_dst):
+                        try:
+                            with open(local_state_dst, 'r', encoding='utf-8') as lsf:
+                                ls_data = json.load(lsf)
+                            if 'user_experience_metrics' in ls_data and 'stability' in ls_data['user_experience_metrics']:
+                                ls_data['user_experience_metrics']['stability']['exited_cleanly'] = True
+                            with open(local_state_dst, 'w', encoding='utf-8') as lsf:
+                                json.dump(ls_data, lsf)
+                        except Exception:
+                            pass
+                    
                     clean_lock_files(temp_dir)
                     
                     final_user_data_dir = temp_dir
@@ -308,7 +343,13 @@ class Browser:
                     executable_path=self.executable_path,
                     headless=self.headless,
                     args=args,
-                    ignore_default_args=["--use-mock-keychain", "--password-store=basic", "--enable-unsafe-swiftshader"],
+                    ignore_default_args=[
+                        "--use-mock-keychain",
+                        "--password-store=basic",
+                        "--enable-unsafe-swiftshader",
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                    ],
                     viewport=None,
                     handle_sigterm=False,
                     handle_sigint=False,
@@ -349,9 +390,13 @@ class Browser:
                 executable_path=self.executable_path,
                 headless=self.headless,
                 args=args,
-                ignore_default_args=["--enable-unsafe-swiftshader"]
+                ignore_default_args=[
+                    "--enable-unsafe-swiftshader",
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                ]
             )
-            self.context = await self.browser.new_context()
+            self.context = await self.browser.new_context(viewport=None)
 
         if self.context:
             # 1. Close extra pages if Chrome opened multiple tabs/windows from restored session
@@ -362,7 +407,11 @@ class Browser:
                     except Exception:
                         pass
 
-            # 2. Auto-close unexpected popups/new windows created during automation
+            # 2. Maximize the initial window to remove borders
+            if self.context.pages:
+                await self._maximize_page_window(self.context.pages[0])
+
+            # 3. Auto-close unexpected popups/new windows created during automation
             async def _auto_close_popup(new_page):
                 try:
                     await asyncio.sleep(0.3)
@@ -375,14 +424,60 @@ class Browser:
 
             self.context.on("page", lambda p: asyncio.create_task(_auto_close_popup(p)))
 
+    @staticmethod
+    async def _maximize_page_window(page):
+        """Maximize browser window using CDP (Chrome DevTools Protocol) and JS bounds
+        to ensure the browser fills the display without right-hand borders."""
+        if not page:
+            return
+        try:
+            # 1. Native CDP window control
+            cdp = await page.context.new_cdp_session(page)
+            win_info = await cdp.send('Browser.getWindowForTarget')
+            window_id = win_info.get('windowId')
+            if window_id is not None:
+                dim = await page.evaluate("""() => ({
+                    w: window.screen.availWidth || window.screen.width || 1920,
+                    h: window.screen.availHeight || window.screen.height || 1080
+                })""")
+                w = int(dim.get('w', 1920))
+                h = int(dim.get('h', 1080))
+                await cdp.send('Browser.setWindowBounds', {
+                    'windowId': window_id,
+                    'bounds': {
+                        'left': 0,
+                        'top': 0,
+                        'width': w,
+                        'height': h,
+                        'windowState': 'normal'
+                    }
+                })
+            await cdp.detach()
+        except Exception:
+            pass
+
+        try:
+            # 2. JS resizeTo fallback
+            await page.evaluate("""() => {
+                if (window.screen) {
+                    window.moveTo(0, 0);
+                    window.resizeTo(screen.availWidth, screen.availHeight);
+                }
+            }""")
+        except Exception:
+            pass
+
     async def get_current_page(self):
         if self.context and self.context.pages:
-            return self.context.pages[0]
+            p = self.context.pages[0]
+            await self._maximize_page_window(p)
+            return p
         return None
 
     async def new_page(self):
         if self.context:
             page = await self.context.new_page()
+            await self._maximize_page_window(page)
             # Context-level route blocking (set in start()) covers all pages,
             # so no per-page handler is needed here.
             return page
@@ -653,7 +748,7 @@ async def main():
     # Define Tasks: (Task Name, Start URL, Prompt)
     tasks = [
         # Priority 1: Instahyre Inbox Questionnaire (Testing)
-        ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/opportunities/?matching=true", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
+        ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/inbox/439288/6201541231/", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
         # Job applications
         ("Naukri Application", "https://www.naukri.com/mnjuser/recommendedjobs", prompts.NAUKRI_JOB_APPLY_TASK),
         ("LinkedIn Application", "https://www.linkedin.com/jobs/search-results/?currentJobId=4325424519&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=Qwth1ndwtouG0vtFGj%2Bpsg%3D%3D&geoId=102713980&distance=0.0&f_TPR=r86400&f_AL=true", prompts.LINKEDIN_JOB_APPLY_TASK),
@@ -680,8 +775,12 @@ async def main():
         pw = await get_shared_playwright()
         args = [
             '--disable-blink-features=AutomationControlled',
+            '--test-type',
+            '--disable-infobars',
             '--disable-gpu', '--disable-extensions', '--no-first-run',
             '--start-maximized', '--ignore-certificate-errors',
+            '--disable-session-crashed-bubble',
+            '--hide-crash-restore-bubble',
             '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide,OptimizationGuideOnDeviceModel,PromptAPIForGeminiNano,LanguageDetectionModelDownloading,OptimizationHints,OptimizationHintsFetching,OptimizationTargetPrediction,Translate,MediaRouter,DialMediaRouteProvider,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,PrivacySandboxSettings4',
             '--disable-background-networking',
             '--disable-component-update',
@@ -698,7 +797,11 @@ async def main():
             br = await pw.chromium.launch(
                 executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
                 headless=False, args=args,
-                ignore_default_args=["--enable-unsafe-swiftshader"],
+                ignore_default_args=[
+                    "--enable-unsafe-swiftshader",
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                ],
             )
             await br.close()
             print("🔥 Playwright warm-up complete (non-persistent)")

@@ -200,7 +200,47 @@ class InputAwareResolver:
         question: str = ""
     ) -> MatchResult:
         answer_lower = answer.lower().strip()
-        
+        ql = question.lower().strip() if question else ""
+
+        # Check if options represent Yes/No choices and evaluate question guardrails first
+        has_yes_opt = None
+        has_no_opt = None
+        for opt in options:
+            lbl = opt.label.lower().strip()
+            val = opt.value.lower().strip()
+            if lbl in ['yes', 'y', 'true', 'agree', 'accept'] or val in ['yes', 'y', 'true', 'agree', 'accept']:
+                has_yes_opt = opt
+            elif lbl in ['no', 'n', 'false', 'decline', 'reject'] or val in ['no', 'n', 'false', 'decline', 'reject']:
+                has_no_opt = opt
+
+        if has_yes_opt and has_no_opt and ql:
+            # Privacy & Consent guard
+            if bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities)\b', ql)):
+                return MatchResult(
+                    matched_option=has_yes_opt,
+                    confidence=0.98,
+                    match_type='consent_boolean',
+                    original_answer=answer
+                )
+            # Salary cut below minimum acceptable threshold guard
+            if bool(re.search(r'\b(ok with|comfortable with|accept)\b.*?\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql)):
+                m = re.search(r'\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql)
+                if m and float(m.group(2)) < 20:
+                    return MatchResult(
+                        matched_option=has_no_opt,
+                        confidence=0.98,
+                        match_type='salary_guard_boolean',
+                        original_answer=answer
+                    )
+            # Fresher graduation guard
+            if bool(re.search(r'\b(completing|graduating|bachelor\'?s?)\b', ql) and re.search(r'\b(2025|2026)\b', ql)):
+                return MatchResult(
+                    matched_option=has_no_opt,
+                    confidence=0.98,
+                    match_type='fresher_guard_boolean',
+                    original_answer=answer
+                )
+
         for opt in options:
             if opt.value.lower() == answer_lower or opt.label.lower() == answer_lower:
                 return MatchResult(
@@ -209,7 +249,7 @@ class InputAwareResolver:
                     match_type='exact',
                     original_answer=answer
                 )
-        
+
         answer_num = self._extract_number(answer)
         if answer_num:
             matching_ranges = []
@@ -227,7 +267,7 @@ class InputAwareResolver:
                     match_type='numeric_range',
                     original_answer=answer
                 )
-        
+
         for opt in options:
             if self._is_synonym_match(answer_lower, opt.label.lower()):
                 return MatchResult(
@@ -236,19 +276,36 @@ class InputAwareResolver:
                     match_type='synonym',
                     original_answer=answer
                 )
-        
-        # Check if options represent Yes/No choices and answer is numeric or proficiency
-        has_yes_opt = None
-        has_no_opt = None
-        for opt in options:
-            lbl = opt.label.lower().strip()
-            val = opt.value.lower().strip()
-            if lbl in ['yes', 'y', 'true', 'agree', 'accept'] or val in ['yes', 'y', 'true', 'agree', 'accept']:
-                has_yes_opt = opt
-            elif lbl in ['no', 'n', 'false', 'decline', 'reject'] or val in ['no', 'n', 'false', 'decline', 'reject']:
-                has_no_opt = opt
 
         if has_yes_opt and has_no_opt:
+            ql = question.lower().strip()
+            # Privacy & Consent guard
+            if bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities)\b', ql)):
+                return MatchResult(
+                    matched_option=has_yes_opt,
+                    confidence=0.98,
+                    match_type='consent_boolean',
+                    original_answer=answer
+                )
+            # Salary cut below minimum acceptable threshold guard
+            if bool(re.search(r'\b(ok with|comfortable with|accept)\b.*?\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql)):
+                m = re.search(r'\b(\d{1,2})\s*(?:to|-)\s*(\d{1,2})\s*lpa\b', ql)
+                if m and float(m.group(2)) < 20:
+                    return MatchResult(
+                        matched_option=has_no_opt,
+                        confidence=0.98,
+                        match_type='salary_guard_boolean',
+                        original_answer=answer
+                    )
+            # Fresher graduation guard
+            if bool(re.search(r'\b(completing|graduating|bachelor\'?s?)\b', ql) and re.search(r'\b(2025|2026)\b', ql)):
+                return MatchResult(
+                    matched_option=has_no_opt,
+                    confidence=0.98,
+                    match_type='fresher_guard_boolean',
+                    original_answer=answer
+                )
+
             if answer_num is not None:
                 try:
                     val = float(answer_num)

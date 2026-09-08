@@ -1030,7 +1030,15 @@
     },
     "education_university": {
       "patterns": [
+        "school",
+        "school name",
+        "name of school",
+        "which school did you attend",
         "university",
+        "name of university",
+        "college",
+        "institution",
+        "institute name",
         "batch"
       ],
       "category": "education",
@@ -1136,7 +1144,6 @@
         "reason for leaving",
         "why switching",
         "reasons for your job change",
-        "reason for job change",
         "reason for change",
         "why are you looking",
         "reasons for job change",
@@ -3436,8 +3443,8 @@
         "select": "https://github.com/siddhant3646",
         "text": "https://github.com/siddhant3646",
         "textarea": "https://github.com/siddhant3646",
-        "checkbox": "Yes",
-        "number": ".3646"
+        "checkbox": "https://github.com/siddhant3646",
+        "number": "https://github.com/siddhant3646"
       },
       "priority": 13
     },
@@ -3751,8 +3758,7 @@
     },
     "institute": {
       "patterns": [
-        "institute",
-        "institute name"
+        "institute"
       ],
       "category": "education",
       "default": "VIT Bhopal University",
@@ -3816,6 +3822,12 @@
         "employed by any of the",
         "previously employed by",
         "have you ever worked for",
+        "have you ever worked for?",
+        "as an employee, intern, or contractor",
+        "as an employee, intern, or contractor?",
+        "(as an employee, intern, or contractor)",
+        "have you ever worked for (as an employee, intern, or contractor)",
+        "have you ever worked for as an employee, intern, or contractor",
         "employment consent"
       ],
       "category": "yes_no",
@@ -5578,8 +5590,7 @@
     },
     "preference_9062": {
       "patterns": [
-        "where did you study",
-        "institution"
+        "where did you study"
       ],
       "category": "preference",
       "default": "VIT Bhopal University",
@@ -14543,6 +14554,9 @@
     },
     "current_location_abroad": {
       "patterns": [
+        "what is your current country of residence",
+        "what is your current country of residence?",
+        "current country of residence",
         "which country are you currently located",
         "what country are you currently located in",
         "which country do you currently reside in",
@@ -15192,9 +15206,11 @@
         "ui/ux",
         "user interface",
         "user experience",
-        "design",
+        "ui design",
+        "ux design",
+        "ui/ux design",
         "experience with ui ux",
-        "years of experience with design"
+        "years of experience with ui design"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -15206,6 +15222,27 @@
         "select": "Yes",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
+      }
+    },
+    "secure_rest_apis_spring_boot_best_practices": {
+      "patterns": [
+        "how do you design robust and secure rest apis in spring boot",
+        "design robust and secure rest apis in spring boot",
+        "robust and secure rest apis in spring boot",
+        "best practices for rest apis in spring boot",
+        "how do you design robust and secure rest apis",
+        "what best practices do you follow when designing rest apis in spring boot",
+        "secure rest apis in spring boot"
+      ],
+      "category": "skills",
+      "default": "To design robust and secure REST APIs in Spring Boot: 1) Security: Enforce stateless authentication with Spring Security and OAuth2/JWT, validate payloads with Hibernate Validator (@Valid, @NotNull), apply @PreAuthorize for RBAC, and sanitize inputs against XSS/SQLi. 2) Robustness: Centralize error handling with @RestControllerAdvice and ResponseEntityExceptionHandler returning RFC 7807 problem details. 3) API Design: Follow RESTful resource naming, versioning (/api/v1/...), and OpenAPI/Swagger documentation. 4) Resilience & Performance: Use Redis caching, Resilience4j circuit breakers/rate limiters, and indexed JPA repositories.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "To design robust and secure REST APIs in Spring Boot: 1) Security: Enforce stateless authentication with Spring Security and OAuth2/JWT, validate payloads with Hibernate Validator (@Valid, @NotNull), apply @PreAuthorize for RBAC, and sanitize inputs against XSS/SQLi. 2) Robustness: Centralize error handling with @RestControllerAdvice and ResponseEntityExceptionHandler returning RFC 7807 problem details. 3) API Design: Follow RESTful resource naming, versioning (/api/v1/...), and OpenAPI/Swagger documentation. 4) Resilience & Performance: Use Redis caching, Resilience4j circuit breakers/rate limiters, and indexed JPA repositories.",
+        "textarea": "To design robust and secure REST APIs in Spring Boot: 1) Security: Enforce stateless authentication with Spring Security and OAuth2/JWT, validate payloads with Hibernate Validator (@Valid, @NotNull), apply @PreAuthorize for RBAC, and sanitize inputs against XSS/SQLi. 2) Robustness: Centralize error handling with @RestControllerAdvice and ResponseEntityExceptionHandler returning RFC 7807 problem details. 3) API Design: Follow RESTful resource naming, versioning (/api/v1/...), and OpenAPI/Swagger documentation. 4) Resilience & Performance: Use Redis caching, Resilience4j circuit breakers/rate limiters, and indexed JPA repositories.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
       }
     },
     "product_management_experience": {
@@ -80866,15 +80903,15 @@
         "please provide your linkedin profile"
       ],
       "category": "preference",
-      "default": "https://example.com/profile",
+      "default": "https://www.linkedin.com/in/siddhant3646/",
       "priority": 6,
       "input_type_defaults": {
-        "text": "https://example.com/profile",
-        "textarea": "https://example.com/profile",
-        "radio": "https://example.com/profile",
-        "select": "https://example.com/profile",
-        "checkbox": "Yes",
-        "number": "."
+        "text": "https://www.linkedin.com/in/siddhant3646/",
+        "textarea": "https://www.linkedin.com/in/siddhant3646/",
+        "radio": "https://www.linkedin.com/in/siddhant3646/",
+        "select": "https://www.linkedin.com/in/siddhant3646/",
+        "checkbox": "https://www.linkedin.com/in/siddhant3646/",
+        "number": "https://www.linkedin.com/in/siddhant3646/"
       }
     },
     "field_portfolio_website": {
@@ -80900,15 +80937,15 @@
         "please provide your github url"
       ],
       "category": "preference",
-      "default": "https://example.com/profile",
+      "default": "https://github.com/siddhant3646",
       "priority": 6,
       "input_type_defaults": {
-        "text": "https://example.com/profile",
-        "textarea": "https://example.com/profile",
-        "radio": "https://example.com/profile",
-        "select": "https://example.com/profile",
-        "checkbox": "Yes",
-        "number": "."
+        "text": "https://github.com/siddhant3646",
+        "textarea": "https://github.com/siddhant3646",
+        "radio": "https://github.com/siddhant3646",
+        "select": "https://github.com/siddhant3646",
+        "checkbox": "https://github.com/siddhant3646",
+        "number": "https://github.com/siddhant3646"
       }
     },
     "field_driving_license": {
@@ -81811,15 +81848,15 @@
         "please provide your linkedin url"
       ],
       "category": "preference",
-      "default": "https://example.com/profile",
+      "default": "https://www.linkedin.com/in/siddhant3646/",
       "priority": 6,
       "input_type_defaults": {
-        "text": "https://example.com/profile",
-        "textarea": "https://example.com/profile",
-        "radio": "https://example.com/profile",
-        "select": "https://example.com/profile",
-        "checkbox": "Yes",
-        "number": "."
+        "text": "https://www.linkedin.com/in/siddhant3646/",
+        "textarea": "https://www.linkedin.com/in/siddhant3646/",
+        "radio": "https://www.linkedin.com/in/siddhant3646/",
+        "select": "https://www.linkedin.com/in/siddhant3646/",
+        "checkbox": "https://www.linkedin.com/in/siddhant3646/",
+        "number": "https://www.linkedin.com/in/siddhant3646/"
       }
     },
     "social_gitlab_url": {
@@ -81828,15 +81865,15 @@
         "please provide your gitlab url"
       ],
       "category": "preference",
-      "default": "https://example.com/profile",
+      "default": "https://github.com/siddhant3646",
       "priority": 6,
       "input_type_defaults": {
-        "text": "https://example.com/profile",
-        "textarea": "https://example.com/profile",
-        "radio": "https://example.com/profile",
-        "select": "https://example.com/profile",
-        "checkbox": "Yes",
-        "number": "."
+        "text": "https://github.com/siddhant3646",
+        "textarea": "https://github.com/siddhant3646",
+        "radio": "https://github.com/siddhant3646",
+        "select": "https://github.com/siddhant3646",
+        "checkbox": "https://github.com/siddhant3646",
+        "number": "https://github.com/siddhant3646"
       }
     },
     "social_stackoverflow_url": {
@@ -83965,6 +84002,10 @@
       "default": "Everbridge",
       "priority": 9,
       "patterns": [
+        "who is your current or most recent employer",
+        "who is your current or most recent employer?",
+        "current or most recent employer",
+        "most recent employer",
         "company",
         "company name",
         "employer",
@@ -85531,8 +85572,6 @@
     "future_contact_consent": {
       "patterns": [
         "i am allowing valgenesis to contact me about future job opportunities for up to 2 years",
-        "contact me about future job opportunities for up to 2 years",
-        "contact me about future job opportunities",
         "allowing us to contact you for future job opportunities",
         "allow us to contact you for future opportunities",
         "contact you about future opportunities",
@@ -87512,10 +87551,7 @@
     },
     "job_offers_in_hand": {
       "patterns": [
-        "offers in hand",
-        "any offers in hand",
         "current offers in hand",
-        "do you have any offers in hand",
         "number of offers in hand",
         "holding any offers"
       ],
@@ -230417,6 +230453,738 @@
         "select": "Informally mentored 1 2 peers",
         "text": "Informally mentored 1-2 peers",
         "textarea": "Informally mentored 1-2 junior engineers on design patterns, clean code practices, and led technical code review discussions to elevate overall code quality."
+      }
+    },
+    "high_scale_java_backend_designed_challenges": {
+      "patterns": [
+        "can you describe a high-scale java backend system you've personally designed or owned",
+        "describe a high-scale java backend system you've personally designed or owned",
+        "can you describe a high-scale java backend system you have personally designed or owned",
+        "high-scale java backend system you've personally designed or owned",
+        "what were the biggest technical challenges you faced, and how did you resolve them",
+        "describe a high-scale java backend system you've personally designed",
+        "describe a high-scale java backend system",
+        "high-scale java backend system you have personally designed"
+      ],
+      "category": "skills",
+      "default": "I designed and owned an end-to-end event-driven settlement and transaction backend system at Everbridge handling 10M+ daily transactions. Built with Java 21 and Spring Boot, I utilized Virtual Threads and reactive patterns to reduce dispute processing latency to <2s. Key technical challenges included distributed data consistency and ledger reconciliation across microservices under high concurrency; I resolved these by implementing the Transactional Outbox and Saga patterns with Apache Kafka event streaming, Apache Flink for real-time deduplication, and PostgreSQL row-level locks with Redis cache-aside, improving reporting reliability by 40%.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "I designed and owned an end-to-end event-driven settlement and transaction backend system at Everbridge handling 10M+ daily transactions using Java 21, Spring Boot, Kafka, Flink, and PostgreSQL.",
+        "textarea": "I designed and owned an end-to-end event-driven settlement and transaction backend system at Everbridge handling 10M+ daily transactions. Built with Java 21 and Spring Boot, I utilized Virtual Threads and reactive patterns to reduce dispute processing latency to <2s. Key technical challenges included distributed data consistency and ledger reconciliation across microservices under high concurrency; I resolved these by implementing the Transactional Outbox and Saga patterns with Apache Kafka event streaming, Apache Flink for real-time deduplication, and PostgreSQL row-level locks with Redis cache-aside, improving reporting reliability by 40%.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "key_differences_java_8_11_17": {
+      "patterns": [
+        "what are the key differences between java 8, java 11, and java 17",
+        "key differences between java 8, java 11, and java 17",
+        "differences between java 8, java 11, and java 17",
+        "differences between java 8 java 11 and java 17",
+        "difference between java 8 java 11 and java 17",
+        "key differences between java 8 and java 17",
+        "differences between java 8 and java 11",
+        "differences between java 11 and java 17"
+      ],
+      "category": "skills",
+      "default": "Java 8 introduced functional programming (Lambdas, Stream API, Optional, default methods in interfaces). Java 11 introduced local variable type inference (var), modern HttpClient (HTTP/2 & WebSocket support), String/Collection utility enhancements, and flight recorder. Java 17 (LTS) introduced Records (concise immutable data models), Pattern Matching for switch and instanceof, Sealed Classes (restricted inheritance), Text Blocks, and enhanced ZGC garbage collection. In production at Everbridge, migrating to modern Java allowed leveraging Virtual Threads and Records for high-throughput microservices.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Java 8 (Lambdas/Streams), Java 11 (var, modern HttpClient, performance), Java 17 (Records, Sealed Classes, Pattern Matching, ZGC).",
+        "textarea": "Java 8 introduced functional programming (Lambdas, Stream API, Optional, default methods in interfaces). Java 11 introduced local variable type inference (var), modern HttpClient (HTTP/2 & WebSocket support), String/Collection utility enhancements, and flight recorder. Java 17 (LTS) introduced Records (concise immutable data models), Pattern Matching for switch and instanceof, Sealed Classes (restricted inheritance), Text Blocks, and enhanced ZGC garbage collection. In production at Everbridge, migrating to modern Java allowed leveraging Virtual Threads and Records for high-throughput microservices.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "java_memory_model_heap_stack_metaspace": {
+      "patterns": [
+        "explain the java memory model (heap, stack, metaspace)",
+        "explain the java memory model",
+        "java memory model (heap, stack, metaspace)",
+        "java memory model heap stack metaspace",
+        "differences between heap stack and metaspace",
+        "heap, stack, metaspace",
+        "heap stack and metaspace",
+        "explain java memory model heap stack metaspace"
+      ],
+      "category": "skills",
+      "default": "The Java Memory Model is divided into: 1. Heap Memory: Shared memory space where all object instances and JRE classes reside; managed by the Garbage Collector (G1/ZGC). 2. Stack Memory: Thread-local memory storing primitive local variables, method execution frames, and object reference pointers; memory is automatically reclaimed when method calls return. 3. Metaspace: Located in native off-heap memory (replacing PermGen since Java 8), holding class metadata, method bytecode, runtime constant pools, and static variables, dynamically resizing with native OS memory.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Heap (shared object storage managed by GC), Stack (thread-local execution frames and primitives), Metaspace (native off-heap class metadata and constant pool).",
+        "textarea": "The Java Memory Model is divided into: 1. Heap Memory: Shared memory space where all object instances and JRE classes reside; managed by the Garbage Collector (G1/ZGC). 2. Stack Memory: Thread-local memory storing primitive local variables, method execution frames, and object reference pointers; memory is automatically reclaimed when method calls return. 3. Metaspace: Located in native off-heap memory (replacing PermGen since Java 8), holding class metadata, method bytecode, runtime constant pools, and static variables, dynamically resizing with native OS memory.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "motivate_and_encourage_coworkers_example": {
+      "patterns": [
+        "describe an example of how you motivate and encourage coworkers, teammates or employees",
+        "how you motivate and encourage coworkers, teammates or employees",
+        "describe an example of how you motivate and encourage coworkers",
+        "how you motivate and encourage coworkers",
+        "example of how you motivate and encourage coworkers",
+        "motivate and encourage coworkers teammates",
+        "how do you motivate teammates",
+        "motivating coworkers or team members"
+      ],
+      "category": "behavioral",
+      "default": "I motivate teammates through transparent technical leadership, collaborative problem-solving, and active knowledge sharing. At Everbridge, during our architecture migration to Java 21 and event-driven Kafka pipelines, I conducted weekly hands-on design walkthroughs, paired with engineers to debug complex concurrency edge-cases, and recognized individual contributions during sprint demos. Empowering teammates with technical autonomy and a supportive review environment significantly accelerated delivery and team morale.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "I motivate teammates through peer design walkthroughs, pair-programming complex concurrency issues, providing technical autonomy, and celebrating individual contributions during sprint demos.",
+        "textarea": "I motivate teammates through transparent technical leadership, collaborative problem-solving, and active knowledge sharing. At Everbridge, during our architecture migration to Java 21 and event-driven Kafka pipelines, I conducted weekly hands-on design walkthroughs, paired with engineers to debug complex concurrency edge-cases, and recognized individual contributions during sprint demos. Empowering teammates with technical autonomy and a supportive review environment significantly accelerated delivery and team morale.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "proudest_moment_professional_career": {
+      "patterns": [
+        "elaborate on the proudest moment in your professional career and why it is important to you",
+        "proudest moment in your professional career and why it is important to you",
+        "proudest moment in your professional career",
+        "proudest achievement in your professional career",
+        "proudest moment in your career",
+        "proudest professional achievement"
+      ],
+      "category": "behavioral",
+      "default": "My proudest professional achievement was architecting the real-time settlement and transaction reporting pipeline at Everbridge handling 10M+ daily events. By implementing the Transactional Outbox pattern with Apache Kafka, Flink, and PostgreSQL, we eliminated critical ledger synchronization inconsistencies and reduced reporting latency by 40%. Solving this complex distributed consistency challenge and delivering measurable enterprise impact was deeply rewarding.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Architecting the real-time settlement pipeline at Everbridge handling 10M+ daily transactions, eliminating ledger inconsistencies, and reducing reporting latency by 40% using Java 21, Kafka, and Flink.",
+        "textarea": "My proudest professional achievement was architecting the real-time settlement and transaction reporting pipeline at Everbridge handling 10M+ daily events. By implementing the Transactional Outbox pattern with Apache Kafka, Flink, and PostgreSQL, we eliminated critical ledger synchronization inconsistencies and reduced reporting latency by 40%. Solving this complex distributed consistency challenge and delivering measurable enterprise impact was deeply rewarding.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "why_work_with_wissen_technology": {
+      "patterns": [
+        "what excites you about working with wissen technology",
+        "why do you want to work with wissen technology",
+        "why work with wissen technology",
+        "what excites you about working with our company",
+        "why do you want to join our organization"
+      ],
+      "category": "behavioral",
+      "default": "I am excited by Wissen Technology's strong culture of engineering excellence and its track record of building high-performance, mission-critical systems in financial services and enterprise tech. With my background in architecting high-throughput Java 21 microservices, Kafka streaming pipelines, and distributed data systems at Everbridge, I look forward to tackling complex scalability challenges and contributing to high-impact client solutions.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Wissen Technology's engineering excellence and high-scale financial systems align perfectly with my background in high-throughput Java 21 microservices and distributed systems.",
+        "textarea": "I am excited by Wissen Technology's strong culture of engineering excellence and its track record of building high-performance, mission-critical systems in financial services and enterprise tech. With my background in architecting high-throughput Java 21 microservices, Kafka streaming pipelines, and distributed data systems at Everbridge, I look forward to tackling complex scalability challenges and contributing to high-impact client solutions.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "spring_boot_exception_security_performance_optimization": {
+      "patterns": [
+        "in spring boot, how do you handle exception management, security, and api performance optimization",
+        "how do you handle exception management, security, and api performance optimization",
+        "exception management, security, and api performance optimization",
+        "spring boot exception management security and api performance optimization",
+        "spring boot exception management security and performance"
+      ],
+      "category": "skills",
+      "default": "1. Exception Management: Centralized global exception handling using @RestControllerAdvice and @ExceptionHandler, mapping business exceptions into standardized Problem Details / RFC 7807 error responses. 2. Security: Spring Security with JWT stateless authentication, RBAC authorization filters, secure headers, CORS, and Fortify/SonarQube CI/CD vulnerability scanning. 3. Performance Optimization: Java 21 Virtual Threads, Redis distributed caching, asynchronous processing with Kafka, connection pooling (HikariCP), JPA query optimization (fetching strategies, pagination, and database indexing).",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Exception Management (@RestControllerAdvice), Security (Spring Security with JWT/RBAC), Performance (Virtual Threads, Redis caching, Kafka async processing, DB indexing).",
+        "textarea": "1. Exception Management: Centralized global exception handling using @RestControllerAdvice and @ExceptionHandler, mapping business exceptions into standardized Problem Details / RFC 7807 error responses. 2. Security: Spring Security with JWT stateless authentication, RBAC authorization filters, secure headers, CORS, and Fortify/SonarQube CI/CD vulnerability scanning. 3. Performance Optimization: Java 21 Virtual Threads, Redis distributed caching, asynchronous processing with Kafka, connection pooling (HikariCP), JPA query optimization (fetching strategies, pagination, and database indexing).",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "describe_backend_system_designed_owned": {
+      "patterns": [
+        "describe a backend system you designed or owned end-to-end",
+        "escribe a backend system you designed or owned end-to-end",
+        "backend system you designed or owned end-to-end",
+        "describe a backend system you designed or owned",
+        "backend system you designed end to end",
+        "walk us through a backend system you designed"
+      ],
+      "category": "skills",
+      "default": "I designed and owned an end-to-end event-driven settlement and reporting system at Everbridge that processes over 10 million daily transactions. I built the backend using Java 21 and Spring Boot, leveraging Virtual Threads to optimize concurrency and reduce dispute processing latency to under 2 seconds. To ensure high throughput and reliability, I integrated Apache Kafka for asynchronous inter-service communication and utilized Apache Flink and Spark for distributed data streaming, which improved settlement reporting reliability by 40% and eliminated critical ledger inconsistencies. To maintain distributed data consistency, I implemented the Transactional Outbox and Saga patterns, deployed on AWS (EKS, RDS, S3).",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "I designed an event-driven settlement backend at Everbridge processing 10M+ daily transactions using Java 21, Spring Boot, Virtual Threads, Kafka, Flink, and PostgreSQL with Transactional Outbox.",
+        "textarea": "I designed and owned an end-to-end event-driven settlement and reporting system at Everbridge that processes over 10 million daily transactions. I built the backend using Java 21 and Spring Boot, leveraging Virtual Threads to optimize concurrency and reduce dispute processing latency to under 2 seconds. To ensure high throughput and reliability, I integrated Apache Kafka for asynchronous inter-service communication and utilized Apache Flink and Spark for distributed data streaming, which improved settlement reporting reliability by 40% and eliminated critical ledger inconsistencies. To maintain distributed data consistency, I implemented the Transactional Outbox and Saga patterns, deployed on AWS (EKS, RDS, S3).",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "backend_scalable_reliable_production_ready": {
+      "patterns": [
+        "how do you ensure backend services are scalable, reliable, and production-ready",
+        "how do you ensure backend services are scalable, reliable, and production ready",
+        "how do you ensure backend services are scalable",
+        "ensure backend services are scalable reliable and production ready",
+        "scalable reliable and production ready backend services",
+        "making backend services scalable and reliable"
+      ],
+      "category": "skills",
+      "default": "To ensure scalability: Microservices with stateless horizontal scaling on Kubernetes (EKS), asynchronous messaging via Apache Kafka, distributed Redis caching, and database read-replicas. To ensure reliability: Circuit breakers (Resilience4j), Transactional Outbox and Saga patterns for distributed consistency, and idempotent consumers. For production-readiness: Health checks (Spring Boot Actuator), structured logging with OpenTelemetry/ELK distributed tracing, automated CI/CD pipelines, unit/integration testing with Testcontainers, and zero-downtime rolling deployments.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Scalability (K8s horizontal scaling, Kafka messaging, Redis cache), Reliability (Resilience4j circuit breakers, Outbox/Saga patterns), Production-readiness (Actuator metrics, OpenTelemetry distributed tracing, automated CI/CD).",
+        "textarea": "To ensure scalability: Microservices with stateless horizontal scaling on Kubernetes (EKS), asynchronous messaging via Apache Kafka, distributed Redis caching, and database read-replicas. To ensure reliability: Circuit breakers (Resilience4j), Transactional Outbox and Saga patterns for distributed consistency, and idempotent consumers. For production-readiness: Health checks (Spring Boot Actuator), structured logging with OpenTelemetry/ELK distributed tracing, automated CI/CD pipelines, unit/integration testing with Testcontainers, and zero-downtime rolling deployments.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "ai_improved_development_workflow_example": {
+      "patterns": [
+        "can you share a specific example of how ai has improved your development workflow or engineering output",
+        "how ai has improved your development workflow or engineering output",
+        "example of how ai has improved your development workflow",
+        "how ai has improved your development workflow",
+        "example of using ai to improve development workflow",
+        "how do you use ai in your development workflow"
+      ],
+      "category": "skills",
+      "default": "I leverage AI-assisted tools (Cursor, Copilot, LLM prompt engineering) to accelerate code prototyping, generate comprehensive edge-case unit test fixtures, and analyze complex legacy codebases during refactoring. For example, during migration of services to Java 21 Virtual Threads, AI assisted in identifying potential blocking third-party library calls and drafting initial architectural documentation, increasing overall engineering velocity and test coverage.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "I use AI tools to generate edge-case unit tests, draft initial architectural docs, and detect blocking synchronous calls when migrating Spring Boot services to Java 21 Virtual Threads.",
+        "textarea": "I leverage AI-assisted tools (Cursor, Copilot, LLM prompt engineering) to accelerate code prototyping, generate comprehensive edge-case unit test fixtures, and analyze complex legacy codebases during refactoring. For example, during migration of services to Java 21 Virtual Threads, AI assisted in identifying potential blocking third-party library calls and drafting initial architectural documentation, increasing overall engineering velocity and test coverage.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "take_ownership_production_service_cicd": {
+      "patterns": [
+        "have you personally taken ownership of an existing production service, including ci/cd, monitoring, releases, and production incident",
+        "have you personally taken ownership of an existing production service",
+        "taken ownership of an existing production service, including ci/cd",
+        "ownership of an existing production service, including ci/cd, monitoring, releases, and production incident",
+        "ownership of an existing production service",
+        "have you personally taken ownership of an existing production service?yes / no"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, I have personally owned production services end-to-end at Everbridge, including managing CI/CD pipelines (GitHub Actions/Jenkins), monitoring with Prometheus/Grafana and Datadog, conducting zero-downtime releases, and participating in L3 on-call incident triage and post-mortems.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "angular_rest_api_integration_troubleshooting": {
+      "patterns": [
+        "how comfortable are you with integrating angular applications with rest apis and troubleshooting ui/api issues",
+        "integrating angular applications with rest apis and troubleshooting ui/api issues",
+        "integrating angular applications with rest apis",
+        "integrating angular with rest apis",
+        "troubleshooting ui/api issues with angular",
+        "how comfortable are you with integrating angular applications with rest apis"
+      ],
+      "category": "skills",
+      "default": "Very comfortable - 4+ years of experience integrating Angular/React frontends with Spring Boot REST APIs, managing RxJS observables, handling CORS and JWT authentication, and troubleshooting API/UI payloads using browser DevTools.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Very comfortable - 4+ years of experience integrating Angular frontends with Spring Boot REST APIs and troubleshooting UI/API issues.",
+        "textarea": "Very comfortable - 4+ years of experience integrating Angular frontends with Spring Boot REST APIs, managing RxJS observables, handling CORS and JWT authentication, and troubleshooting API/UI payloads using browser DevTools.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "independently_owned_feature_lifecycle": {
+      "patterns": [
+        "have you independently owned a feature from requirement/design through development, testing, code review, and production release",
+        "independently owned a feature from requirement/design through development, testing, code review, and production release",
+        "have you independently owned a feature from requirement design through development",
+        "independently owned a feature end to end",
+        "owned a feature from requirement to release"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, extensive experience independently owning end-to-end feature delivery from requirement gathering and technical design through implementation, automated testing, peer review, and zero-downtime production deployment.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "git_and_agile_scrum_familiarity": {
+      "patterns": [
+        "familiarity with git and agile/scrum methodologies",
+        "familiarity with git and agile scrum methodologies",
+        "familiarity with git and agile scrum",
+        "experience with git and agile/scrum methodologies",
+        "git and agile/scrum methodologies",
+        "git and agile scrum methodologies",
+        "familiar with git and agile scrum"
+      ],
+      "category": "skills",
+      "default": "Yes, 4+ years of hands-on experience using Git (branching strategies, PR reviews, merge conflict resolution) and working in Agile/Scrum sprint cycles with Jira, daily standups, sprint planning, and retrospectives.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Yes, 4+ years of experience with Git and Agile/Scrum methodologies.",
+        "textarea": "Yes, 4+ years of hands-on experience using Git (branching strategies, PR reviews, merge conflict resolution) and working in Agile/Scrum sprint cycles with Jira, daily standups, sprint planning, and retrospectives.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "aws_services_used": {
+      "patterns": [
+        "what are the services used in aws",
+        "services used in aws",
+        "which aws services have you used",
+        "aws services worked on",
+        "aws services used",
+        "aws services experience"
+      ],
+      "category": "skills",
+      "default": "EC2, S3, RDS, EKS, Lambda, CloudWatch, IAM, SQS, SNS, DynamoDB",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "EC2, S3, RDS, EKS, Lambda, CloudWatch, IAM, SQS, SNS, DynamoDB",
+        "textarea": "Extensive production experience on AWS with EC2, S3, RDS (PostgreSQL/MySQL), EKS (Kubernetes), Lambda, CloudWatch, IAM, SQS, SNS, and DynamoDB.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "date_month_of_to": {
+      "patterns": [
+        "month of to",
+        "to month",
+        "end month",
+        "employment end month",
+        "work end month"
+      ],
+      "category": "personal",
+      "default": "Present",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Present",
+        "select": "Present",
+        "radio": "Present",
+        "checkbox": "Present"
+      }
+    },
+    "system_design_url_shortener_tinyurl": {
+      "patterns": [
+        "how would you design a url shortener system (like tinyurl) at a high level?",
+        "how would you design a url shortener system like tinyurl at a high level",
+        "how would you design a url shortener system",
+        "how would you design a url shortener",
+        "design a url shortener system like tinyurl",
+        "design a url shortener system",
+        "design a url shortener",
+        "design tinyurl",
+        "tinyurl system design",
+        "url shortener system at a high level",
+        "design url shortener"
+      ],
+      "category": "technical",
+      "default": "A high-level URL shortener system (TinyURL) comprises: 1) API: POST /api/v1/shorten (accepts longURL, returns shortURL) and GET /{shortCode} (HTTP 301/302 redirect). 2) Short Code Generation: Base62 encoding (using unique 64-bit distributed IDs from Snowflake/Zookeeper) or MurmurHash3 truncated to 7 characters (handling collisions via DB lookup/salt). 3) Storage: Distributed NoSQL/Key-Value store (DynamoDB/Cassandra) or PostgreSQL (sharded by shortCode hash) storing {short_code, original_url, user_id, created_at, expires_at}. 4) High-Throughput Read Caching: Redis cluster caching top 20% most accessed URLs with LRU eviction. 5) Scalability & Availability: Stateless application servers behind an API Gateway with rate limiting (Token Bucket), Kafka for asynchronous analytics/click-tracking ingestion, and global CDN caching.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "A high-level URL shortener system (TinyURL) comprises: 1) API: POST /api/v1/shorten (accepts longURL, returns shortURL) and GET /{shortCode} (HTTP 301/302 redirect). 2) Short Code Generation: Base62 encoding (using unique 64-bit distributed IDs from Snowflake/Zookeeper) or MurmurHash3 truncated to 7 characters (handling collisions via DB lookup/salt). 3) Storage: Distributed NoSQL/Key-Value store (DynamoDB/Cassandra) or PostgreSQL (sharded by shortCode hash) storing {short_code, original_url, user_id, created_at, expires_at}. 4) High-Throughput Read Caching: Redis cluster caching top 20% most accessed URLs with LRU eviction. 5) Scalability & Availability: Stateless application servers behind an API Gateway with rate limiting (Token Bucket), Kafka for asynchronous analytics/click-tracking ingestion, and global CDN caching.",
+        "textarea": "A high-level URL shortener system (TinyURL) comprises: 1) API: POST /api/v1/shorten (accepts longURL, returns shortURL) and GET /{shortCode} (HTTP 301/302 redirect). 2) Short Code Generation: Base62 encoding (using unique 64-bit distributed IDs from Snowflake/Zookeeper) or MurmurHash3 truncated to 7 characters (handling collisions via DB lookup/salt). 3) Storage: Distributed NoSQL/Key-Value store (DynamoDB/Cassandra) or PostgreSQL (sharded by shortCode hash) storing {short_code, original_url, user_id, created_at, expires_at}. 4) High-Throughput Read Caching: Redis cluster caching top 20% most accessed URLs with LRU eviction. 5) Scalability & Availability: Stateless application servers behind an API Gateway with rate limiting (Token Bucket), Kafka for asynchronous analytics/click-tracking ingestion, and global CDN caching."
+      }
+    },
+    "privacy_policy_future_contact_consent": {
+      "patterns": [
+        "i am allowing brevo to contact me about future job opportunities for up to 2 years. privacy policy",
+        "i am allowing brevo to contact me about future job opportunities for up to 2 years",
+        "allowing brevo to contact me about future job opportunities",
+        "contact me about future job opportunities for up to 2 years",
+        "contact me about future job opportunities",
+        "allowing to contact me about future job opportunities",
+        "future job opportunities for up to 2 years",
+        "future job opportunities for up to 2 years privacy policy",
+        "privacy policy required"
+      ],
+      "category": "data_consent",
+      "default": "Yes",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Yes",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "offers_in_hand_status": {
+      "patterns": [
+        "offers in hand, mention if any with ctc offered, location, date of joining, etc:",
+        "offers in hand, mention if any with ctc offered",
+        "offers in hand, mention if any",
+        "offers in hand if any with ctc offered",
+        "offers in hand mention if any",
+        "offers in hand",
+        "any offers in hand",
+        "do you have any offers in hand",
+        "mention if any with ctc offered"
+      ],
+      "category": "salary",
+      "default": "None",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "None",
+        "textarea": "Currently no other offers in hand; actively interviewing and available to join immediately upon completing notice period.",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "industry_projects_experience": {
+      "patterns": [
+        "industry - life science/banking/insurance mention name of projects",
+        "industry life science banking insurance mention name of projects",
+        "life science/banking/insurance mention name of projects",
+        "life science banking insurance mention name of projects",
+        "industry - life science/banking/insurance",
+        "industry life science banking insurance"
+      ],
+      "category": "employment",
+      "default": "BFSI - Dispute Expert Toolkit & Settlement Reporting System",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "BFSI - Dispute Expert Toolkit & Real-time Settlement Reporting System (Everbridge)",
+        "textarea": "BFSI Domain - Dispute Expert Toolkit and Real-Time Settlement Reporting System at Everbridge, processing 10M+ daily transactions using Java/Spring Boot, Kafka, Spark, and PostgreSQL."
+      }
+    },
+    "ai_llm_technologies_worked": {
+      "patterns": [
+        "which ai/llm technologies have you worked with?",
+        "which ai/llm technologies have you worked with",
+        "which ai llm technologies have you worked with",
+        "ai/llm technologies have you worked with",
+        "ai llm technologies have you worked with",
+        "what ai/llm technologies have you worked with",
+        "what ai llm technologies have you worked with",
+        "technologies have you worked with in ai/llm",
+        "ai/llm technologies you have worked with"
+      ],
+      "category": "skills",
+      "default": "OpenAI API, LangChain, TensorFlow Lite, YOLOv10, RAG pipelines, Prompt Engineering",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "OpenAI API, LangChain, TensorFlow Lite, YOLOv10, RAG pipelines, Prompt Engineering",
+        "textarea": "Hands-on experience building AI applications using OpenAI GPT APIs, LangChain for RAG pipelines, TensorFlow Lite, and YOLOv10 for mobile/edge intelligent detection models."
+      }
+    },
+    "reason_for_seeking_job_change": {
+      "patterns": [
+        "what is your reason for seeking a job change?",
+        "what is your reason for seeking a job change",
+        "reason for seeking a job change",
+        "reason for job change",
+        "why are you looking for a job change",
+        "why do you want to change your job",
+        "reason for seeking change",
+        "reason for seeking a change"
+      ],
+      "category": "employment",
+      "default": "Seeking career advancement, new technical challenges, and opportunities to architect scalable distributed systems.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Seeking career advancement, new technical challenges, and opportunities to architect scalable distributed systems.",
+        "textarea": "I am looking for a new opportunity where I can leverage my 4.2+ years of full-stack and distributed systems experience to architect larger-scale backend services, drive technical excellence, and take on greater engineering ownership."
+      }
+    },
+    "consumer_journey_improvement": {
+      "patterns": [
+        "how you improved consumer journey",
+        "how have you improved consumer journey",
+        "how did you improve consumer journey",
+        "improved consumer journey",
+        "improved consumer journey in commercial projects"
+      ],
+      "category": "experience",
+      "default": "Modernized frontend architecture with React/TypeScript and accelerated dispute processing to under 2s, improving reliability by 40%.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Modernized frontend architecture with React/TypeScript and accelerated dispute processing to under 2s, improving reliability by 40%.",
+        "textarea": "Improved user journey by modernizing legacy interfaces into high-performance React/TypeScript applications (40% performance gain) and streamlining dispute resolution workflows to under 2 seconds, reducing user-reported issues by 60%."
+      }
+    },
+    "bachelor_graduating_2025_2026": {
+      "patterns": [
+        "are you completing bachelor's in computer engineering or related field in 2025/2026?",
+        "are you completing bachelor's in computer engineering or related field in 2025/2026",
+        "completing bachelor's in computer engineering or related field in 2025/2026",
+        "completing bachelor in 2025/2026",
+        "completing bachelor's in 2025/2026",
+        "graduating in 2025/2026",
+        "graduating in 2025 or 2026",
+        "completing bachelor's in 2025 or 2026"
+      ],
+      "category": "education",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No (Graduated in 2022)",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "salary_cut_below_minimum": {
+      "patterns": [
+        "are you ok with upto 12 to 13 lpa ?",
+        "are you ok with upto 12 to 13 lpa",
+        "ok with upto 12 to 13 lpa",
+        "ok with 12 to 13 lpa",
+        "comfortable with 12 to 13 lpa",
+        "ok with 10 to 12 lpa",
+        "ok with 12-14 lpa",
+        "ok with 15 lpa",
+        "ok with upto 10 to 12 lpa",
+        "ok with upto 14 to 15 lpa",
+        "ok with upto 15 to 16 lpa"
+      ],
+      "category": "salary",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "oracle_cpq_cloud_exp": {
+      "patterns": [
+        "how many years of experience do you have in oracle cpq cloud?",
+        "how many years of experience do you have in oracle cpq cloud",
+        "experience do you have in oracle cpq cloud",
+        "oracle cpq cloud",
+        "oracle cpq"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No experience",
+        "select": "0"
+      }
+    },
+    "dotnet_core_exp": {
+      "patterns": [
+        "how many years of experience do you have in .net core?",
+        "how many years of experience do you have in .net core",
+        "how many years of experience do you have in dotnet core",
+        ".net core",
+        "dotnet core"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No experience",
+        "select": "0"
+      }
+    },
+    "shopify_exp": {
+      "patterns": [
+        "how many years of work experience do you have with shopify?",
+        "how many years of work experience do you have with shopify",
+        "work experience do you have with shopify",
+        "shopify experience"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "azure_databricks_exp": {
+      "patterns": [
+        "how many years of work experience do you have with azure databricks?",
+        "how many years of work experience do you have with azure databricks",
+        "work experience do you have with azure databricks",
+        "azure databricks"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "dialogflow_cx_exp": {
+      "patterns": [
+        "how many years of experience do you have in google dialogflow cx?",
+        "how many years of experience do you have in google dialogflow cx",
+        "google dialogflow cx",
+        "dialogflow cx"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No experience",
+        "select": "0"
+      }
+    },
+    "ccai_exp": {
+      "patterns": [
+        "how many years of experience do you have in ccai?",
+        "how many years of experience do you have in ccai",
+        "ccai experience",
+        "ccai"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No experience",
+        "select": "0"
+      }
+    },
+    "aws_glue_exp": {
+      "patterns": [
+        "how many years of experience do you have in glue?",
+        "how many years of experience do you have in glue",
+        "aws glue",
+        "glue"
+      ],
+      "category": "skills",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "radio": "No experience",
+        "select": "0"
+      }
+    },
+    "nms_network_mgmt_exp": {
+      "patterns": [
+        "do you have experience in nms (network management system)?",
+        "experience in nms (network management system)",
+        "nms (network management system)"
+      ],
+      "category": "skills",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "describe_react_nextjs_commercial": {
+      "patterns": [
+        "briefly describe your hands-on experience with react, next.js, typescript, and node.js in commercial projects ?",
+        "briefly describe your hands-on experience with react, next.js, typescript, and node.js in commercial projects",
+        "hands-on experience with react, next.js, typescript, and node.js in commercial projects"
+      ],
+      "category": "skills",
+      "default": "4+ years hands-on commercial experience developing responsive UIs and web applications using React.js, Next.js, TypeScript, and Node.js with state management and automated build pipelines.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "4+ years hands-on commercial experience developing responsive UIs and web applications using React.js, Next.js, TypeScript, and Node.js with state management and automated build pipelines.",
+        "textarea": "4+ years hands-on commercial experience developing responsive UIs and web applications using React.js, Next.js, TypeScript, and Node.js with state management and automated build pipelines."
+      }
+    },
+    "describe_sql_cloud_azure": {
+      "patterns": [
+        "briefly describe your experience with sql databases and cloud/serverless technologies, particularly microsoft azure ?",
+        "briefly describe your experience with sql databases and cloud/serverless technologies, particularly microsoft azure",
+        "experience with sql databases and cloud/serverless technologies, particularly microsoft azure"
+      ],
+      "category": "skills",
+      "default": "4+ years designing relational schemas and query optimization in PostgreSQL/MySQL, along with cloud architecture and microservices deployment on AWS and Azure cloud platforms.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "4+ years designing relational schemas and query optimization in PostgreSQL/MySQL, along with cloud architecture and microservices deployment on AWS and Azure cloud platforms.",
+        "textarea": "4+ years designing relational schemas and query optimization in PostgreSQL/MySQL, along with cloud architecture and microservices deployment on AWS and Azure cloud platforms."
+      }
+    },
+    "describe_responsive_ui_react_nextjs": {
+      "patterns": [
+        "briefly describe your hands-on experience developing responsive user interfaces using react and next.js ?",
+        "briefly describe your hands-on experience developing responsive user interfaces using react and next.js",
+        "developing responsive user interfaces using react and next.js"
+      ],
+      "category": "skills",
+      "default": "Extensive hands-on experience building performant, modular, and responsive UIs with React.js, Next.js, and TypeScript, improving build efficiency and rendering performance by 40%.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Extensive hands-on experience building performant, modular, and responsive UIs with React.js, Next.js, and TypeScript, improving build efficiency and rendering performance by 40%.",
+        "textarea": "Extensive hands-on experience building performant, modular, and responsive UIs with React.js, Next.js, and TypeScript, improving build efficiency and rendering performance by 40%."
+      }
+    },
+    "experience_in_each_java_aws_lead": {
+      "patterns": [
+        "how much experience do you have in each (java, aws, leading or managing team)?",
+        "how much experience do you have in each (java, aws, leading or managing team)",
+        "experience do you have in each (java, aws, leading or managing team)"
+      ],
+      "category": "experience",
+      "default": "Java: 4.2 Years, AWS: 3.5 Years, Technical Leadership/Mentoring: 2 Years.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Java: 4.2 Years, AWS: 3.5 Years, Technical Leadership/Mentoring: 2 Years.",
+        "textarea": "Java: 4.2 Years, AWS: 3.5 Years, Technical Leadership/Mentoring: 2 Years."
+      }
+    },
+    "experience_pyspark_data_volume": {
+      "patterns": [
+        "how many years of hands-on pyspark/spark, and what was the largest data volume you processed?",
+        "how many years of hands-on pyspark/spark, and what was the largest data volume you processed",
+        "hands-on pyspark/spark, and what was the largest data volume you processed"
+      ],
+      "category": "experience",
+      "default": "4+ years of hands-on Apache Spark/PySpark experience, processing 10M+ daily transactions and multi-TB settlement reporting pipelines.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "4+ years of hands-on Apache Spark/PySpark experience, processing 10M+ daily transactions and multi-TB settlement reporting pipelines.",
+        "textarea": "4+ years of hands-on Apache Spark/PySpark experience, processing 10M+ daily transactions and multi-TB settlement reporting pipelines."
+      }
+    },
+    "experience_aws_services_eks_emr": {
+      "patterns": [
+        "how many years on aws, and which services did you deploy and operate yourself specifically eks/kubernetes and emr?",
+        "how many years on aws, and which services did you deploy and operate yourself specifically eks/kubernetes and emr",
+        "specifically eks/kubernetes and emr"
+      ],
+      "category": "experience",
+      "default": "3.5+ years on AWS deploying and operating microservices on EKS/Kubernetes, EC2, S3, RDS, Lambda, and CloudWatch with CI/CD automation.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "3.5+ years on AWS deploying and operating microservices on EKS/Kubernetes, EC2, S3, RDS, Lambda, and CloudWatch with CI/CD automation.",
+        "textarea": "3.5+ years on AWS deploying and operating microservices on EKS/Kubernetes, EC2, S3, RDS, Lambda, and CloudWatch with CI/CD automation."
+      }
+    },
+    "experience_redis_postgresql_schema": {
+      "patterns": [
+        "how many years working with redis and postgresql, and did you own schema design, indexing and query optimisation?",
+        "how many years working with redis and postgresql, and did you own schema design, indexing and query optimisation",
+        "did you own schema design, indexing and query optimisation"
+      ],
+      "category": "experience",
+      "default": "4+ years with PostgreSQL and Redis, directly owning relational schema design, indexing strategies, query optimization, and high-throughput caching.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "4+ years with PostgreSQL and Redis, directly owning relational schema design, indexing strategies, query optimization, and high-throughput caching.",
+        "textarea": "4+ years with PostgreSQL and Redis, directly owning relational schema design, indexing strategies, query optimization, and high-throughput caching."
       }
     }
   },

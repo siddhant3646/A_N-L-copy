@@ -85,7 +85,7 @@ class TestInstahyreInboxTask(unittest.TestCase):
                     self.assertEqual(r["status"], "submitted")
 
     async def _async_test_inbox_flow_direct_url(self):
-        """Simulate workflow starting directly at target inbox URL -> All filter -> questionnaire -> ack."""
+        """Simulate workflow starting directly at target inbox URL -> All filter -> click first card -> questionnaire -> ack."""
         mock_page = AsyncMock()
         mock_page.url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
         mock_editor = AsyncMock()
@@ -96,24 +96,27 @@ class TestInstahyreInboxTask(unittest.TestCase):
         # Mock evaluate calls:
         # 1. All filter confirmed -> 'ALL_RADIO_CONFIRMED'
         # 2. conv count -> 1
-        # 3. click conv -> {'status': 'CLICKED', 'name': 'Pallavi Naik', 'job': 'Infosys - Software Developer'}
-        # 4. inspect message -> {'hasCompletedAckEntry': False, 'qUrl': 'https://www.instahyre.com/questionnaire/112329/6204425826'}
-        # 5. wait for questions render -> True
-        # 6. extract questions on questionnaire page
-        # 7. fill question 1 -> 'FILLED_TEXT'
-        # 8. fill question 2 -> 'FILLED_TEXT'
-        # 9. submit button -> 'SUBMIT_CLICKED'
-        # 10. confirmation -> True
-        # 11. _send_instahyre_ack: editor found -> True
-        # 12. _send_instahyre_ack: text verified in editor
-        # 13. _send_instahyre_ack: button state -> enabled
-        # 14. _send_instahyre_ack: click send -> None
-        # 15. loop turn 1: click next conv -> NO_MORE_CONVERSATIONS
-        # 16. scroll check -> False
+        # 3. click conv 1 -> {'status': 'CLICKED', 'name': 'Pallavi Naik', 'job': 'Infosys - Software Developer'}
+        # 4. polling readiness -> True
+        # 5. inspect message -> {'hasCompletedAckEntry': False, 'qUrl': 'https://www.instahyre.com/questionnaire/112329/6204425826'}
+        # 6. wait for questions render -> True
+        # 7. extract questions on questionnaire page
+        # 8. fill question 1 -> 'FILLED_TEXT'
+        # 9. fill question 2 -> 'FILLED_TEXT'
+        # 10. submit button -> 'SUBMIT_CLICKED'
+        # 11. confirmation -> True
+        # 12. _send_instahyre_ack: editor found -> True
+        # 13. _send_instahyre_ack: text verified in editor
+        # 14. _send_instahyre_ack: button state -> enabled
+        # 15. _send_instahyre_ack: click send -> None
+        # 16. _send_instahyre_ack: dispatch verified -> True
+        # 17. loop turn 1: click next conv -> NO_MORE_CONVERSATIONS
+        # 18. scroll check -> False
         mock_page.evaluate.side_effect = [
             'ALL_RADIO_CONFIRMED',
             1,
-            {'status': 'CLICKED', 'name': 'Pallavi Naik', 'job': 'Infosys - Software Developer'},
+            {'status': 'CLICKED', 'id': 'card-1', 'rawId': 'raw-1', 'name': 'Pallavi Naik', 'job': 'Infosys - Software Developer'},
+            True,
             {'hasCompletedAckEntry': False, 'qUrl': 'https://www.instahyre.com/questionnaire/112329/6204425826'},
             True,
             [
@@ -128,6 +131,7 @@ class TestInstahyreInboxTask(unittest.TestCase):
             "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.",
             {'found': True, 'disabled': False},
             None,
+            True,
             {'status': 'NO_MORE_CONVERSATIONS'},
             False
         ]
@@ -150,9 +154,40 @@ class TestInstahyreInboxTask(unittest.TestCase):
         import asyncio
         asyncio.run(self._async_test_inbox_flow_direct_url())
 
-    async def _async_test_inbox_skip_acknowledged_conversations(self):
-        """Verify skipping conversations that already have the completed questionnaire entry,
-        and processing conversations that do not."""
+    async def _async_test_inbox_first_card_acknowledged_stops_immediately(self):
+        """Verify inspecting first conversation stops immediately if already acknowledged."""
+        mock_page = AsyncMock()
+        mock_page.url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
+
+        mock_page.evaluate.side_effect = [
+            'ALL_RADIO_CONFIRMED',
+            5,
+            {'status': 'CLICKED', 'id': 'conv-123', 'rawId': 'raw-123', 'name': 'Pallavi Naik', 'job': 'Infosys'},
+            True,
+            {'hasCompletedAckEntry': True, 'qUrl': None}
+        ]
+
+        agent = SentinelAgent()
+        agent._page = mock_page
+
+        with patch.object(agent, '_answer_instahyre_questionnaire', new=AsyncMock()) as mock_ans, \
+             patch.object(agent, '_send_instahyre_ack', new=AsyncMock()) as mock_ack, \
+             patch("asyncio.sleep", AsyncMock()):
+            result = await agent._handle_instahyre_inbox_task()
+
+        self.assertTrue(result)
+        self.assertTrue(agent.state.task_complete)
+        mock_ans.assert_not_called()
+        mock_ack.assert_not_called()
+
+    def test_inbox_first_card_acknowledged_stops_immediately(self):
+        """Run async test for stopping at first card when already acknowledged."""
+        import asyncio
+        asyncio.run(self._async_test_inbox_first_card_acknowledged_stops_immediately())
+
+    async def _async_test_inbox_stops_at_first_acknowledged_conversation(self):
+        """Verify that encountering an already-acknowledged conversation stops immediately
+        since conversations are ordered chronologically newest-first."""
         mock_page = AsyncMock()
         mock_page.url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
 
@@ -160,20 +195,14 @@ class TestInstahyreInboxTask(unittest.TestCase):
         # 1. All filter confirmed -> 'ALL_RADIO_CONFIRMED'
         # 2. conv_count -> 2
         # 3. click card 1 -> {'status': 'CLICKED', 'id': 'card-1', 'name': 'Pallavi Naik', 'job': 'Infosys'}
-        # 4. inspect card 1 -> {'hasCompletedAckEntry': True, 'qUrl': None} (ALREADY ACKED -> SKIP)
-        # 5. click card 2 -> {'status': 'CLICKED', 'id': 'card-2', 'name': 'Rohan Gupta', 'job': 'Google'}
-        # 6. inspect card 2 -> {'hasCompletedAckEntry': False, 'qUrl': 'https://www.instahyre.com/questionnaire/999/888'} (CONDITION SATISFIED -> PROCESS)
-        # 7. click card 3 -> {'status': 'NO_MORE_CONVERSATIONS'}
-        # 8. scroll check -> False
+        # 4. readiness -> True
+        # 5. inspect card 1 -> {'hasCompletedAckEntry': True, 'qUrl': None} (ALREADY ACKED -> COMPLETE IMMEDIATELY)
         mock_page.evaluate.side_effect = [
             'ALL_RADIO_CONFIRMED',
             2,
-            {'status': 'CLICKED', 'id': 'card-1', 'name': 'Pallavi Naik', 'job': 'Infosys'},
+            {'status': 'CLICKED', 'id': 'card-1', 'rawId': 'raw-1', 'name': 'Pallavi Naik', 'job': 'Infosys'},
+            True,
             {'hasCompletedAckEntry': True, 'qUrl': None},
-            {'status': 'CLICKED', 'id': 'card-2', 'name': 'Rohan Gupta', 'job': 'Google'},
-            {'hasCompletedAckEntry': False, 'qUrl': 'https://www.instahyre.com/questionnaire/999/888'},
-            {'status': 'NO_MORE_CONVERSATIONS'},
-            False
         ]
 
         agent = SentinelAgent()
@@ -186,14 +215,43 @@ class TestInstahyreInboxTask(unittest.TestCase):
 
         self.assertTrue(result)
         self.assertTrue(agent.state.task_complete)
-        # Verify card 1 was skipped and card 2 was processed
-        mock_answer.assert_called_once_with(mock_page, 'https://www.instahyre.com/questionnaire/999/888')
-        mock_ack.assert_called_once_with(mock_page, "https://www.instahyre.com/candidate/inbox/439288/6201541231/", "Rohan Gupta", has_questionnaire=True)
+        # Verify card 2 was never opened and no ack was sent since card 1 was already acknowledged
+        mock_answer.assert_not_called()
+        mock_ack.assert_not_called()
 
-    def test_inbox_skip_acknowledged_conversations(self):
-        """Run async test for skipping acknowledged conversations."""
+    def test_inbox_stops_at_first_acknowledged_conversation(self):
+        """Run async test for stopping at first acknowledged conversation."""
         import asyncio
-        asyncio.run(self._async_test_inbox_skip_acknowledged_conversations())
+        asyncio.run(self._async_test_inbox_stops_at_first_acknowledged_conversation())
+
+    async def _async_test_inbox_ack_failure_reporting(self):
+        """Verify that when sending an ack fails, honest failure is returned instead of false success."""
+        mock_page = AsyncMock()
+        mock_page.url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
+
+        mock_page.evaluate.side_effect = [
+            'ALL_RADIO_CONFIRMED',
+            1,
+            {'status': 'CLICKED', 'id': 'card-1', 'rawId': 'raw-1', 'name': 'Pallavi Naik', 'job': 'Infosys'},
+            True,
+            {'hasCompletedAckEntry': False, 'qUrl': None},
+        ]
+
+        agent = SentinelAgent()
+        agent._page = mock_page
+
+        with patch.object(agent, '_send_instahyre_ack', new=AsyncMock(return_value=False)) as mock_ack, \
+             patch("asyncio.sleep", AsyncMock()):
+            result = await agent._handle_instahyre_inbox_task()
+
+        self.assertFalse(result)
+        self.assertTrue(agent.state.task_complete)
+        self.assertEqual(agent.metrics['instahyre_acks_sent'], 0)
+
+    def test_inbox_ack_failure_reporting(self):
+        """Run async test for honest failure reporting on ack failure."""
+        import asyncio
+        asyncio.run(self._async_test_inbox_ack_failure_reporting())
 
 
 if __name__ == '__main__':

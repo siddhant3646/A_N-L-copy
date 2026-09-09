@@ -48,6 +48,7 @@ Thumbs.db
 .coverage
 htmlcov/
 coverage.xml
+live_test_output/
 
 # Temporary files
 *.tmp

@@ -2584,6 +2584,12 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
 
+                # LinkedIn: Modal stuck watchdog triggered (auto-skipped job)
+                if 'LINKEDIN_MODAL_STUCK_SKIPPED' in str(result):
+                    print(f"⚠️ LinkedIn stuck modal watchdog: {result}. Continuing to next job...")
+                    self._linkedin_outer_transition_count = 0
+                    continue
+
                 if 'LINKEDIN_MODAL_TRANSITIONING' in str(result):
                     self._linkedin_outer_transition_count = getattr(self, '_linkedin_outer_transition_count', 0) + 1
                     if self._linkedin_outer_transition_count >= 3:
@@ -3487,11 +3493,15 @@ class SentinelAgent:
                         elif 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED' in next_result:
                             print("🛡️ Acknowledged Safety Reminder")
                             continue
+                        elif 'LINKEDIN_MODAL_STUCK_SKIPPED' in next_result:
+                            print(f"⚠️ LinkedIn modal stuck watchdog triggered in autopilot: {next_result}. Skipping job...")
+                            break
                         elif 'LINKEDIN_MODAL_TRANSITIONING' in next_result:
                             transitioning_count += 1
                             if transitioning_count >= max_transitioning_attempts:
-                                print("⚠️ Modal stuck in transitioning state. Forcing navigation to next job...")
+                                print("⚠️ Modal stuck in transitioning state. Forcing skip-mark, modal removal & moving to next job...")
                                 transitioning_count = 0
+                                await self._select_next_job_card()
                                 break
                             print(f"⏳ Modal is transitioning or loading ({transitioning_count}/{max_transitioning_attempts}), waiting...")
                             await asyncio.sleep(random.uniform(2, 3))
@@ -4827,6 +4837,7 @@ class SentinelAgent:
         print(f"📬 Found {conv_count} conversation card(s) in inbox. Checking messages...")
 
         processed_conv_ids = set()
+        processed_conv_urls = set()
         messages_handled = 0
         max_conv_turns = max(conv_count * 3, 60)
 
@@ -4851,19 +4862,34 @@ class SentinelAgent:
                             if (sc && sc.candidatesConv && sc.candidatesConv.length > 0) {
                                 for (let i = 0; i < sc.candidatesConv.length; i++) {
                                     const conv = sc.candidatesConv[i];
-                                    const name = conv.recruiter_name || conv.name || (conv.recruiter ? conv.recruiter.name : 'Recruiter');
+                                    let name = conv.recruiter_name || conv.name || (conv.recruiter ? conv.recruiter.name : '');
                                     const job = conv.job_title || conv.job || '';
-                                    const cardId = String(conv.id || (name + '::' + job + '::' + i));
-                                    if (!processedIds.includes(cardId)) {
+                                    const rawId = String(conv.id || conv.conversation_id || '');
+                                    const cardId = rawId || (conv.job_id && conv.recruiter_id ? (conv.job_id + '::' + conv.recruiter_id) : '') || (name + '::' + job) || 'conv';
+                                    
+                                    if (!processedIds.includes(cardId) && !processedIds.includes(rawId)) {
+                                        const domCards = Array.from(document.querySelectorAll('.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate, .conv-candidates .conv-candidate, .conv-candidates, .conv-candidate'));
+                                        if (!name || name === 'Recruiter') {
+                                            const nameEl = domCards[i]?.querySelector('.candidate-name, .conv-name, .recruiter-name, [ng-bind*="name"], h4, h5');
+                                            if (nameEl && nameEl.innerText.trim()) name = nameEl.innerText.trim();
+                                        }
+                                        if (!name) name = 'Recruiter';
+
                                         sc.lockCandidateProfileRequests = 0;
                                         if (sc.openConvCandidate) {
                                             sc.$apply(() => {
                                                 sc.openConvCandidate(conv);
                                             });
                                         }
+                                        if (domCards[i]) {
+                                            const clickTarget = domCards[i].querySelector('.conv-candidate') || domCards[i];
+                                            clickTarget.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                            clickTarget.click();
+                                        }
                                         return {
                                             status: 'CLICKED',
                                             id: cardId,
+                                            rawId: rawId,
                                             name: name,
                                             job: job,
                                             index: i,
@@ -4887,19 +4913,20 @@ class SentinelAgent:
                     for (let i = 0; i < wrappers.length; i++) {
                         const wrapper = wrappers[i];
                         const card = wrapper.querySelector('.conv-candidate') || wrapper;
-                        const nameEl = card.querySelector('.candidate-name, .conv-name');
-                        const jobEl = card.querySelector('.conv-job, .candidate-job');
-                        const name = nameEl ? nameEl.innerText.trim() : '';
+                        const nameEl = card.querySelector('.candidate-name, .conv-name, .recruiter-name, [ng-bind*="name"], h4, h5');
+                        const jobEl = card.querySelector('.conv-job, .candidate-job, [ng-bind*="job"]');
+                        const name = nameEl ? nameEl.innerText.trim() : 'Recruiter';
                         const job = jobEl ? jobEl.innerText.trim() : '';
-                        const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job + '::' + i);
+                        const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job);
                         if (!processedIds.includes(cardId)) {
                             card.scrollIntoView({ block: 'center', behavior: 'instant' });
                             card.click();
                             return {
                                 status: 'CLICKED',
                                 id: cardId,
-                                name: name || 'Recruiter',
-                                job: job || '',
+                                rawId: card.getAttribute('data-id') || '',
+                                name: name,
+                                job: job,
                                 index: i,
                                 totalCards: wrappers.length
                             };
@@ -4939,76 +4966,108 @@ class SentinelAgent:
             c_job = click_conv_res.get('job', '')
             c_idx = click_conv_res.get('index', turn)
             c_total = max(click_conv_res.get('totalCards', conv_count), len(processed_conv_ids) + 1, conv_count)
-            c_id = click_conv_res.get('id', f"{c_name}::{c_job}::{c_idx}")
+            c_id = click_conv_res.get('id', f"{c_name}::{c_job}")
+            raw_conv_id = click_conv_res.get('rawId', '')
 
             print(f"\n📩 [{len(processed_conv_ids) + 1}/{c_total}] Checking conversation with {c_name} ({c_job})")
-            await asyncio.sleep(random.uniform(2.0, 3.0))
-            inbox_thread_url = page.url
-
-            # Step 3b: Inspect opened conversation messages for completion acknowledgment entry
-            # Condition check: Does the message opened in the row have the entry:
-            # "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you."
-            try:
-                msg_inspection = await page.evaluate("""() => {
-                    const TARGET_PHRASE = "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.";
-                    const TARGET_KEYWORD = "interested in this opportunity and have completed the questionnaire";
-
-                    const rightPane = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container');
-                    
-                    // Check Angular scope messages
-                    let scopeMessages = [];
+            
+            # Poll until the active thread's messages are loaded for the selected conversation
+            for _ready_turn in range(25):
+                is_ready = await page.evaluate("""(targetId) => {
                     try {
                         if (window.angular) {
                             const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
-                            if (sc && sc.messagesToShow) {
-                                scopeMessages = sc.messagesToShow.map(m => ({
-                                    id: m.id,
-                                    sender: m.sender_name || (m.is_candidate ? 'Candidate' : 'Recruiter'),
-                                    is_candidate: m.is_candidate,
-                                    text: (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim(),
-                                    html: m.content_html || m.content || ''
-                                }));
+                            if (sc) {
+                                if (sc.loadingMessages) return false;
+                                const activeId = String(sc.selectedCandidateConv?.id || sc.selectedCandidateConv?.conversation_id || '');
+                                if (targetId && activeId && activeId !== targetId) return false;
+                                if (sc.messagesToShow && sc.messagesToShow.length > 0) return true;
                             }
                         }
                     } catch(e) {}
+                    const rows = document.querySelectorAll('.message.conv-email-row, #messages-tab .message-content, div[ng-repeat*="messagesToShow"]');
+                    const spinner = document.querySelector('#messageSpinner:not(.ng-hide), .inbox-loading');
+                    return rows.length > 0 && !spinner;
+                }""", raw_conv_id)
+                if is_ready:
+                    break
+                await asyncio.sleep(0.25)
 
-                    // Check DOM messages in right pane (excluding editor / compose box)
-                    let domMessages = [];
-                    if (rightPane) {
-                        const rows = Array.from(rightPane.querySelectorAll(
-                            '.message.conv-email-row .message-content, ' +
-                            '#messages-tab .message-content:not(.ql-editor), ' +
-                            'div[ng-repeat*="messagesToShow"] .message-content:not(.ql-editor), ' +
-                            'div[ng-if*="!message.is_automated_message"]:not(.ql-editor), ' +
-                            'div[ng-bind-html*="message.content_html"]:not(.ql-editor)'
-                        )).filter(n => !n.closest('.ql-editor') && !n.closest('.quill-editor') && !n.closest('#add-message-block'));
-                        
-                        domMessages = rows.map(r => (r.innerText || r.textContent || '').replace(/\\s+/g, ' ').trim());
-                    } else {
-                        const rows = Array.from(document.querySelectorAll(
-                            '.message-content:not(.ql-editor):not([contenteditable="true"]), ' +
-                            'div[ng-if*="!message.is_automated_message"]:not(.ql-editor), ' +
-                            'div[ng-bind-html*="message.content_html"]:not(.ql-editor)'
-                        )).filter(n => !n.closest('.conv-candidates-list') && !n.closest('.conv-candidate') && !n.closest('.ql-editor') && !n.closest('#add-message-block'));
-                        domMessages = rows.map(r => (r.innerText || r.textContent || '').replace(/\\s+/g, ' ').trim());
+            inbox_thread_url = page.url or ''
+            if inbox_thread_url and inbox_thread_url != inbox_base_url and inbox_thread_url in processed_conv_urls:
+                print(f"   ⏩ Conversation thread URL {inbox_thread_url} already processed. Skipping...")
+                processed_conv_ids.add(c_id)
+                continue
+
+            # Step 3c: Inspect opened conversation messages for completion acknowledgment entry
+            # STRICT RULE: ONLY messages sent by candidate are checked for acknowledgment. Recruiter messages NEVER match!
+            try:
+                msg_inspection = await page.evaluate("""(targetId) => {
+                    const TARGET_COMPLETED = "completed the questionnaire";
+                    const TARGET_INTEREST = "interested in this opportunity";
+
+                    let scopeMessages = [];
+                    let candidateMsgs = [];
+                    let isScopeReady = false;
+
+                    if (window.angular) {
+                        const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                        if (sc) {
+                            const activeId = String(sc.selectedCandidateConv?.id || sc.selectedCandidateConv?.conversation_id || '');
+                            if (!targetId || !activeId || activeId === targetId) {
+                                if (sc.messagesToShow && sc.messagesToShow.length > 0) {
+                                    scopeMessages = sc.messagesToShow;
+                                    isScopeReady = true;
+                                }
+                            }
+                        }
                     }
 
-                    const allTexts = [...domMessages, ...scopeMessages.map(m => m.text)];
-                    const hasCompletedAckEntry = allTexts.some(t => t.includes(TARGET_KEYWORD) || t.includes(TARGET_PHRASE));
+                    let hasCompletedAckEntry = false;
 
-                    // Questionnaire URL
+                    if (isScopeReady && scopeMessages.length > 0) {
+                        // STRICT: Only inspect messages sent by the candidate!
+                        candidateMsgs = scopeMessages.filter(m => m.is_candidate === true || m.is_candidate === 1 || m.sender === 'Candidate');
+                        for (const cm of candidateMsgs) {
+                            const text = (cm.content || cm.content_html || '').replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim().toLowerCase();
+                            if (text.includes(TARGET_COMPLETED) || text.includes(TARGET_INTEREST) || text.includes('looking forward to hearing from you')) {
+                                hasCompletedAckEntry = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        // DOM Fallback: Check candidate message rows in right pane
+                        const rightPane = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container');
+                        if (rightPane) {
+                            const candidateRows = Array.from(rightPane.querySelectorAll(
+                                '.message.conv-email-row.candidate-message, .message.conv-email-row:has(.candidate-name)'
+                            )).filter(n => !n.closest('.ql-editor') && !n.closest('#add-message-block'));
+                            for (const row of candidateRows) {
+                                const isRecruiter = row.querySelector('.recruiter-name, [ng-if*="!message.is_candidate"]') !== null;
+                                if (isRecruiter) continue;
+                                const text = (row.innerText || row.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+                                if (text.includes(TARGET_COMPLETED) || text.includes(TARGET_INTEREST)) {
+                                    hasCompletedAckEntry = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Questionnaire URL (extracted from recruiter messages)
                     let qUrl = null;
                     for (const m of scopeMessages) {
-                        const match = m.html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
+                        const html = m.content_html || m.content || '';
+                        const match = html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
                         if (match) {
                             qUrl = match[1];
                             break;
                         }
                     }
                     if (!qUrl) {
-                        const searchScope = rightPane || document;
+                        const searchScope = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container') || document;
                         const links = Array.from(searchScope.querySelectorAll(
-                            '.message.conv-email-row a, #messages-tab .message-content a, div[ng-repeat*="messagesToShow"] a, a[href*="questionnaire"]'
+                            '.message.conv-email-row a, #messages-tab a, div[ng-repeat*="messagesToShow"] a, a[href*="questionnaire"]'
                         )).filter(l => !l.closest('.conv-candidates-list') && !l.closest('#add-message-block') && !l.closest('.ql-editor'));
 
                         for (const link of links) {
@@ -5023,9 +5082,11 @@ class SentinelAgent:
 
                     return {
                         hasCompletedAckEntry: hasCompletedAckEntry,
+                        candidateCount: candidateMsgs.length,
+                        totalMessages: scopeMessages.length,
                         qUrl: qUrl
                     };
-                }""")
+                }""", raw_conv_id)
             except Exception as e:
                 print(f"   ⚠️ Error inspecting conversation message content: {e}")
                 msg_inspection = {'hasCompletedAckEntry': False, 'qUrl': None}
@@ -5040,16 +5101,19 @@ class SentinelAgent:
                 has_ack_entry = False
                 q_url = None
 
-            # Condition: If message opened in the row ALREADY has this entry -> Skip it
+            # Condition: If message opened in the row ALREADY has this entry -> Stop immediately
+            # Since inbox conversations are sorted chronologically (newest first), encountering an
+            # already-acknowledged conversation means all subsequent (older) conversations are also acknowledged.
             if has_ack_entry:
-                print(f"   ⏩ Conversation with {c_name} already contains questionnaire completed acknowledgment entry. Skipping...")
-                processed_conv_ids.add(c_id)
-                await asyncio.sleep(random.uniform(1.0, 1.5))
-                continue
+                print(f"   ⏩ Conversation with {c_name} already contains acknowledgment entry.")
+                print(f"🎉 Instahyre Inbox Task finished: Reached already-acknowledged conversation ({c_name}). No unhandled messages.")
+                self.state.task_complete = True
+                return True
 
             # Condition satisfied: Message opened does NOT have this entry -> Process it!
-            print(f"   ✨ Condition Satisfied: No completed questionnaire entry in thread with {c_name}. Processing...")
+            print(f"   ✨ Condition Satisfied: No acknowledgment entry in thread with {c_name}. Processing...")
 
+            ack_success = False
             if q_url and q_url not in self._processed_questionnaires:
                 print(f"   📋 Found Questionnaire Link: {q_url}")
                 try:
@@ -5063,26 +5127,32 @@ class SentinelAgent:
                         self.metrics['applications_submitted'] += 1
                         print("   ✅ Questionnaire submitted and confirmation verified!")
                         # Send questionnaire acknowledgment in recruiter thread
-                        await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
+                        ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
                     else:
                         print("   ⚠️ Questionnaire submission could not be verified. Skipping acknowledgment.")
                 except Exception as e:
                     print(f"   ❌ Error processing questionnaire {q_url}: {e}")
             elif q_url and q_url in self._processed_questionnaires:
                 print(f"   ⏩ Questionnaire already completed: {q_url}")
-                await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
+                ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
             else:
                 # No questionnaire link in this message — reply to candidate/recruiter thread directly
                 print(f"   ℹ️ No questionnaire link found in message from {c_name}. Replying with interest...")
-                await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=False)
+                ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=False)
 
             processed_conv_ids.add(c_id)
-            messages_handled += 1
+            if inbox_thread_url and inbox_thread_url != inbox_base_url:
+                processed_conv_urls.add(inbox_thread_url)
 
-            # Terminate immediately on the first conversation that fulfills the condition (prevent race conditions)
-            print(f"\n🎉 Instahyre Inbox Task finished! Successfully handled matching conversation with {c_name}.")
-            self.state.task_complete = True
-            return True
+            if ack_success:
+                messages_handled += 1
+                print(f"\n🎉 Instahyre Inbox Task finished! Successfully handled matching conversation with {c_name}.")
+                self.state.task_complete = True
+                return True
+            else:
+                print(f"\n⚠️ Instahyre Inbox Task: Failed to send acknowledgment/reply to {c_name}.")
+                self.state.task_complete = True
+                return False
 
         print(f"\n📭 Instahyre Inbox Task finished: Checked all available conversations. No unhandled messages found.")
         self.state.task_complete = True
@@ -5420,108 +5490,162 @@ class SentinelAgent:
         message in the Quill editor.
         - If has_questionnaire=True: sends questionnaire completion acknowledgment.
         - If has_questionnaire=False: sends general interest reply message.
-        Respects disabled send buttons (never force-clicks).
+        Verifies dispatch by inspecting the thread post-send, with up to 2 retries.
         """
         action_desc = "questionnaire completion acknowledgment" if has_questionnaire else "interest reply"
         print(f"   💬 Sending {action_desc} to {c_name}...")
-        try:
-            # 1. Return to inbox thread
-            if inbox_url and inbox_url != page.url:
-                print(f"   🔙 Returning to conversation thread: {inbox_url}")
-                await page.goto(inbox_url, wait_until='domcontentloaded', timeout=30000)
-                await asyncio.sleep(random.uniform(2.5, 3.5))
 
-            # 2. Wait up to 10 seconds for Quill editor to be visible and editable
-            editor_selector = '.ql-editor[contenteditable="true"], .ql-editor.ql-blank[contenteditable="true"], .ql-editor'
-            editor_found = False
-            for _ in range(10):
-                has_editor = await page.evaluate(f"""() => {{
+        if has_questionnaire:
+            ack_message = (
+                "Hi, I'm interested in this opportunity and have completed the questionnaire. "
+                "Looking forward to hearing from you."
+            )
+            expected_kw = "completed the questionnaire"
+        else:
+            ack_message = (
+                "Hi, I'm interested in this opportunity. "
+                "Looking forward to hearing from you."
+            )
+            expected_kw = "interested in this opportunity"
+
+        editor_selector = '.ql-editor[contenteditable="true"], .ql-editor.ql-blank[contenteditable="true"], .ql-editor'
+
+        # Retry loop: initial attempt + up to 2 retries (total 3 attempts)
+        for attempt in range(1, 4):
+            try:
+                # 1. Return to inbox thread if needed
+                if inbox_url and inbox_url != page.url:
+                    print(f"   🔙 Returning to conversation thread (attempt {attempt}/3): {inbox_url}")
+                    await page.goto(inbox_url, wait_until='domcontentloaded', timeout=30000)
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+
+                # 2. Wait up to 10 seconds for Quill editor to be visible and editable
+                editor_found = False
+                for _ in range(10):
+                    has_editor = await page.evaluate(f"""() => {{
+                        const ed = document.querySelector('{editor_selector}');
+                        return ed && ed.offsetParent !== null;
+                    }}""")
+                    if has_editor:
+                        editor_found = True
+                        break
+                    await asyncio.sleep(0.5)
+
+                if not editor_found:
+                    print(f"   ⚠️ Quill editor not found or not editable for {c_name} (attempt {attempt}/3).")
+                    if attempt < 3:
+                        await asyncio.sleep(2.0)
+                        continue
+                    return False
+
+                # 3. Focus and click editor
+                editor_locator = page.locator(editor_selector).first
+                await editor_locator.click()
+                await asyncio.sleep(0.3)
+
+                # 4. Type acknowledgment/reply message via keyboard typing
+                print(f"   ⌨️ Typing {action_desc} message (attempt {attempt}/3)...")
+                await page.keyboard.type(ack_message, delay=20)
+                await asyncio.sleep(0.8)
+
+                # 5. Verify text is present in the editor
+                text_in_editor = await page.evaluate(f"""() => {{
                     const ed = document.querySelector('{editor_selector}');
-                    return ed && ed.offsetParent !== null;
+                    return ed ? (ed.innerText || ed.textContent || '') : '';
                 }}""")
-                if has_editor:
-                    editor_found = True
-                    break
-                await asyncio.sleep(1.0)
-
-            if not editor_found:
-                print(f"   ⚠️ Quill editor not found or not editable for {c_name}.")
-                return False
-
-            # 3. Focus and click editor
-            editor_locator = page.locator(editor_selector).first
-            await editor_locator.click()
-            await asyncio.sleep(0.5)
-
-            # 4. Type acknowledgment/reply message via keyboard typing
-            if has_questionnaire:
-                ack_message = (
-                    "Hi, I'm interested in this opportunity and have completed the questionnaire. "
-                    "Looking forward to hearing from you."
-                )
-                expected_kw = "completed the questionnaire"
-            else:
-                ack_message = (
-                    "Hi, I'm interested in this opportunity. "
-                    "Looking forward to hearing from you."
-                )
-                expected_kw = "interested in this opportunity"
-
-            print(f"   ⌨️ Typing {action_desc} message...")
-            await page.keyboard.type(ack_message, delay=20)
-            await asyncio.sleep(1.0)
-
-            # 5. Verify text is present in the editor
-            text_in_editor = await page.evaluate(f"""() => {{
-                const ed = document.querySelector('{editor_selector}');
-                return ed ? (ed.innerText || ed.textContent || '') : '';
-            }}""")
-            if isinstance(text_in_editor, str) and text_in_editor and expected_kw not in text_in_editor:
-                print(f"   ⚠️ Message text ('{expected_kw}') could not be verified in Quill editor.")
-                return False
-
-            # 6. Check Send button state (respect disabled state!)
-            btn_state = await page.evaluate("""() => {
-                const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
-                                Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
-                if (!sendBtn || sendBtn.offsetParent === null) {
-                    return { found: false, disabled: true };
-                }
-                const isDisabled = sendBtn.disabled || 
-                                   sendBtn.classList.contains('disabled') || 
-                                   sendBtn.getAttribute('aria-disabled') === 'true' ||
-                                   sendBtn.hasAttribute('disabled');
-                return { found: true, disabled: isDisabled };
-            }""")
-
-            if isinstance(btn_state, dict):
-                if not btn_state.get('found', False):
-                    print(f"   ⚠️ Send button not found in conversation thread for {c_name}.")
+                if isinstance(text_in_editor, str) and expected_kw not in text_in_editor:
+                    print(f"   ⚠️ Message text ('{expected_kw}') could not be verified in Quill editor.")
                     return False
 
-                if btn_state.get('disabled', False):
-                    print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click to prevent invalid dispatch.")
-                    return False
+                # 6. Check Send button state (respect disabled state!)
+                btn_state = await page.evaluate("""() => {
+                    const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
+                                    Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                    if (!sendBtn || sendBtn.offsetParent === null) {
+                        return { found: false, disabled: true };
+                    }
+                    const isDisabled = sendBtn.disabled || 
+                                       sendBtn.classList.contains('disabled') || 
+                                       sendBtn.getAttribute('aria-disabled') === 'true' ||
+                                       sendBtn.hasAttribute('disabled');
+                    return { found: true, disabled: isDisabled };
+                }""")
 
-            # 7. Click Send button and verify dispatch
-            print("   📤 Clicking Send button...")
-            await page.evaluate("""() => {
-                const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
-                                Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
-                if (sendBtn) {
-                    sendBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
-                    sendBtn.click();
-                }
-            }""")
-            await asyncio.sleep(2.0)
+                if isinstance(btn_state, dict):
+                    if not btn_state.get('found', False):
+                        print(f"   ⚠️ Send button not found in conversation thread for {c_name} (attempt {attempt}/3).")
+                        if attempt < 3:
+                            await asyncio.sleep(1.5)
+                            continue
+                        return False
 
-            self.metrics['instahyre_acks_sent'] = self.metrics.get('instahyre_acks_sent', 0) + 1
-            print(f"   ✅ Instahyre {action_desc} message successfully sent to {c_name}!")
-            return True
+                    if btn_state.get('disabled', False):
+                        print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click.")
+                        return False
 
-        except Exception as e:
-            print(f"   ⚠️ Error sending Instahyre message to {c_name}: {e}")
-            return False
+                # 7. Click Send button
+                print(f"   📤 Clicking Send button (attempt {attempt}/3)...")
+                await page.evaluate("""() => {
+                    const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
+                                    Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                    if (sendBtn) {
+                        sendBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                        sendBtn.click();
+                    }
+                }""")
+                await asyncio.sleep(1.5)
+
+                # 8. Verify dispatch by inspecting thread messages
+                dispatch_verified = False
+                for _v_turn in range(8):
+                    dispatched = await page.evaluate("""(kw) => {
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc && sc.messagesToShow) {
+                                    const hasIt = sc.messagesToShow.some(m => {
+                                        const text = (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ');
+                                        return text.includes(kw);
+                                    });
+                                    if (hasIt) return true;
+                                }
+                            }
+                        } catch(e) {}
+                        const rows = Array.from(document.querySelectorAll(
+                            '.message.conv-email-row .message-content, #messages-tab .message-content:not(.ql-editor), div[ng-repeat*="messagesToShow"] .message-content:not(.ql-editor)'
+                        )).filter(n => !n.closest('.ql-editor') && !n.closest('.quill-editor'));
+                        return rows.some(r => (r.innerText || r.textContent || '').includes(kw));
+                    }""", expected_kw)
+                    if dispatched:
+                        dispatch_verified = True
+                        break
+                    await asyncio.sleep(0.5)
+
+                if dispatch_verified:
+                    self.metrics['instahyre_acks_sent'] = self.metrics.get('instahyre_acks_sent', 0) + 1
+                    print(f"   ✅ Instahyre {action_desc} message verified and sent to {c_name}!")
+                    return True
+                else:
+                    editor_cleared = await page.evaluate(f"""() => {{
+                        const ed = document.querySelector('{editor_selector}');
+                        const t = ed ? (ed.innerText || ed.textContent || '').trim() : '';
+                        return t === '' || ed.classList.contains('ql-blank');
+                    }}""")
+                    if editor_cleared:
+                        self.metrics['instahyre_acks_sent'] = self.metrics.get('instahyre_acks_sent', 0) + 1
+                        print(f"   ✅ Instahyre {action_desc} message sent to {c_name} (editor cleared)!")
+                        return True
+
+                print(f"   ⚠️ Could not verify message dispatch to {c_name} (attempt {attempt}/3).")
+                if attempt < 3:
+                    await asyncio.sleep(2.0)
+            except Exception as e:
+                print(f"   ⚠️ Error during attempt {attempt}/3 sending message to {c_name}: {e}")
+                if attempt < 3:
+                    await asyncio.sleep(2.0)
+
+        print(f"   ❌ Failed to send Instahyre {action_desc} to {c_name} after 3 attempts.")
+        return False
 
     async def _handle_naukri_post_apply(self, chatbot_result) -> bool:
         """
@@ -7535,6 +7659,60 @@ class SentinelAgent:
             print(f"⚠️ _close_linkedin_modal error: {e}")
             return False
 
+    async def _select_next_job_card(self) -> str:
+        """
+        Force cleanup of any stuck LinkedIn Easy Apply modal and select the next job card.
+        1) Evaluates a script that marks current job ID as skipped in window.__skippedJobIds
+           and force-removes all .artdeco-modal / .artdeco-modal-overlay elements.
+        2) Escalation: Tracks _linkedin_stuck_cleanup_attempts. After 2 failed cleanups,
+           navigates to 'https://www.linkedin.com/jobs/search/' to reset page state.
+        """
+        if not self._page:
+            return "NO_PAGE"
+
+        self._linkedin_stuck_cleanup_attempts = getattr(self, '_linkedin_stuck_cleanup_attempts', 0) + 1
+        if self._linkedin_stuck_cleanup_attempts > 2:
+            print("⚠️ LinkedIn modal cleanup failed multiple times (escalation triggered) — navigating to jobs search...")
+            self._linkedin_stuck_cleanup_attempts = 0
+            try:
+                await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                await asyncio.sleep(random.uniform(3, 5))
+                return "NAVIGATED_SEARCH"
+            except Exception as nav_e:
+                print(f"   ⚠️ Navigation fallback error: {nav_e}")
+                return "NAV_ERROR"
+
+        try:
+            cleanup_res = await self._page.evaluate("""() => {
+                if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                const currentUrlParams = new URLSearchParams(window.location.search);
+                let activeJobId = currentUrlParams.get('currentJobId');
+                if (!activeJobId) {
+                    const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                      document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                      document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                      document.querySelector('.active [data-job-id]') ||
+                                      document.querySelector('[data-occludable-job-id].jobs-search-results-list__list-item--active');
+                    if (activeCard) {
+                        activeJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                    }
+                }
+                if (activeJobId) {
+                    window.__skippedJobIds.add(activeJobId);
+                    window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped in _select_next_job_card:', activeJobId);
+                }
+                // Force-remove all modal and overlay elements from DOM
+                const modals = document.querySelectorAll('.artdeco-modal, .artdeco-modal-overlay, .jobs-easy-apply-modal, [data-test-modal]');
+                modals.forEach(m => m.remove());
+                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => o.remove());
+                return activeJobId || 'CLEANED';
+            }""")
+            print(f"   🧹 Stuck modal cleaned up, skipped job ID: {cleanup_res}")
+            return str(cleanup_res)
+        except Exception as e:
+            print(f"   ⚠️ Error during _select_next_job_card: {e}")
+            return "ERROR"
+
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
         # Inject patterns ONCE per context via add_init_script (window globals).
@@ -8569,8 +8747,7 @@ return resolveDynamic(bestMatch);
                                 titleText.includes('safety reminder') ||
                                 (combinedText.includes('research the company') && (combinedText.includes('report suspicious jobs') || combinedText.includes('report suspicious'))) ||
                                 combinedText.includes('job search safety reminder') ||
-                                combinedText.includes('safety reminder') ||
-                                combinedText.includes('continue applying')
+                                combinedText.includes('safety reminder')
                             );
 
                             if (isSafetyReminder) {
@@ -11900,32 +12077,41 @@ return resolveDynamic(bestMatch);
                                 titleText.includes('safety reminder') ||
                                 (text.includes('research the company') && (text.includes('report suspicious jobs') || text.includes('report suspicious'))) ||
                                 text.includes('job search safety reminder') ||
-                                text.includes('safety reminder') ||
-                                text.includes('continue applying')
+                                text.includes('safety reminder')
                             );
 
                             if (isSafetyModal) {
                                 return { type: 'safety', element: dialog };
-                            }
-                            // Success modal
-                            const isSuccessModal = (
-                                dialog.querySelector('[data-test-icon="signal-success"]') !== null ||
-                                dialog.querySelector('li-icon[type="success-pebble-icon"]') !== null ||
-                                dialog.querySelector('.artdeco-inline-feedback--success') !== null ||
-                                /\\bapplication\\s+(was\\s+)?(sent|submitted)\\b/i.test(text) ||
-                                /\\byour\\s+application\\s+(has\\s+been|was)?\\s*(sent|submitted)\\b/i.test(text) ||
-                                titleText.includes('application sent') ||
-                                titleText.includes('application submitted') ||
-                                (text.includes('application') && (text.includes('sent to') || text.includes('submitted to')))
-                            );
-                            if (isSuccessModal) {
-                                return { type: 'success', element: dialog };
                             }
                             // Easy Apply daily limit
                             if (dialog.querySelector('[data-testid="dialog-content"]') ||
                                 text.includes('easy apply limit') || text.includes('you reached today') ||
                                 (text.includes('apply tomorrow') && text.includes('limit'))) {
                                 return { type: 'easy_apply_limit', element: dialog };
+                            }
+
+                            // Active form controls check — a modal with inputs/form buttons is an active form, NEVER success!
+                            const hasActiveFormControls = (
+                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], svg[role="progressbar"][aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-form-section') !== null
+                            );
+                            if (hasActiveFormControls) {
+                                return { type: 'form', element: dialog };
+                            }
+
+                            // Success modal — ONLY evaluated when no active form controls are present
+                            const isSuccessModal = (
+                                dialog.querySelector('[data-test-icon="signal-success"]') !== null ||
+                                dialog.querySelector('li-icon[type="success-pebble-icon"]') !== null ||
+                                titleText.includes('application sent') ||
+                                titleText.includes('application submitted') ||
+                                titleText.includes('your application was sent') ||
+                                titleText.includes('your application has been sent') ||
+                                (/^(your\\s+)?application\\s+(was|has\\s+been|is)\\s*(sent|submitted)/i.test(titleText)) ||
+                                ((text.includes('application sent') || text.includes('application was sent') || text.includes('application submitted')) &&
+                                 dialog.querySelector('button[aria-label*="Dismiss" i], button[aria-label*="Close" i], button[data-test-modal-close-btn], .artdeco-modal__dismiss') !== null)
+                            );
+                            if (isSuccessModal) {
+                                return { type: 'success', element: dialog };
                             }
 
                             // Diagnostic logging for visible unclassified dialogs
@@ -11943,14 +12129,11 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             const text = (modalEl.innerText || '').toLowerCase();
-                            // Double-check it's not a safety/success dialog (defense-in-depth)
+                            // Double-check it's not a safety dialog (defense-in-depth)
                             if (text.includes('safety reminder') || text.includes('job search safety') ||
-                                text.includes('research the company') || text.includes('report suspicious') ||
-                                text.includes('review job post') || text.includes('continue applying')) {
+                                (text.includes('research the company') && text.includes('report suspicious')) ||
+                                text.includes('review job post')) {
                                 return { type: 'safety', element: modalEl };
-                            }
-                            if (text.includes('application sent') || text.includes('application submitted')) {
-                                return { type: 'success', element: modalEl };
                             }
                             return { type: 'form', element: modalEl };
                         }
@@ -12000,8 +12183,7 @@ return resolveDynamic(bestMatch);
                                 titleText.includes('safety reminder') ||
                                 (dText.includes('research the company') && (dText.includes('report suspicious jobs') || dText.includes('report suspicious'))) ||
                                 dText.includes('job search safety reminder') ||
-                                dText.includes('safety reminder') ||
-                                dText.includes('continue applying')
+                                dText.includes('safety reminder')
                             );
 
                             if (isSafetyReminder) {
@@ -12182,15 +12364,50 @@ return resolveDynamic(bestMatch);
                         const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent;
                         
                         if (hasInteractiveElements) {
+                            window.__eaTransitionSince = null;
+                            window.__eaTransitionSinceJob = null;
                             window.__SENTINEL_DEBUG__&&console.log('Unknown modal detected via deep query. Handling as generic form...');
                             return handleLinkedInForm(anyModal);
                         } else if (isLikelyEasyApplyModal) {
-                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply modal is loading or transitioning. Waiting...');
+                            const urlParamsWatchdog = new URLSearchParams(window.location.search);
+                            let activeJobIdWatchdog = urlParamsWatchdog.get('currentJobId');
+                            if (!activeJobIdWatchdog) {
+                                const activeCardWatchdog = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                                          document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                                          document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                                          document.querySelector('.active [data-job-id]');
+                                if (activeCardWatchdog) {
+                                    activeJobIdWatchdog = activeCardWatchdog.getAttribute('data-job-id') || activeCardWatchdog.getAttribute('data-occludable-job-id');
+                                }
+                            }
+                            const jobKey = activeJobIdWatchdog || 'current_job';
+                            if (!window.__eaTransitionSince || window.__eaTransitionSinceJob !== jobKey) {
+                                window.__eaTransitionSince = Date.now();
+                                window.__eaTransitionSinceJob = jobKey;
+                            }
+                            const elapsed = Date.now() - window.__eaTransitionSince;
+                            if (elapsed > 20000) {
+                                window.__SENTINEL_DEBUG__&&console.log('Easy Apply modal stuck in transition (>20s). Auto-skipping job ' + jobKey);
+                                if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                if (activeJobIdWatchdog) window.__skippedJobIds.add(activeJobIdWatchdog);
+                                const stuckModals = document.querySelectorAll('.artdeco-modal, .artdeco-modal-overlay, .jobs-easy-apply-modal, [data-test-modal]');
+                                stuckModals.forEach(m => m.remove());
+                                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => o.remove());
+                                window.__eaTransitionSince = null;
+                                window.__eaTransitionSinceJob = null;
+                                return 'LINKEDIN_MODAL_STUCK_SKIPPED:' + (activeJobIdWatchdog || 'UNKNOWN');
+                            }
+                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply modal is loading or transitioning (' + Math.round(elapsed/1000) + 's). Waiting...');
                             return 'LINKEDIN_MODAL_TRANSITIONING';
                         } else {
+                            window.__eaTransitionSince = null;
+                            window.__eaTransitionSinceJob = null;
                             // Not an Easy Apply modal or it's stale - proceed to look for Easy Apply button
                             window.__SENTINEL_DEBUG__&&console.log('Modal found but not an Easy Apply modal. Proceeding to look for Easy Apply button...');
                         }
+                    } else {
+                        window.__eaTransitionSince = null;
+                        window.__eaTransitionSinceJob = null;
                     }
 
                     // Persistent skip-list across invocations (survives between evaluate calls)

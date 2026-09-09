@@ -57,7 +57,9 @@ class TestRadioCheckboxCSV(unittest.TestCase):
 
     def test_js_form_results_contain_options_and_source(self):
         """Verify all radio and checkbox handlers in JS fallback populate options, selectedOption, and source."""
-        src = inspect.getsource(self.agent._handle_scripted_fallback)
+        import pathlib
+        agent_path = pathlib.Path(__file__).parent.parent.parent.parent / "src" / "sentinel" / "agent.py"
+        src = agent_path.read_text(encoding="utf-8")
 
         # Fieldset radios
         self.assertIn("options: radioOptions", src)

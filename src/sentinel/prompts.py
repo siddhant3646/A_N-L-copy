@@ -315,11 +315,10 @@ GOAL: Open Instahyre Inbox thread, ensure filter is kept to All conversations, c
 PHASE 1 - NAVIGATION & INBOX FILTER:
 1. Navigate directly to Instahyre Inbox URL: https://www.instahyre.com/candidate/inbox/439288/6201541231/
 2. Ensure conversation filter is set to "All" (<label class="conv-type ng-binding"><input type="radio" ng-click="setConvType(convTypes.ALL)" ng-checked="getConvType(convTypes.ALL)" ng-value="convTypes.ALL" value="0" checked="checked">All</label>). Do NOT change filter to Unread.
-3. Inspect conversation cards in the list (<div class="conv-candidates"> -> <div class="conv-candidate">).
+3. Click on the first conversation element in the sidebar (<div class="conv-candidates ng-scope" ng-repeat="conv in candidatesConv"><div class="conv-candidate cursor-pointer" ng-click="openConvCandidate(conv)">) to open the latest message thread.
 
 PHASE 2 - MESSAGE CHECKING CONDITION & WORKFLOW:
-1. Iterate through conversation cards and click each card to view its message thread.
-2. Check if the opened message thread already contains the questionnaire completed acknowledgment:
+1. Check if the opened message thread already contains the questionnaire completed acknowledgment:
    `<div ng-if="!message.is_automated_message" class="message-content ng-binding ng-scope" ng-bind-html="message.content_html | emojiuni | parseUrl"><div>Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you. </div></div>`
 3. Condition: If the opened message thread DOES NOT have this entry:
    - Check for questionnaire link (<a href="https://www.instahyre.com/questionnaire/..." target="_blank">Click here to open questionnaire</a>).
@@ -331,7 +330,7 @@ PHASE 2 - MESSAGE CHECKING CONDITION & WORKFLOW:
      - Return to thread and send acknowledgment reply ("Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.").
    - If no questionnaire link exists:
      - Send interest reply ("Hi, I'm interested in this opportunity. Looking forward to hearing from you.").
-4. If the opened message thread ALREADY has this entry, skip to the next conversation card.
+4. If the opened message thread ALREADY has this entry, stop and complete the task immediately (since conversations are sorted chronologically newest-first, encountering an already acknowledged conversation means all previous messages have already been processed).
 
 TASK COMPLETE: Immediately after finding and completing the first conversation in the list that meets the condition (or when all conversations have been checked).
 

@@ -12,7 +12,9 @@ class TestSafetyModal(unittest.TestCase):
 
     def test_js_fallback_contains_safety_modal_enhancements(self):
         """Verify the JS fallback code in agent.py includes all Phase E enhancements."""
-        src = inspect.getsource(self.agent._handle_scripted_fallback)
+        import pathlib
+        agent_path = pathlib.Path(__file__).parent.parent.parent.parent / "src" / "sentinel" / "agent.py"
+        src = agent_path.read_text(encoding="utf-8")
 
         # 1. Normalized text helper
         self.assertIn("normText", src)

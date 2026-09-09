@@ -22,11 +22,13 @@ class TestInstahyreAck(unittest.IsolatedAsyncioTestCase):
         # 2. text_in_editor -> text contains "completed the questionnaire"
         # 3. btn_state -> { found: True, disabled: False }
         # 4. click send -> None
+        # 5. verify dispatch -> True
         mock_page.evaluate = AsyncMock(side_effect=[
             True,
             "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.",
             {"found": True, "disabled": False},
-            None
+            None,
+            True
         ])
 
         prev_acks = self.agent.metrics.get('instahyre_acks_sent', 0)
@@ -82,7 +84,8 @@ class TestInstahyreAck(unittest.IsolatedAsyncioTestCase):
             True,
             "Hi, I'm interested in this opportunity. Looking forward to hearing from you.",
             {"found": True, "disabled": False},
-            None
+            None,
+            True
         ])
 
         prev_acks = self.agent.metrics.get('instahyre_acks_sent', 0)

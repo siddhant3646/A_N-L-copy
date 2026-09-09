@@ -309,6 +309,3 @@ def pytest_collection_modifyitems(config, items):
         # Mark tests in tests/integration as integration tests
         elif "tests/integration" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
-        # Mark tests in tests/e2e as e2e tests
-        elif "tests/e2e" in str(item.fspath):
-            item.add_marker(pytest.mark.e2e)

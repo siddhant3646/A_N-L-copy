@@ -2,6 +2,7 @@ import asyncio
 import atexit
 import random
 import sys
+import time
 import datetime
 import os
 import shutil
@@ -961,72 +962,85 @@ async def main():
             if shutdown_requested:
                 break
 
-            # Cycle complete - run INTERSESSION task during wait period
+            # Cycle complete - run continuous INTERSESSION task during wait period
             wait_mins = random.uniform(15, 20)  # Random 15-20 minutes total wait
+            deadline = time.time() + (wait_mins * 60)
             print(f"\n\n{'#'*60}")
             print(f"✅ CYCLE {cycle_count} COMPLETE - All {len(tasks)} tasks done!")
-            print(f"⏳ INTERSESSION: Running Instahyre (20 jobs) during {wait_mins:.1f} min wait...")
+            print(f"⏳ INTERSESSION: Running continuous Instahyre during {wait_mins:.1f} min window...")
             print(f"{'#'*60}")
             
-            # Track intersession start time
-            import time
-            intersession_start = time.time()
-            
-            # Give Chrome time to fully exit from the last task before starting a fresh
-            # persistent context — macOS can hold profile locks for several seconds after
-            # context.close(), causing 'Browser window not found' / exitCode=0 crashes.
-            print("⏳ [INTERSESSION] Waiting 15s for Chrome processes to fully exit...")
-            await asyncio.sleep(15)
-            
-            # Run Instahyre INTERSESSION task (reuse the shared agent with reset state)
-            agent.reset_per_task_state()
-            intersession_browser = Browser(
-                headless=False,
-                user_data_dir=CHROME_USER_DATA,
-            )
-            current_browser = intersession_browser
-            
-            try:
-                print("🌐 [INTERSESSION] Launching Browser...")
-                await intersession_browser.start()
-                
-                page = await intersession_browser.get_current_page()
-                if not page:
-                    page = await intersession_browser.new_page()
-                    
-                print("🔗 [INTERSESSION] Navigating to Instahyre...")
-                await page.goto("https://www.instahyre.com/candidate/opportunities/?matching=true", 
-                              wait_until='domcontentloaded', timeout=30000)
-                await asyncio.sleep(5)
-                
-                agent._page = page
-                agent.browser = intersession_browser
-                
-                print("▶️  [INTERSESSION] Running Instahyre (20 jobs)...")
-                await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
-                print("🎉 [INTERSESSION] Instahyre task completed!")
-                
-            except (KeyboardInterrupt, asyncio.CancelledError):
-                shutdown_requested = True
-                raise
-            except Exception as e:
-                print(f"⚠️  [INTERSESSION] Error: {e}")
-            finally:
-                await intersession_browser.stop(fast=shutdown_requested)
-                current_browser = None
-            
+            intersession_iter = 0
+            while time.time() < deadline and not shutdown_requested:
+                intersession_iter += 1
+                remaining_sec = deadline - time.time()
+                remaining_mins = remaining_sec / 60.0
+
+                # Min-time guard: remaining < 5 min → sleep to deadline, break
+                if remaining_mins < 5.0:
+                    print(f"⏳ [INTERSESSION Pass #{intersession_iter}] Less than 5 min remaining ({remaining_mins:.1f}m < 5m). Sleeping to deadline...")
+                    if remaining_sec > 0:
+                        try:
+                            await asyncio.sleep(remaining_sec)
+                        except (KeyboardInterrupt, asyncio.CancelledError):
+                            shutdown_requested = True
+                    break
+
+                print(f"\n🔄 [INTERSESSION Pass #{intersession_iter}] Starting pass ({remaining_mins:.1f} min remaining until deadline)...")
+
+                # 15s Chrome-exit cooldown on first pass; ~10s on subsequent passes
+                cooldown_sec = 15 if intersession_iter == 1 else 10
+                print(f"⏳ [INTERSESSION Pass #{intersession_iter}] Waiting {cooldown_sec}s Chrome cooldown...")
+                try:
+                    await asyncio.sleep(cooldown_sec)
+                except (KeyboardInterrupt, asyncio.CancelledError):
+                    shutdown_requested = True
+                    break
+
+                # Run Instahyre INTERSESSION task (reuse shared agent with reset state)
+                agent.reset_per_task_state()
+                intersession_browser = Browser(
+                    headless=False,
+                    user_data_dir=CHROME_USER_DATA,
+                )
+                current_browser = intersession_browser
+
+                try:
+                    print(f"🌐 [INTERSESSION Pass #{intersession_iter}] Launching Browser...")
+                    await intersession_browser.start()
+
+                    page = await intersession_browser.get_current_page()
+                    if not page:
+                        page = await intersession_browser.new_page()
+
+                    print(f"🔗 [INTERSESSION Pass #{intersession_iter}] Navigating to Instahyre...")
+                    await page.goto("https://www.instahyre.com/candidate/opportunities/?matching=true", 
+                                  wait_until='domcontentloaded', timeout=30000)
+                    await asyncio.sleep(5)
+
+                    agent._page = page
+                    agent.browser = intersession_browser
+
+                    print(f"▶️  [INTERSESSION Pass #{intersession_iter}] Running Instahyre task...")
+                    await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
+                    print(f"🎉 [INTERSESSION Pass #{intersession_iter}] Instahyre task pass completed!")
+
+                except (KeyboardInterrupt, asyncio.CancelledError):
+                    shutdown_requested = True
+                    break
+                except Exception as e:
+                    print(f"⚠️  [INTERSESSION Pass #{intersession_iter}] Error: {e}")
+                finally:
+                    print(f"🔒 Closing browser for [INTERSESSION Pass #{intersession_iter}]...")
+                    await intersession_browser.stop(fast=shutdown_requested)
+                    if not shutdown_requested:
+                        await reset_shared_playwright()
+                        print("   🔄 Playwright pipe refreshed after intersession pass")
+                    current_browser = None
+
             if shutdown_requested:
                 break
 
-            # Wait for remaining time (if any)
-            elapsed = time.time() - intersession_start
-            remaining_wait = (wait_mins * 60) - elapsed
-            if remaining_wait > 0:
-                print(f"⏳ Waiting {remaining_wait/60:.1f} more minutes...")
-                await asyncio.sleep(remaining_wait)
-            else:
-                print("⏩ Intersession took longer than wait time, starting next cycle immediately")
-            
             print(f"\n🔄 Starting Cycle {cycle_count + 1}...")
 
     except (KeyboardInterrupt, asyncio.CancelledError):

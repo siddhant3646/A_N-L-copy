@@ -921,6 +921,11 @@ class SentinelAgent:
         if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower:
             return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
 
+        # Yes/No proficiency questions (NOT rating scale) - MUST be before is_rating_question
+        # Questions like "Strong proficiency in Java (8/11/17)?" should answer Yes, not 9
+        if is_yes_no_proficiency:
+            return 'Yes', 0.95
+        
         if is_rating_question:
             return '9', 0.95
         
@@ -6854,11 +6859,18 @@ class SentinelAgent:
                     qText.toLowerCase().includes('pay');
 
                 if (isNaukri && isSalaryQuestion) {{
-                    const isCurrentSalary = qText.toLowerCase().includes('current') ||
-                        qText.toLowerCase().includes('cctc') ||
-                        qText.toLowerCase().includes('present');
+                    const qLowerSalary = qText.toLowerCase();
+                    const isCompoundCtc = (qLowerSalary.includes('current') && qLowerSalary.includes('expected')) ||
+                        qLowerSalary.includes('current and expected') || qLowerSalary.includes('current & expected');
+                    const isCurrentSalary = qLowerSalary.includes('current') ||
+                        qLowerSalary.includes('cctc') ||
+                        qLowerSalary.includes('present');
                     // Use full INR values for Naukri
-                    answer = isCurrentSalary ? '2300000' : '3000000';
+                    if (isCompoundCtc) {{
+                        answer = 'Current: 2300000, Expected: 3000000';
+                    }} else {{
+                        answer = isCurrentSalary ? '2300000' : '3000000';
+                    }}
                 }}
                 
                 // DEBUG: Log what we detected
@@ -8405,13 +8417,21 @@ class SentinelAgent:
                         'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations',
                         'monthly salary', 'current monthly salary', 'expected monthly salary',
                         'per month salary', 'current ctc in lpa', 'expected ctc in lpa',
-                        'desired compensation', 'desired salary'
+                        'desired compensation', 'desired salary',
+                        // Compound CTC questions (current AND expected)
+                        'current & expected ctc', 'current and expected ctc', 'current ctc and expected ctc',
+                        'current and expected compensation', 'what is your current ctc and expected ctc'
                     ];
                     salaryKeys.forEach(k => {
                         if (KNOWN_PATTERNS[k]) {
                             const kLower = k.toLowerCase();
+                            // Compound CTC questions (current AND expected) - MUST be first
+                            if ((kLower.includes('current') && kLower.includes('expected')) ||
+                                kLower.includes('current and expected') || kLower.includes('current & expected')) {
+                                KNOWN_PATTERNS[k] = 'Current: 2300000, Expected: 3000000';
+                            }
                             // Monthly salary questions
-                            if (kLower.includes('monthly') || kLower.includes('per month')) {
+                            else if (kLower.includes('monthly') || kLower.includes('per month')) {
                                 KNOWN_PATTERNS[k] = kLower.includes('expected') ? '250000' : '191667';
                             }
                             // LPA/Lakh questions

@@ -2912,6 +2912,13 @@
         "checkbox": "Yes",
         "number": "5"
       },
+      "negative_patterns": [
+        "years of experience",
+        "how many years",
+        "years of work experience",
+        "total experience",
+        "experience in years"
+      ],
       "priority": 6
     },
     "other_areas_experience": {
@@ -84724,7 +84731,14 @@
         "radio": "5",
         "select": "5",
         "checkbox": "Yes"
-      }
+      },
+      "negative_patterns": [
+        "years of experience",
+        "how many years",
+        "years of work experience",
+        "total experience",
+        "experience in years"
+      ]
     },
     "rating_scale_communication": {
       "patterns": [

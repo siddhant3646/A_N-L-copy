@@ -282,7 +282,7 @@ GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 1. If filters are already set, skip to Phase 2
 # 2. Otherwise: Set Experience: 4 years (Disabled - uncomment to re-enable)
-2. Otherwise: Select Company Size: Large (select#company-size, option with value "2")
+2. Otherwise: Select Company Size: All (select#company-size, option "All" / option with value "" or "0")
 3. Otherwise: Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
 4. Add Skills (one by one): Java, JavaScript, TypeScript, SpringBoot, ReactJS, AWS, Git, OpenAI, LLMs, Claude, FastAPI, Machine Learning, Generative AI
 5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
@@ -298,7 +298,7 @@ PHASE 2 - APPLY TO 20 JOBS (High Volume Session):
 TASK COMPLETE: After 20 applications submitted.
 
 DOM Selectors:
-- Company Size: select#company-size (option value "2" = Large)
+- Company Size: select#company-size (option "All" or value "" / "0")
 - Skills Input: input#skills-selectized
 - Job Functions Input: input#job-functions-selectized
 - Location Input: input#locations-selectized
@@ -308,19 +308,27 @@ DOM Selectors:
 """
 
 INSTAHYRE_INBOX_QUESTIONNAIRE_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.instahyre.com/candidate/inbox/439288/6201541231/ immediately.
+NAVIGATE to https://www.instahyre.com/candidate/inbox/ immediately.
 
-GOAL: Open Instahyre Inbox thread, ensure filter is kept to All conversations, check all messages in the list until finding conversations without the questionnaire completed acknowledgment, answer all questions using QA patterns, submit questionnaires, and send acknowledgments.
+GOAL: Open Instahyre Inbox, ensure filter is set to All conversations, and iterate through message cards:
+1. Opens instahyre inbox.
+2. Click on 'All' radio button filter.
+3. Open the first message card.
+4. Check if there is an acknowledgment message in history: "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you."
+5. If this message is not available, click the questionnaire link, fill the questionnaire, submit, return and add the acknowledgment in that message card, and move to next card.
+6. If next card already has that acknowledgment message, stop the task.
+7. If the first message card already has the acknowledgment message, close the task immediately.
 
 PHASE 1 - NAVIGATION & INBOX FILTER:
-1. Navigate directly to Instahyre Inbox URL: https://www.instahyre.com/candidate/inbox/439288/6201541231/
+1. Navigate directly to Instahyre Inbox URL: https://www.instahyre.com/candidate/inbox/
 2. Ensure conversation filter is set to "All" (<label class="conv-type ng-binding"><input type="radio" ng-click="setConvType(convTypes.ALL)" ng-checked="getConvType(convTypes.ALL)" ng-value="convTypes.ALL" value="0" checked="checked">All</label>). Do NOT change filter to Unread.
-3. Click on the first conversation element in the sidebar (<div class="conv-candidates ng-scope" ng-repeat="conv in candidatesConv"><div class="conv-candidate cursor-pointer" ng-click="openConvCandidate(conv)">) to open the latest message thread.
+3. Click on the first conversation card in the sidebar (<div class="conv-candidates ng-scope" ng-repeat="conv in candidatesConv"><div class="conv-candidate cursor-pointer" ng-click="openConvCandidate(conv)">) to open the latest message thread.
 
 PHASE 2 - MESSAGE CHECKING CONDITION & WORKFLOW:
-1. Check if the opened message thread already contains the questionnaire completed acknowledgment:
-   `<div ng-if="!message.is_automated_message" class="message-content ng-binding ng-scope" ng-bind-html="message.content_html | emojiuni | parseUrl"><div>Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you. </div></div>`
-3. Condition: If the opened message thread DOES NOT have this entry:
+1. Check if the active conversation thread already contains candidate's acknowledgment:
+   `<div class="message-content"><div>Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you. </div></div>`
+2. If first message card has the acknowledgment message, stop and complete task immediately (all messages up to date).
+3. If acknowledgment message is NOT available:
    - Check for questionnaire link (<a href="https://www.instahyre.com/questionnaire/..." target="_blank">Click here to open questionnaire</a>).
    - If questionnaire link exists:
      - Navigate in-place to questionnaire.
@@ -330,12 +338,13 @@ PHASE 2 - MESSAGE CHECKING CONDITION & WORKFLOW:
      - Return to thread and send acknowledgment reply ("Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you.").
    - If no questionnaire link exists:
      - Send interest reply ("Hi, I'm interested in this opportunity. Looking forward to hearing from you.").
-4. If the opened message thread ALREADY has this entry, stop and complete the task immediately (since conversations are sorted chronologically newest-first, encountering an already acknowledged conversation means all previous messages have already been processed).
+   - Move to next conversation card.
+4. If a subsequent card already has the acknowledgment message, stop and complete the task.
 
-TASK COMPLETE: Immediately after finding and completing the first conversation in the list that meets the condition (or when all conversations have been checked).
+TASK COMPLETE: When an already-acknowledged conversation card is reached, or when all available cards have been checked and completed.
 
 DOM Selectors:
-- Inbox Target URL: https://www.instahyre.com/candidate/inbox/439288/6201541231/
+- Inbox Target URL: https://www.instahyre.com/candidate/inbox/
 - All Radio Filter: input[ng-click*="setConvType(convTypes.ALL)"], input[ng-value*="convTypes.ALL"], input[value="0"], label.conv-type
 - Candidate Conversations: .conv-candidates .conv-candidate, div[ng-click*="openConvCandidate"]
 - Completed Questionnaire Ack Entry: .message-content:has-text("completed the questionnaire")
@@ -346,5 +355,6 @@ DOM Selectors:
 - Submit Button: button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg
 - Confirmation: .text-center i.fa-check-circle, h4:has-text("Questionnaire has been sent")
 """
+
 
 

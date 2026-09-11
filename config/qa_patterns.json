@@ -1791,20 +1791,32 @@
         "when would you like to start",
         "start date",
         "when can you start working",
-        "proposed start date"
+        "proposed start date",
+        "earliest start date",
+        "earliest start date?",
+        "what is your earliest start date",
+        "earliest possible start date",
+        "available start date",
+        "tentative start date",
+        "potential start date",
+        "when can you join",
+        "when can you start",
+        "earliest joining date",
+        "joining date",
+        "start date?"
       ],
-      "category": "notice_period",
-      "default": "04/09/2026",
+      "category": "availability",
+      "default": "25/09/2026",
       "numeric_default": "15",
-      "note": "Dynamic DD/MM/YYYY value (today + 15 days) is computed at runtime in agent.py",
+      "note": "Dynamic DD/MM/YYYY or MM/DD/YYYY value (today + 15 days) is computed at runtime in agent.py",
       "input_type_defaults": {
         "radio": "15",
         "checkbox": "No",
         "select": "15 days",
-        "text": "1st September 2026",
+        "text": "25/09/2026",
         "number": "15",
-        "date": "04/09/2026",
-        "textarea": "04/09/2026"
+        "date": "25/09/2026",
+        "textarea": "25/09/2026"
       },
       "priority": 7
     },
@@ -14864,6 +14876,66 @@
         "text": "Yes",
         "checkbox": "Yes",
         "textarea": "Yes"
+      }
+    },
+    "core_java_experience": {
+      "patterns": [
+        "corejava",
+        "core java",
+        "core-java",
+        "corejava experience",
+        "core java experience",
+        "experience in core java",
+        "experience in corejava",
+        "years of experience in core java",
+        "years of experience in corejava",
+        "experience with core java",
+        "experience with corejava",
+        "years of work experience do you have with core java",
+        "years of work experience do you have with corejava",
+        "how many years of work experience do you have with core java",
+        "how many years of work experience do you have with corejava"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 8,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4.2",
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "checkbox": "Yes",
+        "textarea": "4.2 Years"
+      }
+    },
+    "springboot_experience": {
+      "patterns": [
+        "springboot",
+        "spring boot",
+        "spring-boot",
+        "springboot experience",
+        "spring boot experience",
+        "experience in springboot",
+        "experience in spring boot",
+        "years of experience in springboot",
+        "years of experience in spring boot",
+        "experience with springboot",
+        "experience with spring boot",
+        "years of work experience do you have with springboot",
+        "years of work experience do you have with spring boot",
+        "how many years of work experience do you have with springboot",
+        "how many years of work experience do you have with spring boot"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 8,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4.2",
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "checkbox": "Yes",
+        "textarea": "4.2 Years"
       }
     },
     "microservices_experience": {
@@ -64092,13 +64164,13 @@
         "place of birth"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "Banda, Uttar Pradesh, India",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "Banda, Uttar Pradesh, India",
+        "textarea": "Banda, Uttar Pradesh, India",
+        "radio": "Banda, Uttar Pradesh, India",
+        "select": "Banda, Uttar Pradesh, India",
         "checkbox": "Yes"
       }
     },
@@ -64109,13 +64181,13 @@
         "enter your age"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "26",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "26",
+        "textarea": "26",
+        "radio": "26",
+        "select": "26",
         "checkbox": "Yes"
       }
     },
@@ -64154,13 +64226,13 @@
         "address"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "Bengaluru, Karnataka, India",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "Bengaluru, Karnataka, India",
+        "textarea": "Bengaluru, Karnataka, India",
+        "radio": "Bengaluru, Karnataka, India",
+        "select": "Bengaluru, Karnataka, India",
         "checkbox": "Yes"
       }
     },
@@ -64169,13 +64241,13 @@
         "alternate mobile"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "7905828880",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "7905828880",
+        "textarea": "7905828880",
+        "radio": "7905828880",
+        "select": "7905828880",
         "checkbox": "Yes"
       }
     },
@@ -64184,13 +64256,13 @@
         "alternate email"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "siddhant3646@gmail.com",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "siddhant3646@gmail.com",
+        "textarea": "siddhant3646@gmail.com",
+        "radio": "siddhant3646@gmail.com",
+        "select": "siddhant3646@gmail.com",
         "checkbox": "Yes"
       }
     },
@@ -64199,13 +64271,13 @@
         "secondary contact"
       ],
       "category": "personal_info",
-      "default": "Please provide",
+      "default": "6263066371",
       "priority": 8,
       "input_type_defaults": {
-        "text": "Please provide",
-        "textarea": "Please provide",
-        "radio": "Please provide",
-        "select": "Please provide",
+        "text": "6263066371",
+        "textarea": "6263066371",
+        "radio": "6263066371",
+        "select": "6263066371",
         "checkbox": "Yes"
       }
     },

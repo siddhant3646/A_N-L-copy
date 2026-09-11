@@ -133,3 +133,86 @@ class TestFixedQAResults:
         ans, _ = pattern_matcher.fuzzy_match(q, input_type="text")
         assert ans.startswith("https://www.linkedin.com/in/siddhant3646")
         assert "example.com" not in ans
+
+    def test_equity_in_current_company(self, pattern_matcher):
+        q = "Do you hold any equity in the current company?"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="text")
+        assert ans == "No"
+        assert score >= 0.95
+
+    def test_address_resolved(self, pattern_matcher):
+        q = "Address"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="text")
+        assert "bengaluru" in ans.lower() or "karnataka" in ans.lower()
+        assert "please provide" not in ans.lower()
+
+    def test_tools_platforms_technologies_proficiency(self, pattern_matcher):
+        q = "Which tools, platforms, or technologies are you proficient in? (e.g., Jira, GitHub, MS Project, AI tools, etc.)"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="textarea")
+        assert "http" not in ans.lower()
+        assert "jira" in ans.lower() or "git" in ans.lower() or "docker" in ans.lower()
+
+    def test_scalable_backend_system_architecture(self, pattern_matcher):
+        q = "Can you design a scalable backend system for a high-traffic application? What architecture would you choose and why?"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="textarea")
+        assert ans != "23"
+        assert len(ans) > 50
+        assert "microservices" in ans.lower() or "event-driven" in ans.lower() or "kafka" in ans.lower()
+
+    def test_spring_boot_rest_api_best_practices(self, pattern_matcher):
+        q = "How do you design robust and secure REST APIs in Spring Boot? What best practices do you follow?"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="textarea")
+        assert ans != "4.2 Years"
+        assert len(ans) > 50
+        assert "spring security" in ans.lower() or "rest" in ans.lower() or "validation" in ans.lower()
+
+    def test_visa_sponsorship_negative(self, pattern_matcher, resolver):
+        q = "Will you now or in the future require sponsorship for employment visa status?"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="radio")
+        assert ans == "No"
+        options = [Option(value="yes", label="Yes"), Option(value="no", label="No")]
+        match = resolver.resolve(ans, InputType.RADIO, options, question=q)
+        assert match.matched_option is not None
+        assert match.matched_option.value.lower() == "no"
+
+    def test_resume_attachment_link(self, pattern_matcher):
+        q = "Please attach your updated resume."
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="text")
+        assert ans != "0"
+        assert "http" in ans or "portfolio" in ans.lower() or "github" in ans.lower()
+
+    def test_dynamic_lwd_resolution(self, pattern_matcher):
+        q = "If you are serving notice, what will be your official last working day?"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="text")
+        assert "__DYNAMIC_" not in ans
+        assert len(ans) > 0
+
+    def test_holding_offer_doj_ctc(self, pattern_matcher):
+        q = "Are you holding any offer? If yes, please specify the DOJ and CTC."
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="textarea")
+        assert "3000000" not in ans
+        assert "2300000" not in ans
+        assert "no" in ans.lower()
+
+    def test_side_projects_github_url(self, pattern_matcher):
+        q = "Have you built any personal or side projects in the last 12 months? Please share the GitHub URL"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="textarea")
+        assert "github" in ans.lower() or "http" in ans.lower()
+
+    def test_corejava_and_springboot_experience(self, pattern_matcher):
+        q1 = "corejava*"
+        ans1, score1 = pattern_matcher.fuzzy_match(q1, input_type="text")
+        assert "4.2" in ans1 or "4" in ans1
+
+        q2 = "springboot *"
+        ans2, score2 = pattern_matcher.fuzzy_match(q2, input_type="text")
+        assert "4.2" in ans2 or "4" in ans2
+
+    def test_earliest_start_date(self, pattern_matcher):
+        q = "Earliest start date?*"
+        ans, score = pattern_matcher.fuzzy_match(q, input_type="text")
+        assert score >= 0.85
+        assert any(sep in ans for sep in ["/", "-"]) or "2026" in ans
+
+
+

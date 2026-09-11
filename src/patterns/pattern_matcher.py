@@ -144,6 +144,65 @@ class PatternMatcher:
             )
             return tinyurl_ans, max(score, 0.98)
 
+        # 0g. Scalable Backend System / High-Traffic Architecture
+        if bool(re.search(r'\b(scalable backend system|architecture would you choose|design a scalable|design scalable backend)\b', ql)):
+            return (
+                "I would choose an event-driven microservices architecture using Java/Spring Boot for core domain services, "
+                "PostgreSQL with read replicas and connection pooling (HikariCP) for ACID transaction data (orders/payments), "
+                "Redis for low-latency distributed caching, and Apache Kafka for asynchronous order/payment event streams. "
+                "The architecture incorporates an API Gateway with token-bucket rate limiting, load balancing, idempotent API endpoints, "
+                "and horizontal pod autoscaling on Kubernetes with multi-AZ deployment to guarantee high availability, fault tolerance, "
+                "and sub-second latency under peak traffic."
+            ), max(score, 0.98)
+
+        # 0h. Robust & Secure REST APIs in Spring Boot Best Practices
+        if bool(re.search(r'\b(robust and secure rest apis|best practices do you follow.*spring boot|spring boot.*best practices)\b', ql)) or ('secure rest apis' in ql and 'spring boot' in ql):
+            return (
+                "I implement RESTful principles with versioned endpoints, Spring Security with OAuth2/JWT for stateless authentication, "
+                "and role-based access control (RBAC). Key best practices include: 1) Strict input validation via Hibernate Validator (@Valid), "
+                "2) Centralized exception handling via @RestControllerAdvice returning standardized RFC 7807 problem details, "
+                "3) DTO separation with MapStruct to prevent entity leakage, 4) Idempotent endpoints with unique idempotency keys for mutations, "
+                "5) Connection pooling (HikariCP) and pagination for data retrieval, 6) Structured logging with correlation IDs (MDC/Micrometer) for distributed tracing, "
+                "and 7) OpenAPI/Swagger documentation and OWASP top 10 security headers."
+            ), max(score, 0.98)
+
+        # 0i. Equity / ESOP in Current Company
+        is_equity_q = bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|esop|stock\s+options?\s+in)\b', ql) or
+                           ('equity' in ql and ('current company' in ql or 'employer' in ql or 'hold' in ql)))
+        if is_equity_q:
+            return 'No', max(score, 0.98)
+
+        # 0j. Address
+        is_address_q = bool(ql in ('address', 'current address', 'permanent address', 'residential address', 'street address', 'address line 1', 'address line 2') or
+                            (ql.startswith('address') and len(ql) <= 20 and not any(k in ql for k in ['email', 'ip', 'mac', 'web'])))
+        if is_address_q:
+            return 'Bengaluru, Karnataka, India', max(score, 0.98)
+
+        # 0k. Tools & Platforms Proficiency
+        is_tools_proficient = bool(re.search(r'\b(tools.*platforms.*technologies.*proficient|tools, platforms, or technologies|technologies are you proficient in|tools and platforms you are proficient)\b', ql) or
+                                   ('proficient in' in ql and ('jira' in ql or 'tools' in ql or 'platforms' in ql)))
+        if is_tools_proficient:
+            return 'Git, GitHub, Jira, Docker, Kubernetes, AWS, Postman, IntelliJ IDEA, VS Code, CI/CD', max(score, 0.98)
+
+        # 0l. Resume Attachment Prompt in Text Input
+        if bool(re.search(r'\b(attach (your )?updated resume|upload (your )?resume|resume link|share your resume)\b', ql)) and not any(kw in ql for kw in ['experience', 'years', 'how many']):
+            return 'https://siddhant3646.github.io/Portfolio/', max(score, 0.98)
+
+        # 0m. Offer in hand / Holding offers / Competing offers
+        if bool(re.search(r'\b(offer\s+in\s+hand|holding\s+(any\s+)?offers?|competing\s+offers?|existing\s+offers?)\b', ql)):
+            if input_type in ('number', 'numeric'):
+                return '0', max(score, 0.98)
+            return 'No', max(score, 0.98)
+
+        # 0n. Side Projects & GitHub URL
+        if ('personal or side projects' in ql or 'side projects' in ql) and ('github' in ql or 'share' in ql or 'link' in ql):
+            return 'Yes, GitHub: https://github.com/siddhant3646 | Portfolio: https://siddhant3646.github.io/Portfolio/', max(score, 0.98)
+
+        # 0o. Visa Sponsorship Requirement
+        if 'sponsorship' in ql or 'visa sponsorship' in ql:
+            if any(kw in ql for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment']):
+                return 'No', max(score, 0.98)
+
         # 1. Disability safety guard: Candidate has NO disability
         if 'disability' in ql:
             if al.lower() in ('yes', 'true', '1') or 'do you have' in ql or 'any kind of disability' in ql:
@@ -204,13 +263,15 @@ class PatternMatcher:
 
         # 8. Detect company / payroll company questions vs numeric / salary false positives
         is_company_q = bool(re.search(r'\b(current company|payroll company|which company|working at|current payroll|current employer)\b', ql) and
-                           not re.search(r'\b(relative|family|experience|years|how many|early release|resign|notice|buy ?out|negotiable)\b', ql))
+                           not re.search(r'\b(relative|family|experience|years|how many|early release|resign|notice|buy ?out|negotiable|equity|stock|shares|esop|bonus|holding|hold)\b', ql))
         if is_company_q:
             if re.search(r'^\d+$', al) or al.lower() in ('yes', 'no', '4.2', '4.2 years', '4 years'):
                 return 'Everbridge', max(score, 0.98)
 
         # 9. Detect GitHub / portfolio link in text inputs
-        is_portfolio_link = bool(re.search(r'\b(github|portfolio link|portfolio url|online portfolio|repo link|portfolio or best work|best work link|add your portfolio|work link)\b', ql))
+        is_portfolio_link = bool((re.search(r'\b(portfolio link|portfolio url|online portfolio|repo link|portfolio or best work|best work link|add your portfolio|work link)\b', ql) or
+                                 (re.search(r'\b(github url|github link|github profile)\b', ql) and not re.search(r'\b(tools|platforms|technologies|proficient|e\.?g\.?)\b', ql))) and
+                                 not is_tools_proficient)
         if is_portfolio_link:
             if input_type in ('radio', 'checkbox'):
                 return 'Yes', max(score, 0.98)

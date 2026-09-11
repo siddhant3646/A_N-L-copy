@@ -242,6 +242,7 @@ class SentinelAgent:
         exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
         exact_match_keys_json = json.dumps(exact_match_keys)
         profile_json = json.dumps(self._profile_store.to_js_dict()) if self._profile_store else '{}'
+        is_intersession = bool(self._task_description and ('intersession' in self._task_description.lower() or '20 jobs' in self._task_description.lower()))
         
         init_script = (
             f"window.__SENTINEL_DEBUG__ = {'true' if os.getenv('SENTINEL_JS_DEBUG') else 'false'};\n"
@@ -251,6 +252,7 @@ class SentinelAgent:
             f"window.__SENTINEL_STOPWORDS__ = {stopwords_json};\n"
             f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
             f"window.__SENTINEL_PROFILE__ = {profile_json};\n"
+            f"window.__SENTINEL_IS_INTERSESSION__ = {'true' if is_intersession else 'false'};\n"
         )
         
         try:
@@ -470,8 +472,50 @@ class SentinelAgent:
             return 'No', 0.98
 
         # Holding offers
-        if 'offer in hand' in question_lower or 'holding offer' in question_lower or 'competing offer' in question_lower or 'existing offer' in question_lower:
+        if 'offer in hand' in question_lower or 'holding offer' in question_lower or 'competing offer' in question_lower or 'existing offer' in question_lower or 'holding any offer' in question_lower:
             return 'No', 0.98
+
+        # Equity / ESOP in current company
+        if bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|esop|stock\s+options?\s+in)\b', question_lower)) or ('equity' in question_lower and ('current company' in question_lower or 'employer' in question_lower or 'hold' in question_lower)):
+            return 'No', 0.98
+
+        # Address
+        if question_lower in ('address', 'current address', 'permanent address', 'residential address', 'street address', 'address line 1', 'address line 2') or (question_lower.startswith('address') and len(question_lower) <= 20 and not any(k in question_lower for k in ['email', 'ip', 'mac', 'web'])):
+            return 'Bengaluru, Karnataka, India', 0.98
+
+        # Tools & Platforms Proficiency
+        if bool(re.search(r'\b(tools.*platforms.*technologies.*proficient|tools, platforms, or technologies|technologies are you proficient in|tools and platforms you are proficient)\b', question_lower)) or ('proficient in' in question_lower and ('jira' in question_lower or 'tools' in question_lower or 'platforms' in question_lower)):
+            return 'Git, GitHub, Jira, Docker, Kubernetes, AWS, Postman, IntelliJ IDEA, VS Code, CI/CD', 0.98
+
+        # Scalable Backend System / Architecture
+        if bool(re.search(r'\b(scalable backend system|architecture would you choose|design a scalable|design scalable backend)\b', question_lower)):
+            return (
+                "I would choose an event-driven microservices architecture using Java/Spring Boot for core domain services, "
+                "PostgreSQL with read replicas and connection pooling (HikariCP) for ACID transaction data (orders/payments), "
+                "Redis for low-latency distributed caching, and Apache Kafka for asynchronous order/payment event streams. "
+                "The architecture incorporates an API Gateway with token-bucket rate limiting, load balancing, idempotent API endpoints, "
+                "and horizontal pod autoscaling on Kubernetes with multi-AZ deployment to guarantee high availability, fault tolerance, "
+                "and sub-second latency under peak traffic."
+            ), 0.98
+
+        # Robust & Secure REST APIs in Spring Boot Best Practices
+        if bool(re.search(r'\b(robust and secure rest apis|best practices do you follow.*spring boot|spring boot.*best practices)\b', question_lower)) or ('secure rest apis' in question_lower and 'spring boot' in question_lower):
+            return (
+                "I implement RESTful principles with versioned endpoints, Spring Security with OAuth2/JWT for stateless authentication, "
+                "and role-based access control (RBAC). Key best practices include: 1) Strict input validation via Hibernate Validator (@Valid), "
+                "2) Centralized exception handling via @RestControllerAdvice returning standardized RFC 7807 problem details, "
+                "3) DTO separation with MapStruct to prevent entity leakage, 4) Idempotent endpoints with unique idempotency keys for mutations, "
+                "5) Connection pooling (HikariCP) and pagination for data retrieval, 6) Structured logging with correlation IDs (MDC/Micrometer) for distributed tracing, "
+                "and 7) OpenAPI/Swagger documentation and OWASP top 10 security headers."
+            ), 0.98
+
+        # Resume Attachment Prompt in Text Input
+        if bool(re.search(r'\b(attach (your )?updated resume|upload (your )?resume|resume link|share your resume)\b', question_lower)) and not any(kw in question_lower for kw in ['experience', 'years', 'how many']):
+            return 'https://siddhant3646.github.io/Portfolio/', 0.98
+
+        # Side Projects & GitHub URL
+        if ('personal or side projects' in question_lower or 'side projects' in question_lower) and ('github' in question_lower or 'share' in question_lower or 'link' in question_lower):
+            return 'Yes, GitHub: https://github.com/siddhant3646 | Portfolio: https://siddhant3646.github.io/Portfolio/', 0.98
 
         # Academic eligibility (60%+ criteria)
         if ('60%' in question_lower or '60 percent' in question_lower or 'first class' in question_lower) and any(kw in question_lower for kw in ['academic', '10th', '12th', 'graduation', 'throughout']):
@@ -499,11 +543,12 @@ class SentinelAgent:
         if 'preferred pronouns' in question_lower or 'what pronouns' in question_lower or 'pronouns (he/him' in question_lower:
             return 'He/Him/His', 0.98
 
-        # Work Authorization in India
+        # Work Authorization in India & Visa Sponsorship
         if ('authorized to work in india' in question_lower or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower:
             return 'Yes', 0.98
-        if 'require sponsorship' in question_lower or 'require visa sponsorship' in question_lower or 'need visa sponsorship' in question_lower:
-            return 'No', 0.98
+        if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower:
+            if any(kw in question_lower for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment']):
+                return 'No', 0.98
 
         # Ex-employee / Ever worked for company
         ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|with|for)"
@@ -804,10 +849,12 @@ class SentinelAgent:
             lwd_date = datetime.now() + timedelta(days=15)
             return lwd_date.strftime('%d-%b-%y'), 0.98
         
-        # Desired / preferred / expected start date questions - return DD/MM/YYYY (today + 15 days)
+        # Desired / preferred / expected / earliest start date questions - return DD/MM/YYYY (today + 15 days)
         start_date_keywords = ['desired start date', 'preferred start date', 'expected start date',
+                               'earliest start date', 'earliest possible start date',
                                'when would you like to start', 'when can you start working',
-                               'proposed start date']
+                               'when can you join', 'proposed start date', 'available start date',
+                               'tentative start date', 'potential start date', 'earliest joining date']
         is_start_date_question = any(kw in question_lower for kw in start_date_keywords)
         # "start date" alone (without other noise) also qualifies
         if not is_start_date_question and 'start date' in question_lower:
@@ -4705,31 +4752,37 @@ class SentinelAgent:
         return 0
 
     async def _handle_instahyre_inbox_task(self) -> bool:
-        """Handle Instahyre Inbox:
-        1. Navigate directly to target inbox URL (https://www.instahyre.com/candidate/inbox/439288/6201541231/).
-        2. Ensure conversation filter is kept to 'All' (convTypes.ALL / value="0"). Do not change to Unread.
-        3. Check all messages in the conversation list until condition is met:
-           Condition: Message opened in the row doesn't have the completed questionnaire entry.
-           If entry is absent, answer questionnaire (if link present), submit, and send completion acknowledgment.
-           If entry is already present, skip to the next conversation."""
+        """Handle Instahyre Inbox & Questionnaire Flow (7-Step Workflow):
+        1. Opens Instahyre candidate inbox (https://www.instahyre.com/candidate/inbox/).
+        2. Click/ensure 'All' radio button filter is selected.
+        3. Open the first message card.
+        4. Check if there is acknowledgment message in history:
+           "Hi, I'm interested in this opportunity and have completed the questionnaire. Looking forward to hearing from you."
+        5. If this message is not available:
+           - Click questionnaire link, fill questionnaire, submit.
+           - Return to message card and add acknowledgment reply.
+           - Move to next card.
+        6. If next card already has that acknowledgment message, stop the task.
+        7. If the first message card has the acknowledgment message on initial check, close the task immediately.
+        """
         page = self._page
         if not page:
             return False
         
-        target_inbox_url = "https://www.instahyre.com/candidate/inbox/439288/6201541231/"
+        target_inbox_url = "https://www.instahyre.com/candidate/inbox/"
         print("📥 Starting Instahyre Inbox & Questionnaire Automation...")
         self._current_platform = "instahyre"
         if not hasattr(self, '_processed_questionnaires'):
             self._processed_questionnaires = set()
             
-        # Step 1: Ensure we are on the target inbox URL
+        # Step 1: Ensure we are on candidate inbox
         current_url = page.url or ''
         if 'candidate/inbox' not in current_url:
             print(f"📍 Navigating directly to Instahyre Inbox: {target_inbox_url}...")
             await page.goto(target_inbox_url, wait_until='domcontentloaded', timeout=30000)
             await asyncio.sleep(random.uniform(2.5, 3.5))
 
-        inbox_base_url = target_inbox_url
+        inbox_base_url = "https://www.instahyre.com/candidate/inbox/"
 
         # Step 2: Ensure filter is kept to 'All' (convTypes.ALL / value="0") - Do NOT change to Unread!
         print("🔘 Ensuring conversation filter is set to 'All'...")
@@ -4806,9 +4859,9 @@ class SentinelAgent:
                             return sc.candidatesConv.length;
                         }
                     }
-                    const cards = document.querySelectorAll(
-                        '.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate:not(.more-conv), .conv-candidate.cursor-pointer'
-                    );
+                    const cards = Array.from(document.querySelectorAll(
+                        '.conv-candidate.cursor-pointer, .conv-candidates > .conv-candidate, div[ng-repeat*="conv in candidatesConv"] .conv-candidate'
+                    )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
                     const spinner = document.querySelector('.inbox-loading, .loading, #messageSpinner:not(.ng-hide)');
                     if (cards.length > 0 && !spinner) {
                         return cards.length;
@@ -4837,12 +4890,11 @@ class SentinelAgent:
         print(f"📬 Found {conv_count} conversation card(s) in inbox. Checking messages...")
 
         processed_conv_ids = set()
-        processed_conv_urls = set()
         messages_handled = 0
         max_conv_turns = max(conv_count * 3, 60)
 
         for turn in range(max_conv_turns):
-            # If navigated away from inbox, return to target inbox URL
+            # If navigated away from inbox, return to candidate inbox URL
             current_url = page.url or ''
             if 'candidate/inbox' not in current_url:
                 print(f"   🔙 Returning to inbox: {inbox_base_url}")
@@ -4856,6 +4908,18 @@ class SentinelAgent:
             c_id = ""
             try:
                 click_conv_res = await page.evaluate("""(processedIds) => {
+                    const getDomCards = () => {
+                        let list = Array.from(document.querySelectorAll(
+                            '.conv-candidate.cursor-pointer, .conv-candidates > .conv-candidate, div[ng-repeat*="conv in candidatesConv"] .conv-candidate'
+                        )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                        if (!list.length) {
+                            list = Array.from(document.querySelectorAll(
+                                '.conv-candidates, .conv-candidate:not(.more-conv)'
+                            )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                        }
+                        return list;
+                    };
+
                     try {
                         if (window.angular) {
                             const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
@@ -4865,13 +4929,17 @@ class SentinelAgent:
                                     let name = conv.recruiter_name || conv.name || (conv.recruiter ? conv.recruiter.name : '');
                                     const job = conv.job_title || conv.job || '';
                                     const rawId = String(conv.id || conv.conversation_id || '');
-                                    const cardId = rawId || (conv.job_id && conv.recruiter_id ? (conv.job_id + '::' + conv.recruiter_id) : '') || (name + '::' + job) || 'conv';
+                                    const cardId = rawId || (conv.job_id && conv.recruiter_id ? (conv.job_id + '::' + conv.recruiter_id) : '') || (name + '::' + job) || ('conv_' + i);
                                     
                                     if (!processedIds.includes(cardId) && !processedIds.includes(rawId)) {
-                                        const domCards = Array.from(document.querySelectorAll('.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate, .conv-candidates .conv-candidate, .conv-candidates, .conv-candidate'));
-                                        if (!name || name === 'Recruiter') {
-                                            const nameEl = domCards[i]?.querySelector('.candidate-name, .conv-name, .recruiter-name, [ng-bind*="name"], h4, h5');
+                                        const domCards = getDomCards();
+                                        if (domCards[i]) {
+                                            const nameEl = domCards[i].querySelector('.candidate-name, .conv-name, .recruiter-name, [ng-bind*="name"], h4, h5');
                                             if (nameEl && nameEl.innerText.trim()) name = nameEl.innerText.trim();
+                                            const jobEl = domCards[i].querySelector('.conv-job, .candidate-job, [ng-bind*="job"]');
+                                            if (jobEl && jobEl.innerText.trim()) {
+                                                // keep job
+                                            }
                                         }
                                         if (!name) name = 'Recruiter';
 
@@ -4902,22 +4970,16 @@ class SentinelAgent:
                     } catch(e) {}
 
                     // Fallback: DOM wrappers
-                    let wrappers = Array.from(document.querySelectorAll(
-                        '.conv-candidates-list .conv-candidates, .conv-candidates-list .conv-candidate:not(.more-conv)'
-                    ));
-                    if (!wrappers.length) {
-                        wrappers = Array.from(document.querySelectorAll('.conv-candidate.cursor-pointer, .conv-candidate:not(.more-conv)'));
-                    }
+                    const wrappers = getDomCards();
                     if (!wrappers.length) return { status: 'NO_MORE_CONVERSATIONS', totalCards: 0 };
                     
                     for (let i = 0; i < wrappers.length; i++) {
-                        const wrapper = wrappers[i];
-                        const card = wrapper.querySelector('.conv-candidate') || wrapper;
+                        const card = wrappers[i];
                         const nameEl = card.querySelector('.candidate-name, .conv-name, .recruiter-name, [ng-bind*="name"], h4, h5');
                         const jobEl = card.querySelector('.conv-job, .candidate-job, [ng-bind*="job"]');
                         const name = nameEl ? nameEl.innerText.trim() : 'Recruiter';
                         const job = jobEl ? jobEl.innerText.trim() : '';
-                        const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job);
+                        const cardId = card.getAttribute('data-id') || card.getAttribute('id') || (name + '::' + job) || ('conv_' + i);
                         if (!processedIds.includes(cardId)) {
                             card.scrollIntoView({ block: 'center', behavior: 'instant' });
                             card.click();
@@ -4971,82 +5033,105 @@ class SentinelAgent:
 
             print(f"\n📩 [{len(processed_conv_ids) + 1}/{c_total}] Checking conversation with {c_name} ({c_job})")
             
-            # Poll until the active thread's messages are loaded for the selected conversation
+            # Poll until the active thread's messages are loaded specifically for the selected conversation
             for _ready_turn in range(25):
-                is_ready = await page.evaluate("""(targetId) => {
+                is_ready = await page.evaluate("""(targetData) => {
+                    const { targetName, targetRawId, targetIndex } = targetData;
                     try {
                         if (window.angular) {
                             const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
                             if (sc) {
                                 if (sc.loadingMessages) return false;
-                                const activeId = String(sc.selectedCandidateConv?.id || sc.selectedCandidateConv?.conversation_id || '');
-                                if (targetId && activeId && activeId !== targetId) return false;
-                                if (sc.messagesToShow && sc.messagesToShow.length > 0) return true;
+                                if (sc.selectedCandidateConv) {
+                                    const selId = String(sc.selectedCandidateConv.id || sc.selectedCandidateConv.conversation_id || '');
+                                    const selName = (sc.selectedCandidateConv.recruiter_name || sc.selectedCandidateConv.name || (sc.selectedCandidateConv.recruiter ? sc.selectedCandidateConv.recruiter.name : '') || '').toLowerCase().trim();
+                                    if (targetRawId && selId && selId === String(targetRawId)) return true;
+                                    if (targetName && targetName !== 'Recruiter' && selName && (selName === targetName.toLowerCase().trim() || selName.includes(targetName.toLowerCase().trim()) || targetName.toLowerCase().includes(selName))) return true;
+                                }
                             }
                         }
                     } catch(e) {}
-                    const rows = document.querySelectorAll('.message.conv-email-row, #messages-tab .message-content, div[ng-repeat*="messagesToShow"]');
+                    const rows = document.querySelectorAll('.message.conv-email-row, #messages-tab .message-content, div[ng-repeat*="messagesToShow"], .conv-email-row');
                     const spinner = document.querySelector('#messageSpinner:not(.ng-hide), .inbox-loading');
                     return rows.length > 0 && !spinner;
-                }""", raw_conv_id)
+                }""", {'targetName': c_name, 'targetRawId': raw_conv_id, 'targetIndex': c_idx})
                 if is_ready:
                     break
                 await asyncio.sleep(0.25)
 
-            inbox_thread_url = page.url or ''
-            if inbox_thread_url and inbox_thread_url != inbox_base_url and inbox_thread_url in processed_conv_urls:
-                print(f"   ⏩ Conversation thread URL {inbox_thread_url} already processed. Skipping...")
-                processed_conv_ids.add(c_id)
-                continue
-
-            # Step 3c: Inspect opened conversation messages for completion acknowledgment entry
-            # STRICT RULE: ONLY messages sent by candidate are checked for acknowledgment. Recruiter messages NEVER match!
+            # Step 4: Inspect opened conversation messages for completion acknowledgment entry
+            # Check candidate messages for "completed the questionnaire"
             try:
-                msg_inspection = await page.evaluate("""(targetId) => {
+                msg_inspection = await page.evaluate("""(targetData) => {
+                    const { targetName, targetRawId, targetIndex } = targetData;
                     const TARGET_COMPLETED = "completed the questionnaire";
-                    const TARGET_INTEREST = "interested in this opportunity";
-
-                    let scopeMessages = [];
-                    let candidateMsgs = [];
-                    let isScopeReady = false;
-
-                    if (window.angular) {
-                        const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
-                        if (sc) {
-                            const activeId = String(sc.selectedCandidateConv?.id || sc.selectedCandidateConv?.conversation_id || '');
-                            if (!targetId || !activeId || activeId === targetId) {
-                                if (sc.messagesToShow && sc.messagesToShow.length > 0) {
-                                    scopeMessages = sc.messagesToShow;
-                                    isScopeReady = true;
-                                }
-                            }
-                        }
-                    }
 
                     let hasCompletedAckEntry = false;
+                    let allScopeMessages = [];
+                    let qUrl = null;
 
-                    if (isScopeReady && scopeMessages.length > 0) {
-                        // STRICT: Only inspect messages sent by the candidate!
-                        candidateMsgs = scopeMessages.filter(m => m.is_candidate === true || m.is_candidate === 1 || m.sender === 'Candidate');
-                        for (const cm of candidateMsgs) {
-                            const text = (cm.content || cm.content_html || '').replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim().toLowerCase();
-                            if (text.includes(TARGET_COMPLETED) || text.includes(TARGET_INTEREST) || text.includes('looking forward to hearing from you')) {
-                                hasCompletedAckEntry = true;
-                                break;
+                    const checkAckText = (t) => {
+                        if (!t) return false;
+                        const s = t.toLowerCase();
+                        return s.includes(TARGET_COMPLETED);
+                    };
+
+                    // LAYER 1: Angular Scope Inspection
+                    if (window.angular) {
+                        try {
+                            const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                            if (sc) {
+                                const selId = sc.selectedCandidateConv ? String(sc.selectedCandidateConv.id || sc.selectedCandidateConv.conversation_id || '') : '';
+                                const isMatchingConv = !targetRawId || !selId || selId === String(targetRawId);
+                                if (isMatchingConv) {
+                                    if (sc.messagesToShow && sc.messagesToShow.length > 0) {
+                                        allScopeMessages = sc.messagesToShow;
+                                    } else if (sc.selectedCandidateConv && sc.selectedCandidateConv.messages && sc.selectedCandidateConv.messages.length > 0) {
+                                        allScopeMessages = sc.selectedCandidateConv.messages;
+                                    }
+                                }
+                                for (const m of allScopeMessages) {
+                                    const text = (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ');
+                                    const html = m.content_html || m.content || '';
+                                    
+                                    // Check candidate messages for acknowledgment
+                                    const isCandidate = m.is_candidate === true || m.is_candidate === 1 || m.sender === 'Candidate' || m.from === 'candidate' || m.sender_type === 'candidate';
+                                    if (isCandidate && checkAckText(text)) {
+                                        hasCompletedAckEntry = true;
+                                    }
+                                    // Also check if text is specifically candidate ack phrase (ignoring recruiter instructions)
+                                    if (checkAckText(text) && !text.toLowerCase().includes('would like you to complete') && !text.toLowerCase().includes('please fill the questionnaire') && !text.toLowerCase().includes('as part of the application process')) {
+                                        hasCompletedAckEntry = true;
+                                    }
+
+                                    // Extract questionnaire url from recruiter message
+                                    const match = html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
+                                    if (match && !qUrl) {
+                                        qUrl = match[1];
+                                    }
+                                }
                             }
-                        }
-                    } else {
-                        // DOM Fallback: Check candidate message rows in right pane
-                        const rightPane = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container');
+                        } catch(e) {}
+                    }
+
+                    // LAYER 2: DOM Right Pane Message Elements (Candidate messages only)
+                    if (!hasCompletedAckEntry) {
+                        const rightPane = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container, #candidate-inbox .col-md-8, #candidate-inbox .col-sm-8, .inbox-right-pane') || document.body;
                         if (rightPane) {
-                            const candidateRows = Array.from(rightPane.querySelectorAll(
-                                '.message.conv-email-row.candidate-message, .message.conv-email-row:has(.candidate-name)'
-                            )).filter(n => !n.closest('.ql-editor') && !n.closest('#add-message-block'));
-                            for (const row of candidateRows) {
-                                const isRecruiter = row.querySelector('.recruiter-name, [ng-if*="!message.is_candidate"]') !== null;
-                                if (isRecruiter) continue;
-                                const text = (row.innerText || row.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
-                                if (text.includes(TARGET_COMPLETED) || text.includes(TARGET_INTEREST)) {
+                            const messageRows = Array.from(rightPane.querySelectorAll(
+                                '.message.conv-email-row, .conv-email-row, div[ng-repeat*="messagesToShow"], .email-content, .message'
+                            )).filter(el => !el.closest('.ql-editor') && !el.closest('#add-message-block') && !el.closest('.quill-editor'));
+
+                            for (const row of messageRows) {
+                                const headerText = (row.querySelector('.sender-name, .conv-name, strong, b, h4, h5')?.innerText || '').toLowerCase();
+                                const contentText = (row.querySelector('.message-content, .email-text, [ng-bind-html*="message.content"]')?.innerText || row.innerText || '').toLowerCase();
+                                const isCandidate = headerText.includes('(you)') || headerText.includes('you') || headerText.includes('siddhant') || row.classList.contains('candidate-message') || row.classList.contains('sent-by-user');
+                                
+                                if (isCandidate && checkAckText(contentText)) {
+                                    hasCompletedAckEntry = true;
+                                    break;
+                                }
+                                if (checkAckText(contentText) && !contentText.includes('would like you to complete') && !contentText.includes('please fill the questionnaire') && !contentText.includes('as part of the application process')) {
                                     hasCompletedAckEntry = true;
                                     break;
                                 }
@@ -5054,16 +5139,29 @@ class SentinelAgent:
                         }
                     }
 
-                    // Questionnaire URL (extracted from recruiter messages)
-                    let qUrl = null;
-                    for (const m of scopeMessages) {
-                        const html = m.content_html || m.content || '';
-                        const match = html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
-                        if (match) {
-                            qUrl = match[1];
-                            break;
-                        }
+                    // LAYER 3: Sidebar Card Snippet Inspection
+                    if (!hasCompletedAckEntry) {
+                        try {
+                            const cards = Array.from(document.querySelectorAll(
+                                '.conv-candidate.cursor-pointer, .conv-candidates > .conv-candidate, div[ng-repeat*="conv in candidatesConv"] .conv-candidate'
+                            )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                            let activeCard = null;
+                            if (typeof targetIndex === 'number' && targetIndex >= 0 && targetIndex < cards.length) {
+                                activeCard = cards[targetIndex];
+                            }
+                            if (!activeCard && targetName && targetName !== 'Recruiter') {
+                                activeCard = cards.find(c => (c.innerText || '').toLowerCase().includes(targetName.toLowerCase().trim()));
+                            }
+                            if (activeCard) {
+                                const cardText = (activeCard.innerText || activeCard.textContent || '').toLowerCase();
+                                if (cardText.includes('you:') && cardText.includes('completed the questionnaire')) {
+                                    hasCompletedAckEntry = true;
+                                }
+                            }
+                        } catch(e) {}
                     }
+
+                    // Fallback questionnaire URL extraction from DOM links
                     if (!qUrl) {
                         const searchScope = document.querySelector('#messages-tab, .employer-conv-emails, .employer-conv-container') || document;
                         const links = Array.from(searchScope.querySelectorAll(
@@ -5082,11 +5180,10 @@ class SentinelAgent:
 
                     return {
                         hasCompletedAckEntry: hasCompletedAckEntry,
-                        candidateCount: candidateMsgs.length,
-                        totalMessages: scopeMessages.length,
+                        totalMessages: allScopeMessages.length,
                         qUrl: qUrl
                     };
-                }""", raw_conv_id)
+                }""", {'targetName': c_name, 'targetRawId': raw_conv_id, 'targetIndex': c_idx})
             except Exception as e:
                 print(f"   ⚠️ Error inspecting conversation message content: {e}")
                 msg_inspection = {'hasCompletedAckEntry': False, 'qUrl': None}
@@ -5101,17 +5198,27 @@ class SentinelAgent:
                 has_ack_entry = False
                 q_url = None
 
-            # Condition: If message opened in the row ALREADY has this entry -> Stop immediately
-            # Since inbox conversations are sorted chronologically (newest first), encountering an
-            # already-acknowledged conversation means all subsequent (older) conversations are also acknowledged.
+            # Rules 6 & 7: Check if acknowledgment is already present
             if has_ack_entry:
-                print(f"   ⏩ Conversation with {c_name} already contains acknowledgment entry.")
-                print(f"🎉 Instahyre Inbox Task finished: Reached already-acknowledged conversation ({c_name}). No unhandled messages.")
-                self.state.task_complete = True
-                return True
+                if messages_handled == 0:
+                    # Rule 7: First message card has ack -> close task immediately
+                    print(f"   ⏩ First conversation card with {c_name} already contains acknowledgment entry. All messages are up to date.")
+                    print(f"🎉 Instahyre Inbox Task finished: Reached already-acknowledged conversation ({c_name}). No unhandled messages.")
+                    self.state.task_complete = True
+                    return True
+                else:
+                    # Rule 6: Subsequent card already has ack -> stop task
+                    print(f"   ⏩ Conversation with {c_name} already contains acknowledgment entry.")
+                    print(f"🎉 Instahyre Inbox Task finished: Reached already-acknowledged conversation ({c_name}). Successfully handled {messages_handled} conversation(s).")
+                    self.state.task_complete = True
+                    return True
 
-            # Condition satisfied: Message opened does NOT have this entry -> Process it!
+            # Step 5: Condition satisfied: Message opened does NOT have acknowledgment entry -> Process it!
             print(f"   ✨ Condition Satisfied: No acknowledgment entry in thread with {c_name}. Processing...")
+
+            # Capture direct conversation thread URL before navigating to external questionnaire
+            curr_url = page.url or ''
+            thread_url = curr_url if ('candidate/inbox' in curr_url and not curr_url.rstrip('/').endswith('/candidate/inbox')) else inbox_base_url
 
             ack_success = False
             if q_url and q_url not in self._processed_questionnaires:
@@ -5127,34 +5234,64 @@ class SentinelAgent:
                         self.metrics['applications_submitted'] += 1
                         print("   ✅ Questionnaire submitted and confirmation verified!")
                         # Send questionnaire acknowledgment in recruiter thread
-                        ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
+                        ack_success = await self._send_instahyre_ack(
+                            page=page,
+                            inbox_url=thread_url,
+                            c_name=c_name,
+                            has_questionnaire=True,
+                            raw_conv_id=raw_conv_id,
+                            card_index=c_idx,
+                            card_id=c_id,
+                            job_title=c_job
+                        )
                     else:
                         print("   ⚠️ Questionnaire submission could not be verified. Skipping acknowledgment.")
                 except Exception as e:
                     print(f"   ❌ Error processing questionnaire {q_url}: {e}")
             elif q_url and q_url in self._processed_questionnaires:
                 print(f"   ⏩ Questionnaire already completed: {q_url}")
-                ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=True)
+                ack_success = await self._send_instahyre_ack(
+                    page=page,
+                    inbox_url=thread_url,
+                    c_name=c_name,
+                    has_questionnaire=True,
+                    raw_conv_id=raw_conv_id,
+                    card_index=c_idx,
+                    card_id=c_id,
+                    job_title=c_job
+                )
             else:
                 # No questionnaire link in this message — reply to candidate/recruiter thread directly
                 print(f"   ℹ️ No questionnaire link found in message from {c_name}. Replying with interest...")
-                ack_success = await self._send_instahyre_ack(page, inbox_thread_url, c_name, has_questionnaire=False)
+                ack_success = await self._send_instahyre_ack(
+                    page=page,
+                    inbox_url=thread_url,
+                    c_name=c_name,
+                    has_questionnaire=False,
+                    raw_conv_id=raw_conv_id,
+                    card_index=c_idx,
+                    card_id=c_id,
+                    job_title=c_job
+                )
 
             processed_conv_ids.add(c_id)
-            if inbox_thread_url and inbox_thread_url != inbox_base_url:
-                processed_conv_urls.add(inbox_thread_url)
 
             if ack_success:
                 messages_handled += 1
-                print(f"\n🎉 Instahyre Inbox Task finished! Successfully handled matching conversation with {c_name}.")
-                self.state.task_complete = True
-                return True
+                print(f"   ✅ Successfully handled conversation ({messages_handled}) with {c_name}. Moving to next card...")
+                # Return to inbox for next card if needed
+                current_url = page.url or ''
+                if 'candidate/inbox' not in current_url:
+                    try:
+                        await page.goto(inbox_base_url, wait_until='domcontentloaded', timeout=30000)
+                        await asyncio.sleep(random.uniform(1.5, 2.5))
+                    except Exception:
+                        pass
+                # Step 5: Continue to the next conversation card!
             else:
-                print(f"\n⚠️ Instahyre Inbox Task: Failed to send acknowledgment/reply to {c_name}.")
-                self.state.task_complete = True
-                return False
+                print(f"   ⚠️ Failed to send acknowledgment/reply to {c_name}. Continuing to next card...")
 
-        print(f"\n📭 Instahyre Inbox Task finished: Checked all available conversations. No unhandled messages found.")
+        print(f"\n📭 Instahyre Inbox Task finished: Checked all available conversations. Handled {messages_handled} message(s).")
         self.state.task_complete = True
         return True
 
@@ -5197,36 +5334,41 @@ class SentinelAgent:
 
         # Step 2: Extract questions metadata from Angular scope and DOM
         questions_info = await q_page.evaluate("""() => {
+            const domCards = Array.from(document.querySelectorAll('.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]'))
+                .filter((card, idx, arr) => !card.classList.contains('info-box') && !arr.some(other => other !== card && other.contains(card)));
+
             if (window.angular) {
                 const qCtrl = document.querySelector('.candidate-questionnaire');
                 const sc = window.angular.element(qCtrl || document.body).scope();
                 if (sc && sc.questionnaire && sc.questionnaire.questions && sc.questionnaire.questions.length > 0) {
-                    return sc.questionnaire.questions.map((q, idx) => ({
-                        index: idx,
-                        id: q.id,
-                        question: (q.text || '').replace(/REQUIRED/g, '').trim(),
-                        type: q.type,
-                        minValue: q.min_value !== undefined ? q.min_value : null,
-                        maxValue: q.max_value !== undefined ? q.max_value : null,
-                        choiceOptions: (q.choice_options || []).map(co => ({
-                            id: co.id,
-                            label: (co.label || co.text || co.name || co.option_text || '').trim()
-                        }))
-                    }));
+                    return sc.questionnaire.questions.map((q, idx) => {
+                        const card = domCards[idx];
+                        const isNumInput = card ? card.querySelector('input[type="number"]') !== null : false;
+                        const isRadioInput = card ? card.querySelector('input[type="radio"]') !== null : false;
+                        const isCheckboxInput = card ? card.querySelector('input[type="checkbox"]') !== null : false;
+                        const isTextarea = card ? card.querySelector('textarea') !== null : false;
+                        return {
+                            index: idx,
+                            id: q.id,
+                            question: (q.text || '').replace(/REQUIRED/g, '').trim(),
+                            type: q.type,
+                            isNumInput: isNumInput,
+                            isRadioInput: isRadioInput,
+                            isCheckboxInput: isCheckboxInput,
+                            isTextarea: isTextarea,
+                            minValue: q.min_value !== undefined ? q.min_value : null,
+                            maxValue: q.max_value !== undefined ? q.max_value : null,
+                            choiceOptions: (q.choice_options || []).map(co => ({
+                                id: co.id,
+                                label: (co.label || co.text || co.name || co.option_text || '').trim()
+                            }))
+                        };
+                    });
                 }
             }
 
             // Fallback: DOM query
-            let qCards = Array.from(document.querySelectorAll('.questionnaire-question'));
-            if (!qCards.length) {
-                qCards = Array.from(document.querySelectorAll('div[ng-repeat*="question in questionnaire.questions"]'));
-            }
-            qCards = qCards.filter((card, idx, arr) => 
-                !card.classList.contains('info-box') && 
-                !arr.some(other => other !== card && other.contains(card))
-            );
-
-            return qCards.map((card, idx) => {
+            return domCards.map((card, idx) => {
                 const labelEl = card.querySelector('.question-label span.ng-binding, .question-label span, .question-text-heading, .question-label');
                 let qText = '';
                 if (labelEl) {
@@ -5239,11 +5381,19 @@ class SentinelAgent:
                     const headerEl = card.querySelector('.question-text-container');
                     if (headerEl) qText = (headerEl.innerText || '').replace(/REQUIRED/g, '').trim();
                 }
+                const isNumInput = card.querySelector('input[type="number"]') !== null;
+                const isRadioInput = card.querySelector('input[type="radio"]') !== null;
+                const isCheckboxInput = card.querySelector('input[type="checkbox"]') !== null;
+                const isTextarea = card.querySelector('textarea') !== null;
                 return {
                     index: idx,
                     id: idx,
                     question: qText,
-                    type: 0,
+                    type: isNumInput ? 9 : (isTextarea ? 1 : (isRadioInput ? 2 : (isCheckboxInput ? 3 : 0))),
+                    isNumInput: isNumInput,
+                    isRadioInput: isRadioInput,
+                    isCheckboxInput: isCheckboxInput,
+                    isTextarea: isTextarea,
                     minValue: null,
                     maxValue: null,
                     choiceOptions: []
@@ -5266,6 +5416,7 @@ class SentinelAgent:
             choice_options = q.get('choiceOptions', [])
             min_val = q.get('minValue')
             max_val = q.get('maxValue')
+            is_num_input = q.get('isNumInput', False)
             
             if not q_text:
                 continue
@@ -5300,24 +5451,29 @@ class SentinelAgent:
                 conf = 0.5
                 source = "unmatched_fallback"
 
-            # Handle type-specific conversions
-            # Angular question types: 0=SINGLE_LINE, 1=MULTIPLE_LINE, 2=SINGLE_CHOICE, 3=MULTIPLE_CHOICE, 9=NUMERIC_INPUT
+            # Handle type-specific conversions and numeric sanitation
+            # Angular question types: 0=SINGLE_LINE, 1=MULTIPLE_LINE, 2=SINGLE_CHOICE, 3=MULTIPLE_CHOICE, 4/9=NUMERIC_INPUT
+            is_numeric_question = (
+                is_num_input or
+                q_type in (4, 9)
+            )
             numeric_val = None
-            if q_type == 9:
+            if is_numeric_question or (isinstance(ans, str) and re.search(r'(\d+(?:\.\d+)?)', str(ans))):
                 num_match = re.search(r'(\d+(?:\.\d+)?)', str(ans))
                 if num_match:
                     numeric_val = float(num_match.group(1))
-                else:
+                    if min_val is not None and numeric_val < min_val:
+                        numeric_val = float(min_val)
+                    if max_val is not None and numeric_val > max_val:
+                        numeric_val = float(max_val)
+                elif is_numeric_question:
                     numeric_val = 4.2
-                if min_val is not None and numeric_val < min_val:
-                    numeric_val = float(min_val)
-                if max_val is not None and numeric_val > max_val:
-                    numeric_val = float(max_val)
 
             answers_payload.append({
                 "index": q_idx,
                 "question": q_text,
                 "type": q_type,
+                "isNumInput": is_numeric_question,
                 "answer": str(ans),
                 "numericValue": numeric_val,
                 "source": source,
@@ -5325,12 +5481,13 @@ class SentinelAgent:
             })
 
             # Log to CSV
+            display_ans = str(numeric_val) if (is_numeric_question and numeric_val is not None) else str(ans)
             self.log_qa_result(
                 question=q_text,
-                answer=str(numeric_val if numeric_val is not None else ans),
-                input_type='numeric' if numeric_val is not None else 'text',
+                answer=display_ans,
+                input_type='numeric' if is_numeric_question else 'text',
                 options=[co.get('label', '') for co in choice_options],
-                selected_option=str(numeric_val if numeric_val is not None else ans),
+                selected_option=display_ans,
                 confidence=conf,
                 status='submitted',
                 platform='instahyre',
@@ -5339,10 +5496,10 @@ class SentinelAgent:
                 job_id_or_url=q_url
             )
             self.metrics['questions_answered'] += 1
-            print(f"      Q [{q_idx+1}]: '{q_text}' -> A: '{numeric_val if numeric_val is not None else ans}' (conf: {conf})")
+            print(f"      Q [{q_idx+1}]: '{q_text}' -> A: '{display_ans}' (conf: {conf})")
 
         # Step 4: Inject answers into Angular models and DOM elements
-        fill_res = await q_page.evaluate("""(answers) => {
+        fill_res = await q_page.evaluate(r"""(answers) => {
             if (window.angular) {
                 const qCtrl = document.querySelector('.candidate-questionnaire');
                 const sc = window.angular.element(qCtrl || document.body).scope();
@@ -5353,34 +5510,70 @@ class SentinelAgent:
                         const q = questions[item.index];
                         if (!q.answer) q.answer = {};
 
-                        // NUMERIC_INPUT (9)
-                        if (q.type === sc.QUESTION_TYPES.NUMERIC_INPUT || item.numericValue !== null) {
-                            q.answer.numeric_value = item.numericValue !== null ? item.numericValue : parseFloat(item.answer);
+                        const numVal = item.numericValue !== null ? item.numericValue : (parseFloat(item.answer) || null);
+                        const cleanNumStr = numVal !== null ? (Number.isInteger(numVal) ? String(numVal) : String(numVal)) : item.answer;
+
+                        // NUMERIC_INPUT / Number question
+                        if (q.type === 9 || q.type === 4 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.NUMERIC_INPUT) || item.isNumInput || numVal !== null) {
+                            if (numVal !== null) {
+                                q.answer.numeric_value = numVal;
+                                q.answer.number = numVal;
+                            }
+                            q.answer.text = cleanNumStr;
+                            q.answer.value = numVal !== null ? numVal : item.answer;
                         }
                         // SINGLE_LINE (0) / MULTIPLE_LINE (1)
-                        else if (q.type === sc.QUESTION_TYPES.SINGLE_LINE || q.type === sc.QUESTION_TYPES.MULTIPLE_LINE) {
+                        if (q.type === 0 || q.type === 1 || (sc.QUESTION_TYPES && (q.type === sc.QUESTION_TYPES.SINGLE_LINE || q.type === sc.QUESTION_TYPES.MULTIPLE_LINE))) {
                             q.answer.text = item.answer;
+                            q.answer.value = item.answer;
                         }
                         // MULTIPLE_CHOICE (3)
-                        else if (q.type === sc.QUESTION_TYPES.MULTIPLE_CHOICE) {
+                        if (q.type === 3 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.MULTIPLE_CHOICE)) {
                             if (q.choice_options && q.choice_options.length > 0) {
                                 const target = (item.answer || '').toLowerCase().trim();
+                                const tokens = target.split(/[,;\/\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+                                let anySelected = false;
                                 for (let co of q.choice_options) {
                                     const lbl = (co.label || co.text || co.name || co.option_text || '').toLowerCase().trim();
-                                    if (lbl === target || lbl.includes(target) || target.includes(lbl) || 
-                                        (target.includes('15') && (lbl.includes('immediate') || lbl.includes('30')))) {
+                                    const isMatch = (
+                                        lbl === target ||
+                                        lbl.includes(target) ||
+                                        target.includes(lbl) ||
+                                        tokens.some(t => t.length > 1 && (lbl === t || lbl.includes(t) || t.includes(lbl))) ||
+                                        (target.includes('15') && (lbl.includes('immediate') || lbl.includes('30')))
+                                    );
+                                    if (isMatch) {
                                         co.selected = true;
+                                        co.is_selected = true;
+                                        anySelected = true;
                                     } else {
                                         co.selected = false;
+                                        co.is_selected = false;
                                     }
                                 }
-                                if (!q.choice_options.some(co => co.selected)) {
-                                    q.choice_options[0].selected = true;
+                                if (!anySelected) {
+                                    const javaOpt = q.choice_options.find(co => (co.label || co.text || '').toLowerCase().includes('java'));
+                                    if (javaOpt) {
+                                        javaOpt.selected = true;
+                                        javaOpt.is_selected = true;
+                                    } else {
+                                        q.choice_options[0].selected = true;
+                                        q.choice_options[0].is_selected = true;
+                                    }
+                                }
+                                const selectedOpts = q.choice_options.filter(co => co.selected);
+                                q.answer.choices = selectedOpts;
+                                q.answer.choice_options = selectedOpts;
+                                q.answer.choice_ids = selectedOpts.map(co => co.id);
+                                q.answer.selected_choices = selectedOpts;
+                                if (selectedOpts.length > 0) {
+                                    q.answer.choice = selectedOpts[0];
+                                    q.answer.choice_id = selectedOpts[0].id;
                                 }
                             }
                         }
                         // SINGLE_CHOICE (2) / DROPDOWN
-                        else if (q.type === sc.QUESTION_TYPES.SINGLE_CHOICE || q.type === sc.QUESTION_TYPES.DROPDOWN) {
+                        if (q.type === 2 || (sc.QUESTION_TYPES && (q.type === sc.QUESTION_TYPES.SINGLE_CHOICE || q.type === sc.QUESTION_TYPES.DROPDOWN))) {
                             if (q.choice_options && q.choice_options.length > 0) {
                                 const target = (item.answer || '').toLowerCase().trim();
                                 let chosen = q.choice_options.find(co => {
@@ -5388,36 +5581,164 @@ class SentinelAgent:
                                     return lbl === target || lbl.includes(target) || target.includes(lbl);
                                 });
                                 if (!chosen) {
-                                    chosen = q.choice_options.find(co => (co.label || '').toLowerCase().includes('yes')) || q.choice_options[0];
+                                    chosen = q.choice_options.find(co => (co.label || co.text || '').toLowerCase().includes('yes')) || q.choice_options[0];
+                                }
+                                for (let co of q.choice_options) {
+                                    co.selected = (co === chosen);
+                                    co.is_selected = (co === chosen);
                                 }
                                 q.answer.choice = chosen;
+                                q.answer.choice_id = chosen.id;
+                                q.answer.choice_option = chosen;
+                                q.answer.choice_option_id = chosen.id;
+                                q.answer.selected_choice = chosen;
+                                chosen.selected = true;
                             }
                         }
                         // RATING_SCALE
-                        else if (q.type === sc.QUESTION_TYPES.RATING_SCALE) {
-                            q.answer.rating_scale_value = item.numericValue !== null ? item.numericValue : parseInt(item.answer) || 9;
+                        if (q.type === 5 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.RATING_SCALE)) {
+                            q.answer.rating_scale_value = numVal !== null ? numVal : parseInt(item.answer) || 9;
                         }
                     }
 
-                    sc.$apply();
+                    try { sc.$apply(); } catch(e) {}
                 }
             }
 
             // Sync native DOM inputs & trigger change events
-            const domCards = document.querySelectorAll('.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]');
+            const domCards = Array.from(document.querySelectorAll('.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]'))
+                .filter((card, idx, arr) => !card.classList.contains('info-box') && !arr.some(other => other !== card && other.contains(card)));
+
             domCards.forEach((card, idx) => {
                 if (idx >= answers.length) return;
                 const item = answers[idx];
-                const textInput = card.querySelector('input[type="text"], input[type="number"], input.text-answer-input');
+                const target = (item.answer || '').toLowerCase().trim();
+                const tokens = target.split(/[,;\/\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+                const numVal = item.numericValue !== null ? item.numericValue : (parseFloat(item.answer) || null);
+                const cleanNumStr = numVal !== null ? (Number.isInteger(numVal) ? String(numVal) : String(numVal)) : item.answer;
+
+                // 1. Checkboxes
+                const checkboxes = Array.from(card.querySelectorAll('input[type="checkbox"]'));
+                if (checkboxes.length > 0) {
+                    let anyChecked = false;
+                    for (let cb of checkboxes) {
+                        const lbl = (cb.labels && cb.labels[0] ? cb.labels[0].innerText : '') || (cb.parentElement ? cb.parentElement.innerText : '') || cb.value || '';
+                        const l = lbl.toLowerCase().trim();
+                        const isMatch = (
+                            l === target || 
+                            l.includes(target) || 
+                            target.includes(l) ||
+                            tokens.some(t => t.length > 1 && (l === t || l.includes(t) || t.includes(l))) ||
+                            (target.includes('15') && (l.includes('immediate') || l.includes('30')))
+                        );
+                        if (isMatch) {
+                            if (!cb.checked) {
+                                cb.click();
+                            }
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('input', { bubbles: true }));
+                            cb.dispatchEvent(new Event('change', { bubbles: true }));
+                            anyChecked = true;
+                        } else {
+                            if (cb.checked) {
+                                cb.click();
+                            }
+                            cb.checked = false;
+                            cb.dispatchEvent(new Event('input', { bubbles: true }));
+                            cb.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                    if (!anyChecked) {
+                        const firstOrJava = checkboxes.find(cb => {
+                            const lbl = ((cb.parentElement ? cb.parentElement.innerText : '') || '').toLowerCase();
+                            return lbl.includes('java') || lbl.includes('python');
+                        }) || checkboxes[0];
+                        if (firstOrJava) {
+                            if (!firstOrJava.checked) {
+                                firstOrJava.click();
+                            }
+                            firstOrJava.checked = true;
+                            firstOrJava.dispatchEvent(new Event('input', { bubbles: true }));
+                            firstOrJava.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                    return;
+                }
+
+                // 2. Radio buttons
+                const radios = Array.from(card.querySelectorAll('input[type="radio"]'));
+                if (radios.length > 0) {
+                    let matchedRadio = radios.find(r => {
+                        const lbl = (r.labels && r.labels[0] ? r.labels[0].innerText : '') || (r.parentElement ? r.parentElement.innerText : '') || r.value || '';
+                        const l = lbl.toLowerCase().trim();
+                        return l === target || l.includes(target) || target.includes(l);
+                    });
+                    if (!matchedRadio) {
+                        matchedRadio = radios.find(r => {
+                            const lbl = ((r.parentElement ? r.parentElement.innerText : '') || '').toLowerCase();
+                            return lbl.includes('yes');
+                        }) || radios[0];
+                    }
+                    if (matchedRadio) {
+                        if (!matchedRadio.checked) {
+                            matchedRadio.click();
+                        }
+                        matchedRadio.checked = true;
+                        matchedRadio.dispatchEvent(new Event('input', { bubbles: true }));
+                        matchedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    return;
+                }
+
+                // 3. Select Dropdown
+                const select = card.querySelector('select');
+                if (select) {
+                    let matchedOpt = Array.from(select.options).find(opt => {
+                        const text = (opt.text || opt.label || opt.value || '').toLowerCase().trim();
+                        return text === target || text.includes(target) || target.includes(text);
+                    });
+                    if (!matchedOpt) {
+                        matchedOpt = Array.from(select.options).find(opt => (opt.text || '').toLowerCase().includes('yes')) || 
+                                     select.options[1] || 
+                                     select.options[0];
+                    }
+                    if (matchedOpt) {
+                        select.value = matchedOpt.value;
+                        matchedOpt.selected = true;
+                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    return;
+                }
+
+                // 4. Number input
+                const numInput = card.querySelector('input[type="number"]');
+                if (numInput) {
+                    numInput.value = cleanNumStr;
+                    numInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    numInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    numInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                    return;
+                }
+
+                // 5. Textarea
                 const textarea = card.querySelector('textarea');
                 if (textarea) {
                     textarea.value = item.answer;
                     textarea.dispatchEvent(new Event('input', { bubbles: true }));
                     textarea.dispatchEvent(new Event('change', { bubbles: true }));
-                } else if (textInput) {
-                    textInput.value = item.numericValue !== null ? String(item.numericValue) : item.answer;
+                    textarea.dispatchEvent(new Event('blur', { bubbles: true }));
+                    return;
+                }
+
+                // 6. Text input
+                const textInput = card.querySelector('input[type="text"], input.text-answer-input:not([type="number"])');
+                if (textInput) {
+                    textInput.value = item.isNumInput && cleanNumStr ? cleanNumStr : item.answer;
                     textInput.dispatchEvent(new Event('input', { bubbles: true }));
                     textInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    textInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                    return;
                 }
             });
 
@@ -5426,33 +5747,89 @@ class SentinelAgent:
         
         await asyncio.sleep(random.uniform(1.5, 2.5))
         
-        # Step 5: Submit questionnaire
+        # Step 5: Submit questionnaire with validation recovery
         print("   📤 Submitting questionnaire...")
         submit_res = await q_page.evaluate("""() => {
+            // Guard: Fix any missing required fields before clicking submit
+            const cards = Array.from(document.querySelectorAll('.questionnaire-question, div[ng-repeat*="question in questionnaire.questions"]'))
+                .filter((card, idx, arr) => !card.classList.contains('info-box') && !arr.some(other => other !== card && other.contains(card)));
+
+            cards.forEach(card => {
+                const cbs = Array.from(card.querySelectorAll('input[type="checkbox"]'));
+                if (cbs.length > 0 && !cbs.some(c => c.checked)) {
+                    const defaultCb = cbs.find(c => {
+                        const lbl = ((c.parentElement ? c.parentElement.innerText : '') || '').toLowerCase();
+                        return lbl.includes('java') || lbl.includes('python');
+                    }) || cbs[0];
+                    if (defaultCb) {
+                        defaultCb.checked = true;
+                        defaultCb.click();
+                        defaultCb.checked = true;
+                        defaultCb.dispatchEvent(new Event('input', { bubbles: true }));
+                        defaultCb.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+                const rds = Array.from(card.querySelectorAll('input[type="radio"]'));
+                if (rds.length > 0 && !rds.some(r => r.checked)) {
+                    const defaultRd = rds.find(r => {
+                        const lbl = ((r.parentElement ? r.parentElement.innerText : '') || '').toLowerCase();
+                        return lbl.includes('yes');
+                    }) || rds[0];
+                    if (defaultRd) {
+                        defaultRd.checked = true;
+                        defaultRd.click();
+                        defaultRd.dispatchEvent(new Event('input', { bubbles: true }));
+                        defaultRd.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+                const sel = card.querySelector('select');
+                if (sel && (!sel.value || sel.selectedIndex <= 0)) {
+                    if (sel.options.length > 1) {
+                        sel.selectedIndex = 1;
+                        sel.value = sel.options[1].value;
+                        sel.dispatchEvent(new Event('input', { bubbles: true }));
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+
+            if (window.angular) {
+                const qCtrl = document.querySelector('.candidate-questionnaire');
+                const sc = window.angular.element(qCtrl || document.body).scope();
+                if (sc && sc.$apply) {
+                    try { sc.$apply(); } catch(e) {}
+                }
+            }
+
+            let clicked = false;
+            const submitBtn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg, button.btn-primary') ||
+                              Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim().includes('submit'));
+            if (submitBtn && submitBtn.offsetParent !== null) {
+                submitBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                submitBtn.focus();
+                submitBtn.click();
+                submitBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                clicked = true;
+            }
+
             if (window.angular) {
                 const qCtrl = document.querySelector('.candidate-questionnaire');
                 const sc = window.angular.element(qCtrl || document.body).scope();
                 if (sc && sc.submitQuestionnaire) {
                     try {
                         sc.submitQuestionnaire();
-                        return 'SUBMITTED_VIA_SCOPE';
+                        if (!sc.$$phase) sc.$apply();
+                        return clicked ? 'SUBMIT_CLICKED_AND_SCOPE' : 'SUBMITTED_VIA_SCOPE';
                     } catch(e) {}
                 }
             }
-            const submitBtn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg, button.btn-primary') ||
-                              Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim().includes('submit'));
-            if (submitBtn && submitBtn.offsetParent !== null) {
-                submitBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
-                submitBtn.click();
-                return 'SUBMIT_CLICKED';
-            }
-            return 'SUBMIT_NOT_FOUND';
+            return clicked ? 'SUBMIT_CLICKED' : 'SUBMIT_NOT_FOUND';
         }""")
         print(f"   📤 Submit Button Result: {submit_res}")
         
         # Step 6: Verify confirmation
         confirmed = False
-        for check_i in range(10):
+        for check_i in range(12):
             await asyncio.sleep(1.5)
             confirmed = await q_page.evaluate("""() => {
                 const textCenterDiv = document.querySelector('div.text-center');
@@ -5480,20 +5857,38 @@ class SentinelAgent:
             if confirmed:
                 print(f"   🎉 Confirmation Verified: 'Questionnaire has been sent' (check {check_i + 1})")
                 return True
+
+            # If not yet confirmed after check 3, re-trigger submit button click
+            if check_i in (2, 5):
+                await q_page.evaluate("""() => {
+                    const btn = document.querySelector('button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg, button.btn-primary');
+                    if (btn) { btn.click(); }
+                }""")
                 
         print("   ⚠️ Confirmation message not found within timeout.")
         return False
 
-    async def _send_instahyre_ack(self, page, inbox_url: str, c_name: str, has_questionnaire: bool = True) -> bool:
+    async def _send_instahyre_ack(
+        self,
+        page,
+        inbox_url: str,
+        c_name: str,
+        has_questionnaire: bool = True,
+        raw_conv_id: str = "",
+        card_index: int = 0,
+        card_id: str = "",
+        job_title: str = ""
+    ) -> bool:
         """
-        Navigate back to the Instahyre conversation thread and send a reply/acknowledgment
-        message in the Quill editor.
+        Navigate back to the Instahyre conversation thread, ensure the target conversation
+        card (matching card_index / raw_conv_id / c_name) is actively selected and loaded,
+        and send a reply/acknowledgment message in the Quill editor.
         - If has_questionnaire=True: sends questionnaire completion acknowledgment.
         - If has_questionnaire=False: sends general interest reply message.
         Verifies dispatch by inspecting the thread post-send, with up to 2 retries.
         """
         action_desc = "questionnaire completion acknowledgment" if has_questionnaire else "interest reply"
-        print(f"   💬 Sending {action_desc} to {c_name}...")
+        print(f"   💬 Sending {action_desc} to {c_name} (card index: {card_index})...")
 
         if has_questionnaire:
             ack_message = (
@@ -5513,22 +5908,215 @@ class SentinelAgent:
         # Retry loop: initial attempt + up to 2 retries (total 3 attempts)
         for attempt in range(1, 4):
             try:
-                # 1. Return to inbox thread if needed
-                if inbox_url and inbox_url != page.url:
-                    print(f"   🔙 Returning to conversation thread (attempt {attempt}/3): {inbox_url}")
-                    await page.goto(inbox_url, wait_until='domcontentloaded', timeout=30000)
+                # 1. Return to inbox / thread URL if needed
+                current_url = page.url or ''
+                target_url = inbox_url or "https://www.instahyre.com/candidate/inbox/"
+                if 'candidate/inbox' not in current_url or ('questionnaire' in current_url):
+                    print(f"   🔙 Returning to conversation thread (attempt {attempt}/3): {target_url}")
+                    await page.goto(target_url, wait_until='domcontentloaded', timeout=30000)
                     await asyncio.sleep(random.uniform(1.5, 2.5))
 
-                # 2. Wait up to 10 seconds for Quill editor to be visible and editable
+                # 2. Ensure filter is set to 'All'
+                try:
+                    await page.evaluate("""() => {
+                        try {
+                            let allRadio = document.querySelector(
+                                'input[type="radio"][ng-click*="convTypes.ALL"], ' +
+                                'input[type="radio"][ng-value*="convTypes.ALL"], ' +
+                                'input[type="radio"][value="0"]'
+                            );
+                            if (allRadio && !allRadio.checked) {
+                                allRadio.click();
+                                allRadio.checked = true;
+                                allRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                            if (window.angular) {
+                                const scope = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (scope && scope.setConvType && scope.convTypes) {
+                                    scope.$apply(() => {
+                                        scope.setConvType(scope.convTypes.ALL);
+                                    });
+                                }
+                            }
+                        } catch(e) {}
+                    }""")
+                except Exception:
+                    pass
+
+                # 3. Wait for conversations to be rendered / loaded in Angular or DOM
+                for _w in range(15):
+                    has_convs = await page.evaluate("""() => {
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc && sc.candidatesConv && sc.candidatesConv.length > 0) return true;
+                            }
+                            const cards = document.querySelectorAll('.conv-candidate, .conv-candidates, div[ng-repeat*="conv in candidatesConv"]');
+                            return cards.length > 0;
+                        } catch(e) { return false; }
+                    }""")
+                    if has_convs:
+                        break
+                    await asyncio.sleep(0.5)
+
+                # 4. Check if target conversation is actively loaded, and if not, switch to it
+                thread_switched = False
+                for _switch_attempt in range(3):
+                    thread_status = await page.evaluate("""(targetData) => {
+                        const { targetName, targetRawId, targetIndex } = targetData;
+                        let isActive = false;
+                        let currentActiveName = '';
+                        let currentActiveId = '';
+
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc && sc.selectedCandidateConv) {
+                                    currentActiveId = String(sc.selectedCandidateConv.id || sc.selectedCandidateConv.conversation_id || '');
+                                    currentActiveName = (sc.selectedCandidateConv.recruiter_name || sc.selectedCandidateConv.name || (sc.selectedCandidateConv.recruiter ? sc.selectedCandidateConv.recruiter.name : '') || '').toLowerCase().trim();
+                                }
+                                if (targetRawId && currentActiveId && currentActiveId === String(targetRawId)) {
+                                    isActive = true;
+                                } else if (targetName && targetName !== 'Recruiter' && currentActiveName && (currentActiveName === targetName.toLowerCase().trim() || currentActiveName.includes(targetName.toLowerCase().trim()) || targetName.toLowerCase().includes(currentActiveName))) {
+                                    isActive = true;
+                                }
+                            }
+                        } catch(e) {}
+
+                        // Check DOM header if Angular check inconclusive
+                        if (!isActive && targetName && targetName !== 'Recruiter') {
+                            const headerEl = document.querySelector('.employer-conv-container, .inbox-right-pane, #candidate-inbox .col-md-8, #candidate-inbox .col-sm-8');
+                            if (headerEl) {
+                                const headerText = (headerEl.innerText || '').toLowerCase();
+                                if (headerText.includes(targetName.toLowerCase().trim())) {
+                                    isActive = true;
+                                }
+                            }
+                        }
+
+                        if (isActive) {
+                            return { isActive: true, currentActiveName: currentActiveName };
+                        }
+
+                        // Not active -> Perform card click to switch
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc && sc.candidatesConv && sc.candidatesConv.length > 0) {
+                                    let targetConv = null;
+                                    let targetIdx = -1;
+                                    if (targetRawId) {
+                                        targetIdx = sc.candidatesConv.findIndex(c => String(c.id || c.conversation_id || '') === String(targetRawId));
+                                    }
+                                    if (targetIdx === -1 && targetName && targetName !== 'Recruiter') {
+                                        targetIdx = sc.candidatesConv.findIndex(c => {
+                                            const n = (c.recruiter_name || c.name || (c.recruiter ? c.recruiter.name : '') || '').toLowerCase().trim();
+                                            return n && (n === targetName.toLowerCase().trim() || n.includes(targetName.toLowerCase().trim()) || targetName.toLowerCase().includes(n));
+                                        });
+                                    }
+                                    if (targetIdx === -1 && typeof targetIndex === 'number' && targetIndex >= 0 && targetIndex < sc.candidatesConv.length) {
+                                        targetIdx = targetIndex;
+                                    }
+                                    if (targetIdx >= 0) {
+                                        targetConv = sc.candidatesConv[targetIdx];
+                                        sc.lockCandidateProfileRequests = 0;
+                                        if (sc.openConvCandidate) {
+                                            sc.$apply(() => {
+                                                sc.openConvCandidate(targetConv);
+                                            });
+                                        }
+                                        const getDomCards = () => {
+                                            let list = Array.from(document.querySelectorAll(
+                                                '.conv-candidate.cursor-pointer, .conv-candidates > .conv-candidate, div[ng-repeat*="conv in candidatesConv"] .conv-candidate'
+                                            )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                                            if (!list.length) {
+                                                list = Array.from(document.querySelectorAll(
+                                                    '.conv-candidates, .conv-candidate:not(.more-conv)'
+                                                )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                                            }
+                                            return list;
+                                        };
+                                        const domCards = getDomCards();
+                                        if (domCards[targetIdx]) {
+                                            const clickTarget = domCards[targetIdx].querySelector('.conv-candidate') || domCards[targetIdx];
+                                            clickTarget.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                            clickTarget.click();
+                                        }
+                                        return { isActive: false, switched: true, targetIdx: targetIdx, currentActiveName: currentActiveName };
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+
+                        // DOM Fallback click
+                        const wrappers = Array.from(document.querySelectorAll(
+                            '.conv-candidate.cursor-pointer, .conv-candidates > .conv-candidate, div[ng-repeat*="conv in candidatesConv"] .conv-candidate'
+                        )).filter((c, idx, arr) => !arr.some(other => other !== c && other.contains(c)));
+                        if (wrappers.length > 0) {
+                            let foundIdx = -1;
+                            if (targetName && targetName !== 'Recruiter') {
+                                foundIdx = wrappers.findIndex(w => {
+                                    const t = (w.innerText || '').toLowerCase();
+                                    return t.includes(targetName.toLowerCase().trim());
+                                });
+                            }
+                            if (foundIdx === -1 && typeof targetIndex === 'number' && targetIndex >= 0 && targetIndex < wrappers.length) {
+                                foundIdx = targetIndex;
+                            }
+                            if (foundIdx >= 0) {
+                                const cardToClick = wrappers[foundIdx];
+                                const clickTarget = cardToClick.querySelector('.conv-candidate') || cardToClick;
+                                clickTarget.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                clickTarget.click();
+                                return { isActive: false, switched: true, targetIdx: foundIdx, currentActiveName: currentActiveName };
+                            }
+                        }
+                        return { isActive: false, switched: false, currentActiveName: currentActiveName };
+                    }""", {'targetName': c_name, 'targetRawId': raw_conv_id, 'targetIndex': card_index})
+
+                    if thread_status is True or (isinstance(thread_status, dict) and thread_status.get('isActive', False)):
+                        thread_switched = True
+                        break
+                    await asyncio.sleep(1.0)
+
+                # Wait up to 5 seconds for active thread messages to settle
+                for _ in range(15):
+                    ready = await page.evaluate("""(targetData) => {
+                        const { targetName, targetRawId } = targetData;
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc) {
+                                    if (sc.loadingMessages) return false;
+                                    if (sc.selectedCandidateConv) {
+                                        const selId = String(sc.selectedCandidateConv.id || sc.selectedCandidateConv.conversation_id || '');
+                                        const selName = (sc.selectedCandidateConv.recruiter_name || sc.selectedCandidateConv.name || (sc.selectedCandidateConv.recruiter ? sc.selectedCandidateConv.recruiter.name : '') || '').toLowerCase().trim();
+                                        if (targetRawId && selId && selId === String(targetRawId)) return true;
+                                        if (targetName && targetName !== 'Recruiter' && selName && (selName === targetName.toLowerCase().trim() || selName.includes(targetName.toLowerCase().trim()) || targetName.toLowerCase().includes(selName))) return true;
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+                        return true;
+                    }""", {'targetName': c_name, 'targetRawId': raw_conv_id, 'targetIndex': card_index})
+                    if ready:
+                        break
+                    await asyncio.sleep(0.3)
+
+                # 5. Wait for Quill editor to be visible and editable in the active thread
                 editor_found = False
                 for _ in range(10):
-                    has_editor = await page.evaluate(f"""() => {{
-                        const ed = document.querySelector('{editor_selector}');
-                        return ed && ed.offsetParent !== null;
-                    }}""")
-                    if has_editor:
-                        editor_found = True
-                        break
+                    try:
+                        has_editor = await page.evaluate(f"""() => {{
+                            const ed = document.querySelector('{editor_selector}');
+                            const spinner = document.querySelector('#messageSpinner:not(.ng-hide), .inbox-loading');
+                            return ed && ed.offsetParent !== null && !spinner;
+                        }}""")
+                        if has_editor:
+                            editor_found = True
+                            break
+                    except Exception:
+                        pass
                     await asyncio.sleep(0.5)
 
                 if not editor_found:
@@ -5538,17 +6126,55 @@ class SentinelAgent:
                         continue
                     return False
 
-                # 3. Focus and click editor
+                # 6. Check if acknowledgment is already present in THIS active thread (idempotency check)
+                try:
+                    already_dispatched = await page.evaluate("""(kw) => {
+                        try {
+                            if (window.angular) {
+                                const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                                if (sc && sc.messagesToShow) {
+                                    const hasIt = sc.messagesToShow.some(m => {
+                                        if (m.is_candidate === true || m.is_candidate === 1 || m.sender === 'Candidate') {
+                                            const text = (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ');
+                                            return text.includes(kw);
+                                        }
+                                        return false;
+                                    });
+                                    if (hasIt) return true;
+                                }
+                            }
+                        } catch(e) {}
+                        return false;
+                    }""", expected_kw)
+                    if already_dispatched:
+                        self.metrics['instahyre_acks_sent'] = self.metrics.get('instahyre_acks_sent', 0) + 1
+                        print(f"   ✅ Instahyre {action_desc} message already verified in thread for {c_name}!")
+                        return True
+                except Exception:
+                    pass
+
+                # 7. Snapshot initial candidate message count before sending
+                initial_msg_count = await page.evaluate("""() => {
+                    try {
+                        if (window.angular) {
+                            const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
+                            if (sc && sc.messagesToShow) return sc.messagesToShow.length;
+                        }
+                    } catch(e) {}
+                    return document.querySelectorAll('.message.conv-email-row, .conv-email-row').length;
+                }""") or 0
+
+                # 8. Focus and click editor
                 editor_locator = page.locator(editor_selector).first
                 await editor_locator.click()
                 await asyncio.sleep(0.3)
 
-                # 4. Type acknowledgment/reply message via keyboard typing
+                # 9. Type acknowledgment/reply message via keyboard typing
                 print(f"   ⌨️ Typing {action_desc} message (attempt {attempt}/3)...")
                 await page.keyboard.type(ack_message, delay=20)
                 await asyncio.sleep(0.8)
 
-                # 5. Verify text is present in the editor
+                # 10. Verify text is present in the editor
                 text_in_editor = await page.evaluate(f"""() => {{
                     const ed = document.querySelector('{editor_selector}');
                     return ed ? (ed.innerText || ed.textContent || '') : '';
@@ -5557,10 +6183,13 @@ class SentinelAgent:
                     print(f"   ⚠️ Message text ('{expected_kw}') could not be verified in Quill editor.")
                     return False
 
-                # 6. Check Send button state (respect disabled state!)
+                # 11. Check Send button state (respect disabled state!)
                 btn_state = await page.evaluate("""() => {
                     const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
-                                    Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                                    Array.from(document.querySelectorAll('button')).find(b => {
+                                        const t = (b.innerText || '').toLowerCase().trim();
+                                        return t === 'send' || t === 'send email';
+                                    });
                     if (!sendBtn || sendBtn.offsetParent === null) {
                         return { found: false, disabled: true };
                     }
@@ -5583,11 +6212,14 @@ class SentinelAgent:
                         print(f"   ⚠️ Send button is currently disabled for {c_name}. Skipping click.")
                         return False
 
-                # 7. Click Send button
+                # 12. Click Send button
                 print(f"   📤 Clicking Send button (attempt {attempt}/3)...")
                 await page.evaluate("""() => {
                     const sendBtn = document.querySelector('button.send-email, button[ng-click*="send"], button.btn-send') ||
-                                    Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').toLowerCase().trim() === 'send');
+                                    Array.from(document.querySelectorAll('button')).find(b => {
+                                        const t = (b.innerText || '').toLowerCase().trim();
+                                        return t === 'send' || t === 'send email';
+                                    });
                     if (sendBtn) {
                         sendBtn.scrollIntoView({ block: 'center', behavior: 'instant' });
                         sendBtn.click();
@@ -5595,14 +6227,16 @@ class SentinelAgent:
                 }""")
                 await asyncio.sleep(1.5)
 
-                # 8. Verify dispatch by inspecting thread messages
+                # 13. Verify dispatch by inspecting thread messages or editor cleared
                 dispatch_verified = False
                 for _v_turn in range(8):
-                    dispatched = await page.evaluate("""(kw) => {
+                    dispatched = await page.evaluate("""(data) => {
+                        const { kw, initCount } = (typeof data === 'object' && data !== null) ? data : { kw: data, initCount: 0 };
                         try {
                             if (window.angular) {
                                 const sc = window.angular.element(document.querySelector('#candidate-inbox') || document.body).scope();
                                 if (sc && sc.messagesToShow) {
+                                    if (typeof initCount === 'number' && sc.messagesToShow.length > initCount) return true;
                                     const hasIt = sc.messagesToShow.some(m => {
                                         const text = (m.content || m.content_html || '').replace(/<[^>]*>/g, ' ');
                                         return text.includes(kw);
@@ -5615,7 +6249,7 @@ class SentinelAgent:
                             '.message.conv-email-row .message-content, #messages-tab .message-content:not(.ql-editor), div[ng-repeat*="messagesToShow"] .message-content:not(.ql-editor)'
                         )).filter(n => !n.closest('.ql-editor') && !n.closest('.quill-editor'));
                         return rows.some(r => (r.innerText || r.textContent || '').includes(kw));
-                    }""", expected_kw)
+                    }""", {'kw': expected_kw, 'initCount': initial_msg_count})
                     if dispatched:
                         dispatch_verified = True
                         break
@@ -7720,6 +8354,13 @@ class SentinelAgent:
         # >500 MB/site memory usage. Now patterns are window globals.
         await self._inject_patterns_once()
         
+        if self._page:
+            is_intersession = bool(self._task_description and ('intersession' in self._task_description.lower() or '20 jobs' in self._task_description.lower()))
+            try:
+                await self._page.evaluate("isInter => { window.__SENTINEL_IS_INTERSESSION__ = isInter; }", is_intersession)
+            except Exception:
+                pass
+        
         if self._page and 'linkedin' in (self._page.url or ''):
             await self._handle_linkedin_resume_upload(self._page)
 
@@ -7737,12 +8378,17 @@ class SentinelAgent:
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {
-                    // Override ALL experience values for LinkedIn (numeric-only fields)
+                    // Override ALL experience values for LinkedIn (numeric-only whole numbers, e.g. '4')
                     // Instead of maintaining a list, scan all values generically
                     Object.keys(KNOWN_PATTERNS).forEach(k => {
                         const v = KNOWN_PATTERNS[k];
-                        if (v === '4 Years') KNOWN_PATTERNS[k] = '4';
-                        else if (v === '2 Years') KNOWN_PATTERNS[k] = '2';
+                        if (typeof v === 'string') {
+                            if (/4(?:\\.2)?\\s*Years?/i.test(v) || v === '4.2' || v === '4.2 Years' || v === '4 Years') {
+                                KNOWN_PATTERNS[k] = '4';
+                            } else if (/2(?:\\.0)?\\s*Years?/i.test(v) || v === '2' || v === '2 Years') {
+                                KNOWN_PATTERNS[k] = '2';
+                            }
+                        }
                     });
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs
@@ -7859,22 +8505,22 @@ class SentinelAgent:
                         if (KNOWN_PATTERNS[k]) KNOWN_PATTERNS[k] = '4';
                     });
 
-                    // LinkedIn: experience-category patterns must answer bare number ("4"), not "4 Years".
-                    // Naukri text inputs now return "4 Years" from input_type_defaults.text; LinkedIn must
-                    // strip the " Years" suffix for both the flat default and input_type_defaults.
+                    // LinkedIn: experience-category patterns must answer bare number ("4"), not "4 Years" or "4.2".
+                    // Naukri text inputs return "4 Years" from input_type_defaults.text; LinkedIn must
+                    // convert to integer numbers for both the flat default and input_type_defaults.
                     Object.keys(KNOWN_PATTERNS_WITH_DEFAULTS).forEach(k => {
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (!defaultObj || defaultObj.category !== 'experience') return;
                         const flatVal = KNOWN_PATTERNS[k];
-                        if (typeof flatVal === 'string' && /\\d+\\s*Years?/i.test(flatVal)) {
-                            const m = flatVal.match(/(\\d+(?:\\.\\d+)?)/);
+                        if (typeof flatVal === 'string' && (/\\d+\\s*Years?/i.test(flatVal) || /^\\d+(\\.\\d+)?$/.test(flatVal.trim()))) {
+                            const m = flatVal.match(/(\\d+)/);
                             KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
                         }
                         if (defaultObj.input_type_defaults) {
                             Object.keys(defaultObj.input_type_defaults).forEach(t => {
                                 const tv = defaultObj.input_type_defaults[t];
-                                if (typeof tv === 'string' && /\\d+\\s*Years?/i.test(tv)) {
-                                    const m = tv.match(/(\\d+(?:\\.\\d+)?)/);
+                                if (typeof tv === 'string' && (/\\d+\\s*Years?/i.test(tv) || /^\\d+(\\.\\d+)?$/.test(tv.trim()))) {
+                                    const m = tv.match(/(\\d+)/);
                                     defaultObj.input_type_defaults[t] = m ? m[1] : tv;
                                 }
                             });
@@ -7951,6 +8597,7 @@ class SentinelAgent:
                 const fuzzyMatch = (question) => {
                     if (!question) return null;
                     const qLower = question.toLowerCase().trim();
+                    const cleanQ = qLower.replace(/[*?:!]/g, ' ').replace(/\\s+/g, ' ').trim();
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     let bestScore = 0;
@@ -7961,13 +8608,13 @@ class SentinelAgent:
                     // --- PASS 1: Exact match (highest priority) ---
                     for (const [key, val] of sortedPatterns) {
                         const keyLower = key.toLowerCase();
-                        if (qLower === keyLower) return resolveDynamic(val);
+                        if (qLower === keyLower || cleanQ === keyLower) return resolveDynamic(val);
                     }
                     
                     // --- PASS 2: Substring match (question contains entire pattern key) ---
                     for (const [key, val] of sortedPatterns) {
                         const keyLower = key.toLowerCase();
-                        if (qLower.includes(keyLower)) {
+                        if (qLower.includes(keyLower) || cleanQ.includes(keyLower)) {
                             // Anti-collision for generic words
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
@@ -8039,10 +8686,15 @@ class SentinelAgent:
                         const isRelativeNameQ = /name\\s*of\\s*your\\s*relative/i.test(qLower);
                         const isFacebookQ = /^facebook$/i.test(qLower.trim());
                         const isCitizenshipQ = /citizenship|nationality/i.test(qLower);
-                        const isRsuQ = /rsu|stock/i.test(qLower);
+                        const isRsuQ = /rsu|stock/i.test(qLower) && !/equity|holding|esop/i.test(qLower);
+                        const isEquityQ = (/equity|esop/i.test(qLower) || (/stock\\s*options?/i.test(qLower))) && (/current\\s*company|employer|hold\\s*any|holding/i.test(qLower) || /hold\\s*(any\\s*)?equity/i.test(qLower));
+                        const isAddressQ = /^address$|^current\\s*address$|^permanent\\s*address$/i.test(qLower.trim());
+                        const isToolsProficientQ = /tools.*platforms.*technologies.*proficient|technologies are you proficient in|proficient in.*(?:jira|github|tools)/i.test(qLower);
+                        const isSponsorshipQ = /require\\s*(visa\\s*)?sponsorship|sponsorship\\s*for\\s*employment|need\\s*(visa\\s*)?sponsorship/i.test(qLower);
+                        const isHoldingOfferQ = /holding\\s*any\\s*offer|offer\\s*in\\s*hand|competing\\s*offer|holding\\s*offers?/i.test(qLower);
                         const isOrgProductQ = /product\\s*based\\s*or\\s*service|product\\s*or\\s*service/i.test(qLower);
                         const isMeetReqQ = /meet\\s*(the\\s*)?requirements|meet\\s*all\\s*requirements|eligible\\s*for\\s*(this\\s*)?(position|role)/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -8053,7 +8705,17 @@ class SentinelAgent:
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
-                        if (isAgeQ) {
+                        if (isEquityQ) {
+                            bestMatch = 'No';
+                        } else if (isSponsorshipQ) {
+                            bestMatch = 'No';
+                        } else if (isHoldingOfferQ) {
+                            bestMatch = 'No';
+                        } else if (isAddressQ) {
+                            bestMatch = 'Bengaluru, Karnataka, India';
+                        } else if (isToolsProficientQ) {
+                            bestMatch = 'Git, GitHub, Jira, Docker, Kubernetes, AWS, Postman, IntelliJ IDEA, VS Code, CI/CD';
+                        } else if (isAgeQ) {
                             bestMatch = 'Yes';
                         } else if (isMeetReqQ) {
                             bestMatch = 'Yes';
@@ -8098,7 +8760,7 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -8139,7 +8801,7 @@ class SentinelAgent:
                         }
                     }
                     
-                    return bestMatch;
+                    return bestMatch ? resolveDynamic(bestMatch) : null;
                 };               
                 
                 // Helper: Find best matching option
@@ -8651,7 +9313,12 @@ return resolveDynamic(bestMatch);
                         'relative working', 'referred', 'referral',
                         'criminal', 'felony', 'convict',
                         'worked with nielsen', 'worked with navan', 'worked with visa',
-                        'worked with reed', 'worked with mastercard'
+                        'worked with reed', 'worked with mastercard',
+                        'sponsorship', 'visa sponsorship', 'require sponsorship', 'require visa', 'need visa', 'need sponsorship',
+                        'disability', 'handicapped',
+                        'equity in the current', 'hold equity', 'hold any equity', 'equity in current',
+                        'offer in hand', 'holding offer', 'holding any offer', 'competing offer',
+                        'cooling period', 'non-compete', 'non compete', 'non-solicitation', 'disciplinary proceedings'
                     ];
                     return negativePatterns.some(p => t.includes(p));
                 };
@@ -9426,19 +10093,46 @@ return resolveDynamic(bestMatch);
                                                   input.className?.toLowerCase().includes('decimal') ||
                                                   (labelText && /how many|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
                             
+                            const placeholderUpper = (input.placeholder || '').toUpperCase();
+                            const isDateField = input.type === 'date' ||
+                                                placeholderUpper.includes('MM/DD/YYYY') ||
+                                                placeholderUpper.includes('DD/MM/YYYY') ||
+                                                placeholderUpper.includes('YYYY-MM-DD') ||
+                                                /start\\s*date|earliest\\s*start|joining\\s*date|expected\\s*start|available\\s*start|date\\s*of\\s*birth|dob\\b|birth\\s*date/i.test(lowerLabel);
+
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
+
+                            // Dynamic Date Resolution for date fields / start date / earliest start date / DOB
+                            if (isDateField && !lowerLabel.includes('last date of employment')) {
+                                const isDob = /birth|dob/i.test(lowerLabel);
+                                if (isDob) {
+                                    answer = (placeholderUpper.includes('MM/DD/YYYY') || placeholderUpper.includes('MM-DD-YYYY')) ? '12/17/2000' : '17/12/2000';
+                                } else {
+                                    // Start date / earliest start date / joining date / notice period: today + 15 days
+                                    const today = new Date();
+                                    const targetDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
+                                    const targetMonth = String(targetDate.getMonth() + 1).padStart(2, '0');
+                                    const targetDay = String(targetDate.getDate()).padStart(2, '0');
+                                    const targetYear = String(targetDate.getFullYear());
+                                    
+                                    if (placeholderUpper.includes('DD/MM/YYYY') || placeholderUpper.includes('DD-MM-YYYY')) {
+                                        answer = `${targetDay}/${targetMonth}/${targetYear}`;
+                                    } else if (placeholderUpper.includes('YYYY-MM-DD') || placeholderUpper.includes('YYYY/MM/DD')) {
+                                        answer = `${targetYear}-${targetMonth}-${targetDay}`;
+                                    } else {
+                                        // Default for LinkedIn / US date fields (MM/DD/YYYY)
+                                        answer = `${targetMonth}/${targetDay}/${targetYear}`;
+                                    }
+                                }
+                                window.__SENTINEL_DEBUG__&&console.log('DATE FIELD resolved value:', labelText, 'placeholder:', input.placeholder, '-> answer:', answer);
+                            }
 
                             // GUARD: LinkedIn/Microsoft last-employment-date field must stay blank.
                             // We never worked there, so any fuzzyMatch answer ('No', 'Yes', etc.)
                             // would cause a date validation error and block the form.
                             if (answer && lowerLabel.includes('last date of employment')) {
                                 window.__SENTINEL_DEBUG__&&console.log('LEAVE BLANK: last-employment-date field — discarding answer:', answer);
-                                answer = null;
-                            }
-                            // Also skip any text input whose placeholder signals a date format
-                            if (answer && (input.placeholder || '').toUpperCase().includes('MM/DD/YYYY')) {
-                                window.__SENTINEL_DEBUG__&&console.log('LEAVE BLANK: MM/DD/YYYY date field — discarding answer:', answer);
                                 answer = null;
                             }
 
@@ -9448,7 +10142,7 @@ return resolveDynamic(bestMatch);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD)
-                            if (answer && !isLwdDateQuestion && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
+                            if (answer && !isLwdDateQuestion && !isDateField && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
 
                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
@@ -9474,15 +10168,15 @@ return resolveDynamic(bestMatch);
                                 answer = 'https://siddhant3646.github.io/Portfolio/';
                             }
 
-                            // If it's a numeric input, extract just the number from the answer (not for LWD dates or textareas)
-                            if (answer && isNumericInput && !isLwdDateQuestion && input.tagName !== 'TEXTAREA') {
+                            // If it's a numeric input, extract just the number from the answer (not for LWD dates, date fields, or textareas)
+                            if (answer && isNumericInput && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA') {
                                 const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
                                 if (numericMatch) {
                                     let numVal = parseFloat(numericMatch[1]);
-                                    // LinkedIn rejects decimals in experience fields — round up
-                                    if (numVal % 1 !== 0 && /experience|years/i.test(labelText)) {
-                                        numVal = Math.ceil(numVal);
-                                        window.__SENTINEL_DEBUG__&&console.log('Rounded up experience:', numericMatch[1], '->', numVal);
+                                    // LinkedIn rejects decimals in experience/skill fields — format as whole integer
+                                    if (numVal % 1 !== 0) {
+                                        numVal = Math.round(numVal);
+                                        window.__SENTINEL_DEBUG__&&console.log('Rounded numeric field for LinkedIn:', numericMatch[1], '->', numVal);
                                     }
                                     answer = String(numVal);
                                     window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
@@ -11415,53 +12109,65 @@ return resolveDynamic(bestMatch);
                                     const containerText = container.innerText || '';
                                     const ctLower = containerText.toLowerCase();
                                     if (ctLower.includes('consent') || ctLower.includes('privacy') ||
-                                        ctLower.includes('collect') || ctLower.includes('store and process') ||
-                                        ctLower.includes('1825 days') || ctLower.includes('730 days') ||
-                                        ctLower.includes('365 days') || ctLower.includes('days thereafter') ||
-                                        ctLower.includes('for employment') || ctLower.includes('acknowledge') ||
-                                        ctLower.includes('processing of my') || ctLower.includes('personal data')) {
-                                        const overrideText = containerText.substring(0, 500);
-                                        window.__SENTINEL_DEBUG__&&console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
-                                        labelText = overrideText;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            window.__SENTINEL_DEBUG__&&console.log('Checkbox label text found:', labelText.substring(0, 100));
-                            const lowerLabel = labelText.toLowerCase();
-                            
-                            // Check if this is a privacy/consent/acknowledge/confirm checkbox
-                            const isConsentCheckbox = lowerLabel.includes('consent') || 
-                                                     lowerLabel.includes('privacy') || 
-                                                     lowerLabel.includes('agree') ||
-                                                     lowerLabel.includes('declare') ||
-                                                     lowerLabel.includes('i consent') ||
-                                                     lowerLabel.includes('has my consent') ||
-                                                     lowerLabel.includes('read and agree') ||
-                                                     lowerLabel.includes('collect, store') ||
-                                                     lowerLabel.includes('collect store and process') ||
-                                                     lowerLabel.includes('for employment') ||
-                                                     lowerLabel.includes('days thereafter') ||
-                                                     lowerLabel.includes('365 days') ||
-                                                     lowerLabel.includes('730 days') ||
-                                                     lowerLabel.includes('1825 days') ||
-                                                     lowerLabel.includes('considering me for employment') ||
-                                                     lowerLabel.includes('acknowledge') ||
-                                                     lowerLabel.includes('i acknowledge') ||
-                                                     lowerLabel.includes('hereby acknowledge') ||
-                                                     lowerLabel.includes('i certify') ||
-                                                     lowerLabel.includes('hereby certify') ||
-                                                     lowerLabel.includes('i confirm') ||
-                                                     lowerLabel.includes('confirmed') ||
-                                                     lowerLabel.includes('i understand and agree') ||
-                                                     lowerLabel.includes('i have read and') ||
-                                                     lowerLabel.includes('read and understood') ||
-                                                     lowerLabel.includes('read and acknowledge') ||
-                                                     lowerLabel.includes('data privacy notice') ||
-                                                     lowerLabel.includes('privacy notice') ||
-                                                     lowerLabel.includes('applicant data privacy') ||
-                                                     lowerLabel.includes('job applicant data');
+                                         ctLower.includes('declare') || ctLower.includes('certify') ||
+                                         ctLower.includes('365 days') || ctLower.includes('days thereafter') ||
+                                         ctLower.includes('considering me for employment') || ctLower.includes('acknowledge') ||
+                                         ctLower.includes('processing of my') || ctLower.includes('personal data')) {
+                                         const overrideText = containerText.substring(0, 500);
+                                         window.__SENTINEL_DEBUG__&&console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
+                                         labelText = overrideText;
+                                         break;
+                                     }
+                                 }
+                             }
+                             
+                             window.__SENTINEL_DEBUG__&&console.log('Checkbox label text found:', labelText.substring(0, 100));
+                             const lowerLabel = labelText.toLowerCase();
+                             
+                             // Safeguard: Never treat demographic, visa sponsorship, disability, or criminal record questions as auto-consent checkboxes
+                             const hasNegativeCheckboxIntent = lowerLabel.includes('sponsorship') || 
+                                                              lowerLabel.includes('require visa') ||
+                                                              lowerLabel.includes('need visa') ||
+                                                              lowerLabel.includes('disability') ||
+                                                              lowerLabel.includes('felony') ||
+                                                              lowerLabel.includes('convict') ||
+                                                              lowerLabel.includes('criminal') ||
+                                                              lowerLabel.includes('military') ||
+                                                              lowerLabel.includes('veteran');
+                             
+                             // Check if this is a privacy/consent/acknowledge/confirm checkbox
+                             const isConsentCheckbox = !hasNegativeCheckboxIntent && (
+                                                      lowerLabel.includes('consent') || 
+                                                      lowerLabel.includes('privacy') || 
+                                                      lowerLabel.includes('agree') ||
+                                                      lowerLabel.includes('declare') ||
+                                                      lowerLabel.includes('i consent') ||
+                                                      lowerLabel.includes('has my consent') ||
+                                                      lowerLabel.includes('read and agree') ||
+                                                      lowerLabel.includes('collect, store') ||
+                                                      lowerLabel.includes('collect store and process') ||
+                                                      lowerLabel.includes('considering me for employment') ||
+                                                      lowerLabel.includes('consideration for employment') ||
+                                                      lowerLabel.includes('days thereafter') ||
+                                                      lowerLabel.includes('365 days') ||
+                                                      lowerLabel.includes('730 days') ||
+                                                      lowerLabel.includes('1825 days') ||
+                                                      lowerLabel.includes('acknowledge') ||
+                                                      lowerLabel.includes('i acknowledge') ||
+                                                      lowerLabel.includes('hereby acknowledge') ||
+                                                      lowerLabel.includes('i certify') ||
+                                                      lowerLabel.includes('hereby certify') ||
+                                                      lowerLabel.includes('i confirm') ||
+                                                      lowerLabel.includes('confirmed') ||
+                                                      lowerLabel.includes('i understand and agree') ||
+                                                      lowerLabel.includes('i have read and') ||
+                                                      lowerLabel.includes('read and understood') ||
+                                                      lowerLabel.includes('read and acknowledge') ||
+                                                      lowerLabel.includes('data privacy notice') ||
+                                                      lowerLabel.includes('privacy notice') ||
+                                                      lowerLabel.includes('applicant data privacy') ||
+                                                      lowerLabel.includes('job applicant data')
+                             );
                             
                             // Check if this is a "currently working here" checkbox in experience section
                             const isCurrentJobCheckbox = lowerLabel.includes('currently work') ||
@@ -14105,12 +14811,26 @@ return resolveDynamic(bestMatch);
                             }
                         }
                         
-                        // A0. Company Size - One-shot: select "Large" (value 2) before skills
+                        // A0. Company Size - Intersession task: select "All"; Regular search: select "Large" (value 2)
+                        const isIntersession = !!window.__SENTINEL_IS_INTERSESSION__;
                         const companySizeSelect = document.querySelector('select#company-size');
-                        if (companySizeSelect && companySizeSelect.value !== '2') {
-                            companySizeSelect.value = '2';
-                            companySizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                            return 'INSTAHYRE_SET_COMPANY_SIZE: Large';
+                        if (companySizeSelect) {
+                            let targetValue = '2';
+                            let targetText = 'Large';
+                            if (isIntersession) {
+                                const allOption = Array.from(companySizeSelect.options).find(o => 
+                                    /all/i.test(o.text || '') || o.value === '' || o.value === '0' || (o.value || '').toLowerCase() === 'all'
+                                ) || companySizeSelect.options[0];
+                                targetValue = allOption ? allOption.value : '';
+                                targetText = allOption ? (allOption.text || 'All') : 'All';
+                            }
+                            
+                            if (companySizeSelect.value !== targetValue) {
+                                companySizeSelect.value = targetValue;
+                                companySizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                companySizeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+                                return 'INSTAHYRE_SET_COMPANY_SIZE: ' + targetText;
+                            }
                         }
                         
                         // A. Skills - Add one skill at a time (FIRST)
@@ -14332,9 +15052,20 @@ return resolveDynamic(bestMatch);
                             const jobFuncContainerCheck = jobFuncCtrl ? jobFuncCtrl.querySelector('.selectize-input') : null;
                             const hasJobFuncs = jobFuncContainerCheck && jobFuncContainerCheck.querySelectorAll('.item').length >= 1;
                             
-                            // Check company size (value '2' = Large; treat as OK if the select is not in the DOM)
+                            // Check company size (Intersession: All; Regular: Large / value '2')
                             const csSelect = document.querySelector('select#company-size');
-                            const hasCompanySize = !csSelect || csSelect.value === '2';
+                            let hasCompanySize = true;
+                            if (csSelect) {
+                                if (isIntersession) {
+                                    const allOption = Array.from(csSelect.options).find(o => 
+                                        /all/i.test(o.text || '') || o.value === '' || o.value === '0' || (o.value || '').toLowerCase() === 'all'
+                                    ) || csSelect.options[0];
+                                    const expectedVal = allOption ? allOption.value : '';
+                                    hasCompanySize = csSelect.value === expectedVal || /all/i.test(csSelect.options[csSelect.selectedIndex]?.text || '');
+                                } else {
+                                    hasCompanySize = csSelect.value === '2' || /large/i.test(csSelect.options[csSelect.selectedIndex]?.text || '');
+                                }
+                            }
                             
                             window.__SENTINEL_DEBUG__&&console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs + ', CompanySize=' + hasCompanySize);
                             

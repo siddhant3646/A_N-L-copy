@@ -90,6 +90,8 @@ SYNONYM_MAP = {
     'know': 'skills',
     'technologies': 'skills',
     'tools': 'skills',
+    'corejava': 'core java',
+    'springboot': 'spring boot',
     
     # Notice Period
     'np': 'notice period',

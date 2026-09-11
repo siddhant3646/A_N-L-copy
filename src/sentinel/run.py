@@ -50,13 +50,30 @@ def _sweep_chrome_temp():
     ]
     swept = 0
     current_pid_marker = f"sentinel_profile_{os.getpid()}"
+    active_paths = set()
+    for root in (_shared_tmp_root, _shared_profile_dir):
+        if root:
+            active_paths.add(root)
+            active_paths.add(os.path.abspath(root))
+            active_paths.add(os.path.realpath(root))
+
     for pattern in patterns:
         for path in glob.glob(os.path.join(_SYSTEM_TEMP, pattern)):
-            # Never delete active process temp wrapper or active profile
-            if _shared_tmp_root and (path == _shared_tmp_root or path.startswith(_shared_tmp_root)):
+            real_p = os.path.realpath(path)
+            abs_p = os.path.abspath(path)
+            
+            # Never delete active process temp wrapper or active profile (resolving symlinks)
+            if any(p == real_p or real_p.startswith(p + os.sep) or p == abs_p or abs_p.startswith(p + os.sep) for p in active_paths):
                 continue
-            if current_pid_marker in path:
+            if current_pid_marker in path or current_pid_marker in real_p:
                 continue
+            # Also preserve very recently created sentinel directories (< 30 minutes old)
+            try:
+                mtime = os.path.getmtime(path)
+                if time.time() - mtime < 1800 and "sentinel_" in os.path.basename(path):
+                    continue
+            except OSError:
+                pass
             try:
                 if os.path.isdir(path):
                     shutil.rmtree(path, ignore_errors=True)
@@ -77,8 +94,6 @@ def _ensure_tmp_root():
     """
     global _shared_tmp_root, _shared_profile_dir
     if _shared_tmp_root is None or not os.path.exists(_shared_tmp_root):
-        # Sweep stale Chrome temp from past force-killed runs first
-        _sweep_chrome_temp()
         _shared_tmp_root = tempfile.mkdtemp(prefix="sentinel_")
         os.environ["TMPDIR"] = _shared_tmp_root
         # Name includes PID so the existing pgrep-based Chrome kill logic
@@ -88,6 +103,10 @@ def _ensure_tmp_root():
         )
         os.makedirs(_shared_profile_dir, exist_ok=True)
         print(f"🔧 Shared TMPDIR: {_shared_tmp_root}")
+    else:
+        os.makedirs(_shared_tmp_root, exist_ok=True)
+        if _shared_profile_dir:
+            os.makedirs(_shared_profile_dir, exist_ok=True)
     return _shared_profile_dir
 
 
@@ -240,7 +259,7 @@ class Browser:
             
             # Reuse the single shared profile dir for the whole process run
             # instead of sentinel_profile_<pid>_<taskid> per task (which leaked).
-            temp_dir = _shared_profile_dir
+            temp_dir = _ensure_tmp_root()
             self._temp_dir = temp_dir
             os.makedirs(temp_dir, exist_ok=True)
             
@@ -749,7 +768,7 @@ async def main():
     # Define Tasks: (Task Name, Start URL, Prompt)
     tasks = [
         # Priority 1: Instahyre Inbox Questionnaire (Testing)
-        ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/inbox/439288/6201541231/", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
+        ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/inbox/", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
         # Job applications
         ("Naukri Application", "https://www.naukri.com/mnjuser/recommendedjobs", prompts.NAUKRI_JOB_APPLY_TASK),
         ("LinkedIn Application", "https://www.linkedin.com/jobs/search-results/?currentJobId=4325424519&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=Qwth1ndwtouG0vtFGj%2Bpsg%3D%3D&geoId=102713980&distance=0.0&f_TPR=r86400&f_AL=true", prompts.LINKEDIN_JOB_APPLY_TASK),

@@ -452,16 +452,42 @@ class SentinelAgent:
         # PHASE 0.1: Critical Compliance & Specific Intent Intercepts
         # These MUST be resolved before generic fingerprint/pattern matching
         # ==========================================
+        # AI Coding Assistants / Claude / Agentic Workflows
+        if any(kw in question_lower for kw in ['claude', 'chatgpt', 'copilot', 'cursor', 'ai agent', 'ai agents', 'orchestrated workflows', 'genai', 'generative ai', 'llm']) and any(act in question_lower for act in ['worked', 'experience', 'used', 'use', 'compress', 'scaffolding', 'dev work', 'proficiency', 'tools', 'hands on', 'hands-on', 'debugging', 'test generation', 'automation']):
+            return 'Yes', 0.98
+
         # Relatives / Family / Conflict of interest in company
         conflict_keywords = ['conflict of interest', 'close relative', 'family member', 
                             'relative working', 'relatives working', 'relatives in', 'family in company', 'relatives in company', 'relatives working with us', 'relative working with us']
         if any(kw in question_lower for kw in conflict_keywords) or ('relative' in question_lower and 'company' in question_lower):
             return 'No', 0.98
 
-        # Cooling period / Applied in past 6 months
-        cooling_keywords = ['past 6 months', 'last 6 months', 'past 3 months', 'last 3 months', 'cooling period', 'applied to any of the roles', 'applied to any roles', 'interviewed in the last']
-        if any(kw in question_lower for kw in cooling_keywords) and any(act in question_lower for act in ['applied', 'interviewed', 'roles', 'cooling']):
+        # Cooling period / Applied in past 6/12 months
+        cooling_keywords = [
+            'past 6 months', 'last 6 months', 'past 3 months', 'last 3 months',
+            'past 12 months', 'last 12 months', '6/12 months', '6-12 months', '6/12',
+            'past 1 year', 'last 1 year', 'past year', 'last year',
+            'cooling period', 'applied to any of the roles', 'applied to any roles',
+            'applied with', 'applied to', 'interviewed in the last', 'interviewed with',
+            'appeared for an interview in', 'attended an interview in'
+        ]
+        if (any(kw in question_lower for kw in cooling_keywords) or 'cooling' in question_lower) and any(act in question_lower for act in ['applied', 'interviewed', 'roles', 'cooling', 'appeared', 'attended']):
             return 'No', 0.98
+
+        # Active PF / Provident Fund Account
+        if ('pf' in question_lower or 'provident fund' in question_lower) and any(kw in question_lower for kw in ['active', 'have', 'account', 'all companies', 'uan', 'number', 'history']):
+            return 'Yes', 0.98
+
+        # Joining on or before a specific date
+        if any(kw in question_lower for kw in [
+            'join on or before', 'join before', 'join by', 'able to join on or before',
+            'can you join on or before', 'join on or before oct', 'join on or before nov',
+            'join on or before dec', 'join on or before jan', 'join on or before feb',
+            'join on or before mar', 'join on or before apr', 'join on or before may',
+            'join on or before jun', 'join on or before jul', 'join on or before aug',
+            'join on or before sep'
+        ]):
+            return 'Yes', 0.98
 
         # Non-compete and Post-employment restrictions
         if 'non-compete' in question_lower or 'non compete' in question_lower or 'non-solicitation' in question_lower or 'post-employment restriction' in question_lower:
@@ -751,45 +777,57 @@ class SentinelAgent:
             'docker', 'kubernetes', 'gcp', 'azure', 'git', 'jenkins', 'sql', 'nosql', 'kafka', 
             'redis', 'spark', 'hadoop', 'c#', 'c++', 'go', 'rust', 'ruby', 'php', 'html', 'css', 
             'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs',
-            'celery', 'asyncio', 'async', 'asynchronous', 'background', 'rabbitmq', 'logging'
+            'celery', 'asyncio', 'async', 'asynchronous', 'background', 'rabbitmq', 'logging',
+            'claude', 'chatgpt', 'copilot', 'cursor', 'gemini', 'openai', 'anthropic', 'langchain',
+            'llamaindex', 'ollama', 'huggingface', 'pytorch', 'tensorflow', 'springboot', 'spring',
+            'hibernate', 'fastapi', 'django', 'flask', 'express', 'nextjs', 'vuejs', 'graphql',
+            'rest', 'microservices', 'postgresql', 'mysql', 'mongodb', 'elasticsearch'
         }
+        
+        is_dev_tool_question = any(kw in question_lower for kw in [
+            'workflow', 'workflows', 'tool', 'tools', 'agent', 'agents', 'scaffolding',
+            'code', 'framework', 'frameworks', 'library', 'libraries', 'stack', 'dev',
+            'development', 'debugging', 'automation', 'test generation', 'compress',
+            'testing', 'review', 'architecture', 'design', 'prompt'
+        ])
         
         # Pattern: Async/Celery/Background job questions - MUST be before company patterns
         is_async_job_question = any(kw in question_lower for kw in ASYNC_JOB_KEYWORDS)
         if is_async_job_question:
             return 'Yes, I have extensive experience with asynchronous programming using Celery, AsyncIO, and background job processing. I have designed and implemented task queues, scheduled jobs, and message-driven architectures using RabbitMQ, Redis, and logging frameworks to handle high-throughput event processing.', 0.98
         
-        # Pattern 1: "Have you worked with/at/for [Company]" - Most common Workday pattern
-        worked_with_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)"
-        worked_with_match = re.search(worked_with_company_pattern, question_lower)
-        if worked_with_match:
-            company = worked_with_match.group(1).lower()
-            if company not in TECH_KEYWORDS:
-                # Only answer "Yes" for current/past employer, "No" for all others
-                if company == 'everbridge' or company == 'fiserv':
-                    return 'Yes', 0.98
-                return 'No', 0.98
-        
-        # Pattern 2: "Have you worked with [Company] in the past X years"
-        past_years_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)\s+(?:in\s+the\s+)?(?:past|last)\s+(\d+)"
-        past_years_match = re.search(past_years_pattern, question_lower)
-        if past_years_match:
-            company = past_years_match.group(1).lower()
-            if company not in TECH_KEYWORDS:
-                if company == 'everbridge' or company == 'fiserv':
-                    return 'Yes', 0.98
-                return 'No', 0.98
-        
-        # Pattern 3: "Have you worked with Visa" or similar specific company questions
-        specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+in\s+the\s+)?"
-        specific_company_match = re.search(specific_company_pattern, question_lower)
-        if specific_company_match:
-            company = specific_company_match.group(1).lower()
-            if company not in TECH_KEYWORDS:
-                if company == 'everbridge' or company == 'fiserv':
-                    return 'Yes', 0.98
-                # For Visa and other companies, return "No"
-                return 'No', 0.98
+        if not is_dev_tool_question:
+            # Pattern 1: "Have you worked with/at/for [Company]" - Most common Workday pattern
+            worked_with_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at|in)\s+(?:the\s+)?(?:past\s+)?(?:\d+\s+years?\s+)?at\s+(\w+)"
+            worked_with_match = re.search(worked_with_company_pattern, question_lower)
+            if worked_with_match:
+                company = worked_with_match.group(1).lower()
+                if company not in TECH_KEYWORDS:
+                    # Only answer "Yes" for current/past employer, "No" for all others
+                    if company == 'everbridge' or company == 'fiserv':
+                        return 'Yes', 0.98
+                    return 'No', 0.98
+            
+            # Pattern 2: "Have you worked with [Company] in the past X years"
+            past_years_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)\s+(?:in\s+the\s+)?(?:past|last)\s+(\d+)"
+            past_years_match = re.search(past_years_pattern, question_lower)
+            if past_years_match:
+                company = past_years_match.group(1).lower()
+                if company not in TECH_KEYWORDS:
+                    if company == 'everbridge' or company == 'fiserv':
+                        return 'Yes', 0.98
+                    return 'No', 0.98
+            
+            # Pattern 3: "Have you worked with Visa" or similar specific company questions
+            specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+in\s+the\s+)?"
+            specific_company_match = re.search(specific_company_pattern, question_lower)
+            if specific_company_match:
+                company = specific_company_match.group(1).lower()
+                if company not in TECH_KEYWORDS:
+                    if company == 'everbridge' or company == 'fiserv':
+                        return 'Yes', 0.98
+                    # For Visa and other companies, return "No"
+                    return 'No', 0.98
         
         # Pattern 4: "Currently employed by any of the" - blanket No
         currently_employed_pattern = r"currently\s+(?:employed|an\s+employee)\s+(?:by|at|of)\s+(?:any|any\s+of\s+the)"
@@ -7120,13 +7158,19 @@ class SentinelAgent:
                         
                         // Numeric range / comparison matching for experience, notice days, salary
                         if (expVal !== null) {{
-                            // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9")
+                            // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9", "2-4 yrs")
                             const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
                             if (rangeMatch) {{
                                 const rMin = parseFloat(rangeMatch[1]);
                                 const rMax = parseFloat(rangeMatch[2]);
-                                if (expVal >= rMin && expVal <= rMax) {{
-                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(expVal - rMin));
+                                if (expVal >= rMin && expVal <= (rMax + 0.5)) {{
+                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(expVal - Math.min(expVal, rMax)));
+                                }}
+                                if (expVal > rMax) {{
+                                    const diff = expVal - rMax;
+                                    if (diff <= 2.0) {{
+                                        return Math.max(70, 85 - diff * 8);
+                                    }}
                                 }}
                                 return 0;
                             }}
@@ -9025,20 +9069,21 @@ class SentinelAgent:
                                 }
                             }
                             
-                            // Year-based range matching for experience (e.g. "3-5", "3 5", "4-5")
+                            // Year-based range matching for experience (e.g. "3-5", "3 5", "4-5", "2-4 yrs")
                             if (score === 0 && !isDayUnit) {
                                 const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (rangeMatch) {
                                     const min = parseFloat(rangeMatch[1]);
                                     const max = parseFloat(rangeMatch[2]);
-                                    if (expVal >= min && expVal <= max) {
+                                    if (expVal >= min && expVal <= (max + 0.5)) {
                                         const rangeSize = max - min;
-                                        const offsetFromMin = Math.abs(expVal - min);
-                                        // Prefer tighter ranges containing 4.2 (e.g. 4-5 > 4-6 > 3-5)
+                                        const offsetFromMin = Math.abs(expVal - Math.min(expVal, max));
                                         score = Math.max(80, 98 - rangeSize * 2 - offsetFromMin);
+                                    } else if (expVal > max && (expVal - max) <= 2.0) {
+                                        // Candidate slightly exceeds highest available bracket (e.g. 4.2 vs 2-4)
+                                        const diff = expVal - max;
+                                        score = Math.max(70, 85 - diff * 8);
                                     } else {
-                                        // Strictly reject brackets that candidate has exceeded (e.g. 0-3, 1-3, 2-4)
-                                        // or brackets candidate has not reached (e.g. 5-7, 6-8)
                                         score = 0;
                                     }
                                 }
@@ -9325,10 +9370,19 @@ return resolveDynamic(bestMatch);
                 const shouldDefaultToNo = (text) => {
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
+                    
+                    // Technical skill, tool, framework, AI workflow, PF account, or joining date questions must NOT default to No
+                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by/i.test(t);
+                    if (isPositiveIntent) return false;
+                    
                     const negativePatterns = [
                         'worked with', 'worked for', 'worked at',
                         'employed by', 'employed at', 'employed with',
                         'previously employed', 'ever been employed', 'currently employed',
+                        'applied with', 'applied to', 'applied in last', 'applied in the last',
+                        'applied in past', 'applied in the past', '6/12 months', '6-12 months',
+                        'past 6 months', 'last 6 months', 'past 12 months', 'last 12 months',
+                        'interviewed in last', 'interviewed in the last', 'interviewed with',
                         'conflict of interest', 'close relative', 'family member',
                         'relative working', 'referred', 'referral',
                         'criminal', 'felony', 'convict',
@@ -10630,7 +10684,8 @@ return resolveDynamic(bestMatch);
                             // ===== NOTICE PERIOD SELECT HANDLER =====
                             // "What will be your notice period?" - options like "Serving Notice Period", "30 Days", etc.
                             // When "15 days" isn't an option, select "Serving Notice Period" as fallback
-                            const isNoticePeriodSelect = lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day') || lowerLabel.includes('join'));
+                            const isNoticePeriodSelect = (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day') || lowerLabel.includes('join') || lowerLabel.includes('serving'))) ||
+                                                         (lowerLabel.includes('join') && (lowerLabel.includes('soon') || lowerLabel.includes('when') || lowerLabel.includes('before') || lowerLabel.includes('earlier') || lowerLabel.includes('how quickly')));
                             if (isNoticePeriodSelect) {
                                 const npOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 let npMatch = null;
@@ -10640,12 +10695,12 @@ return resolveDynamic(bestMatch);
                                 
                                 // Priority 2: "Serving Notice Period" or "Serving Notice"
                                 if (!npMatch) {
-                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('serving notice'));
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('serving notice') || o.text.toLowerCase().includes('serving np'));
                                 }
                                 
                                 // Priority 3: "0-15 days" or similar short notice range
                                 if (!npMatch) {
-                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('0-15') || o.text.toLowerCase().includes('0 - 15'));
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('0-15') || o.text.toLowerCase().includes('0 - 15') || o.text.toLowerCase().includes('0 to 15') || o.text.toLowerCase().includes('within 15'));
                                 }
                                 
                                 // Priority 4: "Immediate Joiner" / "Immediate"
@@ -10653,7 +10708,21 @@ return resolveDynamic(bestMatch);
                                     npMatch = npOptions.find(o => o.text.toLowerCase().includes('immediate'));
                                 }
                                 
-                                // Priority 5: Shortest numeric days option (e.g., "30 Days" over "60 Days")
+                                // Priority 5: "15-30 days", "within 30 days", "1 month"
+                                if (!npMatch) {
+                                    npMatch = npOptions.find(o => o.text.toLowerCase().includes('15-30') || o.text.toLowerCase().includes('15 - 30') || o.text.toLowerCase().includes('15 to 30') || o.text.toLowerCase().includes('within 30') || o.text.toLowerCase().includes('within 1 month') || o.text.toLowerCase().includes('less than 30'));
+                                }
+                                
+                                // Priority 6: Yes/No options for joining/notice questions (e.g. "Can you join on or before Oct 11?", "Are you serving notice?")
+                                if (!npMatch) {
+                                    const hasYes = npOptions.some(o => o.text.toLowerCase().trim() === 'yes' || o.text.toLowerCase().includes('yes'));
+                                    const hasNo = npOptions.some(o => o.text.toLowerCase().trim() === 'no' || o.text.toLowerCase().includes('no'));
+                                    if (hasYes && hasNo) {
+                                        npMatch = npOptions.find(o => o.text.toLowerCase().trim() === 'yes' || o.text.toLowerCase().includes('yes'));
+                                    }
+                                }
+                                
+                                // Priority 7: Shortest numeric days option (e.g., "30 Days" over "60 Days")
                                 if (!npMatch) {
                                     let shortestDays = Infinity;
                                     for (const opt of npOptions) {
@@ -11211,7 +11280,7 @@ return resolveDynamic(bestMatch);
                                 
                                 // UNIVERSAL SAFE FALLBACK FOR UNFILLED SELECTS:
                                 // Ensure no select is ever left at "Select an option" to prevent blocking form progression
-                                const dangerousYesPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member'];
+                                const dangerousYesPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12'];
                                 const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
                                 
                                 if (!isFieldPreFilled(select)) {

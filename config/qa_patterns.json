@@ -16150,6 +16150,13 @@
         "do you have pf",
         "pf number",
         "pf account",
+        "do you have an active pf account",
+        "active pf account",
+        "have active pf account",
+        "do you have pf account",
+        "active provident fund account",
+        "pf account active",
+        "do you have pf for all companies",
         "pf for all companies",
         "pf for all companies which you have worked",
         "provident fund for all companies"
@@ -16163,8 +16170,7 @@
         "text": "Yes",
         "checkbox": "Yes",
         "textarea": "Yes"
-      },
-      "requires_exact_match": true
+      }
     },
     "policy_opcodes": {
       "patterns": [
@@ -43847,11 +43853,18 @@
         "checkbox": "Yes"
       },
       "negative_patterns": [
-        "salary",
-        "notice period",
-        "ctc",
         "expected",
-        "current"
+        "ctc",
+        "current",
+        "salary",
+        "automation",
+        "scaffolding",
+        "compress dev work",
+        "orchestrated workflows",
+        "dev work",
+        "test generation",
+        "ai agents",
+        "notice period"
       ]
     },
     "exp_gemini": {
@@ -85676,15 +85689,31 @@
     },
     "cooling_period_past_application": {
       "patterns": [
+        "have you applied with mphasis in last 6/12 months",
+        "have you applied with accenture in last 6/12 months",
+        "have you applied with mphasis",
+        "have you applied with accenture",
         "have you applied to any of the roles with mphasis in the past 6 months",
-        "have you applied to any of the roles with .* in the past 6 months",
-        "have you applied to .* in the past 6 months",
+        "applied with mphasis in last 6/12 months",
+        "applied with accenture in last 6/12 months",
+        "applied in last 6/12 months",
+        "applied in the last 6/12 months",
+        "applied in last 6 months",
+        "applied in last 12 months",
+        "applied in past 12 months",
+        "applied in the past 12 months",
+        "applied with in last 6/12 months",
+        "applied with in the last 6/12 months",
         "have you applied in the past 6 months",
         "have you applied in the last 6 months",
         "have you interviewed in the last 6 months",
         "have you applied in the last 1 year",
         "have you applied in the past 1 year",
-        "applied to any role in the past 6 months"
+        "applied to any role in the past 6 months",
+        "interviewed in last 6/12 months",
+        "interviewed in the last 6/12 months",
+        "interviewed in last 6 months",
+        "interviewed in last 12 months"
       ],
       "category": "compliance",
       "default": "No",
@@ -231271,6 +231300,67 @@
       "input_type_defaults": {
         "text": "4+ years with PostgreSQL and Redis, directly owning relational schema design, indexing strategies, query optimization, and high-throughput caching.",
         "textarea": "4+ years with PostgreSQL and Redis, directly owning relational schema design, indexing strategies, query optimization, and high-throughput caching."
+      }
+    },
+    "claude_ai_agents_workflow": {
+      "patterns": [
+        "have you worked with claude/ai agents/orchestrated workflows to compress dev work",
+        "have you worked with claude/ai agents/orchestrated workflows",
+        "worked with claude/ai agents/orchestrated workflows",
+        "have you worked with claude/ai agents",
+        "worked with claude/ai agents",
+        "have you worked with claude or ai agents",
+        "worked with claude or ai agents",
+        "orchestrated workflows to compress dev work",
+        "ai agents and orchestrated workflows",
+        "ai agents to compress dev work",
+        "have you used claude or chatgpt or copilot",
+        "have you used ai coding assistants",
+        "have you used ai agents",
+        "worked with ai agents",
+        "experience with ai agents"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, extensively work with Claude, GitHub Copilot, Cursor, and custom AI agent workflows to compress development cycles including scaffolding, automated testing, code review, and CI/CD automation.",
+        "checkbox": "Yes"
+      }
+    },
+    "join_on_or_before_date": {
+      "patterns": [
+        "can you join on or before",
+        "join on or before",
+        "can you join by",
+        "able to join on or before",
+        "willing to join on or before",
+        "can join on or before",
+        "join on or before oct",
+        "join on or before nov",
+        "join on or before dec",
+        "join on or before jan",
+        "join on or before feb",
+        "join on or before mar",
+        "join on or before apr",
+        "join on or before may",
+        "join on or before jun",
+        "join on or before jul",
+        "join on or before aug",
+        "join on or before sep"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 15,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am serving notice and can join immediately / within 15 days.",
+        "checkbox": "Yes"
       }
     }
   },

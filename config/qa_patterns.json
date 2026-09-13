@@ -232157,10 +232157,14 @@
         "years with current employer",
         "how many years have you worked at your current company",
         "how long is your tenure at the current company",
-        "current company tenure"
+        "current company tenure",
+        "tenure in current role",
+        "months at current company",
+        "duration in current company"
       ],
       "category": "experience",
-      "default": "1.5 Years",
+      "default": "3 Months",
+      "numeric_default": "0.3",
       "priority": 14,
       "negative_patterns": [
         "total experience",
@@ -232170,11 +232174,38 @@
         "how many years of experience do you have"
       ],
       "input_type_defaults": {
-        "radio": "1.5",
-        "select": "1.5 Years",
-        "text": "1.5 Years",
-        "number": "1.5",
-        "textarea": "I have been working at my current company for 1.5 years.",
+        "radio": "0-1 yrs",
+        "select": "0-1 yrs",
+        "text": "3 Months",
+        "number": "0.3",
+        "textarea": "I have been working at Everbridge since June 2026 (approx 3 months) as SDE-2. Prior to this, I worked at Fiserv for 4 years.",
+        "checkbox": "Yes"
+      }
+    },
+    "previous_employer": {
+      "patterns": [
+        "previous employer",
+        "previous company",
+        "past employer",
+        "past company",
+        "last company worked for",
+        "previous organization",
+        "last organization",
+        "prior company",
+        "prior employer",
+        "last worked company",
+        "previous organization name",
+        "last employer name",
+        "previous company name"
+      ],
+      "category": "employment",
+      "default": "Fiserv",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Fiserv",
+        "select": "Fiserv",
+        "text": "Fiserv",
+        "textarea": "Fiserv (June 2022 - June 2026, Software Engineer)",
         "checkbox": "Yes"
       }
     },
@@ -232187,21 +232218,43 @@
         "are you applying from abroad",
         "international applicant",
         "overseas applicant",
-        "are you based in india",
-        "currently based in india",
         "nri candidate",
         "non-resident india",
         "are you a non-resident indian"
       ],
       "category": "work_authorization",
-      "default": "No, I am based in Bangalore, India.",
+      "default": "No",
       "priority": 12,
       "input_type_defaults": {
         "radio": "No",
-        "select": "No, based in India",
-        "text": "No, I am based in Bangalore, India.",
+        "select": "No",
+        "text": "No",
         "textarea": "No, I am currently based in Bangalore, Karnataka, India. I am an Indian citizen and resident.",
         "checkbox": "No"
+      }
+    },
+    "based_in_india": {
+      "patterns": [
+        "are you based in india",
+        "currently based in india",
+        "are you currently in india",
+        "residing in india",
+        "currently residing in india",
+        "do you live in india",
+        "are you located in india",
+        "currently located in india",
+        "are you based in bangalore",
+        "currently based in bangalore"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am currently based in Bangalore, Karnataka, India.",
+        "checkbox": "Yes"
       }
     },
     "medical_examination_consent": {
@@ -232314,14 +232367,14 @@
         "comfortable with a service bond"
       ],
       "category": "compliance",
-      "default": "No",
+      "default": "Yes",
       "priority": 11,
       "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "textarea": "I prefer not to sign a service bond. However, I am committed to my professional responsibilities and would discuss terms that are mutually acceptable.",
-        "checkbox": "No"
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am willing to sign a service bond or agreement as per the company's policies.",
+        "checkbox": "Yes"
       }
     },
     "work_from_office_willingness": {
@@ -232475,7 +232528,7 @@
         "select": "2",
         "text": "2",
         "number": "2",
-        "textarea": "I have worked at 2 companies - currently at Everbridge and previously at Fiserv.",
+        "textarea": "I have worked at 2 companies: currently at Everbridge (since June 2026 as SDE-2) and previously at Fiserv (June 2022 - June 2026 as Software Engineer).",
         "checkbox": "Yes"
       }
     },

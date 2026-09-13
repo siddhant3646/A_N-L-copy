@@ -231362,6 +231362,780 @@
         "textarea": "Yes, I am serving notice and can join immediately / within 15 days.",
         "checkbox": "Yes"
       }
+    },
+    "ai_coding_tools_comprehensive": {
+      "patterns": [
+        "have you used ai tools for development",
+        "do you use github copilot",
+        "experience with cursor ide",
+        "are you comfortable using ai coding assistants",
+        "do you use chatgpt for code generation",
+        "ai-assisted development experience",
+        "do you use ai tools for coding",
+        "are you familiar with ai-powered code completion",
+        "have you used ai coding tools",
+        "do you use generative ai for development",
+        "experience with ai-based code generation",
+        "are you open to using ai tools in development",
+        "have you used copilot or similar tools",
+        "do you use any ai code assistant",
+        "familiarity with ai coding assistants",
+        "comfortable with ai-assisted programming",
+        "ai tools proficiency in software development"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have experience using AI coding assistants like GitHub Copilot, Cursor, and ChatGPT for code generation, debugging, and documentation. I find them helpful for accelerating development while maintaining code quality.",
+        "checkbox": "Yes"
+      }
+    },
+    "holding_offers_competing": {
+      "patterns": [
+        "are you holding any other offer",
+        "do you have any other offers",
+        "are you interviewing elsewhere",
+        "do you have competing offers",
+        "any offer in hand",
+        "currently evaluating other offers",
+        "are you considering other opportunities",
+        "other companies in final round",
+        "are you in talks with other companies",
+        "multiple offer situation"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 13,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not have any other offers at this time.",
+        "checkbox": "No"
+      }
+    },
+    "equity_esop_current": {
+      "patterns": [
+        "do you have equity or esop",
+        "do you have stocks or esop in current company",
+        "are you holding any esop",
+        "equity compensation in current role",
+        "stock options in current company",
+        "esop or rsu in current employment",
+        "do you have any unvested equity",
+        "pending esop vesting"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not have any equity or ESOP in my current company.",
+        "checkbox": "No"
+      }
+    },
+    "cooling_period_comprehensive": {
+      "patterns": [
+        "are you in cooling period",
+        "cooling period status",
+        "are you under any cooling period",
+        "do you have any cooling off period",
+        "cooling off period applicable",
+        "are you bound by a cooling period",
+        "is there a restriction on joining immediately",
+        "cooling period from previous employer",
+        "non-compete cooling period",
+        "mandatory waiting period before joining"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I am not under any cooling period or restrictive covenant.",
+        "checkbox": "No"
+      }
+    },
+    "non_compete_comprehensive": {
+      "patterns": [
+        "are you bound by a non-compete agreement",
+        "do you have a non-compete clause",
+        "non-compete restrictions",
+        "restrictive covenant in current employment",
+        "post-employment restrictions",
+        "non-solicitation agreement",
+        "are you bound by non-solicitation",
+        "can you join a competitor",
+        "restrictions on joining competitors",
+        "employment restrictions after leaving"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 13,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I am not bound by any non-compete or non-solicitation agreements.",
+        "checkbox": "No"
+      }
+    },
+    "disciplinary_action_comprehensive": {
+      "patterns": [
+        "have you ever been terminated",
+        "have you been asked to resign",
+        "disciplinary action against you",
+        "have you been dismissed from a job",
+        "ever been fired from a position",
+        "have you been involuntarily separated",
+        "have you been placed on a performance improvement plan",
+        "PIP in current or previous role",
+        "have you been asked to leave a company",
+        "involuntary termination history"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I have never been terminated, asked to resign, or placed on a performance improvement plan.",
+        "checkbox": "No"
+      }
+    },
+    "academic_backlogs_comprehensive": {
+      "patterns": [
+        "do you have any backlogs",
+        "have you ever failed a subject",
+        "academic backlogs or arrears",
+        "any pending backlogs",
+        "history of academic backlogs",
+        "have you cleared all subjects",
+        "backlog history in college",
+        "any arrears during graduation",
+        "pending subjects or backlogs",
+        "number of backlogs"
+      ],
+      "category": "education",
+      "default": "No",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I have no backlogs or arrears. I cleared all subjects in my first attempt.",
+        "checkbox": "No"
+      }
+    },
+    "interview_availability_comprehensive": {
+      "patterns": [
+        "are you available for an interview",
+        "can you attend an interview",
+        "interview availability",
+        "available for technical interview",
+        "can you give an interview this week",
+        "walk-in interview availability",
+        "available for face-to-face interview",
+        "can you attend a virtual interview",
+        "interview scheduling availability",
+        "available for coding assessment"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 13,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am available for interviews. I can attend virtual or in-person interviews on weekdays after 6 PM or on weekends.",
+        "checkbox": "Yes"
+      }
+    },
+    "noc_relieving_letter": {
+      "patterns": [
+        "do you have a relieving letter",
+        "noc from current employer",
+        "experience letter from current company",
+        "can you provide noc",
+        "relieving letter availability",
+        "do you have experience certificate",
+        "can you get noc from employer",
+        "service certificate from current employer",
+        "completion certificate from employer",
+        "no objection certificate"
+      ],
+      "category": "employment",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I will have my relieving letter, experience certificate, and NOC from my current employer upon resignation.",
+        "checkbox": "Yes"
+      }
+    },
+    "commute_relocate_comprehensive": {
+      "patterns": [
+        "are you willing to commute",
+        "can you commute to office",
+        "willing to travel to office",
+        "commuting to office location",
+        "can you work from office",
+        "are you localite",
+        "are you from this city",
+        "do you stay in this city",
+        "current city of residence",
+        "are you based in this location"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Bangalore",
+        "text": "Bangalore",
+        "textarea": "Yes, I am based in Bangalore and can commute to the office. I am willing to relocate if required.",
+        "checkbox": "Yes"
+      }
+    },
+    "highest_qualification_comprehensive": {
+      "patterns": [
+        "what is your highest qualification",
+        "highest education level",
+        "what degree do you hold",
+        "educational qualification",
+        "highest academic degree",
+        "what is your educational background",
+        "your qualification",
+        "degree and specialization",
+        "what did you study",
+        "branch and degree"
+      ],
+      "category": "education",
+      "default": "B.Tech in Computer Science",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "B.Tech",
+        "select": "B.Tech in Computer Science",
+        "text": "B.Tech in Computer Science",
+        "textarea": "B.Tech in Computer Science and Engineering",
+        "checkbox": "Yes"
+      }
+    },
+    "employment_type_comprehensive": {
+      "patterns": [
+        "what is your employment type",
+        "are you a full-time employee",
+        "permanent or contract",
+        "employment status",
+        "full-time or part-time",
+        "type of employment",
+        "are you employed full time",
+        "current employment type",
+        "is your employment permanent",
+        "contract or permanent role"
+      ],
+      "category": "employment",
+      "default": "Full-time",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "Full-time",
+        "select": "Full-time",
+        "text": "Full-time",
+        "textarea": "Full-time (Permanent)",
+        "checkbox": "Yes"
+      }
+    },
+    "payroll_company_comprehensive": {
+      "patterns": [
+        "which company pays your salary",
+        "payroll company name",
+        "who is your employer on payroll",
+        "payroll employer",
+        "company on your payslip",
+        "salary credited by which company",
+        "legal employer name",
+        "name of employer on record",
+        "paying company",
+        "your payroll employer"
+      ],
+      "category": "employment",
+      "default": "Everbridge",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "Everbridge",
+        "select": "Everbridge",
+        "text": "Everbridge",
+        "textarea": "Everbridge",
+        "checkbox": "Yes"
+      }
+    },
+    "fixed_variable_breakup": {
+      "patterns": [
+        "fixed and variable salary breakup",
+        "ctc breakup fixed variable",
+        "what is your fixed salary",
+        "fixed vs variable compensation",
+        "how much is fixed in your ctc",
+        "salary structure fixed variable",
+        "breakdown of your ctc",
+        "what is your fixed component",
+        "fixed salary and variable pay",
+        "ctc composition"
+      ],
+      "category": "salary",
+      "default": "Fixed CTC: 21 LPA, Variable: 2 LPA",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "21",
+        "select": "Fixed CTC: 21 LPA, Variable: 2 LPA",
+        "text": "Fixed CTC: 21 LPA, Variable: 2 LPA",
+        "number": "2100000",
+        "textarea": "My CTC breakup is: Fixed CTC: 21 LPA, Variable: 2 LPA, Total: 23 LPA.",
+        "checkbox": "Yes"
+      }
+    },
+    "last_appraisal_comprehensive": {
+      "patterns": [
+        "when was your last appraisal",
+        "date of last increment",
+        "last salary revision",
+        "when did you get your last hike",
+        "appraisal cycle at current company",
+        "how often do you get appraisals",
+        "last promotion date",
+        "when were you last promoted",
+        "promotion history",
+        "career progression at current company"
+      ],
+      "category": "experience",
+      "default": "I received my last appraisal in April 2025 with a 15% increment.",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "April 2025",
+        "select": "April 2025",
+        "text": "April 2025",
+        "textarea": "I received my last appraisal in April 2025 with a 15% increment. I was promoted to SDE-2 in my current role.",
+        "checkbox": "Yes"
+      }
+    },
+    "marital_status_comprehensive": {
+      "patterns": [
+        "what is your marital status",
+        "are you married or single",
+        "marital status",
+        "are you single",
+        "married or unmarried",
+        "relationship status",
+        "are you married",
+        "single married divorced",
+        "your marital status",
+        "marital status of candidate"
+      ],
+      "category": "personal_info",
+      "default": "Single",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Single",
+        "select": "Single",
+        "text": "Single",
+        "textarea": "Single",
+        "checkbox": "Yes"
+      }
+    },
+    "emergency_contact_comprehensive": {
+      "patterns": [
+        "provide emergency contact details",
+        "emergency contact address",
+        "emergency contact email",
+        "whom to contact in case of emergency",
+        "emergency contact person",
+        "name of emergency contact",
+        "emergency contact number",
+        "who is your emergency contact",
+        "emergency contact relationship",
+        "emergency contact information"
+      ],
+      "category": "personal_info",
+      "default": "Father: +91-XXXXXXXXXX",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Father",
+        "select": "Father",
+        "text": "Father: +91-XXXXXXXXXX",
+        "textarea": "Emergency Contact: Father, +91-XXXXXXXXXX",
+        "checkbox": "Yes"
+      }
+    },
+    "current_city_comprehensive": {
+      "patterns": [
+        "what city are you based in",
+        "current city of residence",
+        "where do you currently live",
+        "your current address city",
+        "city you are based in",
+        "current residing city",
+        "which city do you stay in",
+        "present city",
+        "current base location",
+        "city of current residence"
+      ],
+      "category": "location",
+      "default": "Bangalore",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "Bangalore",
+        "select": "Bangalore",
+        "text": "Bangalore",
+        "textarea": "Bangalore, Karnataka, India",
+        "checkbox": "Yes"
+      }
+    },
+    "relocate_willing_comprehensive": {
+      "patterns": [
+        "willing to relocate",
+        "are you open to relocation",
+        "can you relocate",
+        "relocation willingness",
+        "open to relocating",
+        "willing to move to another city",
+        "relocation flexibility",
+        "comfortable with relocation",
+        "are you willing to move",
+        "open to relocation for this role"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am 100% open to relocation for this opportunity.",
+        "checkbox": "Yes"
+      }
+    },
+    "shift_flexibility_comprehensive": {
+      "patterns": [
+        "are you comfortable with rotational shifts",
+        "can you work night shifts",
+        "willing to work in night shift",
+        "shift flexibility",
+        "comfortable with US/UK shift timings",
+        "can you work in different time zones",
+        "open to working in shifts",
+        "flexible with working hours",
+        "can you work on weekends",
+        "willing to work on weekends if needed"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am flexible with rotational shifts, night shifts, and US/UK shift timings.",
+        "checkbox": "Yes"
+      }
+    },
+    "reference_contacts_comprehensive": {
+      "patterns": [
+        "provide reference contacts",
+        "reference check details",
+        "name two professional references",
+        "references for background verification",
+        "professional reference contact",
+        "who can be your reference",
+        "reference name and contact",
+        "provide references from previous employer",
+        "reference details",
+        "supervisor reference"
+      ],
+      "category": "personal_info",
+      "default": "Available upon request",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Available upon request",
+        "select": "Available upon request",
+        "text": "Available upon request",
+        "textarea": "Professional references available upon request.",
+        "checkbox": "Yes"
+      }
+    },
+    "background_check_comprehensive": {
+      "patterns": [
+        "are you comfortable with background verification",
+        "bgc consent",
+        "background check consent",
+        "are you okay with reference and background check",
+        "consent for background verification",
+        "bgv consent",
+        "do you consent to background verification",
+        "background screening consent",
+        "willing to undergo background check",
+        "ok with background verification"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I consent to background verification and reference checks.",
+        "checkbox": "Yes"
+      }
+    },
+    "bond_service_agreement_comprehensive": {
+      "patterns": [
+        "are you under any bond",
+        "do you have a service bond",
+        "service agreement with current employer",
+        "training bond period",
+        "bond amount if you leave early",
+        "are you bonded to your current employer",
+        "service bond duration",
+        "do you have any retention agreement",
+        "bond or agreement with employer",
+        "notice period bond"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I am not under any bond or service agreement with my current employer.",
+        "checkbox": "No"
+      }
+    },
+    "certifications_comprehensive": {
+      "patterns": [
+        "do you have any certifications",
+        "professional certifications",
+        "certification in cloud or technologies",
+        "aws or azure certification",
+        "any technical certifications",
+        "certified professional",
+        "industry certifications held",
+        "certification courses completed",
+        "do you hold any professional certification",
+        "technical certifications"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I hold certifications in AWS, Docker, and Kubernetes.",
+        "checkbox": "Yes"
+      }
+    },
+    "referred_by_comprehensive": {
+      "patterns": [
+        "were you referred by anyone",
+        "do you have a referral",
+        "referral employee name",
+        "who referred you",
+        "referral from current company",
+        "were you referred to this position",
+        "employee referral",
+        "referral source",
+        "do you know anyone at our company",
+        "internal referral"
+      ],
+      "category": "preference",
+      "default": "No",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I was not referred by anyone. I applied through the job posting.",
+        "checkbox": "No"
+      }
+    },
+    "job_change_reason_comprehensive": {
+      "patterns": [
+        "why are you looking to change",
+        "reason for job change",
+        "why do you want to leave",
+        "reason for leaving current job",
+        "why are you seeking a new role",
+        "what is prompting you to look",
+        "reason for job switch",
+        "why this job change",
+        "what motivates you to change",
+        "why are you interested in a new opportunity"
+      ],
+      "category": "behavioral",
+      "default": "Looking for better career growth opportunities and challenging projects",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Career Growth",
+        "select": "Better career growth opportunities",
+        "text": "Looking for better career growth opportunities and challenging projects",
+        "textarea": "I am looking for better career growth opportunities, challenging projects, and a role where I can contribute to impactful products. I want to work in a product-based company with a strong engineering culture.",
+        "checkbox": "Yes"
+      }
+    },
+    "startup_experience_comprehensive": {
+      "patterns": [
+        "do you have startup experience",
+        "have you worked in a startup",
+        "startup work experience",
+        "experience in early-stage companies",
+        "have you worked in a fast-paced environment",
+        "startup ecosystem experience",
+        "early stage startup experience",
+        "working in a startup environment",
+        "experience building from scratch",
+        "building products from zero"
+      ],
+      "category": "experience",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have experience working in fast-paced environments, building products from scratch, and handling multiple responsibilities.",
+        "checkbox": "Yes"
+      }
+    },
+    "leadership_comprehensive": {
+      "patterns": [
+        "have you managed a team",
+        "leadership experience",
+        "team management experience",
+        "have you led a team of engineers",
+        "experience leading projects",
+        "people management experience",
+        "team lead experience",
+        "mentoring junior developers",
+        "have you mentored anyone",
+        "technical leadership experience"
+      ],
+      "category": "experience",
+      "default": "Yes, I have mentored junior developers and led project modules.",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have mentored junior developers, led project modules, and conducted code reviews. I have experience guiding team members on best practices and technical decisions.",
+        "checkbox": "Yes"
+      }
+    },
+    "passport_comprehensive": {
+      "patterns": [
+        "do you have a valid passport",
+        "passport validity",
+        "passport number",
+        "are you passport holder",
+        "valid passport status",
+        "passport details",
+        "can you travel internationally",
+        "passport expiry date",
+        "do you hold a passport",
+        "willingness to travel internationally"
+      ],
+      "category": "work_authorization",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have a valid Indian passport and am willing to travel internationally if required.",
+        "checkbox": "Yes"
+      }
+    },
+    "criminal_record_comprehensive": {
+      "patterns": [
+        "do you have any criminal record",
+        "have you been convicted",
+        "criminal background check",
+        "any pending criminal cases",
+        "have you ever been arrested",
+        "criminal history",
+        "any criminal charges against you",
+        "felony or misdemeanor",
+        "criminal record disclosure",
+        "any legal proceedings against you"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not have any criminal record, pending cases, or legal proceedings.",
+        "checkbox": "No"
+      }
+    },
+    "work_from_home_preference": {
+      "patterns": [
+        "preference for work from home",
+        "do you prefer wfh",
+        "work from home or office",
+        "hybrid or remote preference",
+        "preferred work mode",
+        "wfh or wfo preference",
+        "remote or on-site",
+        "work location preference",
+        "do you prefer remote work",
+        "comfortable with wfo"
+      ],
+      "category": "work_mode",
+      "default": "Flexible",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Flexible",
+        "select": "Flexible",
+        "text": "Flexible",
+        "textarea": "I am flexible with both remote and office work. I can adapt to the company's work mode policy.",
+        "checkbox": "Yes"
+      }
+    },
+    "immediate_joiner_comprehensive": {
+      "patterns": [
+        "are you an immediate joiner",
+        "can you join immediately",
+        "immediate joining possible",
+        "when can you start",
+        "immediate joiner status",
+        "can you join within a week",
+        "available for immediate joining",
+        "how soon can you join",
+        "start date availability",
+        "joining timeline"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I can join within 15 days. I am serving my notice period.",
+        "checkbox": "Yes"
+      }
     }
   },
   "categories": {

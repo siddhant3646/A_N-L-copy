@@ -232136,6 +232136,455 @@
         "textarea": "Yes, I can join within 15 days. I am serving my notice period.",
         "checkbox": "Yes"
       }
+    },
+    "tenure_at_current_company": {
+      "patterns": [
+        "years at current company",
+        "how long at current employer",
+        "how long have you been with your current employer",
+        "tenure at current company",
+        "how long have you been with your current company",
+        "duration at current company",
+        "duration at current organization",
+        "time at current company",
+        "how many years at current company",
+        "years in current company",
+        "years in current organization",
+        "how many years have you been with your current employer",
+        "how long have you been working at your current company",
+        "how long at current organization",
+        "tenure at current organization",
+        "years with current employer",
+        "how many years have you worked at your current company",
+        "how long is your tenure at the current company",
+        "current company tenure"
+      ],
+      "category": "experience",
+      "default": "1.5 Years",
+      "priority": 14,
+      "negative_patterns": [
+        "total experience",
+        "overall experience",
+        "cumulative experience",
+        "total years of experience",
+        "how many years of experience do you have"
+      ],
+      "input_type_defaults": {
+        "radio": "1.5",
+        "select": "1.5 Years",
+        "text": "1.5 Years",
+        "number": "1.5",
+        "textarea": "I have been working at my current company for 1.5 years.",
+        "checkbox": "Yes"
+      }
+    },
+    "nri_overseas_candidate": {
+      "patterns": [
+        "are you an nri",
+        "are you an overseas candidate",
+        "non-resident indian",
+        "nri status",
+        "are you applying from abroad",
+        "international applicant",
+        "overseas applicant",
+        "are you based in india",
+        "currently based in india",
+        "nri candidate",
+        "non-resident india",
+        "are you a non-resident indian"
+      ],
+      "category": "work_authorization",
+      "default": "No, I am based in Bangalore, India.",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No, based in India",
+        "text": "No, I am based in Bangalore, India.",
+        "textarea": "No, I am currently based in Bangalore, Karnataka, India. I am an Indian citizen and resident.",
+        "checkbox": "No"
+      }
+    },
+    "medical_examination_consent": {
+      "patterns": [
+        "medical examination",
+        "medical test",
+        "pre-employment medical",
+        "health checkup",
+        "medical fitness",
+        "physical examination",
+        "medical clearance",
+        "willing to undergo medical examination",
+        "pre employment medical test",
+        "medical fitness certificate",
+        "health examination"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am willing to undergo any pre-employment medical examination or fitness test as required.",
+        "checkbox": "Yes"
+      }
+    },
+    "design_documents_rfc_experience": {
+      "patterns": [
+        "have you written design documents",
+        "experience with technical design documents",
+        "have you authored architecture documents",
+        "do you write rfc",
+        "design document experience",
+        "technical design document",
+        "architecture document",
+        "rfc experience",
+        "have you created technical design docs",
+        "written any rfc or design doc",
+        "design specification documents",
+        "api design documentation",
+        "system design document"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I regularly write technical design documents, RFC proposals, and architecture specifications for microservices, APIs, and distributed systems at Everbridge. These documents cover system architecture, data flow, API contracts, error handling, and deployment strategies.",
+        "checkbox": "Yes"
+      }
+    },
+    "extended_hours_overtime": {
+      "patterns": [
+        "extended hours",
+        "long hours",
+        "work late",
+        "after hours",
+        "willing to work overtime if required",
+        "occasional overtime",
+        "work beyond regular hours",
+        "work extra hours",
+        "flexible with working hours",
+        "available outside business hours",
+        "willing to work beyond scheduled hours"
+      ],
+      "category": "preference",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am flexible and willing to work extended hours or occasional overtime when project deadlines or production issues require it.",
+        "checkbox": "Yes"
+      }
+    },
+    "police_verification_consent": {
+      "patterns": [
+        "police verification",
+        "police clearance",
+        "police check",
+        "criminal background check",
+        "police clearance certificate",
+        "no criminal record",
+        "police verification required",
+        "willing to undergo police verification"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have a clean record and am willing to undergo police verification or provide a police clearance certificate as required.",
+        "checkbox": "Yes"
+      }
+    },
+    "willing_to_sign_bond_explicit": {
+      "patterns": [
+        "willing to sign a bond",
+        "sign a service bond",
+        "agree to a bond",
+        "bond agreement willingness",
+        "willing to enter into a service bond",
+        "open to signing a bond",
+        "comfortable with a service bond"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 11,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "I prefer not to sign a service bond. However, I am committed to my professional responsibilities and would discuss terms that are mutually acceptable.",
+        "checkbox": "No"
+      }
+    },
+    "work_from_office_willingness": {
+      "patterns": [
+        "willing to work from office",
+        "wfo willing",
+        "comfortable working from office",
+        "ok to work from office",
+        "work from office preference",
+        "onsite work willingness",
+        "willing to come to office",
+        "can you work from office",
+        "open to working from office",
+        "office attendance willingness"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am comfortable working from the office in a hybrid or fully onsite arrangement as per the company's policy.",
+        "checkbox": "Yes"
+      }
+    },
+    "home_office_setup": {
+      "patterns": [
+        "home office setup",
+        "dedicated workspace",
+        "remote work setup",
+        "do you have a home office",
+        "work from home infrastructure",
+        "stable internet connection",
+        "ergonomic workspace"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 8,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have a dedicated home office setup with a stable high-speed internet connection, ergonomic workspace, and necessary equipment for remote work.",
+        "checkbox": "Yes"
+      }
+    },
+    "hiring_timeline_preference": {
+      "patterns": [
+        "when do you want to start",
+        "preferred start date",
+        "when would you like to join",
+        "desired date of joining",
+        "start date preference",
+        "preferred date of joining",
+        "when do you wish to join"
+      ],
+      "category": "availability",
+      "default": "Within 15 days",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Within 15 days",
+        "select": "Within 15 days",
+        "text": "Within 15 days",
+        "textarea": "I can start within 15 days of receiving the offer. I am currently serving my notice period.",
+        "checkbox": "Yes"
+      }
+    },
+    "employment_gaps": {
+      "patterns": [
+        "employment gaps",
+        "gap in employment",
+        "career gap",
+        "employment gap",
+        "break in career",
+        "career break",
+        "gap in work history",
+        "period of unemployment",
+        "any gaps in your career"
+      ],
+      "category": "employment",
+      "default": "No",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I have a continuous employment history without any significant career breaks. I have been working full-time since graduation in 2022.",
+        "checkbox": "No"
+      }
+    },
+    "willing_to_work_weekends": {
+      "patterns": [
+        "willing to work on weekends",
+        "weekend work",
+        "work on weekends",
+        "saturday work",
+        "sunday work",
+        "weekend availability",
+        "can you work on weekends",
+        "open to working weekends"
+      ],
+      "category": "preference",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am flexible and willing to work on weekends when required for critical releases, production issues, or project deadlines.",
+        "checkbox": "Yes"
+      }
+    },
+    "notice_period_buyout": {
+      "patterns": [
+        "notice period buyout",
+        "can your notice be bought out",
+        "buyout notice period",
+        "willing to get notice period bought out",
+        "notice buyout option",
+        "can we buyout your notice",
+        "buyout option for notice"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "priority": 13,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, my notice period can be bought out if mutually agreed upon with the current employer.",
+        "checkbox": "Yes"
+      }
+    },
+    "how_many_companies_worked": {
+      "patterns": [
+        "how many companies have you worked for",
+        "number of companies worked",
+        "how many employers",
+        "how many organizations have you worked at",
+        "total companies worked",
+        "how many jobs have you had",
+        "work history companies",
+        "number of employers"
+      ],
+      "category": "experience",
+      "default": "2",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "2",
+        "select": "2",
+        "text": "2",
+        "number": "2",
+        "textarea": "I have worked at 2 companies - currently at Everbridge and previously at Fiserv.",
+        "checkbox": "Yes"
+      }
+    },
+    "reason_for_leaving": {
+      "patterns": [
+        "reason for leaving current job",
+        "why are you leaving",
+        "why do you want to leave",
+        "reason for leaving",
+        "why are you looking to leave",
+        "reason for wanting to leave",
+        "why do you want to leave your current job",
+        "reason for job change from current"
+      ],
+      "category": "behavioral",
+      "default": "Looking for a high-impact engineering role in distributed systems, backend architectures, and high-scale applications with greater technical challenges and growth opportunities.",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Looking for better opportunities",
+        "select": "Looking for better opportunities",
+        "text": "Looking for better opportunities",
+        "textarea": "I am looking for a high-impact engineering role in distributed systems, backend architectures, and high-scale applications where I can take on greater technical challenges and grow into a senior engineering leadership position.",
+        "checkbox": "Yes"
+      }
+    },
+    "willing_to_sign_nda": {
+      "patterns": [
+        "willing to sign nda",
+        "non-disclosure agreement",
+        "nda agreement",
+        "confidentiality agreement",
+        "willing to sign a non-disclosure",
+        "sign an nda",
+        "nda consent"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am willing to sign a Non-Disclosure Agreement (NDA) or confidentiality agreement as required.",
+        "checkbox": "Yes"
+      }
+    },
+    "technical_interview_availability": {
+      "patterns": [
+        "available for technical interview",
+        "technical interview availability",
+        "can you attend a technical interview",
+        "available for coding assessment",
+        "available for technical screening",
+        "available for online assessment",
+        "take a technical test"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am available for technical interviews, coding assessments, and online evaluations at a mutually convenient time.",
+        "checkbox": "Yes"
+      }
+    },
+    "references_available": {
+      "patterns": [
+        "references available",
+        "can you provide references",
+        "professional references",
+        "reference check",
+        "provide reference contact",
+        "references upon request",
+        "willing to provide references"
+      ],
+      "category": "employment",
+      "default": "Yes",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I can provide professional references from my previous and current employers upon request.",
+        "checkbox": "Yes"
+      }
+    },
+    "contract_or_permanent": {
+      "patterns": [
+        "are you on contract or permanent",
+        "contract or permanent employment",
+        "permanent or contractual",
+        "type of employment",
+        "employment type",
+        "is this a permanent role",
+        "permanent position",
+        "contract position"
+      ],
+      "category": "employment",
+      "default": "Permanent",
+      "priority": 10,
+      "input_type_defaults": {
+        "radio": "Permanent",
+        "select": "Permanent",
+        "text": "Permanent",
+        "textarea": "I am currently in a full-time permanent employment role.",
+        "checkbox": "Yes"
+      }
     }
   },
   "categories": {

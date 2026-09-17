@@ -20,7 +20,7 @@ DOM_DIR = OUTPUT_DIR / "dom"
 SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
 DOM_DIR.mkdir(parents=True, exist_ok=True)
 
-LINKEDIN_START_URL = "https://www.linkedin.com/jobs/search-results/?currentJobId=4325424519&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=Qwth1ndwtouG0vtFGj%2Bpsg%3D%3D&geoId=102713980&distance=0.0&f_TPR=r86400&f_AL=true"
+LINKEDIN_START_URL = "https://www.linkedin.com/jobs/search-results/?currentJobId=4465964530&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=%2BwZjKLMP0hIfZu3X9nxkoA%3D%3D&f_TPR=r86400&f_AL=true"
 
 async def capture_state(page, step_label: str):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")

@@ -110,7 +110,7 @@ class TestJSONConfig(unittest.TestCase):
     def test_qa_patterns_structure(self):
         """Test that qa_patterns.json has the expected structure."""
         config_path = os.path.join(
-            os.path.dirname(__file__), '..', 'config', 'qa_patterns.json'
+            os.path.dirname(__file__), '..', '..', '..', 'config', 'qa_patterns.json'
         )
         
         if not os.path.exists(config_path):

@@ -146,7 +146,7 @@ class TestQAAuditFixes(unittest.TestCase):
             res = self.matcher.match_with_details(q)
             self.assertIsNotNone(res, f"Failed to match {q}")
             ans = res.get('answer', '')
-            self.assertIn('Sep', ans)
+            self.assertRegex(ans, r'\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}')
             self.assertNotEqual(ans, '15')
 
     def test_join_within_1_month(self):

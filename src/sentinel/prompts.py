@@ -100,7 +100,7 @@ DETAILS TO USE:
 """
 
 LINKEDIN_JOB_APPLY_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.linkedin.com/jobs/search-results/?currentJobId=4325424519&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=Qwth1ndwtouG0vtFGj%2Bpsg%3D%3D&geoId=102713980&distance=0.0&f_TPR=r86400&f_AL=true immediately.
+NAVIGATE to https://www.linkedin.com/jobs/search-results/?currentJobId=4465964530&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=%2BwZjKLMP0hIfZu3X9nxkoA%3D%3D&f_TPR=r86400&f_AL=true immediately.
 
 GOAL: Click 'Easy Apply' and submit applications.
 
@@ -249,7 +249,7 @@ PHASE 1 - CONFIGURE SEARCH:
 2. Select Company Size: Large (select#company-size, option with value "2")
 3. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
 4. Add Skills (one by one): Java, JavaScript, TypeScript, SpringBoot, ReactJS, AWS, Git, OpenAI, LLMs, Claude, FastAPI, Machine Learning, Generative AI
-5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
+5. Add Job Functions: All - Software Engineering
 6. Click "Show results" button after all configuration is complete
 
 PHASE 2 - APPLY TO JOBS (Loop 5 times):
@@ -285,7 +285,7 @@ PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 2. Otherwise: Select Company Size: All (select#company-size, option "All" / option with value "" or "0")
 3. Otherwise: Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
 4. Add Skills (one by one): Java, JavaScript, TypeScript, SpringBoot, ReactJS, AWS, Git, OpenAI, LLMs, Claude, FastAPI, Machine Learning, Generative AI
-5. Add Job Functions: Backend Development, Frontend Development, Full-Stack Development
+5. Add Job Functions: All - Software Engineering
 6. Click "Show results"
 
 PHASE 2 - APPLY TO 20 JOBS (High Volume Session):

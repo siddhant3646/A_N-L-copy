@@ -42,6 +42,17 @@ class TestInstahyreInboxTask(unittest.TestCase):
         prompt = prompts.INSTAHYRE_SEARCH_TASK
         self.assertIn("Company Size: Large", prompt)
 
+    def test_instahyre_job_functions_all_software_engineering(self):
+        """Verify Task 4 and Intersession tasks use only All - Software Engineering for job functions."""
+        for prompt_name, prompt in [
+            ("INSTAHYRE_SEARCH_TASK", prompts.INSTAHYRE_SEARCH_TASK),
+            ("INSTAHYRE_INTERSESSION_TASK", prompts.INSTAHYRE_INTERSESSION_TASK),
+        ]:
+            self.assertIn("Job Functions: All - Software Engineering", prompt, f"Failed for {prompt_name}")
+            self.assertNotIn("Backend Development", prompt, f"Backend Development found in {prompt_name}")
+            self.assertNotIn("Frontend Development", prompt, f"Frontend Development found in {prompt_name}")
+            self.assertNotIn("Full-Stack Development", prompt, f"Full-Stack Development found in {prompt_name}")
+
     def test_task_in_runner_list(self):
         """Verify Task 1 is included in tasks in run.py with direct target inbox URL."""
         import inspect

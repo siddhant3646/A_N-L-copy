@@ -102,6 +102,8 @@ class SentinelAgent:
         self._processed_questionnaires = set()  # Track processed Instahyre questionnaire URLs
         self._instahyre_inbox_no_conv_count = 0
         self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
+        self._linkedin_skipped_job_ids = set()  # Persistent set of skipped LinkedIn job IDs
+        self._linkedin_skipped_job_titles = set()  # Persistent set of skipped LinkedIn job titles
         self._linkedin_no_jobs_scroll_count = 0  # Track consecutive 'No jobs found' scrolls for pagination
         self._naukri_no_progress_count = 0  # Track consecutive chatbot completions with no count progress
         self._naukri_no_progress_max = 3  # Max no-progress rounds before stopping the task
@@ -396,6 +398,15 @@ class SentinelAgent:
             pass
         return self._current_platform
 
+    def _get_linkedin_search_url(self) -> str:
+        """Get the configured LinkedIn search URL from task description or default target URL."""
+        import re
+        if getattr(self, '_task_description', None):
+            match = re.search(r'https?://[^\s]*linkedin\.com/jobs/[^\s]*', self._task_description)
+            if match:
+                return match.group(0).rstrip('.,;')
+        return "https://www.linkedin.com/jobs/search-results/?currentJobId=4465964530&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=%2BwZjKLMP0hIfZu3X9nxkoA%3D%3D&f_TPR=r86400&f_AL=true"
+
     def _detect_negation(self, question: str) -> bool:
         """Detect if question contains negation words."""
         negation_words = ['not', 'no', "n't", 'never', 'without', 'except', 'apart from', 'cannot', "can't", "won't", 'refuse', 'decline']
@@ -457,10 +468,107 @@ class SentinelAgent:
             return 'Yes', 0.98
 
         # Relatives / Family / Conflict of interest in company
-        conflict_keywords = ['conflict of interest', 'close relative', 'family member', 
+        conflict_keywords = ['conflict of interest', 'close relative', 'family member', 'family members',
+                            'personal relationship', 'personal relationships',
                             'relative working', 'relatives working', 'relatives in', 'family in company', 'relatives in company', 'relatives working with us', 'relative working with us']
-        if any(kw in question_lower for kw in conflict_keywords) or ('relative' in question_lower and 'company' in question_lower):
+        if any(kw in question_lower for kw in conflict_keywords) or (('relative' in question_lower or 'family' in question_lower or 'personal relationship' in question_lower) and ('company' in question_lower or 'vendor' in question_lower or 'supplier' in question_lower or 'partner' in question_lower or 'okta' in question_lower)):
             return 'No', 0.98
+
+        # Outside business activities / Advisory / Side business / Moonlighting
+        if any(kw in question_lower for kw in ['outside business', 'side business', 'side businesses', 'advisory, consulting', 'advisory consulting', 'board role', 'board roles', 'dual employment', 'moonlighting', 'secondary employment']):
+            return 'No', 0.98
+
+        # Referral by internal employee & follow-up name question
+        if any(kw in question_lower for kw in ['referred by an internal', 'referred by an employee', 'referred by a current employee', 'internal employee referral', 'were you referred by an internal', 'were you referred by']):
+            return 'No', 0.98
+        if any(kw in question_lower for kw in ['please provide the employee’s first and last name', 'please provide the employee\'s first and last name', 'employee’s first and last name', 'employee\'s first and last name', 'if you answered yes to the last question', 'provide the employee’s first and last name', 'provide the employee\'s first and last name']):
+            return 'N/A', 0.98
+
+        # Ex-employee / Previously employed with check (Deterministic 'No' unless current employer)
+        if any(kw in question_lower for kw in [
+            'previously employed with freshworks', 'previously employed with',
+            'previously worked with freshworks', 'previously worked with',
+            'ever worked for freshworks', 'ex-employee of', 'ex-employee with'
+        ]) and 'everbridge' not in question_lower and 'fiserv' not in question_lower:
+            return 'No', 0.98
+
+        # TCS EP Number (Candidature ID)
+        if any(kw in question_lower for kw in ['ep number(candidature id)', 'ep number (candidature id)', 'candidature id) if already registered with tcs', 'registered with tcs']):
+            return 'N/A', 0.98
+
+        # Independent Technical Problem Solving
+        if any(kw in question_lower for kw in ['independently diagnose and solve', 'solve technical problems independently', 'diagnose and solve technical', 'independently diagnose', 'diagnose and solve']):
+            return 'Yes', 0.98
+
+        # Fast-paced environment alignment
+        if any(kw in question_lower for kw in ['incredibly fast-paced', 'fast-paced. we do whatever it takes', 'aligned with this aspect']):
+            return 'Yes, I thrive in fast-paced environments with a focus on ownership, high velocity, and engineering excellence.', 0.98
+
+        # Bengaluru on-site requirement
+        if ('bengaluru' in question_lower or 'bangalore' in question_lower) and any(kw in question_lower for kw in ['requires you to be in', 'role requires you to be in', 'okay with that', 'comfortable with that']):
+            return 'Yes, I am based in Bengaluru and fully comfortable working on-site.', 0.98
+
+        # How quickly can you join / notice period in textarea
+        if any(kw in question_lower for kw in ['how quickly can you join us if shortlisted', 'how quickly can you join us', 'how early you can join']):
+            return '15 Days (Serving Notice Period)', 0.98
+
+        # Spanish country phone code (Código del país)
+        if any(kw in question_lower for kw in ['código del país', 'codigo del pais', 'codigo de pais', 'código de país']):
+            return 'India (+91)', 0.98
+
+        # Product / Feature owned end-to-end
+        if any(kw in question_lower for kw in ['product or feature you owned end to end', 'owned end to end, from idea to production', 'owned end to end from idea to production']):
+            return 'As SDE-2 at Everbridge, I owned the Dispute Expert Toolkit & Real-time Settlement Reporting System end-to-end. I designed the event-driven microservices architecture using Java, Spring Boot, and Kafka, implemented distributed caching with Redis, and led deployment on AWS using Docker and Kubernetes, scaling throughput by 40%.', 0.98
+
+        # Main or only developer on a product
+        if any(kw in question_lower for kw in ['main or only developer on a product', 'main developer on a product that real users used']):
+            return 'Yes, as lead developer for key modules of the Real-time Settlement and Reporting pipeline at Everbridge, I took full ownership from design to post-launch monitoring, maintaining 99.99% uptime and handling production P1/P2 incidents.', 0.98
+
+        # UI design and responsiveness
+        if any(kw in question_lower for kw in ['show a piece of ui you built', 'piece of ui you built from a design', 'how close did the final result come to the design']):
+            return 'Built responsive analytics dashboard in React.js and TypeScript utilizing Tailwind CSS and CSS Grid/Flexbox, matching Figma specs with pixel precision and ensuring full responsiveness across mobile, tablet, and desktop viewports.', 0.98
+
+        # Motivation to join / elevator pitch
+        if any(kw in question_lower for kw in ['motivation behind wanting to join', 'tell us why you are interested in this job role', 'tell us your career aspirations and where you see yourself', 'this can be your elevator pitch to us']):
+            return 'I am excited about building world-class SaaS and distributed systems at scale. With 4+ years of experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to high-impact products and collaborate with dynamic engineering teams.', 0.98
+
+        # AI & Web product count
+        if any(kw in question_lower for kw in ['ai & web product you have developed', 'ai and web products have you developed', 'how many ai & web product']):
+            return '5+', 0.98
+
+        # MBA / PhD education check (Candidate has B.Tech)
+        if any(kw in question_lower for kw in ['master of business administration', 'level of education: master of business', 'level of education master of business', 'mba degree', 'doctorate', 'phd degree', 'level of education: doctorate']):
+            return 'No', 0.98
+
+        # Compound CTC (Current & Expected in one field) - returns raw INR per requirement
+        if ('ctc: current & expected' in question_lower or 'current & expected ctc' in question_lower or 'current and expected ctc' in question_lower or 'current & expected compensation' in question_lower or 'current and expected compensation' in question_lower):
+            if 'lpa' in question_lower:
+                return '23 LPA / 30 LPA', 0.98
+            return '2300000 / 3000000', 0.98
+
+        # Gaps in education/career
+        if ('gap' in question_lower or 'gaps' in question_lower) and ('education' in question_lower or 'career' in question_lower or 'graduation' in question_lower):
+            return 'No', 0.98
+
+        # PF records, payslips, and employment documents available
+        if ('payslip' in question_lower or 'payslips' in question_lower or 'employment documents' in question_lower or 'service certificate' in question_lower) and any(kw in question_lower for kw in ['available', 'provide', 'verification', 'previous employers', 'all previous employers', 'documents', 'form 16']):
+            return 'Yes, all documents available', 0.98
+
+        # Notice period negotiable / buyout
+        if ('notice period' in question_lower or 'notice' in question_lower) and any(kw in question_lower for kw in ['negotiable', 'negotiate', 'buyout', 'buy out', 'reduce', 'can you reduce', 'early joining']):
+            return 'Yes', 0.98
+
+        # Counter offers / Holding offer
+        if any(kw in question_lower for kw in ['counter offer', 'holding any counter offer', 'any offer? (if yes', 'any offer ? (if yes', 'holding counter offer', 'competing offer', 'offer in hand', 'holding offer', 'existing offer', 'holding any offer']):
+            return 'No', 0.98
+
+        # Contract type preference
+        if any(kw in question_lower for kw in ['type of contract', 'contract type', 'employment type are you looking', 'type of employment are you seeking']):
+            return 'Full-time', 0.98
+
+        # Country of residence text
+        if any(kw in question_lower for kw in ['country in which you currently reside', 'country you currently live', 'confirm in which country you live', 'country of residence']):
+            return 'India', 0.98
 
         # Cooling period / Applied in past 6/12 months
         cooling_keywords = [
@@ -473,6 +581,11 @@ class SentinelAgent:
         ]
         if (any(kw in question_lower for kw in cooling_keywords) or 'cooling' in question_lower) and any(act in question_lower for act in ['applied', 'interviewed', 'roles', 'cooling', 'appeared', 'attended']):
             return 'No', 0.98
+
+        # Criminal record / Conviction
+        if any(kw in question_lower for kw in ['criminal record', 'criminal history', 'criminal charges', 'convicted of', 'convicted for', 'criminal offence', 'criminal offense', 'pending criminal']):
+            if 'no criminal record' not in question_lower and 'clean background' not in question_lower:
+                return 'No', 0.98
 
         # Active PF / Provident Fund Account
         if ('pf' in question_lower or 'provident fund' in question_lower) and any(kw in question_lower for kw in ['active', 'have', 'account', 'all companies', 'uan', 'number', 'history']):
@@ -504,6 +617,30 @@ class SentinelAgent:
         # Equity / ESOP in current company
         if bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|esop|stock\s+options?\s+in)\b', question_lower)) or ('equity' in question_lower and ('current company' in question_lower or 'employer' in question_lower or 'hold' in question_lower)):
             return 'No', 0.98
+
+        # Accommodation requirement / preference
+        if 'accommodation' in question_lower and any(kw in question_lower for kw in ['require', 'need', 'special accommodation']):
+            return 'Not required', 0.98
+
+        # ADA Accommodation & Policy disclaimers
+        if any(kw in question_lower for kw in ['reasonable accommodation', 'ada amendments act', 'adaaa', 'request an accommodation', 'accommodations notice']) or ('accommodation' in question_lower and any(kw in question_lower for kw in ['disability', 'apply', 'organization', 'qualified', 'request', 'policy', 'email careers'])):
+            return 'I understand', 0.98
+
+        # Privacy Policy & Terms of Service Agreements
+        if any(kw in question_lower for kw in ['privacy policy & terms', 'terms of service', 'applicant tracking\'s privacy policy', 'agree to isolved', 'by applying to this position, i agree', 'refer.io terms']):
+            return 'I understand', 0.98
+
+        # Voluntary Self-Identification Disability Survey (Federal CC-305 / OMB Burden Statement)
+        if any(kw in question_lower for kw in ['paperwork reduction act', 'burden statement', 'omb control number', 'voluntary self-identification of disability', 'self-identification of disability']):
+            return "No, I Don't Have A Disability, Or A History/Record Of Having A Disability", 0.98
+
+        # Preferred Contact Method
+        if any(kw in question_lower for kw in ['preferred method of contact', 'preferred contact method', 'method of contact do you prefer', 'what is your preferred method of contact']):
+            return 'Email', 0.98
+
+        # Communication Policy / SMS / Text Message consent
+        if any(kw in question_lower for kw in ['applicant communication policy', 'communication policy for receiving text', 'receiving text messages', 'opt-in to receive email notifications', 'receive email notifications about new jobs']):
+            return 'Yes, I agree to be contacted by text messages', 0.98
 
         # Address
         if question_lower in ('address', 'current address', 'permanent address', 'residential address', 'street address', 'address line 1', 'address line 2') or (question_lower.startswith('address') and len(question_lower) <= 20 and not any(k in question_lower for k in ['email', 'ip', 'mac', 'web'])):
@@ -570,18 +707,28 @@ class SentinelAgent:
             return 'He/Him/His', 0.98
 
         # Work Authorization in India & Visa Sponsorship
-        if ('authorized to work in india' in question_lower or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower:
+        if ('authorized to work in india' in question_lower or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower and 'sponsorship' not in question_lower:
             return 'Yes', 0.98
-        if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower:
-            if any(kw in question_lower for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment']):
+        if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower:
+            if any(kw in question_lower for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment', 'support', 'transfer']):
                 return 'No', 0.98
 
-        # Ex-employee / Ever worked for company
-        ever_employed_pattern = r"(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|with|for)"
-        if re.search(ever_employed_pattern, question_lower):
-            if 'everbridge' in question_lower or 'fiserv' in question_lower:
-                return 'Yes', 0.98
-            return 'No', 0.98
+        # Ex-employee / Ever worked for company or subsidiaries
+        ex_tech_kw = {'kafka', 'python', 'java', 'react', 'aws', 'spring', 'docker', 'kubernetes', 'node', 'microservices', 'event streaming', 'pipeline', 'pipelines', 'sql', 'nosql', 'redis', 'c#', 'c++', 'go', 'golang', 'azure', 'gcp'}
+        if not any(tk in question_lower for tk in ex_tech_kw):
+            is_ex_emp = (
+                'subsidiaries in the past' in question_lower or
+                'subsidiary in the past' in question_lower or
+                'as an employee, intern, or contractor' in question_lower or
+                'agency personnel' in question_lower or
+                'ever worked for?' in question_lower or
+                bool(re.search(r'(?:ever\s+been\s+employed|previously\s+employed|ever\s+worked|previously\s+worked)\s+(?:by|at|for|with)', question_lower)) or
+                bool(re.search(r'have\s+you\s+(?:ever\s+)?worked\s+(?:for|at)\s+(?:our\s+company|this\s+company|\?)', question_lower))
+            )
+            if is_ex_emp:
+                if 'everbridge' in question_lower or 'fiserv' in question_lower:
+                    return 'Yes', 0.98
+                return 'No', 0.98
 
         # NOC / Relieving Letter / Experience Letter
         if 'noc' in question_lower or 'relieving letter' in question_lower or 'experience letter' in question_lower:
@@ -744,7 +891,8 @@ class SentinelAgent:
         
         # Rating scale short ("Rate your experience (1-5)") - without "on a scale"
         rating_scale_short_keywords = ['rate your experience', 'rate your proficiency', 'rate your skills',
-                                       'rate your communication', 'rate your stakeholder']
+                                       'rate your communication', 'rate your stakeholder', 'proficiency (1-5)',
+                                       'rate yourself (1-5)', '(1-5)', '1 to 5', '1-5']
         is_rating_scale_short = any(kw in question_lower for kw in rating_scale_short_keywords)
         
         # Last Working Date in specific format ("dd-mmm-yy format")
@@ -865,6 +1013,26 @@ class SentinelAgent:
             return '15', 0.99
         
         # Handle high-priority question types FIRST
+
+        # Notice period 2-digit confirmation check (e.g. "please confirm the notice period... just put 2 digit number")
+        if ('notice period' in question_lower and ('2 digit' in question_lower or 'just put 2' in question_lower or 'confirm the notice' in question_lower)) or 'confirm the notice period' in question_lower:
+            return '15', 0.99
+
+        # GitHub profile link (NOT portfolio or resume link)
+        if any(kw in question_lower for kw in ['github link', 'github profile', 'github url', 'github profile link', 'github profile url']) or (question_lower.strip() in ['github', 'git hub', 'github repo']):
+            return 'https://github.com/siddhant3646', 0.98
+
+        # Current job title / Designation
+        if question_lower.strip() in ['your title', 'current job title', 'current title', 'designation', 'job title', 'title'] or any(kw in question_lower for kw in ['your current title', 'your current job title', 'current designation']):
+            return 'Software Engineer 2', 0.98
+
+        # Current company / Current employer
+        if question_lower.strip() in ['company', 'current company', 'current employer', 'present company', 'present employer', 'employer'] or any(kw in question_lower for kw in ['name of current company', 'name of current employer', 'your current company']):
+            return 'Everbridge', 0.98
+
+        # Compound CTC (Current & Expected in one field)
+        if ('ctc: current & expected' in question_lower or 'current & expected ctc' in question_lower or 'current and expected ctc' in question_lower or 'current & expected compensation' in question_lower or 'current and expected compensation' in question_lower):
+            return '2300000 / 3000000', 0.98
         
         # Composite HR question (must check BEFORE individual NP/salary)
         if is_composite_hr:
@@ -964,12 +1132,12 @@ class SentinelAgent:
         if is_yes_no_proficiency:
             return 'Yes', 0.95
         
-        if is_rating_question:
-            return '9', 0.95
-        
         # Rating scale short ("Rate your experience (1-5)") - different scale than 1-10
         if is_rating_scale_short:
-            return '4', 0.95
+            return '5', 0.95
+
+        if is_rating_question:
+            return '9', 0.95
         
         if is_position_question:
             return 'Backend', 0.95
@@ -1110,7 +1278,7 @@ class SentinelAgent:
             # LPA (Lakhs Per Annum) questions - return LPA value, not annual INR
             # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum" -> "23" or "30"
             if 'lpa' in question_lower or 'lakh' in question_lower or 'per annum' in question_lower:
-                if 'expected' in question_lower or 'expect' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
+                if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
                     return '30', 0.98
                 return '23', 0.98
 
@@ -1121,7 +1289,7 @@ class SentinelAgent:
                 return '30', 0.98
             
             # Check for expected vs current - use plain numbers
-            if 'expected' in question_lower or 'expect' in question_lower:
+            if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower:
                 return '30', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
                 return '23', 0.95
@@ -2688,10 +2856,29 @@ class SentinelAgent:
                         await self._close_linkedin_modal()
                         await self._select_next_job_card()
                         continue
-                    print(f"⏳ LinkedIn modal transitioning ({self._linkedin_outer_transition_count}/3), waiting...")
-                    await asyncio.sleep(2)
+                if 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN' in str(result):
+                    self._linkedin_custom_dropdown_count = getattr(self, '_linkedin_custom_dropdown_count', 0) + 1
+                    print(f"⏳ LinkedIn custom dropdown handling ({self._linkedin_custom_dropdown_count}/3)...")
+                    if self._linkedin_custom_dropdown_count >= 2:
+                        print("⚠️ LinkedIn custom dropdown repeating. Force-clicking Next/Review/Submit...")
+                        try:
+                            for btn_text in ['Submit application', 'Review', 'Next', 'Continue']:
+                                btn = self._page.locator(f'button:has-text("{btn_text}")').first
+                                if await btn.count() > 0 and await btn.is_visible():
+                                    await btn.click(timeout=2000)
+                                    print(f"   ✅ Force-clicked {btn_text}")
+                                    break
+                        except Exception as btn_e:
+                            print(f"   ⚠️ Force-click button failed: {btn_e}")
+                    if self._linkedin_custom_dropdown_count >= 3:
+                        print("⚠️ LinkedIn custom dropdown stuck 3 times. Closing modal and skipping job...")
+                        self._linkedin_custom_dropdown_count = 0
+                        await self._close_linkedin_modal()
+                        await self._select_next_job_card()
+                        continue
+                    await asyncio.sleep(1.5)
                     continue
-                self._linkedin_outer_transition_count = 0
+                self._linkedin_custom_dropdown_count = 0
                 
                 if 'SUCCESS' in result:
                     # For LinkedIn, we want to apply to multiple jobs (up to limit)
@@ -2789,7 +2976,7 @@ class SentinelAgent:
                             if not closed:
                                 print("⚠️ Modal close failed — navigating to LinkedIn jobs search...")
                                 try:
-                                    await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                                    await self._page.goto(self._get_linkedin_search_url(), timeout=30000)
                                     await asyncio.sleep(random.uniform(3, 5))
                                 except Exception as nav_e:
                                     print(f"   ⚠️ Navigation fallback error: {nav_e}")
@@ -3141,23 +3328,27 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to render
                     continue
                 
+                if 'Skipping stuck job — ' in result:
+                    skipped_t = result.split('Skipping stuck job — ')[-1].strip()
+                    if skipped_t:
+                        self._linkedin_skipped_job_titles.add(skipped_t)
+                
                 # LinkedIn: Form stuck loop detection in outer step loop
                 # When autopilot breaks after being stuck, the outer loop keeps getting
                 # LINKEDIN_FORM_STUCK from _handle_scripted_fallback. After 3 consecutive
                 # stuck results, force-close the modal and navigate away to escape.
                 if 'LINKEDIN_FORM_STUCK' in result:
                     self._linkedin_stuck_count += 1
-                    print(f"⚠️ LinkedIn form stuck ({self._linkedin_stuck_count}/3): {result}")
-                    if self._linkedin_stuck_count >= 3:
-                        print("⚠️ LinkedIn stuck 3x in outer loop. Force-closing modal and navigating away...")
-                        closed = await self._close_linkedin_modal()
-                        if not closed:
-                            print("⚠️ Modal close failed — navigating to LinkedIn jobs search to escape...")
-                            try:
-                                await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
-                                await asyncio.sleep(random.uniform(4, 6))
-                            except Exception as nav_e:
-                                print(f"   ⚠️ Navigation fallback error: {nav_e}")
+                    print(f"⚠️ LinkedIn form stuck ({self._linkedin_stuck_count}/2): {result}")
+                    if self._linkedin_stuck_count >= 2:
+                        print("⚠️ LinkedIn stuck 2x in outer loop. Force-closing modal, skipping job, and navigating to search...")
+                        await self._close_linkedin_modal()
+                        await self._select_next_job_card()
+                        try:
+                            await self._page.goto(self._get_linkedin_search_url(), timeout=30000)
+                            await asyncio.sleep(random.uniform(4, 6))
+                        except Exception as nav_e:
+                            print(f"   ⚠️ Navigation fallback error: {nav_e}")
                         self._linkedin_stuck_count = 0  # Reset counter
                         await asyncio.sleep(random.uniform(2, 3))
                     else:
@@ -3173,6 +3364,25 @@ class SentinelAgent:
                     if hasattr(self, '_job_selected_streak'):
                         self._job_selected_streak = 0
                 
+                # LinkedIn: Step continued in outer loop (when modal is handled outside autopilot)
+                if 'LINKEDIN_FORM_STEP_CONTINUED' in result:
+                    self._linkedin_outer_step_count = getattr(self, '_linkedin_outer_step_count', 0) + 1
+                    print(f"➡️ LinkedIn form step continued in outer loop ({self._linkedin_outer_step_count}/5)")
+                    if self._linkedin_outer_step_count >= 5:
+                        print("⚠️ LinkedIn form stuck in outer step loop 5 times. Closing modal and skipping job...")
+                        self._linkedin_outer_step_count = 0
+                        await self._close_linkedin_modal()
+                        await self._select_next_job_card()
+                        try:
+                            await self._page.goto(self._get_linkedin_search_url(), timeout=30000)
+                            await asyncio.sleep(random.uniform(3, 5))
+                        except Exception as nav_e:
+                            print(f"   ⚠️ Navigation fallback error: {nav_e}")
+                    await asyncio.sleep(random.uniform(2, 4))
+                    continue
+                else:
+                    self._linkedin_outer_step_count = 0
+
                 # LinkedIn Autopilot — triggered by APPLY_CLICKED_LINKEDIN (legacy) or LINKEDIN_EASY_APPLY_CLICKED (JS)
                 if 'APPLY_CLICKED_LINKEDIN' in result or 'LINKEDIN_EASY_APPLY_CLICKED' in result:
                     # STRICT CHECK: If we've already submitted 5 applications, mark task complete
@@ -3194,6 +3404,7 @@ class SentinelAgent:
                     transitioning_count = 0   # Track consecutive modal transitioning states
                     max_transitioning_attempts = 5  # Max waits for modal to transition
                     easy_apply_restart_count = 0  # Track Easy Apply re-clicks inside autopilot (modal restarted)
+                    form_stuck_count = 0  # Track consecutive form stuck errors
                     # Reset location retry counters for each new job
                     self._location_retrigger_count = 0
                     self._location_fallback_attempted = False
@@ -3291,6 +3502,31 @@ class SentinelAgent:
 
                         next_result = await self._handle_scripted_fallback()
                         print(f"   📜 Autopilot: {next_result}")
+                        
+                        # LinkedIn: Custom dropdown watchdog inside autopilot
+                        if 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN' in str(next_result):
+                            self._linkedin_custom_dropdown_count = getattr(self, '_linkedin_custom_dropdown_count', 0) + 1
+                            print(f"   ⏳ Autopilot custom dropdown handling ({self._linkedin_custom_dropdown_count}/3)...")
+                            if self._linkedin_custom_dropdown_count >= 2:
+                                print("   ⚠️ Autopilot custom dropdown repeating. Force-clicking Next/Review/Submit...")
+                                try:
+                                    for btn_text in ['Submit application', 'Review', 'Next', 'Continue']:
+                                        btn = self._page.locator(f'button:has-text("{btn_text}")').first
+                                        if await btn.count() > 0 and await btn.is_visible():
+                                            await btn.click(timeout=2000)
+                                            print(f"   ✅ Force-clicked {btn_text}")
+                                            break
+                                except Exception:
+                                    pass
+                            if self._linkedin_custom_dropdown_count >= 3:
+                                print("   ⚠️ Autopilot custom dropdown stuck 3 times. Closing modal and skipping job...")
+                                self._linkedin_custom_dropdown_count = 0
+                                await self._close_linkedin_modal()
+                                break
+                            await asyncio.sleep(1.5)
+                            continue
+                        else:
+                            self._linkedin_custom_dropdown_count = 0
                         
                         # LinkedIn: Location autocomplete dropdown — handle INSIDE autopilot
                         # so the Playwright keyboard typing runs before the stuck-loop detector.
@@ -3457,34 +3693,50 @@ class SentinelAgent:
                                 print("⚠️ Stuck in loop, skipping this job...")
                                 # Mark the current job as skipped so it's not re-selected
                                 try:
-                                    await self._page.evaluate("""() => {
+                                    skipped_info = await self._page.evaluate("""() => {
                                         if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                        if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
                                         const urlParams = new URLSearchParams(window.location.search);
                                         let currentJobId = urlParams.get('currentJobId');
-                                        if (!currentJobId) {
-                                            const activeCard = document.querySelector(
-                                                '.jobs-search-results-list__list-item--active [data-job-id]') ||
-                                                document.querySelector('[aria-current="true"] [data-job-id]') ||
-                                                document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
-                                                document.querySelector('.active [data-job-id]');
-                                            if (activeCard) {
+                                        let cardTitle = '';
+                                        const activeCard = document.querySelector(
+                                            '.jobs-search-results-list__list-item--active') ||
+                                            document.querySelector('[aria-current="true"]') ||
+                                            document.querySelector('.job-card-list__list-item--active') ||
+                                            document.querySelector('.active');
+                                        if (activeCard) {
+                                            if (!currentJobId) {
                                                 currentJobId = activeCard.getAttribute('data-job-id') ||
-                                                               activeCard.getAttribute('data-occludable-job-id');
+                                                               activeCard.getAttribute('data-occludable-job-id') ||
+                                                               activeCard.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
+                                                               activeCard.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id');
                                             }
+                                            cardTitle = (activeCard.innerText || '').split('\\n')[0].trim().replace(/^selected,?\\s*/i, '').substring(0, 80);
                                         }
                                         if (currentJobId) {
+                                            currentJobId = String(currentJobId).replace(/^.*:/, '').trim();
                                             window.__skippedJobIds.add(currentJobId);
                                             window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped (stuck in loop):', currentJobId);
                                         }
+                                        if (cardTitle) {
+                                            window.__skippedJobTitles.add(cardTitle);
+                                        }
+                                        return { jobId: currentJobId, title: cardTitle };
                                     }""")
+                                    if skipped_info:
+                                        if skipped_info.get('jobId'):
+                                            self._linkedin_skipped_job_ids.add(str(skipped_info['jobId']))
+                                        if skipped_info.get('title'):
+                                            self._linkedin_skipped_job_titles.add(str(skipped_info['title']))
                                 except Exception as e:
                                     print(f"   ⚠️ Failed to mark job as skipped: {e}")
-                                # Two-step close: X button then Discard confirmation
+                                # Two-step close: X button then Discard confirmation, with DOM force-cleanup
                                 closed = await self._close_linkedin_modal()
+                                await self._select_next_job_card()
                                 if not closed:
                                     print("⚠️ Modal close failed — navigating to LinkedIn jobs search to escape...")
                                     try:
-                                        await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                                        await self._page.goto(self._get_linkedin_search_url(), timeout=30000)
                                         await asyncio.sleep(random.uniform(3, 5))
                                     except Exception as nav_e:
                                         print(f"   ⚠️ Navigation fallback error: {nav_e}")
@@ -3604,6 +3856,7 @@ class SentinelAgent:
                         elif 'LINKEDIN_FORM_FILLED' in next_result or 'LINKEDIN_FORM_FIELDS_FILLED' in next_result:
                             print("📝 Filled form fields")
                             submit_attempt_count = 0  # Reset when filling (progress made)
+                            form_stuck_count = 0
                             
                             # Parse and log Q&A data if present
                             if '|' in next_result:
@@ -3645,11 +3898,18 @@ class SentinelAgent:
                             await asyncio.sleep(random.uniform(1.5, 2.5))
                             continue
                         elif 'LINKEDIN_FORM_STUCK' in next_result:
-                            print("⚠️ Form stuck (button not found or validation issue). Waiting for re-render...")
+                            form_stuck_count += 1
+                            print(f"⚠️ Form stuck (button not found or validation issue) ({form_stuck_count}/4). Waiting for re-render...")
+                            if form_stuck_count >= 4:
+                                print("⚠️ Form stuck 4 times consecutively. Closing modal and skipping job...")
+                                await self._close_linkedin_modal()
+                                await self._select_next_job_card()
+                                break
                             await asyncio.sleep(random.uniform(2, 4))
                             continue
                         elif 'LINKEDIN_FORM_STEP_CONTINUED' in next_result:
                             # Parse and log Q&A data if present
+                            qa_pairs = []
                             if '|' in next_result:
                                 try:
                                     qa_json = next_result.split('|', 1)[1]
@@ -3669,8 +3929,33 @@ class SentinelAgent:
                                         )
                                 except Exception:
                                     pass  # Silently handle parse errors
+
+                            # Stuck step detector: track identical questions across consecutive Next clicks
+                            current_step_q_signature = tuple(sorted([
+                                str(qa.get('q', qa.get('question', ''))).strip().lower()
+                                for qa in qa_pairs if isinstance(qa, dict) and (qa.get('q') or qa.get('question'))
+                            ]))
+
+                            if current_step_q_signature and current_step_q_signature == getattr(self, '_last_step_q_signature', None):
+                                self._same_step_continued_count = getattr(self, '_same_step_continued_count', 0) + 1
+                                print(f"⚠️ Form step did not advance after Next click ({self._same_step_continued_count}/5)")
+                                if self._same_step_continued_count >= 5:
+                                    print("⚠️ Stuck on identical form step 5 times consecutively. Closing modal and skipping job...")
+                                    self._same_step_continued_count = 0
+                                    self._last_step_q_signature = None
+                                    await self._close_linkedin_modal()
+                                    await self._select_next_job_card()
+                                    break
+                            else:
+                                self._same_step_continued_count = 0
+                                if current_step_q_signature:
+                                    self._last_step_q_signature = current_step_q_signature
+                                else:
+                                    self._last_step_q_signature = None
+
                             print("➡️ Form step continued")
                             submit_attempt_count = 0  # Progress made
+                            form_stuck_count = 0  # Reset on progress
                             # Reset location retry counters — new form step means
                             # previous location issue was resolved (or was on a
                             # different step). Without this, the count carries over
@@ -3678,6 +3963,7 @@ class SentinelAgent:
                             # premature fallback after only 1 retrigger on the new step.
                             self._location_retrigger_count = 0
                             self._location_fallback_attempted = False
+                            await asyncio.sleep(random.uniform(1.8, 2.8))  # Allow React animation & network transition
                             continue
                         elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result:
                             easy_apply_restart_count += 1
@@ -6881,7 +7167,10 @@ class SentinelAgent:
                                 'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs',
                                 'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
                                 'last 3 months', 'applied to any', 'applied in the past', 'non-compete', 'non compete',
-                                'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer'];
+                                'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer',
+                                'counter offer', 'holding counter offer', 'any offer', 'outside business', 'side business',
+                                'advisory', 'consulting', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
+                                'personal relationship', 'referred by', 'internal employee'];
                             const isNegative = negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
@@ -7086,17 +7375,35 @@ class SentinelAgent:
                                         saveDiv.click();
                                     }}
                                     const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
-                                    return 'CHATBOT_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text, options: _allDropOpts}});
-                                }}
+                            const optText = (opt.text || '').toLowerCase().trim();
+                            if (!optText || optText.includes('select') || optText.includes('choose')) continue;
+                            
+                            let score = 0;
+                            if (optText === answerLower) score = 100;
+                            else if (optText.includes(answerLower) || answerLower.includes(optText)) score = 80;
+                            else if (/\\byes\\b/.test(answerLower) && /\\byes\\b/.test(optText)) score = 90;
+                            else if (/\\bno\\b/.test(answerLower) && /\\bno\\b/.test(optText)) score = 90;
+                            
+                            if (score > bestScore) {{
+                                bestScore = score;
+                                bestOption = opt;
                             }}
                         }}
                         
-                        if (selectOptions.length > 1) {{
-                            select.selectedIndex = 1;
-                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
-                            const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
-                            if (saveDiv && saveDiv.offsetParent !== null) {{
+                        if (bestOption && bestScore > 0) {{
+                            selectEl.value = bestOption.value;
+                            selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveDiv = chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
+                            if (saveDiv) {{
+                                saveDiv.click();
+                                return 'CHATBOT_DROPDOWN_SELECTED_AND_SAVED|' + JSON.stringify({{q: qText.substring(0,200), a: bestOption.text, t: 'select', s: bestOption.text, options: _allDropOpts}});
+                            }}
+                            return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: bestOption.text, t: 'select', s: bestOption.text, options: _allDropOpts}});
+                        }} else if (selectOptions.length > 1) {{
+                            selectEl.selectedIndex = 1;
+                            selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveDiv = chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
+                            if (saveDiv) {{
                                 saveDiv.click();
                                 return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text, options: _allDropOpts}});
                             }}
@@ -7138,7 +7445,8 @@ class SentinelAgent:
                     const answerLower = answer.toLowerCase();
                     const answerNumericMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
-                    const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : answerNumeric;
+                    const isExpQ = /experience|years|hands-on|hands on|worked on|indicate your experience/i.test(qLower);
+                    const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : (answerNumeric !== null ? answerNumeric : (isExpQ ? 4.2 : null));
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
                     const scoreRadio = (label, radioEl) => {{
@@ -8267,28 +8575,39 @@ class SentinelAgent:
         Close the LinkedIn Easy Apply modal with a two-step close:
         1) Click the X/Dismiss button (opens 'Discard application?' confirmation dialog)
         2) Wait for the Discard dialog, then click the Discard confirmation button
+        3) If modal still remains, force-remove all modal elements from DOM as a safety net.
         
         Returns True if the modal was closed (no visible modal remains), False otherwise.
         """
         if not self._page:
             return False
         try:
-            # Step 1: Click the dismiss/close (X) button
+            # Step 1: Click the dismiss/close (X) button with full pointer/mouse dispatch
             step1 = await self._page.evaluate("""() => {
+                const dispatchFullClick = (btn) => {
+                    try {
+                        btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                    } catch (e) {}
+                    btn.click();
+                };
                 const closeSelectors = [
-                    'button[aria-label*="Dismiss"]',
-                    'button[aria-label*="dismiss"]',
-                    'button[aria-label*="Close"]',
-                    'button[aria-label*="close"]',
+                    'button[aria-label*="Dismiss" i]',
+                    'button[aria-label*="dismiss" i]',
+                    'button[aria-label*="Close" i]',
+                    'button[aria-label*="close" i]',
                     'button[data-test-modal-close-btn]',
                     '.artdeco-modal__dismiss',
+                    'button.artdeco-modal__dismiss',
                     '.artdeco-button--circle[aria-label]',
-                    'button[aria-label*="Discard"]'
+                    'button[aria-label*="Discard" i]'
                 ];
                 for (let sel of closeSelectors) {
                     const btn = document.querySelector(sel);
-                    if (btn && btn.offsetParent !== null) {
-                        btn.click();
+                    if (btn && (btn.offsetParent !== null || btn.offsetWidth > 0)) {
+                        dispatchFullClick(btn);
                         return 'CLICKED';
                     }
                 }
@@ -8301,21 +8620,34 @@ class SentinelAgent:
             
             # Step 2: Click the "Discard application" confirmation button (appears after step 1)
             step2 = await self._page.evaluate("""() => {
-                // The Discard confirmation dialog has a primary button with text "Discard application"
-                const buttons = document.querySelectorAll('button');
-                for (const btn of buttons) {
-                    const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
-                    if ((text === 'discard' || text === 'discard application' || text.includes('discard application')) && btn.offsetParent !== null) {
-                        btn.click();
+                const dispatchFullClick = (btn) => {
+                    try {
+                        btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
+                        btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+                    } catch (e) {}
+                    btn.click();
+                };
+                const discardSelectors = [
+                    'button[data-control-name="discard_application_confirm_btn"]',
+                    'button[data-test-dialog-secondary-btn]',
+                    'button[data-test-dialog-primary-btn]',
+                    'button[data-live-test-easy-apply-discard-button]',
+                    'button[data-test-easy-apply-discard-button]'
+                ];
+                for (const sel of discardSelectors) {
+                    const btn = document.querySelector(sel);
+                    if (btn && (btn.offsetParent !== null || btn.offsetWidth > 0)) {
+                        dispatchFullClick(btn);
                         return 'DISCARDED';
                     }
                 }
-                // Fallback: aria-label based
-                const discardBtn = document.querySelector('button[data-test-dialog-primary-button], button.artdeco-button--primary');
-                if (discardBtn && discardBtn.offsetParent !== null) {
-                    const t = (discardBtn.innerText || '').toLowerCase();
-                    if (t.includes('discard')) {
-                        discardBtn.click();
+                const buttons = document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                    if ((text === 'discard' || text === 'discard application' || text.includes('discard application')) && (btn.offsetParent !== null || btn.offsetWidth > 0)) {
+                        dispatchFullClick(btn);
                         return 'DISCARDED';
                     }
                 }
@@ -8334,17 +8666,36 @@ class SentinelAgent:
             except Exception:
                 pass  # Non-critical cleanup
             
-            # Step 3: Verify modal is actually closed
+            # Step 3: Verify modal is actually closed using modern LinkedIn selectors
             modal_still_open = await self._page.evaluate("""() => {
-                const modal = document.querySelector('.artdeco-modal--is-open, .jobs-easy-apply-modal');
-                return !!(modal && modal.offsetParent !== null);
+                const modals = Array.from(document.querySelectorAll('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [data-test-modal]'));
+                const activeModal = modals.find(m => {
+                    if (m.offsetParent === null && m.offsetWidth === 0 && m.offsetHeight === 0) return false;
+                    if (m.classList.contains('msg-overlay-conversation-bubble') || m.closest('.msg-overlay-list-bubble')) return false;
+                    const text = (m.innerText || '').toLowerCase();
+                    if (text.includes('easy apply') || text.includes('discard') || text.includes('application')) return true;
+                    return m.classList.contains('artdeco-modal') || m.classList.contains('jobs-easy-apply-modal');
+                });
+                return !!activeModal;
             }""")
             
             if not modal_still_open:
                 print("✅ LinkedIn modal closed successfully (two-step close)")
                 return True
-            print("⚠️ LinkedIn modal still open after two-step close attempt")
-            return False
+
+            # Step 4: Force-cleanup if modal still visible after clicks
+            await self._page.evaluate("""() => {
+                const modals = document.querySelectorAll('.artdeco-modal, .artdeco-modal-overlay, .jobs-easy-apply-modal, [data-test-modal]');
+                modals.forEach(m => {
+                    if (!m.classList.contains('msg-overlay-conversation-bubble') && !m.closest('.msg-overlay-list-bubble')) {
+                        m.remove();
+                    }
+                });
+                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => o.remove());
+            }""")
+            await asyncio.sleep(0.5)
+            print("⚠️ LinkedIn modal remained open after discard; force-removed from DOM.")
+            return True
         except Exception as e:
             print(f"⚠️ _close_linkedin_modal error: {e}")
             return False
@@ -8365,7 +8716,7 @@ class SentinelAgent:
             print("⚠️ LinkedIn modal cleanup failed multiple times (escalation triggered) — navigating to jobs search...")
             self._linkedin_stuck_cleanup_attempts = 0
             try:
-                await self._page.goto('https://www.linkedin.com/jobs/search/', timeout=30000)
+                await self._page.goto(self._get_linkedin_search_url(), timeout=30000)
                 await asyncio.sleep(random.uniform(3, 5))
                 return "NAVIGATED_SEARCH"
             except Exception as nav_e:
@@ -8388,6 +8739,7 @@ class SentinelAgent:
                     }
                 }
                 if (activeJobId) {
+                    activeJobId = String(activeJobId).replace(/^.*:/, '').trim();
                     window.__skippedJobIds.add(activeJobId);
                     window.__SENTINEL_DEBUG__&&console.log('Marked job as skipped in _select_next_job_card:', activeJobId);
                 }
@@ -8397,6 +8749,8 @@ class SentinelAgent:
                 document.querySelectorAll('.artdeco-modal-overlay').forEach(o => o.remove());
                 return activeJobId || 'CLEANED';
             }""")
+            if cleanup_res and cleanup_res != 'CLEANED':
+                self._linkedin_skipped_job_ids.add(str(cleanup_res))
             print(f"   🧹 Stuck modal cleaned up, skipped job ID: {cleanup_res}")
             return str(cleanup_res)
         except Exception as e:
@@ -8419,6 +8773,18 @@ class SentinelAgent:
         
         if self._page and 'linkedin' in (self._page.url or ''):
             await self._handle_linkedin_resume_upload(self._page)
+            try:
+                await self._page.evaluate("""({skippedIds, skippedTitles}) => {
+                    if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                    if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
+                    if (skippedIds) skippedIds.forEach(id => window.__skippedJobIds.add(id));
+                    if (skippedTitles) skippedTitles.forEach(t => window.__skippedJobTitles.add(t));
+                }""", {
+                    "skippedIds": list(self._linkedin_skipped_job_ids),
+                    "skippedTitles": list(self._linkedin_skipped_job_titles)
+                })
+            except Exception:
+                pass
 
         try:
             # We use a formatted string to inject the JSON, but we must escape braces for the JS function
@@ -8483,7 +8849,7 @@ class SentinelAgent:
                                 KNOWN_PATTERNS[k] = (kLower.includes('expected') || kLower.includes('desired')) ? '30' : '23';
                             }
                             // Expected/desired salary (annual INR)
-                            else if (kLower.includes('expected') || kLower.includes('ectc') || kLower.includes('desired')) {
+                            else if (kLower.includes('expected') || kLower.includes('ectc') || kLower.includes('desired') || kLower.includes('expectation') || kLower.includes('expectations')) {
                                 KNOWN_PATTERNS[k] = '3000000';
                             }
                             // Current salary (annual INR)
@@ -8688,8 +9054,11 @@ class SentinelAgent:
                             if (patternData && patternData.negative_patterns && patternData.negative_patterns.length > 0) {
                                 if (patternData.negative_patterns.some(np => qLower.includes(np.toLowerCase()))) continue;
                             }
-                            if (keyLower.length <= 3) {
-                                const wbRegex = new RegExp('\\b' + keyLower.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\b', 'i');
+                            if (keyLower.length <= 4 || keyLower.includes('#') || keyLower.includes('+') || keyLower.startsWith('.')) {
+                                const escaped = keyLower.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                                const startBoundary = /^[a-zA-Z0-9]/.test(keyLower) ? '(?:^|[^a-zA-Z0-9])' : '(?:^|\\\\s)';
+                                const endBoundary = /[a-zA-Z0-9]$/.test(keyLower) ? '(?:[^a-zA-Z0-9]|$)' : '(?:[^a-zA-Z0-9]|$)';
+                                const wbRegex = new RegExp(startBoundary + escaped + endBoundary, 'i');
                                 if (!wbRegex.test(qLower)) continue;
                             }
                             if (key.length > bestKeyLen) {
@@ -8765,6 +9134,11 @@ class SentinelAgent:
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
                         const isNoticeQ = /notice\\s*period|serving\\s*notice/.test(qLower) || isLwdQ;
                         const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
+                        const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)|based\\s*in\\s*(hyderabad|bangalore|bengaluru|pune|delhi|mumbai|gurgaon|noida)|residing\\s*in/i.test(qLower);
+                        const isBgCheckQ = /background\\s*(check|verification)|drug\\s*screen|reference\\s*check|criminal\\s*record/i.test(qLower);
+                        const isAuthIndiaQ = (/authorized\\s*to\\s*work\\s*in\\s*india|legally\\s*authorized.*india|work\\s*authorization/i.test(qLower)) && !isSponsorshipQ;
+                        const isTechExpQ = /(?:c#|c\\+\\+|\\.net|dotnet|azure|sql|csharp|cloud)\\s*(?:experience|years)?|years.*(?:c#|c\\+\\+|\\.net|dotnet|azure|sql)/i.test(qLower);
                         // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
@@ -8775,6 +9149,14 @@ class SentinelAgent:
                             bestMatch = 'No';
                         } else if (isHoldingOfferQ) {
                             bestMatch = 'No';
+                        } else if (isShiftQ) {
+                            bestMatch = 'Yes';
+                        } else if (isRelocateQ) {
+                            bestMatch = 'Yes';
+                        } else if (isBgCheckQ) {
+                            bestMatch = 'Yes';
+                        } else if (isAuthIndiaQ) {
+                            bestMatch = 'Yes';
                         } else if (isAddressQ) {
                             bestMatch = 'Bengaluru, Karnataka, India';
                         } else if (isToolsProficientQ) {
@@ -8801,6 +9183,8 @@ class SentinelAgent:
                             bestMatch = 'Everbridge';
                         } else if (isLwdQ) {
                             bestMatch = resolveDynamic('__DYNAMIC_LWD__');
+                        } else if (isTechExpQ && (isExpQ || isYearsQ)) {
+                            bestMatch = yearsDefault;
                         } else if (isYearsQ) {
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
@@ -8861,13 +9245,58 @@ class SentinelAgent:
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
                         } else if (isNoticeQ && !isLwdQ && !/\\d/.test(bestMatch)) {
-                            bestMatch = '15';
+                            if (isNoticeQ && !isLwdQ && !/\\d/.test(bestMatch)) {
+                                bestMatch = '15';
+                            }
                         }
                     }
                     
                     return bestMatch ? resolveDynamic(bestMatch) : null;
                 };               
                 
+                // Helper: Comprehensive check for select / dropdown placeholder text across languages
+                const isSelectPlaceholderText = (text, value = null, selectedIndex = -1) => {
+                    const t = (text || '').toLowerCase().trim();
+                    const v = (value !== null && value !== undefined) ? String(value).toLowerCase().trim() : null;
+                    
+                    // Empty or punctuation-only text is always placeholder
+                    if (!t || t === '--' || t === '---' || t === '-' || t === '—' || t === '...' || t === '…') return true;
+                    
+                    // Dummy or empty values
+                    if (v !== null && (v === '' || v === '-1' || v === 'null' || v === 'undefined' || v === '--' || v === '---' || v === 'none' || v === 'placeholder' || v === 'default')) {
+                        if (selectedIndex === 0 || !t || /select|choose|pick|option|opci|elegir|elija|escolha|choisir|wähl|kies/i.test(t)) {
+                            return true;
+                        }
+                    }
+
+                    // Direct match for placeholder standalone words
+                    if (/^(options?|opci[oó]n|opci[oó]nes|opzione|opzioni)$/i.test(t)) return true;
+
+                    // Direct prefix match for common placeholder actions
+                    if (/^(select|choose|pick|selecciona|seleccione|seleccionar|elija|elegir|escolha|selecione|s[eé]lectionne[rz]?|choisir|w[aä]hlen|ausw[aä]hlen|seleziona|selezionare|kies|kiezen)\b/i.test(t)) return true;
+                    if (v !== null && /^(select|choose|pick|selecciona|seleccione|seleccionar|elija|elegir|escolha|selecione|s[eé]lectionne[rz]?|choisir|w[aä]hlen|ausw[aä]hlen|seleziona|selezionare|kies|kiezen)\b/i.test(v)) return true;
+
+                    // Multilingual placeholder words
+                    const placeholderRegex = /\\b(select|choose|pick|please\\s+select|make\\s+a\\s+selection|selecciona|seleccione|seleccionar|elija|elegir|opci[oó]n|opci[oó]nes|selecione|escolha|s[eé]lectionne[rz]?|choisir|w[aä]hlen|ausw[aä]hlen|seleziona|selezionare|scegli|kies|kiezen|optie|opzione|opzioni)\\b/i;
+                    if (placeholderRegex.test(t)) return true;
+                    if (v !== null && placeholderRegex.test(v)) return true;
+
+                    // Date placeholders
+                    if (/^(month|year|day|dd|mm|yyyy|maand|jaar|mes|año)$/i.test(t)) return true;
+                    if (v !== null && /^(month|year|day|dd|mm|yyyy|maand|jaar|mes|año)$/i.test(v)) return true;
+
+                    // Bracketed placeholders: e.g. <Select an option>, [Choose one], -- Select --
+                    if (/^[-–—\\s<([{]+.*[-–—\\s>\\])]+$/.test(t) && (t.includes('select') || t.includes('choose') || t.includes('opci') || t.includes('option') || t.includes('--'))) return true;
+
+                    // First option (index 0) heuristic
+                    if (selectedIndex === 0) {
+                        if (t.includes('select') || t.includes('choose') || t.includes('selecc') || t.includes('elegir') || t.includes('elija') || t.includes('escolha') || t.includes('opci') || t.includes('wähl') || t.includes('option')) return true;
+                        if (v === '' || v === null || v === '-1') return true;
+                    }
+
+                    return false;
+                };
+
                 // Helper: Find best matching option
                 const findBestMatch = (answer, options) => {
                     if (!answer || !options) return null;
@@ -8877,13 +9306,14 @@ class SentinelAgent:
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     // Extract the integer part for exact matching (e.g., "4" -> 4)
-                    const answerInt = Math.floor(answerNum);                    const MIN_MATCH_SCORE = 10; // Don't select if no meaningful match found
+                    const answerInt = Math.floor(answerNum);
+                    const MIN_MATCH_SCORE = 10; // Don't select if no meaningful match found
                     let bestOpt = null;
                     let bestScore = -1;
                     
                     for (const opt of options) {
                         const text = (opt.text || opt.label || '').toLowerCase().trim();
-                        if (!text || text.includes('select')) continue;
+                        if (!text || isSelectPlaceholderText(text, opt.value, opt.index)) continue;
                         let score = 0;
                         
                         // Extract number from option text for numeric comparison
@@ -8962,6 +9392,10 @@ class SentinelAgent:
                         window.__SENTINEL_DEBUG__&&console.log('findBestMatch: score too low (' + bestScore + '), skipping selection');
                         return null;
                     }
+                    if (bestOpt && isSelectPlaceholderText(bestOpt.text, bestOpt.value, bestOpt.index)) {
+                        window.__SENTINEL_DEBUG__&&console.log('findBestMatch: rejected placeholder match:', bestOpt.text);
+                        return null;
+                    }
                     return bestOpt;
                 };
                 
@@ -8975,8 +9409,13 @@ class SentinelAgent:
                     
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    const hasRangeRadios = Array.from(radios).some(r => {
+                        const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
+                        return /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lbl);
+                    });
                     // For experience matching: candidate has 4.2 years experience
-                    const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
+                    const effectiveExpVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : (answerNum > 0 ? answerNum : (hasRangeRadios ? 4.2 : 0));
+                    const expVal = effectiveExpVal;
                     
                     for (const radio of radios) {
                         let label = '';
@@ -9034,7 +9473,7 @@ class SentinelAgent:
                         else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
                             score = 100;
                         }
-                        else if (answerNum > 0) {
+                        else if (effectiveExpVal > 0) {
                             // Day-based matching (notice period questions)
                             const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
                             if (isDayUnit) {
@@ -9362,7 +9801,13 @@ return resolveDynamic(bestMatch);
                            t.includes('localite') ||
                            t.includes('relocate') ||
                            t.includes('relocation') ||
-                           t.includes('open to');
+                           t.includes('open to') ||
+                           t.includes('offshore') ||
+                           t.includes('shift') ||
+                           t.includes('sponsorship') ||
+                           t.includes('authorized') ||
+                           t.includes('authorization') ||
+                           t.includes('background check');
                 };
 
                 // Helper: Detect if a Yes/No question should default to "No"
@@ -9372,7 +9817,7 @@ return resolveDynamic(bestMatch);
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
                     
                     // Technical skill, tool, framework, AI workflow, PF account, or joining date questions must NOT default to No
-                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by/i.test(t);
+                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad/i.test(t);
                     if (isPositiveIntent) return false;
                     
                     const negativePatterns = [
@@ -9383,15 +9828,19 @@ return resolveDynamic(bestMatch);
                         'applied in past', 'applied in the past', '6/12 months', '6-12 months',
                         'past 6 months', 'last 6 months', 'past 12 months', 'last 12 months',
                         'interviewed in last', 'interviewed in the last', 'interviewed with',
-                        'conflict of interest', 'close relative', 'family member',
-                        'relative working', 'referred', 'referral',
+                        'conflict of interest', 'close relative', 'family member', 'family members',
+                        'personal relationship', 'personal relationships',
+                        'suppliers', 'supplier', 'vendors', 'vendor', 'partners', 'partner',
+                        'subsidiary', 'subsidiaries',
+                        'relative working', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
                         'criminal', 'felony', 'convict',
                         'worked with nielsen', 'worked with navan', 'worked with visa',
                         'worked with reed', 'worked with mastercard',
                         'sponsorship', 'visa sponsorship', 'require sponsorship', 'require visa', 'need visa', 'need sponsorship',
+                        'outside business', 'side business', 'side businesses', 'advisory', 'board role', 'board roles', 'dual employment', 'moonlighting', 'secondary employment',
                         'disability', 'handicapped',
                         'equity in the current', 'hold equity', 'hold any equity', 'equity in current',
-                        'offer in hand', 'holding offer', 'holding any offer', 'competing offer',
+                        'offer in hand', 'holding offer', 'holding any offer', 'competing offer', 'counter offer', 'any offer',
                         'cooling period', 'non-compete', 'non compete', 'non-solicitation', 'disciplinary proceedings'
                     ];
                     return negativePatterns.some(p => t.includes(p));
@@ -9657,33 +10106,11 @@ return resolveDynamic(bestMatch);
                             }
 
                             if (tagName === 'select') {
-                                // LinkedIn uses "Select an option", "Month", "Year", etc. as placeholders.
+                                if (element.selectedIndex < 0) return false;
                                 const value = element.value ? element.value.trim() : "";
-                                const selectedText = (element.options[element.selectedIndex]?.text || "").toLowerCase().trim();
-                                const valueLower = value.toLowerCase();
-                                const isPlaceholder = (
-                                    !value ||
-                                    value === "" ||
-                                    valueLower === "month" ||
-                                    valueLower === "year" ||
-                                    valueLower === "day" ||
-                                    valueLower === "dd" ||
-                                    valueLower === "mm" ||
-                                    valueLower === "yyyy" ||
-                                    valueLower === "-1" ||
-                                    valueLower.includes("select") ||
-                                    valueLower.includes("choose") ||
-                                    selectedText === "month" ||
-                                    selectedText === "year" ||
-                                    selectedText === "day" ||
-                                    selectedText === "dd" ||
-                                    selectedText === "mm" ||
-                                    selectedText === "yyyy" ||
-                                    selectedText.includes("select") ||
-                                    selectedText.includes("choose") ||
-                                    (element.selectedIndex <= 0 && (selectedText.includes("select") || selectedText.includes("choose") || selectedText === "month" || selectedText === "year" || selectedText === "day"))
-                                );
-                                return !isPlaceholder;
+                                const selectedOption = element.options[element.selectedIndex];
+                                const selectedText = selectedOption ? selectedOption.text : "";
+                                return !isSelectPlaceholderText(selectedText, value, element.selectedIndex);
                             }
                             
                             // Custom elements with aria-valuenow or aria-checked
@@ -10215,8 +10642,8 @@ return resolveDynamic(bestMatch);
                                                       /last working day|lwd|official last|last date/i.test(lowerLabel);
 
                             // If the answer is notice period-related and we are filling a text input,
-                            // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD)
-                            if (answer && !isLwdDateQuestion && !isDateField && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
+                            // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea
+                            if (answer && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
 
                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
@@ -10228,8 +10655,8 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            // Special handling for currency / salary text fields
-                            if (/salary|ctc|compensation|pay|remuneration/i.test(lowerLabel)) {
+                            // Special handling for currency / salary text fields (preserve compound / textarea answers)
+                            if (input.tagName !== 'TEXTAREA' && /salary|ctc|compensation|pay|remuneration/i.test(lowerLabel)) {
                                 if (/usd|dollar|\\$/i.test(lowerLabel)) {
                                     answer = /current|present|cctc/i.test(lowerLabel) ? '40000' : '60000';
                                 } else if (/lakh|lac|lpa/i.test(lowerLabel)) {
@@ -10261,10 +10688,54 @@ return resolveDynamic(bestMatch);
                                 }
                             }
 
-                            // Textarea essay fallback (avoid single digits like 4.2 or 5 in descriptive textareas)
-                            if (input.tagName === 'TEXTAREA' && (!answer || /^(\\d+(\\.\\d+)?(\\s*years?)?|yes|no)$/i.test(answer.trim()))) {
-                                answer = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
-                                window.__SENTINEL_DEBUG__&&console.log('Provided technical summary for textarea field:', labelText);
+                            // Textarea essay fallback:
+                            // Preserve concise answers for Yes/No (location, alignment, authorization), Compensation/Salary, Notice period, and specific questions.
+                            // The technical essay is ONLY used when the textarea field explicitly asks for open-ended background, cover letter, why hire you,
+                            // summary of experience, or when no answer is found and the prompt is open-ended.
+                            if (input.tagName === 'TEXTAREA') {
+                                const isYesNoPrompt = /^(are|is|do|does|did|can|could|would|will|should|have|has|had)\\b/i.test(lowerLabel.trim()) ||
+                                                      /okay with|aligned with|comfortable|willing|agree|consent|authorized|sponsorship|visa|relocate|on-site|onsite|hybrid|remote|permit|clearance|conflict of interest|non[- ]compete|disciplinary|convicted|crime|ex-employee|previously employed/i.test(lowerLabel);
+                                const isCompPrompt = /salary|ctc|compensation|pay\\b|package|remuneration/i.test(lowerLabel);
+                                const isNoticePrompt = /notice|how soon|how quickly|joining|join us|available to start|start date|earliest start|lwd/i.test(lowerLabel);
+                                const isLocationPrompt = /location|city|country|state|reside|based in|relocate|bengaluru|bangalore/i.test(lowerLabel);
+                                const isConditionalPrompt = /if\\s+(yes|any|applicable|so)|details\\s+if\\s+any|please\\s+(specify|describe|explain)\\s+if/i.test(lowerLabel);
+                                const isConciseField = isYesNoPrompt || isCompPrompt || isNoticePrompt || isLocationPrompt || isConditionalPrompt;
+
+                                const isOpenEndedPrompt = /cover\\s*letter|why\\s*(should\\s*we\\s*hire|hire\\s*you|work\\s*here|join|are\\s*you\\s*interested)|background|summary\\s*of\\s*(your\\s*)?experience|tell\\s*(us|me)\\s*about\\s*your(self|experience|background)|elevator\\s*pitch|overview|aspirations|motivation|describe\\s*(yourself|your\\s*background|your\\s*journey)|explain\\s*(your\\s*experience|architecture|design)|technical\\s*summary/i.test(lowerLabel);
+
+                                const technicalEssay = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
+
+                                if (answer) {
+                                    // Concise answers for Yes/No, Compensation, Notice, Location, and specific questions are preserved.
+                                    // Only replace with technical essay if prompt is explicitly open-ended AND not a concise field AND answer is a short numeric/generic artifact.
+                                    if (isOpenEndedPrompt && !isConciseField && /^(\\d+(\\.\\d+)?(\\s*years?)?)$/i.test(answer.trim())) {
+                                        answer = technicalEssay;
+                                        window.__SENTINEL_DEBUG__&&console.log('Provided technical summary for open-ended textarea field:', labelText);
+                                    }
+                                } else {
+                                    // No answer found yet:
+                                    if (isConditionalPrompt) {
+                                        answer = 'N/A';
+                                    } else if (isOpenEndedPrompt) {
+                                        answer = technicalEssay;
+                                        window.__SENTINEL_DEBUG__&&console.log('Provided technical summary fallback for open-ended textarea field:', labelText);
+                                    } else if (isCompPrompt) {
+                                        if (/current|present|cctc/i.test(lowerLabel) && /expected|expectation|ectc/i.test(lowerLabel)) {
+                                            answer = 'Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)';
+                                        } else if (/expected|expectation|ectc/i.test(lowerLabel)) {
+                                            answer = '30 LPA (Fixed)';
+                                        } else {
+                                            answer = '23 LPA (Fixed)';
+                                        }
+                                    } else if (isNoticePrompt) {
+                                        answer = '15 days (serving notice period)';
+                                    } else if (isLocationPrompt) {
+                                        answer = 'Bengaluru, Karnataka, India';
+                                    } else if (isYesNoPrompt) {
+                                        const isNegative = /sponsorship|visa|convicted|crime|disciplinary|conflict of interest|non[- ]compete|ex-employee|previously employed/i.test(lowerLabel);
+                                        answer = isNegative ? 'No' : 'Yes';
+                                    }
+                                }
                             }
                             
                             // KEYWORD-BASED FALLBACK: If fuzzyMatch returned nothing, try common field patterns
@@ -10338,10 +10809,29 @@ return resolveDynamic(bestMatch);
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling reason for change');
                                 }
                                 
-                                // "How many X" fallback: always fill with a number for any unmatched "how many" question
-                                if (!answer && /how many/i.test(combinedText)) {
-                                    answer = '3';
-                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling how-many question with numeric default 3');
+                                // Universal numeric / text fallback for unfilled fields
+                                if (!answer) {
+                                    if (isNumericInput || /years?|experience|rating|scale|score|rate|ctc|salary|lpa|notice|days|months/i.test(combinedText) || /how many/i.test(combinedText)) {
+                                        if (/salary|ctc|pay|compensation|fixed/i.test(combinedText)) {
+                                            answer = /lpa|lakh/i.test(combinedText) ? '30' : '3000000';
+                                        } else if (/notice|join|days|serving/i.test(combinedText)) {
+                                            answer = '15';
+                                        } else if (/rating|scale.*10|out of 10/i.test(combinedText)) {
+                                            answer = '8';
+                                        } else if (/rating|scale.*5|out of 5/i.test(combinedText)) {
+                                            answer = '4';
+                                        } else {
+                                            answer = '4';
+                                        }
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling numeric/experience field with default:', answer, '| text:', combinedText.substring(0, 50));
+                                    } else if (input.required || input.getAttribute('aria-required') === 'true' || hasError || input.tagName === 'TEXTAREA') {
+                                        if (input.tagName === 'TEXTAREA') {
+                                            answer = 'Experienced Software Engineer with 4+ years in backend and full-stack development, microservices, cloud systems, and scalable architectures.';
+                                        } else {
+                                            answer = 'Yes';
+                                        }
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Universal required text fallback:', answer, '| text:', combinedText.substring(0, 50));
+                                    }
                                 }
                             }
                             
@@ -10418,8 +10908,21 @@ return resolveDynamic(bestMatch);
                         for (const select of nativeSelects) {
                             if (!isVisible(select)) continue;
                             
-                            // Capture pre-filled selects before label detection
-                            if (isFieldPreFilled(select)) {
+                            // Capture pre-filled selects before label detection (only if truly filled, not placeholder, and no error)
+                            let hasSelectError = select.getAttribute('aria-invalid') === 'true' || 
+                                                 (select.getAttribute('aria-describedby') || '').includes('error') ||
+                                                 !!select.closest('.artdeco-form-field--error, .fb-dash-form-element--error, [class*="error"]');
+                            if (!hasSelectError) {
+                                const selParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
+                                if (selParent) {
+                                    const errFeedback = selParent.querySelector('.artdeco-inline-feedback--error, [data-testid*="error"]');
+                                    if (errFeedback && isVisible(errFeedback)) hasSelectError = true;
+                                }
+                            }
+                            const pfOpt = select.options[select.selectedIndex];
+                            const isPfPlaceholder = !pfOpt || isSelectPlaceholderText(pfOpt.text, select.value, select.selectedIndex);
+
+                            if (!hasSelectError && !isPfPlaceholder && isFieldPreFilled(select)) {
                                 let pfLabel = select.getAttribute('aria-label') || '';
                                 if (!pfLabel && select.id) {
                                     const lbl = queryDeep(`label[for="${select.id}"]`, modal);
@@ -10432,7 +10935,6 @@ return resolveDynamic(bestMatch);
                                         if (lbl) pfLabel = lbl.innerText || lbl.textContent || '';
                                     }
                                 }
-                                const pfOpt = select.options[select.selectedIndex];
                                 if (pfOpt && pfLabel) {
                                     formResults.push({ question: pfLabel, answer: pfOpt.text, inputType: 'select', prefilled: true });
                                     window.__SENTINEL_DEBUG__&&console.log('Pre-filled select captured:', pfLabel, '=', pfOpt.text);
@@ -10443,11 +10945,11 @@ return resolveDynamic(bestMatch);
                             // ROBUST LABEL DETECTION for selects (same as text inputs)
                             let labelText = '';
                             
-                            // Method 1: .fb-dash-form-element parent
+                            // Method 1: .fb-dash-form-element or question parent
                             if (!labelText) {
-                                const fbParent = select.closest('.fb-dash-form-element');
+                                const fbParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, .jobs-easy-apply-form-element, .artdeco-form-field');
                                 if (fbParent) {
-                                    const lbl = fbParent.querySelector('label');
+                                    const lbl = fbParent.querySelector('label, legend, .artdeco-form-field__label');
                                     if (lbl) labelText = lbl.innerText || lbl.textContent || '';
                                 }
                             }
@@ -10486,7 +10988,7 @@ return resolveDynamic(bestMatch);
                                                 break;
                                             }
                                         }
-                                        if (prevSib.innerText && prevSib.innerText.trim().length > 2 && prevSib.innerText.trim().length < 200) {
+                                        if (prevSib.innerText && prevSib.innerText.trim().length > 2 && prevSib.innerText.trim().length < 3000) {
                                             const text = prevSib.innerText.trim();
                                             if (!text.includes('Select') && !text.includes('select')) {
                                                 labelText = text;
@@ -10509,12 +11011,18 @@ return resolveDynamic(bestMatch);
                                         const spans = formGroup.querySelectorAll('span, div, p, label');
                                         for (const el of spans) {
                                             const t = (el.innerText || el.textContent || '').trim();
-                                            if (t.length > 2 && t.length < 200 && !t.includes('Select an option') && !t.includes('select an option')) {
+                                            if (t.length > 2 && t.length < 3000 && !isSelectPlaceholderText(t)) {
                                                 if (!select.contains(el)) {
                                                     labelText = t;
                                                     break;
                                                 }
                                             }
+                                        }
+                                    }
+                                    if (!labelText) {
+                                        const fullFormText = (formGroup.innerText || formGroup.textContent || '').replace(select.innerText || '', '').trim();
+                                        if (fullFormText.length > 2 && fullFormText.length < 3000) {
+                                            labelText = fullFormText;
                                         }
                                     }
                                 }
@@ -10526,6 +11034,73 @@ return resolveDynamic(bestMatch);
                             window.__SENTINEL_DEBUG__&&console.log('SELECT LABEL DETECTION:', JSON.stringify(labelText), '| current value:', select.value);
                             
                             const lowerLabel = labelText.toLowerCase();
+
+                            const selectOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                            const realOptions = selectOptions.filter(o => {
+                                const t = (o.text || '').toLowerCase().trim();
+                                const v = (o.value || '').toLowerCase().trim();
+                                return t && v && !isSelectPlaceholderText(o.text, o.value, o.index);
+                            });
+
+                            // ===== RULE 0: SINGLE NON-PLACEHOLDER OPTION AUTO-SELECTION =====
+                            // If a dropdown has only one valid option, always select it immediately
+                            if (realOptions.length === 1) {
+                                const singleOpt = realOptions[0];
+                                window.__SENTINEL_DEBUG__&&console.log('Single Option Select: Auto-selecting only available option:', singleOpt.text, 'for', labelText.substring(0, 80));
+                                select.value = singleOpt.value;
+                                if (select.value !== singleOpt.value) select.selectedIndex = singleOpt.index;
+                                select.dispatchEvent(new Event('input', { bubbles: true }));
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                formResults.push({ question: labelText, answer: singleOpt.text, inputType: 'select-single-option' });
+                                continue;
+                            }
+
+                            // ===== RULE 0.5: ACKNOWLEDGMENT / POLICY / TERMS / ACCOMMODATION NOTICE SELECT =====
+                            // Handles legal disclaimers, ADA accommodation notices, privacy policies, terms of service
+                            // where option is "I understand", "I agree", "Acknowledge", "Accept", etc.
+                            const isAckKeyword = lowerLabel.includes('understand') ||
+                                                 lowerLabel.includes('accommodation') ||
+                                                 lowerLabel.includes('privacy policy') ||
+                                                 lowerLabel.includes('terms of service') ||
+                                                 lowerLabel.includes('terms & conditions') ||
+                                                 lowerLabel.includes('terms and conditions') ||
+                                                 lowerLabel.includes('ada ') ||
+                                                 lowerLabel.includes('adaaa') ||
+                                                 lowerLabel.includes('reasonable accommodation') ||
+                                                 lowerLabel.includes('acknowledge') ||
+                                                 lowerLabel.includes('certif') ||
+                                                 lowerLabel.includes('consent') ||
+                                                 lowerLabel.includes('policy') ||
+                                                 lowerLabel.includes('notice') ||
+                                                 lowerLabel.includes('applicant tracking');
+
+                            const ackOpt = realOptions.find(o => {
+                                const t = o.text.toLowerCase().trim();
+                                return t === 'i understand' || 
+                                       t.includes('i understand') || 
+                                       t === 'understand' || 
+                                       t === 'i agree' || 
+                                       t.includes('i agree') || 
+                                       t === 'agree' || 
+                                       t === 'i accept' || 
+                                       t.includes('i accept') || 
+                                       t === 'accept' || 
+                                       t.includes('acknowledge') || 
+                                       t.includes('certif') || 
+                                       t.includes('confirm');
+                            });
+
+                            if (ackOpt && (isAckKeyword || realOptions.length <= 2)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Acknowledgment Select: Selecting', ackOpt.text, 'for', labelText.substring(0, 80));
+                                select.value = ackOpt.value;
+                                if (select.value !== ackOpt.value) select.selectedIndex = ackOpt.index;
+                                select.dispatchEvent(new Event('input', { bubbles: true }));
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                formResults.push({ question: labelText, answer: ackOpt.text, inputType: 'select-acknowledgment' });
+                                continue;
+                            }
                             
                             // SPECIAL CASE: For "learn about" / "hear about" / "source" questions, select ANY first option
                             const isLearnAboutQuestion = lowerLabel.includes('learn about') || 
@@ -10540,7 +11115,7 @@ return resolveDynamic(bestMatch);
                                 // Skip first option if it's a placeholder
                                 const firstRealOption = options.find(o => {
                                     const text = o.text.toLowerCase();
-                                    return !text.includes('select') && !text.includes('choose') && text.trim().length > 0;
+                                    return !isSelectPlaceholderText(text) && text.trim().length > 0;
                                 });
                                 
                                 if (firstRealOption) {
@@ -10563,7 +11138,7 @@ return resolveDynamic(bestMatch);
                                 // Select "Citizen (India)" or "Citizen" — NOT "Non Citizen"
                                 let citizenMatch = citizenOptions.find(o => {
                                     const t = o.text.toLowerCase().trim();
-                                    return (t.includes('citizen') && !t.includes('non') && !t.includes('select'));
+                                    return (t.includes('citizen') && !t.includes('non') && !isSelectPlaceholderText(t));
                                 });
                                 if (citizenMatch) {
                                     window.__SENTINEL_DEBUG__&&console.log('Citizenship match: Selecting', citizenMatch.text, 'for', labelText.substring(0, 80));
@@ -10577,17 +11152,23 @@ return resolveDynamic(bestMatch);
                                 continue;
                             }
                             
-                            // ===== SELF-IDENTIFICATION HANDLING (gender, orientation, birth sex) =====
-                            // These questions use non-standard option text ("Man" vs "Male", etc.)
-                            // and must NOT fall through to generic findBestMatch which fails on them.
-                            // Also catches diversity/equal-opportunity monitoring selects that don't
-                            // explicitly mention "gender" in their label (e.g. "All applicants are invited...")
-                            const isSelfIdQuestion = lowerLabel.includes('gender') || 
-                                                    lowerLabel.includes('sexual orientation') ||
-                                                    lowerLabel.includes('sex registered at birth') ||
-                                                    lowerLabel.includes('identify with') ||
-                                                    lowerLabel.includes('disability') ||
-                                                    (lowerLabel.includes('equal opportunit') && lowerLabel.includes('statistical'));
+                            // ===== SELF-IDENTIFICATION HANDLING (gender, orientation, birth sex, disability survey) =====
+                            const isAccommodationNotice = lowerLabel.includes('accommodation') || 
+                                                          lowerLabel.includes('careers@') || 
+                                                          lowerLabel.includes('ada ') || 
+                                                          lowerLabel.includes('adaaa');
+
+                            const isSelfIdQuestion = !isAccommodationNotice && (
+                                lowerLabel.includes('gender') || 
+                                lowerLabel.includes('sexual orientation') ||
+                                lowerLabel.includes('sex registered at birth') ||
+                                lowerLabel.includes('identify with') ||
+                                lowerLabel.includes('disability') ||
+                                lowerLabel.includes('handicap') ||
+                                lowerLabel.includes('burden statement') ||
+                                lowerLabel.includes('paperwork reduction act') ||
+                                (lowerLabel.includes('equal opportunit') && lowerLabel.includes('statistical'))
+                            );
                             
                             if (isSelfIdQuestion) {
                                 const selfIdOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
@@ -10596,17 +11177,31 @@ return resolveDynamic(bestMatch);
                                 if ((lowerLabel.includes('gender') || lowerLabel.includes('identify with') || (lowerLabel.includes('equal opportunit') && lowerLabel.includes('statistical'))) && 
                                     !lowerLabel.includes('sex registered') && !lowerLabel.includes('same as') &&
                                     !lowerLabel.includes('sexual orientation') && !lowerLabel.includes('disability')) {
-                                    // Gender question — look for Man/Male
+                                    // Gender question — look for Man/Male (multilingual: Male, Man, Hombre, Masculino, Homme, Homem, Männlich)
                                     selfIdOpt = selfIdOptions.find(o => {
+                                        if (isSelectPlaceholderText(o.text, o.value, o.index)) return false;
                                         const t = o.text.toLowerCase().trim();
-                                        return t === 'man' || t === 'male' || t.startsWith('man ');
+                                        return t === 'man' || t === 'male' || t.startsWith('man ') || t.startsWith('male ') ||
+                                               t === 'hombre' || t === 'masculino' || t === 'homme' || t === 'homem' || t === 'männlich';
                                     });
+                                    // Secondary match: findBestMatch with 'Male' or 'Man'
+                                    if (!selfIdOpt) {
+                                        const nonPlaceholderOpts = selfIdOptions.filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
+                                        selfIdOpt = findBestMatch('Male', nonPlaceholderOpts) || findBestMatch('Man', nonPlaceholderOpts);
+                                    }
                                     // Fallback: Prefer not to say
                                     if (!selfIdOpt) {
                                         selfIdOpt = selfIdOptions.find(o => {
+                                            if (isSelectPlaceholderText(o.text, o.value, o.index)) return false;
                                             const t = o.text.toLowerCase();
-                                            return t.includes('prefer not') || t.includes('decline') || t.includes('rather not');
+                                            return t.includes('prefer not') || t.includes('decline') || t.includes('rather not') ||
+                                                   t.includes('prefiero no') || t.includes('ne souhaite pas') || t.includes('nicht');
                                         });
+                                    }
+                                    // Final safety fallback for gender: first valid non-placeholder option
+                                    if (!selfIdOpt) {
+                                        const validOpts = selfIdOptions.filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
+                                        if (validOpts.length > 0) selfIdOpt = validOpts[0];
                                     }
                                 } else if (lowerLabel.includes('sex registered at birth') || lowerLabel.includes('same as your sex') || lowerLabel.includes('same as')) {
                                     // Gender same as birth — answer Yes
@@ -10624,12 +11219,33 @@ return resolveDynamic(bestMatch);
                                             return t.includes('prefer not') || t.includes('decline') || t.includes('rather not');
                                         });
                                     }
-                                } else if (lowerLabel.includes('disability')) {
+                                } else if (lowerLabel.includes('disability') || lowerLabel.includes('burden statement') || lowerLabel.includes('paperwork reduction act') || lowerLabel.includes('handicap')) {
                                     // Disability question — No or Prefer not to say
+                                    // Priority 1: No disability option
                                     selfIdOpt = selfIdOptions.find(o => {
                                         const t = o.text.toLowerCase().trim();
-                                        return t === 'no' || t.includes('do not') || t.includes('prefer not') || t.includes('decline');
+                                        return t === 'no' || 
+                                               t.startsWith('no,') || 
+                                               t.startsWith('no ') || 
+                                               t.includes("don't have a disability") || 
+                                               t.includes('do not have a disability') || 
+                                               t.includes('without disability') || 
+                                               t.includes('no disability') ||
+                                               t.includes('no, i do not') ||
+                                               t.includes("no, i don't") ||
+                                               t.includes('not have a history');
                                     });
+                                    // Priority 2: Decline / Prefer not to say / I don't wish to answer
+                                    if (!selfIdOpt) {
+                                        selfIdOpt = selfIdOptions.find(o => {
+                                            const t = o.text.toLowerCase().trim();
+                                            return t.includes('prefer not') || 
+                                                   t.includes("don't wish") || 
+                                                   t.includes('do not wish') || 
+                                                   t.includes('decline') ||
+                                                   t.includes('rather not');
+                                        });
+                                    }
                                 }
                                 
                                 if (selfIdOpt) {
@@ -10640,10 +11256,75 @@ return resolveDynamic(bestMatch);
                                     select.dispatchEvent(new Event('change', { bubbles: true }));
                                     select.dispatchEvent(new Event('blur', { bubbles: true }));
                                     formResults.push({ question: labelText, answer: selfIdOpt.text, inputType: 'select-self-id' });
+                                    continue;
                                 } else {
-                                    window.__SENTINEL_DEBUG__&&console.log('Self-ID: No match found for:', labelText.substring(0, 80), '— skipping (optional)');
+                                    window.__SENTINEL_DEBUG__&&console.log('Self-ID: No match found for:', labelText.substring(0, 80), '— falling through to subsequent handlers');
                                 }
-                                continue;
+                            }
+
+                            // ===== PREFERRED METHOD OF CONTACT SELECT HANDLER =====
+                            const isContactMethodQ = lowerLabel.includes('contact method') || 
+                                                     lowerLabel.includes('method of contact') || 
+                                                     lowerLabel.includes('preferred contact') || 
+                                                     lowerLabel.includes('preferred method') ||
+                                                     lowerLabel.includes('how should we contact') ||
+                                                     lowerLabel.includes('how to contact');
+
+                            if (isContactMethodQ) {
+                                const contactOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                // Priority 1: Email
+                                let contactMatch = contactOptions.find(o => o.text.toLowerCase().trim().includes('email'));
+                                // Priority 2: Text Message / SMS
+                                if (!contactMatch) {
+                                    contactMatch = contactOptions.find(o => /text|sms/i.test(o.text));
+                                }
+                                // Priority 3: Phone
+                                if (!contactMatch) {
+                                    contactMatch = contactOptions.find(o => /phone|call/i.test(o.text));
+                                }
+                                // Fallback: first non-placeholder option
+                                if (!contactMatch) {
+                                    contactMatch = contactOptions.find(o => !isSelectPlaceholderText(o.text, o.value, o.index));
+                                }
+                                if (contactMatch) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Contact Method Select: Selecting', contactMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = contactMatch.value;
+                                    if (select.value !== contactMatch.value) select.selectedIndex = contactMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: contactMatch.text, inputType: 'select-contact-method' });
+                                    continue;
+                                }
+                            }
+
+                            // ===== COMMUNICATION POLICY / OPT-IN NOTIFICATIONS SELECT HANDLER =====
+                            const isCommunicationConsentQ = lowerLabel.includes('communication policy') ||
+                                                            lowerLabel.includes('text message') ||
+                                                            lowerLabel.includes('opt-in') ||
+                                                            lowerLabel.includes('opt in') ||
+                                                            lowerLabel.includes('notifications about') ||
+                                                            lowerLabel.includes('receive notifications') ||
+                                                            lowerLabel.includes('receive email') ||
+                                                            lowerLabel.includes('receive text') ||
+                                                            lowerLabel.includes('refer.io');
+
+                            if (isCommunicationConsentQ) {
+                                const consentOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                let consentMatch = consentOptions.find(o => {
+                                    const t = o.text.toLowerCase().trim();
+                                    return t.startsWith('yes') || t.includes('i agree') || t.includes('i understand') || t.includes('opt-in') || t.includes('opt in') || t === 'agree' || t === 'allow';
+                                });
+                                if (consentMatch) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Communication/Consent Select: Selecting', consentMatch.text, 'for', labelText.substring(0, 80));
+                                    select.value = consentMatch.value;
+                                    if (select.value !== consentMatch.value) select.selectedIndex = consentMatch.index;
+                                    select.dispatchEvent(new Event('input', { bubbles: true }));
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                    formResults.push({ question: labelText, answer: consentMatch.text, inputType: 'select-consent' });
+                                    continue;
+                                }
                             }
                             
                             // ===== NOTICE SERVING QUESTION =====
@@ -10791,7 +11472,7 @@ return resolveDynamic(bestMatch);
                                 
                                 for (const opt of ctcOptions) {
                                     const optText = (opt.text || '').toLowerCase().trim();
-                                    if (!optText || optText.includes('select') || optText.includes('choose') || optText === '--') continue;
+                                    if (!optText || isSelectPlaceholderText(optText, opt.value, opt.index) || optText === '--') continue;
                                     
                                     const cleaned = optText.replace(/,/g, '').replace(/inr?/g, '').trim();
                                     let minVal = null, maxVal = null;
@@ -10832,7 +11513,7 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
                                 
-                                const selectedOpt = bestCTCOpt || closestCTCOpt || ctcOptions.find(o => !o.text.toLowerCase().includes('select') && o.text.trim().length > 0);
+                                const selectedOpt = bestCTCOpt || closestCTCOpt || ctcOptions.find(o => !isSelectPlaceholderText(o.text, o.value, o.index) && o.text.trim().length > 0);
                                 
                                 if (selectedOpt) {
                                     window.__SENTINEL_DEBUG__&&console.log('CTC Select: Selecting', selectedOpt.text, 'for', labelText.substring(0, 80), '(answer:', rawCTC + ')');
@@ -10874,10 +11555,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (!langMatch) {
-                                    langMatch = langOptions.find(o => {
-                                        const t = o.text.toLowerCase().trim();
-                                        return t && !t.includes('select') && !t.includes('choose') && t !== '--';
-                                    });
+                                    langMatch = langOptions.find(o => !isSelectPlaceholderText(o.text, o.value, o.index));
                                 }
                                 
                                 if (langMatch) {
@@ -11032,7 +11710,7 @@ return resolveDynamic(bestMatch);
                                 if (!jlMatch) {
                                     jlMatch = jlOptions.find(o => {
                                         const t = (o.text || '').toLowerCase().trim();
-                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('please') && !t.includes('fresher');
+                                        return t.length > 0 && !isSelectPlaceholderText(o.text, o.value, o.index) && !t.includes('fresher');
                                     });
                                 }
                                 
@@ -11070,7 +11748,7 @@ return resolveDynamic(bestMatch);
                                 if (!wpMatch) {
                                     wpMatch = wpOptions.find(o => {
                                         const t = (o.text || '').toLowerCase().trim();
-                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('please');
+                                        return t.length > 0 && !isSelectPlaceholderText(o.text, o.value, o.index);
                                     });
                                 }
                                 
@@ -11152,7 +11830,7 @@ return resolveDynamic(bestMatch);
                                 if (!targetOpt) {
                                     targetOpt = dateOptions.find(o => {
                                         const t = (o.text || '').toLowerCase().trim();
-                                        return t.length > 0 && !t.includes('select') && !t.includes('choose') && !t.includes('kies') && !t.includes('month') && !t.includes('maand') && !t.includes('year') && !t.includes('jaar');
+                                        return t.length > 0 && !isSelectPlaceholderText(o.text, o.value, o.index);
                                     });
                                 }
                                 
@@ -11173,7 +11851,7 @@ return resolveDynamic(bestMatch);
                                 
                                 // KEYWORD-BASED FALLBACK for select when fuzzyMatch returned nothing
                                 if (!answer && lowerLabel) {
-                                    if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work')) {
+                                    if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work') || lowerLabel.includes('relevant years') || lowerLabel.includes('relevant experience')) {
                                         answer = '4';
                                         window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 4 for years of experience select');
                                     } else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience')) {
@@ -11225,7 +11903,9 @@ return resolveDynamic(bestMatch);
                                                       lowerLabel.includes('willing');
                                 
                                 if (answer || isYesNoQuestion) {
-                                    const options = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    const options = Array.from(select.options)
+                                        .map(o => ({ text: o.text, value: o.value, index: o.index }))
+                                        .filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
                                     let bestOpt = findBestMatch(answer, options);
                                     
                                     // Fallback: If answer is numeric (e.g. "4 Years") but options are Yes/No
@@ -11261,7 +11941,7 @@ return resolveDynamic(bestMatch);
                                          if (bestOpt) window.__SENTINEL_DEBUG__&&console.log('Defaulting native select to Yes for:', labelText);
                                     }
 
-                                    if (bestOpt) {
+                                    if (bestOpt && !isSelectPlaceholderText(bestOpt.text, bestOpt.value, bestOpt.index)) {
                                         window.__SENTINEL_DEBUG__&&console.log('Selecting native dropdown:', labelText, 'with:', bestOpt.text);
                                         
                                         // Robust selection logic
@@ -11280,19 +11960,34 @@ return resolveDynamic(bestMatch);
                                 
                                 // UNIVERSAL SAFE FALLBACK FOR UNFILLED SELECTS:
                                 // Ensure no select is ever left at "Select an option" to prevent blocking form progression
-                                const dangerousYesPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12'];
+                                const dangerousYesPatterns = [
+                                    'visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity',
+                                    'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector',
+                                    'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12',
+                                    'outside business', 'side business', 'advisory', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
+                                    'employed by', 'worked for', 'referral', 'referred by', 'counter offer', 'any offer'
+                                ];
                                 const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
+                                const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live/i.test(lowerLabel);
+                                const isContractTypeQ = /type\\s+of\\s+contract|contract\\s+type|employment\\s+type/i.test(lowerLabel);
                                 
                                 if (!isFieldPreFilled(select)) {
                                     const options = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    const realOptions = options.filter(o => {
-                                        const t = (o.text || '').toLowerCase().trim();
-                                        return t && !t.includes('select') && !t.includes('choose') && t !== '--';
-                                    });
+                                    const realOptions = options.filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
                                     
                                     if (realOptions.length > 0) {
+                                        const isExperienceSelectQ = /experience|experiencia|erfahrung|exp[eé]rience/i.test(lowerLabel);
                                         let fallbackOpt = null;
-                                        if (!isDangerousYes) {
+                                        if (isCountryResidenceQ) {
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'india' || o.text.toLowerCase().includes('india'));
+                                        } else if (isContractTypeQ) {
+                                            fallbackOpt = realOptions.find(o => /full[- ]?time|permanent|regular/i.test(o.text));
+                                        } else if (isExperienceSelectQ) {
+                                            fallbackOpt = findBestMatch('4', realOptions);
+                                        } else if (lowerLabel.includes('gender')) {
+                                            fallbackOpt = realOptions.find(o => /man|male|hombre|masculino/i.test(o.text)) || realOptions.find(o => /prefer not|decline/i.test(o.text));
+                                        }
+                                        if (!fallbackOpt && !isDangerousYes) {
                                             fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'yes' || o.text.toLowerCase().includes('yes'));
                                         }
                                         if (!fallbackOpt && isDangerousYes) {
@@ -11302,10 +11997,13 @@ return resolveDynamic(bestMatch);
                                             fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'none' || o.text.toLowerCase().includes('elementary') || o.text.toLowerCase().includes('limited') || o.text.toLowerCase().includes('basic'));
                                         }
                                         if (!fallbackOpt) {
+                                            fallbackOpt = realOptions.find(o => /understand|agree|accept|acknowledge|confirm/i.test(o.text));
+                                        }
+                                        if (!fallbackOpt) {
                                             fallbackOpt = realOptions[0];
                                         }
                                         
-                                        if (fallbackOpt) {
+                                        if (fallbackOpt && !isSelectPlaceholderText(fallbackOpt.text, fallbackOpt.value, fallbackOpt.index)) {
                                             window.__SENTINEL_DEBUG__&&console.log('UNIVERSAL SELECT FALLBACK: Defaulting to', fallbackOpt.text, 'for unfilled select:', labelText);
                                             select.value = fallbackOpt.value;
                                             if (select.value !== fallbackOpt.value) {
@@ -11326,23 +12024,29 @@ return resolveDynamic(bestMatch);
                         // Process custom LinkedIn dropdowns (comboboxes)
                         for (const dropdown of customDropdowns) {
                             if (!isVisible(dropdown) || dropdown.tagName === 'SELECT') continue;
+                            if (dropdown.getAttribute('data-sentinel-handled') === 'true') continue;
                             
-                            // Check if dropdown needs filling
-                            const dropdownText = dropdown.innerText || dropdown.textContent || '';
-                            const isUnselected = dropdownText.toLowerCase().includes('select an option') || 
-                                               dropdownText.toLowerCase().includes('select') ||
-                                               !dropdown.getAttribute('aria-expanded');
+                            // Check if dropdown needs filling: read value from multiple sources
+                            const directVal = (readFieldValue(dropdown) || 
+                                              (dropdown.value !== undefined && dropdown.value !== null ? String(dropdown.value) : '') || 
+                                              (dropdown.innerText || dropdown.textContent || '')).trim();
                             
-                            if (!isUnselected) {
-                                // window.__SENTINEL_DEBUG__&&console.log('Skipping pre-filled custom dropdown:', dropdownText);
+                            const childInput = dropdown.querySelector('input, textarea, select');
+                            const isChildFilled = childInput && isFieldPreFilled(childInput);
+                            const isDirectFilled = isFieldPreFilled(dropdown);
+                            const isPlaceholder = isSelectPlaceholderText(directVal);
+                            
+                            if ((!isPlaceholder && directVal.length > 0 && directVal !== '--' && directVal !== '-') || isChildFilled || isDirectFilled) {
+                                // window.__SENTINEL_DEBUG__&&console.log('Skipping pre-filled custom dropdown:', directVal.substring(0, 40));
                                 continue;
                             }
                             
                             // Get label text from parent element
-                            const labelText = dropdown.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || 
-                                            dropdown.closest('.jobs-easy-apply-form-section__question')?.querySelector('label')?.innerText ||
+                            const parentFormEl = dropdown.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
+                            let labelText = (parentFormEl?.querySelector('label')?.innerText || 
                                             dropdown.getAttribute('aria-label') || 
-                                            dropdown.closest('div')?.querySelector('label')?.innerText || '';
+                                            dropdown.closest('div')?.querySelector('label')?.innerText || '').trim();
+                            labelText = labelText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
                             const lowerLabel = labelText.toLowerCase();
                             
@@ -11356,37 +12060,52 @@ return resolveDynamic(bestMatch);
                             if (isLearnAboutQuestion) {
                                 window.__SENTINEL_DEBUG__&&console.log('Learn about question detected - selecting first available option');
                                 dropdown.click();
+                                dropdown.setAttribute('data-sentinel-handled', 'true');
                                 
-                                setTimeout(() => {
-                                    const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, li');
-                                    for (const option of allOptions) {
-                                        const text = option.innerText.trim();
-                                        const lowerText = text.toLowerCase();
-                                        if (text && !lowerText.includes('select') && !lowerText.includes('choose') && text.length > 2) {
-                                            window.__SENTINEL_DEBUG__&&console.log('Selected first option for learn about question:', text);
-                                            option.click();
-                                            formResults.push({ question: labelText, answer: text, inputType: 'custom-dropdown' });
-                                            break;
-                                        }
+                                const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, [data-test-text-entity-list-item], li');
+                                let selectedLearn = false;
+                                for (const option of allOptions) {
+                                    const text = (option.innerText || option.textContent || '').trim();
+                                    if (text && !isSelectPlaceholderText(text) && text.length > 2) {
+                                        window.__SENTINEL_DEBUG__&&console.log('Selected first option for learn about question:', text);
+                                        option.click();
+                                        formResults.push({ question: labelText, answer: text, inputType: 'custom-dropdown' });
+                                        selectedLearn = true;
+                                        break;
                                     }
-                                }, 200);
-                                
-                                return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN';
+                                }
+                                if (!selectedLearn) {
+                                    setTimeout(() => {
+                                        const delayedOpts = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, li');
+                                        for (const option of delayedOpts) {
+                                            const text = (option.innerText || option.textContent || '').trim();
+                                            if (text && !isSelectPlaceholderText(text) && text.length > 2) {
+                                                option.click();
+                                                formResults.push({ question: labelText, answer: text, inputType: 'custom-dropdown' });
+                                                break;
+                                            }
+                                        }
+                                    }, 100);
+                                }
+                                continue;
                             }
                             
                             if (labelText) {
                                 const answer = fuzzyMatch(labelText);
-                                // For Yes/No questions, default to "Yes" if no specific answer found
                                 const isYesNoQuestion = lowerLabel.includes('experience') || 
                                                       lowerLabel.includes('developer') ||
                                                       lowerLabel.includes('willing') ||
                                                       lowerLabel.includes('relocate') ||
                                                       lowerLabel.includes('comfortable') ||
-                                                      lowerLabel.includes('work from');
+                                                      lowerLabel.includes('work from') ||
+                                                      lowerLabel.includes('authorized') ||
+                                                      lowerLabel.includes('sponsorship') ||
+                                                      lowerLabel.includes('citizen') ||
+                                                      lowerLabel.includes('visa');
                                 
                                 // SMART EXPERIENCE & RELOCATION CHECK
                                 let calculatedShouldSelectYes = false;
-                                if (lowerLabel.includes('willing') || lowerLabel.includes('relocate') || lowerLabel.includes('work from')) {
+                                if (lowerLabel.includes('willing') || lowerLabel.includes('relocate') || lowerLabel.includes('work from') || lowerLabel.includes('authorized')) {
                                     calculatedShouldSelectYes = true;
                                 }
                                 if (answer && (lowerLabel.includes('experience') || lowerLabel.includes('year'))) {
@@ -11397,70 +12116,100 @@ return resolveDynamic(bestMatch);
                                     if (ansYears >= reqYears) calculatedShouldSelectYes = true;
                                 }
 
-                                const shouldSelectYes = calculatedShouldSelectYes || (isYesNoQuestion && (!answer || answer.toLowerCase().includes('yes')));
+                                const dangerousPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12', 'outside business', 'side business', 'advisory', 'board role', 'moonlighting'];
+                                const isDangerous = dangerousPatterns.some(p => lowerLabel.includes(p));
+
+                                let shouldSelectYes = calculatedShouldSelectYes || (isYesNoQuestion && !isDangerous && (!answer || answer.toLowerCase().includes('yes')));
+                                if (isDangerous && (!answer || answer.toLowerCase().includes('no'))) {
+                                    shouldSelectYes = false;
+                                }
                                 
-                                if (answer || shouldSelectYes) {
-                                    window.__SENTINEL_DEBUG__&&console.log('Clicking custom dropdown:', labelText);
-                                    dropdown.click();
-                                    
-                                    // Wait briefly for dropdown options to appear
-                                    setTimeout(() => {
-                                        const yesOption = findByText('[role="option"], li', 'yes', true) ||
-                                                        findByText('span', 'yes', true);
-                                        const noOption = findByText('[role="option"], li', 'no', true) ||
-                                                        findByText('span', 'no', true);
+                                window.__SENTINEL_DEBUG__&&console.log('Interacting with custom dropdown:', labelText, '| answer:', answer, '| shouldSelectYes:', shouldSelectYes);
+                                dropdown.click();
+                                dropdown.setAttribute('data-sentinel-handled', 'true');
+                                
+                                const allOptions = Array.from(document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, [data-test-text-entity-list-item], li, span[role="menuitem"]'));
+                                let matchedOpt = null;
+                                let matchedAns = '';
+                                
+                                if (allOptions.length > 0) {
+                                    for (const opt of allOptions) {
+                                        const optText = (opt.innerText || opt.textContent || '').trim();
+                                        const lowerOpt = optText.toLowerCase();
+                                        if (!lowerOpt || isSelectPlaceholderText(lowerOpt) || lowerOpt === '--') continue;
                                         
-                                        if (shouldSelectYes && yesOption) {
-                                            window.__SENTINEL_DEBUG__&&console.log('Selecting Yes for:', labelText);
-                                            yesOption.click();
+                                        if (answer && (lowerOpt === answer.toLowerCase() || lowerOpt.includes(answer.toLowerCase()) || answer.toLowerCase().includes(lowerOpt))) {
+                                            matchedOpt = opt;
+                                            matchedAns = optText;
+                                            break;
+                                        }
+                                        if (shouldSelectYes && (lowerOpt === 'yes' || lowerOpt.startsWith('yes'))) {
+                                            matchedOpt = opt;
+                                            matchedAns = 'Yes';
+                                            break;
+                                        }
+                                        if (!shouldSelectYes && (lowerOpt === 'no' || lowerOpt.startsWith('no'))) {
+                                            matchedOpt = opt;
+                                            matchedAns = 'No';
+                                            break;
+                                        }
+                                        if (/i understand|i agree|acknowledge|accept|confirm/i.test(lowerOpt)) {
+                                            matchedOpt = opt;
+                                            matchedAns = optText;
+                                            break;
+                                        }
+                                        if (/no.*disability|without disability|don't have a disability|not wish to answer|prefer not|decline/i.test(lowerOpt)) {
+                                            matchedOpt = opt;
+                                            matchedAns = optText;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (!matchedOpt) {
+                                        // Fallback to first non-placeholder option
+                                        for (const opt of allOptions) {
+                                            const optText = (opt.innerText || opt.textContent || '').trim();
+                                            const lowerOpt = optText.toLowerCase();
+                                            if (lowerOpt && !isSelectPlaceholderText(lowerOpt) && lowerOpt !== '--' && optText.length > 1) {
+                                                matchedOpt = opt;
+                                                matchedAns = optText;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (matchedOpt && !isSelectPlaceholderText(matchedAns)) {
+                                    window.__SENTINEL_DEBUG__&&console.log('CUSTOM DROPDOWN: Selected option:', matchedAns, 'for:', labelText);
+                                    matchedOpt.click();
+                                    formResults.push({ question: labelText, answer: matchedAns, inputType: 'custom-dropdown' });
+                                } else if (dropdown.tagName === 'INPUT' && answer) {
+                                    fillReactInput(dropdown, answer);
+                                    formResults.push({ question: labelText, answer: answer, inputType: 'combobox-input' });
+                                } else {
+                                    // Delayed selection fallback in case menu renders asynchronously
+                                    setTimeout(() => {
+                                        const delayedOptions = Array.from(document.querySelectorAll('[role="option"], .artdeco-dropdown__item, .jobs-easy-apply-form-element__dropdown-option, li'));
+                                        const yesOpt = delayedOptions.find(o => {
+                                            const t = (o.innerText || '').toLowerCase().trim();
+                                            return t.startsWith('yes') && !isSelectPlaceholderText(t);
+                                        });
+                                        const noOpt = delayedOptions.find(o => {
+                                            const t = (o.innerText || '').toLowerCase().trim();
+                                            return t.startsWith('no') && !isSelectPlaceholderText(t);
+                                        });
+                                        if (shouldSelectYes && yesOpt) {
+                                            yesOpt.click();
                                             formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' });
-                                        } else if (!shouldSelectYes && answer && answer.toLowerCase().includes('no') && noOption) {
-                                            window.__SENTINEL_DEBUG__&&console.log('Selecting No for:', labelText);
-                                            noOption.click();
+                                        } else if (!shouldSelectYes && noOpt) {
+                                            noOpt.click();
                                             formResults.push({ question: labelText, answer: 'No', inputType: 'custom-dropdown' });
-                                        } else if (yesOption) {
-                                            window.__SENTINEL_DEBUG__&&console.log('Defaulting to Yes for:', labelText);
-                                            yesOption.click();
+                                        } else if (yesOpt) {
+                                            yesOpt.click();
                                             formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown' });
                                         }
                                     }, 100);
-                                    
-                                    return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN';
                                 }
-                            }
-                            
-                            // AGGRESSIVE FALLBACK: For unfilled custom dropdowns with Yes/No options
-                            // SAFETY: Blacklist dangerous questions that should NOT default to Yes
-                            const customDangerousPatterns = ['visa', 'sponsorship', 'citizenship', 'disability', 'gender', 'race', 'ethnicity', 'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector', 'polygraph', 'genetic', 'relative', 'family member'];
-                            const isCustomDangerousYes = customDangerousPatterns.some(p => lowerLabel.includes(p));
-                            
-                            if (stillUnselected && labelText && !isCustomDangerousYes) {
-                                window.__SENTINEL_DEBUG__&&console.log('AGGRESSIVE FALLBACK: Checking custom dropdown for Yes/No:', labelText);
-                                dropdown.click();
-                                
-                                setTimeout(() => {
-                                    const allOptions = document.querySelectorAll('[role="option"], .artdeco-dropdown__item, li');
-                                    let hasYes = false;
-                                    let hasNo = false;
-                                    let yesOption = null;
-                                    
-                                    for (const option of allOptions) {
-                                        const text = option.innerText.trim().toLowerCase();
-                                        if (text === 'yes' || text.includes('yes')) {
-                                            hasYes = true;
-                                            yesOption = option;
-                                        }
-                                        if (text === 'no' || text.includes('no')) hasNo = true;
-                                    }
-                                    
-                                    if (hasYes && hasNo && yesOption) {
-                                        window.__SENTINEL_DEBUG__&&console.log('AGGRESSIVE FALLBACK: Selecting Yes for custom dropdown:', labelText);
-                                        yesOption.click();
-                                        formResults.push({ question: labelText, answer: 'Yes', inputType: 'custom-dropdown-aggressive' });
-                                    }
-                                }, 150);
-                                
-                                return 'LINKEDIN_FORM_FILLING_CUSTOM_DROPDOWN_AGGRESSIVE';
                             }
                         }
 
@@ -11567,6 +12316,24 @@ return resolveDynamic(bestMatch);
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'} in fieldset:`, legend.substring(0, 50));
                                             clickInput(targetRadio);
                                             formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: radioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
+                                        }
+                                    } else {
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        let safeRadio = null;
+                                        for (const kw of safeKeywords) {
+                                            safeRadio = radios.find(r => {
+                                                const val = (r.value || '').toLowerCase();
+                                                const lbl = getInputLabelText(r).toLowerCase();
+                                                return val.includes(kw) || lbl.includes(kw);
+                                            });
+                                            if (safeRadio) break;
+                                        }
+                                        const chosenRadio = safeRadio || radios[0];
+                                        if (chosenRadio) {
+                                            window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No radio group in fieldset to option:', getInputLabelText(chosenRadio) || chosenRadio.value);
+                                            clickInput(chosenRadio);
+                                            const chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            formResults.push({ question: legend.substring(0, 100), answer: chosenVal, inputType: 'radio', options: radioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
                                 }
@@ -11699,6 +12466,23 @@ return resolveDynamic(bestMatch);
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting custom Yes/No to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
                                             clickCustomRadio(targetRadio);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: customRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
+                                        }
+                                    } else {
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        let safeCustom = null;
+                                        for (const kw of safeKeywords) {
+                                            safeCustom = customRadios.find(r => {
+                                                const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                                return t.includes(kw);
+                                            });
+                                            if (safeCustom) break;
+                                        }
+                                        const chosenCustom = safeCustom || customRadios[0];
+                                        if (chosenCustom) {
+                                            window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No custom radio to:', chosenCustom.innerText?.substring(0, 30));
+                                            clickCustomRadio(chosenCustom);
+                                            const chosenVal = (chosenCustom.innerText || chosenCustom.getAttribute('aria-label') || 'Selected').trim();
+                                            formResults.push({ question: questionText.substring(0, 100), answer: chosenVal, inputType: 'radio', options: customRadioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
                                 }
@@ -11843,6 +12627,24 @@ return resolveDynamic(bestMatch);
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50) || 'Unknown question');
                                             clickInput(targetRadio);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
+                                        }
+                                    } else {
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        let safeRadio = null;
+                                        for (const kw of safeKeywords) {
+                                            safeRadio = radios.find(r => {
+                                                const val = (r.value || '').toLowerCase();
+                                                const lbl = getInputLabelText(r).toLowerCase();
+                                                return val.includes(kw) || lbl.includes(kw);
+                                            });
+                                            if (safeRadio) break;
+                                        }
+                                        const chosenRadio = safeRadio || radios[0];
+                                        if (chosenRadio) {
+                                            window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No standalone radio to:', getInputLabelText(chosenRadio) || chosenRadio.value);
+                                            clickInput(chosenRadio);
+                                            const chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            formResults.push({ question: questionText.substring(0, 100), answer: chosenVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
                                 }
@@ -12346,15 +13148,9 @@ return resolveDynamic(bestMatch);
                                 if (!isVisible(s)) return false;
                                 const val = (s.value || '').trim();
                                 const opt = s.options[s.selectedIndex];
-                                const optVal = opt ? (opt.value || '').trim() : '';
-                                const optText = opt ? (opt.text || '').trim().toLowerCase() : '';
+                                const optText = opt ? (opt.text || '').trim() : '';
                                 
-                                return !val || 
-                                       val.toLowerCase().includes('select') || 
-                                       val === '--' || 
-                                       optText.includes('select') || 
-                                       optText.includes('choose') || 
-                                       optText === '--';
+                                return isSelectPlaceholderText(optText, val, s.selectedIndex);
                             });
                             
                             const hasEmptyRadio = radioGroups.some(g => {
@@ -12539,7 +13335,7 @@ return resolveDynamic(bestMatch);
                                 const allInputsFilled = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled = !queryAllDeep('select', modal)
-                                    .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
+                                    .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
                                 
                                 if (allInputsFilled && allSelectsFilled) {
                                     // Guard against empty file input / missing resume upload: block force-click
@@ -12612,7 +13408,7 @@ return resolveDynamic(bestMatch);
                                 const allInputsFilled2 = !queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal)
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled2 = !queryAllDeep('select', modal)
-                                    .some(sel => isVisible(sel) && (!sel.value || sel.options[sel.selectedIndex]?.text.toLowerCase().includes('select')));
+                                    .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
                                 if (!(allInputsFilled2 && allSelectsFilled2)) {
                                     window.__SENTINEL_DEBUG__&&console.log('Form has errors. Waiting...');
                                     return 'LINKEDIN_FORM_STUCK: Validation errors';
@@ -13394,6 +14190,9 @@ return resolveDynamic(bestMatch);
                     // 5. Must not be in the skipped jobs set
                     const candidates = jobCards.filter(card => {
                         const text = card.innerText.toLowerCase();
+                        const rawFirstLine = (card.innerText || '').split('\\n')[0].trim().toLowerCase();
+                        const cardAria = (card.getAttribute('aria-label') || '').toLowerCase();
+                        const isSelectedText = rawFirstLine.startsWith('selected') || cardAria.startsWith('selected');
                         // Active class may be on card itself OR on a parent <li> element
                         // LinkedIn puts --active on the <li> wrapper, not on .job-card-container
                         const isActive = card.classList.contains('jobs-search-results-list__list-item--active') ||
@@ -13403,18 +14202,22 @@ return resolveDynamic(bestMatch);
                                         card.closest('[aria-current="true"]') !== null ||
                                         card.getAttribute('aria-current') === 'true' ||
                                         card.classList.contains('active') ||
-                                        card.closest('.active') !== null;
+                                        card.closest('.active') !== null ||
+                                        isSelectedText;
                         
                         if (isActive) return false;
                         if (!isVisible(card)) return false;
                         
-                        // Check if this job's ID is in the skip list
-                        const cardJobId = card.getAttribute('data-job-id') ||
+                        // Check if this job's ID is in the skip list (normalize URNs)
+                        const rawJobId = card.getAttribute('data-job-id') ||
                                          card.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
                                          card.getAttribute('data-occludable-job-id') ||
-                                         card.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id');
-                        if (cardJobId && window.__skippedJobIds && window.__skippedJobIds.has(cardJobId)) {
-                            window.__SENTINEL_DEBUG__&&console.log('Skipping previously-skipped job ID:', cardJobId);
+                                         card.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id') ||
+                                         card.getAttribute('data-entity-urn') ||
+                                         card.querySelector('[data-entity-urn]')?.getAttribute('data-entity-urn');
+                        const cleanJobId = rawJobId ? String(rawJobId).replace(/^.*:/, '').trim() : null;
+                        if (window.__skippedJobIds && ((cleanJobId && window.__skippedJobIds.has(cleanJobId)) || (rawJobId && window.__skippedJobIds.has(rawJobId)))) {
+                            window.__SENTINEL_DEBUG__&&console.log('Skipping previously-skipped job ID:', cleanJobId || rawJobId);
                             return false;
                         }
                         
@@ -13437,13 +14240,13 @@ return resolveDynamic(bestMatch);
                     // Filter out jobs whose title was skipped by the title-based skip list
                     const titleFilteredCandidates = candidates.filter(card => {
                         if (!window.__skippedJobTitles || window.__skippedJobTitles.size === 0) return true;
-                        const cardTitle = card.innerText.split('\\n')[0].trim().substring(0, 80);
+                        const cardTitle = card.innerText.split('\\n')[0].trim().replace(/^selected,?\\s*/i, '').substring(0, 80);
                         return !window.__skippedJobTitles.has(cardTitle);
                     });
 
                     if (titleFilteredCandidates.length > 0) {
                         const nextJob = titleFilteredCandidates[0];
-                        const nextJobTitle = nextJob.innerText.split('\\n')[0].trim();
+                        const nextJobTitle = nextJob.innerText.split('\\n')[0].trim().replace(/^selected,?\\s*/i, '');
                         
                         // Detect infinite loop: if we already clicked this exact job title last time,
                         // it means clicking it did not advance state. Skip it.
@@ -14980,14 +15783,31 @@ return resolveDynamic(bestMatch);
                         }
                         
                         // B. Job Functions - Use Selectize API (SECOND)
-                        const jobFuncsToAdd = ['Backend Development', 'Frontend Development', 'Full-Stack Development'];
+                        // Remove fullstack, backend, frontend and ensure ONLY 'All - Software Engineering' is selected
+                        const targetJobFunc = 'All - Software Engineering';
                         const jobFuncSelectize = getSelectize('job-functions');
                         const jobFuncInput = document.querySelector('input#job-functions-selectized');
                         if (jobFuncInput) {
                             const jobFuncControl = jobFuncInput.closest('.selectize-control');
                             const jobFuncContainer = jobFuncControl ? jobFuncControl.querySelector('.selectize-input') : null;
                             if (jobFuncContainer) {
-                                // Use Selectize API for accurate check of existing items
+                                // 1. Remove unwanted functions (backend, frontend, full-stack) if present
+                                if (jobFuncSelectize) {
+                                    let removedAny = false;
+                                    for (const key of [...jobFuncSelectize.items]) {
+                                        const opt = jobFuncSelectize.options[key];
+                                        const text = (opt ? (opt.text || opt.name || key) : key).toLowerCase();
+                                        if (text.includes('backend') || text.includes('frontend') || text.includes('full-stack') || text.includes('full stack')) {
+                                            jobFuncSelectize.removeItem(key);
+                                            removedAny = true;
+                                        }
+                                    }
+                                    if (removedAny) {
+                                        return 'INSTAHYRE_REMOVED_OLD_JOB_FUNCS';
+                                    }
+                                }
+
+                                // 2. Check existing items using Selectize API
                                 let existingTexts = [];
                                 if (jobFuncSelectize) {
                                     existingTexts = jobFuncSelectize.items.map(key => {
@@ -15000,45 +15820,45 @@ return resolveDynamic(bestMatch);
                                         .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
                                 }
                                 
-                                for (const func of jobFuncsToAdd) {
-                                    const funcKeyword = func.split(' ')[0].toLowerCase(); // "backend", "frontend", "full-stack"
-                                    if (!existingTexts.some(f => f.includes(funcKeyword))) {
-                                        // Try Selectize API first
-                                        if (jobFuncSelectize) {
-                                            // Find the option key by matching text
-                                            const options = jobFuncSelectize.options;
-                                            let foundKey = null;
-                                            for (const key in options) {
-                                                const optText = (options[key].text || options[key].name || '').toLowerCase();
-                                                if (optText.includes(funcKeyword)) {
-                                                    foundKey = key;
-                                                    break;
-                                                }
-                                            }
-                                            if (foundKey) {
-                                                jobFuncSelectize.addItem(foundKey);
-                                                return 'INSTAHYRE_ADDED_JOB_FUNC: ' + func;
+                                const hasTarget = existingTexts.some(f => f.includes('software engineering') || f.includes('all - software engineering'));
+                                if (!hasTarget) {
+                                    // Try Selectize API first
+                                    if (jobFuncSelectize) {
+                                        // Find the option key by matching text
+                                        const options = jobFuncSelectize.options;
+                                        let foundKey = null;
+                                        for (const key in options) {
+                                            const optText = (options[key].text || options[key].name || '').toLowerCase();
+                                            if (optText.includes('all - software engineering') || optText.includes('software engineering') || (optText.includes('all') && optText.includes('software'))) {
+                                                foundKey = key;
+                                                break;
                                             }
                                         }
-                                        // Fallback: Set pending state, trigger input, schedule click
-                                        sessionStorage.setItem('instahyre_pending', 'jobfunc_' + func + '|' + Date.now());
-                                        jobFuncInput.focus();
-                                        jobFuncInput.click();
-                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                        if (setter) setter.call(jobFuncInput, funcKeyword);
-                                        jobFuncInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                        setTimeout(() => {
-                                            const dropdown = jobFuncControl.querySelector('.selectize-dropdown-content');
-                                            if (dropdown) {
-                                                const option = dropdown.querySelector('.option.active, .option:first-child');
-                                                if (option) {
-                                                    option.click();
-                                                    sessionStorage.removeItem('instahyre_pending');
-                                                }
-                                            }
-                                        }, 500);
-                                        return 'INSTAHYRE_ADDING_JOB_FUNC: ' + func;
+                                        if (foundKey) {
+                                            jobFuncSelectize.addItem(foundKey);
+                                            return 'INSTAHYRE_ADDED_JOB_FUNC: ' + targetJobFunc;
+                                        }
                                     }
+                                    // Fallback: Set pending state, trigger input, schedule click
+                                    sessionStorage.setItem('instahyre_pending', 'jobfunc_' + targetJobFunc + '|' + Date.now());
+                                    jobFuncInput.focus();
+                                    jobFuncInput.click();
+                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                    if (setter) setter.call(jobFuncInput, 'Software Engineering');
+                                    jobFuncInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    setTimeout(() => {
+                                        const dropdown = jobFuncControl.querySelector('.selectize-dropdown-content');
+                                        if (dropdown) {
+                                            const option = Array.from(dropdown.querySelectorAll('.option')).find(o => 
+                                                /all\\s*-\\s*software\\s+engineering|software\\s+engineering/i.test(o.textContent || '')
+                                            ) || dropdown.querySelector('.option.active, .option:first-child');
+                                            if (option) {
+                                                option.click();
+                                                sessionStorage.removeItem('instahyre_pending');
+                                            }
+                                        }
+                                    }, 500);
+                                    return 'INSTAHYRE_ADDING_JOB_FUNC: ' + targetJobFunc;
                                 }
                             }
                         }

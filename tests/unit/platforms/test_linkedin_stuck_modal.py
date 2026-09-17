@@ -44,7 +44,7 @@ class TestLinkedInStuckModal(unittest.IsolatedAsyncioTestCase):
             res3 = await self.agent._select_next_job_card()
 
         self.assertEqual(res3, "NAVIGATED_SEARCH")
-        mock_page.goto.assert_called_once_with('https://www.linkedin.com/jobs/search/', timeout=30000)
+        mock_page.goto.assert_called_once_with(self.agent._get_linkedin_search_url(), timeout=30000)
         self.assertEqual(self.agent._linkedin_stuck_cleanup_attempts, 0)
 
     def test_check_modals_prioritizes_form_over_success(self):

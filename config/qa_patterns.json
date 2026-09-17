@@ -472,7 +472,9 @@
         "where are you based",
         "where do you currently live",
         "your current city",
-        "where do you reside"
+        "where do you reside",
+        "where do you currently reside",
+        "where do you currently reside?"
       ],
       "category": "location",
       "default": "Bengaluru",
@@ -2335,18 +2337,25 @@
         "can you join within",
         "short notice",
         "buyout option",
-        "can join within"
+        "can join within",
+        "is notice period negotiable",
+        "is your notice period negotiable",
+        "notice period negotiable",
+        "can you reduce your notice period",
+        "can notice period be reduced",
+        "notice period buyout option",
+        "is notice period buyout possible"
       ],
       "category": "yes_no",
       "default": "Yes",
       "input_type_defaults": {
         "radio": "Yes",
-        "checkbox": "Yes",
         "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
+        "text": "Yes, negotiable",
+        "textarea": "Yes, my notice period is 15 days and is negotiable with buyout or early release option.",
+        "checkbox": "Yes"
       },
-      "priority": 7
+      "priority": 18
     },
     "certifications": {
       "patterns": [
@@ -4119,6 +4128,8 @@
         "total it experience",
         "overall it experience",
         "relevant years",
+        "relevant years of experience",
+        "specify your relevant years of experience",
         "domain experience",
         "field experience",
         "sector experience"
@@ -4989,18 +5000,24 @@
         "offers",
         "current offers",
         "other offers",
-        "competing offer"
+        "competing offer",
+        "any offer",
+        "counter offer",
+        "holding any counter offer",
+        "are you holding any counter offer",
+        "any offer? (if yes, please mention the value and doj)",
+        "any offer? (if yes, mention value and doj)"
       ],
       "category": "yes_no",
-      "default": "Yes",
+      "default": "No",
       "input_type_defaults": {
-        "radio": "Yes",
-        "checkbox": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes"
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No"
       },
-      "priority": 7
+      "priority": 18
     },
     "naukri_marital_status": {
       "patterns": [
@@ -7447,7 +7464,13 @@
         "what is your disability accommodation",
         "your disability accommodation",
         "please mention disability accommodation",
-        "mention disability accommodation"
+        "mention disability accommodation",
+        "require accommodation",
+        "do you require accommodation",
+        "do you require an accommodation",
+        "need accommodation",
+        "do you need accommodation",
+        "do you require reasonable accommodation"
       ],
       "category": "preference",
       "default": "Not required",
@@ -7456,9 +7479,9 @@
         "select": "Not required",
         "text": "Not required",
         "textarea": "Not required",
-        "checkbox": "Yes"
+        "checkbox": "No"
       },
-      "priority": 4
+      "priority": 14
     },
     "preference_2792": {
       "patterns": [
@@ -8739,8 +8762,6 @@
         "how many days notice period left to serve",
         "notice period left to serve if currently serving",
         "kindly mention your official notice period if serving please mention",
-        "if yes please describe",
-        "if yes please specify",
         "notice period",
         "what is your notice period",
         "how soon can you join us",
@@ -8781,7 +8802,15 @@
         "available for interview",
         "are you serving notice period",
         "are you serving",
-        "last working day"
+        "last working day",
+        "negotiable",
+        "buyout",
+        "negotiate",
+        "can you reduce",
+        "reduce",
+        "if yes",
+        "describe",
+        "specify"
       ]
     },
     "last_working_date": {
@@ -9055,26 +9084,26 @@
       }
     },
     "employment_gaps": {
-      "category": "preference",
-      "default": "I have more than 1 year gap after education to job, which I used for skill development and personal projects.",
-      "priority": 7,
       "patterns": [
-        "gaps from education to job",
         "employment gaps",
-        "gap between jobs",
-        "what are your gaps",
-        "gaps after education",
-        "gap after college",
-        "not have much gaps",
-        "you should not have much gaps"
+        "gap in employment",
+        "career gap",
+        "employment gap",
+        "break in career",
+        "career break",
+        "gap in work history",
+        "period of unemployment",
+        "any gaps in your career"
       ],
+      "category": "employment",
+      "default": "No",
+      "priority": 12,
       "input_type_defaults": {
-        "radio": "I have more than 1 year gap after education to job",
-        "text": "I have more than 1 year gap after education to job, which I used for skill development and personal projects.",
-        "select": "I have more than 1 year gap after education to job",
-        "textarea": "I have more than 1 year gap after education to job, which I used for skill development and personal projects.",
-        "checkbox": "Yes",
-        "number": "1."
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I have a continuous employment history without any significant career breaks. I have been working full-time since graduation in 2022.",
+        "checkbox": "No"
       }
     },
     "company_association": {
@@ -9106,7 +9135,7 @@
     "holding_offer": {
       "category": "preference",
       "default": "No",
-      "priority": 13,
+      "priority": 18,
       "patterns": [
         "holding offer",
         "offer in hand",
@@ -9128,10 +9157,10 @@
       ],
       "input_type_defaults": {
         "radio": "No",
-        "checkbox": "No",
         "select": "No",
         "text": "No",
-        "textarea": "No"
+        "textarea": "No",
+        "checkbox": "No"
       },
       "negative_patterns": [
         "expected ctc",
@@ -9433,22 +9462,23 @@
     },
     "notice_period_buyout": {
       "patterns": [
-        "notice buyout",
-        "buy out notice",
         "notice period buyout",
-        "can buy out notice",
-        "willing to buy out"
+        "can your notice be bought out",
+        "buyout notice period",
+        "willing to get notice period bought out",
+        "notice buyout option",
+        "can we buyout your notice",
+        "buyout option for notice"
       ],
       "category": "notice_period",
       "default": "Yes",
-      "priority": 10,
+      "priority": 13,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes",
-        "date": "__DYNAMIC_LWD__",
-        "textarea": "Yes"
+        "textarea": "Yes, my notice period can be bought out if mutually agreed upon with the current employer.",
+        "checkbox": "Yes"
       }
     },
     "immediate_joining": {
@@ -12077,19 +12107,106 @@
       "patterns": [
         "c sharp",
         "csharp",
+        "c#",
+        "c#.net",
+        "experience with c#",
         "experience with c sharp",
-        "years of experience with c sharp"
+        "years of experience with c#",
+        "years of experience with c sharp",
+        "how many years of experience do you have with c#",
+        "how many years of experience do you have with c sharp"
       ],
       "category": "experience",
       "default": "4.2 Years",
-      "priority": 9,
+      "priority": 12,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
       "input_type_defaults": {
         "text": "4.2 Years",
-        "number": "4.2",
+        "number": "4",
         "radio": "Yes",
         "select": "Yes",
         "checkbox": "Yes",
-        "textarea": "4.2 Years"
+        "textarea": "4.2 Years of experience with C# and .NET development"
+      }
+    },
+    "dotnet_experience": {
+      "patterns": [
+        ".net",
+        "dotnet",
+        ".net core",
+        "asp.net",
+        "asp.net core",
+        "experience with .net",
+        "experience with dotnet",
+        "years of experience with .net",
+        "years of experience with dotnet",
+        "how many years of experience do you have with .net",
+        "how many years of experience do you have with dotnet"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 12,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "textarea": "4.2 Years of experience with .NET ecosystem"
+      }
+    },
+    "azure_cloud_experience": {
+      "patterns": [
+        "azure",
+        "microsoft azure",
+        "azure cloud",
+        "experience with azure",
+        "years of experience with azure",
+        "how many years of experience do you have with azure",
+        "how many years of experience do you have with microsoft azure"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 12,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "textarea": "4.2 Years of experience with Microsoft Azure and cloud services"
+      }
+    },
+    "offshore_shift_flexibility": {
+      "patterns": [
+        "comfortable with offshore",
+        "willing to work offshore",
+        "work in offshore",
+        "working with offshore teams",
+        "us shift",
+        "est hours",
+        "night shift",
+        "rotational shift",
+        "comfortable working offshore"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 12,
+      "input_type_defaults": {
+        "text": "Yes",
+        "number": "1",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes, I am 100% comfortable and flexible working in offshore and US shift hours."
       }
     },
     "tensorflow_experience": {
@@ -16285,21 +16402,30 @@
     },
     "noc_relieving_letter": {
       "patterns": [
-        "noc",
+        "do you have a relieving letter",
+        "noc from current employer",
+        "experience letter from current company",
+        "can you provide noc",
+        "relieving letter availability",
+        "do you have experience certificate",
+        "can you get noc from employer",
+        "service certificate from current employer",
+        "completion certificate from employer",
         "no objection certificate",
-        "relieving letter",
+        "experience letter available",
         "experience letter",
-        "service certificate"
+        "relieving letter",
+        "can you provide a relieving letter"
       ],
-      "category": "yes_no",
-      "default": "Yes, can provide",
-      "priority": 15,
+      "category": "employment",
+      "default": "Yes",
+      "priority": 12,
       "input_type_defaults": {
-        "radio": "Yes, can provide",
-        "select": "Yes, can provide",
-        "text": "Yes, can provide",
-        "checkbox": "Yes, can provide",
-        "textarea": "Yes, can provide"
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I will have my relieving letter, experience certificate, and NOC from my current employer upon resignation.",
+        "checkbox": "Yes"
       }
     },
     "laptop_availability": {
@@ -49862,7 +49988,30 @@
         "notice period",
         "ctc",
         "expected",
-        "current"
+        "current",
+        "family",
+        "relative",
+        "relatives",
+        "relationship",
+        "relationships",
+        "supplier",
+        "suppliers",
+        "vendor",
+        "vendors",
+        "partner",
+        "partners",
+        "outside business",
+        "advisory",
+        "consulting",
+        "board",
+        "side business",
+        "employed by",
+        "worked for",
+        "subsidiary",
+        "subsidiaries",
+        "joined okta",
+        "referral",
+        "referred"
       ]
     },
     "exp_auth0": {
@@ -63387,13 +63536,10 @@
     },
     "work_authorization_syn": {
       "patterns": [
-        "do you require sponsorship",
-        "will you require visa sponsorship",
         "are you authorized to work in india",
         "do you have work authorization for india",
         "legally eligible to work",
         "legally authorized",
-        "do you need visa sponsorship",
         "are you eligible to work",
         "work permit status"
       ],
@@ -64648,18 +64794,20 @@
     },
     "wa_do_you_require_sponsorship_now_or_in_the_future": {
       "patterns": [
-        "do you require sponsorship now or in the future"
+        "do you require sponsorship now or in the future",
+        "will you require sponsorship now or in the future",
+        "do you now or will you in the future require visa sponsorship",
+        "will you now or in the future require visa sponsorship"
       ],
       "category": "work_authorization",
-      "default": "Yes, I am legally authorized to work in India.",
-      "priority": 8,
+      "default": "No",
+      "priority": 16,
       "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes, I am legally authorized to work in India.",
-        "textarea": "Yes, I am legally authorized to work in India.",
-        "checkbox": "Yes",
-        "number": "."
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not require visa sponsorship now or in the future.",
+        "checkbox": "No"
       }
     },
     "wa_are_you_legally_authorized_to_work_in": {
@@ -83584,6 +83732,104 @@
         "checkbox": "No"
       }
     },
+    "ada_accommodation_notice": {
+      "category": "compliance",
+      "default": "I understand",
+      "priority": 14,
+      "patterns": [
+        "in compliance with the ada",
+        "in compliance with the ada amendments act",
+        "ada amendments act (adaaa)",
+        "ada amendments act",
+        "if you have a disability and would like to request an accommodation",
+        "reasonable accommodation notice",
+        "request a reasonable accommodation",
+        "request an accommodation in order to apply"
+      ],
+      "negative_patterns": [
+        "require",
+        "need",
+        "what accommodation",
+        "do you require",
+        "do you need"
+      ],
+      "input_type_defaults": {
+        "select": "I understand",
+        "radio": "I understand",
+        "checkbox": "Yes",
+        "text": "I understand",
+        "textarea": "I understand"
+      }
+    },
+    "privacy_policy_terms_agreement": {
+      "category": "compliance",
+      "default": "I understand",
+      "priority": 14,
+      "patterns": [
+        "by applying to this position i agree to",
+        "by applying to this position, i agree to",
+        "agree to isolved applicant tracking",
+        "terms of service and privacy policy",
+        "applicant tracking's privacy policy & terms of service",
+        "applicant tracking's privacy policy and terms of service"
+      ],
+      "input_type_defaults": {
+        "select": "I understand",
+        "radio": "I understand",
+        "checkbox": "Yes",
+        "text": "I understand"
+      }
+    },
+    "preferred_contact_method": {
+      "category": "preference",
+      "default": "Email",
+      "priority": 13,
+      "patterns": [
+        "what is your preferred method of contact",
+        "preferred method of contact",
+        "preferred contact method",
+        "how should we contact you"
+      ],
+      "input_type_defaults": {
+        "select": "Email",
+        "radio": "Email",
+        "text": "Email"
+      }
+    },
+    "communication_policy_text_messages": {
+      "category": "compliance",
+      "default": "Yes, I agree to be contacted by text messages",
+      "priority": 13,
+      "patterns": [
+        "applicant communication policy for receiving text messages",
+        "agree to isolved applicant tracking's applicant communication policy",
+        "policy for receiving text messages",
+        "receiving text messages"
+      ],
+      "input_type_defaults": {
+        "select": "Yes, I agree to be contacted by text messages",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "voluntary_self_identification_disability": {
+      "category": "self_identification",
+      "default": "No, I Don't Have A Disability, Or A History/Record Of Having A Disability",
+      "priority": 15,
+      "patterns": [
+        "public burden statement: according to the paperwork reduction act",
+        "according to the paperwork reduction act of 1995",
+        "this survey should take about 5 minutes to complete",
+        "voluntary self-identification of disability",
+        "voluntary self identification of disability",
+        "please check one of the boxes below: public burden statement"
+      ],
+      "input_type_defaults": {
+        "select": "No, I Don't Have A Disability, Or A History/Record Of Having A Disability",
+        "radio": "No",
+        "text": "No"
+      }
+    },
     "linkedin_ms_dates": {
       "category": "compliance",
       "default": "No",
@@ -84685,7 +84931,7 @@
       ],
       "category": "technical_screening",
       "default": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to Freshworks' mission of delivering intuitive, world-class SaaS products.",
-      "priority": 15,
+      "priority": 20,
       "input_type_defaults": {
         "textarea": "I am passionate about building scalable, high-performance distributed systems. With 4+ years of full-stack engineering experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to Freshworks' mission of delivering intuitive, world-class SaaS products.",
         "text": "I am passionate about building scalable, high-performance distributed systems with Java, Spring Boot, React, and cloud architectures.",
@@ -85579,6 +85825,14 @@
     },
     "niche_non_resume_skills": {
       "patterns": [
+        "how many years of hands-on aem backend experience you have?",
+        "how many years of hands-on aem backend experience you have",
+        "how many years of experience do you have in aem backend",
+        "how many years of experience do you have in aem",
+        "aem backend",
+        "aem",
+        "experience in aem",
+        "experience in aem backend",
         "how many years of experience do you have in calypso",
         "calypso",
         "how many years of experience do you have in camunda bpm",
@@ -85626,6 +85880,7 @@
         "do you have experience in incorta",
         "have you worked on incorta",
         "have you worked on calypso",
+        "have you worked on aem",
         "have you worked on snowflake",
         "have you worked on blockchain",
         "have you worked on solana",
@@ -85989,29 +86244,27 @@
     },
     "holding_offers_competing": {
       "patterns": [
-        "do you have any offer in hand",
-        "do you have any offer in hand?",
-        "any holding offers",
-        "any holding offers?",
-        "what is your holding offer ctc?",
-        "holding offer ctc",
-        "do you have any existing offer",
-        "do you have any existing offer?",
-        "holding offer details if any",
-        "do you currently hold any other offer"
+        "are you holding any other offer",
+        "do you have any other offers",
+        "are you interviewing elsewhere",
+        "do you have competing offers",
+        "any offer in hand",
+        "currently evaluating other offers",
+        "are you considering other opportunities",
+        "other companies in final round",
+        "are you in talks with other companies",
+        "multiple offer situation"
       ],
-      "category": "salary",
+      "category": "compliance",
       "default": "No",
+      "priority": 13,
       "input_type_defaults": {
         "radio": "No",
-        "checkbox": "No",
         "select": "No",
         "text": "No",
-        "number": "0",
-        "textarea": "No"
-      },
-      "priority": 15,
-      "negative_patterns": []
+        "textarea": "No, I do not have any other offers at this time.",
+        "checkbox": "No"
+      }
     },
     "notice_period_buyout_negotiable": {
       "patterns": [
@@ -231098,15 +231351,23 @@
         "how many years of experience do you have in .net core",
         "how many years of experience do you have in dotnet core",
         ".net core",
-        "dotnet core"
+        "dotnet core",
+        ".net core experience",
+        "dotnet core experience"
       ],
-      "category": "skills",
-      "default": "0",
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
       "priority": 20,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
       "input_type_defaults": {
-        "text": "0 Years",
-        "radio": "No experience",
-        "select": "0"
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years"
       }
     },
     "shopify_exp": {
@@ -231394,30 +231655,6 @@
         "checkbox": "Yes"
       }
     },
-    "holding_offers_competing": {
-      "patterns": [
-        "are you holding any other offer",
-        "do you have any other offers",
-        "are you interviewing elsewhere",
-        "do you have competing offers",
-        "any offer in hand",
-        "currently evaluating other offers",
-        "are you considering other opportunities",
-        "other companies in final round",
-        "are you in talks with other companies",
-        "multiple offer situation"
-      ],
-      "category": "compliance",
-      "default": "No",
-      "priority": 13,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "textarea": "No, I do not have any other offers at this time.",
-        "checkbox": "No"
-      }
-    },
     "equity_esop_current": {
       "patterns": [
         "do you have equity or esop",
@@ -231557,30 +231794,6 @@
         "select": "Yes",
         "text": "Yes",
         "textarea": "Yes, I am available for interviews. I can attend virtual or in-person interviews on weekdays after 6 PM or on weekends.",
-        "checkbox": "Yes"
-      }
-    },
-    "noc_relieving_letter": {
-      "patterns": [
-        "do you have a relieving letter",
-        "noc from current employer",
-        "experience letter from current company",
-        "can you provide noc",
-        "relieving letter availability",
-        "do you have experience certificate",
-        "can you get noc from employer",
-        "service certificate from current employer",
-        "completion certificate from employer",
-        "no objection certificate"
-      ],
-      "category": "employment",
-      "default": "Yes",
-      "priority": 12,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes, I will have my relieving letter, experience certificate, and NOC from my current employer upon resignation.",
         "checkbox": "Yes"
       }
     },
@@ -232332,7 +232545,20 @@
         "text": "Yes",
         "textarea": "Yes, I am flexible and willing to work extended hours or occasional overtime when project deadlines or production issues require it.",
         "checkbox": "Yes"
-      }
+      },
+      "negative_patterns": [
+        "outside business activity",
+        "outside business activities",
+        "advisory",
+        "consulting",
+        "board role",
+        "board roles",
+        "side business",
+        "side businesses",
+        "dual employment",
+        "moonlighting",
+        "secondary employment"
+      ]
     },
     "police_verification_consent": {
       "patterns": [
@@ -232443,29 +232669,6 @@
         "checkbox": "Yes"
       }
     },
-    "employment_gaps": {
-      "patterns": [
-        "employment gaps",
-        "gap in employment",
-        "career gap",
-        "employment gap",
-        "break in career",
-        "career break",
-        "gap in work history",
-        "period of unemployment",
-        "any gaps in your career"
-      ],
-      "category": "employment",
-      "default": "No",
-      "priority": 12,
-      "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
-        "text": "No",
-        "textarea": "No, I have a continuous employment history without any significant career breaks. I have been working full-time since graduation in 2022.",
-        "checkbox": "No"
-      }
-    },
     "willing_to_work_weekends": {
       "patterns": [
         "willing to work on weekends",
@@ -232485,27 +232688,6 @@
         "select": "Yes",
         "text": "Yes",
         "textarea": "Yes, I am flexible and willing to work on weekends when required for critical releases, production issues, or project deadlines.",
-        "checkbox": "Yes"
-      }
-    },
-    "notice_period_buyout": {
-      "patterns": [
-        "notice period buyout",
-        "can your notice be bought out",
-        "buyout notice period",
-        "willing to get notice period bought out",
-        "notice buyout option",
-        "can we buyout your notice",
-        "buyout option for notice"
-      ],
-      "category": "notice_period",
-      "default": "Yes",
-      "priority": 13,
-      "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
-        "textarea": "Yes, my notice period can be bought out if mutually agreed upon with the current employer.",
         "checkbox": "Yes"
       }
     },
@@ -232637,6 +232819,1054 @@
         "text": "Permanent",
         "textarea": "I am currently in a full-time permanent employment role.",
         "checkbox": "Yes"
+      }
+    },
+    "outside_business_activities": {
+      "patterns": [
+        "outside business activity",
+        "outside business activities",
+        "outside business activity(ies)",
+        "advisory, consulting, or board roles, or side businesses",
+        "advisory consulting or board roles",
+        "advisory, consulting, or board roles",
+        "side businesses",
+        "side business",
+        "dual employment",
+        "secondary employment",
+        "moonlighting",
+        "other commercial activities",
+        "commercial activities outside"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not have any outside business activities, consulting, or side businesses.",
+        "checkbox": "No"
+      }
+    },
+    "relatives_family_personal_relationships_at_company": {
+      "patterns": [
+        "family members / relatives or personal relationships",
+        "family members relatives or personal relationships",
+        "personal relationships at okta",
+        "relatives or personal relationships at",
+        "family members or relatives at",
+        "family members at",
+        "relatives at suppliers partners or vendors",
+        "relatives or personal relationships at any suppliers",
+        "personal relationship that could improperly bias your conduct",
+        "familial or close personal relationships",
+        "familial or close personal relationships with a current",
+        "close personal relationships with a current employee",
+        "personal relationships with a current employee",
+        "familial relationships"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I do not have any family members, relatives, or personal relationships at the company or its suppliers/partners/vendors.",
+        "checkbox": "No"
+      }
+    },
+    "ex_employee_subsidiaries": {
+      "patterns": [
+        "been employed by okta",
+        "employed by okta, inc. or any of its subsidiaries in the past",
+        "employed by okta inc or any of its subsidiaries in the past",
+        "employed by or any of its subsidiaries in the past",
+        "employed by any of its subsidiaries",
+        "previously employed by this company or its subsidiaries",
+        "ever worked for this organization or its subsidiaries",
+        "former employee of the company or subsidiaries"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I have not been previously employed by the company or any of its subsidiaries.",
+        "checkbox": "No"
+      }
+    },
+    "referred_by_internal_employee": {
+      "patterns": [
+        "were you referred by an internal xometry employee?",
+        "were you referred by an internal xometry employee",
+        "were you referred by an internal employee?",
+        "were you referred by an internal employee",
+        "were you referred by an employee",
+        "internal employee referral",
+        "employee referral"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No",
+        "select": "No",
+        "radio": "No",
+        "checkbox": "No",
+        "textarea": "No"
+      }
+    },
+    "pf_payslips_employment_documents_available": {
+      "patterns": [
+        "pf, payslips & employment documents available for all previous employers",
+        "pf, payslips & employment documents available",
+        "pf, payslips and employment documents available for all previous employers",
+        "employment documents available for all previous employers",
+        "payslips and employment documents available",
+        "documents available for all previous employers",
+        "do you have pf and payslips for previous employers",
+        "service certificates and payslips available",
+        "all employment documents available for verification"
+      ],
+      "category": "compliance",
+      "default": "Yes",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, all documents and payslips are available for verification",
+        "textarea": "Yes, all PF records, payslips, Form 16, and employment documents are available for all previous employers.",
+        "checkbox": "Yes"
+      }
+    },
+    "country_of_residence_text": {
+      "patterns": [
+        "please confirm the country in which you currently reside",
+        "country in which you currently reside",
+        "country you currently live in",
+        "if the country you currently live in is not listed in the question above",
+        "if the country you currently live in is not listed",
+        "please confirm in which country you live",
+        "confirm in which country you live",
+        "country of residence",
+        "current country of residence",
+        "which country do you reside in",
+        "country where you reside"
+      ],
+      "category": "personal_info",
+      "default": "India",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "India",
+        "select": "India",
+        "text": "India",
+        "textarea": "India",
+        "checkbox": "India"
+      }
+    },
+    "contract_type_preference": {
+      "patterns": [
+        "what type of contract are you looking for",
+        "type of contract are you looking for",
+        "contract type",
+        "employment type looking for",
+        "type of employment are you seeking",
+        "preferred contract type",
+        "looking for full-time or contract"
+      ],
+      "category": "preference",
+      "default": "Full-time",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "Full-time",
+        "select": "Full-time",
+        "text": "Full-time / Permanent",
+        "textarea": "I am looking for a full-time, permanent position.",
+        "checkbox": "Full-time"
+      }
+    },
+    "if_yes_please_describe": {
+      "patterns": [
+        "if yes, please describe",
+        "if yes please describe",
+        "if yes, please specify",
+        "if yes please specify",
+        "if yes, please identify name of person / vendor and describe relationship / association",
+        "if yes, please identify name of person / vendor",
+        "if yes, please explain"
+      ],
+      "category": "compliance",
+      "default": "N/A",
+      "priority": 16,
+      "input_type_defaults": {
+        "radio": "N/A",
+        "select": "N/A",
+        "text": "N/A",
+        "textarea": "N/A",
+        "checkbox": "N/A"
+      }
+    },
+    "independent_problem_solving": {
+      "patterns": [
+        "can you independently diagnose and solve technical problems",
+        "independently diagnose and solve technical problems",
+        "solve technical problems independently",
+        "can you diagnose and solve technical problems"
+      ],
+      "category": "soft_skills",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have strong problem-solving skills and experience independently diagnosing, debugging, and resolving complex technical issues in distributed systems.",
+        "checkbox": "Yes"
+      }
+    },
+    "country_phone_code_es": {
+      "patterns": [
+        "código del país",
+        "codigo del pais",
+        "codigo de pais",
+        "código de país"
+      ],
+      "category": "personal_info",
+      "default": "India (+91)",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "India (+91)",
+        "text": "+91",
+        "radio": "India (+91)",
+        "textarea": "+91",
+        "checkbox": "+91"
+      }
+    },
+    "product_feature_owned_end_to_end": {
+      "patterns": [
+        "describe one product or feature you owned end to end, from idea to production. what was your specific role, and what did you decide yourself?",
+        "describe one product or feature you owned end to end, from idea to production",
+        "describe one product or feature you owned end to end",
+        "product or feature you owned end to end"
+      ],
+      "category": "technical",
+      "default": "Architected and deployed distributed notification pipelines and microservices at Everbridge using Spring Boot and Kafka, reducing latency by 40%.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Architected and deployed distributed notification pipelines and microservices at Everbridge using Spring Boot and Kafka, reducing latency by 40%.",
+        "textarea": "Architected and deployed distributed notification pipelines and microservices at Everbridge using Spring Boot and Kafka, reducing latency by 40%.",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "main_or_only_developer_on_product": {
+      "patterns": [
+        "have you been the main or only developer on a product that real users used",
+        "main or only developer on a product that real users used",
+        "main or only developer on a product",
+        "what were you responsible for keeping running after launch"
+      ],
+      "category": "technical",
+      "default": "Yes, as lead developer for key modules of the Real-time Settlement and Reporting pipeline at Everbridge, I took full ownership from design to post-launch monitoring, maintaining 99.99% uptime and handling production P1/P2 incidents.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "Yes, as lead developer for key modules of the Real-time Settlement and Reporting pipeline at Everbridge, I took full ownership from design to post-launch monitoring, maintaining 99.99% uptime and handling production P1/P2 incidents.",
+        "text": "Yes, lead developer on Real-time Settlement Reporting at Everbridge",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "ai_web_products_developed_count": {
+      "patterns": [
+        "how many ai & web product you have developed so far",
+        "how many ai & web product you have developed",
+        "how many ai and web products have you developed",
+        "ai & web product you have developed so far",
+        "ai & web product you have developed"
+      ],
+      "category": "experience",
+      "default": "5+",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "5+",
+        "number": "5",
+        "select": "5+",
+        "radio": "5+",
+        "textarea": "5+",
+        "checkbox": "Yes"
+      }
+    },
+    "tcs_ep_number_candidature_id": {
+      "patterns": [
+        "mention ep number(candidature id) if already registered with tcs",
+        "mention ep number (candidature id) if already registered with tcs",
+        "ep number(candidature id) if already registered with tcs",
+        "ep number if already registered with tcs"
+      ],
+      "category": "personal_info",
+      "default": "N/A",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "N/A",
+        "textarea": "N/A",
+        "select": "N/A",
+        "radio": "N/A",
+        "checkbox": "N/A"
+      }
+    },
+    "show_piece_of_ui_responsiveness": {
+      "patterns": [
+        "show a piece of ui you built from a design",
+        "piece of ui you built from a design",
+        "how close did the final result come to the design, and how did you handle responsiveness",
+        "how did you handle responsiveness"
+      ],
+      "category": "technical",
+      "default": "Built responsive analytics dashboard in React.js and TypeScript utilizing Tailwind CSS and CSS Grid/Flexbox, matching Figma specs with pixel precision and ensuring full responsiveness across mobile, tablet, and desktop viewports.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "Built responsive analytics dashboard in React.js and TypeScript utilizing Tailwind CSS and CSS Grid/Flexbox, matching Figma specs with pixel precision and ensuring full responsiveness across mobile, tablet, and desktop viewports.",
+        "text": "Responsive React.js/TypeScript Analytics Dashboard",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "motivation_why_join_company_elevator_pitch": {
+      "patterns": [
+        "take this opportunity to tell us your motivation behind wanting to join",
+        "motivation behind wanting to join",
+        "tell us why you are interested in this job role",
+        "tell us your career aspirations and where you see yourself in this domain a few years down the line",
+        "this can be your elevator pitch to us"
+      ],
+      "category": "behavioral",
+      "default": "I am excited about building world-class SaaS and distributed systems at scale. With 4+ years of experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to high-impact products and collaborate with dynamic engineering teams.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "I am excited about building world-class SaaS and distributed systems at scale. With 4+ years of experience in Java, Spring Boot, React, and cloud architectures, I am eager to contribute to high-impact products and collaborate with dynamic engineering teams.",
+        "text": "Passionate about building scalable distributed systems and robust web applications.",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "employee_referral_name_if_yes": {
+      "patterns": [
+        "if you answered yes to the last question, please provide the employee’s first and last name",
+        "if you answered yes to the last question, please provide the employee's first and last name",
+        "if you answered yes to the last question please provide the employee's first and last name",
+        "please provide the employee's first and last name",
+        "please provide the employee’s first and last name"
+      ],
+      "category": "personal_info",
+      "default": "N/A",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "N/A",
+        "textarea": "N/A",
+        "select": "N/A",
+        "radio": "N/A",
+        "checkbox": "N/A"
+      }
+    },
+    "mba_education_check": {
+      "patterns": [
+        "have you completed the following level of education: master of business administration",
+        "have you completed the following level of education master of business administration",
+        "master of business administration?"
+      ],
+      "category": "education",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No, I hold a B.Tech in Computer Science.",
+        "checkbox": "No"
+      }
+    },
+    "fast_paced_alignment": {
+      "patterns": [
+        "we're incredibly fast-paced. we do whatever it takes to get things done. would you be aligned with this aspect",
+        "we're incredibly fast-paced",
+        "would you be aligned with this aspect"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I thrive in fast-paced environments with a focus on ownership, high velocity, and engineering excellence.",
+        "checkbox": "Yes"
+      }
+    },
+    "bengaluru_onsite_ok": {
+      "patterns": [
+        "this role requires you to be in bengaluru. are you okay with that",
+        "this role requires you to be in bangalore. are you okay with that",
+        "this role requires you to be in bengaluru",
+        "are you okay to commute 3 days to office, mon, tue and thursday? our office location is koramangala, bangalore"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am based in Bengaluru and fully comfortable working on-site.",
+        "checkbox": "Yes"
+      }
+    },
+    "how_quickly_join_shortlisted": {
+      "patterns": [
+        "how quickly can you join us if shortlisted",
+        "how quickly can you join us",
+        "how soon would you be available to start",
+        "how early you can join"
+      ],
+      "category": "notice_period",
+      "default": "15 Days",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "15",
+        "select": "15 Days",
+        "text": "15 Days",
+        "number": "15",
+        "textarea": "15 Days (Serving Notice Period)",
+        "checkbox": "Yes"
+      }
+    },
+    "rel_exp_dotnetcore": {
+      "patterns": [
+        "rel exp in .netcore:",
+        "rel exp in .netcore",
+        "rel exp in dotnet core",
+        "rel exp in dotnet core:",
+        "relevant experience in .net core",
+        "relevant experience in dotnet core",
+        "relevant experience in .netcore"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 18,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years"
+      }
+    },
+    "internal_referral_employee_name": {
+      "patterns": [
+        "if you answered yes to the last question, please provide the employee's first and last name",
+        "if you answered yes to the last question, please provide the employee’s first and last name",
+        "please provide the employee's first and last name",
+        "please provide the employee’s first and last name",
+        "provide the employee's first and last name",
+        "provide the employee’s first and last name",
+        "employee's first and last name",
+        "employee’s first and last name"
+      ],
+      "category": "personal_info",
+      "default": "N/A",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "N/A",
+        "select": "N/A",
+        "radio": "N/A",
+        "textarea": "N/A",
+        "checkbox": "No"
+      }
+    },
+    "ex_employee_freshworks": {
+      "patterns": [
+        "have you been previously employed with freshworks?",
+        "have you been previously employed with freshworks",
+        "have you been previously employed with",
+        "previously employed with freshworks",
+        "previously employed with",
+        "previously worked with freshworks",
+        "ever worked for freshworks",
+        "have you ever been employed with freshworks"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "No",
+        "select": "No",
+        "radio": "No",
+        "checkbox": "No",
+        "textarea": "No"
+      }
+    },
+    "education_mba_degree": {
+      "patterns": [
+        "have you completed the following level of education: master of business administration?",
+        "have you completed the following level of education: master of business administration",
+        "master of business administration",
+        "mba degree",
+        "have you completed the following level of education: doctorate",
+        "phd degree",
+        "doctorate degree"
+      ],
+      "category": "education",
+      "default": "No",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "No",
+        "select": "No",
+        "radio": "No",
+        "checkbox": "No",
+        "textarea": "No"
+      }
+    },
+    "diagnose_and_solve_problems": {
+      "patterns": [
+        "can you independently diagnose and solve technical problems?",
+        "can you independently diagnose and solve technical problems",
+        "independently diagnose and solve technical problems",
+        "independently diagnose and solve",
+        "solve technical problems independently"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "Yes",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes"
+      }
+    },
+    "current_job_title_exact": {
+      "patterns": [
+        "your title",
+        "current job title",
+        "current title",
+        "designation",
+        "your designation",
+        "job title"
+      ],
+      "category": "personal_info",
+      "default": "Software Engineer 2",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "Software Engineer 2",
+        "select": "Software Engineer 2",
+        "radio": "Software Engineer 2",
+        "textarea": "Software Engineer 2"
+      }
+
+    },
+    "github_profile_link": {
+      "patterns": [
+        "github link",
+        "github profile",
+        "github url",
+        "github profile link",
+        "github profile url",
+        "github repository",
+        "github repo link"
+      ],
+      "category": "personal_info",
+      "default": "https://github.com/siddhant3646",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "https://github.com/siddhant3646",
+        "select": "https://github.com/siddhant3646",
+        "radio": "https://github.com/siddhant3646",
+        "textarea": "https://github.com/siddhant3646"
+      }
+    },
+    "rate_proficiency_scale_5": {
+      "patterns": [
+        "rate your proficiency (1-5) in our core stack: react.js, next.js, and react native.",
+        "rate your proficiency (1-5) in our core stack: react.js, next.js, and react native",
+        "rate your proficiency (1-5)",
+        "rate your proficiency 1-5",
+        "rate your proficiency (1 to 5)",
+        "rate your skills (1-5)",
+        "rate yourself (1-5)"
+      ],
+      "category": "skills",
+      "default": "5",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "5",
+        "select": "5",
+        "radio": "5",
+        "number": "5",
+        "textarea": "5"
+      }
+    },
+    "confirm_notice_period_digits": {
+      "patterns": [
+        "please confirm the notice period(7 days, 15 days, 30, 60 or 90 days just put 2 digit number)? 2 or 3 months candidates can ignore this role?",
+        "please confirm the notice period(7 days, 15 days, 30, 60 or 90 days just put 2 digit number)",
+        "please confirm the notice period(7 days, 15 days, 30, 60 or 90 days",
+        "just put 2 digit number",
+        "confirm the notice period"
+      ],
+      "category": "notice_period",
+      "default": "15",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "15",
+        "select": "15 days",
+        "radio": "15",
+        "number": "15",
+        "textarea": "15"
+      }
+    },
+    "ctc_current_and_expected_compound": {
+      "patterns": [
+        "ctc: current & expected?",
+        "ctc: current & expected",
+        "current and expected ctc",
+        "current & expected ctc",
+        "current & expected compensation",
+        "current and expected compensation"
+      ],
+      "category": "salary",
+      "default": "2300000 / 3000000",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "23 LPA / 30 LPA",
+        "text_inr": "2300000 / 3000000",
+        "text_lpa": "23 LPA / 30 LPA",
+        "select": "23 LPA / 30 LPA",
+        "radio": "23",
+        "textarea": "Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)"
+      }
+    },
+    "instahyre_expected_ctc_lpa": {
+      "patterns": [
+        "what is your expected ctc?",
+        "what is your expected ctc",
+        "expected ctc (lpa)",
+        "expected ctc in lpa",
+        "mention your expected ctc"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "priority": 18,
+      "platform_overrides": {
+        "instahyre": "30 LPA"
+      },
+      "input_type_defaults": {
+        "text": "30 LPA",
+        "select": "30 LPA",
+        "radio": "30",
+        "number": "30",
+        "textarea": "30 LPA",
+        "text_lpa": "30 LPA",
+        "text_inr": "3000000"
+      }
+    },
+    "role_location_bengaluru_textarea": {
+      "patterns": [
+        "this role requires you to be in bengaluru. are you okay with that?",
+        "this role requires you to be in bengaluru. are you okay with that",
+        "this role requires you to be in bengaluru",
+        "role requires you to be in bengaluru"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes, I am based in Bengaluru and available to work on-site."
+      }
+    },
+    "work_culture_fast_paced_alignment": {
+      "patterns": [
+        "we're incredibly fast-paced. we do whatever it takes to get things done. would you be aligned with this aspect?",
+        "we're incredibly fast-paced. we do whatever it takes to get things done. would you be aligned with this aspect",
+        "would you be aligned with this aspect?",
+        "would you be aligned with this aspect",
+        "we do whatever it takes to get things done. would you be aligned with this aspect?"
+      ],
+      "category": "behavioral",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes, I thrive in fast-paced, high-ownership environments."
+      }
+    },
+    "current_and_expected_ctc_textarea": {
+      "patterns": [
+        "what is your current compensation? would be great if you can highlight your expected compensation as well.",
+        "what is your current compensation? would be great if you can highlight your expected compensation as well",
+        "current compensation? would be great if you can highlight your expected compensation as well",
+        "highlight your expected compensation as well"
+      ],
+      "category": "salary",
+      "default": "Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)",
+        "textarea": "Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)",
+        "select": "23 LPA / 30 LPA",
+        "radio": "23",
+        "text_inr": "2300000 / 3000000",
+        "text_lpa": "23 LPA / 30 LPA"
+      }
+    },
+    "joining_availability_textarea": {
+      "patterns": [
+        "how quickly can you join us if shortlisted?",
+        "how quickly can you join us if shortlisted",
+        "how quickly can you join us",
+        "how quickly can you join"
+      ],
+      "category": "notice_period",
+      "default": "15 days",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "15 days",
+        "textarea": "15 days (serving notice period)",
+        "select": "15 days",
+        "radio": "15",
+        "number": "15",
+        "checkbox": "Yes"
+      }
+    },
+    "lead_developer_product_ownership": {
+      "patterns": [
+        "have you been the main or only developer on a product that real users used? if yes, which one and what were you responsible for keeping running after launch?",
+        "have you been the main or only developer on a product that real users used?",
+        "have you been the main or only developer on a product that real users used",
+        "main or only developer on a product that real users used"
+      ],
+      "category": "technical",
+      "default": "Yes, led backend engineering for critical services at Everbridge, managing microservices architecture and production reliability.",
+      "priority": 16,
+      "input_type_defaults": {
+        "text": "Yes, led backend engineering for critical services at Everbridge, managing microservices architecture and production reliability.",
+        "textarea": "Yes, led backend engineering for critical services at Everbridge, managing microservices architecture and production reliability.",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "ui_design_fidelity_responsiveness": {
+      "patterns": [
+        "show a piece of ui you built from a design. how close did the final result come to the design, and how did you handle responsiveness?",
+        "show a piece of ui you built from a design",
+        "piece of ui you built from a design",
+        "show a piece of ui you built",
+        "how close did the final result come to the design, and how did you handle responsiveness?"
+      ],
+      "category": "technical",
+      "default": "Built enterprise dashboards in React.js matching Figma specs with pixel-perfect responsive layouts using CSS flex/grid and Tailwind.",
+      "priority": 16,
+      "input_type_defaults": {
+        "text": "Built enterprise dashboards in React.js matching Figma specs with pixel-perfect responsive layouts using CSS flex/grid and Tailwind.",
+        "textarea": "Built enterprise dashboards in React.js matching Figma specs with pixel-perfect responsive layouts using CSS flex/grid and Tailwind.",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "select_relevant_years_experience": {
+      "patterns": [
+        "specify your relevant years of experience",
+        "relevant years of experience"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 18,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4",
+        "textarea": "4.2 Years of relevant software engineering experience"
+      }
+    },
+    "gender_self_id_spanish_resilient": {
+      "patterns": [
+        "gender",
+        "gender self-identification",
+        "selecciona una opción gender"
+      ],
+      "category": "personal_info",
+      "default": "Male",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Male",
+        "select": "Male",
+        "radio": "Male",
+        "checkbox": "Yes",
+        "textarea": "Male"
+      }
+    },
+    "exp_agentic_ai_years": {
+      "patterns": [
+        "how many years of experience in agentic ai?",
+        "how many years of experience in agentic ai",
+        "years of experience in agentic ai",
+        "experience in agentic ai",
+        "agentic ai experience"
+      ],
+      "category": "experience",
+      "default": "1 year",
+      "numeric_default": "1",
+      "priority": 17,
+      "platform_overrides": {
+        "linkedin": "1"
+      },
+      "input_type_defaults": {
+        "text": "1 year",
+        "select": "4.2 Years",
+        "radio": "1",
+        "number": "1",
+        "textarea": "1 year of experience in Agentic AI and LLM workflows"
+      }
+    },
+    "exp_full_stack_select": {
+      "patterns": [
+        "how many years of experience in full stack development?",
+        "how many years of experience in full stack development",
+        "years of experience in full stack development",
+        "full stack development experience"
+      ],
+      "category": "experience",
+      "default": "4 years",
+      "numeric_default": "4",
+      "priority": 18,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4 years",
+        "select": "4.2 Years",
+        "radio": "4",
+        "number": "4",
+        "textarea": "4.2 Years of experience in Full Stack Development"
+      }
+    },
+    "exp_cloud_devops_select": {
+      "patterns": [
+        "how many years of experience in azure, docker, kubernetes, and github?",
+        "how many years of experience in azure, docker, kubernetes, and github",
+        "years of experience in azure, docker, kubernetes, and github"
+      ],
+      "category": "experience",
+      "default": "4 years",
+      "numeric_default": "4",
+      "priority": 17,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4 years",
+        "select": "4.2 Years",
+        "radio": "4",
+        "number": "4",
+        "textarea": "4.2 Years of experience in Azure, Docker, Kubernetes, and GitHub"
+      }
+    },
+    "naukri_radio_microservices_exp": {
+      "patterns": [
+        "how many years of experience do you have in microservices?",
+        "how many years of experience do you have in microservices",
+        "years of experience in microservices",
+        "experience do you have in microservices"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 18,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in Microservices architecture"
+      }
+    },
+    "naukri_radio_cloud_exp": {
+      "patterns": [
+        "how much experience you hold in cloud?",
+        "how much experience you hold in cloud",
+        "experience you hold in cloud",
+        "experience in cloud"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 18,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in Cloud (AWS/GCP)"
+      }
+    },
+    "naukri_radio_python_iam_exp": {
+      "patterns": [
+        "how much experience you hold in iam roles and python (fast api)?",
+        "how much experience you hold in iam roles and python (fast api)",
+        "experience you hold in iam roles and python",
+        "experience in iam roles and python (fast api)"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 17,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in IAM Roles and Python"
+      }
+    },
+    "naukri_radio_java_exp": {
+      "patterns": [
+        "how much experience you hold in java",
+        "how much experience you hold in java?",
+        "experience you hold in java"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 19,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in Java"
+      }
+    },
+    "naukri_radio_react_exp": {
+      "patterns": [
+        "how much experience you hold in react.js?",
+        "how much experience you hold in react.js",
+        "how much experience you hold in reactjs",
+        "experience you hold in react.js"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 19,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in React.js"
+      }
+    },
+    "sql_hands_on_or_familiar_yn": {
+      "patterns": [
+        "do you have hands-on experience with sql, or are you familiar with sql cpncepts?",
+        "do you have hands-on experience with sql, or are you familiar with sql cpncepts",
+        "do you have hands-on experience with sql, or are you familiar with sql concepts?",
+        "do you have hands-on experience with sql, or are you familiar with sql concepts",
+        "familiar with sql concepts"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "select": "Yes",
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes"
+      }
+    },
+    "aem_backend_experience": {
+      "patterns": [
+        "how many years of experience do you have in aem backend?",
+        "how many years of experience do you have in aem backend",
+        "how many years of hands-on aem backend experience you have?",
+        "how many years of hands-on aem backend experience you have",
+        "aem backend experience",
+        "hands-on aem backend experience"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 16,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of backend engineering experience"
+      }
+    },
+    "calypso_experience": {
+      "patterns": [
+        "how many years of experience do you have in calypso?",
+        "how many years of experience do you have in calypso",
+        "calypso experience",
+        "experience in calypso"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 16,
+      "platform_overrides": {
+        "linkedin": "4"
+      },
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "select": "4.2 Years",
+        "radio": "4.2",
+        "number": "4.2",
+        "textarea": "4.2 Years of software engineering experience"
       }
     }
   },

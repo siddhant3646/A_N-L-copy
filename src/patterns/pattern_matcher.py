@@ -203,6 +203,21 @@ class PatternMatcher:
             if any(kw in ql for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment']):
                 return 'No', max(score, 0.98)
 
+        # 0p. Accommodation requirement / preference
+        if 'accommodation' in ql and any(kw in ql for kw in ('require', 'need', 'special accommodation')):
+            return 'Not required', max(score, 0.98)
+
+        # 0q. Direct GitHub Profile / Repo link (distinct from portfolio)
+        is_github_direct = bool(re.search(r'\b(github\s+(profile|link|url|username|handle|id)|link\s+to\s+github|your\s+github)\b', ql) or ql in ('github', 'github link', 'github url', 'github profile'))
+        if is_github_direct and not any(kw in ql for kw in ['portfolio', 'website', 'personal site', 'side projects']):
+            return 'https://github.com/siddhant3646', max(score, 0.98)
+
+        # 0r. Rating scale (1-5) bounded proficiency (guard against 1-10 or experience overrides)
+        is_rating_scale_5 = bool(re.search(r'\b(rate\s+(your\s+)?proficiency|proficiency\s*\(1[-–]5\)|rate\s+(yourself\s+)?(1[-–]5|1\s+to\s+5)|scale\s+of\s+1\s+(to|[-–])\s*5|rating\s*\(1[-–]5\))\b', ql))
+        if is_rating_scale_5 and not bool(re.search(r'\b(years?|how many years)\b', ql)):
+            if al in ('9', '10', '4.2', '4.2 Years', '4 Years', 'Yes', 'No') or not al:
+                return '4', max(score, 0.98)
+
         # 1. Disability safety guard: Candidate has NO disability
         if 'disability' in ql:
             if al.lower() in ('yes', 'true', '1') or 'do you have' in ql or 'any kind of disability' in ql:
@@ -238,9 +253,27 @@ class PatternMatcher:
                 if lpa_m:
                     return lpa_m.group(1), max(score, 0.98)
 
-        # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits like 4.2 or 5 in essays)
+        # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits in open-ended technical essays)
+        is_yes_no_q = bool(
+            re.search(r'\b(are you|would you|do you|can you|could you|will you|should you|is there|is it|willing|comfortable|aligned with|okay with|agree|consent|opt[- ]in|authorized|sponsorship|visa|eligible|permit|clearance|conflict of interest|non[- ]compete|disciplinary|convicted|crime|ex-employee|previously employed)\b', ql) or
+            re.search(r'^(have you|were you|did you|will you|should you|is it|can we|shall we)\b', ql)
+        )
+        is_notice_q = bool(re.search(r'\b(notice|how soon|how quickly|joining|join us|available to start|start date|earliest start|lwd|official last)\b', ql))
+        is_salary_q = bool(re.search(r'\b(salary|ctc|compensation|pay\b|package|remuneration|gross|net pay|fixed pay|variable pay|take home)\b', ql))
+        is_location_q = bool(re.search(r'\b(location|city|country|state|reside|relocate|relocation|based in|where do you live|bengaluru|bangalore)\b', ql))
+        is_conditional_q = bool(re.search(r'\b(if\s+(yes|any|applicable|so)|details\s+if\s+any|please\s+(specify|describe|explain)\s+if)\b', ql))
+        is_simple_field_q = is_yes_no_q or is_notice_q or is_salary_q or is_location_q or is_conditional_q
+
         is_conceptual_q = bool(re.search(r'\b(explain|architecture|design an?|how does|what steps|stabilize and scale|internal working|trade-offs)\b', ql))
-        is_textarea_essay = (input_type == 'textarea' or is_conceptual_q or bool(re.search(r'\b(describe your|tell us about|walk through|hands-on experience working with|experience taking over)\b', ql)))
+        is_open_ended_q = (is_conceptual_q or bool(re.search(
+            r'\b(describe\s+(your|a\s+|how|the|yourself|what|situations?|projects?)|tell us about|walk through|hands-on experience working with|experience taking over|cover\s*letter|why\s*(should\s*we\s*hire|hire\s*you|work\s*here|join)|background|summary\s*of\s*(your\s*)?experience|elevator\s*pitch|overview|aspirations|motivation)\b',
+            ql
+        ))) and not is_conditional_q
+
+        # Never overwrite intentional non-applicable answers ('N/A', 'None', etc.)
+        is_na_answer = al.strip().lower() in ('n/a', 'none', 'na', 'not applicable', 'not required')
+
+        is_textarea_essay = is_open_ended_q and not is_simple_field_q and not is_na_answer
         if is_textarea_essay and (al in ('4', '4.2', '5', '9', '10', '4.2 Years', '5 Years', 'Yes', 'No') or len(al) < 15):
             tech_summary = (
                 "4+ years of professional full-stack software engineering experience specializing in distributed systems, "
@@ -263,7 +296,7 @@ class PatternMatcher:
 
         # 8. Detect company / payroll company questions vs numeric / salary false positives
         is_company_q = bool(re.search(r'\b(current company|payroll company|which company|working at|current payroll|current employer)\b', ql) and
-                           not re.search(r'\b(relative|family|experience|years|how many|early release|resign|notice|buy ?out|negotiable|equity|stock|shares|esop|bonus|holding|hold)\b', ql))
+                           not re.search(r'\b(relative|family|experience|years|how many|early release|resign|notice|buy ?out|negotiable|equity|stock|shares|esop|bonus|holding|hold|noc|relieving|payslip|salary slip|letter|form 16|tax|document|can you provide|provide)\b', ql))
         if is_company_q:
             if re.search(r'^\d+$', al) or al.lower() in ('yes', 'no', '4.2', '4.2 years', '4 years'):
                 return 'Everbridge', max(score, 0.98)

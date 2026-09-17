@@ -91,10 +91,21 @@ class OptionExtractor:
     def extract_select_options(element_html: str) -> List[Option]:
         options = []
         pattern = r'<option[^>]*value=["\']([^"\']*)["\'][^>]*>([^<]*)</option>'
+        placeholder_re = re.compile(
+            r'\b(select|choose|pick|please\s+select|make\s+a\s+selection|selecciona|seleccione|seleccionar|elegir|opci[oó]n|opci[oó]nes|selecione|s[eé]lectionne[rz]?|choisir|w[aä]hlen|ausw[aä]hlen|seleziona|selezionare|kies|kiezen)\b',
+            re.IGNORECASE
+        )
         for i, match in enumerate(re.finditer(pattern, element_html, re.IGNORECASE)):
             value = match.group(1).strip()
             label = match.group(2).strip()
-            if value and label and value.lower() not in ['', 'select', 'choose', '-']:
+            val_lower = value.lower()
+            lbl_lower = label.lower()
+            if (
+                value and label
+                and val_lower not in ['', 'select', 'choose', '-', '--', '---']
+                and not placeholder_re.search(lbl_lower)
+                and not (i == 0 and ('select' in lbl_lower or 'choose' in lbl_lower or 'selecc' in lbl_lower or 'option' in lbl_lower))
+            ):
                 options.append(Option(value=value, label=label, index=i))
         return options
     
@@ -136,7 +147,8 @@ class InputAwareResolver:
         'hybrid': ['hybrid', 'flexible', 'mixed'],
         'onsite': ['onsite', 'work from office', 'wfo', 'in-office'],
         
-        'gender_male': ['male', 'man', 'he/him', 'he/him/his', 'cisgender male'],
+        'gender_male': ['male', 'man', 'he/him', 'he/him/his', 'cisgender male', 'hombre', 'masculino', 'homme', 'homem', 'männlich'],
+        'gender_female': ['female', 'woman', 'she/her', 'she/her/hers', 'cisgender female', 'mujer', 'femenino', 'femme', 'mulher', 'weiblich'],
         'race_asian': ['asian', 'asian (indian)', 'south asian', 'asian indian', 'indian'],
         'work_auth': ['citizen', 'citizen (india)', 'authorized', 'indian citizen', 'yes, authorized', 'yes, citizen', 'lawfully authorized'],
         'employment_permanent': ['permanent', 'direct payroll', 'full-time regular', 'full-time', 'full time', 'regular'],
@@ -242,7 +254,7 @@ class InputAwareResolver:
                 )
 
         for opt in options:
-            if opt.value.lower() == answer_lower or opt.label.lower() == answer_lower:
+            if opt.label.lower() == answer_lower:
                 return MatchResult(
                     matched_option=opt,
                     confidence=1.0,
@@ -265,6 +277,15 @@ class InputAwareResolver:
                     matched_option=matching_ranges[0][0],
                     confidence=0.95,
                     match_type='numeric_range',
+                    original_answer=answer
+                )
+
+        for opt in options:
+            if opt.value.lower() == answer_lower:
+                return MatchResult(
+                    matched_option=opt,
+                    confidence=1.0,
+                    match_type='exact_value',
                     original_answer=answer
                 )
 

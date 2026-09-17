@@ -394,13 +394,13 @@ class TestPlatformOverrides(unittest.TestCase):
         ans, score = self.agent._fuzzy_match_question("enter whole number years of experience")
         self.assertEqual(ans, "4")
         self.assertGreaterEqual(score, 0.90)
-        p = self.patterns_db.get("total_experience") or self.patterns_db.get("experience")
+        p = self.patterns_db.get("select_relevant_years_experience")
         self.assertEqual(p["platform_overrides"]["linkedin"], "4")
 
     def test_naukri_experience_x_years(self):
         self.agent._current_platform = "naukri"
-        ans, score = self.agent._fuzzy_match_question("how many years of total experience do you have")
-        self.assertIn("4.2", ans)
+        ans, score = self.agent._fuzzy_match_question("years of experience")
+        self.assertEqual(ans, "4.2 Years")
         self.assertGreaterEqual(score, 0.90)
 
     def test_calypso_platform_overrides(self):

@@ -12,8 +12,8 @@ Execute and verify the final phases of the Sentinel Q&A audit project:
 |---|-----------|-------|-------|--------|
 | 1 | Textarea & Platform Form Guards Optimization | `src/sentinel/agent.py`, `src/patterns/pattern_matcher.py` | worker_m1 | COMPLETED |
 | 2 | QA Pattern Implementation & Priority Calibration | `config/qa_patterns.json`, `src/sentinel/agent.py` | worker_m2 | COMPLETED |
-| 3 | Test Suite Expansion & Automated Validation | `tests/unit/qa/`, `pytest tests/unit/qa/`, `pytest tests/unit/platforms/` | worker_m3 | IN_PROGRESS |
-| 4 | Independent Review & Forensic Audit | Full codebase & pattern integrity verification | reviewers / challenger / auditor | PLANNED |
+| 3 | Test Suite Expansion & Automated Validation | `tests/unit/qa/`, `pytest tests/unit/qa/`, `pytest tests/unit/platforms/` | worker_m3 | COMPLETED |
+| 4 | Independent Review & Forensic Audit | Full codebase & pattern integrity verification | reviewers / challenger / auditor | IN_PROGRESS |
 
 ## Detailed Plan for Milestone 3
 1. Worker M3 (`teamwork_preview_worker`):

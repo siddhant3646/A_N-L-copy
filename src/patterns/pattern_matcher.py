@@ -314,7 +314,7 @@ class PatternMatcher:
 
         # 10. Detect if the question is asking for numeric years of experience
         is_num_years = bool(re.search(
-            r'\b(how many years|how many yrs|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp)\b',
+            r'\b(how many years|how many yrs|how much experience|experience you hold|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp)\b',
             ql
         ))
 

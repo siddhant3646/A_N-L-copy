@@ -1526,7 +1526,12 @@
         "gender",
         "what is your gender",
         "gender you prefer to identify",
-        "identify with"
+        "identify with",
+        "with which gender do you most identify",
+        "with which gender do you identify",
+        "what gender do you identify with",
+        "how do you identify your gender",
+        "self-identify your gender"
       ],
       "category": "self_identification",
       "default": "Male",
@@ -1817,7 +1822,7 @@
         "select": "15 days",
         "text": "25/09/2026",
         "number": "15",
-        "date": "25/09/2026",
+        "date": "__DYNAMIC_LWD__",
         "textarea": "25/09/2026"
       },
       "priority": 7
@@ -4634,7 +4639,11 @@
         "gender identity",
         "sex",
         "gender identity question",
-        "identify as"
+        "identify as",
+        "with which gender do you most identify",
+        "with which gender do you identify",
+        "what gender do you identify with",
+        "how do you identify your gender"
       ],
       "category": "self_identification",
       "default": "Male",
@@ -9560,7 +9569,13 @@
         "interview slot preference",
         "schedule interview at",
         "best time for interview",
-        "interview availability window"
+        "interview availability window",
+        "please mention your available time",
+        "mention your available time",
+        "available time for",
+        "available time",
+        "interview available time",
+        "preferred time for interview"
       ],
       "category": "availability",
       "default": "Anytime between 10 AM - 6 PM",
@@ -13789,7 +13804,12 @@
         "are you currently on notice",
         "on notice",
         "on notice period",
-        "are you on notice period?"
+        "are you on notice period?",
+        "are you serving notice period ? or already left ?",
+        "are you serving notice period or already left",
+        "are you serving notice or already left the last organisation",
+        "are you serving notice period ? or already left",
+        "serving notice period or already left"
       ],
       "category": "notice_period",
       "default": "Yes",
@@ -13801,6 +13821,35 @@
         "checkbox": "Yes",
         "textarea": "Yes"
       }
+    },
+    "confirm_notice_period_input": {
+      "patterns": [
+        "please confirm the notice period",
+        "confirm the notice period",
+        "confirm your notice period",
+        "please confirm the notice period(7 days, 15 days, 30, 60 or 90 days just put 2 digit number)",
+        "confirm notice period",
+        "please confirm notice period in days"
+      ],
+      "category": "notice_period",
+      "default": "15",
+      "numeric_default": "15",
+      "priority": 16,
+      "input_type_defaults": {
+        "text": "15",
+        "number": "15",
+        "textarea": "15",
+        "radio": "15",
+        "select": "15 days",
+        "checkbox": "Yes"
+      },
+      "negative_patterns": [
+        "2 or 3 months",
+        "ignore this role",
+        "candidates can ignore",
+        "candidate can ignore",
+        "just put 2 digit number"
+      ]
     },
     "early_release": {
       "patterns": [
@@ -14010,9 +14059,19 @@
         "radio": "Full-time",
         "select": "Full-time",
         "text": "Full-time",
-        "checkbox": "Full-time",
+        "checkbox": "Yes",
         "textarea": "Full-time"
-      }
+      },
+      "negative_patterns": [
+        "years",
+        "experience",
+        "minimum",
+        "how many",
+        "work experience",
+        "exp",
+        "do you have",
+        "do u have"
+      ]
     },
     "no_part_time": {
       "patterns": [
@@ -232666,7 +232725,8 @@
         "select": "Within 15 days",
         "text": "Within 15 days",
         "textarea": "I can start within 15 days of receiving the offer. I am currently serving my notice period.",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "date": "__DYNAMIC_LWD__"
       }
     },
     "willing_to_work_weekends": {
@@ -233373,7 +233433,6 @@
         "radio": "Software Engineer 2",
         "textarea": "Software Engineer 2"
       }
-
     },
     "github_profile_link": {
       "patterns": [
@@ -233595,7 +233654,15 @@
     "select_relevant_years_experience": {
       "patterns": [
         "specify your relevant years of experience",
-        "relevant years of experience"
+        "relevant years of experience",
+        "especifica tus años de experiencia relevantes",
+        "especifica tus años de experiencia",
+        "indica tus años de experiencia",
+        "años de experiencia relevantes",
+        "años de experiencia",
+        "selecciona tus años de experiencia",
+        "indique sus años de experiencia",
+        "experiencia relevante en años"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -233616,7 +233683,15 @@
       "patterns": [
         "gender",
         "gender self-identification",
-        "selecciona una opción gender"
+        "selecciona una opción gender",
+        "género",
+        "sexo",
+        "identidad de género",
+        "con qué género te identificas",
+        "con que genero te identificas",
+        "seleccione su género",
+        "indique su género",
+        "cuál es su género"
       ],
       "category": "personal_info",
       "default": "Male",
@@ -233867,6 +233942,63 @@
         "radio": "4.2",
         "number": "4.2",
         "textarea": "4.2 Years of software engineering experience"
+      }
+    },
+    "capital_markets_experience": {
+      "patterns": [
+        "any exp in capital markets",
+        "capital market domain",
+        "trading or capital market domain",
+        "experience in trading or capital market",
+        "capital markets experience",
+        "exp in capital markets"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 14,
+      "input_type_defaults": {
+        "text": "Yes",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes, I have experience working with financial domain microservices, dispute management, and capital markets transactions."
+      }
+    },
+    "production_security_controls": {
+      "patterns": [
+        "handled production security controls",
+        "production security controls such as iam",
+        "iam secrets encryption network security",
+        "security controls such as iam",
+        "secrets encryption network security or audit logging"
+      ],
+      "category": "technical",
+      "default": "Yes, hands-on experience with AWS IAM, secrets management, SSL/TLS encryption, security groups, and audit logging.",
+      "priority": 16,
+      "input_type_defaults": {
+        "text": "Yes, hands-on experience with AWS IAM, secrets management, SSL/TLS encryption, security groups, and audit logging.",
+        "textarea": "Yes, hands-on experience with AWS IAM, secrets management, SSL/TLS encryption, security groups, and audit logging.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "interview_time_slot_specific": {
+      "patterns": [
+        "time slot for interview",
+        "mention your available time for",
+        "please give us a time slot for interview",
+        "time slot for interview on saturday",
+        "available time for saturday"
+      ],
+      "category": "availability",
+      "default": "Anytime between 10 AM - 4 PM",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Anytime between 10 AM - 4 PM",
+        "textarea": "Anytime between 10 AM - 4 PM",
+        "radio": "Anytime between 10 AM - 4 PM",
+        "select": "Anytime between 10 AM - 4 PM"
       }
     }
   },

@@ -255,9 +255,10 @@ PHASE 1 - CONFIGURE SEARCH:
 PHASE 2 - APPLY TO JOBS (Loop 5 times):
 1. On results page, click "View »" button on a job card
 2. Wait for job modal to open
-3. Click "Apply" button in the modal
-4. Wait for confirmation, close modal if needed
-5. Repeat for next job until 5 applications completed
+3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
+4. Click "Apply" button in the modal
+5. Wait for confirmation, close modal if needed
+6. Repeat for next job until 5 applications completed
 
 TASK COMPLETE: After 5 applications submitted.
 
@@ -291,9 +292,10 @@ PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 PHASE 2 - APPLY TO 20 JOBS (High Volume Session):
 1. On results page, click "View »" button on a job card
 2. Wait for job modal to open
-3. Click "Apply" button in the modal
-4. Wait for confirmation, close modal if needed
-5. Repeat until 20 applications completed
+3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
+4. Click "Apply" button in the modal
+5. Wait for confirmation, close modal if needed
+6. Repeat until 20 applications completed
 
 TASK COMPLETE: After 20 applications submitted.
 

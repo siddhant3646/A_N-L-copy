@@ -707,7 +707,10 @@ class SentinelAgent:
             return 'He/Him/His', 0.98
 
         # Work Authorization in India & Visa Sponsorship
-        if ('authorized to work in india' in question_lower or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower and 'sponsorship' not in question_lower:
+        if (any(kw in question_lower for kw in [
+            'authorized to work', 'legally permitted to work', 'legally authorized',
+            'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
+        ]) or 'citizen of india' in question_lower or 'indian citizen' in question_lower) and 'require' not in question_lower and 'sponsorship' not in question_lower:
             return 'Yes', 0.98
         if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower:
             if any(kw in question_lower for kw in ['require', 'need', 'future require', 'visa status', 'employment visa', 'sponsorship for employment', 'support', 'transfer']):
@@ -794,6 +797,13 @@ class SentinelAgent:
         notice_keywords = NOTICE_KEYWORDS
         location_keywords = LOCATION_KEYWORDS
         
+        is_asking_quantity = any(kw in question_lower for kw in [
+            'how many years', 'years of experience', 'total experience', 'total years', 
+            'total exp', 'how much experience', 'number of years', 'months of experience', 
+            'how many months', 'years in', 'years working', 'experience in years',
+            'relevant experience', 'overall experience', 'how long have you'
+        ]) or (any(kw in question_lower for kw in ['experience', 'exp']) and any(kw in question_lower for kw in ['years', 'yrs', 'months']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
+
         # LWD (Last Working Day/Date) detection - BEFORE experience keywords
         lwd_keywords = [
             'last working day', 'last working date', 'lwd', 'exact lwd', 'exact last working', 
@@ -825,9 +835,10 @@ class SentinelAgent:
         db_knowledge_keywords = ['knowledge in db', 'strong knowledge', 'database knowledge', 'db knowledge']
         is_db_question = any(kw in question_lower for kw in db_knowledge_keywords)
         
-        # DSA questions
-        dsa_keywords = ['dsa', 'data structures', 'algorithms', 'how good are you']
-        is_dsa_question = any(kw in question_lower for kw in dsa_keywords) and not is_conceptual_tech
+        # DSA questions (only when asking for rating / score / scale, NOT years of experience)
+        dsa_keywords = ['dsa', 'data structures', 'algorithms']
+        is_dsa_rating = any(kw in question_lower for kw in dsa_keywords) and any(w in question_lower for w in ['rate', 'scale', 'how good', '1-10', '1-5', 'out of 10', 'proficiency level', 'rate yourself']) and not is_conceptual_tech
+        is_dsa_question = is_dsa_rating
         
         # Async/Background job questions - MUST BE BEFORE generic experience check
         is_async_job_question = any(kw in question_lower for kw in ASYNC_JOB_KEYWORDS)
@@ -862,9 +873,14 @@ class SentinelAgent:
         project_count_keywords = ['how many projects', 'number of projects', 'projects you have worked', 'projects as fullstack']
         is_project_count = any(kw in question_lower for kw in project_count_keywords)
         
-        # Yes/No Proficiency questions (NOT rating scale)
-        yes_no_proficiency_keywords = ['strong proficiency', 'good grasp', 'do you have proficiency', 'etl concepts', 'good understanding of']
-        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords)
+        # Yes/No Proficiency questions (NOT rating scale, NOT asking quantity)
+        yes_no_proficiency_keywords = [
+            'strong proficiency', 'good grasp', 'do you have proficiency', 'etl concepts', 'good understanding of',
+            'do you have experience', 'do u have experience', 'do you have hands-on experience', 'do u have hands-on experience',
+            'do you have hands on experience', 'do u have hands on experience', 'any exp in', 'any experience in',
+            'trading or capital market', 'capital markets', 'capital market'
+        ]
+        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years'])
         
         # E-commerce domain experience
         ecommerce_keywords = ['e-commerce', 'ecommerce', 'e commerce']
@@ -1159,6 +1175,22 @@ class SentinelAgent:
         if is_technologies_worked:
             return 'React, Node.js, Python, Java, Spring Boot, PostgreSQL, MongoDB, Docker, AWS', 0.95
         
+        # Handle tools and platforms proficiency (Jira, GitHub, etc.)
+        if ('which tools' in question_lower or 'tools, platforms' in question_lower or 'tools platforms' in question_lower or 'tools are you proficient' in question_lower or 'proficient in? (e.g., jira' in question_lower or 'tools, platforms, or technologies are you proficient' in question_lower):
+            return 'Git, GitHub, Jira, Docker, Kubernetes, AWS, Postman, IntelliJ IDEA, VS Code, CI/CD', 0.98
+
+        # Handle production security controls (IAM, secrets, encryption, audit logging)
+        if ('security controls' in question_lower or 'iam' in question_lower or 'secrets' in question_lower or 'encryption' in question_lower) and ('audit logging' in question_lower or 'production' in question_lower or 'handled' in question_lower or 'security' in question_lower):
+            return 'Yes, hands-on experience with AWS IAM, secrets management, SSL/TLS encryption, security groups, and audit logging.', 0.98
+
+        # Handle interview time slot requests
+        if ('time slot' in question_lower or 'available time for' in question_lower or 'slot for interview' in question_lower or 'time for interview' in question_lower or ('available' in question_lower and any(t in question_lower for t in ['9am', '10am', '9-5', '10-6', '9 am', '10 am', 'between 9', 'between 10']))) and not is_asking_quantity:
+            return 'Anytime between 10 AM - 4 PM', 0.95
+
+        # Handle work mode questions ("Current work mode 1.Remote 2.Onsite 3.Hybrid ...", "Preferred work mode", etc.)
+        if 'work mode' in question_lower or 'workplace type' in question_lower or ('remote' in question_lower and 'onsite' in question_lower and 'hybrid' in question_lower):
+            return 'Hybrid', 0.95
+
         # Handle expertise questions ("Expertise with React.js?") - NOT years of experience
         if is_expertise_question:
             return 'Strong proficiency - 4+ years hands-on experience building production applications', 0.95
@@ -1244,12 +1276,6 @@ class SentinelAgent:
             not is_conceptual_tech and
             not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
         )
-        is_asking_quantity = any(kw in question_lower for kw in [
-            'how many years', 'years of experience', 'total experience', 'total years', 
-            'total exp', 'how much experience', 'number of years', 'months of experience', 
-            'how many months', 'years in', 'years working', 'experience in years',
-            'relevant experience', 'overall experience', 'how long have you'
-        ]) or (any(kw in question_lower for kw in ['experience', 'exp']) and any(kw in question_lower for kw in ['years', 'yrs', 'months']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
         is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question
         is_notice_question = any(kw in question_lower for kw in notice_keywords)
         is_location_question = any(kw in question_lower for kw in location_keywords)
@@ -2790,6 +2816,7 @@ class SentinelAgent:
                                             'url': current_url,
                                             'confidence': 'form_filled'
                                         })
+                                        self.metrics['questions_answered'] += 1
                             # Update result to just the action part
                             result = action
                         except Exception as e:
@@ -2822,9 +2849,20 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
+                # Naukri: Partial success - update metrics
+                if 'NAUKRI_SUCCESS_PARTIAL' in result:
+                    match_applied = re.search(r'Applied\s+(\d+)\s+total', result)
+                    if match_applied:
+                        self.metrics['applications_submitted'] = int(match_applied.group(1))
+
                 # Naukri: Task complete after target jobs applied
                 if 'NAUKRI_TASK_DONE' in result:
                     print("🎉 Naukri task complete - applied to 5 jobs successfully!")
+                    match_done = re.search(r'Applied to\s+(\d+)\s+jobs', result)
+                    if match_done:
+                        self.metrics['applications_submitted'] = int(match_done.group(1))
+                    elif self.metrics['applications_submitted'] == 0:
+                        self.metrics['applications_submitted'] = 5
                     self.state.task_complete = True
                     break
                 
@@ -4036,7 +4074,7 @@ class SentinelAgent:
                         print(f"   📜 Step 1 - Edit click: {update_result}")
                         
                         if update_result == 'EDIT_CLICKED':
-                            await asyncio.sleep(random.uniform(4, 8))  # Wait for modal to fully open
+                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for modal to fully open
                             
                             # Step 2: Remove fullstop (using exact selector from screenshot)
                             # Step 2: Remove fullstop using Keyboard (Backpsace)
@@ -4056,13 +4094,13 @@ class SentinelAgent:
                                 await textarea.focus()
                                 await textarea.select_text()
                                 await textarea.press('Backspace')
-                                await asyncio.sleep(0.5)
+                                await asyncio.sleep(0.3)
                                 await textarea.type(new_text)
                                 remove_result = 'FULLSTOP_REMOVED'
                             
                             print(f"   📜 Step 2 - Remove fullstop: {remove_result}")
                             
-                            await asyncio.sleep(random.uniform(4, 8))
+                            await asyncio.sleep(random.uniform(1.0, 2.0))
 
                             # Step 3: Click Save button and verify
                             try:
@@ -4096,13 +4134,13 @@ class SentinelAgent:
                                 save_result = 'NO_SAVE_BUTTON'
                             print(f"   📜 Step 3 - First save: {save_result}")
                             
-                            await asyncio.sleep(2)
+                            await asyncio.sleep(1)
                             if save_result == 'NO_SAVE_BUTTON':
                                 print("      ⚠️ No Save button found, retrying edit...")
                                 self.state.task_complete = True
                                 break
                             
-                            await asyncio.sleep(random.uniform(4, 8))  # Wait for save to complete
+                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for save to complete
                             
                             # Navigate back to profile page explicitly to ensure clean state
                             print("   🔄 Navigating back to profile page...")
@@ -4111,7 +4149,7 @@ class SentinelAgent:
                                 await self._page.wait_for_selector('#lazyResumeHead, .resumeHeadline', timeout=30000)
                             except Exception as e:
                                 print(f"      ⚠️ Navigation error: {e}")
-                            await asyncio.sleep(random.uniform(4, 8))
+                            await asyncio.sleep(random.uniform(1.0, 2.0))
                             
                             # Step 4: Click edit again
                             edit2_result = await self._page.evaluate("""() => {
@@ -4124,7 +4162,7 @@ class SentinelAgent:
                             }""")
                             print(f"   📜 Step 4 - Edit again: {edit2_result}")
                             
-                            await asyncio.sleep(random.uniform(4, 8))  # Wait for second modal to open
+                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for second modal to open
                             
                             # Step 5: Add fullstop back using keyboard
                             add_result = await self._page.evaluate("""() => {
@@ -4144,13 +4182,13 @@ class SentinelAgent:
                                     await textarea.focus()
                                     await textarea.select_text()
                                     await textarea.press('Backspace')
-                                    await asyncio.sleep(0.5)
+                                    await asyncio.sleep(0.3)
                                     await textarea.type(new_text)
                                     add_result = 'FULLSTOP_ADDED'
                             
                             print(f"   📜 Step 5 - Add fullstop: {add_result}")
                             
-                            await asyncio.sleep(random.uniform(4, 8))  # Wait before second Save
+                            await asyncio.sleep(random.uniform(1.0, 2.0))  # Wait before second Save
                             
                             # Step 6: Click Save button and verify
                             try:
@@ -4522,8 +4560,7 @@ class SentinelAgent:
                     # Parse batch size from result (e.g., "CHECKBOX_CLICKED: 5/5")
                     self._naukri_last_batch_size = self._parse_naukri_batch_size(result)
                     # Try to click apply immediately with robust logic and 2s monitoring
-                    # NOTE: Using regular function expression for better Playwright compatibility
-                    apply_result = await self._page.evaluate("""function() {
+                    apply_result = await self._page.evaluate("""() => {
                         const applyBtn = document.querySelector(
                             'button.multi-apply-button, .multi-apply-button, button.typ-16Bold, span.fright button, div.headSection button.multi-apply-button, button[class*="multi-apply"]'
                         ) || Array.from(document.querySelectorAll('button')).find(b => 
@@ -4753,6 +4790,46 @@ class SentinelAgent:
                             break
                         continue
                 
+                # Naukri: Chat action executed by scripted fallback
+                if 'NAUKRI_CHAT_' in result and 'naukri.com' in current_url:
+                    self._naukri_no_chatbot_count = 0
+                    # Check for repeated question
+                    q_text = ''
+                    if '|' in result:
+                        try:
+                            payload = json.loads(result.split('|', 1)[1])
+                            q_text = payload.get('q', '').strip()
+                        except Exception:
+                            pass
+                    
+                    last_q = getattr(self, '_naukri_last_fallback_question', None)
+                    if q_text and q_text == last_q:
+                        self._naukri_same_question_count = getattr(self, '_naukri_same_question_count', 0) + 1
+                    else:
+                        self._naukri_last_fallback_question = q_text
+                        self._naukri_same_question_count = 1
+                    
+                    if self._naukri_same_question_count >= 2:
+                        print(f"⚠️ Naukri chatbot same question repeated ({self._naukri_same_question_count} times) - triggering Playwright native submit...")
+                        try:
+                            # Try native Enter press and native click on sendMsg
+                            content_el = await self._page.query_selector('div[contenteditable="true"], .chatbot_DrawerContentWrapper input[type="text"]')
+                            if content_el:
+                                await content_el.focus()
+                                await self._page.keyboard.press('Enter')
+                            send_el = await self._page.query_selector('div.sendMsg, .sendMsgbtn_container .sendMsg')
+                            if send_el:
+                                await send_el.click(force=True, timeout=2000)
+                        except Exception:
+                            pass
+                    
+                    if self._naukri_same_question_count >= 5:
+                        print("🛑 Naukri chatbot stuck on same question for 5 turns - clearing stuck state...")
+                        self._naukri_same_question_count = 0
+                    
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    continue
+                
                 # Naukri: Tab clicked - wait for page to load new jobs
                 if 'TAB_CLICKED' in result and 'naukri.com' in current_url:
                     tab_name = result.split(': ')[1] if ': ' in result else 'Unknown'
@@ -4817,6 +4894,7 @@ class SentinelAgent:
                 
                 # Instahyre: Application submitted
                 if 'INSTAHYRE_APPLY_CLICKED' in result:
+                    self._instahyre_consecutive_views = 0
                     if not hasattr(self, '_instahyre_apply_count'):
                         self._instahyre_apply_count = 0
                     self._instahyre_apply_count += 1
@@ -4833,18 +4911,44 @@ class SentinelAgent:
                 
                 # Instahyre: View clicked - wait for modal
                 if 'INSTAHYRE_VIEW_CLICKED' in result:
-                    print("👁️ Viewing job details, looking for Apply button...")
+                    self._instahyre_consecutive_views = getattr(self, '_instahyre_consecutive_views', 0) + 1
+                    print(f"👁️ Viewing job details, looking for Apply button... (attempt {self._instahyre_consecutive_views})")
+                    if self._instahyre_consecutive_views >= 3:
+                        print("⚠️ Stuck in Instahyre View loop without applying — closing any modal and scrolling down...")
+                        try:
+                            await self._page.keyboard.press('Escape')
+                            await self._page.evaluate("window.scrollBy(0, 800)")
+                        except Exception:
+                            pass
+                        self._instahyre_consecutive_views = 0
                     await asyncio.sleep(random.uniform(2, 3))  # Wait for modal to open
                     continue
                 
+                # Instahyre: View active jobs button found in modal (inactive / redirected job)
+                if 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED' in result:
+                    self._instahyre_consecutive_views = 0
+                    print("   ⏭️ Instahyre: Job has 'View active jobs' instead of Apply — skipping and closing modal...")
+                    try:
+                        await self._page.keyboard.press('Escape')
+                    except Exception:
+                        pass
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    continue
+
                 # Instahyre: Modal closed (post-apply or blocked modal)
                 if 'INSTAHYRE_MODAL_CLOSED' in result:
+                    self._instahyre_consecutive_views = 0
                     print("   📜 Instahyre: Modal closed, continuing...")
+                    try:
+                        await self._page.keyboard.press('Escape')
+                    except Exception:
+                        pass
                     await asyncio.sleep(random.uniform(1, 2))
                     continue
                 
                 # Instahyre: Modal closed after success
                 if 'INSTAHYRE_MODAL_CLOSED_SUCCESS' in result:
+                    self._instahyre_consecutive_views = 0
                     print("✅ Application confirmed, looking for next job...")
                     await asyncio.sleep(random.uniform(1, 2))
                     continue
@@ -6753,8 +6857,9 @@ class SentinelAgent:
                     print(f"   ⚠️ Error snackbar detected in chatbot loop iteration {iteration}")
                     return snackbar_result
             
-            result = await self._page.evaluate(f"""async () => {{
-                // Flat answers for all logic (from window globals set by add_init_script)
+            try:
+                result = await self._page.evaluate(f"""async () => {{
+                    // Flat answers for all logic (from window globals set by add_init_script)
                 const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__;
                 // Full objects with input_type_defaults per pattern
                 const KNOWN_PATTERNS_WITH_DEFAULTS = window.__SENTINEL_PATTERNS_WITH_DEFAULTS__;
@@ -7350,39 +7455,29 @@ class SentinelAgent:
                     const select = chatLayer.querySelector('select');
                     if (select && select.offsetParent !== null) {{
                         const selectOptions = Array.from(select.options);
+                        const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
                         window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found dropdown with', selectOptions.length, 'options');
                         
+                        let bestOption = null;
+                        let bestScore = 0;
+                        const answerLower = (answer || '').toLowerCase().trim();
+                        
                         for (const opt of selectOptions) {{
-                            const optText = opt.text.toLowerCase();
-                            if (isSalaryQuestion) {{
-                                if (optText.includes(answer) || 
-                                    (answer === '30' && (optText.includes('30') || optText.includes('25-30') || optText.includes('23-30')))) {{
-                                    select.value = opt.value;
-                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
-                                    if (saveDiv && saveDiv.offsetParent !== null) {{
-                                        saveDiv.click();
-                                    }}
-                                    const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
-                                    return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: opt.text, t: 'select', s: opt.text, options: _allDropOpts}});
-                                }}
-                            }} else {{
-                                if (optText.includes(answer.toLowerCase())) {{
-                                    select.value = opt.value;
-                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                    const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg');
-                                    if (saveDiv && saveDiv.offsetParent !== null) {{
-                                        saveDiv.click();
-                                    }}
-                                    const _allDropOpts = selectOptions.map(o => (o.text || '').trim()).filter(Boolean);
                             const optText = (opt.text || '').toLowerCase().trim();
                             if (!optText || optText.includes('select') || optText.includes('choose')) continue;
                             
                             let score = 0;
-                            if (optText === answerLower) score = 100;
-                            else if (optText.includes(answerLower) || answerLower.includes(optText)) score = 80;
-                            else if (/\\byes\\b/.test(answerLower) && /\\byes\\b/.test(optText)) score = 90;
-                            else if (/\\bno\\b/.test(answerLower) && /\\bno\\b/.test(optText)) score = 90;
+                            if (isSalaryQuestion) {{
+                                if (optText.includes(answerLower) || 
+                                    (answerLower === '30' && (optText.includes('30') || optText.includes('25-30') || optText.includes('23-30')))) {{
+                                    score = 100;
+                                }}
+                            }} else {{
+                                if (optText === answerLower) score = 100;
+                                else if (optText.includes(answerLower) || answerLower.includes(optText)) score = 80;
+                                else if (/\\byes\\b/.test(answerLower) && /\\byes\\b/.test(optText)) score = 90;
+                                else if (/\\bno\\b/.test(answerLower) && /\\bno\\b/.test(optText)) score = 90;
+                            }}
                             
                             if (score > bestScore) {{
                                 bestScore = score;
@@ -7391,19 +7486,23 @@ class SentinelAgent:
                         }}
                         
                         if (bestOption && bestScore > 0) {{
-                            selectEl.value = bestOption.value;
-                            selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            const saveDiv = chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
-                            if (saveDiv) {{
+                            select.value = bestOption.value;
+                            select.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg') ||
+                                           chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
+                            if (saveDiv && saveDiv.offsetParent !== null && !saveDiv.disabled && !saveDiv.classList.contains('disabled')) {{
                                 saveDiv.click();
                                 return 'CHATBOT_DROPDOWN_SELECTED_AND_SAVED|' + JSON.stringify({{q: qText.substring(0,200), a: bestOption.text, t: 'select', s: bestOption.text, options: _allDropOpts}});
                             }}
                             return 'CHATBOT_DROPDOWN_SELECTED|' + JSON.stringify({{q: qText.substring(0,200), a: bestOption.text, t: 'select', s: bestOption.text, options: _allDropOpts}});
                         }} else if (selectOptions.length > 1) {{
-                            selectEl.selectedIndex = 1;
-                            selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            const saveDiv = chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
-                            if (saveDiv) {{
+                            select.selectedIndex = 1;
+                            select.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            const saveDiv = document.querySelector('.sendMsg[tabindex], div.sendMsg, .sendMsgbtn_container .sendMsg') ||
+                                           chatLayer.querySelector('.chatbot_save') || chatLayer.querySelector('[class*="save"]');
+                            if (saveDiv && saveDiv.offsetParent !== null && !saveDiv.disabled && !saveDiv.classList.contains('disabled')) {{
                                 saveDiv.click();
                                 return 'CHATBOT_DROPDOWN_DEFAULT_AND_SAVE|' + JSON.stringify({{q: qText.substring(0,200), a: selectOptions[1].text, t: 'select', s: selectOptions[1].text, options: _allDropOpts}});
                             }}
@@ -7467,7 +7566,7 @@ class SentinelAgent:
                         // Numeric range / comparison matching for experience, notice days, salary
                         if (expVal !== null) {{
                             // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9", "2-4 yrs")
-                            const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                            const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
                             if (rangeMatch) {{
                                 const rMin = parseFloat(rangeMatch[1]);
                                 const rMax = parseFloat(rangeMatch[2]);
@@ -7512,7 +7611,7 @@ class SentinelAgent:
                         }}
                         
                         // Text keyword match (only if not a range/comparison)
-                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(cleanLabel);
+                        const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(cleanLabel);
                         if (!isComparativeOrRange && (cleanLabel.includes(answerLower) || answerLower.includes(cleanLabel))) {{
                             return 90;
                         }}
@@ -8125,19 +8224,25 @@ class SentinelAgent:
                 if (contentEditable) {{
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Found contenteditable div:', contentEditable.className);
                     
-                    // Clear existing content
-                    contentEditable.innerHTML = '';
+                    // Clear existing content and set text via execCommand for React/DraftJS synthetic event binding
+                    contentEditable.focus();
+                    try {{
+                        document.execCommand('selectAll', false, null);
+                        document.execCommand('insertText', false, answer);
+                    }} catch (e) {{}}
                     
-                    // Insert text as text node
-                    const textNode = document.createTextNode(answer);
-                    contentEditable.appendChild(textNode);
+                    if (contentEditable.innerText.trim() !== answer.trim()) {{
+                        contentEditable.innerHTML = '';
+                        const textNode = document.createTextNode(answer);
+                        contentEditable.appendChild(textNode);
+                    }}
                     
-                    // Trigger input event
+                    // Trigger comprehensive input events
+                    contentEditable.dispatchEvent(new InputEvent('beforeinput', {{ inputType: 'insertText', data: answer, bubbles: true, cancelable: true }}));
+                    contentEditable.dispatchEvent(new InputEvent('input', {{ inputType: 'insertText', data: answer, bubbles: true }}));
                     contentEditable.dispatchEvent(new Event('input', {{ bubbles: true }}));
                     contentEditable.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                    
-                    // Focus the element
-                    contentEditable.focus();
+                    contentEditable.dispatchEvent(new KeyboardEvent('keyup', {{ bubbles: true }}));
                     
                     // Place cursor at end
                     const range = document.createRange();
@@ -8171,8 +8276,13 @@ class SentinelAgent:
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
                     
                     if (saveBtn) {{
-                        if (saveBtn.disabled) {{
+                        const isSaveDisabled = saveBtn.disabled || saveBtn.classList.contains('disabled') || saveBtn.getAttribute('aria-disabled') === 'true';
+                        if (isSaveDisabled) {{
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button is disabled');
+                            // Fallback: trigger Enter on contentEditable
+                            contentEditable.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
+                            contentEditable.dispatchEvent(new KeyboardEvent('keypress', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
+                            contentEditable.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
                             return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
                         }}
                         
@@ -8273,7 +8383,8 @@ class SentinelAgent:
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
                     
                     if (saveBtn) {{
-                        if (saveBtn.disabled) {{
+                        const isSaveDisabled = saveBtn.disabled || saveBtn.classList.contains('disabled') || saveBtn.getAttribute('aria-disabled') === 'true';
+                        if (isSaveDisabled) {{
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button is disabled');
                             return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
                         }}
@@ -8336,6 +8447,10 @@ class SentinelAgent:
                 
                 return 'CHATBOT_WAITING';
             }}""")
+            except Exception as e:
+                print(f"   ⚠️ Chatbot evaluate error on turn {iteration}: {e}")
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                continue
             
             # Extract question text from result for tracking and log Q&A to CSV
             current_question = None
@@ -9411,7 +9526,7 @@ class SentinelAgent:
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
                     const hasRangeRadios = Array.from(radios).some(r => {
                         const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
-                        return /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lbl);
+                        return /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lbl);
                     });
                     // For experience matching: candidate has 4.2 years experience
                     const effectiveExpVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : (answerNum > 0 ? answerNum : (hasRangeRadios ? 4.2 : 0));
@@ -9444,7 +9559,7 @@ class SentinelAgent:
                         let score = 0;
                         
                         // Check if label represents a range or comparative bounds
-                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
+                        const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
                         const isLabelYes = /\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes';
                         const isLabelNo = (/\bno\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && !isLabelYes;
@@ -9477,7 +9592,7 @@ class SentinelAgent:
                             // Day-based matching (notice period questions)
                             const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
                             if (isDayUnit) {
-                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
                                 const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
@@ -9626,7 +9741,7 @@ class SentinelAgent:
                             // Check for day-based labels first (notice period questions)
                             const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
                             if (isDayUnit) {
-                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
+                                const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
                                 const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
@@ -10540,6 +10655,7 @@ return resolveDynamic(bestMatch);
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
                                     else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
+                                    else if (/work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel) || /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
                                     else if (isNumberError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }
                                 
@@ -10604,6 +10720,17 @@ return resolveDynamic(bestMatch);
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
 
+                            // Work mode / workplace questions: resolve before notice period checks and guard against notice period overrides
+                            const isWorkModeQ = /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText) ||
+                                                /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel);
+                            if (isWorkModeQ) {
+                                if (isNumericInput || (/\\b1\\s*[\\.\\):-]\\s*remote/i.test(labelText) && isNumericInput)) {
+                                    answer = '1';
+                                } else {
+                                    answer = 'Remote';
+                                }
+                            }
+
                             // Dynamic Date Resolution for date fields / start date / earliest start date / DOB
                             if (isDateField && !lowerLabel.includes('last date of employment')) {
                                 const isDob = /birth|dob/i.test(lowerLabel);
@@ -10642,10 +10769,10 @@ return resolveDynamic(bestMatch);
                                                       /last working day|lwd|official last|last date/i.test(lowerLabel);
 
                             // If the answer is notice period-related and we are filling a text input,
-                            // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea
-                            if (answer && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
+                            // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
+                            if (answer && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
 
-                                const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
+                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
                                 if (defaultObj && defaultObj.category === 'notice_period') {
                                     const match = answer.match(/(\\d+)/);
                                     answer = match ? match[1] : '15';
@@ -10683,7 +10810,7 @@ return resolveDynamic(bestMatch);
                                     window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
                                 } else {
                                     // Fallback if answer contained no numbers but input expects numeric/years
-                                    answer = /notice|np/i.test(labelText) ? '15' : '4';
+                                    answer = !isWorkModeQ && /notice|np/i.test(labelText) ? '15' : '4';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                 }
                             }
@@ -11621,15 +11748,7 @@ return resolveDynamic(bestMatch);
                                 // required dropdown is never left empty. Mirrors the "learn about"
                                 // placeholder-skip logic above.
                                 if (!locMatch) {
-                                    locMatch = locOptions.find(o => {
-                                        const t = (o.text || '').toLowerCase().trim();
-                                        return t.length > 0 &&
-                                               !t.includes('select') &&
-                                               !t.includes('choose') &&
-                                               !t.includes('please') &&
-                                               !t.includes('an option') &&
-                                               !t.includes('skip');
-                                    });
+                                    locMatch = locOptions.find(o => !isSelectPlaceholderText(o.text, o.value, o.index));
                                     window.__SENTINEL_DEBUG__&&console.log('Location Select: no match for', locAnswer, '- defaulting to first option:', locMatch?.text);
                                 }
                                 
@@ -11851,15 +11970,18 @@ return resolveDynamic(bestMatch);
                                 
                                 // KEYWORD-BASED FALLBACK for select when fuzzyMatch returned nothing
                                 if (!answer && lowerLabel) {
-                                    if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work') || lowerLabel.includes('relevant years') || lowerLabel.includes('relevant experience')) {
+                                    if (lowerLabel.includes('total years') || lowerLabel.includes('years of professional') || lowerLabel.includes('years of experience') || lowerLabel.includes('years of work') || lowerLabel.includes('relevant years') || lowerLabel.includes('relevant experience') || lowerLabel.includes('años de experiencia') || lowerLabel.includes('años de') || lowerLabel.includes('experiencia') || lowerLabel.includes('experiencia relevante') || lowerLabel.includes('especifica tus años') || lowerLabel.includes('indica tus años') || lowerLabel.includes('indique sus años')) {
                                         answer = '4';
                                         window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 4 for years of experience select');
-                                    } else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience')) {
+                                    } else if (lowerLabel.includes('additional months') || lowerLabel.includes('months of experience') || lowerLabel.includes('meses de experiencia') || lowerLabel.includes('meses de')) {
                                         answer = '0';
                                         window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 0 for months of experience select');
-                                    } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day'))) {
+                                    } else if (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day')) || lowerLabel.includes('notificación') || lowerLabel.includes('avisar') || lowerLabel.includes('periodo de notificación') || lowerLabel.includes('plazo de preaviso')) {
                                         answer = '15';
                                         window.__SENTINEL_DEBUG__&&console.log('Fallback: Using 15 for notice period select');
+                                    } else if (lowerLabel.includes('género') || lowerLabel.includes('sexo') || lowerLabel.includes('identidad de género') || lowerLabel.includes('genero') || lowerLabel.includes('identidad de genero')) {
+                                        answer = 'Male';
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Using Male for gender select');
                                     }
                                 }
                                 
@@ -14595,7 +14717,11 @@ return resolveDynamic(bestMatch);
                                     clickedBtn = btn;
                                     break;
                                 }
-                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ || isYesNoQ) &&
+                                if ((optAnsLower === 'no' || optAnsLower.startsWith('no') || /\bno\b/.test(optAnsLower)) && (btnText === 'no' || btnText.startsWith('no '))) {
+                                    clickedBtn = btn;
+                                    break;
+                                }
+                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ || (isYesNoQ && !optAnsLower.includes('no'))) &&
                                     (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {
                                     clickedBtn = btn;
                                     break;
@@ -14610,10 +14736,6 @@ return resolveDynamic(bestMatch);
                                     break;
                                 }
                                 if (qLower.includes('pune') && btnText.includes('pune')) {
-                                    clickedBtn = btn;
-                                    break;
-                                }
-                                if ((optAnsLower === 'no' || optAnsLower.startsWith('no')) && (btnText === 'no' || btnText.startsWith('no '))) {
                                     clickedBtn = btn;
                                     break;
                                 }
@@ -14809,14 +14931,26 @@ return resolveDynamic(bestMatch);
                                 const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                 
                                 if (isYesNo || isPrivacyQ) {
-                                    for (const radio of radios) {
-                                        const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
-                                        if (label.toLowerCase().includes('yes') || 
-                                            label.toLowerCase().includes('serving') ||
-                                            label.toLowerCase().includes('currently') ||
-                                            label.toLowerCase().includes('agree')) {
-                                            bestRadio = radio;
-                                            break;
+                                    const isNoAnswer = fuzzyAnswer && (/^no\b/i.test(fuzzyAnswer) || fuzzyAnswer.toLowerCase() === 'no');
+                                    if (isNoAnswer) {
+                                        for (const radio of radios) {
+                                            const label = (radio.closest('label')?.innerText || radio.parentElement?.innerText || radio.value || radio.id || '').toLowerCase();
+                                            if (label === 'no' || label.startsWith('no ') || label.startsWith('no,')) {
+                                                bestRadio = radio;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!bestRadio) {
+                                        for (const radio of radios) {
+                                            const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
+                                            if (label.toLowerCase().includes('yes') || 
+                                                label.toLowerCase().includes('serving') ||
+                                                label.toLowerCase().includes('currently') ||
+                                                label.toLowerCase().includes('agree')) {
+                                                bestRadio = radio;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -15261,8 +15395,28 @@ return resolveDynamic(bestMatch);
                         // ─── CONTENTEDITABLE / TEXT INPUT (Pure text questions) ──────────
                         if (inputDiv) {
                             inputDiv.focus();
-                            inputDiv.innerHTML = '';
-                            inputDiv.textContent = answer;
+                            const range = document.createRange();
+                            range.selectNodeContents(inputDiv);
+                            const sel = window.getSelection();
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                            try {
+                                document.execCommand('delete', false, null);
+                                document.execCommand('insertText', false, answer);
+                            } catch (e) {}
+                            if (inputDiv.innerText.trim() !== answer.trim()) {
+                                inputDiv.innerHTML = '';
+                                const textNode = document.createTextNode(answer);
+                                inputDiv.appendChild(textNode);
+                            }
+                            const endRange = document.createRange();
+                            endRange.selectNodeContents(inputDiv);
+                            endRange.collapse(false);
+                            sel.removeAllRanges();
+                            sel.addRange(endRange);
+
+                            inputDiv.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: answer, bubbles: true, cancelable: true }));
+                            inputDiv.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: answer, bubbles: true }));
                             inputDiv.dispatchEvent(new Event('input', { bubbles: true }));
                             inputDiv.dispatchEvent(new Event('change', { bubbles: true }));
                             inputDiv.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
@@ -15275,14 +15429,26 @@ return resolveDynamic(bestMatch);
                             
                             window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: sendBtn found=', !!sendBtn, sendBtn?.outerHTML?.slice(0, 100));
                             
-                            if (sendBtn) { 
-                                sendBtn.click(); 
-                                return 'NAUKRI_CHAT_ANSWERED_AND_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: answer, t: 'text', s: answer}); 
+                            if (sendBtn) {
+                                const isSendDisabled = sendBtn.disabled || 
+                                                       sendBtn.classList.contains('disabled') || 
+                                                       sendBtn.getAttribute('aria-disabled') === 'true' ||
+                                                       !!sendBtn.closest('.disabled') ||
+                                                       (sendBtn.parentElement && sendBtn.parentElement.classList.contains('disabled'));
+                                if (!isSendDisabled) {
+                                    sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
+                                    sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                    sendBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
+                                    sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                                    sendBtn.click();
+                                    return 'NAUKRI_CHAT_ANSWERED_AND_SAVED|' + JSON.stringify({q: qText.substring(0, 200), a: answer, t: 'text', s: answer});
+                                }
                             }
                             
                             // Fallback: try pressing Enter to submit
-                            inputDiv.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-                            inputDiv.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, bubbles: true }));
+                            inputDiv.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+                            inputDiv.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+                            inputDiv.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
                             return 'NAUKRI_CHAT_ANSWERED|' + JSON.stringify({q: qText.substring(0, 200), a: answer, t: 'text', s: answer});
                         }
 
@@ -15725,7 +15891,7 @@ return resolveDynamic(bestMatch);
                             }
                         }
                         
-                        // A. Skills - Add one skill at a time (FIRST)
+                        // A. Skills - Batch add missing skills via Selectize API (FIRST)
                         const skillsToAdd = ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
                         const skillsSelectize = getSelectize('skills');
                         const skillsInput = document.querySelector('input#skills-selectized');
@@ -15740,43 +15906,47 @@ return resolveDynamic(bestMatch);
                                         const opt = skillsSelectize.options[key];
                                         return opt ? (opt.text || opt.name || key).toLowerCase() : key.toLowerCase();
                                     });
-                                } else {
-                                    // Fallback: DOM parsing with × removal
-                                    existingSkills = Array.from(skillsContainer.querySelectorAll('.item'))
-                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
-                                }
-                                
-                                for (const skill of skillsToAdd) {
-                                    if (!existingSkills.some(s => s.includes(skill.toLowerCase()))) {
-                                        // Try Selectize API first
-                                        if (skillsSelectize) {
-                                            // Use addItem if option exists, else createItem
+                                    let addedCount = 0;
+                                    for (const skill of skillsToAdd) {
+                                        if (!existingSkills.some(s => s.includes(skill.toLowerCase()))) {
                                             if (skillsSelectize.options[skill]) {
                                                 skillsSelectize.addItem(skill);
                                             } else {
                                                 skillsSelectize.createItem(skill);
                                             }
-                                            return 'INSTAHYRE_ADDED_SKILL: ' + skill;
+                                            addedCount++;
                                         }
-                                        // Fallback: Set pending state, trigger input, schedule click
-                                        sessionStorage.setItem('instahyre_pending', 'skill_' + skill + '|' + Date.now());
-                                        skillsInput.focus();
-                                        skillsInput.click();
-                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                        if (setter) setter.call(skillsInput, skill);
-                                        skillsInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                        // Schedule click with longer delay
-                                        setTimeout(() => {
-                                            const dropdown = skillsControl.querySelector('.selectize-dropdown-content');
-                                            if (dropdown) {
-                                                const option = dropdown.querySelector('.option.active, .option:first-child');
-                                                if (option) {
-                                                    option.click();
-                                                    sessionStorage.removeItem('instahyre_pending');
+                                    }
+                                    if (addedCount > 0) {
+                                        return 'INSTAHYRE_ADDED_SKILLS: ' + addedCount + ' skills added';
+                                    }
+                                } else {
+                                    // Fallback: DOM parsing with × removal
+                                    existingSkills = Array.from(skillsContainer.querySelectorAll('.item'))
+                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
+                                    
+                                    for (const skill of skillsToAdd) {
+                                        if (!existingSkills.some(s => s.includes(skill.toLowerCase()))) {
+                                            // Fallback: Set pending state, trigger input, schedule click
+                                            sessionStorage.setItem('instahyre_pending', 'skill_' + skill + '|' + Date.now());
+                                            skillsInput.focus();
+                                            skillsInput.click();
+                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                            if (setter) setter.call(skillsInput, skill);
+                                            skillsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                            // Schedule click with longer delay
+                                            setTimeout(() => {
+                                                const dropdown = skillsControl.querySelector('.selectize-dropdown-content');
+                                                if (dropdown) {
+                                                    const option = dropdown.querySelector('.option.active, .option:first-child');
+                                                    if (option) {
+                                                        option.click();
+                                                        sessionStorage.removeItem('instahyre_pending');
+                                                    }
                                                 }
-                                            }
-                                        }, 500);
-                                        return 'INSTAHYRE_ADDING_SKILL: ' + skill;
+                                            }, 500);
+                                            return 'INSTAHYRE_ADDING_SKILL: ' + skill;
+                                        }
                                     }
                                 }
                             }
@@ -15878,19 +16048,11 @@ return resolveDynamic(bestMatch);
                                         const opt = locationSelectize.options[key];
                                         return opt ? (opt.text || opt.name || key).toLowerCase() : key.toLowerCase();
                                     });
-                                } else {
-                                    // Fallback: DOM parsing with × removal
-                                    existingLocations = Array.from(locationContainer.querySelectorAll('.item'))
-                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
-                                }
-                                
-                                for (const location of locationsToAdd) {
-                                    // Use a keyword from each location for matching
-                                    const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
-                                    if (!existingLocations.some(l => l.includes(locKeyword))) {
-                                        // Try Selectize API first
-                                        if (locationSelectize) {
-                                            const options = locationSelectize.options;
+                                    let locAddedCount = 0;
+                                    const options = locationSelectize.options;
+                                    for (const location of locationsToAdd) {
+                                        const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
+                                        if (!existingLocations.some(l => l.includes(locKeyword))) {
                                             let foundKey = null;
                                             for (const key in options) {
                                                 const optText = (options[key].text || options[key].name || '').toLowerCase();
@@ -15901,27 +16063,41 @@ return resolveDynamic(bestMatch);
                                             }
                                             if (foundKey) {
                                                 locationSelectize.addItem(foundKey);
-                                                return 'INSTAHYRE_ADDED_LOCATION: ' + location;
+                                                locAddedCount++;
                                             }
                                         }
-                                        // Fallback: Set pending state, trigger input, schedule click
-                                        sessionStorage.setItem('instahyre_pending', 'location_' + location + '|' + Date.now());
-                                        locationInput.focus();
-                                        locationInput.click();
-                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                        if (setter) setter.call(locationInput, location);
-                                        locationInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                        setTimeout(() => {
-                                            const dropdown = locControl.querySelector('.selectize-dropdown-content');
-                                            if (dropdown) {
-                                                const option = dropdown.querySelector('.option.active, .option:first-child');
-                                                if (option) {
-                                                    option.click();
-                                                    sessionStorage.removeItem('instahyre_pending');
+                                    }
+                                    if (locAddedCount > 0) {
+                                        return 'INSTAHYRE_ADDED_LOCATIONS: ' + locAddedCount + ' locations added';
+                                    }
+                                } else {
+                                    // Fallback: DOM parsing with × removal
+                                    existingLocations = Array.from(locationContainer.querySelectorAll('.item'))
+                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
+                                
+                                    for (const location of locationsToAdd) {
+                                        // Use a keyword from each location for matching
+                                        const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
+                                        if (!existingLocations.some(l => l.includes(locKeyword))) {
+                                            // Fallback: Set pending state, trigger input, schedule click
+                                            sessionStorage.setItem('instahyre_pending', 'location_' + location + '|' + Date.now());
+                                            locationInput.focus();
+                                            locationInput.click();
+                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                            if (setter) setter.call(locationInput, location);
+                                            locationInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                            setTimeout(() => {
+                                                const dropdown = locControl.querySelector('.selectize-dropdown-content');
+                                                if (dropdown) {
+                                                    const option = dropdown.querySelector('.option.active, .option:first-child');
+                                                    if (option) {
+                                                        option.click();
+                                                        sessionStorage.removeItem('instahyre_pending');
+                                                    }
                                                 }
-                                            }
-                                        }, 500);
-                                        return 'INSTAHYRE_ADDING_LOCATION: ' + location;
+                                            }, 500);
+                                            return 'INSTAHYRE_ADDING_LOCATION: ' + location;
+                                        }
                                     }
                                 }
                             }
@@ -15997,38 +16173,102 @@ return resolveDynamic(bestMatch);
 
                     // 4. View & Apply (The Main Loop)
                     
+                    // A0. Handle Modal with "View active jobs" button (inactive / redirected jobs)
+                    const modalCandidateBtns = Array.from(document.querySelectorAll(
+                        '.modal button, .application-modal button, [class*="modal"] button, [id*="modal"] button, .modal a.btn, [class*="modal"] a.btn, button.new-btn, button.btn-primary'
+                    ));
+                    const viewActiveJobsBtn = modalCandidateBtns.find(btn => {
+                        if (!btn || btn.offsetParent === null) return false;
+                        const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                        return text.includes('view active jobs') || text.includes('view active job') || (text.includes('active jobs') && !text.includes('apply'));
+                    });
+
+                    if (viewActiveJobsBtn) {
+                        window.__SENTINEL_DEBUG__&&console.log('Instahyre: Found "View active jobs" button - skipping inactive job and closing modal');
+                        const modal = viewActiveJobsBtn.closest('.modal, [class*="modal"], [id*="modal"], .dialog, [role="dialog"]') || document;
+                        const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
+                        if (closeBtn && closeBtn.offsetParent !== null) {
+                            closeBtn.click();
+                        }
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.click();
+                        }
+                        if (window.angular) {
+                            try {
+                                const modalEl = document.querySelector('.modal.in, .modal.show, [class*="modal"]');
+                                if (modalEl) {
+                                    const scope = angular.element(modalEl).scope();
+                                    if (scope) {
+                                        if (typeof scope.$dismiss === 'function') scope.$dismiss();
+                                        else if (typeof scope.close === 'function') scope.close();
+                                        else if (typeof scope.cancel === 'function') scope.cancel();
+                                        else if (typeof scope.dismiss === 'function') scope.dismiss();
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                        if (window.$ && typeof window.$.fn?.modal === 'function') {
+                            try {
+                                $('.modal').modal('hide');
+                            } catch (e) {}
+                        }
+                        return 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED';
+                    }
+
                     // A. Handle Modal - Look for Apply button in any modal
-                    const modalApplyBtns = document.querySelectorAll('.modal button.btn-primary, .application-modal button, [class*="modal"] button.btn-primary');
+                    const modalApplyBtns = document.querySelectorAll(
+                        '.modal button, .application-modal button, [class*="modal"] button, [id*="modal"] button, .modal a.btn, [class*="modal"] a.btn'
+                    );
                     for (const btn of modalApplyBtns) {
-                        if (btn && btn.offsetParent !== null && (btn.innerText || '').toLowerCase().includes('apply')) {
-                            btn.click();
-                            return 'INSTAHYRE_APPLY_CLICKED';
+                        if (btn && btn.offsetParent !== null && !btn.disabled) {
+                            const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                            if (text.includes('view active jobs') || text.includes('active jobs')) continue;
+                            if (/^(apply|interested|send application|submit application|apply now|yes)/i.test(text) || (text.includes('apply') && !text.includes('applied') && !text.includes('already'))) {
+                                btn.scrollIntoView({ block: 'center' });
+                                btn.click();
+                                return 'INSTAHYRE_APPLY_CLICKED';
+                            }
                         }
                     }
                     
                     // A2. Close ANY visible modal/overlay that blocks interaction
                     // This handles post-apply confirmation dialogs, "already applied" modals, etc.
-                    const allModals = document.querySelectorAll('.modal[style*="display: block"], .modal.show, .modal.fade.in, [class*="modal"].show, .modal-backdrop, [class*="overlay"][class*="show"]');
-                    for (const modal of allModals) {
-                        if (modal.offsetParent !== null || modal.classList.contains('modal-backdrop')) {
-                            // Try close button first
-                            const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"]');
-                            if (closeBtn) {
+                    const openModals = Array.from(document.querySelectorAll('.modal, [class*="modal"], [id*="modal"], .dialog, [role="dialog"]')).filter(m => {
+                        return m.offsetParent !== null && (m.offsetWidth > 0 || m.offsetHeight > 0) && !m.classList.contains('modal-backdrop');
+                    });
+                    if (openModals.length > 0) {
+                        for (const modal of openModals) {
+                            const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
+                            if (closeBtn && closeBtn.offsetParent !== null) {
                                 closeBtn.click();
                                 return 'INSTAHYRE_MODAL_CLOSED';
                             }
                         }
-                    }
-                    // Also try closing via Bootstrap jQuery if available
-                    const openModal = document.querySelector('.modal.show, .modal.in');
-                    if (openModal && openModal.offsetParent !== null) {
-                        // Click the modal backdrop to dismiss
                         const backdrop = document.querySelector('.modal-backdrop');
                         if (backdrop) {
                             backdrop.click();
                             return 'INSTAHYRE_MODAL_CLOSED';
                         }
-                        // Last resort: press Escape
+                        if (window.angular) {
+                            try {
+                                const modalEl = document.querySelector('.modal.in, .modal.show, [class*="modal"]');
+                                if (modalEl) {
+                                    const scope = angular.element(modalEl).scope();
+                                    if (scope) {
+                                        if (typeof scope.$dismiss === 'function') scope.$dismiss();
+                                        else if (typeof scope.close === 'function') scope.close();
+                                        else if (typeof scope.cancel === 'function') scope.cancel();
+                                        else if (typeof scope.dismiss === 'function') scope.dismiss();
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                        if (window.$ && typeof window.$.fn?.modal === 'function') {
+                            try {
+                                $('.modal').modal('hide');
+                            } catch (e) {}
+                        }
                         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }));
                         return 'INSTAHYRE_MODAL_CLOSED';
                     }
@@ -16047,14 +16287,26 @@ return resolveDynamic(bestMatch);
                     }
                     
                     // C. Click "View" on Job Cards - prioritized selector patterns from DOM inspection
-                    // Skip buttons that say "Applied" or "Already Applied"
-                    const primaryViewBtn = document.querySelector('button#interested-btn.btn-success:not([disabled])');
-                    if (primaryViewBtn && primaryViewBtn.offsetParent !== null) {
-                        const pText = (primaryViewBtn.innerText || '').toLowerCase();
-                        if (!pText.includes('applied') && !pText.includes('saved')) {
-                            primaryViewBtn.scrollIntoView({ block: 'center' });
-                            primaryViewBtn.click();
-                            return 'INSTAHYRE_VIEW_CLICKED';
+                    // Skip buttons that say "Applied" or "Already Applied", or cards already viewed/skipped in this pass
+                    const isAlreadyViewed = (el) => el.getAttribute('data-sentinel-viewed') === 'true' || 
+                                                   el.getAttribute('data-sentinel-skipped') === 'true' || 
+                                                   el.classList.contains('sentinel-viewed') || 
+                                                   el.classList.contains('sentinel-skipped') || 
+                                                   !!el.closest('[data-sentinel-viewed="true"]') ||
+                                                   !!el.closest('[data-sentinel-skipped="true"]');
+
+                    const primaryViewBtns = document.querySelectorAll('button#interested-btn.btn-success:not([disabled])');
+                    for (const primaryViewBtn of primaryViewBtns) {
+                        if (primaryViewBtn && primaryViewBtn.offsetParent !== null && !isAlreadyViewed(primaryViewBtn)) {
+                            const pText = (primaryViewBtn.innerText || '').toLowerCase();
+                            if (!pText.includes('applied') && !pText.includes('saved')) {
+                                primaryViewBtn.setAttribute('data-sentinel-viewed', 'true');
+                                const card = primaryViewBtn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"]') || primaryViewBtn.parentElement;
+                                if (card) card.setAttribute('data-sentinel-viewed', 'true');
+                                primaryViewBtn.scrollIntoView({ block: 'center' });
+                                primaryViewBtn.click();
+                                return 'INSTAHYRE_VIEW_CLICKED';
+                            }
                         }
                     }
                     
@@ -16073,7 +16325,10 @@ return resolveDynamic(bestMatch);
                         const btns = document.querySelectorAll(sel);
                         for (const btn of btns) {
                             const btnText = (btn.innerText || '').toLowerCase();
-                            if ((btnText.includes('view') || btnText.includes('interested')) && !btn.disabled && btn.offsetParent !== null && !btnText.includes('applied')) {
+                            if ((btnText.includes('view') || btnText.includes('interested')) && !btn.disabled && btn.offsetParent !== null && !btnText.includes('applied') && !isAlreadyViewed(btn)) {
+                                btn.setAttribute('data-sentinel-viewed', 'true');
+                                const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"]') || btn.parentElement;
+                                if (card) card.setAttribute('data-sentinel-viewed', 'true');
                                 btn.scrollIntoView({ block: 'center' });
                                 btn.click();
                                 return 'INSTAHYRE_VIEW_CLICKED';
@@ -16081,21 +16336,21 @@ return resolveDynamic(bestMatch);
                         }
                     }
                     
-                    // C2. All visible view buttons say "Applied" — scroll down for fresh jobs
+                    // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs
                     const allViewBtns = document.querySelectorAll('button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success');
-                    let allApplied = true;
+                    let allAppliedOrViewed = true;
                     let visibleCount = 0;
                     for (const btn of allViewBtns) {
                         if (btn.offsetParent !== null) {
                             visibleCount++;
                             const t = (btn.innerText || '').toLowerCase();
-                            if (!t.includes('applied') && !t.includes('saved') && !btn.disabled) {
-                                allApplied = false;
+                            if (!t.includes('applied') && !t.includes('saved') && !btn.disabled && !isAlreadyViewed(btn)) {
+                                allAppliedOrViewed = false;
                                 break;
                             }
                         }
                     }
-                    if (visibleCount > 0 && allApplied) {
+                    if (visibleCount > 0 && allAppliedOrViewed) {
                         window.scrollBy(0, 800);
                         return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
                     }

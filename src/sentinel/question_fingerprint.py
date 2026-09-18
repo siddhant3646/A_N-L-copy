@@ -105,7 +105,6 @@ SYNONYM_MAP = {
     # Contact
     'phone': 'mobile',
     'cell': 'mobile',
-    'contact': 'mobile',
     'tel': 'mobile',
     'telephone': 'mobile',
     'mail': 'email',
@@ -706,6 +705,14 @@ VALIDATION_RULES = {
         'range': (0, 100),
         'message': 'Salary should be numeric (in LPA)'
     },
+    'salary_inr': {
+        'patterns': [
+            r'^\d+$',  # Numeric (raw INR e.g. 2300000)
+            r'^\d+\s*(?:inr|rs|rupees)?$',
+        ],
+        'range': (10000, 100000000),
+        'message': 'Salary should be numeric (in INR)'
+    },
     'date': {
         'patterns': [
             r'^\d{2}/\d{2}/\d{4}$',  # DD/MM/YYYY or MM/DD/YYYY
@@ -772,8 +779,10 @@ def detect_expected_format(question: str) -> Optional[str]:
     if any(re.search(rf'(?<![-_\w]){re.escape(x)}(?![-_\w])', q_lower) for x in ['cgpa', 'gpa', 'grade point', 'academic grade']) or (re.search(r'(?<![-_\w])grade(?![-_\w])', q_lower) and not any(w in q_lower for w in ['production', 'enterprise', 'commercial', 'industry', 'industrial', 'server', 'client'])):
         return 'cgpa'
     
-    # Salary - default to salary_lpa to accept numeric and LPA-suffixed strings (0-100 range)
+    # Salary - detect inr vs lpa
     if any(x in q_lower for x in ['ctc', 'salary']):
+        if any(x in q_lower for x in ['in inr', 'in rupees', 'inr', 'rupees', 'annual salary in inr', 'annual ctc in inr']):
+            return 'salary_inr'
         return 'salary_lpa'
     
     # Date
@@ -786,7 +795,7 @@ def detect_expected_format(question: str) -> Optional[str]:
             return 'numeric'
     
     # Yes/No
-    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving']) and not any(w in q_lower for w in ['days', 'months', 'lwd', 'date']):
+    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving']) and not any(w in q_lower for w in ['days', 'day', 'months', 'month', 'lwd', 'date']):
         return 'yes_no'
     
     # Default to text

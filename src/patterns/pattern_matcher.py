@@ -248,10 +248,6 @@ class PatternMatcher:
                 return ('40000' if is_current else '60000'), max(score, 0.98)
             elif is_in_lakhs:
                 return ('23' if is_current else '30'), max(score, 0.98)
-            elif ('expectation' in ql or 'expected' in ql or 'requirement' in ql):
-                lpa_m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*lpa', al, re.IGNORECASE)
-                if lpa_m:
-                    return lpa_m.group(1), max(score, 0.98)
 
         # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits in open-ended technical essays)
         is_yes_no_q = bool(

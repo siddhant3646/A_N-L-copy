@@ -79,16 +79,16 @@ class TestQAAug25Fixes(unittest.TestCase):
     # 5. Compensation: ECTC and Requirements return 30L / 3000000 (Not 23L)
     def test_ectc_and_compensation_requirements(self):
         cases = [
-            ('What is your ECTC in Lakhs per annum?', ['3000000', '30']),
-            ('What is your CTC expectation?', ['3000000', '30']),
-            ('What are your compensation requirements?', ['3000000', '30'])
+            ('What is your ECTC in Lakhs per annum?', ['3000000', '30', '30 LPA', '30 Lakhs']),
+            ('What is your CTC expectation?', ['3000000', '30', '30 LPA', '30 Lakhs']),
+            ('What are your compensation requirements?', ['3000000', '30', '30 LPA', '30 Lakhs'])
         ]
         for q, expected_options in cases:
             res = self.matcher.match_with_details(q)
             self.assertIsNotNone(res, f"Failed to match {q}")
             ans = str(res.get('answer', ''))
             self.assertIn(ans, expected_options, f"For '{q}', expected one of {expected_options}, got '{ans}'")
-            self.assertNotIn(ans, ['23', '2300000'])
+            self.assertNotIn(ans, ['23', '2300000', '23 LPA'])
 
     # 6. Unit: Months of Experience returns 50 (Not 5)
     def test_months_of_experience(self):

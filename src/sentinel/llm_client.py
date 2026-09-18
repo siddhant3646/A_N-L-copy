@@ -349,18 +349,26 @@ class GemmaLLMClient:
                 match = re.search(r"23\s*LPA", ans_trimmed, re.IGNORECASE)
                 if match:
                     return "23 LPA"
+                if re.search(r"\b23\b", ans_trimmed):
+                    return "23 LPA"
             else:
                 match = re.search(r"23\s*LPA", ans_trimmed, re.IGNORECASE)
                 if match and ("fixed" in ans_trimmed.lower() or "variable" in ans_trimmed.lower() or "breakdown" in q_lower):
+                    return "23 LPA (Fixed: 23 LPA, Variable: 0 LPA)"
+                if re.search(r"\b23\b", ans_trimmed):
                     return "23 LPA (Fixed: 23 LPA, Variable: 0 LPA)"
         elif is_expected and has_ctc and not is_current:
             if "breakdown" not in q_lower and "fixed" not in q_lower and "variable" not in q_lower:
                 match = re.search(r"30\s*LPA", ans_trimmed, re.IGNORECASE)
                 if match:
                     return "30 LPA"
+                if re.search(r"\b30\b", ans_trimmed):
+                    return "30 LPA"
             else:
                 match = re.search(r"30\s*LPA", ans_trimmed, re.IGNORECASE)
                 if match:
+                    return "30 LPA (100% Fixed)"
+                if re.search(r"\b30\b", ans_trimmed):
                     return "30 LPA (100% Fixed)"
 
         # 2. Experience Uniformity

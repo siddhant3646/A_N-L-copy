@@ -546,6 +546,92 @@ class TestTextareaInputAwareGuards(unittest.TestCase):
         self.assertTrue(len(ans) > 100)
 
 
+
+
+class TestQASpanishAndNoticeFixes(unittest.TestCase):
+    """Spanish question text pattern matching, gender phrasing, notice/serving pattern fixes."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.matcher = create_matcher("config/qa_patterns.json")
+
+    # -------------------------------------------------------------------------
+    # Spanish question text pattern matching (not just placeholder filtering)
+    # -------------------------------------------------------------------------
+    def test_spanish_experience_question_pattern(self):
+        questions = [
+            "Especifica tus años de experiencia relevantes",
+            "Especifica tus años de experiencia",
+            "Indica tus años de experiencia",
+            "Años de experiencia relevantes",
+            "Indique sus años de experiencia",
+            "Experiencia relevante en años",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="select")
+            self.assertIsNotNone(ans, f"No answer for Spanish question: '{q}'")
+            self.assertIn(ans, ["4.2", "4.2 Years", "4"], f"Wrong answer for '{q}': '{ans}'")
+
+    def test_spanish_gender_question_pattern(self):
+        questions = [
+            "Género",
+            "Sexo",
+            "Identidad de género",
+            "Con qué género te identificas",
+            "Seleccione su género",
+            "Indique su género",
+            "Cuál es su género",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="select")
+            self.assertIsNotNone(ans, f"No answer for Spanish gender question: '{q}'")
+            self.assertEqual(ans, "Male", f"Wrong answer for '{q}': '{ans}'")
+
+    def test_gender_most_identify_phrasing(self):
+        questions = [
+            "With which gender do you most identify",
+            "With which gender do you identify",
+            "What gender do you identify with",
+            "How do you identify your gender",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="select")
+            self.assertIsNotNone(ans, f"No answer for: '{q}'")
+            self.assertEqual(ans, "Male", f"Wrong answer for '{q}': '{ans}'")
+
+    def test_serving_notice_or_already_left(self):
+        questions = [
+            "Are you serving notice period ? or Already left ?",
+            "Are you serving notice period or already left",
+            "Are you serving notice or already left the last organisation",
+            "Are you serving notice period ? or already left",
+            "Serving notice period or already left",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertIsNotNone(ans, f"No answer for: '{q}'")
+            self.assertEqual(ans, "Yes", f"Answer should be 'Yes' for '{q}', got '{ans}'")
+
+    def test_notice_period_odd_phrasing_confirm_input(self):
+        q = "please confirm the notice period(7 days, 15 days, 30, 60 or 90 days just put 2 digit number)"
+        ans, score = self.matcher.fuzzy_match(q, input_type="text")
+        self.assertIsNotNone(ans)
+        self.assertEqual(ans, "15")
+        self.assertGreaterEqual(score, 0.90)
+
+    def test_instahyre_ctc_lpa_priority_over_expected_ctc(self):
+        """instahyre_expected_ctc_lpa (priority 18) must beat expected_ctc_lakhs (priority 8)."""
+        questions = [
+            "What is your expected CTC?",
+            "Expected CTC ?",
+            "What is your expected CTC",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="text")
+            self.assertIsNotNone(ans, f"No answer for: '{q}'")
+            self.assertEqual(ans, "30 LPA", f"Expected '30 LPA' for '{q}', got '{ans}'")
+            self.assertGreaterEqual(score, 0.80)
+
 class TestDropdownPlaceholderGuards(unittest.TestCase):
     """Verifies that dropdown placeholder options across languages are rejected and legitimate options are selected."""
 

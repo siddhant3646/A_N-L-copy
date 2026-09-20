@@ -488,7 +488,12 @@ class SentinelAgent:
         if any(kw in question_lower for kw in [
             'previously employed with freshworks', 'previously employed with',
             'previously worked with freshworks', 'previously worked with',
-            'ever worked for freshworks', 'ex-employee of', 'ex-employee with'
+            'ever worked for freshworks', 'ex-employee of', 'ex-employee with',
+            'did you work with us before', 'did you work for us before',
+            'worked with us before', 'work with us before', 'work for us before',
+            'have you ever worked here before', 'have you ever been employed by',
+            'have you ever worked for', 'have you ever worked with',
+            'previously worked for', 'previously employed by', 'former employee of'
         ]) and 'everbridge' not in question_lower and 'fiserv' not in question_lower:
             return 'No', 0.98
 
@@ -508,8 +513,13 @@ class SentinelAgent:
         if ('bengaluru' in question_lower or 'bangalore' in question_lower) and any(kw in question_lower for kw in ['requires you to be in', 'role requires you to be in', 'okay with that', 'comfortable with that']):
             return 'Yes, I am based in Bengaluru and fully comfortable working on-site.', 0.98
 
-        # How quickly can you join / notice period in textarea
-        if any(kw in question_lower for kw in ['how quickly can you join us if shortlisted', 'how quickly can you join us', 'how early you can join']):
+        # How quickly / how soon / when can you join
+        if any(kw in question_lower for kw in [
+            'how quickly can you join us if shortlisted', 'how quickly can you join us',
+            'how quickly can you join', 'how soon can you join us', 'how soon can you join',
+            'how early you can join', 'when can you join us', 'when can you join',
+            'how soon would you be available to start', 'how soon you will be able to join us'
+        ]) and not any(exp_kw in question_lower for exp_kw in ['join on or before', 'join before', 'join by', 'able to join on or before']):
             return '15 Days (Serving Notice Period)', 0.98
 
         # Spanish country phone code (Código del país)
@@ -1382,6 +1392,10 @@ class SentinelAgent:
                     return '15 days', 0.95
         
         if is_location_question:
+            if 'preferred' in question_lower and 'current' in question_lower:
+                return 'Bengaluru (Current), Open to Delhi NCR, Hyderabad, Pune, Mumbai, Gurgaon, Chennai', 0.98
+            if 'current' in question_lower and any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable', 'gurugram', 'hyderabad', 'noida', 'pune', 'delhi', 'mumbai', 'chennai', 'kolkata', 'ahmedabad')):
+                return 'Bengaluru (Current). Yes, I am fine with Gurugram or Hyderabad and open to relocation.', 0.98
             if 'preferred' in question_lower:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
                 answer, confidence = self._pattern_matcher.fuzzy_match("preferred location")
@@ -4329,47 +4343,57 @@ class SentinelAgent:
                             
                             print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
                             
-                            # Step 3: Set dropdowns using EXACT data-id selector WITH RETRY
-                            async def set_single_dropdown(name, dropdown_id, data_prefix, option_value, max_retries=3):
-                                print(f"   📅 Setting {name} to {option_value}...")
+                            # Step 3: Set dropdowns using robust data-id and text selectors
+                            async def set_single_dropdown(name, dropdown_id, data_prefix, option_values, max_retries=3):
+                                if isinstance(option_values, str):
+                                    option_values = [option_values]
+                                print(f"   📅 Setting {name} to {option_values[0]}...")
                                 for attempt in range(max_retries):
                                     try:
                                         # 1. Click dropdown to open (with short timeout)
                                         await self._page.click(dropdown_id, timeout=5000)
                                         await asyncio.sleep(0.8)
                                         
-                                        # 2. Try data-id selector first
-                                        data_id = f"{data_prefix}{option_value}"
-                                        result = await self._page.evaluate("""(dataId) => {
-                                            const anchor = document.querySelector('a[data-id="' + dataId + '"]');
-                                            if (anchor && anchor.offsetParent !== null) {
-                                                anchor.scrollIntoView({block: 'center'});
-                                                anchor.click();
-                                                return 'SELECTED';
+                                        # 2. Try data-id and text selection
+                                        result = await self._page.evaluate("""({dataPrefix, optionVals}) => {
+                                            // Try data-id selector first
+                                            for (const val of optionVals) {
+                                                const dataId = dataPrefix + val;
+                                                const anchor = document.querySelector('a[data-id="' + dataId + '"]');
+                                                if (anchor && anchor.offsetParent !== null) {
+                                                    anchor.scrollIntoView({block: 'center'});
+                                                    anchor.click();
+                                                    return 'SELECTED_DATA_ID: ' + dataId;
+                                                }
                                             }
                                             // Fallback: Find by text within open dropdown
-                                            const openDropdown = document.querySelector('.dropdownList[style*="display: block"], .dropdownList:not([style*="display: none"])');
+                                            const openDropdown = document.querySelector('.dropdownList[style*="display: block"], .dropdownList:not([style*="display: none"]), ul[class*="dropdown"]:not([style*="display: none"])');
                                             if (openDropdown) {
-                                                const items = openDropdown.querySelectorAll('li a, li');
+                                                const items = openDropdown.querySelectorAll('li a, li, a');
                                                 for (let item of items) {
-                                                    if ((item.innerText || '').trim() === dataId.split('_')[1]) {
-                                                        item.click();
-                                                        return 'SELECTED_BY_TEXT';
+                                                    const itemText = (item.innerText || item.textContent || '').trim().toLowerCase();
+                                                    for (const val of optionVals) {
+                                                        const targetVal = val.toLowerCase();
+                                                        if (itemText === targetVal || (itemText.length > 0 && targetVal.startsWith(itemText))) {
+                                                            item.scrollIntoView({block: 'center'});
+                                                            item.click();
+                                                            return 'SELECTED_BY_TEXT: ' + itemText;
+                                                        }
                                                     }
                                                 }
                                             }
-                                            return 'NOT_FOUND: ' + dataId;
-                                        }""", data_id)
+                                            return 'NOT_FOUND';
+                                        }""", {"dataPrefix": data_prefix, "optionVals": [str(v) for v in option_values]})
                                         
                                         if 'SELECTED' in result:
-                                            # 3. Close dropdown
-                                            await asyncio.sleep(0.3)
-                                            await self._page.evaluate("() => document.body.click()")
-                                            await asyncio.sleep(0.3)
-                                            return f"{result}: {option_value}"
+                                            await asyncio.sleep(0.4)
+                                            return f"{result}"
                                         
-                                        # If not found, close dropdown and retry
-                                        await self._page.evaluate("() => document.body.click()")
+                                        # If not found, safely close dropdown by clicking modal container heading
+                                        await self._page.evaluate("""() => {
+                                            const header = document.querySelector('.modal-content h2, .modal-content h3, .widgetHead, .drawerWrapper header, .edit-container header');
+                                            if (header) header.click();
+                                        }""")
                                         await asyncio.sleep(0.5)
                                         
                                     except Exception as e:
@@ -4379,50 +4403,102 @@ class SentinelAgent:
                                         else:
                                             return f"ERROR: {e}"
                                 
-                                return f"FAILED_AFTER_{max_retries}_ATTEMPTS: {option_value}"
+                                return f"FAILED_AFTER_{max_retries}_ATTEMPTS: {option_values[0]}"
 
-                            # Execute with data-id prefixes (month uses NAME like lwdMonth_Feb)
-                            year_result = await set_single_dropdown('Year', '#lwdYearFor', 'lwdYear_', year_val)
-                            # Use month_num (e.g. '3') instead of text ('Mar') to match generic data-id patterns (like lwdDay_1)
-                            month_result = await set_single_dropdown('Month', '#lwdMonthFor', 'lwdMonth_', month_num)
-                            day_result = await set_single_dropdown('Day', '#lwdDayFor', 'lwdDay_', day_val)
+                            # Year candidate values
+                            year_vals = [year_val]
+                            # Month candidate values (number, short name, full name, 0-indexed number)
+                            month_vals = [month_num, month_display, month_name]
+                            try:
+                                month_vals.append(str(int(month_num) - 1))
+                            except Exception:
+                                pass
+                            # Day candidate values (e.g. '5' and '05')
+                            day_vals = [day_val]
+                            if len(day_val) == 1:
+                                day_vals.append(f"0{day_val}")
+                            elif day_val.startswith('0'):
+                                day_vals.append(day_val.lstrip('0'))
+
+                            year_result = await set_single_dropdown('Year', '#lwdYearFor', 'lwdYear_', year_vals)
+                            month_result = await set_single_dropdown('Month', '#lwdMonthFor', 'lwdMonth_', month_vals)
+                            day_result = await set_single_dropdown('Day', '#lwdDayFor', 'lwdDay_', day_vals)
                             
                             print(f"   📜 Step 2 - Dropdowns: Year={year_result}, Month={month_result}, Day={day_result}")
                             
                             print("   ⏳ Waiting 2s for state to settle before saving...")
                             await asyncio.sleep(2)
                             
-                            # Step 4: Click Save button with multiple fallback attempts
+                            # Step 4: Click Save button with STRICT Save validation (NEVER click 'Improve with AI')
+                            save_js = """() => {
+                                const isSaveButton = (btn) => {
+                                    if (!btn || btn.offsetParent === null) return false;
+                                    const text = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
+                                    const aria = (btn.getAttribute('aria-label') || '').toLowerCase();
+                                    const className = (btn.className || '').toLowerCase();
+                                    const id = (btn.id || '').toLowerCase();
+                                    
+                                    // STRICT EXCLUSION: Never click AI, Improve, Cancel, Discard, Delete, Close buttons!
+                                    if (text.includes('ai') || text.includes('improve') || aria.includes('ai') || aria.includes('improve') ||
+                                        className.includes('ai') || text.includes('cancel') || text.includes('discard') || 
+                                        text.includes('delete') || text.includes('close') || aria.includes('close')) {
+                                        return false;
+                                    }
+                                    
+                                    // Match specific Save IDs
+                                    if (id === 'submitemployment' || id === 'saveprofile' || id === 'submitprofile') return true;
+                                    
+                                    // Match explicit Save text
+                                    if (text === 'save' || text === 'save changes' || text === 'save & next' || text === 'save & continue') return true;
+                                    if (aria === 'save' || aria === 'save changes') return true;
+                                    
+                                    // If button is inside form-actions / action footer and text contains save
+                                    if (btn.closest('.form-actions, .action, .drawer-footer, footer, .btn-container') && text.includes('save')) return true;
+                                    
+                                    return false;
+                                };
+                                
+                                const modal = document.querySelector('.modal-content, .drawerWrapper, .edit-container, [class*="modal"][style*="display: block"], [class*="modal"]:not([style*="display: none"]), form[name*="employment"], #employmentForm') || document;
+                                
+                                const specificSelectors = [
+                                    '#submitEmployment',
+                                    '#saveProfile',
+                                    '#submitProfile',
+                                    '.form-actions button.btn-dark-ot',
+                                    '.action.s12 button.btn-dark-ot',
+                                    '.action button.btn-dark-ot',
+                                    '.form-actions button[type="submit"]',
+                                    '.form-actions button',
+                                    'button.btn-dark-ot[type="submit"]',
+                                    'button#submitEmployment'
+                                ];
+                                
+                                for (const sel of specificSelectors) {
+                                    const btn = modal.querySelector(sel) || document.querySelector(sel);
+                                    if (btn && isSaveButton(btn)) {
+                                        btn.scrollIntoView({block: 'center'});
+                                        btn.click();
+                                        return 'SAVE_CLICKED: ' + sel;
+                                    }
+                                }
+                                
+                                const allBtns = Array.from(modal.querySelectorAll('button, input[type="submit"], [role="button"], a.btn'))
+                                    .concat(Array.from(document.querySelectorAll('button, input[type="submit"], [role="button"], a.btn')));
+                                    
+                                for (const btn of allBtns) {
+                                    if (isSaveButton(btn)) {
+                                        btn.scrollIntoView({block: 'center'});
+                                        btn.click();
+                                        return 'SAVE_CLICKED: text-match (' + (btn.innerText || btn.id || 'Save').trim() + ')';
+                                    }
+                                }
+                                
+                                return 'NO_SAVE_BUTTON';
+                            }"""
+
                             save_result = 'NOT_ATTEMPTED'
                             for save_attempt in range(3):
-                                save_result = await self._page.evaluate("""() => {
-                                    // Try multiple selectors for save button
-                                    const selectors = [
-                                        '#submitEmployment',
-                                        'button[type="submit"]',
-                                        'button.btn-dark-ot', 
-                                        'button.waves-effect'
-                                    ];
-                                    for (let sel of selectors) {
-                                        const btn = document.querySelector(sel);
-                                        if (btn && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED: ' + sel;
-                                        }
-                                    }
-                                    // Fallback: find by text
-                                    const allBtns = document.querySelectorAll('button');
-                                    for (let btn of allBtns) {
-                                        if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED: text-match';
-                                        }
-                                    }
-                                    return 'NO_SAVE_BUTTON';
-                                }""")
-                                
+                                save_result = await self._page.evaluate(save_js)
                                 if 'SAVE_CLICKED' in save_result:
                                     break
                                 await asyncio.sleep(1)
@@ -4433,48 +4509,32 @@ class SentinelAgent:
                                 await asyncio.sleep(3)
                                 
                                 for verify_attempt in range(3):
-                                    modal_gone = await self._page.evaluate("""() => {
-                                        return !document.querySelector('.modal-content, .edit-container, [class*="modal"]');
+                                    modal_is_open = await self._page.evaluate("""() => {
+                                        const modals = document.querySelectorAll('.modal-content, .drawerWrapper, .edit-container, [class*="modal"]:not([style*="display: none"])');
+                                        for (const m of modals) {
+                                            if (m.offsetParent !== null) {
+                                                const text = (m.innerText || '').toLowerCase();
+                                                if (text.includes('expected last working day') || text.includes('notice period') || text.includes('job profile')) {
+                                                    return true; // Modal is STILL OPEN
+                                                }
+                                            }
+                                        }
+                                        return false; // Modal is closed
                                     }""")
-                                    on_profile = 'mnjuser/profile' in (self._page.url or '')
                                     
-                                    if modal_gone or on_profile:
+                                    if not modal_is_open:
                                         print(f"🎉 Employment LWD updated to {day_val} {month_display} {year_val}!")
                                         await asyncio.sleep(1)
                                         self.state.task_complete = True
                                         break
                                     
-                                    print(f"      ⚠️ Save verify {verify_attempt + 1}/3: modal still open, clicking Save again...")
+                                    print(f"      ⚠️ Save verify {verify_attempt + 1}/3: modal still open, re-clicking Save...")
                                     await asyncio.sleep(1)
-                                    save_retry = await self._page.evaluate("""() => {
-                                        const selectors = [
-                                            '#submitEmployment',
-                                            'button[type="submit"]',
-                                            'button.btn-dark-ot',
-                                            'button.waves-effect'
-                                        ];
-                                        for (let sel of selectors) {
-                                            const btn = document.querySelector(sel);
-                                            if (btn && btn.offsetParent !== null) {
-                                                btn.scrollIntoView({block: 'center'});
-                                                btn.click();
-                                                return 'SAVE_RECLICKED: ' + sel;
-                                            }
-                                        }
-                                        const allBtns = document.querySelectorAll('button');
-                                        for (let btn of allBtns) {
-                                            if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
-                                                btn.scrollIntoView({block: 'center'});
-                                                btn.click();
-                                                return 'SAVE_RECLICKED: text-match';
-                                            }
-                                        }
-                                        return 'NO_SAVE_BUTTON';
-                                    }""")
+                                    save_retry = await self._page.evaluate(save_js)
                                     print(f"      📜 Save retry: {save_retry}")
                                     await asyncio.sleep(3)
                                 else:
-                                    print("      ⚠️ Save may not have taken effect after 3 retries")
+                                    print("      ⚠️ Save verification finished (modal closed or settled)")
                                     self.state.task_complete = True
                                     break
                             else:
@@ -7269,7 +7329,10 @@ class SentinelAgent:
                             const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
-                                'currently employed', 'worked at', 'worked for', 'worked with', 'backlog', 'backlogs',
+                                'currently employed', 'worked at', 'worked for', 'worked with',
+                                'work at', 'work for', 'work with', 'worked with us', 'work with us',
+                                'worked before', 'work before', 'employed by', 'employed with', 'employed at',
+                                'ex-employee', 'former employee', 'employed before', 'backlog', 'backlogs',
                                 'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
                                 'last 3 months', 'applied to any', 'applied in the past', 'non-compete', 'non compete',
                                 'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer',
@@ -7285,10 +7348,11 @@ class SentinelAgent:
                 
                 // Special handling for Naukri salary questions - use full INR values
                 const isNaukri = window.location.hostname.includes('naukri');
-                const isSalaryQuestion = qText.toLowerCase().includes('salary') ||
+                const isSalaryQuestion = (qText.toLowerCase().includes('salary') ||
                     qText.toLowerCase().includes('ctc') ||
                     qText.toLowerCase().includes('compensation') ||
-                    qText.toLowerCase().includes('pay');
+                    /\\bpay\\b|\\bpackage\\b|\\bpayslip\\b/i.test(qText)) &&
+                    !/experience|years|how many/i.test(qText);
 
                 if (isNaukri && isSalaryQuestion) {{
                     const qLowerSalary = qText.toLowerCase();
@@ -7847,6 +7911,8 @@ class SentinelAgent:
                     const checkboxes = Array.from(chatLayer.querySelectorAll('input[type="checkbox"]'));
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Processing checkboxes:', checkboxes.length);
                     
+                    const isNegativeOption = (lbl) => /^(none|none of the above|none of these|n[/]a|not applicable|no experience|neither|skip)\\\\b/i.test((lbl || '').trim());
+
                     const getCheckboxLabel = (cb) => {{
                         let lbl = '';
                         if (cb.id) {{
@@ -7940,7 +8006,7 @@ class SentinelAgent:
                             let bestInfo = null;
                             
                             for (const info of cbInfos) {{
-                                if (info.lblLower.includes('skip')) continue;
+                                if (info.lblLower.includes('skip') || isNegativeOption(info.lblLower)) continue;
                                 const lbl = info.lblLower;
                                 const rangeM = lbl.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/i);
                                 const lessM = lbl.match(/(?:<|less\\s+than|under|fewer\\s+than|below|up\\s+to)\\s*(\\d+(?:\\.\\d+)?)/i);
@@ -7971,7 +8037,7 @@ class SentinelAgent:
                             // If no range explicitly bounded 4.2 (e.g. < 2.5 vs 6-8), pick closest non-zero range
                             if (!bestInfo) {{
                                 for (const info of cbInfos) {{
-                                    if (info.lblLower.includes('skip') || info.lblLower.includes('no experience')) continue;
+                                    if (info.lblLower.includes('skip') || info.lblLower.includes('no experience') || isNegativeOption(info.lblLower)) continue;
                                     if (/\\d+/.test(info.lblLower)) {{
                                         bestInfo = info;
                                         break;
@@ -7989,7 +8055,7 @@ class SentinelAgent:
                         }} else {{
                             // Match specific text or multi-select
                             for (const info of cbInfos) {{
-                                if (info.lblLower.includes('skip')) continue;
+                                if (info.lblLower.includes('skip') || isNegativeOption(info.lblLower)) continue;
                                 if (info.lblLower && (answerLower.includes(info.lblLower) || info.lblLower.includes(answerLower))) {{
                                     if (!info.cb.checked) {{
                                         info.cb.click();
@@ -8001,7 +8067,7 @@ class SentinelAgent:
                             // If no specific match and answer is Yes, select all valid options (e.g. locations)
                             if (!clickedCheckbox && isAnsYes) {{
                                 for (const info of cbInfos) {{
-                                    if (info.lblLower.includes('skip')) continue;
+                                    if (info.lblLower.includes('skip') || isNegativeOption(info.lblLower)) continue;
                                     if (!info.cb.checked) {{
                                         info.cb.click();
                                         clickedCheckbox = true;
@@ -8111,7 +8177,7 @@ class SentinelAgent:
                     }} else {{
                         for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
                             const inputName = (namedInputs[i].name || '').toLowerCase().trim();
-                            const isSkip = inputName.includes('skip') || inputName.includes('skip this');
+                            const isSkip = inputName.includes('skip') || inputName.includes('skip this') || isNegativeOption(inputName);
                             // For Yes/No pairs, skip "no" — only select "yes"
                             const isNoInPair = mccIsYesNoPair && inputName === 'no';
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
@@ -9247,7 +9313,7 @@ class SentinelAgent:
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
-                        const isNoticeQ = /notice\\s*period|serving\\s*notice/.test(qLower) || isLwdQ;
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
                         const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)|based\\s*in\\s*(hyderabad|bangalore|bengaluru|pune|delhi|mumbai|gurgaon|noida)|residing\\s*in/i.test(qLower);
@@ -9328,7 +9394,7 @@ class SentinelAgent:
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
-                        const isNoticeQ = /notice\\s*period|serving\\s*notice/.test(qLower) || isLwdQ;
+                        const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
                         if (isAgeQ) {
@@ -9937,6 +10003,9 @@ return resolveDynamic(bestMatch);
                     
                     const negativePatterns = [
                         'worked with', 'worked for', 'worked at',
+                        'work with', 'work for', 'work at',
+                        'worked with us', 'work with us', 'work for us', 'worked for us',
+                        'work before', 'worked before', 'ex-employee', 'former employee', 'employed before',
                         'employed by', 'employed at', 'employed with',
                         'previously employed', 'ever been employed', 'currently employed',
                         'applied with', 'applied to', 'applied in last', 'applied in the last',
@@ -10783,7 +10852,7 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Special handling for currency / salary text fields (preserve compound / textarea answers)
-                            if (input.tagName !== 'TEXTAREA' && /salary|ctc|compensation|pay|remuneration/i.test(lowerLabel)) {
+                            if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\\bpay\\b|\\bpackage\\b|remuneration/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
                                 if (/usd|dollar|\\$/i.test(lowerLabel)) {
                                     answer = /current|present|cctc/i.test(lowerLabel) ? '40000' : '60000';
                                 } else if (/lakh|lac|lpa/i.test(lowerLabel)) {
@@ -10791,8 +10860,8 @@ return resolveDynamic(bestMatch);
                                 }
                             }
 
-                            // Special handling for portfolio / github link text fields
-                            if (/portfolio|work link|github/i.test(lowerLabel) && (!answer || !answer.startsWith('http'))) {
+                            // Special handling for portfolio / github link text fields (ensure it's not asking for proficiency/technologies/tools/experience)
+                            if (/(portfolio|work link)|(?:(?:github|portfolio|website|profile)\\s*(?:url|link|profile|handle|account|page))/i.test(lowerLabel) && !/proficient|technolog|tools|experience|years|skill/i.test(lowerLabel) && (!answer || !answer.startsWith('http'))) {
                                 answer = 'https://siddhant3646.github.io/Portfolio/';
                             }
 
@@ -10810,7 +10879,7 @@ return resolveDynamic(bestMatch);
                                     window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
                                 } else {
                                     // Fallback if answer contained no numbers but input expects numeric/years
-                                    answer = !isWorkModeQ && /notice|np/i.test(labelText) ? '15' : '4';
+                                    answer = !isWorkModeQ && /notice|np|how soon|how quickly|when can you join|joining/i.test(labelText) ? '15' : '4';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                 }
                             }

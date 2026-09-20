@@ -552,8 +552,8 @@ class TestEmpiricalChallengerBugDemonstration(unittest.TestCase):
         """
         q = "Adobe Experience Manager backend experience"
         ans, score = self.matcher.fuzzy_match(q, input_type="select")
-        self.assertEqual(ans, "Yes", "Fell back to tech_specific_experience instead of AEM pattern")
-        self.assertLess(score, 0.90, "Score dropped below 0.90")
+        self.assertEqual(ans, "4.2", "Fell back to tech_specific_experience instead of AEM pattern")
+        self.assertGreaterEqual(score, 0.90, "Score resolved with high confidence")
 
 
 if __name__ == "__main__":

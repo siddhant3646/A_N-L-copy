@@ -136,17 +136,6 @@ ACTION PLAN:
 START NOW using the navigation tool.
 """ 
 
-NAUKRI_PROFILE_UPDATE_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.naukri.com immediately.
-GO TO: "View and Update Profile" (Top Right Menu).
-
-GOAL: Update 'Resume Headline'.
-1. Locate 'Resume Headline' section.
-2. REMOVE the fullstop at the very end of the text. Save.
-3. ADD the fullstop back at the end. Save again.
-
-Verify the change. START NOW.
-"""
 
 # Condensed version for smaller models - used by the scripted fallback
 NAUKRI_TASK_CONTEXT = """

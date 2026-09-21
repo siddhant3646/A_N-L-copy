@@ -757,8 +757,9 @@ def detect_expected_format(question: str) -> Optional[str]:
     is_breakup = ('fixed' in q_lower and 'variable' in q_lower) or 'breakup' in q_lower
     is_composite_hr = 'ctc' in q_lower and ('np' in q_lower or 'notice' in q_lower)
     is_profile_summary = ('email' in q_lower and 'experience' in q_lower) or ('name' in q_lower and 'experience' in q_lower)
+    is_composite_contact = ('email' in q_lower and ('phone' in q_lower or 'mobile' in q_lower or 'contact' in q_lower or 'no.' in q_lower or 'number' in q_lower))
 
-    if is_combined_salary or is_breakup or is_composite_hr or is_profile_summary:
+    if is_combined_salary or is_breakup or is_composite_hr or is_profile_summary or is_composite_contact:
         return None
 
     # Phone/Mobile
@@ -795,7 +796,7 @@ def detect_expected_format(question: str) -> Optional[str]:
             return 'numeric'
     
     # Yes/No
-    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving']) and not any(w in q_lower for w in ['days', 'day', 'months', 'month', 'lwd', 'date']):
+    if any(x in q_lower for x in ['willing', 'comfortable', 'agree', 'accept', 'serving notice']) and not any(w in q_lower for w in ['days', 'day', 'months', 'month', 'lwd', 'date']):
         return 'yes_no'
     
     # Default to text
@@ -860,6 +861,8 @@ class FingerprintMatcher:
     def add_pattern(self, question: str, answer: str):
         """Add a question-answer pattern."""
         fingerprint = create_fingerprint(question)
+        if not fingerprint or not fingerprint.strip():
+            return
         self.fingerprint_cache[fingerprint] = answer
         self.question_index[question.lower()] = fingerprint
     
@@ -871,6 +874,8 @@ class FingerprintMatcher:
             Tuple of (answer, confidence) or None
         """
         fingerprint = create_fingerprint(question)
+        if not fingerprint or not fingerprint.strip():
+            return None
         
         # Exact fingerprint match
         if fingerprint in self.fingerprint_cache:

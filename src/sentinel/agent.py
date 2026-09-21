@@ -76,6 +76,28 @@ class SentinelAgent:
         "options", "selected_option", "confidence", "status", "error_message",
         "source", "job_id_or_url",
     ]
+
+    # Instahyre skill pools. Each task run randomly picks 8 from LANGUAGES and
+    # 7 from TOOLS (15 total) so every application session presents a varied,
+    # natural-looking profile instead of an identical fixed list.
+    INSTAHYRE_SKILL_LANGUAGES = [
+        "Java", "JavaScript", "HTML", "CSS", "ReactJS", "NodeJS", "Python",
+        "Spring", "Spring Boot", "Hibernate", "Apache Spark", "Apache Flink",
+        "Apache Kafka", "Apache Storm", "Apache Airflow", "DBT", "JUnit",
+        "System Design & patterns", "Data Structures algorithms",
+        "Object-oriented", "SOLID", "CAP", "AWS", "GitLab", "Azure", "GCP",
+        "Cloud", "RAG", "LangChain", "LlamaIndex", "ChromaDB", "YOLOv10",
+        "MediaPipe", "Local LLMs (Gemma 3, Qwen, DeepSeek)", "Ollama",
+    ]
+    INSTAHYRE_SKILL_TOOLS = [
+        "GIT", "MySQL", "NoSQL", "Jira", "Docker", "Kubernetes", "Splunk",
+        "Postman", "Grafana", "CICD", "Confluence", "Oracle SQL Developer",
+        "IntelliJ", "Eclipse", "Fortify", "Microsoft Azure",
+        "Pivotal Cloud Foundry", "Maven", "Ant", "Antigravity", "Claude Code",
+        "Codex", "Cursor", "Kiro", "Github Co-Pilot",
+    ]
+    INSTAHYRE_SKILL_LANGUAGES_COUNT = 8
+    INSTAHYRE_SKILL_TOOLS_COUNT = 7
     
     def __init__(self, browser=None):
         self.browser = browser
@@ -84,6 +106,7 @@ class SentinelAgent:
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None  # Timestamp when LinkedIn can resume
         self.naukri_rate_limit_until = None  # Timestamp when Naukri can resume
+        self._instahyre_skills = None  # Random 8 langs + 7 tools per task run
         self._current_job_url: str = ""  # Track active job URL / ID across platforms
         self._llm_client = None  # Lazy-loaded Gemma LLM client
         self.resume_file_path: str = os.getenv("RESUME_FILE_PATH", "/Users/siddhant/Desktop/Resume/SiddhantSinghResume2026.pdf")
@@ -255,6 +278,16 @@ class SentinelAgent:
             f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
             f"window.__SENTINEL_PROFILE__ = {profile_json};\n"
             f"window.__SENTINEL_IS_INTERSESSION__ = {'true' if is_intersession else 'false'};\n"
+            "window.__SENTINEL_ISVISIBLE__ = function(el) {\n"
+            "    if (!el) return false;\n"
+            "    if (el.offsetParent !== null) return true;\n"
+            "    var r = el.getBoundingClientRect();\n"
+            "    if (r.width === 0 && r.height === 0) return false;\n"
+            "    var cs = getComputedStyle(el);\n"
+            "    if (cs.display === 'none' || cs.visibility === 'hidden') return false;\n"
+            "    if (parseFloat(cs.opacity || '1') === 0) return false;\n"
+            "    return true;\n"
+            "};\n"
         )
         
         try:
@@ -294,6 +327,7 @@ class SentinelAgent:
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None
         self.naukri_rate_limit_until = None
+        self._instahyre_skills = None
         self._error_detector = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
@@ -310,7 +344,25 @@ class SentinelAgent:
             'steps_taken': 0,
             'success': False
         }
-    
+
+    def _get_instahyre_skills(self) -> List[str]:
+        """Return a stable random selection of 8 language and 7 tool skills.
+
+        The selection is drawn once per task run and cached so repeated
+        ``_handle_scripted_fallback`` calls during the same task keep the same
+        15 skills (the Selectize field caps at 15). ``reset_per_task_state``
+        clears the cache so each new task gets a fresh draw.
+        """
+        if self._instahyre_skills is None:
+            languages = random.sample(
+                self.INSTAHYRE_SKILL_LANGUAGES, self.INSTAHYRE_SKILL_LANGUAGES_COUNT
+            )
+            tools = random.sample(
+                self.INSTAHYRE_SKILL_TOOLS, self.INSTAHYRE_SKILL_TOOLS_COUNT
+            )
+            self._instahyre_skills = languages + tools
+        return self._instahyre_skills
+
     def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
         """
         Format answer appropriately for the field type.
@@ -493,7 +545,13 @@ class SentinelAgent:
             'worked with us before', 'work with us before', 'work for us before',
             'have you ever worked here before', 'have you ever been employed by',
             'have you ever worked for', 'have you ever worked with',
-            'previously worked for', 'previously employed by', 'former employee of'
+            'previously worked for', 'previously employed by', 'former employee of',
+            'previously worked in', 'previously worked at', 'worked with in the past',
+            'worked for in the past', 'worked at in the past', 'worked in the past',
+            'worked with us in the past', 'worked for us in the past', 'worked here in the past',
+            'previously worked here', 'previously employed here', 'ex-infosys', 'ex infosys',
+            'ex-nielsen', 'ex nielsen', 'worked with nielsen', 'worked with infosys',
+            'previously worked in infosys', 'previously worked in nielsen'
         ]) and 'everbridge' not in question_lower and 'fiserv' not in question_lower:
             return 'No', 0.98
 
@@ -1189,6 +1247,20 @@ class SentinelAgent:
         if ('which tools' in question_lower or 'tools, platforms' in question_lower or 'tools platforms' in question_lower or 'tools are you proficient' in question_lower or 'proficient in? (e.g., jira' in question_lower or 'tools, platforms, or technologies are you proficient' in question_lower):
             return 'Git, GitHub, Jira, Docker, Kubernetes, AWS, Postman, IntelliJ IDEA, VS Code, CI/CD', 0.98
 
+        # Handle AWS services list questions ("Which AWS services do you have hands-on experience with?")
+        if ('which aws' in question_lower or 'what aws' in question_lower or 'aws services' in question_lower) and any(w in question_lower for w in ['hands-on', 'hands on', 'experience', 'worked with', 'worked on', 'proficient', 'list', 'services do you']):
+            return 'EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway', 0.98
+
+        # Handle backend stack expertise ("Do you have expertise in at least one major backend stack...")
+        if 'expertise in at least one major backend' in question_lower or 'expertise in a major backend' in question_lower or ('expertise in' in question_lower and 'backend stack' in question_lower) or ('major backend stack' in question_lower and 'expertise' in question_lower):
+            return 'Yes, extensive expertise in Java/Spring Boot, Python, Node.js, and REST microservices architectures.', 0.98
+
+        # Handle GPU and AI inference runtimes
+        if 'ai or gpu platforms' in question_lower or 'gpu platforms' in question_lower:
+            return 'Designed and deployed scalable LLM inference pipelines with vLLM, LangChain, and RAG architectures on AWS GPU instances (G4dn/G5).', 0.98
+        if 'model-serving' in question_lower or 'model serving' in question_lower or 'inference runtimes' in question_lower:
+            return 'vLLM, Ollama, TensorRT-LLM, TorchServe, FastAPI on AWS ECS/EKS.', 0.98
+
         # Handle production security controls (IAM, secrets, encryption, audit logging)
         if ('security controls' in question_lower or 'iam' in question_lower or 'secrets' in question_lower or 'encryption' in question_lower) and ('audit logging' in question_lower or 'production' in question_lower or 'handled' in question_lower or 'security' in question_lower):
             return 'Yes, hands-on experience with AWS IAM, secrets management, SSL/TLS encryption, security groups, and audit logging.', 0.98
@@ -1198,7 +1270,7 @@ class SentinelAgent:
             return 'Anytime between 10 AM - 4 PM', 0.95
 
         # Handle work mode questions ("Current work mode 1.Remote 2.Onsite 3.Hybrid ...", "Preferred work mode", etc.)
-        if 'work mode' in question_lower or 'workplace type' in question_lower or ('remote' in question_lower and 'onsite' in question_lower and 'hybrid' in question_lower):
+        if 'work mode' in question_lower or 'workplace type' in question_lower or ('remote' in question_lower and 'onsite' in question_lower and 'hybrid' in question_lower) or 'work setup' in question_lower:
             return 'Hybrid', 0.95
 
         # Handle expertise questions ("Expertise with React.js?") - NOT years of experience
@@ -1216,7 +1288,7 @@ class SentinelAgent:
         # Handle location-specific questions
         if is_location_specific:
             # If the question asks about relocation or willingness to relocate/work from city, always answer Yes!
-            if any(w in question_lower for w in ('relocat', 'willing', 'open to', 'ready to', 'comfortable', 'work from', 'or relocate')):
+            if any(w in question_lower for w in ('relocat', 'willing', 'open to', 'ready to', 'comfortable', 'work from', 'work at', 'work in', 'or relocate', 'okay', 'ok to', 'fine with', 'agree to', 'flexible', 'open for', 'open with')):
                 return 'Yes', 0.95
             # Check for Mumbai-only/exclusivity requirements
             if ('mumbai' in question_lower or 'andheri' in question_lower) and ('need candidates from' in question_lower or 'candidates from mumbai' in question_lower or 'from mumbai itself' in question_lower):
@@ -4646,7 +4718,7 @@ class SentinelAgent:
                                     '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                                     + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                                 );
-                                if (snackBody && snackBody.offsetParent !== null) {
+                                if (snackBody && window.__SENTINEL_ISVISIBLE__(snackBody)) {
                                     const text = snackBody.innerText.toLowerCase();
                                     if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
                                         // Dismiss if close button exists
@@ -4657,7 +4729,7 @@ class SentinelAgent:
                                 }
                                 // Generic fallback check
                                 const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-                                if (genericSnack && genericSnack.offsetParent !== null
+                                if (genericSnack && window.__SENTINEL_ISVISIBLE__(genericSnack)
                                     && (genericSnack.innerText.toLowerCase().includes('error')
                                         || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
@@ -4752,6 +4824,15 @@ class SentinelAgent:
             
                 # Naukri Chatbot handling (for direct APPLY_CLICKED)
                 if 'APPLY_CLICKED' in result and 'LINKEDIN' not in result and 'naukri.com' in current_url:
+                    # Poll immediately for the async error toast before any further
+                    # waits/clicks. The toast surfaces shortly after the click and can
+                    # disappear (or be destroyed by navigation) within a few seconds.
+                    early_snackbar = await self._poll_naukri_error_snackbar(attempts=5, interval=0.8)
+                    if 'NAUKRI_RATE_LIMITED' in early_snackbar:
+                        self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
+                        print(f"⚠️ Naukri Rate Limit Detected! Pausing until {self.naukri_rate_limit_until.strftime('%H:%M')}")
+                        self.state.task_complete = True
+                        break
                     print("⏳ Waiting for Naukri chatbot...")
                     await asyncio.sleep(random.uniform(1.5, 2.5))
                     chatbot_visible = await self._page.is_visible(
@@ -5181,16 +5262,30 @@ class SentinelAgent:
         from Python a few times with a short delay and returns the
         ``NAUKRI_RATE_LIMITED`` signal string the moment the toast surfaces.
         """
+        # Ensure the shared visibility helper exists (it is injected together with
+        # the patterns and is lost after a hard navigation until re-injected).
+        try:
+            await self._inject_patterns_once()
+        except Exception:
+            pass
         # Hybrid selector (Options A+B+C): matches the real DOM structure
         # (.ss-snackbar-error / .ss-snackbar.ss-snackbar-active) while keeping
         # the legacy .ss-snackbar-body + attribute fallbacks for resilience.
         check_js = """
         () => {
+            const isVis = window.__SENTINEL_ISVISIBLE__ || function(el) {
+                if (!el) return false;
+                if (el.offsetParent !== null) return true;
+                const r = el.getBoundingClientRect();
+                if (r.width === 0 && r.height === 0) return false;
+                const cs = getComputedStyle(el);
+                return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity || '1') !== 0;
+            };
             const snack = document.querySelector(
                 '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                 + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
             );
-            if (!snack || snack.offsetParent === null) return null;
+            if (!snack || !isVis(snack)) return null;
             const text = (snack.innerText || '').toLowerCase();
             const hit = text.includes('error') || text.includes('limit')
                 || text.includes('reached') || text.includes('something went wrong')
@@ -5202,7 +5297,7 @@ class SentinelAgent:
             }
             // Generic fallback (Option C): any snackbar/toast mentioning "error"
             const generic = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-            if (generic && generic.offsetParent !== null) {
+            if (generic && isVis(generic)) {
                 const gText = (generic.innerText || '').toLowerCase();
                 if (gText.includes('error') || gText.includes('processing')) {
                     return 'NAUKRI_RATE_LIMITED: Generic error detected (' + gText + ')';
@@ -7156,7 +7251,7 @@ class SentinelAgent:
                     '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                     + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                 );
-                if (snackBody && snackBody.offsetParent !== null) {{
+                if (snackBody && window.__SENTINEL_ISVISIBLE__(snackBody)) {{
                     const snackText = snackBody.innerText.toLowerCase();
                     if (snackText.includes('error') || snackText.includes('limit') || snackText.includes('reached') || snackText.includes('something went wrong') || snackText.includes('processing') || snackText.includes('some error')) {{
                         const closeBtn = document.querySelector('button.ss-close, .ss-close');
@@ -7166,7 +7261,7 @@ class SentinelAgent:
                 }}
                 // Generic fallback (Option C): any snackbar/toast/alert mentioning error/processing
                 const genericSnackStart = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-                if (genericSnackStart && genericSnackStart.offsetParent !== null) {{
+                if (genericSnackStart && window.__SENTINEL_ISVISIBLE__(genericSnackStart)) {{
                     const gText = (genericSnackStart.innerText || '').toLowerCase();
                     if (gText.includes('error') || gText.includes('processing') || gText.includes('some error')) {{
                         return 'NAUKRI_RATE_LIMITED: Generic error detected at loop start';
@@ -7213,7 +7308,7 @@ class SentinelAgent:
                         '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                         + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                     );
-                    if (errSnack && errSnack.offsetParent !== null) {{
+                    if (errSnack && window.__SENTINEL_ISVISIBLE__(errSnack)) {{
                         const errText = (errSnack.innerText || '').toLowerCase();
                         if (errText.includes('error') || errText.includes('processing') || errText.includes('some error')) {{
                             const closeBtn = document.querySelector('button.ss-close, .ss-close');
@@ -7427,7 +7522,7 @@ class SentinelAgent:
                         '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                         + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                     );
-                    if (errSnack2 && errSnack2.offsetParent !== null) {{
+                    if (errSnack2 && window.__SENTINEL_ISVISIBLE__(errSnack2)) {{
                         const errText2 = (errSnack2.innerText || '').toLowerCase();
                         if (errText2.includes('error') || errText2.includes('processing') || errText2.includes('some error')) {{
                             const closeBtn = document.querySelector('button.ss-close, .ss-close');
@@ -8951,6 +9046,15 @@ class SentinelAgent:
                 await self._page.evaluate("isInter => { window.__SENTINEL_IS_INTERSESSION__ = isInter; }", is_intersession)
             except Exception:
                 pass
+            # Stable per-task Instahyre skill selection (8 languages + 7 tools).
+            try:
+                instahyre_skills = self._get_instahyre_skills()
+                await self._page.evaluate(
+                    "skills => { window.__SENTINEL_INSTAHYRE_SKILLS__ = skills; }",
+                    instahyre_skills,
+                )
+            except Exception:
+                pass
         
         if self._page and 'linkedin' in (self._page.url or ''):
             await self._handle_linkedin_resume_upload(self._page)
@@ -10004,10 +10108,15 @@ return resolveDynamic(bestMatch);
                     const negativePatterns = [
                         'worked with', 'worked for', 'worked at',
                         'work with', 'work for', 'work at',
+                        'worked in', 'work in',
                         'worked with us', 'work with us', 'work for us', 'worked for us',
                         'work before', 'worked before', 'ex-employee', 'former employee', 'employed before',
                         'employed by', 'employed at', 'employed with',
                         'previously employed', 'ever been employed', 'currently employed',
+                        'previously worked in', 'previously worked at', 'previously worked with', 'previously worked for',
+                        'worked with in the past', 'worked in the past', 'worked for in the past', 'worked at in the past',
+                        'worked with infosys', 'worked with nielsen', 'worked with navan', 'worked with visa',
+                        'worked with reed', 'worked with mastercard', 'worked in infosys', 'previously worked in infosys',
                         'applied with', 'applied to', 'applied in last', 'applied in the last',
                         'applied in past', 'applied in the past', '6/12 months', '6-12 months',
                         'past 6 months', 'last 6 months', 'past 12 months', 'last 12 months',
@@ -10018,8 +10127,6 @@ return resolveDynamic(bestMatch);
                         'subsidiary', 'subsidiaries',
                         'relative working', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
                         'criminal', 'felony', 'convict',
-                        'worked with nielsen', 'worked with navan', 'worked with visa',
-                        'worked with reed', 'worked with mastercard',
                         'sponsorship', 'visa sponsorship', 'require sponsorship', 'require visa', 'need visa', 'need sponsorship',
                         'outside business', 'side business', 'side businesses', 'advisory', 'board role', 'board roles', 'dual employment', 'moonlighting', 'secondary employment',
                         'disability', 'handicapped',
@@ -10973,9 +11080,15 @@ return resolveDynamic(bestMatch);
                                 } else if (combinedText.includes('state') || combinedText.includes('province')) {
                                     answer = 'Karnataka';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling state/province');
+                                } else if (combinedText.includes('county')) {
+                                    answer = 'Bangalore Urban';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling county');
                                 } else if (combinedText.includes('country') || combinedText.includes('nation')) {
                                     answer = 'India';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling country');
+                                } else if ((combinedText.includes('email') && (combinedText.includes('phone') || combinedText.includes('mobile') || combinedText.includes('contact no'))) || combinedText.includes('contact details')) {
+                                    answer = 'siddhant3646@gmail.com / 7905828880';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling email and phone composite');
                                 } else if (combinedText.includes('phone') || combinedText.includes('mobile') || combinedText.includes('contact number')) {
                                     answer = '7905828880';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling phone/mobile');
@@ -11695,7 +11808,9 @@ return resolveDynamic(bestMatch);
                                     }
                                     
                                     if (minVal !== null && maxVal !== null) {
-                                        const targetVal = minVal < 1000 ? ctcInLakhs : ctcInINR;
+                                        const isLakhUnit = /lpa|lac|lakh/i.test(cleaned);
+                                        const isINRUnit = (minVal >= 1000 || (maxVal >= 1000 && maxVal < 900000000)) && !isLakhUnit;
+                                        const targetVal = isINRUnit ? ctcInINR : ctcInLakhs;
                                         if (targetVal >= minVal && targetVal <= maxVal) {
                                             bestCTCOpt = opt;
                                             window.__SENTINEL_DEBUG__&&console.log('CTC Select: Exact range match -', opt.text, 'for', targetVal);
@@ -14566,7 +14681,7 @@ return resolveDynamic(bestMatch);
                         '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                         + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                     );
-                    if (snackbarBody) {
+                    if (snackbarBody && window.__SENTINEL_ISVISIBLE__(snackbarBody)) {
                         const snackText = snackbarBody.innerText.toLowerCase();
                         if (snackText.includes('error processing') || snackText.includes('some error')
                             || snackText.includes('error') || snackText.includes('processing')
@@ -14579,7 +14694,7 @@ return resolveDynamic(bestMatch);
                     }
                     // Generic fallback (Option C)
                     const genericSnackFallback = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-                    if (genericSnackFallback && genericSnackFallback.offsetParent !== null) {
+                    if (genericSnackFallback && window.__SENTINEL_ISVISIBLE__(genericSnackFallback)) {
                         const gText = (genericSnackFallback.innerText || '').toLowerCase();
                         if (gText.includes('error') || gText.includes('processing') || gText.includes('some error')) {
                             return 'NAUKRI_RATE_LIMITED: Generic error detected during fallback start';
@@ -15681,7 +15796,7 @@ return resolveDynamic(bestMatch);
                                     '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                                     + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                                 );
-                                if (snackBody && snackBody.offsetParent !== null) {
+                                if (snackBody && window.__SENTINEL_ISVISIBLE__(snackBody)) {
                                     const text = snackBody.innerText.toLowerCase();
                                     if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
                                         const closeBtn = document.querySelector('button.ss-close, .ss-close');
@@ -15691,7 +15806,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 // Generic fallback
                                 const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-                                if (genericSnack && genericSnack.offsetParent !== null
+                                if (genericSnack && window.__SENTINEL_ISVISIBLE__(genericSnack)
                                     && (genericSnack.innerText.toLowerCase().includes('error')
                                         || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
@@ -15724,7 +15839,7 @@ return resolveDynamic(bestMatch);
                                     '.ss-snackbar-error, .ss-snackbar.ss-snackbar-active, .ss-snackbar-body, '
                                     + '[class*="ss-snackbar"][class*="error"], div.ss-snackbar[role="alert"]'
                                 );
-                                if (snackBody && snackBody.offsetParent !== null) {
+                                if (snackBody && window.__SENTINEL_ISVISIBLE__(snackBody)) {
                                     const text = snackBody.innerText.toLowerCase();
                                     if (text.includes('error') || text.includes('limit') || text.includes('reached') || text.includes('something went wrong') || text.includes('processing') || text.includes('some error')) {
                                         const closeBtn = document.querySelector('button.ss-close, .ss-close');
@@ -15734,7 +15849,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 // Generic fallback
                                 const genericSnack = document.querySelector('[class*="snackbar"], [class*="toast"], [role="alert"]');
-                                if (genericSnack && genericSnack.offsetParent !== null
+                                if (genericSnack && window.__SENTINEL_ISVISIBLE__(genericSnack)
                                     && (genericSnack.innerText.toLowerCase().includes('error')
                                         || genericSnack.innerText.toLowerCase().includes('processing'))) {
                                     return 'NAUKRI_RATE_LIMITED: Generic error detected';
@@ -15961,7 +16076,9 @@ return resolveDynamic(bestMatch);
                         }
                         
                         // A. Skills - Batch add missing skills via Selectize API (FIRST)
-                        const skillsToAdd = ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
+                        const skillsToAdd = (window.__SENTINEL_INSTAHYRE_SKILLS__ && window.__SENTINEL_INSTAHYRE_SKILLS__.length)
+                            ? window.__SENTINEL_INSTAHYRE_SKILLS__
+                            : ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
                         const skillsSelectize = getSelectize('skills');
                         const skillsInput = document.querySelector('input#skills-selectized');
                         if (skillsInput) {

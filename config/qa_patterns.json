@@ -568,7 +568,31 @@
         "please mention your email and phone number",
         "your email and phone number",
         "email id and mobile number",
-        "email and mobile number"
+        "email and mobile number",
+        "contact details (contact no. & email)",
+        "contact details (contact no & email)",
+        "contact details (contact no. and email)",
+        "contact details (contact number & email)",
+        "contact details (contact number and email)",
+        "contact details (contact no and email)",
+        "contact details (contact no. & email id)",
+        "contact details (email and contact no)",
+        "contact details (email and phone)",
+        "contact details (contact no & email id)",
+        "contact no. & email",
+        "contact no & email",
+        "contact no and email",
+        "contact no. and email id",
+        "contact number & email",
+        "contact number and email",
+        "phone number and email",
+        "phone & email",
+        "phone and email",
+        "mobile & email",
+        "mobile and email",
+        "contact details",
+        "share contact details",
+        "your contact details"
       ],
       "category": "personal_info",
       "default": "siddhant3646@gmail.com / 7905828880",
@@ -580,7 +604,7 @@
         "textarea": "siddhant3646@gmail.com / 7905828880",
         "checkbox": "Yes"
       },
-      "priority": 10
+      "priority": 18
     },
     "pan_card": {
       "patterns": [
@@ -7475,7 +7499,7 @@
       "patterns": [
         "how soon"
       ],
-      "category": "preference",
+      "category": "notice_period",
       "default": "15 days",
       "input_type_defaults": {
         "radio": "15 days",
@@ -16564,11 +16588,35 @@
         "work for us before",
         "have you ever worked at",
         "have you worked with us",
-        "have you worked for us"
+        "have you worked for us",
+        "have you previously worked in infosys",
+        "have you previously worked in infosys?(if yes provide ex-infy id)",
+        "previously worked in infosys",
+        "have you worked in infosys",
+        "have you previously worked in",
+        "previously worked in",
+        "previously worked at",
+        "have you previously worked at",
+        "have you worked with nielsen in the past",
+        "have you worked with nielsen in the past ?",
+        "have you worked with nielsen in the past ? required",
+        "have you worked with nielsen",
+        "worked with nielsen in the past",
+        "worked with nielsen",
+        "worked with in the past",
+        "worked for in the past",
+        "worked at in the past",
+        "worked in the past",
+        "have you worked in the past",
+        "have you worked with us in the past",
+        "have you worked for us in the past",
+        "worked here in the past",
+        "previously worked here",
+        "previously employed here"
       ],
       "category": "yes_no",
       "default": "No",
-      "priority": 15,
+      "priority": 18,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
@@ -87029,11 +87077,16 @@
         "how soon can you join if selected",
         "how soon can you join",
         "how early can you join us",
-        "earliest timeline to join"
+        "earliest timeline to join",
+        "how soon you can join",
+        "how soon you can join us",
+        "how soon you can join?",
+        "how soon you can start",
+        "how soon can you join?"
       ],
       "category": "notice_period",
       "default": "15 Days",
-      "priority": 15,
+      "priority": 16,
       "input_type_defaults": {
         "radio": "15 Days",
         "select": "15 Days",
@@ -234197,6 +234250,151 @@
         "text": "Hybrid",
         "number": "3",
         "textarea": "Hybrid",
+        "checkbox": "Yes"
+      }
+    },
+    "county": {
+      "patterns": [
+        "county",
+        "county name",
+        "county/district",
+        "county / district",
+        "select county"
+      ],
+      "category": "location",
+      "default": "Bangalore Urban",
+      "priority": 12,
+      "input_type_defaults": {
+        "text": "Bangalore Urban",
+        "select": "Bangalore Urban",
+        "textarea": "Bangalore Urban",
+        "radio": "Bangalore Urban",
+        "checkbox": "Bangalore Urban"
+      }
+    },
+    "aws_services_list": {
+      "patterns": [
+        "which aws services do you have hands-on experience with",
+        "which aws services do you have hands on experience with",
+        "which aws services do you have experience with",
+        "what aws services have you worked with",
+        "which aws services have you worked on",
+        "which aws services have you used",
+        "which aws services do you use",
+        "aws services you have hands-on experience with",
+        "aws services you have hands on experience with",
+        "aws services worked on",
+        "aws services experience",
+        "list aws services"
+      ],
+      "category": "skills",
+      "default": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+      "priority": 16,
+      "input_type_defaults": {
+        "text": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+        "textarea": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+        "select": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+        "radio": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "backend_stack_expertise": {
+      "patterns": [
+        "do you have expertise in at least one major backend stack",
+        "expertise in at least one major backend stack",
+        "do you have expertise in a major backend stack",
+        "expertise in major backend stack",
+        "expertise in at least one major backend",
+        "major backend stack (e.g., java/spring boot, go, python, node.js, or c#/.net)",
+        "major backend stack (e.g., java/spring boot"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive expertise in Java/Spring Boot, Python, Node.js, and REST microservices architectures.",
+      "priority": 16,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, extensive expertise in Java/Spring Boot, Python, and Node.js.",
+        "textarea": "Yes, extensive expertise in Java/Spring Boot, Python, and Node.js.",
+        "checkbox": "Yes"
+      }
+    },
+    "gpu_platforms_designed": {
+      "patterns": [
+        "ai or gpu platforms personally designed or scaled",
+        "ai or gpu platforms designed or scaled",
+        "gpu platforms personally designed or scaled",
+        "gpu platforms designed",
+        "ai platforms designed or scaled"
+      ],
+      "category": "skills",
+      "default": "Designed and deployed scalable LLM inference pipelines with vLLM, LangChain, and RAG architectures on AWS GPU instances (G4dn/G5).",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "Designed and deployed scalable LLM inference pipelines with vLLM, LangChain, and RAG architectures on AWS GPU instances (G4dn/G5).",
+        "textarea": "Designed and deployed scalable LLM inference pipelines with vLLM, LangChain, and RAG architectures on AWS GPU instances (G4dn/G5).",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "model_serving_runtimes": {
+      "patterns": [
+        "model-serving and inference runtimes used in production",
+        "model serving and inference runtimes used in production",
+        "model-serving and inference runtimes",
+        "inference runtimes used in production",
+        "model serving runtimes used in production"
+      ],
+      "category": "skills",
+      "default": "vLLM, Ollama, TensorRT-LLM, TorchServe, FastAPI on AWS ECS/EKS.",
+      "priority": 15,
+      "input_type_defaults": {
+        "text": "vLLM, Ollama, TensorRT-LLM, TorchServe, FastAPI on AWS ECS/EKS.",
+        "textarea": "vLLM, Ollama, TensorRT-LLM, TorchServe, FastAPI on AWS ECS/EKS.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "preferred_work_setup": {
+      "patterns": [
+        "what kind of work setup do you prefer",
+        "kind of work setup do you prefer",
+        "preferred work setup",
+        "work setup do you prefer",
+        "work setup preference"
+      ],
+      "category": "preference",
+      "default": "Hybrid",
+      "priority": 14,
+      "input_type_defaults": {
+        "radio": "Hybrid",
+        "select": "Hybrid",
+        "text": "Hybrid",
+        "textarea": "Hybrid or Remote",
+        "checkbox": "Hybrid"
+      }
+    },
+    "willing_to_relocate_delhi": {
+      "patterns": [
+        "are you okay to work at delhi location",
+        "are you okay to work at delhi location?",
+        "are you ok to work at delhi location",
+        "are you ok to work at delhi location?",
+        "are you okay to work in delhi",
+        "are you ok to work in delhi",
+        "okay to work at delhi location",
+        "ok to work at delhi location"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 16,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes, open to work in Delhi/NCR and relocate.",
+        "textarea": "Yes, open to work in Delhi/NCR and relocate.",
         "checkbox": "Yes"
       }
     }

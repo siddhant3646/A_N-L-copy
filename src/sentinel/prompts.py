@@ -237,7 +237,7 @@ PHASE 1 - CONFIGURE SEARCH:
 # 2. Set Experience: 4 years (Disabled - uncomment to re-enable)
 2. Select Company Size: Large (select#company-size, option with value "2")
 3. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills (one by one): Java, JavaScript, TypeScript, SpringBoot, ReactJS, AWS, Git, OpenAI, LLMs, Claude, FastAPI, Machine Learning, Generative AI
+4. Add Skills (one by one): use the runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
 5. Add Job Functions: All - Software Engineering
 6. Click "Show results" button after all configuration is complete
 
@@ -274,7 +274,7 @@ PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
 # 2. Otherwise: Set Experience: 4 years (Disabled - uncomment to re-enable)
 2. Otherwise: Select Company Size: All (select#company-size, option "All" / option with value "" or "0")
 3. Otherwise: Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills (one by one): Java, JavaScript, TypeScript, SpringBoot, ReactJS, AWS, Git, OpenAI, LLMs, Claude, FastAPI, Machine Learning, Generative AI
+4. Add Skills (one by one): use the runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
 5. Add Job Functions: All - Software Engineering
 6. Click "Show results"
 

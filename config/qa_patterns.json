@@ -4734,6 +4734,116 @@
       },
       "priority": 7
     },
+    "organization_industry": {
+      "patterns": [
+        "which industry did your last organizations belong to",
+        "which industry did your last organization belong to",
+        "which industry did your previous organizations belong to",
+        "which industry did your current or previous organization belong to",
+        "which industry did your previous organization belong to",
+        "which industry does your current organization belong to",
+        "which industry does your organization belong to",
+        "industry did your last organizations belong to",
+        "industry did your last organization belong to",
+        "industry did your previous organizations belong to",
+        "industry did your previous organization belong to",
+        "industry of your last organization",
+        "industry of your current organization",
+        "industry your organization belongs to",
+        "industry your last organization belongs to",
+        "industry did your organization belong to",
+        "industry does your organization belong to",
+        "industry did your company belong to",
+        "which industry did your company belong to",
+        "industry of your company",
+        "industry your company belongs to",
+        "what industry does your company belong to",
+        "what industry did your organization belong to"
+      ],
+      "category": "employment",
+      "default": "SaaS B2B",
+      "priority": 15,
+      "negative_patterns": [
+        "experience",
+        "years of experience",
+        "how many years",
+        "certifications"
+      ],
+      "input_type_defaults": {
+        "radio": "SaaS B2B",
+        "select": "SaaS B2B",
+        "text": "SaaS B2B",
+        "textarea": "SaaS B2B, Enterprise Software, Cyber Security, Internet",
+        "checkbox": "SaaS B2B, Fintech B2B, Cyber security, Internet"
+      }
+    },
+    "organization_size": {
+      "patterns": [
+        "size of your latest organization",
+        "size of your organization",
+        "size of your current organization",
+        "size of your previous organization",
+        "company size",
+        "organization size",
+        "number of employees in your organization",
+        "number of employees in your company",
+        "employee count of your organization"
+      ],
+      "category": "employment",
+      "default": "1000+ employees",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "1000+ employees",
+        "select": "1000+ employees",
+        "text": "1000+ employees",
+        "textarea": "1000+ employees",
+        "checkbox": "1000+ employees"
+      }
+    },
+    "role_capacity": {
+      "patterns": [
+        "what capacity did you work in",
+        "what capacity do you work in",
+        "capacity did you work in",
+        "capacity do you work in",
+        "in your last roles, what capacity did you work in",
+        "in your last role, what capacity did you work in",
+        "work capacity",
+        "ic or manager",
+        "individual contributor or people leader",
+        "individual contributor or manager"
+      ],
+      "category": "employment",
+      "default": "Individual Contributor",
+      "priority": 12,
+      "input_type_defaults": {
+        "radio": "Individual Contributor",
+        "select": "Individual Contributor",
+        "text": "Individual Contributor",
+        "textarea": "Individual Contributor",
+        "checkbox": "Individual Contributor"
+      }
+    },
+    "applied_before_role": {
+      "patterns": [
+        "have you applied to termgrid for a role before",
+        "have you applied for a role before",
+        "applied for a role before",
+        "have you applied to this company for a role before",
+        "applied to this organization before for a role",
+        "is this your first application"
+      ],
+      "category": "yes_no",
+      "default": "No, this is my first application",
+      "priority": 13,
+      "input_type_defaults": {
+        "radio": "No, this is my first application",
+        "select": "No, this is my first application",
+        "text": "No, this is my first application",
+        "textarea": "No, this is my first application",
+        "checkbox": "No, this is my first application"
+      }
+    },
     "naukri_functional_area": {
       "patterns": [
         "functional area",
@@ -14703,17 +14813,22 @@
         "travel amount",
         "travel percent",
         "travel frequency",
-        "travel expectations"
+        "travel expectations",
+        "percentage of travel",
+        "what percentage of travel",
+        "willing to travel up to",
+        "amount of travel"
       ],
       "category": "location",
-      "default": "Yes",
+      "default": "Up to 25%",
       "priority": 9,
       "input_type_defaults": {
-        "radio": "Yes",
-        "select": "Yes",
-        "text": "Yes",
+        "radio": "Up to 25%",
+        "select": "Up to 25%",
+        "text": "Up to 25%",
+        "number": "25",
         "checkbox": "Yes",
-        "textarea": "Yes"
+        "textarea": "Yes, I am comfortable with business travel up to 25%."
       }
     },
     "relocation_expenses": {
@@ -84466,7 +84581,20 @@
         "promoted in current company",
         "noc",
         "relieving letter",
-        "service certificate"
+        "service certificate",
+        "industry",
+        "size",
+        "sector",
+        "type",
+        "domain",
+        "revenue",
+        "headcount",
+        "nature",
+        "focus",
+        "which industry",
+        "what industry",
+        "product based or service",
+        "product or service"
       ]
     },
     "work_exp_description": {

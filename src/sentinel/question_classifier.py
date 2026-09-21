@@ -102,7 +102,7 @@ CATEGORY_PATTERNS = {
     },
     QuestionCategory.EXPERIENCE: {
         "keywords": [
-            "experience", "years", "exp", "tenure", "worked", "yrs",
+            "experience", "years", "exp", "tenure", "yrs",
             "work experience", "professional experience", "total exp",
             "how long", "duration", "period"
         ],
@@ -179,7 +179,8 @@ CATEGORY_PATTERNS = {
             "have all", "educational and professional", "lawfully authorized",
             "consent", "collect", "process", "data", "1825 days", "730 days", "highradius",
             "ai apis", "openai", "anthropic", "ci/cd", "cicd", "cloud servers",
-            "database architecture", "leading architecture"
+            "database architecture", "leading architecture", "conflict of interest",
+            "cooling period", "non-compete", "sponsorship"
         ],
         "regex_patterns": [
             r"willing\s*to\s*relocate",
@@ -189,6 +190,9 @@ CATEGORY_PATTERNS = {
             r"interested\s*in",
             r"do\s*you\s*have",
             r"have\s*you\s*ever",
+            r"have\s*you\s*worked",
+            r"worked\s+(?:with|for|at|in)",
+            r"employed\s+(?:by|at|with)",
             r"are\s*you",
             r"have\s*your\s*all\seducational",
             r"educational\s*and\s*professional",
@@ -600,8 +604,42 @@ class QuestionClassifier:
     
     def _get_yes_no_answer(self, question: str) -> str:
         """Get yes/no answer with context awareness."""
+        import re
         question_lower = question.lower()
         
+        # 1. First check if it is an ex-employee / worked with current/past employer (Everbridge / Fiserv)
+        if any(kw in question_lower for kw in ['everbridge', 'fiserv']):
+            if any(kw in question_lower for kw in ['worked', 'employed', 'employee', 'associated', 'intern']):
+                return "Yes"
+        
+        # 2. Technical keywords with word boundary matching for short tokens
+        tech_keywords = {
+            'aws', 'python', 'java', 'react', 'angular', 'vue', 'node', 'nodejs', 'typescript', 'javascript', 
+            'docker', 'kubernetes', 'gcp', 'azure', 'git', 'jenkins', 'sql', 'nosql', 'kafka', 
+            'redis', 'spark', 'hadoop', 'c#', 'c++', 'go', 'golang', 'rust', 'ruby', 'php', 'html', 'css', 
+            'devops', 'agile', 'scrum', 'jira', 'sap', 'salesforce', 'lambda', 'ecs', 's3', 'sqs',
+            'celery', 'asyncio', 'async', 'asynchronous', 'background', 'rabbitmq', 'logging',
+            'claude', 'chatgpt', 'copilot', 'cursor', 'gemini', 'openai', 'anthropic', 'langchain',
+            'llamaindex', 'ollama', 'huggingface', 'pytorch', 'tensorflow', 'springboot', 'spring',
+            'hibernate', 'fastapi', 'django', 'flask', 'express', 'nextjs', 'vuejs', 'graphql',
+            'rest', 'microservices', 'postgresql', 'mysql', 'mongodb', 'elasticsearch', 'api', 'apis',
+            'frontend', 'backend', 'fullstack', 'full-stack', 'ci/cd', 'cicd', 'cloud'
+        }
+        has_tech = False
+        for tk in tech_keywords:
+            if len(tk) <= 3 or '#' in tk or '+' in tk:
+                if re.search(r'\b' + re.escape(tk) + r'\b', question_lower):
+                    has_tech = True
+                    break
+            else:
+                if tk in question_lower:
+                    has_tech = True
+                    break
+        
+        # If asking about tech stack/tools experience in yes/no format -> Yes!
+        if has_tech and any(kw in question_lower for kw in ['have you worked', 'have you ever worked', 'worked with', 'worked on', 'hands-on', 'hands on', 'experience in', 'experience with', 'familiar with', 'knowledge of']):
+            return "Yes"
+
         # Questions that should be "No" - compliance, cooling period, backlogs, gaps, non-compete
         negative_indicators = [
             # Visa/Sponsorship
@@ -623,7 +661,6 @@ class QuestionClassifier:
             "worked with reed", "worked for reed", "employed by reed",
             "worked with nielsen", "worked for nielsen", "employed by nielsen",
             "worked at visa", "worked at navan", "worked at reed", "worked at nielsen",
-            "have you worked", "have you ever worked", "previously employed",
             "currently employed by", "currently an employee of", 
             "ever been employed", "employed by any of the",
             # Conflict of interest
@@ -637,33 +674,31 @@ class QuestionClassifier:
             "competitor", "competing firm",
         ]
         
-        # Check for company-specific compliance patterns
-        # Pattern: "worked with/at/for [Company]" or similar
-        company_compliance_patterns = [
-            r"worked\s+(?:with|for|at|in)\s+\w+",
-            r"employed\s+(?:by|at|with)\s+\w+",
-            r"have\s+you\s+ever\s+worked",
-            r"have\s+you\s+worked",
-            r"previously\s+employed",
-            r"currently\s+employed\s+(?:by|at)",
-            r"(?:relative|family)\s+(?:working|employed)",
-            r"(?:conflict|competing)"
-        ]
-        
+        if not has_tech:
+            negative_indicators.extend([
+                "have you worked", "have you ever worked", "previously employed"
+            ])
+
         # Check negative indicators first
         for indicator in negative_indicators:
             if indicator in question_lower:
                 return "No"
         
         # Check for employment history compliance questions using regex
-        import re
-        for pattern in company_compliance_patterns:
-            if re.search(pattern, question_lower):
-                # Additional check: if it's asking about current company (Everbridge), answer truthfully
-                if "everbridge" in question_lower or "fiserv" in question_lower:
-                    return "Yes"
-                # For all other companies, default to "No" (compliance safe answer)
-                return "No"
+        if not has_tech:
+            company_compliance_patterns = [
+                r"worked\s+(?:with|for|at|in)\s+\w+",
+                r"employed\s+(?:by|at|with)\s+\w+",
+                r"have\s+you\s+ever\s+worked",
+                r"have\s+you\s+worked",
+                r"previously\s+employed",
+                r"currently\s+employed\s+(?:by|at)",
+                r"(?:relative|family)\s+(?:working|employed)",
+                r"(?:conflict|competing)"
+            ]
+            for pattern in company_compliance_patterns:
+                if re.search(pattern, question_lower):
+                    return "No"
         
         return "Yes"
     

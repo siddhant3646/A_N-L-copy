@@ -1053,7 +1053,7 @@ class SentinelAgent:
             return 'Software Engineer 2', 0.98
 
         # Current company / Current employer
-        if question_lower.strip() in ['company', 'current company', 'current employer', 'present company', 'present employer', 'employer'] or any(kw in question_lower for kw in ['name of current company', 'name of current employer', 'your current company']):
+        if (question_lower.strip() in ['company', 'current company', 'current employer', 'present company', 'present employer', 'employer'] or any(kw in question_lower for kw in ['name of current company', 'name of current employer', 'your current company'])) and not any(neg in question_lower for neg in ['industry', 'size', 'sector', 'domain', 'type', 'headcount', 'turnover', 'revenue', 'product based', 'service based', 'product or service', 'nature', 'scale', 'ic or manager', 'capacity', 'description']):
             return 'Everbridge', 0.98
 
         # Compound CTC (Current & Expected in one field)
@@ -9308,7 +9308,7 @@ class SentinelAgent:
                         const isHoldingOfferQ = /holding\\s*any\\s*offer|offer\\s*in\\s*hand|competing\\s*offer|holding\\s*offers?/i.test(qLower);
                         const isOrgProductQ = /product\\s*based\\s*or\\s*service|product\\s*or\\s*service/i.test(qLower);
                         const isMeetReqQ = /meet\\s*(the\\s*)?requirements|meet\\s*all\\s*requirements|eligible\\s*for\\s*(this\\s*)?(position|role)/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -9389,7 +9389,7 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -10723,7 +10723,7 @@ return resolveDynamic(bestMatch);
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
                                     else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
-                                    else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
+                                    else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
                                     else if (/work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel) || /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
                                     else if (isNumberError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }

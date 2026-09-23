@@ -430,7 +430,7 @@ def create_fingerprint(question: str) -> str:
         return ""
     
     # Convert to lowercase
-    text = question.lower()
+    text = question.lower().strip()
     
     # Remove punctuation except apostrophes (for contractions)
     text = re.sub(r"[^\w\s']", ' ', text)
@@ -443,7 +443,7 @@ def create_fingerprint(question: str) -> str:
     
     # Remove stop words
     filtered_words = [w for w in normalized_words if w not in STOP_WORDS and len(w) > 1]
-    
+        
     # Sort alphabetically for consistency
     filtered_words.sort()
     
@@ -855,16 +855,52 @@ class FingerprintMatcher:
     
     def __init__(self):
         """Initialize with empty fingerprint cache."""
-        self.fingerprint_cache: Dict[str, str] = {}  # fingerprint -> answer
+        self.fingerprint_cache: Dict[str, Dict] = {}  # fingerprint -> {'answer': answer, 'priority': priority, 'category': category, 'raw_pattern': pattern}
+        self.exact_question_cache: Dict[str, str] = {}  # exact lowercased question -> answer
         self.question_index: Dict[str, str] = {}  # question -> fingerprint
     
-    def add_pattern(self, question: str, answer: str):
+    def add_pattern(self, question: str, answer: str, priority: int = 10, category: str = ""):
         """Add a question-answer pattern."""
+        if not question or not answer:
+            return
+        q_clean = question.lower().strip()
+        self.exact_question_cache[q_clean] = answer
+        
         fingerprint = create_fingerprint(question)
         if not fingerprint or not fingerprint.strip():
             return
-        self.fingerprint_cache[fingerprint] = answer
-        self.question_index[question.lower()] = fingerprint
+            
+        self.question_index[q_clean] = fingerprint
+        
+        # Priority / collision handling
+        if fingerprint in self.fingerprint_cache:
+            existing = self.fingerprint_cache[fingerprint]
+            existing_priority = existing.get('priority', 0) if isinstance(existing, dict) else 10
+            existing_raw = existing.get('raw_pattern', '') if isinstance(existing, dict) else ''
+            
+            if priority > existing_priority:
+                self.fingerprint_cache[fingerprint] = {
+                    'answer': answer,
+                    'priority': priority,
+                    'category': category,
+                    'raw_pattern': question
+                }
+            elif priority == existing_priority:
+                # When priority is equal, shorter / more exact pattern wins
+                if len(q_clean) < len(existing_raw) or not existing_raw:
+                    self.fingerprint_cache[fingerprint] = {
+                        'answer': answer,
+                        'priority': priority,
+                        'category': category,
+                        'raw_pattern': question
+                    }
+        else:
+            self.fingerprint_cache[fingerprint] = {
+                'answer': answer,
+                'priority': priority,
+                'category': category,
+                'raw_pattern': question
+            }
     
     def match(self, question: str) -> Optional[Tuple[str, float]]:
         """
@@ -873,20 +909,31 @@ class FingerprintMatcher:
         Returns:
             Tuple of (answer, confidence) or None
         """
+        if not question:
+            return None
+            
+        q_clean = question.lower().strip()
+        
+        # 1. Exact question match
+        if q_clean in self.exact_question_cache:
+            return (self.exact_question_cache[q_clean], 1.0)
+            
         fingerprint = create_fingerprint(question)
         if not fingerprint or not fingerprint.strip():
             return None
         
-        # Exact fingerprint match
+        # 2. Exact fingerprint match
         if fingerprint in self.fingerprint_cache:
-            return (self.fingerprint_cache[fingerprint], 1.0)
+            entry = self.fingerprint_cache[fingerprint]
+            ans = entry['answer'] if isinstance(entry, dict) else entry
+            return (ans, 1.0)
         
-        # Partial fingerprint match
+        # 3. Partial fingerprint match
         fp_words = set(fingerprint.split())
         best_match = None
         best_score = 0.0
         
-        for cached_fp, answer in self.fingerprint_cache.items():
+        for cached_fp, entry in self.fingerprint_cache.items():
             cached_words = set(cached_fp.split())
             common_words = fp_words & cached_words
             
@@ -895,7 +942,7 @@ class FingerprintMatcher:
                 score = len(common_words) / max(len(fp_words), len(cached_words))
                 if score > best_score and score >= 0.85:  # At least 85% match for high precision
                     best_score = score
-                    best_match = answer
+                    best_match = entry['answer'] if isinstance(entry, dict) else entry
         
         if best_match:
             return (best_match, best_score)
@@ -915,8 +962,10 @@ class FingerprintMatcher:
             # JSON structure format
             for pattern_id, pattern_data in patterns.items():
                 answer = pattern_data.get('default', '')
+                priority = pattern_data.get('priority', 10)
+                category = pattern_data.get('category', '')
                 for question in pattern_data.get('patterns', []):
-                    self.add_pattern(question, answer)
+                    self.add_pattern(question, answer, priority=priority, category=category)
         else:
             # Flat dict format {question: answer}
             for question, answer in patterns.items():

@@ -43,12 +43,14 @@ class TestInstahyreInboxTask(unittest.TestCase):
         self.assertIn("Company Size: Large", prompt)
 
     def test_instahyre_job_functions_all_software_engineering(self):
-        """Verify Task 4 and Intersession tasks use only All - Software Engineering for job functions."""
+        """Verify Task 4 and Intersession tasks select the Job Functions 'All' checkbox."""
         for prompt_name, prompt in [
             ("INSTAHYRE_SEARCH_TASK", prompts.INSTAHYRE_SEARCH_TASK),
             ("INSTAHYRE_INTERSESSION_TASK", prompts.INSTAHYRE_INTERSESSION_TASK),
         ]:
-            self.assertIn("Job Functions: All - Software Engineering", prompt, f"Failed for {prompt_name}")
+            self.assertIn('Job Functions "All"', prompt, f"Failed for {prompt_name}")
+            self.assertIn("job_functions", prompt, f"Failed for {prompt_name}")
+            self.assertNotIn("All - Software Engineering", prompt, f"Specific job function found in {prompt_name}")
             self.assertNotIn("Backend Development", prompt, f"Backend Development found in {prompt_name}")
             self.assertNotIn("Frontend Development", prompt, f"Frontend Development found in {prompt_name}")
             self.assertNotIn("Full-Stack Development", prompt, f"Full-Stack Development found in {prompt_name}")

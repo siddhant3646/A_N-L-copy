@@ -232,35 +232,33 @@ NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true imm
 
 GOAL: Configure job search filters on Instahyre and apply to 5 jobs.
 
-PHASE 1 - CONFIGURE SEARCH:
-1. Click "Search other jobs" dropdown to expand the filter panel
-# 2. Set Experience: 4 years (Disabled - uncomment to re-enable)
-2. Select Company Size: Large (select#company-size, option with value "2")
-3. Add Locations (one by one, same as skills entry): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills (one by one): use the runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
-5. Add Job Functions: All - Software Engineering
-6. Click "Show results" button after all configuration is complete
+PHASE 1 - ENTER SKILLS & SEARCH:
+1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
+2. Click "Search" button (button.skills-search-btn)
 
-PHASE 2 - APPLY TO JOBS (Loop 5 times):
-1. On results page, click "View »" button on a job card
+PHASE 2 - CONFIGURE FILTERS:
+1. Select Company Size: Large (label.ui-checkbox with "Large" / input[ng-click*="selectFilter('company_size'"])
+2. Select Job Functions "All" checkbox (label.ui-checkbox with "All (5505)", input[ng-click*="job_functions"]). Do not select any specific job function.
+3. Select Locations "All" checkbox (label.ui-checkbox with "All (181)", input[ng-click*="jobLocations"]). Do not add individual cities.
+
+PHASE 3 - APPLY TO JOBS (Loop 5 times):
+1. On results page, click "View job »" button (button.btn-interested.btn-success) on a job card
 2. Wait for job modal to open
 3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
-4. Click "Apply" button in the modal
+4. Click "Apply" button (button.btn-primary.new-btn) in the modal
 5. Wait for confirmation, close modal if needed
 6. Repeat for next job until 5 applications completed
 
 TASK COMPLETE: After 5 applications submitted.
 
 DOM Selectors:
-- Search Other Jobs Dropdown: Text "Search other jobs" or .filter-toggle
-- Company Size: select#company-size (option value "2" = Large)
-- Skills Input: input#skills-selectized
-- Job Functions Input: input#job-functions-selectized
-# - Experience Input: input#years (Disabled - uncomment to re-enable)
-- Location Input: input#location-selectized
-- Show Results Button: button#show-results
-- View Button: button#interested-btn, button.button-interested.btn-success
-- Apply Button: button.btn-primary.new-btn, button.btn-lg.btn-primary
+- Skills Input: input#skills-drop-select-job-search-selectized, input#skills-selectized
+- Search Button: button.skills-search-btn, button.btn-filled.btn-sm.skills-search-btn
+- Company Size: Large (label.ui-checkbox:has-text("Large") input, selectFilter('company_size', ...))
+- Locations "All": label.ui-checkbox:has-text("All") input[ng-click*="jobLocations"]
+- Job Functions "All": label.ui-checkbox:has-text("All") input[ng-click*="job_functions"]
+- View Button: button.btn-interested.btn-success, button.btn-success.btn-md.btn-interested, button.btn-interested, button#interested-btn
+- Apply Button: button.btn-primary.new-btn, button.btn-lg.btn-primary, button.btn.btn-lg.btn-primary.new-btn
 """
 
 # Intersession task - runs during wait period between cycles (20 jobs)
@@ -269,33 +267,34 @@ NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true imm
 
 GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 
-PHASE 1 - QUICK FILTER SETUP (Skip if already configured):
-1. If filters are already set, skip to Phase 2
-# 2. Otherwise: Set Experience: 4 years (Disabled - uncomment to re-enable)
-2. Otherwise: Select Company Size: All (select#company-size, option "All" / option with value "" or "0")
-3. Otherwise: Add Locations (one by one): Bangalore, Work from home / Remote, Delhi / NCR, Hyderabad, Mumbai, Pune, Gurgaon, Noida, Chennai, Kolkata, Ahmedabad
-4. Add Skills (one by one): use the runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
-5. Add Job Functions: All - Software Engineering
-6. Click "Show results"
+PHASE 1 - ENTER SKILLS & SEARCH (Skip if already configured):
+1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
+2. Click "Search" button (button.skills-search-btn)
 
-PHASE 2 - APPLY TO 20 JOBS (High Volume Session):
-1. On results page, click "View »" button on a job card
+PHASE 2 - CONFIGURE FILTERS:
+1. Select Company Size: All (label.ui-checkbox with "All" / input[ng-click*="selectFilter('company_size', 'ALL')"])
+2. Select Job Functions "All" checkbox (label.ui-checkbox with "All (5505)", input[ng-click*="job_functions"]). Do not select any specific job function.
+3. Select Locations "All" checkbox (label.ui-checkbox with "All (181)", input[ng-click*="jobLocations"]). Do not add individual cities.
+
+PHASE 3 - APPLY TO 20 JOBS (High Volume Session):
+1. On results page, click "View job »" button (button.btn-interested.btn-success) on a job card
 2. Wait for job modal to open
 3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
-4. Click "Apply" button in the modal
+4. Click "Apply" button (button.btn-primary.new-btn) in the modal
 5. Wait for confirmation, close modal if needed
 6. Repeat until 20 applications completed
 
 TASK COMPLETE: After 20 applications submitted.
 
+
 DOM Selectors:
-- Company Size: select#company-size (option "All" or value "" / "0")
-- Skills Input: input#skills-selectized
-- Job Functions Input: input#job-functions-selectized
-- Location Input: input#locations-selectized
-- Show Results Button: button#show-results
-- View Button: button#interested-btn, button.button-interested.btn-success
-- Apply Button: button.btn-primary.new-btn, button.btn-lg.btn-primary
+- Skills Input: input#skills-drop-select-job-search-selectized, input#skills-selectized
+- Search Button: button.skills-search-btn, button.btn-filled.btn-sm.skills-search-btn
+- Company Size: All (input[ng-click*="selectFilter('company_size', 'ALL')"], label.ui-checkbox:has-text("All") input)
+- Locations "All": label.ui-checkbox:has-text("All") input[ng-click*="jobLocations"]
+- Job Functions "All": label.ui-checkbox:has-text("All") input[ng-click*="job_functions"]
+- View Button: button.btn-interested.btn-success, button.btn-success.btn-md.btn-interested, button.btn-interested, button#interested-btn
+- Apply Button: button.btn-primary.new-btn, button.btn-lg.btn-primary, button.btn.btn-lg.btn-primary.new-btn
 """
 
 INSTAHYRE_INBOX_QUESTIONNAIRE_TASK = COMMON_CONTEXT + """

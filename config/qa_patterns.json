@@ -60,6 +60,186 @@
     }
   },
   "patterns": {
+    "location_confirmation_bangalore": {
+      "patterns": [
+        "your current location is bangalore",
+        "your current location is bangalore?",
+        "your current location is bengaluru",
+        "your current location is bengaluru?",
+        "current location is bangalore",
+        "current location is bengaluru",
+        "is your current location bangalore",
+        "is your current location bengaluru",
+        "are you currently located in bangalore",
+        "are you currently located in bengaluru"
+      ],
+      "category": "location",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "textarea": "Yes, currently residing in Bengaluru, Karnataka, India."
+      }
+    },
+    "location_confirmation_other_cities": {
+      "patterns": [
+        "your current location is chennai",
+        "your current location is chennai?",
+        "your current location is hyderabad",
+        "your current location is hyderabad?",
+        "your current location is pune",
+        "your current location is pune?",
+        "your current location is mumbai",
+        "your current location is mumbai?",
+        "your current location is delhi",
+        "your current location is noida",
+        "your current location is gurgaon",
+        "current location is chennai",
+        "current location is hyderabad",
+        "current location is pune",
+        "current location is mumbai",
+        "is your current location chennai",
+        "is your current location hyderabad",
+        "is your current location pune",
+        "is your current location mumbai"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "No",
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "textarea": "No, current location is Bengaluru."
+      }
+    },
+    "notice_period_in_months_exact": {
+      "patterns": [
+        "notice periods in months",
+        "notice periods (in months)",
+        "notice in months",
+        "notice period in months",
+        "notice period (in months)",
+        "notice in month",
+        "notice periods in month",
+        "notice period in month",
+        "notice periods (in month)",
+        "notice period (in month)"
+      ],
+      "category": "notice_period",
+      "default": "0.5",
+      "numeric_default": "0.5",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "0.5",
+        "number": "0.5",
+        "radio": "0.5",
+        "select": "0.5",
+        "textarea": "0.5 month (15 days notice period serving notice)"
+      }
+    },
+    "applied_before_first_time": {
+      "patterns": [
+        "have you applied to termgrid for a role before",
+        "have you applied to termgrid for a role before?",
+        "have you applied for a role before",
+        "have you applied to this role before",
+        "have you applied to us before",
+        "applied to us before",
+        "applied to this company before"
+      ],
+      "category": "compliance",
+      "default": "No, this is my first application",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "No, this is my first application",
+        "radio": "No",
+        "select": "No",
+        "textarea": "No, this is my first application."
+      }
+    },
+    "ex_company_with_id": {
+      "patterns": [
+        "have you previously worked in infosys?(if yes provide ex-infy id)",
+        "have you previously worked in infosys",
+        "previously worked in infosys",
+        "ex-infy id",
+        "ex infy id",
+        "ex-infy",
+        "ex employee id if previously worked",
+        "if yes provide ex-infy id"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "No",
+        "radio": "No",
+        "select": "No",
+        "textarea": "No"
+      }
+    },
+    "which_aws_services_list": {
+      "patterns": [
+        "which aws services do you have experience with",
+        "which aws services do you have hands-on experience with",
+        "which aws services have you used",
+        "aws services used",
+        "aws services worked with",
+        "aws services you have experience with",
+        "list of aws services you have worked on",
+        "aws services experience"
+      ],
+      "category": "skills",
+      "default": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway",
+        "textarea": "Extensive production experience with AWS services including EC2, S3, Lambda, ECS, RDS (PostgreSQL/MySQL), CloudWatch, SQS, SNS, IAM, DynamoDB, and API Gateway for resilient microservices.",
+        "radio": "Yes",
+        "select": "Yes"
+      }
+    },
+    "product_company_experience_yn": {
+      "patterns": [
+        "experience with a product-based company?",
+        "experience with a product-based company",
+        "product based company experience",
+        "worked in a product based company",
+        "have you worked in a product-based company",
+        "do you have experience with a product-based company"
+      ],
+      "category": "experience",
+      "default": "Yes, currently working at Everbridge (product-based company)",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, Everbridge",
+        "radio": "Yes",
+        "select": "Yes",
+        "textarea": "Yes, currently working as Software Engineer 2 at Everbridge, building enterprise-scale critical event management SaaS products."
+      }
+    },
+    "backend_stack_expertise_yn": {
+      "patterns": [
+        "do you have expertise in at least one major backend stack (e.g. node.js, python, java, go, or rust)?",
+        "do you have expertise in at least one major backend stack",
+        "expertise in at least one major backend stack",
+        "backend stack expertise"
+      ],
+      "category": "skills",
+      "default": "Yes, Java / Spring Boot and Node.js",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Java, Spring Boot, Node.js",
+        "radio": "Yes",
+        "select": "Yes",
+        "textarea": "Yes, strong expertise in Java / Spring Boot and Node.js backend architectures with microservices, Kafka, and PostgreSQL/MongoDB."
+      }
+    },
     "published_app_store_play_store": {
       "patterns": [
         "published apps on the app store or google play store",
@@ -234396,6 +234576,127 @@
         "text": "Yes, open to work in Delhi/NCR and relocate.",
         "textarea": "Yes, open to work in Delhi/NCR and relocate.",
         "checkbox": "Yes"
+      }
+    },
+    "ctc_in_lacs_per_annum_current": {
+      "patterns": [
+        "what is your current ctc in lacs per annum",
+        "what is your current ctc in lacs per annum?",
+        "what is your current ctc in lakhs per annum",
+        "what is your current ctc in lakhs per annum?",
+        "current ctc in lacs per annum",
+        "current ctc in lakhs per annum",
+        "current ctc in lacs",
+        "current ctc in lakhs",
+        "what is your current ctc in lacs",
+        "what is your current ctc in lakhs",
+        "current ctc (in lacs)",
+        "current ctc (in lakhs)",
+        "what is your current ctc in lpa",
+        "what is your current ctc in lpa?",
+        "what’s your current ctc (cost to company)",
+        "what’s your current ctc (cost to company)?",
+        "what is your current ctc (cost to company)",
+        "what is your current ctc (cost to company)?",
+        "what is your current ctc (in inr)",
+        "what is your current ctc (in inr)?"
+      ],
+      "category": "salary",
+      "default": "23",
+      "numeric_default": "23",
+      "lpa_default": "23",
+      "inr_default": "2300000",
+      "priority": 18,
+      "negative_patterns": [
+        "expected ctc",
+        "expected salary",
+        "ectc",
+        "desired ctc",
+        "salary expectation"
+      ],
+      "input_type_defaults": {
+        "radio": "23",
+        "select": "23 LPA",
+        "text": "23",
+        "number": "23",
+        "text_inr": "2300000",
+        "text_lpa": "23",
+        "textarea": "23 LPA",
+        "checkbox": "Yes"
+      }
+    },
+    "ctc_in_lacs_per_annum_expected": {
+      "patterns": [
+        "what is your expected ctc in lacs per annum",
+        "what is your expected ctc in lacs per annum?",
+        "what is your expected ctc in lakhs per annum",
+        "what is your expected ctc in lakhs per annum?",
+        "expected ctc in lacs per annum",
+        "expected ctc in lakhs per annum",
+        "expected ctc in lakhs",
+        "expected ctc in lacs",
+        "what is your expected ctc in lacs",
+        "what is your expected ctc in lakhs",
+        "expected ctc (in lacs)",
+        "expected ctc (in lakhs)",
+        "what is your expected ctc in lpa",
+        "what is your expected ctc in lpa?",
+        "what’s your expected ctc (cost to company)",
+        "what’s your expected ctc (cost to company)?",
+        "what is your expected ctc (cost to company)",
+        "what is your expected ctc (cost to company)?",
+        "what is your expected ctc (in inr)",
+        "what is your expected ctc (in inr)?"
+      ],
+      "category": "salary",
+      "default": "30",
+      "numeric_default": "30",
+      "lpa_default": "30",
+      "inr_default": "3000000",
+      "priority": 18,
+      "negative_patterns": [
+        "current ctc",
+        "current salary",
+        "cctc",
+        "present ctc",
+        "fixed ctc"
+      ],
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "30",
+        "number": "30",
+        "text_inr": "3000000",
+        "text_lpa": "30",
+        "textarea": "30 LPA",
+        "checkbox": "Yes"
+      }
+    },
+    "ex_infosys_employee_id_or_na": {
+      "patterns": [
+        "are you ex-infosys employee ?if yes mention your infosys employee id if not, write na",
+        "are you ex-infosys employee ?if yes mention your infosys employee id if not write na",
+        "are you ex infosys employee ?if yes mention your infosys employee id if not, write na",
+        "are you ex-infosys employee? if yes mention your infosys employee id if not, write na",
+        "are you ex infosys employee? if yes mention your infosys employee id if not, write na",
+        "have you previously worked in infosys?(if yes provide ex-infy id)",
+        "have you previously worked in infosys? (if yes provide ex-infy id)",
+        "have you previously worked in infosys (if yes provide ex-infy id)",
+        "previously worked in infosys?(if yes provide ex-infy id)",
+        "previously worked in infosys (if yes provide ex-infy id)",
+        "ex-infosys employee id",
+        "infosys employee id if not, write na",
+        "infosys employee id if not write na"
+      ],
+      "category": "compliance",
+      "default": "NA",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "NA",
+        "textarea": "NA",
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No"
       }
     }
   },

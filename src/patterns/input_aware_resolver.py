@@ -138,8 +138,8 @@ class InputAwareResolver:
         'mid': ['2', '2-3', '3', '3-4', 'mid', 'intermediate'],
         'senior': ['4', '4-5', '5', '5+', 'senior', 'lead'],
         
-        'immediate': ['0', 'immediate', 'now', 'immediately'],
-        'short': ['15', '15 days', '2 weeks', 'short notice'],
+        'immediate': ['0', 'immediate', 'now', 'immediately', 'immediate joiner'],
+        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'serving notice', 'serving notice period', 'currently serving'],
         'standard': ['30', '30 days', '1 month', 'one month', 'standard'],
         'long': ['60', '60 days', '2 months', '90', '90 days', '3 months'],
         

@@ -102,6 +102,7 @@ class SentinelAgent:
     def __init__(self, browser=None):
         self.browser = browser
         self._page = None  # Set by runner
+        self._task_description: str = ""  # Active task description
         self.state = SentinelState()
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None  # Timestamp when LinkedIn can resume
@@ -551,8 +552,15 @@ class SentinelAgent:
             'worked with us in the past', 'worked for us in the past', 'worked here in the past',
             'previously worked here', 'previously employed here', 'ex-infosys', 'ex infosys',
             'ex-nielsen', 'ex nielsen', 'worked with nielsen', 'worked with infosys',
-            'previously worked in infosys', 'previously worked in nielsen'
+            'previously worked in infosys', 'previously worked in nielsen',
+            'ex-infy', 'ex infy', 'provide ex-infy id', 'ex-infy id',
+            'applied to termgrid', 'have you applied to termgrid', 'applied for a role before',
+            'applied to us before', 'applied to this role before'
         ]) and 'everbridge' not in question_lower and 'fiserv' not in question_lower:
+            if 'first application' in question_lower or 'termgrid' in question_lower or 'applied' in question_lower:
+                return 'No, this is my first application', 0.98
+            if any(na_kw in question_lower for na_kw in ['write na', 'mention your infosys employee id', 'provide ex-infy id', 'employee id if not', 'if not, write na', 'if not write na', 'if not mention na', 'if not please mention na', 'if not enter na', 'if not write n/a', 'if not, write n/a', 'if no write na', 'if no, write na']):
+                return 'NA', 0.98
             return 'No', 0.98
 
         # TCS EP Number (Candidature ID)
@@ -1383,9 +1391,9 @@ class SentinelAgent:
                     return '250000', 0.98
                 return '191667', 0.98
 
-            # LPA (Lakhs Per Annum) questions - return LPA value, not annual INR
-            # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum" -> "23" or "30"
-            if 'lpa' in question_lower or 'lakh' in question_lower or 'per annum' in question_lower:
+            # LPA (Lakhs Per Annum / Lacs) questions - return LPA value, not annual INR
+            # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum", "CTC in Lacs" -> "23" or "30"
+            if any(u in question_lower for u in ['lpa', 'lakh', 'lakhs', 'lac', 'lacs', 'per annum']):
                 if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
                     return '30', 0.98
                 return '23', 0.98
@@ -1442,6 +1450,10 @@ class SentinelAgent:
             return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
 
         if is_notice_question or is_immediate_joiners_only:
+            # Notice period in months check
+            if any(m in question_lower for m in ['in months', 'in month', '(in months)', '(in month)', 'months', 'month']) and not any(d in question_lower for d in ['days', 'day']):
+                return '0.5', 0.98
+
             if self._current_platform in ('linkedin', 'linkedin_form'):
                 # Check if it is a yes/no question about serving notice
                 is_yes_no = 'serving' in question_lower and not any(kw in question_lower for kw in ['days', 'how many', 'duration', 'lwd', 'last working'])
@@ -1464,9 +1476,24 @@ class SentinelAgent:
                     return '15 days', 0.95
         
         if is_location_question:
+            # Location verification/confirmation questions (e.g. "Your Current Location is Chennai?", "Is your current location Bangalore?")
+            is_loc_confirm = (
+                question_lower.startswith('is your current location') or
+                question_lower.startswith('your current location is') or
+                question_lower.startswith('are you currently located in') or
+                question_lower.startswith('current location is') or
+                (question_lower.endswith('?') and 'current location' in question_lower and any(c in question_lower for c in ['chennai', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'bangalore', 'bengaluru']))
+            ) and not any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable with', 'preferred', 'and'))
+            
+            if is_loc_confirm:
+                if 'bangalore' in question_lower or 'bengaluru' in question_lower:
+                    return 'Yes', 0.98
+                else:
+                    return 'No', 0.98
+
             if 'preferred' in question_lower and 'current' in question_lower:
                 return 'Bengaluru (Current), Open to Delhi NCR, Hyderabad, Pune, Mumbai, Gurgaon, Chennai', 0.98
-            if 'current' in question_lower and any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable', 'gurugram', 'hyderabad', 'noida', 'pune', 'delhi', 'mumbai', 'chennai', 'kolkata', 'ahmedabad')):
+            if 'current' in question_lower and any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable with', 'comfortable to', 'willing to', 'open for')):
                 return 'Bengaluru (Current). Yes, I am fine with Gurugram or Hyderabad and open to relocation.', 0.98
             if 'preferred' in question_lower:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
@@ -1660,9 +1687,10 @@ class SentinelAgent:
             Tuple of (answer, confidence) or None
         """
         # Check self-healing learned patterns first
-        healed = self._self_healing.get_learned_answer(question)
-        if healed and healed[1] >= 0.5:
-            return healed
+        if self._self_healing:
+            healed = self._self_healing.get_learned_answer(question)
+            if healed and healed[1] >= 0.5:
+                return healed
 
         return None
     
@@ -5027,8 +5055,8 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
-                # Instahyre: Show Results clicked - continue to View/Apply phase
-                if 'INSTAHYRE_SHOW_RESULTS_CLICKED' in result:
+                # Instahyre: Show Results / Search clicked - continue to View/Apply phase
+                if 'INSTAHYRE_SHOW_RESULTS_CLICKED' in result or 'INSTAHYRE_SEARCH_CLICKED' in result:
                     print("🔍 Instahyre search configured, now looking for jobs to apply...")
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for results to load
                     continue  # Continue to View/Apply loop
@@ -5693,7 +5721,7 @@ class SentinelAgent:
                                     }
 
                                     // Extract questionnaire url from recruiter message
-                                    const match = html.match(/href=[\"'](https?:\\/\\/[^\"']*questionnaire[^\"']*)[\"']/i);
+                                    const match = html.match(/href=["'](https?:[/][/][^"']*questionnaire[^"']*)["']/i);
                                     if (match && !qUrl) {
                                         qUrl = match[1];
                                     }
@@ -7456,9 +7484,11 @@ class SentinelAgent:
                     const isCurrentSalary = qLowerSalary.includes('current') ||
                         qLowerSalary.includes('cctc') ||
                         qLowerSalary.includes('present');
-                    // Use full INR values for Naukri
+                    // Use full INR values for Naukri unless lacs/lakhs/lpa is requested
                     if (isCompoundCtc) {{
                         answer = 'Current: 2300000, Expected: 3000000';
+                    }} else if (/in lacs|in lakhs|lacs per annum|lakhs per annum|in lpa|in lac|in lakh/i.test(qLowerSalary)) {{
+                        answer = isCurrentSalary ? '23' : '30';
                     }} else {{
                         answer = isCurrentSalary ? '2300000' : '3000000';
                     }}
@@ -9055,6 +9085,11 @@ class SentinelAgent:
                 )
             except Exception:
                 pass
+            if self.state.step_count <= 1:
+                try:
+                    await self._page.evaluate("() => { sessionStorage.removeItem('instahyre_results_clicked'); sessionStorage.removeItem('instahyre_pending'); }")
+                except Exception:
+                    pass
         
         if self._page and 'linkedin' in (self._page.url or ''):
             await self._handle_linkedin_resume_upload(self._page)
@@ -9148,6 +9183,11 @@ class SentinelAgent:
                     Object.keys(KNOWN_PATTERNS).forEach(k => {
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (defaultObj && defaultObj.category === 'notice_period') {
+                            const kLower = k.toLowerCase();
+                            if (kLower.includes('month')) {
+                                KNOWN_PATTERNS[k] = '0.5';
+                                return;
+                            }
                             const v = KNOWN_PATTERNS[k];
                             if (v && typeof v === 'string') {
                                 if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
@@ -9412,7 +9452,7 @@ class SentinelAgent:
                         const isHoldingOfferQ = /holding\\s*any\\s*offer|offer\\s*in\\s*hand|competing\\s*offer|holding\\s*offers?/i.test(qLower);
                         const isOrgProductQ = /product\\s*based\\s*or\\s*service|product\\s*or\\s*service/i.test(qLower);
                         const isMeetReqQ = /meet\\s*(the\\s*)?requirements|meet\\s*all\\s*requirements|eligible\\s*for\\s*(this\\s*)?(position|role)/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -9493,7 +9533,7 @@ class SentinelAgent:
                     // --- PASS 6: Platform-specific overrides (post-match disambiguation) ---
                     if (bestMatch) {
                         const isAgeQ = /18\\s*years|years\\s*of\\s*age|age\\s*of\\s*18|at\\s*least\\s*18|legal\\s*age/i.test(qLower);
-                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
+                        const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
@@ -9759,9 +9799,61 @@ class SentinelAgent:
                             score = 100;
                         }
                         else if (effectiveExpVal > 0) {
+                            const isNoticeContext = /notice|np|join|soon|start|how quickly|when can you|availability/i.test(ans) || (answerNum === 15);
+                            if (isNoticeContext) {
+                                const isLessMonth = /less\\s+than\\s+(?:a|1)\\s+month|<(?:=\\s*)?1\\s*month|under\\s+(?:a|1)\\s+month|within\\s+(?:a|1)\\s+month|0\\s*[-–to]\\s*1\\s*month|1\\s*month\\s*or\\s*less/i.test(lowerLabel);
+                                const isShortNoticeOpt = /15\\s*days?|serving\\s*notice|immediate|right\\s*away|0\\s*[-–to]\\s*15|0\\s*[-–to]\\s*30|15\\s*[-–to]\\s*30|within\\s*15|less\\s+than\\s*30/i.test(lowerLabel);
+                                const isOneMonth = /\\b1\\s*month\\b|\\b30\\s*days\\b/i.test(lowerLabel) && !isLessMonth;
+                                const isTwoMonths = /\\b2\\s*months?\\b|\\b60\\s*days\\b/i.test(lowerLabel);
+                                const isThreeMonthsPlus = /\\b3\\s*months?\\b|\\b90\\s*days\\b|more\\s+than\\s+3\\s*months|>\\s*3\\s*months/i.test(lowerLabel);
+
+                                if (isShortNoticeOpt) {
+                                    score = 98;
+                                } else if (isLessMonth) {
+                                    score = 95;
+                                } else if (isOneMonth) {
+                                    score = 80;
+                                } else if (isTwoMonths) {
+                                    score = 30;
+                                } else if (isThreeMonthsPlus) {
+                                    score = 10;
+                                } else {
+                                    const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                    const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                                    const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                    const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above|\\+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                    const targetDays = answerNum > 0 ? answerNum : 15;
+                                    
+                                    if (dayRangeMatch) {
+                                        const min = parseFloat(dayRangeMatch[1]);
+                                        const max = parseFloat(dayRangeMatch[2]);
+                                        if (targetDays >= min && targetDays <= max) {
+                                            const rangeSize = max - min;
+                                            const offset = Math.abs(targetDays - (min + max) / 2);
+                                            score = Math.max(0, 95 - (offset / Math.max(rangeSize, 1) * 20));
+                                        } else {
+                                            const diff = Math.min(Math.abs(targetDays - min), Math.abs(targetDays - max));
+                                            score = Math.max(0, 60 - diff * 2);
+                                        }
+                                    } else if (weekMatch) {
+                                        const boundDays = parseFloat(weekMatch[1]) * 7;
+                                        if (targetDays <= boundDays) score = 90;
+                                        else score = Math.max(0, 60 - (targetDays - boundDays) * 2);
+                                    } else if (dayLessMatch) {
+                                        const bound = parseFloat(dayLessMatch[1]);
+                                        if (targetDays <= bound) score = 90;
+                                        else score = Math.max(0, 60 - Math.abs(targetDays - bound) * 2);
+                                    } else if (dayMoreMatch) {
+                                        const bound = parseFloat(dayMoreMatch[1]);
+                                        if (targetDays >= bound) score = 85;
+                                        else score = Math.max(0, 60 - Math.abs(targetDays - bound) * 2);
+                                    }
+                                }
+                            }
+                            
                             // Day-based matching (notice period questions)
                             const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
-                            if (isDayUnit) {
+                            if (score === 0 && isDayUnit) {
                                 const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
                                 const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
@@ -9908,9 +10000,61 @@ class SentinelAgent:
                             score = 100;
                         }
                         else if (answerNum > 0) {
+                            const isNoticeContext = /notice|np|join|soon|start|how quickly|when can you|availability/i.test(ans) || (answerNum === 15);
+                            if (isNoticeContext) {
+                                const isLessMonth = /less\\s+than\\s+(?:a|1)\\s+month|<(?:=\\s*)?1\\s*month|under\\s+(?:a|1)\\s+month|within\\s+(?:a|1)\\s+month|0\\s*[-–to]\\s*1\\s*month|1\\s*month\\s*or\\s*less/i.test(lowerLabel);
+                                const isShortNoticeOpt = /15\\s*days?|serving\\s*notice|immediate|right\\s*away|0\\s*[-–to]\\s*15|0\\s*[-–to]\\s*30|15\\s*[-–to]\\s*30|within\\s*15|less\\s+than\\s*30/i.test(lowerLabel);
+                                const isOneMonth = /\\b1\\s*month\\b|\\b30\\s*days\\b/i.test(lowerLabel) && !isLessMonth;
+                                const isTwoMonths = /\\b2\\s*months?\\b|\\b60\\s*days\\b/i.test(lowerLabel);
+                                const isThreeMonthsPlus = /\\b3\\s*months?\\b|\\b90\\s*days\\b|more\\s+than\\s+3\\s*months|>\\s*3\\s*months/i.test(lowerLabel);
+
+                                if (isShortNoticeOpt) {
+                                    score = 98;
+                                } else if (isLessMonth) {
+                                    score = 95;
+                                } else if (isOneMonth) {
+                                    score = 80;
+                                } else if (isTwoMonths) {
+                                    score = 30;
+                                } else if (isThreeMonthsPlus) {
+                                    score = 10;
+                                } else {
+                                    const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                    const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
+                                    const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)/i);
+                                    const dayMoreMatch = lowerLabel.match(/(?:more\\s+than|over|above|\\+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                                    const targetDays = answerNum > 0 ? answerNum : 15;
+                                    
+                                    if (dayRangeMatch) {
+                                        const min = parseFloat(dayRangeMatch[1]);
+                                        const max = parseFloat(dayRangeMatch[2]);
+                                        if (targetDays >= min && targetDays <= max) {
+                                            const rangeSize = max - min;
+                                            const offset = Math.abs(targetDays - (min + max) / 2);
+                                            score = Math.max(0, 95 - (offset / Math.max(rangeSize, 1) * 20));
+                                        } else {
+                                            const diff = Math.min(Math.abs(targetDays - min), Math.abs(targetDays - max));
+                                            score = Math.max(0, 60 - diff * 2);
+                                        }
+                                    } else if (weekMatch) {
+                                        const boundDays = parseFloat(weekMatch[1]) * 7;
+                                        if (targetDays <= boundDays) score = 90;
+                                        else score = Math.max(0, 60 - (targetDays - boundDays) * 2);
+                                    } else if (dayLessMatch) {
+                                        const bound = parseFloat(dayLessMatch[1]);
+                                        if (targetDays <= bound) score = 90;
+                                        else score = Math.max(0, 60 - Math.abs(targetDays - bound) * 2);
+                                    } else if (dayMoreMatch) {
+                                        const bound = parseFloat(dayMoreMatch[1]);
+                                        if (targetDays >= bound) score = 85;
+                                        else score = Math.max(0, 60 - Math.abs(targetDays - bound) * 2);
+                                    }
+                                }
+                            }
+
                             // Check for day-based labels first (notice period questions)
                             const isDayUnit = /days?|weeks?|immediate/i.test(lowerLabel);
-                            if (isDayUnit) {
+                            if (score === 0 && isDayUnit) {
                                 const dayRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)\\s*days/i);
                                 const weekMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*weeks/i);
                                 const dayLessMatch = lowerLabel.match(/(?:within|less\\s+than|under|up\\s+to)\\s+(\\d+(?:\\.\\d+)?)\\s*days/i);
@@ -10877,14 +11021,15 @@ return resolveDynamic(bestMatch);
                             // have a concrete value to refill it with.
                             
                             // Check if input expects numeric values only
-                            const isNumericInput = input.type === 'number' || 
-                                                  /numeric/i.test(input.id || '') ||
-                                                  /numeric/i.test(input.name || '') ||
-                                                  input.getAttribute('inputmode') === 'numeric' ||
-                                                  input.getAttribute('pattern')?.includes('\\d') ||
-                                                  input.className?.toLowerCase().includes('number') ||
-                                                  input.className?.toLowerCase().includes('decimal') ||
-                                                  (labelText && /how many|total years|relevant experience|experience with|decimal number|numeric|experience you are having|years of experience|experience in years|enter a decimal/i.test(labelText));
+                            const isExplicitNumberField = input.type === 'number' || 
+                                                          input.getAttribute('inputmode') === 'numeric' ||
+                                                          /numeric/i.test(input.id || '') ||
+                                                          /numeric/i.test(input.name || '') ||
+                                                          input.className?.toLowerCase().includes('number') ||
+                                                          input.className?.toLowerCase().includes('decimal');
+                            const isNumericLabel = (labelText && !/^(do|does|did|have|has|had|are|is|which|what|list|describe|share|give|explain)\\b/i.test(labelText.trim()) &&
+                                                    /how many years|total years|decimal number|enter a decimal|\\b(in|of)\\s*years\\b|years of experience|experience in years/i.test(labelText));
+                            const isNumericInput = isExplicitNumberField || isNumericLabel;
                             
                             const placeholderUpper = (input.placeholder || '').toUpperCase();
                             const isDateField = input.type === 'date' ||
@@ -10946,15 +11091,18 @@ return resolveDynamic(bestMatch);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
-                            if (answer && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days/i.test(labelText))) {
-
-                                 const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
-                                if (defaultObj && defaultObj.category === 'notice_period') {
-                                    const match = answer.match(/(\\d+)/);
-                                    answer = match ? match[1] : '15';
-                                } else if (/np|notice/i.test(labelText)) {
-                                    const match = answer.match(/(\\d+)/);
-                                    answer = match ? match[1] : '15';
+                            if (answer && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days|months?/i.test(labelText))) {
+                                if (/month/i.test(labelText)) {
+                                    answer = '0.5';
+                                } else {
+                                    const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
+                                    if (defaultObj && defaultObj.category === 'notice_period') {
+                                        const match = answer.match(/(\\d+)/);
+                                        answer = match ? match[1] : '15';
+                                    } else if (/np|notice/i.test(labelText)) {
+                                        const match = answer.match(/(\\d+)/);
+                                        answer = match ? match[1] : '15';
+                                    }
                                 }
                             }
                             
@@ -10978,14 +11126,14 @@ return resolveDynamic(bestMatch);
                                 if (numericMatch) {
                                     let numVal = parseFloat(numericMatch[1]);
                                     // LinkedIn rejects decimals in experience/skill fields — format as whole integer
-                                    if (numVal % 1 !== 0) {
+                                    if (numVal % 1 !== 0 && !/month/i.test(labelText)) {
                                         numVal = Math.round(numVal);
                                         window.__SENTINEL_DEBUG__&&console.log('Rounded numeric field for LinkedIn:', numericMatch[1], '->', numVal);
                                     }
                                     answer = String(numVal);
                                     window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
-                                } else {
-                                    // Fallback if answer contained no numbers but input expects numeric/years
+                                } else if (isExplicitNumberField) {
+                                    // Fallback ONLY if the HTML input element is strictly numeric
                                     answer = !isWorkModeQ && /notice|np|how soon|how quickly|when can you join|joining/i.test(labelText) ? '15' : '4';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                 }
@@ -11059,7 +11207,7 @@ return resolveDynamic(bestMatch);
                                 } else if (combinedText.includes('your title') || combinedText.includes('job title') || combinedText.includes('role title') || combinedText.includes('designation')) {
                                     answer = 'Software Engineer';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling job title');
-                                } else if (combinedText.includes('company name') || combinedText.includes('employer') || (combinedText.includes('company') && !combinedText.includes('relatives') && !combinedText.includes('worked with') && !combinedText.includes('associated with') && !combinedText.includes('promoted'))) {
+                                } else if (combinedText.includes('company name') || combinedText.includes('employer') || (combinedText.includes('company') && !combinedText.includes('relatives') && !combinedText.includes('worked with') && !combinedText.includes('associated with') && !combinedText.includes('promoted') && !combinedText.includes('ctc') && !combinedText.includes('salary') && !combinedText.includes('cost to company'))) {
                                     answer = 'Everbridge';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling company');
                                 } else if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
@@ -11688,6 +11836,18 @@ return resolveDynamic(bestMatch);
                                     npMatch = npOptions.find(o => o.text.toLowerCase().includes('serving notice') || o.text.toLowerCase().includes('serving np'));
                                 }
                                 
+                                // Priority 2.5: "Less than a month", "< 1 month", "under a month", "within a month", "1 month or less"
+                                if (!npMatch) {
+                                    npMatch = npOptions.find(o => {
+                                        const t = o.text.toLowerCase();
+                                        return t.includes('less than a month') || t.includes('less than 1 month') ||
+                                               t.includes('< 1 month') || t.includes('<= 1 month') ||
+                                               t.includes('under a month') || t.includes('under 1 month') ||
+                                               t.includes('within a month') || t.includes('within 1 month') ||
+                                               t.includes('1 month or less') || t.includes('0-1 month') || t.includes('0 to 1 month');
+                                    });
+                                }
+                                
                                 // Priority 3: "0-15 days" or similar short notice range
                                 if (!npMatch) {
                                     npMatch = npOptions.find(o => o.text.toLowerCase().includes('0-15') || o.text.toLowerCase().includes('0 - 15') || o.text.toLowerCase().includes('0 to 15') || o.text.toLowerCase().includes('within 15'));
@@ -11790,10 +11950,10 @@ return resolveDynamic(bestMatch);
                                     if (rangeMatch) {
                                         minVal = parseFloat(rangeMatch[1]);
                                         maxVal = parseFloat(rangeMatch[2]);
-                                    } else if (/less\\s+than|under|up\\s+to|^<\\s*\\d+/i.test(cleaned)) {
+                                    } else if (/less\\s+than|under|up\\s+to|^<\\s*\\d+|\\bbelow\\b/i.test(cleaned)) {
                                         const singleNum = cleaned.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (singleNum) { minVal = 0; maxVal = parseFloat(singleNum[1]); }
-                                    } else if (/more\\s+than|over|above|plus|^\\+?\\s*\\d+\\s*\\+/i.test(cleaned)) {
+                                    } else if (/more\\s+than|over|above|plus|\\+|\\babove\\b|\\bover\\b|^>\\s*\\d+/i.test(cleaned)) {
                                         const singleNum = cleaned.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (singleNum) { minVal = parseFloat(singleNum[1]); maxVal = 999999999; }
                                     } else {
@@ -12624,7 +12784,7 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: radioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
                                             safeRadio = radios.find(r => {
@@ -12774,7 +12934,7 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: customRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeCustom = null;
                                         for (const kw of safeKeywords) {
                                             safeCustom = customRadios.find(r => {
@@ -12935,7 +13095,7 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
                                             safeRadio = radios.find(r => {
@@ -12993,8 +13153,16 @@ return resolveDynamic(bestMatch);
                         function getGroupQuestionText(fieldset) {
                             const legend = fieldset.querySelector('legend');
                             if (legend && legend.innerText.trim().length > 3) return legend.innerText.trim();
-                            const heading = fieldset.querySelector('[class*="label"], [class*="header"], [class*="question"], .artdeco-form-field__label, [data-test-form-element-label]');
+                            const heading = fieldset.querySelector('label, [class*="label"], [class*="header"], [class*="question"], .artdeco-form-field__label, [data-test-form-element-label]');
                             if (heading && heading.innerText.trim().length > 3) return heading.innerText.trim();
+                            
+                            // Check parent container label
+                            const parentContainer = fieldset.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element]');
+                            if (parentContainer) {
+                                const pLabel = parentContainer.querySelector('label, [class*="label"], legend');
+                                if (pLabel && pLabel.innerText.trim().length > 3) return pLabel.innerText.trim();
+                            }
+                            
                             // EXTENDED: LinkedIn places question text OUTSIDE the fieldset as a preceding sibling.
                             // Walk up to 3 ancestor levels looking at previous siblings.
                             let ancestor = fieldset;
@@ -13002,7 +13170,7 @@ return resolveDynamic(bestMatch);
                                 let sib = ancestor.previousElementSibling;
                                 while (sib) {
                                     const t = (sib.innerText || '').trim();
-                                    if (t.length > 10 && t.length < 400 &&
+                                    if (t.length >= 3 && t.length < 400 &&
                                         !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
                                         !t.toLowerCase().includes('this field is required')) {
                                         window.__SENTINEL_DEBUG__&&console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
@@ -13131,6 +13299,64 @@ return resolveDynamic(bestMatch);
                             const groupOptions = Array.from(groupCbs).map(c => getOptionLabel(c).trim()).filter(Boolean);
                             let groupAllLabelsEmpty = true; // track if all option labels are undetectable
                             let anyCheckedInGroup = false; // track if any checkbox was checked in this group
+
+                            // ===== NOTICE PERIOD CHECKBOX GROUP DETECTION =====
+                            const groupQLower = (groupQuestion || '').toLowerCase();
+                            const groupAnsLower = (groupAnswer || '').toLowerCase();
+                            const sampleOptLabels = Array.from(groupCbs).map(c => getOptionLabel(c).toLowerCase().trim());
+                            const hasNoticeKeywordsInOpts = sampleOptLabels.some(o => /less\\s+than\\s+(?:a|1)\\s+month|serving\\s*notice|15\\s*days|\\b1\\s*month\\b|\\b2\\s*months\\b|\\b3\\s*months\\b/.test(o));
+                            const isNoticeGroup = /notice|np|join|start|availability|serving/i.test(groupQLower) ||
+                                                  (/notice|serving/i.test(groupAnsLower) || groupAnsLower === '15' || groupAnsLower.includes('15 days')) ||
+                                                  hasNoticeKeywordsInOpts;
+
+                            if (isNoticeGroup) {
+                                window.__SENTINEL_DEBUG__&&console.log('Notice period checkbox group detected, evaluating options for best match...');
+                                let bestNoticeCb = null;
+                                let bestNoticeScore = -1;
+                                let bestNoticeLabel = '';
+
+                                for (const cb of groupCbs) {
+                                    handledCheckboxes.add(cb);
+                                    if (!isVisible(cb)) continue;
+                                    const optLabel = getOptionLabel(cb);
+                                    if (optLabel) groupAllLabelsEmpty = false;
+                                    const optLower = optLabel.toLowerCase().trim();
+
+                                    let score = 0;
+                                    const isLessMonth = /less\\s+than\\s+(?:a|1)\\s+month|<(?:=\\s*)?1\\s*month|under\\s+(?:a|1)\\s+month|within\\s+(?:a|1)\\s+month|0\\s*[-–to]\\s*1\\s*month|1\\s*month\\s*or\\s*less/i.test(optLower);
+                                    const isShortNoticeOpt = /15\\s*days?|serving\\s*notice|immediate|right\\s*away|0\\s*[-–to]\\s*15|0\\s*[-–to]\\s*30|15\\s*[-–to]\\s*30|within\\s*15|less\\s+than\\s*30/i.test(optLower);
+                                    const isOneMonth = /\\b1\\s*month\\b|\\b30\\s*days\\b/i.test(optLower) && !isLessMonth;
+                                    const isTwoMonths = /\\b2\\s*months?\\b|\\b60\\s*days\\b/i.test(optLower);
+                                    const isThreeMonthsPlus = /\\b3\\s*months?\\b|\\b90\\s*days\\b|more\\s+than\\s+3\\s*months|>\\s*3\\s*months/i.test(optLower);
+
+                                    if (isShortNoticeOpt) {
+                                        score = 100;
+                                    } else if (isLessMonth) {
+                                        score = 95;
+                                    } else if (isOneMonth) {
+                                        score = 80;
+                                    } else if (isTwoMonths) {
+                                        score = 30;
+                                    } else if (isThreeMonthsPlus) {
+                                        score = 10;
+                                    }
+
+                                    if (score > bestNoticeScore) {
+                                        bestNoticeScore = score;
+                                        bestNoticeCb = cb;
+                                        bestNoticeLabel = optLabel;
+                                    }
+                                }
+
+                                if (bestNoticeCb && bestNoticeScore >= 50) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Notice group: Selecting best match:', bestNoticeLabel, '(score:', bestNoticeScore, ')');
+                                    if (!bestNoticeCb.checked) clickInput(bestNoticeCb);
+                                    anyCheckedInGroup = true;
+                                    formResults.push({ question: groupQuestion || 'Notice Period', answer: bestNoticeLabel, inputType: 'checkbox-notice', options: groupOptions, selectedOption: bestNoticeLabel, source: 'pattern_match' });
+                                    continue;
+                                }
+                            }
+
                             for (const cb of groupCbs) {
                                 handledCheckboxes.add(cb);
                                 if (!isVisible(cb) || cb.checked) continue;
@@ -15316,7 +15542,7 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
                             } else if (isNoticePeriodQuestion) {
-                                // For notice period questions, select "Serving Notice Period" option
+                                // For notice period questions, select best matching short notice option
                                 let bestCheckbox = null;
                                 let bestScore = -1;
                                 let allLabels = []; // Debug: store all found labels
@@ -15326,17 +15552,20 @@ return resolveDynamic(bestMatch);
                                     let score = 0;
                                     const labelLower = item.lowerLabel;
                                     
-                                    // Highest priority: "Serving Notice Period" option
-                                    if (labelLower.includes('serving notice period')) {
+                                    const isLessMonth = /less\\s+than\\s+(?:a|1)\\s+month|<(?:=\\s*)?1\\s*month|under\\s+(?:a|1)\\s+month|within\\s+(?:a|1)\\s+month|0\\s*[-–to]\\s*1\\s*month|1\\s*month\\s*or\\s*less/i.test(labelLower);
+                                    const isShortNoticeOpt = /15\\s*days?|serving\\s*notice|immediate|right\\s*away|0\\s*[-–to]\\s*15|0\\s*[-–to]\\s*30|15\\s*[-–to]\\s*30|within\\s*15|less\\s+than\\s*30/i.test(labelLower);
+                                    const isOneMonth = /\\b1\\s*month\\b|\\b30\\s*days\\b/i.test(labelLower) && !isLessMonth;
+                                    
+                                    if (labelLower.includes('serving notice period') || labelLower.includes('15 days') || labelLower === '15') {
                                         score = 100;
-                                    }
-                                    // Secondary: any option with "serving" in it
-                                    else if (labelLower.includes('serving')) {
+                                    } else if (isShortNoticeOpt) {
+                                        score = 98;
+                                    } else if (isLessMonth) {
+                                        score = 95;
+                                    } else if (labelLower.includes('serving')) {
                                         score = 90;
-                                    }
-                                    // Third: "Serving Notice" (without "Period")
-                                    else if (labelLower.includes('serving notice')) {
-                                        score = 85;
+                                    } else if (isOneMonth) {
+                                        score = 80;
                                     }
                                     
                                     if (score > bestScore) {
@@ -15345,8 +15574,8 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
                                 
-                                // Click only the "Serving Notice Period" checkbox
-                                if (bestCheckbox && bestScore >= 85 && !bestCheckbox.cb.checked) {
+                                // Click the best matching notice period checkbox
+                                if (bestCheckbox && bestScore >= 50 && !bestCheckbox.cb.checked) {
                                     bestCheckbox.cb.click();
                                     if (!bestCheckbox.cb.checked) {
                                         bestCheckbox.cb.checked = true;
@@ -15354,7 +15583,7 @@ return resolveDynamic(bestMatch);
                                     }
                                     clickedCount = 1;
                                     debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (score: " + bestScore + ")");
-                                } else if (bestCheckbox && bestScore >= 85 && bestCheckbox.cb.checked) {
+                                } else if (bestCheckbox && bestScore >= 50 && bestCheckbox.cb.checked) {
                                     clickedCount = 1;
                                     debugLog.push("NOTICE_CB: " + bestCheckbox.labelText + " (already checked)");
                                 } else {
@@ -15967,76 +16196,18 @@ return resolveDynamic(bestMatch);
                         }
                     }
                     
-                    // 1. Navigation: Ensure "Search other jobs" (Filter Panel) is OPEN
+                    // 1. Instahyre Opportunities / Search Flow
                     if (window.location.href.includes('opportunities')) {
                         
-                        // IMPORTANT: If URL has search params, we're already on results - skip filter config
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const hasSearchParams = urlParams.has('job_functions') || urlParams.has('skills');
-                        
-                        // Check if filters panel is OPEN using the filters container (more reliable)
-                        const filtersPanel = document.querySelector('div.job-search-filters');
-                        const expInput = document.querySelector('input#years');
-                        const isPanelOpen = (filtersPanel && filtersPanel.offsetParent !== null) || 
-                                           (expInput && expInput.offsetParent !== null);
-                        
-                        // Check for collapsed state indicator (chevron pointing down)
-                        const chevronDown = document.querySelector('.job-search-heading .fa-angle-down');
-                        const isPanelCollapsed = chevronDown && chevronDown.offsetParent !== null;
-                        
-                        // Skip filter configuration if we already have search results
-                        // If Panel is CLOSED (or collapsed) and NOT on search results, we must Open it
-                        if ((!isPanelOpen || isPanelCollapsed) && !hasSearchParams) {
-                            // PRIORITY 1: Target the exact Instahyre class for "Search other jobs"
-                            const jobSearchHeading = document.querySelector('.job-search-heading');
-                            if (jobSearchHeading) {
-                                window.__SENTINEL_DEBUG__&&console.log('Clicking job-search-heading:', jobSearchHeading.innerText);
-                                // Use MouseEvent dispatch for Angular ng-click compatibility
-                                const clickEvent = new MouseEvent('click', {
-                                    bubbles: true, cancelable: true, view: window
-                                });
-                                jobSearchHeading.dispatchEvent(clickEvent);
-                                return 'INSTAHYRE_OPENING_PANEL';
-                            }
-                            
-                            // PRIORITY 2: Try the sidebar section container
-                            const sidebarSection = document.querySelector('.sidebar-section.job-search-section');
-                            if (sidebarSection) {
-                                const heading = sidebarSection.querySelector('div[ng-click]');
-                                if (heading) {
-                                    window.__SENTINEL_DEBUG__&&console.log('Clicking sidebar section heading');
-                                    const clickEvent = new MouseEvent('click', {
-                                        bubbles: true, cancelable: true, view: window
-                                    });
-                                    heading.dispatchEvent(clickEvent);
-                                    return 'INSTAHYRE_OPENING_PANEL';
-                                }
-                            }
-                            
-                            // PRIORITY 3: Fallback - text match with MouseEvent
-                            const searchTriggers = Array.from(document.querySelectorAll('div, span, h4, h5')).filter(el => 
-                                el.innerText && el.innerText.trim().toLowerCase() === 'search other jobs'
-                            );
-                            for (const trigger of searchTriggers) {
-                                if (trigger && trigger.offsetParent !== null) {
-                                    window.__SENTINEL_DEBUG__&&console.log('Clicking Search Trigger (text match):', trigger);
-                                    const clickEvent = new MouseEvent('click', {
-                                        bubbles: true, cancelable: true, view: window
-                                    });
-                                    trigger.dispatchEvent(clickEvent);
-                                    return 'INSTAHYRE_OPENING_PANEL';
-                                }
-                            }
-                        }
-                        
-                        // 2. Fill Details (Configuration) - One step at a time for reliability
-                        // ORDER: Skills -> Job Functions -> Location
-                        
                         // Helper function to get selectize instance
-                        // NOTE: Instahyre uses custom <selectize> tags, NOT <select> tags
                         const getSelectize = (fieldId) => {
-                            const selectizeEl = document.querySelector('selectize#' + fieldId);
-                            return selectizeEl && selectizeEl.selectize ? selectizeEl.selectize : null;
+                            const el = document.getElementById(fieldId) || document.querySelector('selectize#' + fieldId) || document.querySelector('#' + fieldId);
+                            if (el && el.selectize) return el.selectize;
+                            if (window.$ && el) {
+                                const s = window.$(el).data('selectize') || el.selectize;
+                                if (s) return s;
+                            }
+                            return null;
                         };
                         
                         // Check for pending operations (prevents rapid re-invocations)
@@ -16045,47 +16216,35 @@ return resolveDynamic(bestMatch);
                             const [op, timestamp] = pendingOp.split('|');
                             const elapsed = Date.now() - parseInt(timestamp);
                             if (elapsed < 800) {
-                                // Still waiting for previous operation
                                 return 'INSTAHYRE_WAITING: ' + op;
                             } else {
-                                // Timeout expired, clear pending
                                 sessionStorage.removeItem('instahyre_pending');
                             }
                         }
-                        
-                        // A0. Company Size - Intersession task: select "All"; Regular search: select "Large" (value 2)
-                        const isIntersession = !!window.__SENTINEL_IS_INTERSESSION__;
-                        const companySizeSelect = document.querySelector('select#company-size');
-                        if (companySizeSelect) {
-                            let targetValue = '2';
-                            let targetText = 'Large';
-                            if (isIntersession) {
-                                const allOption = Array.from(companySizeSelect.options).find(o => 
-                                    /all/i.test(o.text || '') || o.value === '' || o.value === '0' || (o.value || '').toLowerCase() === 'all'
-                                ) || companySizeSelect.options[0];
-                                targetValue = allOption ? allOption.value : '';
-                                targetText = allOption ? (allOption.text || 'All') : 'All';
-                            }
-                            
-                            if (companySizeSelect.value !== targetValue) {
-                                companySizeSelect.value = targetValue;
-                                companySizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                companySizeSelect.dispatchEvent(new Event('input', { bubbles: true }));
-                                return 'INSTAHYRE_SET_COMPANY_SIZE: ' + targetText;
+
+                        // Optional check: if legacy collapsible panel is present and closed, open it
+                        const legacyHeading = document.querySelector('.job-search-heading .fa-angle-down');
+                        if (legacyHeading && legacyHeading.offsetParent !== null) {
+                            const headingEl = document.querySelector('.job-search-heading');
+                            if (headingEl) {
+                                const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+                                headingEl.dispatchEvent(clickEvent);
+                                return 'INSTAHYRE_OPENING_PANEL';
                             }
                         }
-                        
-                        // A. Skills - Batch add missing skills via Selectize API (FIRST)
+
+                        // 1. Skills - First enter skills
                         const skillsToAdd = (window.__SENTINEL_INSTAHYRE_SKILLS__ && window.__SENTINEL_INSTAHYRE_SKILLS__.length)
                             ? window.__SENTINEL_INSTAHYRE_SKILLS__
                             : ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
-                        const skillsSelectize = getSelectize('skills');
-                        const skillsInput = document.querySelector('input#skills-selectized');
+                        const skillsSelectize = getSelectize('skills-drop-select-job-search') || getSelectize('skills') || getSelectize('skills-drop-select');
+                        const skillsInput = document.querySelector('input#skills-drop-select-job-search-selectized, input#skills-selectized, input[placeholder*="skills or title" i], input[placeholder*="Skills" i]');
+                        let skillsConfigured = false;
+
                         if (skillsInput) {
-                            const skillsControl = skillsInput.closest('.selectize-control');
-                            const skillsContainer = skillsControl ? skillsControl.querySelector('.selectize-input') : null;
+                            const skillsControl = skillsInput.closest('.selectize-control, .skills-search-container, .form-group') || skillsInput.parentElement;
+                            const skillsContainer = skillsControl ? (skillsControl.querySelector('.selectize-input') || skillsControl) : null;
                             if (skillsContainer) {
-                                // Check existing skills using Selectize API
                                 let existingSkills = [];
                                 if (skillsSelectize) {
                                     existingSkills = skillsSelectize.items.map(key => {
@@ -16106,486 +16265,441 @@ return resolveDynamic(bestMatch);
                                     if (addedCount > 0) {
                                         return 'INSTAHYRE_ADDED_SKILLS: ' + addedCount + ' skills added';
                                     }
+                                    skillsConfigured = true;
                                 } else {
-                                    // Fallback: DOM parsing with × removal
-                                    existingSkills = Array.from(skillsContainer.querySelectorAll('.item'))
+                                    existingSkills = Array.from(skillsContainer.querySelectorAll('.item, [data-value]'))
                                         .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
                                     
+                                    let missingSkill = null;
                                     for (const skill of skillsToAdd) {
                                         if (!existingSkills.some(s => s.includes(skill.toLowerCase()))) {
-                                            // Fallback: Set pending state, trigger input, schedule click
-                                            sessionStorage.setItem('instahyre_pending', 'skill_' + skill + '|' + Date.now());
-                                            skillsInput.focus();
-                                            skillsInput.click();
-                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                            if (setter) setter.call(skillsInput, skill);
-                                            skillsInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                            // Schedule click with longer delay
-                                            setTimeout(() => {
-                                                const dropdown = skillsControl.querySelector('.selectize-dropdown-content');
-                                                if (dropdown) {
-                                                    const option = dropdown.querySelector('.option.active, .option:first-child');
-                                                    if (option) {
-                                                        option.click();
-                                                        sessionStorage.removeItem('instahyre_pending');
-                                                    }
+                                            missingSkill = skill;
+                                            break;
+                                        }
+                                    }
+                                    if (missingSkill) {
+                                        sessionStorage.setItem('instahyre_pending', 'skill_' + missingSkill + '|' + Date.now());
+                                        skillsInput.focus();
+                                        skillsInput.click();
+                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                        if (setter) setter.call(skillsInput, missingSkill);
+                                        else skillsInput.value = missingSkill;
+                                        skillsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                        setTimeout(() => {
+                                            const dropdown = (skillsControl || document).querySelector('.selectize-dropdown-content');
+                                            if (dropdown) {
+                                                const option = dropdown.querySelector('.option.active, .option:first-child');
+                                                if (option) {
+                                                    option.click();
                                                 }
-                                            }, 500);
-                                            return 'INSTAHYRE_ADDING_SKILL: ' + skill;
-                                        }
+                                            }
+                                            sessionStorage.removeItem('instahyre_pending');
+                                        }, 500);
+                                        return 'INSTAHYRE_ADDING_SKILL: ' + missingSkill;
+                                    } else {
+                                        skillsConfigured = true;
                                     }
                                 }
+                            } else {
+                                skillsConfigured = true;
                             }
+                        } else {
+                            skillsConfigured = true;
                         }
-                        
-                        // B. Job Functions - Use Selectize API (SECOND)
-                        // Remove fullstack, backend, frontend and ensure ONLY 'All - Software Engineering' is selected
-                        const targetJobFunc = 'All - Software Engineering';
-                        const jobFuncSelectize = getSelectize('job-functions');
-                        const jobFuncInput = document.querySelector('input#job-functions-selectized');
-                        if (jobFuncInput) {
-                            const jobFuncControl = jobFuncInput.closest('.selectize-control');
-                            const jobFuncContainer = jobFuncControl ? jobFuncControl.querySelector('.selectize-input') : null;
-                            if (jobFuncContainer) {
-                                // 1. Remove unwanted functions (backend, frontend, full-stack) if present
-                                if (jobFuncSelectize) {
-                                    let removedAny = false;
-                                    for (const key of [...jobFuncSelectize.items]) {
-                                        const opt = jobFuncSelectize.options[key];
-                                        const text = (opt ? (opt.text || opt.name || key) : key).toLowerCase();
-                                        if (text.includes('backend') || text.includes('frontend') || text.includes('full-stack') || text.includes('full stack')) {
-                                            jobFuncSelectize.removeItem(key);
-                                            removedAny = true;
-                                        }
-                                    }
-                                    if (removedAny) {
-                                        return 'INSTAHYRE_REMOVED_OLD_JOB_FUNCS';
-                                    }
-                                }
 
-                                // 2. Check existing items using Selectize API
-                                let existingTexts = [];
-                                if (jobFuncSelectize) {
-                                    existingTexts = jobFuncSelectize.items.map(key => {
-                                        const opt = jobFuncSelectize.options[key];
-                                        return opt ? (opt.text || opt.name || key).toLowerCase() : key.toLowerCase();
-                                    });
-                                } else {
-                                    // Fallback: DOM parsing with × removal
-                                    existingTexts = Array.from(jobFuncContainer.querySelectorAll('.item'))
-                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
-                                }
-                                
-                                const hasTarget = existingTexts.some(f => f.includes('software engineering') || f.includes('all - software engineering'));
-                                if (!hasTarget) {
-                                    // Try Selectize API first
-                                    if (jobFuncSelectize) {
-                                        // Find the option key by matching text
-                                        const options = jobFuncSelectize.options;
-                                        let foundKey = null;
-                                        for (const key in options) {
-                                            const optText = (options[key].text || options[key].name || '').toLowerCase();
-                                            if (optText.includes('all - software engineering') || optText.includes('software engineering') || (optText.includes('all') && optText.includes('software'))) {
-                                                foundKey = key;
-                                                break;
-                                            }
-                                        }
-                                        if (foundKey) {
-                                            jobFuncSelectize.addItem(foundKey);
-                                            return 'INSTAHYRE_ADDED_JOB_FUNC: ' + targetJobFunc;
-                                        }
-                                    }
-                                    // Fallback: Set pending state, trigger input, schedule click
-                                    sessionStorage.setItem('instahyre_pending', 'jobfunc_' + targetJobFunc + '|' + Date.now());
-                                    jobFuncInput.focus();
-                                    jobFuncInput.click();
-                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                    if (setter) setter.call(jobFuncInput, 'Software Engineering');
-                                    jobFuncInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                    setTimeout(() => {
-                                        const dropdown = jobFuncControl.querySelector('.selectize-dropdown-content');
-                                        if (dropdown) {
-                                            const option = Array.from(dropdown.querySelectorAll('.option')).find(o => 
-                                                /all\\s*-\\s*software\\s+engineering|software\\s+engineering/i.test(o.textContent || '')
-                                            ) || dropdown.querySelector('.option.active, .option:first-child');
-                                            if (option) {
-                                                option.click();
-                                                sessionStorage.removeItem('instahyre_pending');
-                                            }
-                                        }
-                                    }, 500);
-                                    return 'INSTAHYRE_ADDING_JOB_FUNC: ' + targetJobFunc;
-                                }
-                            }
-                        }
-                        
-                        // C. Location - Add all locations one by one (same logic as skills)
-                        const locationsToAdd = ['Anywhere in India', 'Work from home / Remote', 'Bangalore', 'Noida', 'Gurgaon', 'Pune', 'Delhi', 'Delhi / NCR', 'Mumbai', 'Hyderabad'];
-                        const locationSelectize = getSelectize('locations');
-                        const locationInput = document.querySelector('input#locations-selectized');
-                        if (locationInput) {
-                            const locControl = locationInput.closest('.selectize-control');
-                            const locationContainer = locControl ? locControl.querySelector('.selectize-input') : null;
-                            if (locationContainer) {
-                                // Check existing locations using Selectize API
-                                let existingLocations = [];
-                                if (locationSelectize) {
-                                    existingLocations = locationSelectize.items.map(key => {
-                                        const opt = locationSelectize.options[key];
-                                        return opt ? (opt.text || opt.name || key).toLowerCase() : key.toLowerCase();
-                                    });
-                                    let locAddedCount = 0;
-                                    const options = locationSelectize.options;
-                                    for (const location of locationsToAdd) {
-                                        const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
-                                        if (!existingLocations.some(l => l.includes(locKeyword))) {
-                                            let foundKey = null;
-                                            for (const key in options) {
-                                                const optText = (options[key].text || options[key].name || '').toLowerCase();
-                                                if (optText.includes(location.toLowerCase()) || optText.includes(locKeyword)) {
-                                                    foundKey = key;
-                                                    break;
-                                                }
-                                            }
-                                            if (foundKey) {
-                                                locationSelectize.addItem(foundKey);
-                                                locAddedCount++;
-                                            }
-                                        }
-                                    }
-                                    if (locAddedCount > 0) {
-                                        return 'INSTAHYRE_ADDED_LOCATIONS: ' + locAddedCount + ' locations added';
-                                    }
-                                } else {
-                                    // Fallback: DOM parsing with × removal
-                                    existingLocations = Array.from(locationContainer.querySelectorAll('.item'))
-                                        .map(item => (item.textContent || '').replace(/×/g, '').toLowerCase().trim());
-                                
-                                    for (const location of locationsToAdd) {
-                                        // Use a keyword from each location for matching
-                                        const locKeyword = location.toLowerCase().split('/')[0].trim().split(' ').pop();
-                                        if (!existingLocations.some(l => l.includes(locKeyword))) {
-                                            // Fallback: Set pending state, trigger input, schedule click
-                                            sessionStorage.setItem('instahyre_pending', 'location_' + location + '|' + Date.now());
-                                            locationInput.focus();
-                                            locationInput.click();
-                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                            if (setter) setter.call(locationInput, location);
-                                            locationInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                            setTimeout(() => {
-                                                const dropdown = locControl.querySelector('.selectize-dropdown-content');
-                                                if (dropdown) {
-                                                    const option = dropdown.querySelector('.option.active, .option:first-child');
-                                                    if (option) {
-                                                        option.click();
-                                                        sessionStorage.removeItem('instahyre_pending');
-                                                    }
-                                                }
-                                            }, 500);
-                                            return 'INSTAHYRE_ADDING_LOCATION: ' + location;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // D. Experience (Disabled - uncomment to re-enable)
-                        // if (expInput && expInput.value !== '4') {
-                        //     const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                        //     if (setter) setter.call(expInput, '4');
-                        //     expInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        //     expInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        //     return 'INSTAHYRE_SET_EXPERIENCE';
-                        // }
+                        // 2. Click "Search" / "Show Results" button immediately after skills are entered
+                        const searchBtn = document.querySelector('button.skills-search-btn') ||
+                                          document.querySelector('button[ng-click*="searchCustomJobs"]') ||
+                                          document.querySelector('button#show-results.btn-primary.show-results') ||
+                                          document.querySelector('button#show-results') ||
+                                          document.querySelector('button.skills-search-btn, button.btn-filled.btn-sm.skills-search-btn');
 
-                        // 3. Click "Show Results" - Only after ALL fields are configured AND not already on results
-                        // Use exact selector from DOM: button#show-results.btn.btn-primary.show-results
-                        const showResultsBtn = document.querySelector('button#show-results.btn-primary.show-results') ||
-                                              document.querySelector('button#show-results');
-                        if (showResultsBtn && showResultsBtn.offsetParent !== null && isPanelOpen && !hasSearchParams) {
-                            // const hasExp = expInput && expInput.value === '4'; // Uncomment if experience filter is required
-                            
-                            // Check location - use correct plural selector
-                            const locInput = document.querySelector('input#locations-selectized');
-                            const locCtrl = locInput ? locInput.closest('.selectize-control') : null;
-                            const locContainer = locCtrl ? locCtrl.querySelector('.selectize-input') : null;
-                            const hasLocation = locContainer && locContainer.querySelectorAll('.item').length >= 3;
-                            
-                            // Check skills (need at least 3 skills)
-                            const skillsInp = document.querySelector('input#skills-selectized');
-                            const skillsCtrl = skillsInp ? skillsInp.closest('.selectize-control') : null;
-                            const skillsContainerCheck = skillsCtrl ? skillsCtrl.querySelector('.selectize-input') : null;
-                            const hasSkills = skillsContainerCheck && skillsContainerCheck.querySelectorAll('.item').length >= 3;
-                            
-                            // Check job functions (need at least 1)
-                            const jobFuncInp = document.querySelector('input#job-functions-selectized');
-                            const jobFuncCtrl = jobFuncInp ? jobFuncInp.closest('.selectize-control') : null;
-                            const jobFuncContainerCheck = jobFuncCtrl ? jobFuncCtrl.querySelector('.selectize-input') : null;
-                            const hasJobFuncs = jobFuncContainerCheck && jobFuncContainerCheck.querySelectorAll('.item').length >= 1;
-                            
-                            // Check company size (Intersession: All; Regular: Large / value '2')
-                            const csSelect = document.querySelector('select#company-size');
-                            let hasCompanySize = true;
-                            if (csSelect) {
-                                if (isIntersession) {
-                                    const allOption = Array.from(csSelect.options).find(o => 
-                                        /all/i.test(o.text || '') || o.value === '' || o.value === '0' || (o.value || '').toLowerCase() === 'all'
-                                    ) || csSelect.options[0];
-                                    const expectedVal = allOption ? allOption.value : '';
-                                    hasCompanySize = csSelect.value === expectedVal || /all/i.test(csSelect.options[csSelect.selectedIndex]?.text || '');
-                                } else {
-                                    hasCompanySize = csSelect.value === '2' || /large/i.test(csSelect.options[csSelect.selectedIndex]?.text || '');
-                                }
-                            }
-                            
-                            window.__SENTINEL_DEBUG__&&console.log('Config check: Loc=' + hasLocation + ', Skills=' + hasSkills + ', JobFuncs=' + hasJobFuncs + ', CompanySize=' + hasCompanySize);
-                            
-                            // Only click Show Results if ALL fields are configured (add hasExp if re-enabling experience)
-                            if (hasLocation && hasSkills && hasJobFuncs && hasCompanySize) {
-                                showResultsBtn.scrollIntoView({ block: 'center' });
-                                showResultsBtn.click();
+                        const searchAlreadyPerformed = !!sessionStorage.getItem('instahyre_results_clicked');
+
+                        if (searchBtn && searchBtn.offsetParent !== null && !searchAlreadyPerformed) {
+                            if (skillsConfigured) {
+                                searchBtn.scrollIntoView({ block: 'center' });
+                                searchBtn.click();
                                 sessionStorage.setItem('instahyre_results_clicked', Date.now().toString());
                                 return 'INSTAHYRE_SHOW_RESULTS_CLICKED';
-                            } else {
-                                // Return status indicating which field is pending
-                                if (!hasCompanySize) return 'INSTAHYRE_PENDING_COMPANY_SIZE';
-                                if (!hasSkills) return 'INSTAHYRE_PENDING_SKILLS';
-                                if (!hasJobFuncs) return 'INSTAHYRE_PENDING_JOB_FUNCS';
-                                if (!hasLocation) return 'INSTAHYRE_PENDING_LOCATION';
-                                // if (!hasExp) return 'INSTAHYRE_PENDING_EXPERIENCE'; // Uncomment if experience filter is required
                             }
                         }
-                    }
 
-                    // 4. View & Apply (The Main Loop)
-                    
-                    // A0. Handle Modal with "View active jobs" button (inactive / redirected jobs)
-                    const modalCandidateBtns = Array.from(document.querySelectorAll(
-                        '.modal button, .application-modal button, [class*="modal"] button, [id*="modal"] button, .modal a.btn, [class*="modal"] a.btn, button.new-btn, button.btn-primary'
-                    ));
-                    const viewActiveJobsBtn = modalCandidateBtns.find(btn => {
-                        if (!btn || btn.offsetParent === null) return false;
-                        const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
-                        return text.includes('view active jobs') || text.includes('view active job') || (text.includes('active jobs') && !text.includes('apply'));
-                    });
+                        // 3. Configure Filters (Company Size, Job Functions, Locations)
+                        // A. Company Size Filter - Intersession task: select "All"; Regular search: select "Large"
+                        const isIntersession = !!window.__SENTINEL_IS_INTERSESSION__;
+                        let companySizeConfigured = false;
 
-                    if (viewActiveJobsBtn) {
-                        window.__SENTINEL_DEBUG__&&console.log('Instahyre: Found "View active jobs" button - skipping inactive job and closing modal');
-                        const modal = viewActiveJobsBtn.closest('.modal, [class*="modal"], [id*="modal"], .dialog, [role="dialog"]') || document;
-                        const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
-                        if (closeBtn && closeBtn.offsetParent !== null) {
-                            closeBtn.click();
-                        }
-                        const backdrop = document.querySelector('.modal-backdrop');
-                        if (backdrop) {
-                            backdrop.click();
-                        }
-                        if (window.angular) {
-                            try {
-                                const modalEl = document.querySelector('.modal.in, .modal.show, [class*="modal"]');
-                                if (modalEl) {
-                                    const scope = angular.element(modalEl).scope();
-                                    if (scope) {
-                                        if (typeof scope.$dismiss === 'function') scope.$dismiss();
-                                        else if (typeof scope.close === 'function') scope.close();
-                                        else if (typeof scope.cancel === 'function') scope.cancel();
-                                        else if (typeof scope.dismiss === 'function') scope.dismiss();
-                                    }
+                        const compCheckboxes = Array.from(document.querySelectorAll('label.ui-checkbox, .ui-checkbox, input[type="checkbox"]')).filter(el => {
+                            const ngClick = el.getAttribute('ng-click') || el.querySelector('input')?.getAttribute('ng-click') || '';
+                            const ngModel = el.getAttribute('ng-model') || el.querySelector('input')?.getAttribute('ng-model') || '';
+                            const text = (el.innerText || el.textContent || '').toLowerCase();
+                            return ngClick.includes('company_size') || ngModel.includes('company_size') || (el.closest && el.closest('.company-size-filter, [id*="company-size"]'));
+                        });
+
+                        if (compCheckboxes.length > 0) {
+                            if (isIntersession) {
+                                const allInput = document.querySelector('input[type="checkbox"][ng-click*="company_size"][ng-click*="ALL"], input[type="checkbox"][ng-model*="all_values.company_size"]') ||
+                                                 compCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''))?.querySelector('input[type="checkbox"]');
+                                const allLabel = compCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''));
+                                const targetInput = allInput || (allLabel ? allLabel.querySelector('input[type="checkbox"]') : null);
+                                const targetClickEl = targetInput || allLabel;
+
+                                if (targetInput && targetInput.checked) {
+                                    companySizeConfigured = true;
+                                } else if (targetClickEl) {
+                                    targetClickEl.click();
+                                    if (targetInput) targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    return 'INSTAHYRE_SET_COMPANY_SIZE: All';
+                                } else {
+                                    companySizeConfigured = true;
                                 }
-                            } catch (e) {}
-                        }
-                        if (window.$ && typeof window.$.fn?.modal === 'function') {
-                            try {
-                                $('.modal').modal('hide');
-                            } catch (e) {}
-                        }
-                        return 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED';
-                    }
+                            } else {
+                                const largeLabel = compCheckboxes.find(el => /\\b(large|500\\+|1000\\+|enterprise|more than 1000)\\b/i.test(el.innerText || el.textContent || ''));
+                                const largeInput = document.querySelector('input[type="checkbox"][ng-click*="company_size"][value*="Large" i], input[type="checkbox"][ng-click*="company_size"][value="2"], input[type="checkbox"][ng-click*="company_size"][value="3"]') ||
+                                                   (largeLabel ? largeLabel.querySelector('input[type="checkbox"]') : null);
+                                const targetClickEl = largeInput || largeLabel;
 
-                    // A. Handle Modal - Look for Apply button in any modal
-                    const modalApplyBtns = document.querySelectorAll(
-                        '.modal button, .application-modal button, [class*="modal"] button, [id*="modal"] button, .modal a.btn, [class*="modal"] a.btn'
-                    );
-                    for (const btn of modalApplyBtns) {
-                        if (btn && btn.offsetParent !== null && !btn.disabled) {
-                            const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
-                            if (text.includes('view active jobs') || text.includes('active jobs')) continue;
-                            if (/^(apply|interested|send application|submit application|apply now|yes)/i.test(text) || (text.includes('apply') && !text.includes('applied') && !text.includes('already'))) {
-                                btn.scrollIntoView({ block: 'center' });
-                                btn.click();
-                                return 'INSTAHYRE_APPLY_CLICKED';
+                                if (largeInput && largeInput.checked) {
+                                    companySizeConfigured = true;
+                                } else if (targetClickEl) {
+                                    targetClickEl.click();
+                                    if (largeInput) largeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    return 'INSTAHYRE_SET_COMPANY_SIZE: Large';
+                                } else {
+                                    companySizeConfigured = true;
+                                }
+                            }
+                        } else {
+                            const companySizeSelect = document.querySelector('select#company-size');
+                            if (companySizeSelect) {
+                                let targetValue = '2';
+                                let targetText = 'Large';
+                                if (isIntersession) {
+                                    const allOption = Array.from(companySizeSelect.options).find(o => 
+                                        /all/i.test(o.text || '') || o.value === '' || o.value === '0' || (o.value || '').toLowerCase() === 'all'
+                                    ) || companySizeSelect.options[0];
+                                    targetValue = allOption ? allOption.value : '';
+                                    targetText = allOption ? (allOption.text || 'All') : 'All';
+                                }
+                                
+                                if (companySizeSelect.value !== targetValue) {
+                                    companySizeSelect.value = targetValue;
+                                    companySizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    companySizeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+                                    return 'INSTAHYRE_SET_COMPANY_SIZE: ' + targetText;
+                                }
+                                companySizeConfigured = true;
+                            } else {
+                                companySizeConfigured = true;
                             }
                         }
-                    }
-                    
-                    // A2. Close ANY visible modal/overlay that blocks interaction
-                    // This handles post-apply confirmation dialogs, "already applied" modals, etc.
-                    const openModals = Array.from(document.querySelectorAll('.modal, [class*="modal"], [id*="modal"], .dialog, [role="dialog"]')).filter(m => {
-                        return m.offsetParent !== null && (m.offsetWidth > 0 || m.offsetHeight > 0) && !m.classList.contains('modal-backdrop');
-                    });
-                    if (openModals.length > 0) {
-                        for (const modal of openModals) {
-                            const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close"], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
+
+                        // B. Job Functions - Select the "All" checkbox (new UI)
+                        let jobFuncConfigured = false;
+
+                        const allJobFuncCheckboxes = Array.from(document.querySelectorAll('label.ui-checkbox, .ui-checkbox, input[type="checkbox"]')).filter(el => {
+                            const ngClick = el.getAttribute('ng-click') || el.querySelector('input')?.getAttribute('ng-click') || '';
+                            const ngModel = el.getAttribute('ng-model') || el.querySelector('input')?.getAttribute('ng-model') || '';
+                            return ngClick.includes('job_function') || ngClick.includes('job_functions') || ngClick.includes('job_categories') || ngModel.includes('job_function');
+                        });
+
+                        const allJobFuncInput = document.querySelector('input[type="checkbox"][ng-click*="job_functions"]') ||
+                                                allJobFuncCheckboxes.find(el => /^\\s*all\\b/i.test(el.innerText || el.textContent || ''))?.querySelector('input[type="checkbox"]');
+                        const allJobFuncLabel = allJobFuncCheckboxes.find(el => /^\\s*all\\b/i.test(el.innerText || el.textContent || ''));
+                        const jobFuncClickEl = allJobFuncInput || allJobFuncLabel;
+
+                        if (jobFuncClickEl) {
+                            const isChecked = (allJobFuncInput && allJobFuncInput.checked) || (allJobFuncLabel && (allJobFuncLabel.classList.contains('checked') || allJobFuncLabel.querySelector('input:checked')));
+                            if (isChecked) {
+                                jobFuncConfigured = true;
+                            } else {
+                                jobFuncClickEl.click();
+                                if (allJobFuncInput) allJobFuncInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                return 'INSTAHYRE_SET_JOB_FUNCTIONS: All';
+                            }
+                        } else {
+                            jobFuncConfigured = true;
+                        }
+
+                        // C. Location - Select the "All" checkbox (new UI)
+                        let locationConfigured = false;
+
+                        const locationCheckboxes = Array.from(document.querySelectorAll('label.ui-checkbox, .ui-checkbox, input[type="checkbox"]')).filter(el => {
+                            const ngClick = el.getAttribute('ng-click') || el.querySelector('input')?.getAttribute('ng-click') || '';
+                            const ngModel = el.getAttribute('ng-model') || el.querySelector('input')?.getAttribute('ng-model') || '';
+                            return ngClick.includes('location') || ngModel.includes('location');
+                        });
+
+                        const allLocationInput = document.querySelector('input[type="checkbox"][ng-click*="jobLocations"]') ||
+                                                 locationCheckboxes.find(el => /^\\s*all\\b/i.test(el.innerText || el.textContent || ''))?.querySelector('input[type="checkbox"]');
+                        const allLocationLabel = locationCheckboxes.find(el => /^\\s*all\\b/i.test(el.innerText || el.textContent || ''));
+                        const locationClickEl = allLocationInput || allLocationLabel;
+
+                        if (locationClickEl) {
+                            const isChecked = (allLocationInput && allLocationInput.checked) || (allLocationLabel && (allLocationLabel.classList.contains('checked') || allLocationLabel.querySelector('input:checked')));
+                            if (isChecked) {
+                                locationConfigured = true;
+                            } else {
+                                locationClickEl.click();
+                                if (allLocationInput) allLocationInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                return 'INSTAHYRE_SET_LOCATIONS: All';
+                            }
+                        } else {
+                            locationConfigured = true;
+                        }
+
+                        // D. Industry Filter - Ensure All is selected by default so no industries are excluded
+                        const indCheckboxes = Array.from(document.querySelectorAll('label.ui-checkbox, .ui-checkbox, input[type="checkbox"]')).filter(el => {
+                            const ngClick = el.getAttribute('ng-click') || el.querySelector('input')?.getAttribute('ng-click') || '';
+                            const ngModel = el.getAttribute('ng-model') || el.querySelector('input')?.getAttribute('ng-model') || '';
+                            return ngClick.includes('industry') || ngModel.includes('industry');
+                        });
+                        if (indCheckboxes.length > 0 && !sessionStorage.getItem('instahyre_industry_configured')) {
+                            const allIndInput = document.querySelector('input[type="checkbox"][ng-click*="industry"][ng-click*="ALL"], input[type="checkbox"][ng-model*="all_values.industry"]') ||
+                                                indCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''))?.querySelector('input[type="checkbox"]');
+                            const allIndLabel = indCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''));
+                            const targetIndClick = allIndInput || allIndLabel;
+                            if (allIndInput && !allIndInput.checked && targetIndClick) {
+                                targetIndClick.click();
+                                if (allIndInput) allIndInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                sessionStorage.setItem('instahyre_industry_configured', 'true');
+                                return 'INSTAHYRE_SET_INDUSTRY: All';
+                            }
+                            sessionStorage.setItem('instahyre_industry_configured', 'true');
+                        }
+
+                        // E. Company Filter - Ensure All is selected by default
+                        const compFilterCheckboxes = Array.from(document.querySelectorAll('label.ui-checkbox, .ui-checkbox, input[type="checkbox"]')).filter(el => {
+                            const ngClick = el.getAttribute('ng-click') || el.querySelector('input')?.getAttribute('ng-click') || '';
+                            const ngModel = el.getAttribute('ng-model') || el.querySelector('input')?.getAttribute('ng-model') || '';
+                            return (ngClick.includes('company') || ngModel.includes('company')) && !ngClick.includes('company_size') && !ngModel.includes('company_size');
+                        });
+                        if (compFilterCheckboxes.length > 0 && !sessionStorage.getItem('instahyre_company_configured')) {
+                            const allCompInput = document.querySelector('input[type="checkbox"][ng-click*="selectFilter(\\\'company\\\', \\\'ALL\\\')"], input[type="checkbox"][ng-model*="all_values.company"]') ||
+                                                 compFilterCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''))?.querySelector('input[type="checkbox"]');
+                            const allCompLabel = compFilterCheckboxes.find(el => /\\ball\\b/i.test(el.innerText || el.textContent || ''));
+                            const targetCompClick = allCompInput || allCompLabel;
+                            if (allCompInput && !allCompInput.checked && targetCompClick) {
+                                targetCompClick.click();
+                                if (allCompInput) allCompInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                sessionStorage.setItem('instahyre_company_configured', 'true');
+                                return 'INSTAHYRE_SET_COMPANY: All';
+                            }
+                            sessionStorage.setItem('instahyre_company_configured', 'true');
+                        }
+
+                        // 4. View & Apply (The Main Loop)
+
+                        // A0. Handle Modal with "View active jobs" button (inactive / redirected jobs)
+                        const modalCandidateBtns = Array.from(document.querySelectorAll(
+                            '.modal button, .application-modal button, button.new-btn, button.btn-primary'
+                        ));
+                        const viewActiveJobsBtn = modalCandidateBtns.find(btn => {
+                            if (!btn || btn.offsetParent === null) return false;
+                            const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                            return text.includes('view active jobs') || text.includes('view active job') || (text.includes('active jobs') && !text.includes('apply'));
+                        });
+
+                        if (viewActiveJobsBtn) {
+                            window.__SENTINEL_DEBUG__&&console.log('Instahyre: Found "View active jobs" button - skipping inactive job and closing modal');
+                            const modal = viewActiveJobsBtn.closest('.modal, [class*="modal"], [id*="modal"], .dialog, [role="dialog"]') || document;
+                            const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close" i], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
                             if (closeBtn && closeBtn.offsetParent !== null) {
                                 closeBtn.click();
+                            }
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                backdrop.click();
+                            }
+                            if (window.angular) {
+                                try {
+                                    const modalEl = document.querySelector('.modal.in, .modal.show');
+                                    if (modalEl) {
+                                        const scope = angular.element(modalEl).scope();
+                                        if (scope) {
+                                            if (typeof scope.$dismiss === 'function') scope.$dismiss();
+                                            else if (typeof scope.close === 'function') scope.close();
+                                            else if (typeof scope.cancel === 'function') scope.cancel();
+                                            else if (typeof scope.dismiss === 'function') scope.dismiss();
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                            if (window.$ && typeof window.$.fn?.modal === 'function') {
+                                try {
+                                    $('.modal').modal('hide');
+                                } catch (e) {}
+                            }
+                            return 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED';
+                        }
+
+                        // A. Handle Modal - Look for Apply button in any modal
+                        const modalApplyBtns = document.querySelectorAll(
+                            'button.new-btn.btn-primary, button.new-btn, button.btn-primary.new-btn, button.btn.btn-lg.btn-primary.new-btn'
+                        );
+                        for (const btn of modalApplyBtns) {
+                            if (btn && btn.offsetParent !== null && !btn.disabled) {
+                                const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                                if (text.includes('view active jobs') || text.includes('active jobs')) continue;
+                                if (/^(apply|interested|send application|submit application|apply now|yes)/i.test(text) || (text.includes('apply') && !text.includes('applied') && !text.includes('already'))) {
+                                    btn.scrollIntoView({ block: 'center' });
+                                    btn.click();
+                                    return 'INSTAHYRE_APPLY_CLICKED';
+                                }
+                            }
+                        }
+
+                        // A2. Close ANY genuinely open blocking modal/overlay (excluding job apply modal which has Apply buttons)
+                        const openModals = Array.from(document.querySelectorAll('.modal.in, .modal.show, .modal[style*="display: block"], [role="dialog"].in, [role="dialog"].show')).filter(m => {
+                            return m.offsetParent !== null && (m.offsetWidth > 0 || m.offsetHeight > 0) && !m.classList.contains('modal-backdrop');
+                        });
+                        if (openModals.length > 0) {
+                            for (const modal of openModals) {
+                                if (modal.querySelector('button.new-btn, button.btn-primary, button[ng-click*="apply"], button[ng-click*="submit"]')) {
+                                    continue;
+                                }
+                                const closeBtn = modal.querySelector('button.close, .close, [data-dismiss="modal"], button[aria-label="Close"], button[aria-label*="close" i], .modal-header .close, .close-btn, button.btn-secondary, button.btn-default, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"], a.close, span.close');
+                                if (closeBtn && closeBtn.offsetParent !== null) {
+                                    closeBtn.click();
+                                    return 'INSTAHYRE_MODAL_CLOSED';
+                                }
+                            }
+                            const backdrop = document.querySelector('.modal-backdrop.in, .modal-backdrop.show');
+                            if (backdrop) {
+                                backdrop.click();
                                 return 'INSTAHYRE_MODAL_CLOSED';
                             }
                         }
-                        const backdrop = document.querySelector('.modal-backdrop');
-                        if (backdrop) {
-                            backdrop.click();
-                            return 'INSTAHYRE_MODAL_CLOSED';
+
+                        // B. Close success modals / alerts
+                        const successIndicators = document.querySelectorAll('.alert-success, .success-message, [class*="success"], .alert-info');
+                        for (const indicator of successIndicators) {
+                            if (indicator && indicator.offsetParent !== null) {
+                                const closeBtn = indicator.querySelector('button.close, .close, [data-dismiss="modal"], [data-dismiss="alert"]') ||
+                                                document.querySelector('.modal button.close, .modal .close');
+                                if (closeBtn) {
+                                    closeBtn.click();
+                                    return 'INSTAHYRE_MODAL_CLOSED_SUCCESS';
+                                }
+                            }
                         }
-                        if (window.angular) {
-                            try {
-                                const modalEl = document.querySelector('.modal.in, .modal.show, [class*="modal"]');
-                                if (modalEl) {
-                                    const scope = angular.element(modalEl).scope();
-                                    if (scope) {
-                                        if (typeof scope.$dismiss === 'function') scope.$dismiss();
-                                        else if (typeof scope.close === 'function') scope.close();
-                                        else if (typeof scope.cancel === 'function') scope.cancel();
-                                        else if (typeof scope.dismiss === 'function') scope.dismiss();
+
+                        // C. Click "View" / "View job »" on Job Cards
+                        const isAlreadyViewed = (el) => el.getAttribute('data-sentinel-viewed') === 'true' || 
+                                                       el.getAttribute('data-sentinel-skipped') === 'true' || 
+                                                       el.classList.contains('sentinel-viewed') || 
+                                                       el.classList.contains('sentinel-skipped') || 
+                                                       !!el.closest('[data-sentinel-viewed="true"]') ||
+                                                       !!el.closest('[data-sentinel-skipped="true"]');
+
+                        const viewBtnSelectors = [
+                            'button.btn-interested.btn-success:not([disabled])',
+                            'button.btn-success.btn-md.btn-interested:not([disabled])',
+                            'button.btn-interested:not([disabled])',
+                            'button#interested-btn.btn-success:not([disabled])',
+                            'button#interested-btn:not([disabled])',
+                            'button.button-interested.btn-success:not([disabled])',
+                            'button.button-interested:not([disabled])',
+                            'button[ng-click*="openApplyModal"]:not([disabled])',
+                            'button[ng-click*="interested"]:not([disabled])',
+                            '.opportunity-action-links button.btn-success:not([disabled])',
+                            'button.btn-success:not([disabled])',
+                            'a.view-job',
+                            '[class*="interested"] button:not([disabled])'
+                        ];
+
+                        for (const sel of viewBtnSelectors) {
+                            const btns = document.querySelectorAll(sel);
+                            for (const btn of btns) {
+                                if (btn && btn.offsetParent !== null && !isAlreadyViewed(btn)) {
+                                    const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                                    if (!btnText.includes('applied') && !btnText.includes('saved')) {
+                                        btn.setAttribute('data-sentinel-viewed', 'true');
+                                        const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
+                                        if (card) card.setAttribute('data-sentinel-viewed', 'true');
+                                        btn.scrollIntoView({ block: 'center' });
+                                        btn.click();
+                                        return 'INSTAHYRE_VIEW_CLICKED';
                                     }
                                 }
-                            } catch (e) {}
-                        }
-                        if (window.$ && typeof window.$.fn?.modal === 'function') {
-                            try {
-                                $('.modal').modal('hide');
-                            } catch (e) {}
-                        }
-                        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }));
-                        return 'INSTAHYRE_MODAL_CLOSED';
-                    }
-                    
-                    // B. Close success modals / alerts
-                    const successIndicators = document.querySelectorAll('.alert-success, .success-message, [class*="success"], .alert-info');
-                    for (const indicator of successIndicators) {
-                        if (indicator && indicator.offsetParent !== null) {
-                            const closeBtn = indicator.querySelector('button.close, .close, [data-dismiss="modal"], [data-dismiss="alert"]') ||
-                                            document.querySelector('.modal button.close, .modal .close');
-                            if (closeBtn) {
-                                closeBtn.click();
-                                return 'INSTAHYRE_MODAL_CLOSED_SUCCESS';
                             }
                         }
-                    }
-                    
-                    // C. Click "View" on Job Cards - prioritized selector patterns from DOM inspection
-                    // Skip buttons that say "Applied" or "Already Applied", or cards already viewed/skipped in this pass
-                    const isAlreadyViewed = (el) => el.getAttribute('data-sentinel-viewed') === 'true' || 
-                                                   el.getAttribute('data-sentinel-skipped') === 'true' || 
-                                                   el.classList.contains('sentinel-viewed') || 
-                                                   el.classList.contains('sentinel-skipped') || 
-                                                   !!el.closest('[data-sentinel-viewed="true"]') ||
-                                                   !!el.closest('[data-sentinel-skipped="true"]');
 
-                    const primaryViewBtns = document.querySelectorAll('button#interested-btn.btn-success:not([disabled])');
-                    for (const primaryViewBtn of primaryViewBtns) {
-                        if (primaryViewBtn && primaryViewBtn.offsetParent !== null && !isAlreadyViewed(primaryViewBtn)) {
-                            const pText = (primaryViewBtn.innerText || '').toLowerCase();
-                            if (!pText.includes('applied') && !pText.includes('saved')) {
-                                primaryViewBtn.setAttribute('data-sentinel-viewed', 'true');
-                                const card = primaryViewBtn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"]') || primaryViewBtn.parentElement;
-                                if (card) card.setAttribute('data-sentinel-viewed', 'true');
-                                primaryViewBtn.scrollIntoView({ block: 'center' });
-                                primaryViewBtn.click();
-                                return 'INSTAHYRE_VIEW_CLICKED';
+                        const allButtons = Array.from(document.querySelectorAll('button, a.btn'));
+                        for (const btn of allButtons) {
+                            if (btn && btn.offsetParent !== null && !btn.disabled && !isAlreadyViewed(btn)) {
+                                const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+                                if ((btnText.includes('view job') || btnText.startsWith('view') || btnText === 'interested') && !btnText.includes('applied') && !btnText.includes('saved') && !btnText.includes('active jobs')) {
+                                    btn.setAttribute('data-sentinel-viewed', 'true');
+                                    const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
+                                    if (card) card.setAttribute('data-sentinel-viewed', 'true');
+                                    btn.scrollIntoView({ block: 'center' });
+                                    btn.click();
+                                    return 'INSTAHYRE_VIEW_CLICKED';
+                                }
                             }
                         }
-                    }
-                    
-                    // Secondary: Multiple fallback patterns
-                    const viewBtnSelectors = [
-                        'button#interested-btn',
-                        'button.button-interested.btn-success',
-                        'button[ng-click*="openApplyModal"]',
-                        '.opportunity-action-links button.btn-success',
-                        'button.button-interested',
-                        'button.btn-success',
-                        'a.view-job',
-                        '[class*="interested"] button'
-                    ];
-                    for (const sel of viewBtnSelectors) {
-                        const btns = document.querySelectorAll(sel);
-                        for (const btn of btns) {
-                            const btnText = (btn.innerText || '').toLowerCase();
-                            if ((btnText.includes('view') || btnText.includes('interested')) && !btn.disabled && btn.offsetParent !== null && !btnText.includes('applied') && !isAlreadyViewed(btn)) {
-                                btn.setAttribute('data-sentinel-viewed', 'true');
-                                const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"]') || btn.parentElement;
-                                if (card) card.setAttribute('data-sentinel-viewed', 'true');
-                                btn.scrollIntoView({ block: 'center' });
-                                btn.click();
-                                return 'INSTAHYRE_VIEW_CLICKED';
+
+                        // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs
+                        const allViewBtns = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success');
+                        let allAppliedOrViewed = true;
+                        let visibleCount = 0;
+                        for (const btn of allViewBtns) {
+                            if (btn.offsetParent !== null) {
+                                visibleCount++;
+                                const t = (btn.innerText || '').toLowerCase();
+                                if (!t.includes('applied') && !t.includes('saved') && !btn.disabled && !isAlreadyViewed(btn)) {
+                                    allAppliedOrViewed = false;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    
-                    // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs
-                    const allViewBtns = document.querySelectorAll('button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success');
-                    let allAppliedOrViewed = true;
-                    let visibleCount = 0;
-                    for (const btn of allViewBtns) {
-                        if (btn.offsetParent !== null) {
-                            visibleCount++;
-                            const t = (btn.innerText || '').toLowerCase();
-                            if (!t.includes('applied') && !t.includes('saved') && !btn.disabled && !isAlreadyViewed(btn)) {
-                                allAppliedOrViewed = false;
-                                break;
-                            }
+                        if (visibleCount > 0 && allAppliedOrViewed) {
+                            window.scrollBy(0, 800);
+                            return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
                         }
-                    }
-                    if (visibleCount > 0 && allAppliedOrViewed) {
-                        window.scrollBy(0, 800);
-                        return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
-                    }
-                    
-                    // D. Check if no more jobs available — broad detection
-                    const bodyText = document.body.innerText || '';
-                    const noJobsIndicators = [
-                        document.querySelector('.no-jobs, .no-results, [class*="empty-state"]'),
-                        bodyText.includes('No matching jobs'),
-                        bodyText.includes('No jobs found'),
-                        bodyText.includes('No opportunities'),
-                        bodyText.includes('No results found'),
-                        bodyText.includes('0 opportunities'),
-                    ];
-                    
-                    // Grace period: if we recently clicked "Show Results", wait for jobs to load
-                    // before declaring no more jobs (prevents race condition with slow rendering)
-                    const resultsClickedAt = sessionStorage.getItem('instahyre_results_clicked');
-                    const inResultsGracePeriod = resultsClickedAt && (Date.now() - parseInt(resultsClickedAt) < 15000);
-                    
-                    if (!inResultsGracePeriod && noJobsIndicators.some(Boolean)) {
-                        sessionStorage.removeItem('instahyre_results_clicked');
-                        return 'INSTAHYRE_NO_MORE_JOBS';
-                    }
-                    if (inResultsGracePeriod && noJobsIndicators.some(Boolean)) {
-                        return 'INSTAHYRE_WAITING_FOR_RESULTS';
-                    }
-                    
-                    // D2. Check if results page has zero actual job cards (not generic .card elements)
-                    const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card');
-                    const viewBtnsExist = document.querySelectorAll('button#interested-btn, button.button-interested').length > 0;
-                    if (jobCards.length === 0 && !viewBtnsExist) {
-                        if (inResultsGracePeriod) {
-                            return 'INSTAHYRE_WAITING_FOR_RESULTS';
+
+                        // D. Check if no more jobs available — broad detection
+                        const bodyLower = (document.body.innerText || '').toLowerCase();
+                        const noJobsIndicators = [
+                            document.querySelector('.no-jobs, .no-results, .empty-state, [class*="empty-state"]'),
+                            bodyLower.includes('no matching opportunities'),
+                            bodyLower.includes('no matching jobs'),
+                            bodyLower.includes('no jobs found'),
+                            bodyLower.includes('no opportunities found'),
+                            bodyLower.includes('no opportunities'),
+                            bodyLower.includes('no results found'),
+                            bodyLower.includes("couldn't find any matching"),
+                            bodyLower.includes('0 opportunities'),
+                            bodyLower.includes('recommended jobs (0)'),
+                            bodyLower.includes('recommended jobs 0'),
+                            bodyLower.includes('search results (0)'),
+                            bodyLower.includes('search results 0')
+                        ];
+
+                        if (noJobsIndicators.some(Boolean)) {
+                            sessionStorage.removeItem('instahyre_results_clicked');
+                            return 'INSTAHYRE_NO_MORE_JOBS';
                         }
-                        // On the results page but no job cards at all — no jobs match
-                        sessionStorage.removeItem('instahyre_results_clicked');
-                        return 'INSTAHYRE_NO_MORE_JOBS';
-                    }
-                    // Results loaded successfully — clear the grace period timestamp
-                    if (jobCards.length > 0 || viewBtnsExist) {
-                        sessionStorage.removeItem('instahyre_results_clicked');
-                    }
-                    
-                    // E. Scroll to load more jobs if needed
-                    if (jobCards.length > 0) {
-                        const lastCard = jobCards[jobCards.length - 1];
-                        lastCard.scrollIntoView({ block: 'end' });
-                        return 'INSTAHYRE_SCROLLING_FOR_MORE';
+
+                        // D2. Check if results page has zero actual job cards
+                        const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card, .employer-row');
+                        const viewBtnsExist = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, button.btn-success').length > 0;
+                        if (jobCards.length === 0 && !viewBtnsExist) {
+                            sessionStorage.removeItem('instahyre_results_clicked');
+                            return 'INSTAHYRE_NO_MORE_JOBS';
+                        }
+                        if (jobCards.length > 0 || viewBtnsExist) {
+                            sessionStorage.removeItem('instahyre_results_clicked');
+                        }
+
+                        // E. Scroll to load more jobs if needed
+                        if (jobCards.length > 0) {
+                            const lastCard = jobCards[jobCards.length - 1];
+                            lastCard.scrollIntoView({ block: 'end' });
+                            return 'INSTAHYRE_SCROLLING_FOR_MORE';
+                        }
                     }
                 }
 

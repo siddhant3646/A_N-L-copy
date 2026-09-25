@@ -25,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Default fallback models if discovery API is unavailable
 DEFAULT_GEMMA_MODELS = [
-    "gemma-4-26b-a4b-it",
-    "gemma-4-31b-it",
     "gemma-3-27b-it",
     "gemma-2-27b-it",
     "gemma-2-9b-it",
@@ -206,8 +204,27 @@ class GemmaLLMClient:
         if session is not None:
             try:
                 async with session.get(url, timeout=timeout) as resp:
-                    text = await resp.text()
-                    return resp.status, text
+                    text = ""
+                    if hasattr(resp, "text"):
+                        try:
+                            res = resp.text() if not callable(resp.text) else resp.text()
+                            if asyncio.iscoroutine(res):
+                                text = await res
+                            elif isinstance(res, str):
+                                text = res
+                        except Exception:
+                            pass
+                    if not text and hasattr(resp, "json"):
+                        try:
+                            res = resp.json() if not callable(resp.json) else resp.json()
+                            if asyncio.iscoroutine(res):
+                                data = await res
+                                text = json.dumps(data)
+                            elif isinstance(res, (dict, list)):
+                                text = json.dumps(res)
+                        except Exception:
+                            pass
+                    return resp.status, text or "{}"
             except Exception as e:
                 logger.debug(f"aiohttp GET error: {e}, attempting urllib fallback")
 
@@ -232,8 +249,27 @@ class GemmaLLMClient:
         if session is not None:
             try:
                 async with session.post(url, json=payload, timeout=timeout) as resp:
-                    text = await resp.text()
-                    return resp.status, text
+                    text = ""
+                    if hasattr(resp, "text"):
+                        try:
+                            res = resp.text() if not callable(resp.text) else resp.text()
+                            if asyncio.iscoroutine(res):
+                                text = await res
+                            elif isinstance(res, str):
+                                text = res
+                        except Exception:
+                            pass
+                    if not text and hasattr(resp, "json"):
+                        try:
+                            res = resp.json() if not callable(resp.json) else resp.json()
+                            if asyncio.iscoroutine(res):
+                                data = await res
+                                text = json.dumps(data)
+                            elif isinstance(res, (dict, list)):
+                                text = json.dumps(res)
+                        except Exception:
+                            pass
+                    return resp.status, text or "{}"
             except Exception as e:
                 logger.debug(f"aiohttp POST error: {e}, attempting urllib fallback")
 
@@ -260,8 +296,8 @@ class GemmaLLMClient:
     async def verify_and_select_model(self) -> str:
         """
         Verify available Gemma model IDs via GET /v1beta/models.
-        Filters Gemma IDs, logs the list, and selects primary:
-        prioritizes responsive Gemma 4 models (e.g. gemma-4-26b-a4b-it or gemma-4-31b-it).
+        Filters Gemma IDs, logs the list, and selects primary.
+        Prioritizes: 31b, 26b, 27b, 9b, 2b, others.
         """
         if self._discovery_completed and self._selected_model:
             return self._selected_model
@@ -292,13 +328,16 @@ class GemmaLLMClient:
                 print(f"   🤖 [Gemma LLM] Discovered {len(gemma_models)} Gemma model(s): {gemma_models}")
 
                 if gemma_models:
-                    # Order priority: gemma-4-26b-a4b-it, gemma-4-31b-it, gemma-3-*, gemma-2-*
+                    # Order priority: 31b, 26b, 27b, 9b, 2b, others
                     ordered = []
                     for m in gemma_models:
-                        if "26b" in m.lower() and "gemma" in m.lower():
+                        if "31b" in m.lower() and "gemma" in m.lower() and m not in ordered:
                             ordered.append(m)
                     for m in gemma_models:
-                        if "31b" in m.lower() and m not in ordered:
+                        if "26b" in m.lower() and "gemma" in m.lower() and m not in ordered:
+                            ordered.append(m)
+                    for m in gemma_models:
+                        if "27b" in m.lower() and "gemma" in m.lower() and m not in ordered:
                             ordered.append(m)
                     for m in gemma_models:
                         if m not in ordered:

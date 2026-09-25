@@ -112,6 +112,8 @@ class PatternMatcher:
         # 0b. Offers in Hand safety guard (prevent current CTC hijacking e.g. "mention if any with CTC offered")
         is_offers_in_hand = bool(re.search(r'\b(offers? in hand|competing offers?|other offers?)\b', ql))
         if is_offers_in_hand:
+            if 'else 0' in ql or 'else mention 0' in ql or 'amount in lpa' in ql:
+                return '0', max(score, 0.98)
             if al in ('23', '23 LPA', '2300000', '30', '30 LPA') or al.isdigit():
                 return ('None' if input_type in ('text', 'textarea', None) else 'No'), max(score, 0.98)
 
@@ -190,6 +192,8 @@ class PatternMatcher:
 
         # 0m. Offer in hand / Holding offers / Competing offers
         if bool(re.search(r'\b(offer\s+in\s+hand|holding\s+(any\s+)?offers?|competing\s+offers?|existing\s+offers?)\b', ql)):
+            if 'else 0' in ql or 'else mention 0' in ql or 'amount in lpa' in ql:
+                return '0', max(score, 0.98)
             if input_type in ('number', 'numeric'):
                 return '0', max(score, 0.98)
             return 'No', max(score, 0.98)

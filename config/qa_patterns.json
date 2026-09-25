@@ -516,10 +516,10 @@
     "current_salary": {
       "patterns": [
         "what's your current ctc (cost to company)?",
-        "what’s your current ctc (cost to company)?",
+        "what\u2019s your current ctc (cost to company)?",
         "what is your current ctc (cost to company)?",
         "what's your current ctc (cost to company)",
-        "what’s your current ctc (cost to company)",
+        "what\u2019s your current ctc (cost to company)",
         "current ctc (cost to company)",
         "current ctc (cost to company)?",
         "ctc",
@@ -579,10 +579,10 @@
     "expected_salary": {
       "patterns": [
         "what's your expected ctc (cost to company)?",
-        "what’s your expected ctc (cost to company)?",
+        "what\u2019s your expected ctc (cost to company)?",
         "what is your expected ctc (cost to company)?",
         "what's your expected ctc (cost to company)",
-        "what’s your expected ctc (cost to company)",
+        "what\u2019s your expected ctc (cost to company)",
         "expected ctc (cost to company)",
         "expected ctc (cost to company)?",
         "gross expected salary",
@@ -5855,8 +5855,8 @@
         "relocation",
         "relocate to",
         "willingness to travel",
-        "are you comfortable commuting to this job’s location",
-        "are you comfortable commuting to this job’s location?",
+        "are you comfortable commuting to this job\u2019s location",
+        "are you comfortable commuting to this job\u2019s location?",
         "comfortable relocating",
         "relocating",
         "relocating to",
@@ -10987,12 +10987,12 @@
         "can speak write and understand english"
       ],
       "category": "skills",
-      "default": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+      "default": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
       "input_type_defaults": {
-        "radio": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
-        "select": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
-        "text": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
-        "textarea": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+        "radio": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "select": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "text": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "textarea": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
         "checkbox": "Yes",
         "number": "12."
       },
@@ -83795,7 +83795,7 @@
     },
     "current_org_description": {
       "category": "preference",
-      "default": "Fiserv — a global fintech company specializing in financial services technology",
+      "default": "Fiserv \u2014 a global fintech company specializing in financial services technology",
       "priority": 8,
       "patterns": [
         "briefly describe the focus of your current or last organization",
@@ -83805,10 +83805,10 @@
         "current company focus"
       ],
       "input_type_defaults": {
-        "textarea": "Fiserv — a global fintech company specializing in financial services technology",
-        "text": "Fiserv — a global fintech company specializing in financial services technology",
-        "radio": "Fiserv — a global fintech comp",
-        "select": "Fiserv — a global fintech company specializing in financial services technology",
+        "textarea": "Fiserv \u2014 a global fintech company specializing in financial services technology",
+        "text": "Fiserv \u2014 a global fintech company specializing in financial services technology",
+        "radio": "Fiserv \u2014 a global fintech comp",
+        "select": "Fiserv \u2014 a global fintech company specializing in financial services technology",
         "checkbox": "Yes"
       }
     },
@@ -83863,7 +83863,7 @@
       ],
       "input_type_defaults": {
         "textarea": "I worked on an AI Document Intelligence Platform that automated data extraction from complex PDFs using OCR and LLMs, serving 50+ enterprise clients at Fiserv.",
-        "text": "AI Document Intelligence Platform at Fiserv — OCR + LLM for automated PDF data extraction",
+        "text": "AI Document Intelligence Platform at Fiserv \u2014 OCR + LLM for automated PDF data extraction",
         "radio": "I worked on an AI Document Int",
         "select": "I worked on an AI Document Intelligence Platform that automated data extraction from complex PDFs using OCR and LLMs, serving 50+ enterprise clients at Fiserv.",
         "checkbox": "Yes",
@@ -84142,7 +84142,7 @@
     },
     "problem_statement": {
       "category": "preference",
-      "default": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+      "default": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
       "priority": 13,
       "patterns": [
         "using your past experience describe a problem statement you contributed to solving",
@@ -84151,10 +84151,10 @@
         "describe a problem you solved"
       ],
       "input_type_defaults": {
-        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
         "text": "Reduced manual document processing time by 70% with AI-powered OCR pipeline at Fiserv",
         "radio": "I contributed to solving docum",
-        "select": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+        "select": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
         "checkbox": "Yes",
         "number": "70."
       }
@@ -85436,9 +85436,9 @@
     },
     "rating_scale_dsa": {
       "patterns": [
-        "rate your proficiency with data structures, algorithms, and design patterns. (1–5 scale)",
+        "rate your proficiency with data structures, algorithms, and design patterns. (1\u20135 scale)",
         "rate your proficiency with data structures",
-        "data structures, algorithms, and design patterns. (1–5 scale)"
+        "data structures, algorithms, and design patterns. (1\u20135 scale)"
       ],
       "category": "technical_screening",
       "default": "5",
@@ -85461,7 +85461,7 @@
     },
     "rating_scale_communication": {
       "patterns": [
-        "how would you rate your communication and stakeholder engagement skills? (scale of 1–5)",
+        "how would you rate your communication and stakeholder engagement skills? (scale of 1\u20135)",
         "rate your communication and stakeholder engagement skills"
       ],
       "category": "technical_screening",
@@ -86254,60 +86254,71 @@
     },
     "current_ctc_in_lacs": {
       "patterns": [
+        "what is your current ctc in lacs per annum?",
         "what is your current ctc in lacs per annum",
-        "current ctc in lacs per annum",
-        "what is your current ctc in lakhs per annum",
-        "current ctc in lakhs per annum",
+        "what is your current ctc in lacs?",
         "what is your current ctc in lacs",
-        "what is your current ctc in lakhs",
+        "what is your current ctc in lakh per annum",
+        "what is your current ctc in lakhs per annum",
+        "current ctc in lacs per annum",
         "current ctc in lacs",
-        "current ctc in lakhs",
-        "what is your current ctc in lpa",
-        "current ctc in lpa"
+        "current ctc in lakh per annum",
+        "current ctc (in lakh per annum): ctc includes fix salary , variable pay, pf and any other components.",
+        "current ctc (in lakh per annum)"
       ],
       "category": "salary",
       "default": "23",
-      "priority": 20,
+      "numeric_default": "23",
+      "lpa_default": "23",
       "input_type_defaults": {
+        "radio": "23",
+        "select": "23",
         "text": "23",
         "number": "23",
-        "select": "23 LPA",
         "textarea": "23",
-        "radio": "23",
         "checkbox": "Yes"
-      }
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "expected ctc",
+        "expected salary",
+        "ectc",
+        "expected"
+      ]
     },
     "expected_ctc_in_lacs": {
       "patterns": [
+        "what is your expected ctc in lacs per annum?",
         "what is your expected ctc in lacs per annum",
-        "expected ctc in lacs per annum",
-        "what is your expected ctc in lakhs per annum",
-        "expected ctc in lakhs per annum",
+        "what is your expected ctc in lacs?",
         "what is your expected ctc in lacs",
-        "what is your expected ctc in lakhs",
+        "what is your expected ctc in lakh per annum",
+        "what is your expected ctc in lakhs per annum",
+        "expected ctc in lacs per annum",
         "expected ctc in lacs",
-        "expected ctc in lakhs",
-        "what is your expected ctc in lpa",
-        "expected ctc in lpa",
-        "what is your ectc in lakhs per annum",
-        "what is your ectc in lacs per annum",
-        "ectc in lakhs per annum",
-        "ectc in lacs per annum",
-        "ectc in lakhs",
-        "ectc in lacs",
-        "ectc in lpa"
+        "expected ctc in lakh per annum",
+        "expected ctc (in lakh per annum): ctc includes fix salary , variable pay, pf and any other components.",
+        "expected ctc (in lakh per annum)"
       ],
       "category": "salary",
       "default": "30",
-      "priority": 20,
+      "numeric_default": "30",
+      "lpa_default": "30",
       "input_type_defaults": {
+        "radio": "30",
+        "select": "30",
         "text": "30",
         "number": "30",
-        "select": "30 LPA",
         "textarea": "30",
-        "radio": "30",
         "checkbox": "Yes"
-      }
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "current ctc",
+        "current salary",
+        "cctc",
+        "current"
+      ]
     },
     "niche_non_resume_skills": {
       "patterns": [
@@ -88797,10 +88808,10 @@
         "monolithic and microservices architecture differences"
       ],
       "category": "skills",
-      "default": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+      "default": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
       "input_type_defaults": {
-        "text": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
-        "textarea": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+        "text": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+        "textarea": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
         "radio": "Microservices",
         "select": "Microservices",
         "checkbox": "Yes",
@@ -233696,10 +233707,10 @@
     },
     "country_phone_code_es": {
       "patterns": [
-        "código del país",
+        "c\u00f3digo del pa\u00eds",
         "codigo del pais",
         "codigo de pais",
-        "código de país"
+        "c\u00f3digo de pa\u00eds"
       ],
       "category": "personal_info",
       "default": "India (+91)",
@@ -233825,11 +233836,11 @@
     },
     "employee_referral_name_if_yes": {
       "patterns": [
-        "if you answered yes to the last question, please provide the employee’s first and last name",
+        "if you answered yes to the last question, please provide the employee\u2019s first and last name",
         "if you answered yes to the last question, please provide the employee's first and last name",
         "if you answered yes to the last question please provide the employee's first and last name",
         "please provide the employee's first and last name",
-        "please provide the employee’s first and last name"
+        "please provide the employee\u2019s first and last name"
       ],
       "category": "personal_info",
       "default": "N/A",
@@ -233941,13 +233952,13 @@
     "internal_referral_employee_name": {
       "patterns": [
         "if you answered yes to the last question, please provide the employee's first and last name",
-        "if you answered yes to the last question, please provide the employee’s first and last name",
+        "if you answered yes to the last question, please provide the employee\u2019s first and last name",
         "please provide the employee's first and last name",
-        "please provide the employee’s first and last name",
+        "please provide the employee\u2019s first and last name",
         "provide the employee's first and last name",
-        "provide the employee’s first and last name",
+        "provide the employee\u2019s first and last name",
         "employee's first and last name",
-        "employee’s first and last name"
+        "employee\u2019s first and last name"
       ],
       "category": "personal_info",
       "default": "N/A",
@@ -234262,14 +234273,14 @@
       "patterns": [
         "specify your relevant years of experience",
         "relevant years of experience",
-        "especifica tus años de experiencia relevantes",
-        "especifica tus años de experiencia",
-        "indica tus años de experiencia",
-        "años de experiencia relevantes",
-        "años de experiencia",
-        "selecciona tus años de experiencia",
-        "indique sus años de experiencia",
-        "experiencia relevante en años"
+        "especifica tus a\u00f1os de experiencia relevantes",
+        "especifica tus a\u00f1os de experiencia",
+        "indica tus a\u00f1os de experiencia",
+        "a\u00f1os de experiencia relevantes",
+        "a\u00f1os de experiencia",
+        "selecciona tus a\u00f1os de experiencia",
+        "indique sus a\u00f1os de experiencia",
+        "experiencia relevante en a\u00f1os"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -234290,15 +234301,15 @@
       "patterns": [
         "gender",
         "gender self-identification",
-        "selecciona una opción gender",
-        "género",
+        "selecciona una opci\u00f3n gender",
+        "g\u00e9nero",
         "sexo",
-        "identidad de género",
-        "con qué género te identificas",
+        "identidad de g\u00e9nero",
+        "con qu\u00e9 g\u00e9nero te identificas",
         "con que genero te identificas",
-        "seleccione su género",
-        "indique su género",
-        "cuál es su género"
+        "seleccione su g\u00e9nero",
+        "indique su g\u00e9nero",
+        "cu\u00e1l es su g\u00e9nero"
       ],
       "category": "personal_info",
       "default": "Male",
@@ -234794,8 +234805,8 @@
         "current ctc (in lakhs)",
         "what is your current ctc in lpa",
         "what is your current ctc in lpa?",
-        "what’s your current ctc (cost to company)",
-        "what’s your current ctc (cost to company)?",
+        "what\u2019s your current ctc (cost to company)",
+        "what\u2019s your current ctc (cost to company)?",
         "what is your current ctc (cost to company)",
         "what is your current ctc (cost to company)?",
         "what is your current ctc (in inr)",
@@ -234841,8 +234852,8 @@
         "expected ctc (in lakhs)",
         "what is your expected ctc in lpa",
         "what is your expected ctc in lpa?",
-        "what’s your expected ctc (cost to company)",
-        "what’s your expected ctc (cost to company)?",
+        "what\u2019s your expected ctc (cost to company)",
+        "what\u2019s your expected ctc (cost to company)?",
         "what is your expected ctc (cost to company)",
         "what is your expected ctc (cost to company)?",
         "what is your expected ctc (in inr)",
@@ -234898,6 +234909,428 @@
         "select": "No",
         "checkbox": "No"
       }
+    },
+    "role_fit_rating_1_to_10": {
+      "patterns": [
+        "rate your fit for this role (1 10). share examples, key gaps, and how you plan to bridge them.",
+        "rate your fit for this role (1 10)",
+        "rate your fit for this role (1-10)",
+        "rate your fit for this role",
+        "fit for this role (1 10)"
+      ],
+      "category": "skills",
+      "default": "8/10. With 4+ years in Java, Spring Boot, React, and cloud architectures, I have strong domain fit. Any new tech gaps are quickly bridged via rapid prototyping and deep architectural review.",
+      "input_type_defaults": {
+        "text": "8/10",
+        "textarea": "8/10. With 4+ years in Java, Spring Boot, React, and cloud architectures, I have strong domain fit. Any new tech gaps are quickly bridged via rapid prototyping and deep architectural review.",
+        "number": "8",
+        "radio": "8",
+        "select": "8",
+        "checkbox": "Yes"
+      },
+      "priority": 18
+    },
+    "exp_document_parsing_processing": {
+      "patterns": [
+        "yoe in document parsing / document processing -",
+        "yoe in document parsing / document processing",
+        "yoe in document parsing",
+        "yoe in document processing",
+        "years of experience in document parsing",
+        "years of experience in document processing",
+        "experience in document parsing",
+        "experience in document processing",
+        "document parsing experience",
+        "document processing experience"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4",
+      "priority": 12,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "4",
+        "select": "4.2 Years",
+        "textarea": "4+ years of experience in document parsing and automated document processing pipelines"
+      }
+    },
+    "current_salary_cost_to_company": {
+      "patterns": [
+        "what's your current ctc (cost to company)?",
+        "what\u2019s your current ctc (cost to company)?",
+        "what's your current ctc (cost to company)",
+        "what\u2019s your current ctc (cost to company)",
+        "what is your current ctc (cost to company)?",
+        "what is your current ctc (cost to company)",
+        "current ctc (cost to company)",
+        "current ctc (cost to company)?"
+      ],
+      "category": "salary",
+      "default": "23 LPA",
+      "numeric_default": "23",
+      "input_type_defaults": {
+        "radio": "23",
+        "select": "23 LPA",
+        "text": "23 LPA",
+        "number": "23",
+        "text_inr": "2300000",
+        "textarea": "23 LPA",
+        "checkbox": "Yes"
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "expected ctc",
+        "expected salary",
+        "ectc",
+        "expected"
+      ]
+    },
+    "expected_salary_cost_to_company": {
+      "patterns": [
+        "what's your expected ctc (cost to company)?",
+        "what\u2019s your expected ctc (cost to company)?",
+        "what's your expected ctc (cost to company)",
+        "what\u2019s your expected ctc (cost to company)",
+        "what is your expected ctc (cost to company)?",
+        "what is your expected ctc (cost to company)",
+        "expected ctc (cost to company)",
+        "expected ctc (cost to company)?"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "numeric_default": "30",
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "30 LPA",
+        "number": "30",
+        "text_inr": "3000000",
+        "textarea": "30 LPA",
+        "checkbox": "Yes"
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "current ctc",
+        "current salary",
+        "cctc",
+        "current"
+      ]
+    },
+    "base_salary_expectation": {
+      "patterns": [
+        "what is your base salary expectation?",
+        "what is your base salary expectation",
+        "what are your base salary expectations in local currency?",
+        "what are your base salary expectations in local currency",
+        "what are your base salary expectations",
+        "what is your base salary expectation in local currency",
+        "base salary expectation",
+        "base salary expectations"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "numeric_default": "30",
+      "inr_default": "3000000",
+      "lpa_default": "30",
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "3000000",
+        "number": "3000000",
+        "text_inr": "3000000",
+        "textarea": "3000000",
+        "checkbox": "Yes"
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "current base",
+        "current salary",
+        "current ctc"
+      ]
+    },
+    "monthly_fixed_salary_pay": {
+      "patterns": [
+        "what is your current monthly pay? (don't include variable)",
+        "what is your current monthly pay? (don\u2019t include variable)",
+        "what is your current monthly pay",
+        "what is your monthly fixed salary? (don't include variable)",
+        "what is your monthly fixed salary? (don\u2019t include variable)",
+        "what is your monthly fixed salary",
+        "monthly fixed salary",
+        "current monthly pay",
+        "monthly fixed pay",
+        "current monthly fixed salary"
+      ],
+      "category": "salary",
+      "default": "191667",
+      "numeric_default": "191667",
+      "input_type_defaults": {
+        "radio": "191667",
+        "select": "191667",
+        "text": "191667",
+        "number": "191667",
+        "textarea": "191667",
+        "checkbox": "Yes"
+      },
+      "priority": 18
+    },
+    "kpmg_ex_employee": {
+      "patterns": [
+        "are you a current or former employee of kpmg?",
+        "are you a current or former employee of kpmg",
+        "are you a current or former employee of kpmg? \nrequired",
+        "current or former employee of kpmg",
+        "employed by kpmg",
+        "former employee of kpmg",
+        "worked at kpmg"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "no - never employed by kpmg",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "kpmg_functional_area_followup": {
+      "patterns": [
+        "if you have been employed by kpmg, please share your functional area(s) and approximate dates of employment.",
+        "if you have been employed by kpmg, please share your functional area(s) and approximate dates of employment",
+        "if you have been employed by kpmg",
+        "approximate dates of employment at kpmg"
+      ],
+      "category": "compliance",
+      "default": "None",
+      "input_type_defaults": {
+        "text": "None",
+        "textarea": "None",
+        "radio": "None",
+        "select": "None",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "dun_bradstreet_relative_referral": {
+      "patterns": [
+        "do you have a family member or relative who is currently employed by dun & bradstreet?",
+        "do you have a family member or relative who is currently employed by dun & bradstreet",
+        "do you have a family member or relative who is currently employed by dun & bradstreet? \nrequired",
+        "did a current dun & bradstreet employee influence you to apply or refer you to the company/role?",
+        "did a current dun & bradstreet employee influence you to apply or refer you to the company/role",
+        "did a current dun & bradstreet employee influence you to apply or refer you to the company/role? \nrequired",
+        "relative who is currently employed by dun & bradstreet",
+        "family member or relative who is currently employed by dun & bradstreet"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "no",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "dun_bradstreet_relative_name_followup": {
+      "patterns": [
+        "if you have a family member or relative currently employed by dun & bradstreet, please list their name(s):",
+        "if you have a family member or relative currently employed by dun & bradstreet, please list their name(s)",
+        "if you were referred by a dun & bradstreet employee, please list their name:",
+        "if you were referred by a dun & bradstreet employee, please list their name"
+      ],
+      "category": "compliance",
+      "default": "None",
+      "input_type_defaults": {
+        "text": "None",
+        "textarea": "None",
+        "radio": "None",
+        "select": "None",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "termgrid_applied_before": {
+      "patterns": [
+        "have you applied to termgrid for a role before?",
+        "have you applied to termgrid for a role before",
+        "have you applied to termgrid for a role before? \nrequired",
+        "have you applied to termgrid",
+        "applied to termgrid for a role before"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "no, this is my first application",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "deloitte_association_compliance": {
+      "patterns": [
+        "please confirm if you are currently or formerly have been associated with deloitte",
+        "confirm if you are currently or formerly have been associated with deloitte",
+        "associated with deloitte or any of its subsidiary entities",
+        "ex-employee of deloitte (or its subsidiary companies)",
+        "associated with deloitte"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "serving_notice_or_already_left": {
+      "patterns": [
+        "are you currently serving notice period? or already left",
+        "are you currently serving notice period? or already left?",
+        "are you currently serving notice period or already left",
+        "serving notice period? or already left",
+        "serving notice period or already left"
+      ],
+      "category": "notice_period",
+      "default": "Yes- Currently serving notice",
+      "input_type_defaults": {
+        "radio": "Yes- Currently serving notice",
+        "select": "Yes- Currently serving notice",
+        "text": "Yes- Currently serving notice",
+        "textarea": "Yes- Currently serving notice",
+        "checkbox": "Yes"
+      },
+      "priority": 19
+    },
+    "notice_periods_in_months": {
+      "patterns": [
+        "notice periods in months",
+        "notice period in months",
+        "notice period in month",
+        "notice period (in months)"
+      ],
+      "category": "notice_period",
+      "default": "0.5",
+      "numeric_default": "0.5",
+      "input_type_defaults": {
+        "radio": "0.5",
+        "select": "0.5",
+        "text": "0.5",
+        "number": "0.5",
+        "textarea": "0.5",
+        "checkbox": "Yes"
+      },
+      "priority": 18
+    },
+    "offer_in_hand_amount_or_zero": {
+      "patterns": [
+        "do you have any offer in hand ? if yes, please mention the amount in lpa, else mention 0",
+        "do you have any offer in hand? if yes, please mention the amount in lpa, else mention 0",
+        "do you have any offer in hand ? if yes please mention the amount in lpa else mention 0",
+        "if yes, please mention the amount in lpa, else mention 0",
+        "please mention the amount in lpa, else mention 0",
+        "amount in lpa, else mention 0",
+        "else mention 0"
+      ],
+      "category": "notice_period",
+      "default": "0",
+      "numeric_default": "0",
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "0",
+        "text": "0",
+        "number": "0",
+        "textarea": "0",
+        "checkbox": "No"
+      },
+      "priority": 19
+    },
+    "react_experience_years": {
+      "patterns": [
+        "how many years of experience you have in react?",
+        "how many years of experience you have in react",
+        "how many years of experience do you have in react?",
+        "how many years of experience do you have in react",
+        "how many years of experience do you have with react?",
+        "how many years of experience do you have with react",
+        "years of experience in react?",
+        "years of experience in react",
+        "years of experience with react",
+        "experience in react?",
+        "experience in react",
+        "react experience",
+        "react.js experience",
+        "react js experience",
+        "experience with react"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "input_type_defaults": {
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "text": "4.2 Years",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience in React.js and frontend development",
+        "checkbox": "Yes"
+      },
+      "priority": 18,
+      "negative_patterns": [
+        "salary",
+        "notice period",
+        "expected",
+        "current ctc"
+      ]
+    },
+    "siem_tools_experience": {
+      "patterns": [
+        "which siem tools have you worked with?",
+        "which siem tools have you worked with",
+        "siem tools have you worked with",
+        "siem tools you have worked with",
+        "which siem tools",
+        "siem tools"
+      ],
+      "category": "skills",
+      "default": "Microsoft Sentinel, Splunk, Elastic",
+      "input_type_defaults": {
+        "text": "Microsoft Sentinel, Splunk, Elastic",
+        "textarea": "Microsoft Sentinel, Splunk, Elastic",
+        "select": "Microsoft Sentinel",
+        "radio": "Microsoft Sentinel",
+        "checkbox": "Yes"
+      },
+      "priority": 18
+    },
+    "expected_ctc_select_hyphen": {
+      "patterns": [
+        "expected ctc-",
+        "expected ctc -",
+        "current ctc-",
+        "current ctc -"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "numeric_default": "30",
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "3000000",
+        "number": "3000000",
+        "select-ctc": "20 - 30 LPA",
+        "textarea": "30 LPA",
+        "checkbox": "Yes"
+      },
+      "priority": 18
     }
   },
   "categories": {

@@ -43,7 +43,7 @@ FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
 # Module-level keyword constants - single definition used by all methods.
 # Previously these were duplicated in _same_keyword_category() and _fuzzy_match_question().
 SALARY_KEYWORDS = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
-EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp']
+EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp', 'yoe']
 NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'np', 'lwd', 'last working']
 LOCATION_KEYWORDS = ['location', 'city', 'relocate', 'preferred location']
 ASYNC_JOB_KEYWORDS = [
@@ -850,6 +850,36 @@ class SentinelAgent:
         if 'highest qualification' in question_lower or 'highest education' in question_lower:
             return 'B.Tech in Computer Science', 0.95
 
+        # Compound location and relocation
+        if ('current location' in question_lower or 'currently based' in question_lower or 'mention your location' in question_lower or 'where do you stay' in question_lower) and ('relocat' in question_lower or 'open to relocat' in question_lower or 'willing to relocat' in question_lower or 'other cities' in question_lower):
+            return 'Currently based in Bangalore, Karnataka, India. 100% open and willing to relocate to other cities if required.', 0.98
+
+        # Complex full-stack / backend project walkthrough from scratch
+        if any(kw in question_lower for kw in ['complex full-stack', 'complex fullstack', 'complex backend', 'project you built from scratch', 'application you built from scratch', 'system you built from scratch']) or (('tell us about' in question_lower or 'describe' in question_lower or 'walk us through' in question_lower) and ('recent project' in question_lower or 'complex project' in question_lower or 'challenging project' in question_lower)):
+            return 'At Everbridge, I architected and built real-time settlement and dispute tracking microservices handling 10k+ req/sec using Java, Spring Boot, React, Kafka, and PostgreSQL, deployed on AWS with Kubernetes.', 0.98
+
+        # Backend technology strongest in
+        if ('backend technology' in question_lower or 'backend stack' in question_lower or 'backend language' in question_lower or 'technologies are you strongest' in question_lower) and ('strongest' in question_lower or 'best' in question_lower or 'prefer' in question_lower or 'why' in question_lower):
+            return 'Java & Spring Boot is my primary backend stack, supplemented with Python and Node.js. I have 4+ years designing high-throughput REST APIs, Kafka event streaming, and PostgreSQL/Redis data pipelines.', 0.98
+
+        # Cloud platforms hands-on experience
+        if ('cloud platform' in question_lower or 'cloud platforms' in question_lower or 'cloud providers' in question_lower) and any(w in question_lower for w in ['hands-on', 'hands on', 'experience', 'worked with', 'proficient', 'which']):
+            return 'AWS (EC2, S3, RDS, Lambda, ECS, CloudWatch, SQS/SNS, IAM), with containerization using Docker and Kubernetes (EKS).', 0.98
+
+        # Docker / Kubernetes in production
+        if ('docker' in question_lower or 'kubernetes' in question_lower or 'containerization' in question_lower or 'iac' in question_lower) and ('production' in question_lower or 'owned' in question_lower or 'deploy' in question_lower or 'orchestrat' in question_lower):
+            return 'Yes, hands-on experience authoring multi-stage Dockerfiles, Helm charts, and managing Kubernetes deployments on AWS with automated CI/CD pipelines.', 0.98
+
+        # Role fit rating (e.g., "Rate your fit for this role (1 10)...")
+        if ('rate your fit' in question_lower or 'fit for this role' in question_lower or 'fit for this position' in question_lower) and any(r in question_lower for r in ['1-10', '1 to 10', '1 10', 'scale', 'rate']):
+            return '9', 0.98
+
+        # Specific YOE prompts (e.g., "YOE in document parsing / document processing -")
+        if question_lower.startswith('yoe in') or question_lower.startswith('yoe on') or question_lower.startswith('yoe with') or 'yoe in document' in question_lower or 'yoe in react' in question_lower or 'yoe in java' in question_lower:
+            if self._current_platform == 'linkedin':
+                return '4', 0.98
+            return '4.2 Years', 0.98
+
         # Relocation questions
         if ('willing to relocate' in question_lower or question_lower.startswith('relocate') or question_lower == 'relocation') and not any(city in question_lower for city in ['mumbai', 'pune', 'chennai', 'hyderabad', 'delhi', 'noida', 'gurgaon']):
             return 'Yes', 0.95
@@ -902,8 +932,9 @@ class SentinelAgent:
             'how many years', 'years of experience', 'total experience', 'total years', 
             'total exp', 'how much experience', 'number of years', 'months of experience', 
             'how many months', 'years in', 'years working', 'experience in years',
-            'relevant experience', 'overall experience', 'how long have you'
-        ]) or (any(kw in question_lower for kw in ['experience', 'exp']) and any(kw in question_lower for kw in ['years', 'yrs', 'months']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
+            'relevant experience', 'overall experience', 'how long have you',
+            'yoe', 'total yoe', 'relevant yoe', 'yoe in', 'yoe on', 'yoe with', 'yoe -'
+        ]) or bool(re.search(r'\byoe\b', question_lower)) or (any(kw in question_lower for kw in ['experience', 'exp', 'yoe']) and any(kw in question_lower for kw in ['years', 'yrs', 'months', 'yoe']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
 
         # LWD (Last Working Day/Date) detection - BEFORE experience keywords
         lwd_keywords = [
@@ -3304,12 +3335,14 @@ class SentinelAgent:
                                     }
                                 }
                                 if (allOpts.length === 0) return null;
-                                // Prefer options containing "bangalore" or "bengaluru"
+                                // Prefer options containing "bangalore", "bengaluru", "karnataka", "india"
                                 let best = allOpts.find(o =>
                                     o.text.toLowerCase().includes('bangalore') ||
-                                    o.text.toLowerCase().includes('bengaluru')
+                                    o.text.toLowerCase().includes('bengaluru') ||
+                                    o.text.toLowerCase().includes('karnataka') ||
+                                    o.text.toLowerCase().includes('india')
                                 );
-                                if (!best) best = allOpts[0];
+                                if (!best) return null;
                                 best.el.click();
                                 best.el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
                                 best.el.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
@@ -5092,6 +5125,7 @@ class SentinelAgent:
                     if not hasattr(self, '_instahyre_apply_count'):
                         self._instahyre_apply_count = 0
                     self._instahyre_apply_count += 1
+                    self.metrics['applications_submitted'] = self._instahyre_apply_count
                     print(f"✅ Instahyre Application {self._instahyre_apply_count}/10 submitted!")
                     
                     if self._instahyre_apply_count >= 10:
@@ -6134,7 +6168,7 @@ class SentinelAgent:
                     if max_val is not None and numeric_val > int(max_val):
                         numeric_val = int(max_val)
 
-            display_ans = str(int(numeric_val)) if (is_numeric_question and numeric_val is not None) else (str(numeric_val) if numeric_val is not None else str(ans))
+            display_ans = str(int(numeric_val)) if (is_numeric_question and numeric_val is not None) else str(ans)
             final_ans_str = str(int(numeric_val)) if (is_numeric_question and numeric_val is not None) else str(ans)
 
             answers_payload.append({
@@ -9508,10 +9542,10 @@ class SentinelAgent:
                         const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
-                        const isYearsQ = /years\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isYearsQ = /(?:years\\b|\\byoe\\b)/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
                         const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)|based\\s*in\\s*(hyderabad|bangalore|bengaluru|pune|delhi|mumbai|gurgaon|noida)|residing\\s*in/i.test(qLower);
                         const isBgCheckQ = /background\\s*(check|verification)|drug\\s*screen|reference\\s*check|criminal\\s*record/i.test(qLower);
@@ -9569,11 +9603,11 @@ class SentinelAgent:
                             bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
                         } else if (isSalaryQ) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/monthly|per month/.test(qLower)) {
-                                bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
-                            } else if (/lpa|lakh|lac/.test(qLower)) {
-                                bestMatch = /expected|desired/.test(qLower) ? '30' : '23';
-                            } else if (/expected|ectc|desired/.test(qLower)) {
+                            if (/monthly|per month/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
+                            } else if (/lpa|lakh|lac/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
+                            } else if (/expected|expectations?|expect|ectc|desired|asking/i.test(qLower)) {
                                 bestMatch = '3000000';
                             } else {
                                 bestMatch = '2300000';
@@ -9589,7 +9623,7 @@ class SentinelAgent:
                         const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b/.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
@@ -9608,17 +9642,17 @@ class SentinelAgent:
                             }
                         } else if (isSalaryQ && !isCompanyOrPayroll) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/monthly|per month/.test(qLower)) {
-                                bestMatch = /expected|desired/.test(qLower) ? '250000' : '191667';
-                            } else if (/lpa|lakh|lac/.test(qLower)) {
-                                bestMatch = /expected|desired/.test(qLower) ? '30' : '23';
-                            } else if (/expected|ectc|desired/.test(qLower)) {
+                            if (/monthly|per month/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
+                            } else if (/lpa|lakh|lac/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
+                            } else if (/expected|expectations?|expect|ectc|desired|asking/i.test(qLower)) {
                                 bestMatch = '3000000';
                             } else {
                                 bestMatch = '2300000';
                             }
                         } else if (isExpQ && !/\\d/.test(bestMatch)) {
-                            if (/how many|years|months|\\bexp\\b/i.test(qLower)) {
+                            if (/how many|years|months|\\bexp\\b|\\byoe\\b/i.test(qLower)) {
                                 // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
@@ -10465,7 +10499,10 @@ return resolveDynamic(bestMatch);
                         const getInputLabelText = (input) => {
                             if (!input) return '';
                             let labelText = '';
-                            if (input.id) {
+                            if (input.getAttribute('aria-label')) {
+                                labelText = input.getAttribute('aria-label');
+                            }
+                            if (!labelText && input.id) {
                                 const labelEl = document.querySelector(`label[for="${input.id}"]`);
                                 if (labelEl) labelText = labelEl.innerText || labelEl.textContent;
                             }
@@ -10478,11 +10515,11 @@ return resolveDynamic(bestMatch);
                                 if (siblingLabel) labelText = siblingLabel.innerText || siblingLabel.textContent;
                                 else labelText = input.parentElement.innerText || input.parentElement.textContent;
                             }
-                            // LinkedIn: text is in <p> inside <div role="radio">
+                            // LinkedIn: text is in <p> or <label> inside <div role="radio"> or .fb-radio
                             if (!labelText) {
-                                const roleRadioParent = input.closest('[role="radio"]');
+                                const roleRadioParent = input.closest('[role="radio"], .fb-radio, [data-test-form-builder-radio-button-form-component]');
                                 if (roleRadioParent) {
-                                    const textEl = roleRadioParent.querySelector('p, span');
+                                    const textEl = roleRadioParent.querySelector('p, span, label');
                                     if (textEl) labelText = textEl.innerText || textEl.textContent;
                                 }
                             }
@@ -10669,6 +10706,7 @@ return resolveDynamic(bestMatch);
                             const tryClick = (attempt) => {
                                 // Re-focus the input so the dropdown stays open
                                 try { input.focus(); } catch(e) {}
+                                let candidateOpts = [];
                                 for (const sel of locOptionSelectors) {
                                     const opts = document.querySelectorAll(sel);
                                     for (const opt of opts) {
@@ -10677,16 +10715,33 @@ return resolveDynamic(bestMatch);
                                             if (text && text.length > 2 &&
                                                 !text.toLowerCase().includes('select') &&
                                                 !text.toLowerCase().includes('choose')) {
-                                                window.__SENTINEL_DEBUG__&&console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', text);
-                                                opt.click();
-                                                opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                                                opt.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-                                                opt.dispatchEvent(new MouseEvent('mouseup',   { bubbles: true }));
-                                                window.__sentinelLocClickScheduled = false;
-                                                return true;
+                                                candidateOpts.push({ el: opt, text: text });
                                             }
                                         }
                                     }
+                                }
+                                if (candidateOpts.length === 0) return false;
+                                let best = candidateOpts.find(o => {
+                                    const t = o.text.toLowerCase();
+                                    return t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india');
+                                });
+                                if (!best) {
+                                    const val = (input.value || '').toLowerCase().trim();
+                                    if (val && val.length > 2) {
+                                        best = candidateOpts.find(o => o.text.toLowerCase().includes(val));
+                                    }
+                                }
+                                if (!best && candidateOpts.length === 1) {
+                                    best = candidateOpts[0];
+                                }
+                                if (best) {
+                                    window.__SENTINEL_DEBUG__&&console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', best.text);
+                                    best.el.click();
+                                    best.el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                    best.el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                                    best.el.dispatchEvent(new MouseEvent('mouseup',   { bubbles: true }));
+                                    window.__sentinelLocClickScheduled = false;
+                                    return true;
                                 }
                                 return false;
                             };
@@ -10715,14 +10770,27 @@ return resolveDynamic(bestMatch);
                             const allDropdownOpts = document.querySelectorAll(dropdownSelectors);
                             window.__SENTINEL_DEBUG__&&console.log('Pre-check: scanning for visible autocomplete options:', allDropdownOpts.length);
                             
+                            let visibleOpts = [];
                             for (const option of allDropdownOpts) {
-                                if (option.offsetParent !== null) {
-                                    const text = option.innerText.trim();
-                                    if (text && text.length > 2 && !text.toLowerCase().includes('select')) {
-                                        window.__SENTINEL_DEBUG__&&console.log('CLICKING VISIBLE AUTOCOMPLETE OPTION:', text);
-                                        option.click();
-                                        return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: text, inputType: 'typeahead'}]);
+                                if (option.offsetParent !== null || option.getClientRects().length > 0) {
+                                    const text = (option.innerText || option.textContent || '').trim();
+                                    if (text && text.length > 2 && !text.toLowerCase().includes('select') && !text.toLowerCase().includes('choose')) {
+                                        visibleOpts.push({ el: option, text: text });
                                     }
+                                }
+                            }
+                            if (visibleOpts.length > 0) {
+                                let best = visibleOpts.find(o => {
+                                    const t = o.text.toLowerCase();
+                                    return t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india');
+                                });
+                                if (!best && visibleOpts.length === 1) {
+                                    best = visibleOpts[0];
+                                }
+                                if (best) {
+                                    window.__SENTINEL_DEBUG__&&console.log('CLICKING VISIBLE AUTOCOMPLETE OPTION:', best.text);
+                                    best.el.click();
+                                    return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: best.text, inputType: 'typeahead'}]);
                                 }
                             }
                         }
@@ -11203,25 +11271,37 @@ return resolveDynamic(bestMatch);
                                 const isNoticePrompt = /notice|how soon|how quickly|joining|join us|available to start|start date|earliest start|lwd/i.test(lowerLabel);
                                 const isLocationPrompt = /location|city|country|state|reside|based in|relocate|bengaluru|bangalore/i.test(lowerLabel);
                                 const isConditionalPrompt = /if\\s+(yes|any|applicable|so)|details\\s+if\\s+any|please\\s+(specify|describe|explain)\\s+if/i.test(lowerLabel);
-                                const isConciseField = isYesNoPrompt || isCompPrompt || isNoticePrompt || isLocationPrompt || isConditionalPrompt;
+                                const isCompoundLocReloc = (/location|city|reside|based\\s*in|where\\s*do\\s*you/i.test(lowerLabel)) && (/relocat/i.test(lowerLabel));
+                                const isConciseField = (isYesNoPrompt || isCompPrompt || isNoticePrompt || isLocationPrompt || isConditionalPrompt) && !isCompoundLocReloc;
 
-                                const isOpenEndedPrompt = /cover\\s*letter|why\\s*(should\\s*we\\s*hire|hire\\s*you|work\\s*here|join|are\\s*you\\s*interested)|background|summary\\s*of\\s*(your\\s*)?experience|tell\\s*(us|me)\\s*about\\s*your(self|experience|background)|elevator\\s*pitch|overview|aspirations|motivation|describe\\s*(yourself|your\\s*background|your\\s*journey)|explain\\s*(your\\s*experience|architecture|design)|technical\\s*summary/i.test(lowerLabel);
+                                const isOpenEndedPrompt = /cover\\s*letter|why\\s*(should\\s*we\\s*hire|hire\\s*you|work\\s*here|join|are\\s*you\\s*interested)|background|summary\\s*of\\s*(your\\s*)?experience|tell\\s*(us|me)\\s*about|elevator\\s*pitch|overview|aspirations|motivation|describe\\s*(yourself|your\\s*background|your\\s*journey|a\\s*project|a\\s*complex|recent\\s*project|architecture|challenges?)|explain\\s*(your\\s*experience|architecture|design|how|why)|technical\\s*summary|which\\s*backend|complex\\s*full-?stack|architectural|strongest\\s*in|cloud\\s*platforms?|docker.*kubernetes/i.test(lowerLabel);
 
                                 const technicalEssay = '4+ years of professional full-stack software engineering experience specializing in distributed systems, RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), scalable cloud infrastructure (AWS, Docker, Kubernetes), and intuitive frontend integrations. Experienced in end-to-end SDLC, designing resilient database architectures (PostgreSQL, MongoDB), building automated CI/CD pipelines, and troubleshooting complex production issues.';
 
-                                if (answer) {
+                                let domainEssay = technicalEssay;
+                                if (/backend|strongest/i.test(lowerLabel)) {
+                                    domainEssay = 'My strongest backend stack is Java & Spring Boot, along with Python and Node.js. I have 4+ years designing high-throughput REST APIs, Kafka event streaming, and PostgreSQL/Redis data pipelines with robust microservices patterns.';
+                                } else if (/cloud|aws|infrastructure|docker|kubernetes|k8s/i.test(lowerLabel)) {
+                                    domainEssay = 'Extensive hands-on production experience with AWS (EC2, S3, RDS, Lambda, ECS, CloudWatch, SQS/SNS, IAM), containerization with Docker, and Kubernetes orchestration with CI/CD automation.';
+                                } else if (/project|full-?stack|complex|architecture/i.test(lowerLabel)) {
+                                    domainEssay = 'At Everbridge, I architected and built real-time settlement and dispute tracking microservices handling 10k+ req/sec using Java, Spring Boot, React, Kafka, and PostgreSQL, deployed on AWS with Kubernetes.';
+                                }
+
+                                if (isCompoundLocReloc) {
+                                    answer = 'Currently based in Bangalore, Karnataka, India. 100% open and willing to relocate.';
+                                } else if (answer) {
                                     // Concise answers for Yes/No, Compensation, Notice, Location, and specific questions are preserved.
-                                    // Only replace with technical essay if prompt is explicitly open-ended AND not a concise field AND answer is a short numeric/generic artifact.
-                                    if (isOpenEndedPrompt && !isConciseField && /^(\\d+(\\.\\d+)?(\\s*years?)?)$/i.test(answer.trim())) {
-                                        answer = technicalEssay;
-                                        window.__SENTINEL_DEBUG__&&console.log('Provided technical summary for open-ended textarea field:', labelText);
+                                    // Only replace with domain essay if prompt is explicitly open-ended AND not a concise field AND answer is a short artifact.
+                                    if (isOpenEndedPrompt && !isConciseField && (/^(\\d+(\\.\\d+)?(\\s*years?)?)$/i.test(answer.trim()) || answer.length < 15 || /^(yes|no)$/i.test(answer.trim()))) {
+                                        answer = domainEssay;
+                                        window.__SENTINEL_DEBUG__&&console.log('Provided domain summary for open-ended textarea field:', labelText);
                                     }
                                 } else {
                                     // No answer found yet:
                                     if (isConditionalPrompt) {
                                         answer = 'N/A';
                                     } else if (isOpenEndedPrompt) {
-                                        answer = technicalEssay;
+                                        answer = domainEssay;
                                         window.__SENTINEL_DEBUG__&&console.log('Provided technical summary fallback for open-ended textarea field:', labelText);
                                     } else if (isCompPrompt) {
                                         if (/current|present|cctc/i.test(lowerLabel) && /expected|expectation|ectc/i.test(lowerLabel)) {
@@ -11246,9 +11326,11 @@ return resolveDynamic(bestMatch);
                             if (!answer) {
                                 const combinedText = (lowerLabel + ' ' + (input.placeholder || '').toLowerCase()).trim();
                                 
-                                // Yes/no phrasing safety net — catch questions that don't start with
-                                // standard yes/no prefixes but contain yes/no phrasing keywords
-                                if (combinedText.includes('willing') || combinedText.includes('comfortable') ||
+                                // Compound location + relocation check
+                                if ((combinedText.includes('location') || combinedText.includes('city') || combinedText.includes('reside') || combinedText.includes('based in')) && combinedText.includes('relocate')) {
+                                    answer = 'Currently based in Bangalore, Karnataka, India. 100% open and willing to relocate.';
+                                    window.__SENTINEL_DEBUG__&&console.log('LinkedIn form: Compound location+relocate fallback, answer:', answer);
+                                } else if (combinedText.includes('willing') || combinedText.includes('comfortable') ||
                                     combinedText.includes('relocate') || combinedText.includes('able to') ||
                                     combinedText.includes('authorized') || combinedText.includes('eligible') ||
                                     combinedText.includes('require sponsorship') || combinedText.includes('work on site') ||
@@ -12736,19 +12818,21 @@ return resolveDynamic(bestMatch);
                         const fieldsets = queryAllDeep('fieldset, [role="radiogroup"]', modal);
                         for (const fieldset of fieldsets) {
                             let legend = fieldset.querySelector('legend')?.innerText || '';
-                            
+                            if (!legend) {
+                                legend = fieldset.getAttribute('aria-label') || '';
+                            }
                             // Fallback: get question text from parent section if no legend
                             if (!legend) {
-                                const parentSection = fieldset.closest('.jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element]');
+                                const parentSection = fieldset.closest('.jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element], [data-test-form-builder-radio-button-group]');
                                 if (parentSection) {
-                                    const sectionLabel = parentSection.querySelector('label, span, p');
+                                    const sectionLabel = parentSection.querySelector('label, span.fb-dash-form-element__label, legend, p, h3');
                                     if (sectionLabel) legend = sectionLabel.innerText || '';
                                 }
                                 // Walk up parent tree
                                 if (!legend) {
                                     let parent = fieldset.parentElement;
                                     for (let i = 0; i < 4 && parent && parent !== modal; i++) {
-                                        const labelEl = parent.querySelector('label');
+                                        const labelEl = parent.querySelector('label, .fb-dash-form-element__label');
                                         if (labelEl && labelEl.innerText && labelEl.innerText.trim().length > 5) {
                                             legend = labelEl.innerText.trim();
                                             break;
@@ -12766,7 +12850,10 @@ return resolveDynamic(bestMatch);
                                 Array.from(fieldset.querySelectorAll('[role="radio"]')).some(el => el.getAttribute('aria-checked') === 'true');
                             
                             if (radios.length > 0 && !hasCheckedRadio) {
-                                const radioOptions = radios.map(r => (getInputLabelText(r) || r.value || '').trim()).filter(Boolean);
+                                const radioOptions = radios.map(r => {
+                                    const lbl = getInputLabelText(r);
+                                    return (lbl || (r.value !== 'on' ? r.value : '') || '').trim();
+                                }).filter(Boolean);
                                 const answer = legend ? fuzzyMatch(legend) : null;
                                 if (answer) {
                                     let bestRadio = findBestRadioMatch(answer, radios);
@@ -13703,14 +13790,27 @@ return resolveDynamic(bestMatch);
                         {
                             const dropdownSelectors = '.typeahead-input__dropdown-item, [role="option"], .artdeco-typeahead__result, [data-test-typeahead-item], li[class*="typeahead"], .basic-typeahead__selectable, .artdeco-typeahead__results-list li';
                             const postFillOptions = document.querySelectorAll(dropdownSelectors);
+                            let visiblePostFill = [];
                             for (const option of postFillOptions) {
-                                if (option.offsetParent !== null) {
-                                    const text = option.innerText.trim();
-                                    if (text && text.length > 2 && !text.toLowerCase().includes('select')) {
-                                        window.__SENTINEL_DEBUG__&&console.log('Post-fill: clicking autocomplete option:', text);
-                                        option.click();
-                                        return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: text, inputType: 'typeahead'}]);
+                                if (option.offsetParent !== null || option.getClientRects().length > 0) {
+                                    const text = (option.innerText || option.textContent || '').trim();
+                                    if (text && text.length > 2 && !text.toLowerCase().includes('select') && !text.toLowerCase().includes('choose')) {
+                                        visiblePostFill.push({ el: option, text: text });
                                     }
+                                }
+                            }
+                            if (visiblePostFill.length > 0) {
+                                let best = visiblePostFill.find(o => {
+                                    const t = o.text.toLowerCase();
+                                    return t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india');
+                                });
+                                if (!best && visiblePostFill.length === 1) {
+                                    best = visiblePostFill[0];
+                                }
+                                if (best) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Post-fill: clicking autocomplete option:', best.text);
+                                    best.el.click();
+                                    return 'LINKEDIN_AUTOCOMPLETE_SELECTED|' + JSON.stringify([{question: 'autocomplete', answer: best.text, inputType: 'typeahead'}]);
                                 }
                             }
                         }

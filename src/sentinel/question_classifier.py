@@ -138,7 +138,7 @@ CATEGORY_PATTERNS = {
         "keywords": [
             "location", "city", "relocate", "based", "stay", "place",
             "where", "address", "reside", "live", "currently in",
-            "currently located", "where are you"
+            "currently located", "where are you", "locality", "zone", "residential"
         ],
         "regex_patterns": [
             r"current\s*location",
@@ -147,7 +147,9 @@ CATEGORY_PATTERNS = {
             r"located\s*in",
             r"preferred\s*location",
             r"willing\s*to\s*relocate",
-            r"current\s*city"
+            r"current\s*city",
+            r"locality",
+            r"current\s*locality"
         ],
         "input_type_hints": ["text", "select"],
         "requires_numeric": False

@@ -120,7 +120,7 @@ def _normalize_answer(answer: str, category: str, question: str, platform: str) 
     elif category == 'notice_period':
         if 'in month' in question.lower() or '(in months)' in question.lower():
             return '0.5'
-        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period'):
+        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period') or 'serving notice' in answer.lower() or 'immediate' in answer.lower():
             return answer
         if platform == 'linkedin':
             match = re.search(r'(\d+)', answer)
@@ -155,7 +155,7 @@ def _fix_answer(answer: str, category: str, question: str, platform: str) -> Opt
         if match:
             return match.group(1)
     elif category == 'notice_period':
-        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period'):
+        if answer.strip().lower() in ('yes', 'no', 'true', 'false', 'serving notice period') or 'serving notice' in answer.lower() or 'immediate' in answer.lower():
             return None
         if platform == 'linkedin':
             match = re.search(r'(\d+)', answer)

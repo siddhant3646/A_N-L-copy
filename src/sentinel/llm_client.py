@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 # Default fallback models if discovery API is unavailable
 DEFAULT_GEMMA_MODELS = [
+    "gemma-4-26b-a4b-it",
+    "gemma-4-31b-it",
     "gemma-3-27b-it",
     "gemma-2-27b-it",
     "gemma-2-9b-it",
@@ -150,8 +152,8 @@ VOICE, TONE, AND HUMAN AUTHENTICITY GUIDELINES:
      * Total Experience: "4.2 Years" (or "4.2" if numeric field)
      * Java / Spring Boot / Relevant Experience: "4.2 Years" (or "4.2" if numeric field)
      * Notice Period: "15 days" (or "15" if numeric field)
-     * Last Working Day (LWD): Output the exact computed date: "{lwd_str}" (calculated as today + 15 days)
-     * Combined Notice & LWD: "15 days, LWD: {lwd_str}"
+     * Last Working Day (LWD): Output the exact computed date from the factsheet (calculated as today + 15 days, e.g. DD/MM/YYYY or DD Month YYYY)
+     * Combined Notice & LWD: "15 days (serving notice, LWD: <LWD date from factsheet>)"
      * Current Location: "Bangalore, Karnataka, India"
      * Relocation / Immediate Joiner / Open to Hybrid: "Yes"
      * Simple Yes/No questions: "Yes" or "No"
@@ -182,7 +184,14 @@ class GemmaLLMClient:
         """Check if client has a valid API key configured."""
         return bool(self.api_key and self.api_key.strip())
 
-    async def _get_session(self) -> aiohttp.ClientSession:
+    async def _get_session(self):
+        global aiohttp
+        if aiohttp is None:
+            try:
+                import aiohttp as _aiohttp
+                aiohttp = _aiohttp
+            except ImportError:
+                return None
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=120))
         return self._session
@@ -190,6 +199,63 @@ class GemmaLLMClient:
     async def close(self):
         if self._session and not self._session.closed:
             await self._session.close()
+
+    async def _http_get(self, url: str, timeout: float = 15.0) -> Tuple[int, str]:
+        """Perform async GET request via aiohttp with urllib fallback."""
+        session = await self._get_session()
+        if session is not None:
+            try:
+                async with session.get(url, timeout=timeout) as resp:
+                    text = await resp.text()
+                    return resp.status, text
+            except Exception as e:
+                logger.debug(f"aiohttp GET error: {e}, attempting urllib fallback")
+
+        # Fallback to standard library urllib
+        def _urllib_get():
+            import urllib.request
+            import urllib.error
+            req = urllib.request.Request(url, headers={"User-Agent": "Sentinel/1.0"})
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.getcode(), resp.read().decode("utf-8")
+            except urllib.error.HTTPError as he:
+                return he.code, he.read().decode("utf-8", errors="ignore")
+            except Exception as ex:
+                return 500, str(ex)
+
+        return await asyncio.to_thread(_urllib_get)
+
+    async def _http_post(self, url: str, payload: dict, timeout: float = 120.0) -> Tuple[int, str]:
+        """Perform async POST request via aiohttp with urllib fallback."""
+        session = await self._get_session()
+        if session is not None:
+            try:
+                async with session.post(url, json=payload, timeout=timeout) as resp:
+                    text = await resp.text()
+                    return resp.status, text
+            except Exception as e:
+                logger.debug(f"aiohttp POST error: {e}, attempting urllib fallback")
+
+        # Fallback to standard library urllib
+        def _urllib_post():
+            import urllib.request
+            import urllib.error
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={"Content-Type": "application/json", "User-Agent": "Sentinel/1.0"}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.getcode(), resp.read().decode("utf-8")
+            except urllib.error.HTTPError as he:
+                return he.code, he.read().decode("utf-8", errors="ignore")
+            except Exception as ex:
+                return 500, str(ex)
+
+        return await asyncio.to_thread(_urllib_post)
 
     async def verify_and_select_model(self) -> str:
         """
@@ -208,46 +274,44 @@ class GemmaLLMClient:
 
         try:
             url = f"{self.API_BASE}/models?key={self.api_key}"
-            session = await self._get_session()
-            async with session.get(url, timeout=10) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    all_models = data.get("models", [])
-                    # Filter models supporting generateContent and containing gemma
-                    gemma_models = []
-                    for m in all_models:
-                        name = m.get("name", "")
-                        clean_name = name.replace("models/", "")
-                        methods = m.get("supportedGenerationMethods", [])
-                        if "gemma" in clean_name.lower():
-                            if not methods or "generateContent" in methods:
-                                gemma_models.append(clean_name)
+            status, text = await self._http_get(url, timeout=15.0)
+            if status == 200:
+                data = json.loads(text)
+                all_models = data.get("models", [])
+                # Filter models supporting generateContent and containing gemma
+                gemma_models = []
+                for m in all_models:
+                    name = m.get("name", "")
+                    clean_name = name.replace("models/", "")
+                    methods = m.get("supportedGenerationMethods", [])
+                    if "gemma" in clean_name.lower():
+                        if not methods or "generateContent" in methods:
+                            gemma_models.append(clean_name)
 
-                    self._discovered_models = gemma_models
-                    print(f"   🤖 [Gemma LLM] Discovered {len(gemma_models)} Gemma model(s): {gemma_models}")
+                self._discovered_models = gemma_models
+                print(f"   🤖 [Gemma LLM] Discovered {len(gemma_models)} Gemma model(s): {gemma_models}")
 
-                    if gemma_models:
-                        # Order priority: gemma-4-26b-a4b-it, gemma-4-31b-it, gemma-3-*, gemma-2-*
-                        ordered = []
-                        for m in gemma_models:
-                            if "26b" in m.lower() and "gemma" in m.lower():
-                                ordered.append(m)
-                        for m in gemma_models:
-                            if "31b" in m.lower() and m not in ordered:
-                                ordered.append(m)
-                        for m in gemma_models:
-                            if m not in ordered:
-                                ordered.append(m)
+                if gemma_models:
+                    # Order priority: gemma-4-26b-a4b-it, gemma-4-31b-it, gemma-3-*, gemma-2-*
+                    ordered = []
+                    for m in gemma_models:
+                        if "26b" in m.lower() and "gemma" in m.lower():
+                            ordered.append(m)
+                    for m in gemma_models:
+                        if "31b" in m.lower() and m not in ordered:
+                            ordered.append(m)
+                    for m in gemma_models:
+                        if m not in ordered:
+                            ordered.append(m)
 
-                        primary = ordered[0]
-                        self._selected_model = primary
-                        self._fallback_chain = ordered
-                        print(f"   🎯 [Gemma LLM] Selected primary model: {primary}")
-                        self._discovery_completed = True
-                        return primary
-                else:
-                    err_text = await resp.text()
-                    print(f"   ⚠️ [Gemma LLM] Model discovery returned status {resp.status}: {err_text[:100]}")
+                    primary = ordered[0]
+                    self._selected_model = primary
+                    self._fallback_chain = ordered
+                    print(f"   🎯 [Gemma LLM] Selected primary model: {primary}")
+                    self._discovery_completed = True
+                    return primary
+            else:
+                print(f"   ⚠️ [Gemma LLM] Model discovery returned status {status}: {text[:100]}")
         except Exception as e:
             print(f"   ⚠️ [Gemma LLM] Model discovery failed: {e}")
 
@@ -319,13 +383,20 @@ class GemmaLLMClient:
         # Return the original raw answer if no match found
         return raw_answer.strip()
 
-    def _normalize_uniform_answer(self, answer: str, question: str) -> str:
+    def _normalize_uniform_answer(self, answer: str, question: str, input_type: str = "text") -> str:
         """Post-process short field answers to enforce strict uniformity across questionnaires."""
         if not answer:
             return answer
         
         q_lower = question.lower().strip()
         ans_trimmed = answer.strip().strip("\"'`")
+
+        # 0. Strict Numeric / Integer Input Formatting (e.g. 4.2 -> 4)
+        if any(kw in input_type.lower() for kw in ["number", "integer", "numeric"]):
+            match = re.search(r"(\d+(?:\.\d+)?)", ans_trimmed)
+            if match:
+                val = float(match.group(1))
+                return str(int(round(val)))
 
         # Skip multi-part questions (e.g. experience + ctc + notice period + location)
         has_exp = "experience" in q_lower or "years" in q_lower or "exp" in q_lower
@@ -382,16 +453,29 @@ class GemmaLLMClient:
             if "bangalore" in ans_trimmed.lower() or "bengaluru" in ans_trimmed.lower():
                 return "Bangalore, Karnataka, India"
 
-        # 4. Notice Period Uniformity
-        if "last working day" in q_lower and "notice period" not in q_lower and not has_ctc:
-            # Extract date if present
-            date_match = re.search(r"\b\d{2}/\d{2}/\d{4}\b", ans_trimmed)
-            if date_match:
-                return date_match.group(0)
+        # 4. Notice Period & LWD Uniformity
+        if ("notice" in q_lower or "np" in q_lower or "lwd" in q_lower or "last working day" in q_lower) and not has_ctc and not has_exp:
+            from datetime import datetime, timedelta
+            lwd_date = datetime.now() + timedelta(days=15)
+            lwd_formatted = lwd_date.strftime('%d %B %Y')
+            lwd_short = lwd_date.strftime('%d/%m/%Y')
+            if ("last working day" in q_lower or "lwd" in q_lower) and "notice" in q_lower:
+                return f"15 days (serving notice, LWD: {lwd_formatted})"
+            elif ("last working day" in q_lower or "lwd" in q_lower) and "notice" not in q_lower:
+                date_match = re.search(r"\b\d{2}/\d{2}/\d{4}\b", ans_trimmed)
+                if date_match:
+                    return date_match.group(0)
+                return lwd_formatted
+            elif "notice" in q_lower and not any(kw in input_type.lower() for kw in ["number", "integer", "numeric"]):
+                if ans_trimmed in ["15.0", "15", "15 days", "15days"]:
+                    return "15 days"
 
-        # 5. Clean trailing periods on short single-line values
-        if len(ans_trimmed.split("\n")) == 1 and len(ans_trimmed) < 40 and ans_trimmed.endswith("."):
-            ans_trimmed = ans_trimmed[:-1].strip()
+        # 5. Clean trailing periods and floating decimals on short single-line values
+        if len(ans_trimmed.split("\n")) == 1 and len(ans_trimmed) < 40:
+            if ans_trimmed.endswith(".0"):
+                ans_trimmed = ans_trimmed[:-2].strip()
+            elif ans_trimmed.endswith("."):
+                ans_trimmed = ans_trimmed[:-1].strip()
 
         return ans_trimmed
 
@@ -415,8 +499,6 @@ class GemmaLLMClient:
         models_to_try = list(self._fallback_chain)
         prompt = self._build_prompt(question, options=options, input_type=input_type, context=context)
 
-        session = await self._get_session()
-
         for model_id in models_to_try:
             clean_model = model_id.replace("models/", "")
             endpoint = f"{self.API_BASE}/models/{clean_model}:generateContent?key={self.api_key}"
@@ -439,62 +521,60 @@ class GemmaLLMClient:
             for attempt in range(3):
                 start_time = time.time()
                 try:
-                    async with session.post(endpoint, json=payload, timeout=120) as resp:
-                        elapsed = time.time() - start_time
-                        if resp.status == 200:
-                            data = await resp.json()
-                            candidates = data.get("candidates", [])
-                            if candidates and len(candidates) > 0:
-                                parts = candidates[0].get("content", {}).get("parts", [])
-                                if parts and len(parts) > 0:
-                                    # 1. Separate thought parts from actual output parts
-                                    non_thought_parts = [p.get("text", "") for p in parts if not p.get("thought", False)]
-                                    raw_text = "".join(non_thought_parts).strip()
+                    status, text = await self._http_post(endpoint, payload=payload, timeout=120.0)
+                    elapsed = time.time() - start_time
+                    if status == 200:
+                        data = json.loads(text)
+                        candidates = data.get("candidates", [])
+                        if candidates and len(candidates) > 0:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if parts and len(parts) > 0:
+                                # 1. Separate thought parts from actual output parts
+                                non_thought_parts = [p.get("text", "") for p in parts if not p.get("thought", False)]
+                                raw_text = "".join(non_thought_parts).strip()
 
-                                    # 2. Fallback if all parts were marked or unmarked
-                                    if not raw_text:
-                                        all_text = "".join(p.get("text", "") for p in parts).strip()
-                                        # Strip <thought>...</thought> or <think>...</think> tags
-                                        stripped = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", all_text, flags=re.DOTALL).strip()
-                                        if stripped and not stripped.startswith(("*   Role:", "*   User wants", "*   Constraint")):
-                                            raw_text = stripped
+                                # 2. Fallback if all parts were marked or unmarked
+                                if not raw_text:
+                                    all_text = "".join(p.get("text", "") for p in parts).strip()
+                                    # Strip <thought>...</thought> or <think>...</think> tags
+                                    stripped = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", all_text, flags=re.DOTALL).strip()
+                                    if stripped and not stripped.startswith(("*   Role:", "*   User wants", "*   Constraint")):
+                                        raw_text = stripped
 
-                                    if not raw_text:
-                                        print(f"   ⚠️ [Gemma LLM] No non-thought answer produced by {clean_model}. Falling back...")
-                                        break
+                                if not raw_text:
+                                    print(f"   ⚠️ [Gemma LLM] No non-thought answer produced by {clean_model}. Falling back...")
+                                    break
 
-                                    cleaned_text = re.sub(r"^```[a-zA-Z]*\n?", "", raw_text)
-                                    cleaned_text = re.sub(r"\n?```$", "", cleaned_text).strip()
-                                    cleaned_text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", cleaned_text, flags=re.DOTALL).strip()
-                                    cleaned_text = cleaned_text.strip("\"'` ")
+                                cleaned_text = re.sub(r"^```[a-zA-Z]*\n?", "", raw_text)
+                                cleaned_text = re.sub(r"\n?```$", "", cleaned_text).strip()
+                                cleaned_text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", cleaned_text, flags=re.DOTALL).strip()
+                                cleaned_text = cleaned_text.strip("\"'` ")
 
-                                    # Guard: if the text still looks like thinking/reasoning bullet points, reject it
-                                    if cleaned_text.startswith(("*   Role:", "*   User wants", "*   Constraint", "Role: Job applicant")):
-                                        print(f"   ⚠️ [Gemma LLM] Detected reasoning spillover in output from {clean_model}. Falling back...")
-                                        break
+                                # Guard: if the text still looks like thinking/reasoning bullet points, reject it
+                                if cleaned_text.startswith(("*   Role:", "*   User wants", "*   Constraint", "Role: Job applicant")):
+                                    print(f"   ⚠️ [Gemma LLM] Detected reasoning spillover in output from {clean_model}. Falling back...")
+                                    break
 
-                                    if options:
-                                        final_answer = self._match_chosen_option(cleaned_text, options)
-                                    else:
-                                        final_answer = self._normalize_uniform_answer(cleaned_text, question)
+                                if options:
+                                    final_answer = self._match_chosen_option(cleaned_text, options)
+                                else:
+                                    final_answer = self._normalize_uniform_answer(cleaned_text, question, input_type=input_type)
 
-                                    print(f"   🤖 [Gemma LLM] Model: {clean_model} | Latency: {elapsed:.2f}s | Q: '{question[:40]}...' -> A: '{final_answer}'")
-                                    return final_answer
-                        elif resp.status == 429 or resp.status >= 500:
-                            backoff = min(1.0 * (2 ** attempt), 4.0)
-                            print(f"   ⚠️ [Gemma LLM] {clean_model} returned {resp.status}. Retrying in {backoff:.1f}s (attempt {attempt + 1}/3)...")
-                            await asyncio.sleep(backoff)
-                            continue
-                        elif resp.status == 404 or resp.status == 400:
-                            err_msg = await resp.text()
-                            print(f"   ⚠️ [Gemma LLM] {clean_model} returned {resp.status}: {err_msg[:80]}. Trying next fallback model...")
-                            break
-                        else:
-                            err_msg = await resp.text()
-                            print(f"   ⚠️ [Gemma LLM] {clean_model} returned status {resp.status}: {err_msg[:80]}")
-                            break
+                                print(f"   🤖 [Gemma LLM] Model: {clean_model} | Latency: {elapsed:.2f}s | Q: '{question[:40]}...' -> A: '{final_answer}'")
+                                return final_answer
+                    elif status == 429 or status >= 500:
+                        backoff = min(1.0 * (2 ** attempt), 4.0)
+                        print(f"   ⚠️ [Gemma LLM] {clean_model} returned {status}. Retrying in {backoff:.1f}s (attempt {attempt + 1}/3)...")
+                        await asyncio.sleep(backoff)
+                        continue
+                    elif status == 404 or status == 400:
+                        print(f"   ⚠️ [Gemma LLM] {clean_model} returned {status}: {text[:80]}. Trying next fallback model...")
+                        break
+                    else:
+                        print(f"   ⚠️ [Gemma LLM] {clean_model} returned status {status}: {text[:80]}")
+                        break
                 except asyncio.TimeoutError:
-                    print(f"   ⏱️ [Gemma LLM] {clean_model} timed out after 20s (attempt {attempt + 1}/3)")
+                    print(f"   ⏱️ [Gemma LLM] {clean_model} timed out after 120s (attempt {attempt + 1}/3)")
                     await asyncio.sleep(1.0)
                 except Exception as ex:
                     print(f"   ⚠️ [Gemma LLM] Request error on {clean_model}: {ex}")

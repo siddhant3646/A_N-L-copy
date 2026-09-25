@@ -516,6 +516,31 @@ class SentinelAgent:
         # PHASE 0.1: Critical Compliance & Specific Intent Intercepts
         # These MUST be resolved before generic fingerprint/pattern matching
         # ==========================================
+        # Locality / Residential neighborhood
+        if 'locality' in question_lower:
+            if 'hyderabad' in question_lower:
+                return 'Hitec City, Hyderabad', 0.98
+            elif 'bangalore' in question_lower or 'bengaluru' in question_lower:
+                return 'Bengaluru, Karnataka, India', 0.98
+            return 'Bengaluru, Karnataka, India', 0.95
+
+        # Relocation with preferred cities and zones
+        if ('preferred cities' in question_lower or 'cities and zones' in question_lower) and ('relocat' in question_lower or 'travel' in question_lower or 'preferred' in question_lower or 'zones' in question_lower):
+            return 'Yes, open to relocation. Preferred cities: Bangalore, Hyderabad, Pune, Remote', 0.98
+
+        # SIEM Tools & Security Platforms
+        if 'siem' in question_lower and not any(kw in question_lower for kw in ['how many years', 'years of experience', 'ctc', 'salary']):
+            return 'Microsoft Sentinel, Splunk, Elastic', 0.98
+
+        # Cybersecurity / SOC / Threat Areas
+        if (('threat detection' in question_lower or 'security operations center' in question_lower or 'soc' in question_lower or 'siem administration' in question_lower) or
+            ('which of the following areas have you worked on' in question_lower and ('threat' in question_lower or 'security' in question_lower or 'vulnerability' in question_lower or 'soc' in question_lower))):
+            return 'Security Operations Center (SOC), Threat Detection & Monitoring, Vulnerability Management, Incident Response, SIEM Administration, Cloud Security', 0.98
+
+        # Serving notice period vs already left (status choice)
+        if ('currently serving notice period' in question_lower or 'serving notice period? or already left' in question_lower or 'serving notice period or already left' in question_lower or 'serving notice period or immediate' in question_lower):
+            return 'Yes- Currently serving notice', 0.98
+
         # AI Coding Assistants / Claude / Agentic Workflows
         if any(kw in question_lower for kw in ['claude', 'chatgpt', 'copilot', 'cursor', 'ai agent', 'ai agents', 'orchestrated workflows', 'genai', 'generative ai', 'llm']) and any(act in question_lower for act in ['worked', 'experience', 'used', 'use', 'compress', 'scaffolding', 'dev work', 'proficiency', 'tools', 'hands on', 'hands-on', 'debugging', 'test generation', 'automation']):
             return 'Yes', 0.98
@@ -6043,12 +6068,30 @@ class SentinelAgent:
             source = "pattern_fallback"
             conf = conf_pattern
 
+            # Handle type-specific conversions and numeric sanitation
+            # Angular question types: 0=SINGLE_LINE, 1=MULTIPLE_LINE, 2=SINGLE_CHOICE, 3=MULTIPLE_CHOICE, 4/9=NUMERIC_INPUT
+            is_numeric_question = (
+                is_num_input or
+                q_type in (4, 9)
+            )
+
+            pattern_ctx = f"Pattern suggestion: {ans_pattern} (confidence: {conf_pattern})" if ans_pattern else None
+            if is_numeric_question:
+                bounds_str = []
+                if min_val is not None:
+                    bounds_str.append(f"minimum {int(min_val)}")
+                if max_val is not None:
+                    bounds_str.append(f"maximum {int(max_val)}")
+                range_hint = f" (allowed range: {', '.join(bounds_str)})" if bounds_str else ""
+                numeric_ctx = f"Strict numeric field expecting an integer whole number{range_hint}. Output ONLY a single whole integer number (e.g. 4) without decimals or units."
+                pattern_ctx = f"{pattern_ctx}\n{numeric_ctx}" if pattern_ctx else numeric_ctx
+
             if llm_client:
-                pattern_ctx = f"Pattern suggestion: {ans_pattern} (confidence: {conf_pattern})" if ans_pattern else None
                 opts_labels = [co.get('label', '') for co in choice_options]
+                input_type_param = "number (integer)" if is_numeric_question else ("textarea" if q.get('isTextarea') else "text")
                 try:
                     ans = await asyncio.wait_for(
-                        llm_client.answer_question(q_text, options=opts_labels, context=pattern_ctx),
+                        llm_client.answer_question(q_text, options=opts_labels, input_type=input_type_param, context=pattern_ctx),
                         timeout=35.0
                     )
                     if ans:
@@ -6063,41 +6106,49 @@ class SentinelAgent:
                 conf = conf_pattern if ans_pattern else 0.0
 
             if not ans:
-                ans = "Yes" if q_type in (2, 3) else "4.2 Years"
+                ans = "Yes" if q_type in (2, 3) else ("4" if is_numeric_question else "4.2 Years")
                 conf = 0.5
                 source = "unmatched_fallback"
 
-            # Handle type-specific conversions and numeric sanitation
-            # Angular question types: 0=SINGLE_LINE, 1=MULTIPLE_LINE, 2=SINGLE_CHOICE, 3=MULTIPLE_CHOICE, 4/9=NUMERIC_INPUT
-            is_numeric_question = (
-                is_num_input or
-                q_type in (4, 9)
-            )
             numeric_val = None
             if is_numeric_question or (isinstance(ans, str) and re.search(r'(\d+(?:\.\d+)?)', str(ans))):
                 num_match = re.search(r'(\d+(?:\.\d+)?)', str(ans))
                 if num_match:
-                    numeric_val = float(num_match.group(1))
-                    if min_val is not None and numeric_val < min_val:
-                        numeric_val = float(min_val)
-                    if max_val is not None and numeric_val > max_val:
-                        numeric_val = float(max_val)
+                    raw_num = float(num_match.group(1))
+                    if is_numeric_question:
+                        numeric_val = int(round(raw_num))
+                        if min_val is not None and numeric_val < int(min_val):
+                            numeric_val = int(min_val)
+                        if max_val is not None and numeric_val > int(max_val):
+                            numeric_val = int(max_val)
+                    else:
+                        numeric_val = raw_num
+                        if min_val is not None and numeric_val < min_val:
+                            numeric_val = float(min_val)
+                        if max_val is not None and numeric_val > max_val:
+                            numeric_val = float(max_val)
                 elif is_numeric_question:
-                    numeric_val = 4.2
+                    numeric_val = 4
+                    if min_val is not None and numeric_val < int(min_val):
+                        numeric_val = int(min_val)
+                    if max_val is not None and numeric_val > int(max_val):
+                        numeric_val = int(max_val)
+
+            display_ans = str(int(numeric_val)) if (is_numeric_question and numeric_val is not None) else (str(numeric_val) if numeric_val is not None else str(ans))
+            final_ans_str = str(int(numeric_val)) if (is_numeric_question and numeric_val is not None) else str(ans)
 
             answers_payload.append({
                 "index": q_idx,
                 "question": q_text,
                 "type": q_type,
                 "isNumInput": is_numeric_question,
-                "answer": str(ans),
+                "answer": final_ans_str,
                 "numericValue": numeric_val,
                 "source": source,
                 "confidence": conf
             })
 
             # Log to CSV
-            display_ans = str(numeric_val) if (is_numeric_question and numeric_val is not None) else str(ans)
             self.log_qa_result(
                 question=q_text,
                 answer=display_ans,
@@ -6127,16 +6178,17 @@ class SentinelAgent:
                         if (!q.answer) q.answer = {};
 
                         const numVal = item.numericValue !== null ? item.numericValue : (parseFloat(item.answer) || null);
-                        const cleanNumStr = numVal !== null ? (Number.isInteger(numVal) ? String(numVal) : String(numVal)) : item.answer;
+                        const intVal = numVal !== null ? Math.round(numVal) : (parseInt(item.answer) || null);
+                        const cleanNumStr = intVal !== null ? String(intVal) : (numVal !== null ? String(numVal) : item.answer);
 
                         // NUMERIC_INPUT / Number question
-                        if (q.type === 9 || q.type === 4 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.NUMERIC_INPUT) || item.isNumInput || numVal !== null) {
-                            if (numVal !== null) {
-                                q.answer.numeric_value = numVal;
-                                q.answer.number = numVal;
+                        if (q.type === 9 || q.type === 4 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.NUMERIC_INPUT) || item.isNumInput) {
+                            if (intVal !== null) {
+                                q.answer.numeric_value = intVal;
+                                q.answer.number = intVal;
+                                q.answer.value = intVal;
                             }
                             q.answer.text = cleanNumStr;
-                            q.answer.value = numVal !== null ? numVal : item.answer;
                         }
                         // SINGLE_LINE (0) / MULTIPLE_LINE (1)
                         if (q.type === 0 || q.type === 1 || (sc.QUESTION_TYPES && (q.type === sc.QUESTION_TYPES.SINGLE_LINE || q.type === sc.QUESTION_TYPES.MULTIPLE_LINE))) {
@@ -6231,7 +6283,8 @@ class SentinelAgent:
                 const target = (item.answer || '').toLowerCase().trim();
                 const tokens = target.split(/[,;\/\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
                 const numVal = item.numericValue !== null ? item.numericValue : (parseFloat(item.answer) || null);
-                const cleanNumStr = numVal !== null ? (Number.isInteger(numVal) ? String(numVal) : String(numVal)) : item.answer;
+                const intVal = numVal !== null ? Math.round(numVal) : (parseInt(item.answer) || null);
+                const cleanNumStr = intVal !== null ? String(intVal) : (numVal !== null ? String(numVal) : item.answer);
 
                 // 1. Checkboxes
                 const checkboxes = Array.from(card.querySelectorAll('input[type="checkbox"]'));

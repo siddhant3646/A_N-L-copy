@@ -164,23 +164,32 @@
     },
     "ex_company_with_id": {
       "patterns": [
+        "are you ex-infosys employee ?if yes mention your infosys employee id if not, write na",
+        "are you ex-infosys employee",
+        "are you ex infosys employee",
+        "ex-infosys employee",
+        "ex infosys employee",
+        "infosys employee id",
+        "if yes mention your infosys employee id",
+        "if not, write na",
         "have you previously worked in infosys?(if yes provide ex-infy id)",
         "have you previously worked in infosys",
         "previously worked in infosys",
         "ex-infy id",
         "ex infy id",
         "ex-infy",
+        "ex-infy employee",
         "ex employee id if previously worked",
         "if yes provide ex-infy id"
       ],
       "category": "compliance",
-      "default": "No",
+      "default": "NA",
       "priority": 18,
       "input_type_defaults": {
-        "text": "No",
+        "text": "NA",
         "radio": "No",
         "select": "No",
-        "textarea": "No"
+        "textarea": "NA"
       }
     },
     "which_aws_services_list": {
@@ -506,6 +515,13 @@
     },
     "current_salary": {
       "patterns": [
+        "what's your current ctc (cost to company)?",
+        "what’s your current ctc (cost to company)?",
+        "what is your current ctc (cost to company)?",
+        "what's your current ctc (cost to company)",
+        "what’s your current ctc (cost to company)",
+        "current ctc (cost to company)",
+        "current ctc (cost to company)?",
         "ctc",
         "gross current salary",
         "please enter your current salary",
@@ -556,11 +572,19 @@
         "current organisation",
         "current organization",
         "current company",
-        "employer"
+        "employer",
+        "locality"
       ]
     },
     "expected_salary": {
       "patterns": [
+        "what's your expected ctc (cost to company)?",
+        "what’s your expected ctc (cost to company)?",
+        "what is your expected ctc (cost to company)?",
+        "what's your expected ctc (cost to company)",
+        "what’s your expected ctc (cost to company)",
+        "expected ctc (cost to company)",
+        "expected ctc (cost to company)?",
         "gross expected salary",
         "what is your expected salary",
         "please select your salary expectation",
@@ -88464,19 +88488,195 @@
     "tech_database_design_hands_on": {
       "patterns": [
         "database design which of the following have you worked with hands-on",
-        "which of the following have you worked with hands-on? (select all that apply)",
         "database design which of the following",
-        "worked with hands-on? (select all that apply)"
+        "which database have you worked with hands-on",
+        "which databases have you worked with hands-on",
+        "which of the following databases have you worked with hands-on",
+        "database technologies worked with hands-on",
+        "databases worked with hands-on"
       ],
       "category": "skills",
       "default": "PostgreSQL, MySQL, Redis, MongoDB",
       "priority": 18,
+      "negative_patterns": [
+        "soc",
+        "threat",
+        "incident",
+        "siem",
+        "vulnerability",
+        "security",
+        "endpoint",
+        "network security",
+        "compliance"
+      ],
       "input_type_defaults": {
         "text": "PostgreSQL, MySQL, Redis, MongoDB",
         "checkbox": "PostgreSQL",
         "radio": "PostgreSQL",
         "select": "PostgreSQL",
         "textarea": "PostgreSQL, MySQL, Redis, MongoDB"
+      }
+    },
+    "siem_security_tools_experience": {
+      "patterns": [
+        "which siem tools have you worked with",
+        "siem tools have you worked with",
+        "siem tools worked with",
+        "siem tools",
+        "which siem tools",
+        "siem security tools",
+        "siem platforms have you worked with",
+        "siem tools experience",
+        "siem administration tools"
+      ],
+      "category": "skills",
+      "default": "Microsoft Sentinel, Splunk, Elastic",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience",
+        "ctc",
+        "salary",
+        "notice period"
+      ],
+      "input_type_defaults": {
+        "text": "Microsoft Sentinel, Splunk, Elastic",
+        "textarea": "Microsoft Sentinel, Splunk, Elastic",
+        "select": "Microsoft Sentinel",
+        "radio": "Microsoft Sentinel",
+        "checkbox": "Microsoft Sentinel"
+      }
+    },
+    "cybersecurity_soc_threat_areas": {
+      "patterns": [
+        "which of the following areas have you worked on? (select all that apply)",
+        "which of the following areas have you worked on",
+        "areas have you worked on? (select all that apply)",
+        "soc threat detection vulnerability management",
+        "areas have you worked on in security",
+        "security operations center threat detection monitoring",
+        "which security areas have you worked on",
+        "security areas have you worked on"
+      ],
+      "category": "skills",
+      "default": "Security Operations Center (SOC), Threat Detection & Monitoring, Vulnerability Management, Incident Response, SIEM Administration, Cloud Security",
+      "priority": 18,
+      "negative_patterns": [
+        "database",
+        "sql",
+        "nosql",
+        "relational",
+        "mysql",
+        "postgres",
+        "mongodb"
+      ],
+      "input_type_defaults": {
+        "text": "Security Operations Center (SOC), Threat Detection & Monitoring, Vulnerability Management, Incident Response, SIEM Administration, Cloud Security",
+        "textarea": "Security Operations Center (SOC), Threat Detection & Monitoring, Vulnerability Management, Incident Response, SIEM Administration, Cloud Security",
+        "checkbox": "Security Operations Center (SOC)",
+        "select": "Security Operations Center (SOC)",
+        "radio": "Security Operations Center (SOC)"
+      }
+    },
+    "current_locality": {
+      "patterns": [
+        "what is your current locality",
+        "current locality",
+        "what is your locality",
+        "your current locality",
+        "enter your locality",
+        "locality",
+        "current locality in bangalore",
+        "current locality in bengaluru",
+        "what is your current locality in bangalore",
+        "locality in bangalore"
+      ],
+      "category": "location",
+      "default": "Bengaluru, Karnataka, India",
+      "priority": 16,
+      "negative_patterns": [
+        "hyderabad",
+        "mumbai",
+        "pune",
+        "chennai",
+        "delhi",
+        "noida",
+        "gurgaon"
+      ],
+      "input_type_defaults": {
+        "text": "Bengaluru, Karnataka, India",
+        "textarea": "Bengaluru, Karnataka, India",
+        "select": "Bengaluru",
+        "radio": "Bengaluru",
+        "checkbox": "Bengaluru"
+      }
+    },
+    "current_locality_hyderabad": {
+      "patterns": [
+        "what is your current locality in hyderabad",
+        "current locality in hyderabad",
+        "what is your locality in hyderabad",
+        "locality in hyderabad",
+        "locality hyderabad",
+        "your locality in hyderabad"
+      ],
+      "category": "location",
+      "default": "Hitec City, Hyderabad",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Hitec City, Hyderabad",
+        "textarea": "Hitec City, Hyderabad",
+        "select": "Hitec City, Hyderabad",
+        "radio": "Hitec City, Hyderabad",
+        "checkbox": "Hitec City, Hyderabad"
+      }
+    },
+    "relocation_preferred_cities_zones": {
+      "patterns": [
+        "are you open to relocation or travel for work? if yes, please specify preferred cities and zones",
+        "open to relocation or travel for work? if yes, please specify preferred cities and zones",
+        "please specify preferred cities and zones",
+        "specify preferred cities and zones",
+        "open to relocation preferred cities and zones",
+        "preferred cities and zones for relocation",
+        "relocation preferred cities and zones",
+        "preferred cities and zones"
+      ],
+      "category": "location",
+      "default": "Yes, open to relocation. Preferred cities: Bangalore, Hyderabad, Pune, Remote",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, open to relocation. Preferred cities: Bangalore, Hyderabad, Pune, Remote",
+        "textarea": "Yes, open to relocation. Preferred cities: Bangalore, Hyderabad, Pune, Remote",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "serving_notice_period_status_choice": {
+      "patterns": [
+        "are you currently serving notice period? or already left",
+        "currently serving notice period? or already left",
+        "serving notice period or already left",
+        "are you serving notice period or already left",
+        "serving notice period or immediate joiner",
+        "currently serving notice period or already left"
+      ],
+      "category": "notice_period",
+      "default": "Yes- Currently serving notice",
+      "priority": 18,
+      "negative_patterns": [
+        "how many days",
+        "how many months",
+        "number of days",
+        "total days"
+      ],
+      "input_type_defaults": {
+        "text": "Yes- Currently serving notice",
+        "radio": "Yes- Currently serving notice",
+        "select": "Yes- Currently serving notice",
+        "checkbox": "Yes- Currently serving notice",
+        "textarea": "Yes- Currently serving notice"
       }
     },
     "skill_coding_confidence_dsa": {

@@ -43,7 +43,7 @@ FUZZY_MATCH_THRESHOLD_FALLBACK = 0.55
 # Module-level keyword constants - single definition used by all methods.
 # Previously these were duplicated in _same_keyword_category() and _fuzzy_match_question().
 SALARY_KEYWORDS = ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc']
-EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp', 'yoe']
+EXPERIENCE_KEYWORDS = ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp', 'yoe', 'expr', 'experince']
 NOTICE_KEYWORDS = ['notice', 'serving', 'join', 'np', 'lwd', 'last working']
 LOCATION_KEYWORDS = ['location', 'city', 'relocate', 'preferred location']
 ASYNC_JOB_KEYWORDS = [
@@ -81,20 +81,58 @@ class SentinelAgent:
     # 7 from TOOLS (15 total) so every application session presents a varied,
     # natural-looking profile instead of an identical fixed list.
     INSTAHYRE_SKILL_LANGUAGES = [
-        "Java", "JavaScript", "HTML", "CSS", "ReactJS", "NodeJS", "Python",
-        "Spring", "Spring Boot", "Hibernate", "Apache Spark", "Apache Flink",
-        "Apache Kafka", "Apache Storm", "Apache Airflow", "DBT", "JUnit",
-        "System Design & patterns", "Data Structures algorithms",
-        "Object-oriented", "SOLID", "CAP", "AWS", "GitLab", "Azure", "GCP",
-        "Cloud", "RAG", "LangChain", "LlamaIndex", "ChromaDB", "YOLOv10",
-        "MediaPipe", "Local LLMs (Gemma 3, Qwen, DeepSeek)", "Ollama",
+        # Programming & Scripting Languages
+        "Java", "Java 17", "Java 21", "Core Java", "JVM", "Python", "JavaScript", "TypeScript",
+        "Golang", "Go", "C++", "C#", "SQL", "Kotlin", "Scala", "Rust", "Shell Scripting", "Bash",
+        # Backend Frameworks, APIs & Runtimes
+        "Node.js", "NodeJS", "Spring", "Spring Boot", "Spring Cloud", "Spring Security",
+        "Spring Data JPA", "Spring MVC", "Spring WebFlux", "Hibernate", "JPA", "Microservices",
+        "RESTful APIs", "REST API", "gRPC", "GraphQL", "SOAP", "Fastify", "Express.js", "NestJS",
+        "Django", "FastAPI", "Flask", "Dropwizard", "Micronaut", "Quarkus", "Reactive Programming",
+        # Frontend Frameworks, Libraries & Web Technologies
+        "React", "React.js", "ReactJS", "Redux", "Redux Toolkit", "Next.js", "HTML5", "CSS3",
+        "Tailwind CSS", "Bootstrap", "Material UI", "WebSockets", "Front-End Development", "Full Stack",
+        # Architecture, System Design & Engineering Principles
+        "System Design", "High-Level Design (HLD)", "Low-Level Design (LLD)",
+        "Object-Oriented Programming (OOP)", "SOLID Principles", "Design Patterns",
+        "Distributed Systems", "Event-Driven Architecture", "Service-Oriented Architecture (SOA)",
+        "Domain-Driven Design (DDD)", "Microservices Architecture", "CAP Theorem", "BASE Properties",
+        "Concurrency", "Multithreading", "Rate Limiting", "Load Balancing", "Caching Strategies",
+        "Data Consistency", "High Availability", "Fault Tolerance", "Scalability",
+        # Generative AI, LLMs & Machine Learning
+        "Generative AI", "Large Language Models (LLMs)", "RAG (Retrieval-Augmented Generation)",
+        "LangChain", "LlamaIndex", "Hugging Face", "OpenAI API", "Ollama", "DeepSeek", "Qwen",
+        "Gemma", "Vector Search", "Semantic Search", "Prompt Engineering", "Computer Vision",
+        "YOLO", "MediaPipe", "PyTorch", "Machine Learning", "AI Platform",
     ]
     INSTAHYRE_SKILL_TOOLS = [
-        "GIT", "MySQL", "NoSQL", "Jira", "Docker", "Kubernetes", "Splunk",
-        "Postman", "Grafana", "CICD", "Confluence", "Oracle SQL Developer",
-        "IntelliJ", "Eclipse", "Fortify", "Microsoft Azure",
-        "Pivotal Cloud Foundry", "Maven", "Ant", "Antigravity", "Claude Code",
-        "Codex", "Cursor", "Kiro", "Github Co-Pilot",
+        # Build Tools & Package Managers
+        "Webpack", "Vite", "NPM", "Yarn", "Maven", "Gradle",
+        # Databases (Relational, NoSQL, Vector) & DB Optimization
+        "Relational Databases (RDBMS)", "MySQL", "PostgreSQL", "Oracle SQL", "MS SQL Server",
+        "NoSQL", "MongoDB", "Cassandra", "Redis", "DynamoDB", "Elasticsearch", "OpenSearch",
+        "Memcached", "Database Indexing", "Query Optimization", "Database Sharding",
+        "Connection Pooling", "Replication", "Vector Databases", "ChromaDB", "Pinecone", "Milvus",
+        # Messaging, Streaming & Data Engineering
+        "Apache Kafka", "Kafka Streams", "Apache Flink", "Apache Spark", "Spark Streaming",
+        "Apache Airflow", "Apache Storm", "RabbitMQ", "ActiveMQ", "AWS SQS", "AWS SNS",
+        "Pub/Sub", "Event Streaming", "Data Streaming", "Real-Time Analytics", "ETL Pipelines",
+        "Data Engineering", "DBT (Data Build Tool)", "Data Warehousing", "Snowflake",
+        # Cloud Platforms & Cloud Infrastructure
+        "AWS", "Amazon Web Services", "Microsoft Azure", "GCP (Google Cloud Platform)",
+        "Cloud Computing", "Amazon EC2", "AWS S3", "AWS Lambda", "AWS RDS", "AWS CloudWatch",
+        "AWS ECS", "AWS EKS", "AWS IAM", "AWS API Gateway", "Cloud Architecture", "Serverless",
+        "PCF (Pivotal Cloud Foundry)", "Azure DevOps", "Azure Functions", "Azure Blob Storage",
+        # DevOps, CI/CD, Containerization, Infrastructure as Code & VCS
+        "Docker", "Kubernetes (K8s)", "CI/CD", "Jenkins", "GitLab CI", "GitHub Actions",
+        "Terraform", "Ansible", "Helm", "Linux", "Git", "GitHub", "GitLab", "Bitbucket",
+        "Containerization", "Orchestration", "Infrastructure as Code (IaC)", "DevOps",
+        # Observability, Monitoring & APM
+        "Splunk", "Grafana", "Prometheus", "ELK Stack", "Datadog", "New Relic",
+        "Distributed Tracing", "APM (Application Performance Monitoring)", "OpenTelemetry",
+        # Security, Compliance & Authentication
+        "Fortify", "SonarQube", "Application Security", "SAST / DAST", "SOC 2",
+        "FedRAMP", "OWASP Top 10", "OAuth 2.0", "JWT (JSON Web Tokens)",
     ]
     INSTAHYRE_SKILL_LANGUAGES_COUNT = 8
     INSTAHYRE_SKILL_TOOLS_COUNT = 7
@@ -329,6 +367,7 @@ class SentinelAgent:
         self.linkedin_rate_limit_until = None
         self.naukri_rate_limit_until = None
         self._instahyre_skills = None
+        self._last_instahyre_no_more_jobs = False
         self._error_detector = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
@@ -516,6 +555,20 @@ class SentinelAgent:
         # PHASE 0.1: Critical Compliance & Specific Intent Intercepts
         # These MUST be resolved before generic fingerprint/pattern matching
         # ==========================================
+        # Restrictive covenants / Non-compete compliance
+        if any(kw in question_lower for kw in ['restrictive covenant', 'restrictive covenants', 'noncompete', 'non-compete', 'non-solicitation']) or (
+            'confidentiality agreement' in question_lower and any(r in question_lower for r in ['restrict', 'bound', 'covenant', 'employer', 'perform'])
+        ):
+            return 'No', 0.99
+
+        # Career / Education gaps
+        if 'gap' in question_lower and any(kw in question_lower for kw in ['education to job', 'between jobs', 'what are your gap']):
+            return 'None of the above and not much gap', 0.98
+
+        # Agentic AI and AI Agent solution implementation essay
+        if ('agentic ai' in question_lower or 'ai agent' in question_lower) and any(kw in question_lower for kw in ['explain', 'use case', 'contribution', 'describe']):
+            return 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.', 0.99
+
         # Locality / Residential neighborhood
         if 'locality' in question_lower:
             if 'hyderabad' in question_lower:
@@ -523,6 +576,31 @@ class SentinelAgent:
             elif 'bangalore' in question_lower or 'bengaluru' in question_lower:
                 return 'Bengaluru, Karnataka, India', 0.98
             return 'Bengaluru, Karnataka, India', 0.95
+
+        # Current city and state of residence
+        if any(kw in question_lower for kw in ['city and state', 'city & state', 'city and state of residence', 'current city and state']):
+            return 'Bangalore, Karnataka', 0.98
+
+        # Yes/No question asking "Do you have 3-4+ years of experience..."
+        is_yn_exp_req = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', question_lower))
+        if is_yn_exp_req and not any(w in question_lower for w in ('how many', 'how much', 'what is your', 'total years')):
+            return 'Yes', 0.98
+
+        # Referral by employee name or put N/A
+        if ('referred' in question_lower or 'referral' in question_lower or 'who referred' in question_lower) and any(w in question_lower for w in ('put n/a', 'enter n/a', 'type n/a', 'write n/a', 'put na', 'enter na', 'if not referred', 'list their name')):
+            return 'N/A', 0.98
+
+        # Interview time slot availability
+        if any(kw in question_lower for kw in ['9- 3 pm', '9-3 pm', '9 to 3 pm', '9 am to 3 pm']):
+            return 'Anytime between 10 AM - 2 PM', 0.98
+        if any(kw in question_lower for kw in ['time slot in between', 'mention the time slot', 'available time slot', 'time slot for interview', 'what time you will be available', 'at what time you will be available']):
+            return 'Anytime between 10 AM - 4 PM', 0.98
+
+        # Notice period and LWD combined
+        if ('notice' in question_lower or 'np' in question_lower) and any(kw in question_lower for kw in ['lwd', 'last working day', 'ldw']):
+            from datetime import datetime, timedelta
+            lwd_date = datetime.now() + timedelta(days=15)
+            return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", 0.98
 
         # Relocation with preferred cities and zones
         if ('preferred cities' in question_lower or 'cities and zones' in question_lower) and ('relocat' in question_lower or 'travel' in question_lower or 'preferred' in question_lower or 'zones' in question_lower):
@@ -557,10 +635,12 @@ class SentinelAgent:
             return 'No', 0.98
 
         # Referral by internal employee & follow-up name question
-        if any(kw in question_lower for kw in ['referred by an internal', 'referred by an employee', 'referred by a current employee', 'internal employee referral', 'were you referred by an internal', 'were you referred by']):
-            return 'No', 0.98
+        if any(kw in question_lower for kw in ['put n/a', 'enter n/a', 'type n/a', 'write n/a', 'put na', 'enter na', 'if not referred', 'if not, put n/a', 'list their name']):
+            return 'N/A', 0.98
         if any(kw in question_lower for kw in ['please provide the employee’s first and last name', 'please provide the employee\'s first and last name', 'employee’s first and last name', 'employee\'s first and last name', 'if you answered yes to the last question', 'provide the employee’s first and last name', 'provide the employee\'s first and last name']):
             return 'N/A', 0.98
+        if any(kw in question_lower for kw in ['referred by an internal', 'referred by an employee', 'referred by a current employee', 'internal employee referral', 'were you referred by an internal', 'were you referred by', 'do you have a referral']):
+            return 'No', 0.98
 
         # Ex-employee / Previously employed with check (Deterministic 'No' unless current employer)
         if any(kw in question_lower for kw in [
@@ -933,8 +1013,10 @@ class SentinelAgent:
             'total exp', 'how much experience', 'number of years', 'months of experience', 
             'how many months', 'years in', 'years working', 'experience in years',
             'relevant experience', 'overall experience', 'how long have you',
-            'yoe', 'total yoe', 'relevant yoe', 'yoe in', 'yoe on', 'yoe with', 'yoe -'
-        ]) or bool(re.search(r'\byoe\b', question_lower)) or (any(kw in question_lower for kw in ['experience', 'exp', 'yoe']) and any(kw in question_lower for kw in ['years', 'yrs', 'months', 'yoe']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
+            'yoe', 'total yoe', 'relevant yoe', 'yoe in', 'yoe on', 'yoe with', 'yoe -',
+            'total working expr', 'working expr', 'total working experience', 'working experience',
+            'total expr', 'total working'
+        ]) or bool(re.search(r'\b(yoe|working\s+expr|total\s+expr)\b', question_lower)) or (any(kw in question_lower for kw in ['experience', 'exp', 'expr', 'yoe']) and any(kw in question_lower for kw in ['years', 'yrs', 'months', 'yoe', 'working', 'total']) and not any(question_lower.startswith(p) for p in ['have you', 'can you', 'do you', 'are you', 'did you', 'will you', 'in a ']))
 
         # LWD (Last Working Day/Date) detection - BEFORE experience keywords
         lwd_keywords = [
@@ -997,9 +1079,18 @@ class SentinelAgent:
         job_change_keywords = ['reason for job change', 'reasons for job change', 'reasons for your job change', 'why are you changing', 'why job change', 'reason for leaving', 'reason for change']
         is_job_change_question = any(kw in question_lower for kw in job_change_keywords)
         
-        # Total experience question (short form like "total Exp")
-        total_exp_keywords = ['total exp', 'what is your total exp']
-        is_total_exp_question = any(kw in question_lower for kw in total_exp_keywords) and 'ctc' not in question_lower
+        # Total experience question (short form like "total Exp" or "total working expr")
+        total_exp_keywords = [
+            'total exp', 'what is your total exp', 'total working expr', 'working expr',
+            'total working experience', 'total expr', 'total working', 'total experience',
+            'overall exp', 'overall experience', 'working expr in software',
+            'total working expr in software engineering', 'total working experience in software engineering',
+            'working expr in software engineering', 'working experience in software engineering'
+        ]
+        is_total_exp_question = (
+            any(kw in question_lower for kw in total_exp_keywords) or
+            bool(re.search(r'\btotal\s+(?:working\s+)?(?:exp|expr|experience)\b', question_lower))
+        ) and 'ctc' not in question_lower and not any(kw in question_lower for kw in ['salary', 'notice', 'np', 'package'])
         
         # Project count questions
         project_count_keywords = ['how many projects', 'number of projects', 'projects you have worked', 'projects as fullstack']
@@ -1410,7 +1501,12 @@ class SentinelAgent:
         
         # Handle total experience (short form) questions
         if is_total_exp_question:
-            return '4 Years', 0.95
+            if self._current_platform in ('linkedin', 'linkedin_form'):
+                return '4', 0.95
+            elif self._current_platform == 'naukri':
+                return '4.2 Years', 0.98
+            else:
+                return '4.2 Years', 0.95
         
         # Handle country/state questions
         if is_country_question:
@@ -1440,16 +1536,26 @@ class SentinelAgent:
             if 'fixed' in question_lower or 'variable' in question_lower or 'breakup' in question_lower:
                 return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
 
+            # Check for USD / Dollar salary questions
+            is_usd = bool(re.search(r'\b(usd|dollars?|\$)\b', question_lower))
+            is_expected = ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or 'ectc' in question_lower)
+            if is_usd:
+                if 'monthly' in question_lower or 'per month' in question_lower:
+                    return ('5000' if is_expected else '3500'), 0.98
+                return ('60000' if is_expected else '40000'), 0.98
+
             # Monthly salary - MUST check before generic CTC handling
             # Annual CTC 2300000 / 3000000 -> monthly ~191667 / ~250000
             if 'monthly' in question_lower:
-                if 'expected' in question_lower or 'expect' in question_lower:
+                if is_expected:
                     return '250000', 0.98
                 return '191667', 0.98
 
             # LPA (Lakhs Per Annum / Lacs) questions - return LPA value, not annual INR
             # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum", "CTC in Lacs" -> "23" or "30"
             if any(u in question_lower for u in ['lpa', 'lakh', 'lakhs', 'lac', 'lacs', 'per annum']):
+                if bool(re.search(r'\b(700000|mention as \d{6,}|example.*\d{6,})\b', question_lower)):
+                    return ('3000000' if ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower) else '2300000'), 0.98
                 if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
                     return '30', 0.98
                 return '23', 0.98
@@ -3602,12 +3708,53 @@ class SentinelAgent:
                         continue
                     
                     print("🔄 Entering LinkedIn Autopilot Mode...")
-                    # Wait for the Easy Apply modal to fully open before first autopilot iteration
-                    # Without this, the modal heuristics might run before the modal DOM is ready
-                    await asyncio.sleep(random.uniform(3, 4))
+                    modal_is_open = False
+                    try:
+                        # Mark that we are inside autopilot mode to prevent background button clicks
+                        await self._page.evaluate("() => { window.__SENTINEL_IN_AUTOPILOT__ = true; }")
+                        # Poll for modal presence (up to 5 seconds)
+                        for _ in range(10):
+                            await asyncio.sleep(0.5)
+                            modal_is_open = await self._is_linkedin_modal_open_robust()
+                            if modal_is_open:
+                                break
+                    except Exception as e:
+                        print(f"   ⚠️ Modal check error: {e}")
+
+                    if not modal_is_open:
+                        print("   ⏳ Modal not detected after initial click. Attempting Playwright native click on Easy Apply button...")
+                        for sel in [
+                            '.scaffold-layout__detail button.jobs-apply-button',
+                            '.jobs-details button.jobs-apply-button',
+                            '.jobs-search__job-details button.jobs-apply-button',
+                            '.jobs-unified-top-card button.jobs-apply-button',
+                            '[data-view-name="job-details"] button.jobs-apply-button',
+                            '.scaffold-layout__detail button[aria-label*="Easy Apply"]',
+                            '.jobs-details button[aria-label*="Easy Apply"]',
+                            '.jobs-details button:has-text("Easy Apply")',
+                            '.scaffold-layout__detail button:has-text("Easy Apply")',
+                            'button.jobs-apply-button',
+                            '#jobs-apply-button-id',
+                            'button[data-view-name="job-apply-button"]',
+                            'button.top-card-layout__cta--primary',
+                            'button[aria-label*="Easy Apply"]',
+                            'button:has-text("Easy Apply")'
+                        ]:
+                            try:
+                                btn = self._page.locator(sel).first
+                                if await btn.count() > 0 and await btn.is_visible():
+                                    await btn.scroll_into_view_if_needed(timeout=2000)
+                                    await btn.click(timeout=3000, force=True)
+                                    print(f"   ✅ Playwright clicked Easy Apply via selector: {sel}")
+                                    await asyncio.sleep(2.5)
+                                    break
+                            except Exception:
+                                pass
+
                     same_result_count = 0
                     last_result = ""
                     submit_attempt_count = 0  # Track submit attempts without success
+                    submit_clicked = False    # Track if Submit button was clicked for this job
                     max_submit_attempts = 3   # Max retries per job before skipping
                     autopilot_iteration = 0   # Track total iterations in autopilot
                     max_autopilot_iterations = 50  # Safety limit per job
@@ -3896,8 +4043,8 @@ class SentinelAgent:
                                 break
                             continue
                         
-                        # Prevent infinite loop if same result repeats
-                        if next_result == last_result:
+                        # Prevent infinite loop if same result repeats (exclude progressing form steps, which are tracked by question signatures)
+                        if next_result == last_result and 'LINKEDIN_FORM_STEP_CONTINUED' not in next_result:
                             same_result_count += 1
                             if same_result_count >= 5:
                                 print("⚠️ Stuck in loop, skipping this job...")
@@ -3979,11 +4126,17 @@ class SentinelAgent:
                                     if (currentJobId) {
                                         window.__skippedJobIds.add(currentJobId);
                                     }
-                                    // Remove any lingering success modals/overlays to prevent false detections
-                                    document.querySelectorAll('.artdeco-modal, .artdeco-modal-overlay, .jobs-easy-apply-modal').forEach(el => {
-                                        el.style.display = 'none';
-                                        try { el.remove(); } catch(e) {}
+                                    // Dismiss any lingering success/done dialog gracefully via its button rather than removing DOM nodes
+                                    const successBtns = Array.from(document.querySelectorAll('button')).filter(b => {
+                                        const t = (b.innerText || b.getAttribute('aria-label') || '').trim().toLowerCase();
+                                        return t === 'done' || t === 'dismiss' || t === 'close';
                                     });
+                                    for (const b of successBtns) {
+                                        const parentDialog = b.closest('.artdeco-modal, [role="dialog"], [class*="modal"]');
+                                        if (parentDialog && !(parentDialog.className || '').includes('msg-')) {
+                                            try { b.click(); } catch(e) {}
+                                        }
+                                    }
                                 }""")
                             except Exception:
                                 pass
@@ -3996,13 +4149,46 @@ class SentinelAgent:
                             await asyncio.sleep(random.uniform(2, 4))
                             # Exit autopilot after successful submit to navigate to next job
                             break
-                        # Fallback: if we clicked submit and the modal closed (signaled by no modal actions like clicking Easy Apply or selecting/scrolling jobs)
-                        elif submit_attempt_count > 0 and ('LINKEDIN_EASY_APPLY_CLICKED' in next_result or 'LINKEDIN_JOB_SELECTED' in next_result or 'LINKEDIN_SCROLLED' in next_result):
+                        # Fallback: if we clicked submit and the modal closed (signaled by modal disappearance or waiting for modal)
+                        elif (submit_attempt_count > 0 or submit_clicked) and ('LINKEDIN_WAITING_FOR_MODAL' in next_result or 'LINKEDIN_EASY_APPLY_CLICKED' in next_result or 'LINKEDIN_JOB_SELECTED' in next_result or 'LINKEDIN_SCROLLED' in next_result or 'LINKEDIN_MODAL_CLOSED' in next_result):
                             self.linkedin_applications += 1
                             self.metrics['applications_submitted'] = self.linkedin_applications
                             print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted (modal closed after submit)!")
                             submit_attempt_count = 0
+                            submit_clicked = False
                             
+                            # Clean up DOM modals and record applied job ID to prevent re-selection/stale detection
+                            try:
+                                await self._page.evaluate("""() => {
+                                    if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                    const urlParams = new URLSearchParams(window.location.search);
+                                    let currentJobId = urlParams.get('currentJobId');
+                                    if (!currentJobId) {
+                                        const activeCard = document.querySelector(
+                                            '.jobs-search-results-list__list-item--active [data-job-id], [aria-current="true"] [data-job-id], .job-card-list__list-item--active [data-job-id], .active [data-job-id]'
+                                        );
+                                        if (activeCard) {
+                                            currentJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                                        }
+                                    }
+                                    if (currentJobId) {
+                                        window.__skippedJobIds.add(currentJobId);
+                                    }
+                                    // Dismiss any lingering success/done dialog gracefully via its button rather than removing DOM nodes
+                                    const successBtns = Array.from(document.querySelectorAll('button')).filter(b => {
+                                        const t = (b.innerText || b.getAttribute('aria-label') || '').trim().toLowerCase();
+                                        return t === 'done' || t === 'dismiss' || t === 'close';
+                                    });
+                                    for (const b of successBtns) {
+                                        const parentDialog = b.closest('.artdeco-modal, [role="dialog"], [class*="modal"]');
+                                        if (parentDialog && !(parentDialog.className || '').includes('msg-')) {
+                                            try { b.click(); } catch(e) {}
+                                        }
+                                    }
+                                }""")
+                            except Exception:
+                                pass
+
                             if self.linkedin_applications >= 5:
                                 print("✅ LinkedIn target (5 applications) reached. Task complete!")
                                 self.state.task_complete = True
@@ -4012,6 +4198,7 @@ class SentinelAgent:
                             break
                         elif 'LINKEDIN_SUBMITTED' in next_result:
                             submit_attempt_count += 1
+                            submit_clicked = True
                             print(f"✅ Clicked Submit (attempt {submit_attempt_count}/{max_submit_attempts})")
                             
                             # Parse and log Q&A data from the submission payload
@@ -4164,8 +4351,10 @@ class SentinelAgent:
                                     self._last_step_q_signature = None
 
                             print("➡️ Form step continued")
-                            submit_attempt_count = 0  # Progress made
+                            if not submit_clicked:
+                                submit_attempt_count = 0  # Progress made (only reset if submit wasn't clicked)
                             form_stuck_count = 0  # Reset on progress
+                            same_result_count = 0  # Reset on form step progress
                             # Reset location retry counters — new form step means
                             # previous location issue was resolved (or was on a
                             # different step). Without this, the count carries over
@@ -4175,11 +4364,69 @@ class SentinelAgent:
                             self._location_fallback_attempted = False
                             await asyncio.sleep(random.uniform(1.8, 2.8))  # Allow React animation & network transition
                             continue
-                        elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result:
+                        elif 'LINKEDIN_EASY_APPLY_CLICKED' in next_result or 'LINKEDIN_WAITING_FOR_MODAL' in next_result:
+                            if submit_attempt_count > 0 or submit_clicked:
+                                self.linkedin_applications += 1
+                                self.metrics['applications_submitted'] = self.linkedin_applications
+                                print(f"🎉 LinkedIn Application {self.linkedin_applications}/5 Submitted (modal closed after submit)!")
+                                submit_attempt_count = 0
+                                submit_clicked = False
+                                
+                                # Clean up DOM modals and record applied job ID to prevent re-selection/stale detection
+                                try:
+                                    await self._page.evaluate("""() => {
+                                        if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                        const urlParams = new URLSearchParams(window.location.search);
+                                        let currentJobId = urlParams.get('currentJobId');
+                                        if (!currentJobId) {
+                                            const activeCard = document.querySelector(
+                                                '.jobs-search-results-list__list-item--active [data-job-id], [aria-current="true"] [data-job-id], .job-card-list__list-item--active [data-job-id], .active [data-job-id]'
+                                            );
+                                            if (activeCard) {
+                                                currentJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                                            }
+                                        }
+                                        if (currentJobId) {
+                                            window.__skippedJobIds.add(currentJobId);
+                                        }
+                                        // Dismiss any lingering success/done dialog gracefully via its button rather than removing DOM nodes
+                                        const successBtns = Array.from(document.querySelectorAll('button')).filter(b => {
+                                            const t = (b.innerText || b.getAttribute('aria-label') || '').trim().toLowerCase();
+                                            return t === 'done' || t === 'dismiss' || t === 'close';
+                                        });
+                                        for (const b of successBtns) {
+                                            const parentDialog = b.closest('.artdeco-modal, [role="dialog"], [class*="modal"]');
+                                            if (parentDialog && !(parentDialog.className || '').includes('msg-')) {
+                                                try { b.click(); } catch(e) {}
+                                            }
+                                        }
+                                    }""")
+                                except Exception:
+                                    pass
+
+                                if self.linkedin_applications >= 5:
+                                    print("✅ LinkedIn target (5 applications) reached. Task complete!")
+                                    self.state.task_complete = True
+                                    break
+                                await asyncio.sleep(random.uniform(2, 4))
+                                break
+
+                            # Check if modal is actually open in the DOM before incrementing unopened watchdog
+                            is_modal_up = False
+                            try:
+                                is_modal_up = await self._is_linkedin_modal_open_robust()
+                            except Exception:
+                                pass
+
+                            if is_modal_up:
+                                easy_apply_restart_count = 0  # Modal is active! Reset unopened watchdog counter
+                                await asyncio.sleep(1.5)
+                                continue
+
                             easy_apply_restart_count += 1
-                            print(f"🔄 Easy Apply re-clicked inside autopilot (restart {easy_apply_restart_count}/2)...")
-                            if easy_apply_restart_count >= 2:
-                                print("⚠️ Modal restarted twice — application likely submitted or stuck. Moving to next job...")
+                            print(f"⏳ Waiting for Easy Apply modal to become active (attempt {easy_apply_restart_count}/3)...")
+                            if easy_apply_restart_count >= 3:
+                                print("⚠️ Modal unopened/inactive after 3 attempts — skipping job...")
                                 await self._close_linkedin_modal()
                                 # Mark the current job as skipped so it's not re-selected in an
                                 # infinite loop. The job ID is extracted from the URL (preferred)
@@ -4208,7 +4455,7 @@ class SentinelAgent:
                                 except Exception as e:
                                     print(f"   ⚠️ Failed to mark job as skipped: {e}")
                                 break
-                            await asyncio.sleep(random.uniform(3, 4))
+                            await asyncio.sleep(random.uniform(2, 3))
                             continue
                         elif 'NO_ACTION' in next_result or 'MODAL_OPEN_NO_ACTION' in next_result:
                             print("⚠️ Autopilot stuck, checking for form errors...")
@@ -4222,6 +4469,12 @@ class SentinelAgent:
                         elif 'LINKEDIN_JOB_SKIPPED' in next_result:
                             print("⏭️ Job skipped, moving to next...")
                             break
+
+                    # Ensure autopilot flag is cleaned up when leaving autopilot
+                    try:
+                        await self._page.evaluate("() => { window.__SENTINEL_IN_AUTOPILOT__ = false; }")
+                    except Exception:
+                        pass
                 
                 # Naukri Profile Update - Resume Headline Toggle
                 # NOTE: Only run if NOT an Employment LWD task (same URL, different task)
@@ -5186,6 +5439,7 @@ class SentinelAgent:
                     applied_count = getattr(self, '_instahyre_apply_count', 0)
                     print(f"📭 No more Instahyre jobs found. Applied to {applied_count} jobs.")
                     self._instahyre_apply_count = 0
+                    self._last_instahyre_no_more_jobs = True
                     self.state.task_complete = True
                     break
                 
@@ -6233,7 +6487,7 @@ class SentinelAgent:
                         if (q.type === 3 || (sc.QUESTION_TYPES && q.type === sc.QUESTION_TYPES.MULTIPLE_CHOICE)) {
                             if (q.choice_options && q.choice_options.length > 0) {
                                 const target = (item.answer || '').toLowerCase().trim();
-                                const tokens = target.split(/[,;\/\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+                                const tokens = target.split(/[,;\\/\\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
                                 let anySelected = false;
                                 for (let co of q.choice_options) {
                                     const lbl = (co.label || co.text || co.name || co.option_text || '').toLowerCase().trim();
@@ -6315,7 +6569,7 @@ class SentinelAgent:
                 if (idx >= answers.length) return;
                 const item = answers[idx];
                 const target = (item.answer || '').toLowerCase().trim();
-                const tokens = target.split(/[,;\/\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+                const tokens = target.split(/[,;\\/\\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
                 const numVal = item.numericValue !== null ? item.numericValue : (parseFloat(item.answer) || null);
                 const intVal = numVal !== null ? Math.round(numVal) : (parseInt(item.answer) || null);
                 const cleanNumStr = intVal !== null ? String(intVal) : (numVal !== null ? String(numVal) : item.answer);
@@ -7149,9 +7403,10 @@ class SentinelAgent:
                 // Input-type-aware fuzzy match — returns the best answer for the detected input type
                 const fuzzyMatch = (question, chatLayer) => {{
                     if (!question) return null;
-                    const qLower = question.toLowerCase().trim();
+                    const qLower = question.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2013\u2014]/g, '-').trim();
                     // Normalize hyphens/dashes to spaces so "work-from-office" matches "work from office"
-                    const qNormalized = qLower.replace(/[-–]/g, ' ');
+                    // Also normalize typos/abbreviations like "expr", "experince" -> "experience"
+                    const qNormalized = qLower.replace(/\b(expr|experince|experiance)\b/g, 'experience').replace(/distrubuted/g, 'distributed').replace(/[-–—_]/g, ' ').replace(/\\s+/g, ' ');
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     const detectedType = detectInputType(chatLayer);
@@ -7159,14 +7414,18 @@ class SentinelAgent:
                     // PRE-CHECK: "How many years of exp/experience in X?" -> force experience pattern
                     // This prevents tech-specific patterns (microservices, cloud, etc.) from
                     // overriding when the question is clearly asking for numeric years.
-                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years/.test(qLower);
+                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years|what is your experience|working expr|working experience|total working/.test(qNormalized);
                     if (isYearsOfExpQuestion) {{
                         // Find the experience pattern key explicitly
-                        const expKeys = ['years of experience do you have', 'how many years of experience do you have',
+                        const expKeys = [
+                            'total working expr in software engineering', 'total working experience in software engineering',
+                            'working expr in software engineering', 'working experience in software engineering',
+                            'total working expr', 'total working experience', 'working expr', 'working experience',
+                            'years of experience do you have', 'how many years of experience do you have',
                             'how many years of experience', 'years of experience', 'total years of exp',
                             'years of exp', 'years of work experience do you have', 'experience', 'exp', 'years'];
                         for (const ek of expKeys) {{
-                            if (KNOWN_PATTERNS[ek] && qLower.includes(ek)) {{
+                            if (KNOWN_PATTERNS[ek] && (qLower.includes(ek) || qNormalized.includes(ek))) {{
                                 return getAnswerForPattern(ek, detectedType, KNOWN_PATTERNS[ek]);
                             }}
                         }}
@@ -7180,7 +7439,7 @@ class SentinelAgent:
                             return getAnswerForPattern(key, detectedType, val);
                         }}
                         // Use normalized question so hyphenated text still matches space-separated patterns
-                        if (qNormalized.includes(keyLower) && key.length > bestKeyLen) {{
+                        if ((qNormalized.includes(keyLower) || qLower.includes(keyLower)) && key.length > bestKeyLen) {{
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) {{
                                 continue;
                             }}
@@ -7445,6 +7704,10 @@ class SentinelAgent:
                 
                 const qLower = qText.toLowerCase();
                 
+                // Special pre-match: Combined Notice Period + LWD questions
+                const isNoticeAndLwd = (/notice/i.test(qLower) || /\\bnp\\b/i.test(qLower)) && (/lwd|last working day|ldw/i.test(qLower));
+                const isTimeSlotQ = /time\\s*slot|what\\s+time\\s+(you|will|are|u|can)|available\\s+time\\s+slot|slot\\s+in\\s+between|suitable\\s+time/i.test(qLower);
+
                 // Special pre-match: LWD date questions — must answer with a date, not years
                 const isLwdDateQ = qLower.includes('when is your lwd') ||
                                    qLower.includes('what is your lwd') ||
@@ -7455,7 +7718,18 @@ class SentinelAgent:
                                    qLower.includes('ldw') ||
                                    qLower.includes('lwd');
                 let answer;
-                if (isLwdDateQ) {{
+                if (isNoticeAndLwd) {{
+                    const lwd = new Date();
+                    lwd.setDate(lwd.getDate() + 15);
+                    const dd = String(lwd.getDate()).padStart(2, '0');
+                    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lwd.getMonth()];
+                    const yyyy = lwd.getFullYear();
+                    answer = '15 Days, LWD: ' + dd + ' ' + mon + ' ' + yyyy;
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Notice + LWD combined question detected, answering:', answer);
+                }} else if (isTimeSlotQ) {{
+                    answer = 'Anytime between 10 AM - 4 PM';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Time slot question detected, answering:', answer);
+                }} else if (isLwdDateQ) {{
                     const lwd = new Date();
                     lwd.setDate(lwd.getDate() + 15);
                     const dd = String(lwd.getDate()).padStart(2, '0');
@@ -7820,7 +8094,7 @@ class SentinelAgent:
                     const answerLower = answer.toLowerCase();
                     const answerNumericMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
-                    const isExpQ = /experience|years|hands-on|hands on|worked on|indicate your experience/i.test(qLower);
+                    const isExpQ = /experience|\bexpr\b|years|hands-on|hands on|worked on|indicate your experience/i.test(qLower);
                     const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : (answerNumeric !== null ? answerNumeric : (isExpQ ? 4.2 : null));
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
@@ -8963,6 +9237,57 @@ class SentinelAgent:
             print(f"   ⚠️ Error during LinkedIn resume upload: {e}")
             return False
 
+    async def _is_linkedin_modal_open_robust(self) -> bool:
+        """
+        Robust check if a LinkedIn Easy Apply modal is currently open in the DOM.
+        Uses multi-strategy detection (standard dialogs, 'Apply to' headers, close buttons,
+        Easy Apply form elements, and action buttons) to prevent false negatives.
+        """
+        if not self._page:
+            return False
+        try:
+            return await self._page.evaluate("""() => {
+                const isMsg = (el) => {
+                    if (!el) return false;
+                    const cls = (typeof el.className === 'string' ? el.className : (el.getAttribute && el.getAttribute('class')) || '').toLowerCase();
+                    return cls.includes('msg-overlay') || cls.includes('msg-convo') || cls.includes('msg-form') || cls.includes('messaging') ||
+                           (el.closest && el.closest('.msg-overlay-container, .msg-overlay-list-bubble, [class*="msg-overlay"]') !== null);
+                };
+                
+                // 1. Check for standard modal / dialog elements
+                const modals = Array.from(document.querySelectorAll('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"], [data-test-modal], div[aria-modal="true"], dialog'));
+                for (const m of modals) {
+                    if (!m) continue;
+                    if (isMsg(m)) continue;
+                    if (m.offsetWidth > 0 || m.offsetHeight > 0 || m.getClientRects().length > 0) return true;
+                }
+                
+                // 2. Check for "Apply to [Company]" header
+                const headers = Array.from(document.querySelectorAll('h1, h2, h3, header, [data-test-modal-header], div'));
+                const hasApplyHeader = headers.some(el => {
+                    if (isMsg(el)) return false;
+                    const t = (el.innerText || '').trim().toLowerCase();
+                    return (t.startsWith('apply to ') || t === 'apply to') && (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0);
+                });
+                if (hasApplyHeader) return true;
+                
+                // 3. Check for Easy Apply specific form elements / containers
+                const formEl = document.querySelector('.jobs-easy-apply-content, .jobs-document-upload-redesign, .jobs-easy-apply-form-section, .jobs-easy-apply-modal__content, [data-test-form-builder-select-form-component]');
+                if (formEl && (formEl.offsetWidth > 0 || formEl.offsetHeight > 0 || formEl.getClientRects().length > 0)) return true;
+                
+                // 4. Check for Easy Apply action buttons (Next, Review, Submit)
+                const actionBtn = document.querySelector('button[data-easy-apply-next-button], button[data-live-test-easy-apply-next-button], button[data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review your application" i], button[aria-label*="Submit application" i]');
+                if (actionBtn && (actionBtn.offsetParent !== null || actionBtn.offsetWidth > 0 || actionBtn.offsetHeight > 0)) return true;
+                
+                // 5. Check for modal close / dismiss button outside messaging
+                const closeBtn = document.querySelector('button[aria-label*="Dismiss" i], button[aria-label*="dismiss" i], button[data-test-modal-close-btn], .artdeco-modal__dismiss');
+                if (closeBtn && !isMsg(closeBtn) && (closeBtn.offsetParent !== null || closeBtn.offsetWidth > 0 || closeBtn.offsetHeight > 0)) return true;
+                
+                return false;
+            }""")
+        except Exception:
+            return False
+
     async def _close_linkedin_modal(self) -> bool:
         """
         Close the LinkedIn Easy Apply modal with a two-step close:
@@ -8975,6 +9300,30 @@ class SentinelAgent:
         if not self._page:
             return False
         try:
+            # Step 0: Check if this is a post-submit success card ("Application submitted" / "Done")
+            step0 = await self._page.evaluate("""() => {
+                const modals = Array.from(document.querySelectorAll('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [data-test-modal]'));
+                for (const m of modals) {
+                    if (!m || (m.offsetParent === null && m.offsetWidth === 0 && m.offsetHeight === 0)) continue;
+                    const text = (m.innerText || '').toLowerCase();
+                    if (text.includes('application submitted') || text.includes('application was sent') || text.includes('your application was sent') || text.includes('application sent')) {
+                        const btns = Array.from(m.querySelectorAll('button'));
+                        const doneBtn = btns.find(b => {
+                            const t = (b.innerText || b.getAttribute('aria-label') || '').trim().toLowerCase();
+                            return t === 'done' || t.includes('done') || t === 'dismiss' || t === 'close';
+                        }) || m.querySelector('button');
+                        if (doneBtn) {
+                            doneBtn.click();
+                            return 'DONE_CLICKED';
+                        }
+                    }
+                }
+                return 'NO_DONE';
+            }""")
+            if step0 == 'DONE_CLICKED':
+                await asyncio.sleep(1)
+                return True
+
             # Step 1: Click the dismiss/close (X) button with full pointer/mouse dispatch
             step1 = await self._page.evaluate("""() => {
                 const dispatchFullClick = (btn) => {
@@ -9221,27 +9570,14 @@ class SentinelAgent:
                     });
                     
                     // Override salary/CTC to numeric values for LinkedIn text inputs
-                    // Smart salary handling: check for monthly, LPA, expected keywords
-                    const salaryKeys = [
-                        'salary range', 'current salary range', 'expected salary range',
-                        'annual salary', 'ctc range', 'current ctc', 'expected ctc',
-                        'expected annual ctc in inr', 'expected annual ctc', 'expected ctc in inr', 'expected ctc inr',
-                        'current salary', 'expected salary', 'current annual salary',
-                        'what is your current annual salary', 'what is your current annual salary?',
-                        'expected annual salary', 'what is your expected annual salary', 'what is your expected annual salary?',
-                        'what is your current salary?', 'what is your expected salary?',
-                        'what is your current ctc', 'what is your current ctc?',
-                        'gross salary', 'gross current salary', 'gross expected salary', 'salary expectations',
-                        'monthly salary', 'current monthly salary', 'expected monthly salary',
-                        'per month salary', 'current ctc in lpa', 'expected ctc in lpa',
-                        'desired compensation', 'desired salary',
-                        // Compound CTC questions (current AND expected)
-                        'current & expected ctc', 'current and expected ctc', 'current ctc and expected ctc',
-                        'current and expected compensation', 'what is your current ctc and expected ctc'
-                    ];
-                    salaryKeys.forEach(k => {
-                        if (KNOWN_PATTERNS[k]) {
-                            const kLower = k.toLowerCase();
+                    // Smart salary handling: generic scan over ALL patterns in KNOWN_PATTERNS
+                    Object.keys(KNOWN_PATTERNS).forEach(k => {
+                        const kLower = k.toLowerCase();
+                        const defaultObj = (typeof KNOWN_PATTERNS_WITH_DEFAULTS !== 'undefined') ? KNOWN_PATTERNS_WITH_DEFAULTS[kLower] : null;
+                        const isSalaryCat = defaultObj && (defaultObj.category === 'salary' || defaultObj.category === 'compensation');
+                        const isSalaryKey = /salary|ctc|\bpay\b|\bpackage\b|compensation|remuneration/i.test(kLower) && !/company|employer|payroll|industry|department/i.test(kLower);
+                        
+                        if (isSalaryCat || isSalaryKey) {
                             // Compound CTC questions (current AND expected) - MUST be first
                             if ((kLower.includes('current') && kLower.includes('expected')) ||
                                 kLower.includes('current and expected') || kLower.includes('current & expected')) {
@@ -9249,19 +9585,26 @@ class SentinelAgent:
                             }
                             // Monthly salary questions
                             else if (kLower.includes('monthly') || kLower.includes('per month')) {
-                                KNOWN_PATTERNS[k] = kLower.includes('expected') ? '250000' : '191667';
+                                KNOWN_PATTERNS[k] = /expected|desired|asking|expectation/i.test(kLower) ? '250000' : '191667';
                             }
                             // LPA/Lakh questions
                             else if (kLower.includes('lpa') || kLower.includes('lakh') || kLower.includes('lac')) {
-                                KNOWN_PATTERNS[k] = (kLower.includes('expected') || kLower.includes('desired')) ? '30' : '23';
+                                KNOWN_PATTERNS[k] = /expected|desired|asking|expectation|ectc/i.test(kLower) ? '30' : '23';
                             }
                             // Expected/desired salary (annual INR)
-                            else if (kLower.includes('expected') || kLower.includes('ectc') || kLower.includes('desired') || kLower.includes('expectation') || kLower.includes('expectations')) {
+                            else if (kLower.includes('expected') || kLower.includes('ectc') || kLower.includes('desired') || kLower.includes('expectation') || kLower.includes('expectations') || kLower.includes('asking')) {
                                 KNOWN_PATTERNS[k] = '3000000';
                             }
                             // Current salary (annual INR)
                             else {
                                 KNOWN_PATTERNS[k] = '2300000';
+                            }
+                            
+                            // Also override input_type_defaults if present
+                            if (defaultObj && defaultObj.input_type_defaults) {
+                                defaultObj.input_type_defaults.text = KNOWN_PATTERNS[k];
+                                defaultObj.input_type_defaults.number = (kLower.includes('lpa') || kLower.includes('lakh')) ? ((/expected|desired/i.test(kLower)) ? '30' : '23') : ((/expected|desired/i.test(kLower)) ? '3000000' : '2300000');
+                                defaultObj.input_type_defaults.textarea = KNOWN_PATTERNS[k];
                             }
                         }
                     });
@@ -9438,8 +9781,8 @@ class SentinelAgent:
                 // Multi-pass Fuzzy Matcher implementation with robust pattern matching
                 const fuzzyMatch = (question) => {
                     if (!question) return null;
-                    const qLower = question.toLowerCase().trim();
-                    const cleanQ = qLower.replace(/[*?:!]/g, ' ').replace(/\\s+/g, ' ').trim();
+                    const qLower = question.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2013\u2014]/g, '-').trim();
+                    const cleanQ = qLower.replace(/[*?:!_\\-\\(\\)\\/]/g, ' ').replace(/\\s+/g, ' ').trim();
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     let bestScore = 0;
@@ -9542,20 +9885,39 @@ class SentinelAgent:
                         const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\bexpr\\b|working\\s+expr|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isYearsQ = /(?:years\\b|\\byoe\\b)/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
                         const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)|based\\s*in\\s*(hyderabad|bangalore|bengaluru|pune|delhi|mumbai|gurgaon|noida)|residing\\s*in/i.test(qLower);
-                        const isBgCheckQ = /background\\s*(check|verification)|drug\\s*screen|reference\\s*check|criminal\\s*record/i.test(qLower);
+                        const isBgCheckQ = /background\\s*(check|verification)|drug\\s*(screen|screening|test)|reference\\s*check|criminal\\s*record/i.test(qLower);
                         const isAuthIndiaQ = (/authorized\\s*to\\s*work\\s*in\\s*india|legally\\s*authorized.*india|work\\s*authorization/i.test(qLower)) && !isSponsorshipQ;
                         const isTechExpQ = /(?:c#|c\\+\\+|\\.net|dotnet|azure|sql|csharp|cloud)\\s*(?:experience|years)?|years.*(?:c#|c\\+\\+|\\.net|dotnet|azure|sql)/i.test(qLower);
                         // Naukri text inputs expect "4 Years"; LinkedIn numeric-only expects "4".
                         const isLinkedInHost = window.location.hostname.includes('linkedin');
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
-                        if (isEquityQ) {
+                        const isTimeSlotQ = /time\\s*slot|what\\s*time\\s*you\\s*will\\s*be\\s*available|available\\s*time\\s*slot|preferred\\s*time\\s*slot/i.test(qLower);
+                        const isReferralNaQ = /put\\s*n\\/?a|if\\s*not\\s*referred.*put|list\\s*their\\s*name/i.test(qLower);
+                        const isCityStateQ = /city\\s*and\\s*state|city\\s*&\\s*state/i.test(qLower);
+                        const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|confidentiality\\s*agreements?.*restrict/i.test(qLower);
+                        const isGapQ = /gap\\s*from\\s*education|between\\s*jobs.*gap|what\\s*are\\s*your\\s*gap/i.test(qLower);
+                        const isAgenticEssayQ = /agentic\\s*ai|ai\\s*agent/i.test(qLower) && /explain|use\\s*case|contribution|describe/i.test(qLower);
+
+                        if (isRestrictiveQ) {
+                            bestMatch = 'No';
+                        } else if (isReferralNaQ) {
+                            bestMatch = 'N/A';
+                        } else if (isCityStateQ) {
+                            bestMatch = 'Bangalore, Karnataka';
+                        } else if (isTimeSlotQ) {
+                            bestMatch = 'Anytime between 10 AM - 2 PM';
+                        } else if (isGapQ) {
+                            bestMatch = 'None of the above and not much gap';
+                        } else if (isAgenticEssayQ) {
+                            bestMatch = 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.';
+                        } else if (isEquityQ) {
                             bestMatch = 'No';
                         } else if (isSponsorshipQ) {
                             bestMatch = 'No';
@@ -9603,7 +9965,15 @@ class SentinelAgent:
                             bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
                         } else if (isSalaryQ) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/monthly|per month/i.test(qLower)) {
+                            if (/usd|dollar|\\$/i.test(qLower)) {
+                                if (/monthly|per month/i.test(qLower)) {
+                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '5000' : '3500';
+                                } else {
+                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '60000' : '40000';
+                                }
+                            } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '3000000' : '2300000';
+                            } else if (/monthly|per month/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
                             } else if (/lpa|lakh|lac/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
@@ -9623,13 +9993,27 @@ class SentinelAgent:
                         const isCompanyOrPayroll = /company|payroll|employer/i.test(qLower) && !/cost\\s*to\\s*company|salary|ctc|compensation|remuneration|\\bpay\\b|\\bpackage\\b|payslip|pay slip|equity|stock|shares|esop|bonus|holding|hold|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(qLower);
                         const is12thBoardQ = /(12th|10th|hsc|ssc|intermediate)\\s*(board)?/i.test(qLower) && /(%|percent|percentage|marks|aggregate)/i.test(qLower);
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
-                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
+                        const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\bexpr\\b|working\\s+expr|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
+                        // Disambiguate Yes/No vs numeric experience:
+                        const isYesNoExp = /^(do you have|have you|are you|can you|will you|would you)\b/i.test(qLower.trim()) && !/how many|how much|what is your|total years/i.test(qLower);
+                        if (isYesNoExp && (bestMatch === '4' || bestMatch === '4.2 Years' || bestMatch === '4 Years')) {
+                            bestMatch = 'Yes';
+                        }
+                        // Experience prompt in text field (e.g. "Experience in PostgreSQL / MySQL / SQL Server") without "Do you have"
+                        if (/^experience in\b/i.test(qLower) && !/^(do you have|have you|are you)\b/i.test(qLower) && (bestMatch === 'Yes' || bestMatch === 'No')) {
+                            bestMatch = isLinkedInHost6 ? '4' : '4.2 Years';
+                        }
+
                         if (isAgeQ) {
                             bestMatch = 'Yes';
+                        } else if (/1-5|1 to 5|out of 5|scale of 5|\\/5/i.test(qLower) && (/10/i.test(bestMatch) || bestMatch === '8/10' || bestMatch === '8' || bestMatch === '9' || bestMatch === '10')) {
+                            bestMatch = '4';
+                        } else if (/email/i.test(qLower) && /phone|contact number|contact no|mobile/i.test(qLower)) {
+                            bestMatch = 'siddhant3646@gmail.com, 7905828880';
                         } else if (is12thBoardQ && !/^\\d{2}/.test(bestMatch)) {
                             bestMatch = /10th|ssc/i.test(qLower) ? '88' : '85';
                         } else if (isCompanyOrPayroll && (/^\\d+$/.test(bestMatch) || /^\\d+\\s*years?/i.test(bestMatch))) {
@@ -9642,7 +10026,15 @@ class SentinelAgent:
                             }
                         } else if (isSalaryQ && !isCompanyOrPayroll) {
                             // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/monthly|per month/i.test(qLower)) {
+                            if (/usd|dollar|\\$/i.test(qLower)) {
+                                if (/monthly|per month/i.test(qLower)) {
+                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '5000' : '3500';
+                                } else {
+                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '60000' : '40000';
+                                }
+                            } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '3000000' : '2300000';
+                            } else if (/monthly|per month/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
                             } else if (/lpa|lakh|lac/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
@@ -10323,7 +10715,10 @@ return resolveDynamic(bestMatch);
                            t.includes('sponsorship') ||
                            t.includes('authorized') ||
                            t.includes('authorization') ||
-                           t.includes('background check');
+                           t.includes('background check') ||
+                           t.includes('drug test') ||
+                           t.includes('drug screen') ||
+                           t.includes('drug screening');
                 };
 
                 // Helper: Detect if a Yes/No question should default to "No"
@@ -10416,22 +10811,59 @@ return resolveDynamic(bestMatch);
                     
                     // Helper: Find Easy Apply button on job details page
                     const findEasyApplyButton = () => {
-                        window.__SENTINEL_DEBUG__&&console.log('Looking for Easy Apply button...');
-                        // 1. By class and id (most reliable - verified 2026)
-                        let btn = queryDeep('button.jobs-apply-button') || queryDeep('#jobs-apply-button-id');
-                        if (btn && isVisible(btn)) return btn;
-                        
-                        // 2. By aria-label (found during inspection)
-                        btn = queryDeep('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]');
-                        if (btn && isVisible(btn)) return btn;
-                        
-                        // 3. By data-view-name (LinkedIn uses <button> not <a> as of 2026)
-                        btn = queryDeep('button[data-view-name="job-apply-button"], button.top-card-layout__cta--primary');
-                        if (btn && isVisible(btn)) return btn;
+                        // If inside autopilot mode or if any modal is already open, DO NOT return background Easy Apply button
+                        if (window.__SENTINEL_IN_AUTOPILOT__) {
+                            window.__SENTINEL_DEBUG__&&console.log('Inside autopilot mode — skipping Easy Apply button search');
+                            return null;
+                        }
+                        const openModals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [data-test-modal], div[aria-modal="true"]');
+                        const hasOpenModal = openModals.some(m => isVisible(m) && !isMessagingOverlay(m));
+                        if (hasOpenModal) {
+                            window.__SENTINEL_DEBUG__&&console.log('Modal already open — skipping Easy Apply button search');
+                            return null;
+                        }
 
-                        // 4. By text search (broadest fallback)
-                        btn = findByText('button', 'easy apply') || findByText('a', 'easy apply');
-                        if (btn && isVisible(btn)) return btn;
+                        window.__SENTINEL_DEBUG__&&console.log('Looking for Easy Apply button...');
+                        // Scoped container: Find Job Details pane first so we don't accidentally match sidebar cards
+                        const detailContainers = [
+                            document.querySelector('.jobs-details'),
+                            document.querySelector('.jobs-search__job-details'),
+                            document.querySelector('.scaffold-layout__detail'),
+                            document.querySelector('.job-view-layout'),
+                            document.querySelector('[data-view-name="job-details"]'),
+                            document.querySelector('.jobs-unified-top-card'),
+                            document.querySelector('.job-details-jobs-unified-top-card'),
+                            document.querySelector('.jobs-details__main-content')
+                        ].filter(Boolean);
+
+                        const searchRoots = detailContainers.length > 0 ? detailContainers : [document];
+
+                        for (const root of searchRoots) {
+                            // 1. By class and id (most reliable - verified 2026)
+                            let btn = queryDeep('button.jobs-apply-button', root) || 
+                                      queryDeep('#jobs-apply-button-id', root) ||
+                                      queryDeep('.jobs-apply-button--top-card button', root) ||
+                                      queryDeep('.jobs-s-apply button', root);
+                            if (btn && isVisible(btn)) return btn;
+
+                            // 2. By data-view-name or class
+                            btn = queryDeep('button[data-view-name="job-apply-button"]', root) ||
+                                  queryDeep('button.top-card-layout__cta--primary', root) ||
+                                  queryDeep('button[data-control-name="jobdetails_topcard_inapply"]', root) ||
+                                  queryDeep('button[data-job-id]', root);
+                            if (btn && isVisible(btn)) {
+                                const btnText = (btn.innerText || btn.getAttribute('aria-label') || '').toLowerCase();
+                                if (btnText.includes('easy apply') || btnText.includes('apply')) return btn;
+                            }
+
+                            // 3. By aria-label
+                            btn = queryDeep('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]', root);
+                            if (btn && isVisible(btn)) return btn;
+
+                            // 4. By text search inside details pane
+                            btn = findByText('button', 'easy apply', false, root) || findByText('a', 'easy apply', false, root);
+                            if (btn && isVisible(btn)) return btn;
+                        }
 
                         return null;
                     };
@@ -10495,35 +10927,80 @@ return resolveDynamic(bestMatch);
 
                         const formResults = [];
 
+                        // Helper: Check if a string looks like a question/heading rather than an option label
+                        const isQuestionText = (t) => {
+                            if (!t) return false;
+                            const s = t.trim().toLowerCase();
+                            if (s.endsWith('?') || s.includes('?') || s.length > 40) return true;
+                            if (/^(are|do|have|will|can|did|how|what|please|kindly|must|should|if|where|why|which|would|is|select|confirm)\b/i.test(s)) return true;
+                            return false;
+                        };
+
                         // Helper: Get label text associated with input (radio/checkbox)
                         const getInputLabelText = (input) => {
                             if (!input) return '';
                             let labelText = '';
-                            if (input.getAttribute('aria-label')) {
-                                labelText = input.getAttribute('aria-label');
+
+                            // 1. Explicit <label for="input.id"> with CSS escaping
+                            if (input.id) {
+                                try {
+                                    const escapedId = (window.CSS && CSS.escape) ? CSS.escape(input.id) : input.id.replace(/([ #;?%&,.+*~\':"!^$[\\]()=>|/@])/g, '\\$1');
+                                    const labelEl = (typeof queryDeep === 'function' ? queryDeep(`label[for="${escapedId}"]`, modal) : null) || document.querySelector(`label[for="${escapedId}"]`);
+                                    if (labelEl) {
+                                        const txt = (labelEl.innerText || labelEl.textContent || '').trim();
+                                        if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                                    }
+                                } catch(e) {}
                             }
-                            if (!labelText && input.id) {
-                                const labelEl = document.querySelector(`label[for="${input.id}"]`);
-                                if (labelEl) labelText = labelEl.innerText || labelEl.textContent;
-                            }
-                            if (!labelText) {
-                                const labelEl = input.closest('label');
-                                if (labelEl) labelText = labelEl.innerText || labelEl.textContent;
-                            }
-                            if (!labelText && input.parentElement) {
-                                const siblingLabel = input.parentElement.querySelector('label');
-                                if (siblingLabel) labelText = siblingLabel.innerText || siblingLabel.textContent;
-                                else labelText = input.parentElement.innerText || input.parentElement.textContent;
-                            }
-                            // LinkedIn: text is in <p> or <label> inside <div role="radio"> or .fb-radio
-                            if (!labelText) {
-                                const roleRadioParent = input.closest('[role="radio"], .fb-radio, [data-test-form-builder-radio-button-form-component]');
-                                if (roleRadioParent) {
-                                    const textEl = roleRadioParent.querySelector('p, span, label');
-                                    if (textEl) labelText = textEl.innerText || textEl.textContent;
+
+                            // 2. Specific radio/checkbox option container (LinkedIn: [data-test-form-builder-radio-button], .fb-radio, .artdeco-radio, [role="radio"])
+                            const optionContainer = input.closest('[data-test-form-builder-radio-button], .fb-radio, .artdeco-radio, [role="radio"]');
+                            if (optionContainer) {
+                                const optLabel = optionContainer.querySelector('label, [data-test-radio-button-label], span, p');
+                                if (optLabel) {
+                                    const txt = (optLabel.innerText || optLabel.textContent || '').trim();
+                                    if (txt && !isQuestionText(txt)) return txt.toLowerCase();
                                 }
                             }
-                            return (labelText || '').trim().toLowerCase();
+
+                            // 3. Direct wrapping label (excluding question labels)
+                            const directLabel = input.closest('label');
+                            if (directLabel && !directLabel.classList.contains('fb-dash-form-element__label') && !directLabel.classList.contains('jobs-easy-apply-form-section__question-label')) {
+                                const txt = (directLabel.innerText || directLabel.textContent || '').trim();
+                                if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                            }
+
+                            // 4. Sibling elements
+                            let sib = input.nextElementSibling;
+                            while (sib) {
+                                if (sib.tagName === 'LABEL' || sib.tagName === 'SPAN' || sib.tagName === 'P') {
+                                    const txt = (sib.innerText || sib.textContent || '').trim();
+                                    if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                                }
+                                sib = sib.nextElementSibling;
+                            }
+
+                            // 5. aria-label (ONLY if it does not look like a question)
+                            if (input.getAttribute('aria-label')) {
+                                const al = input.getAttribute('aria-label').trim();
+                                if (al && !isQuestionText(al)) return al.toLowerCase();
+                            }
+
+                            // 6. Non-standard input.value
+                            if (input.value && input.value !== 'on' && input.value !== 'true' && !isQuestionText(input.value)) {
+                                return input.value.trim().toLowerCase();
+                            }
+
+                            // 7. Sibling label in parent (only if NOT question label)
+                            if (input.parentElement) {
+                                const siblingLabel = input.parentElement.querySelector('label');
+                                if (siblingLabel && !siblingLabel.classList.contains('fb-dash-form-element__label')) {
+                                    const txt = (siblingLabel.innerText || siblingLabel.textContent || '').trim();
+                                    if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                                }
+                            }
+
+                            return '';
                         };
 
                         // Helper: Robust click on input (clicks label if input is hidden)
@@ -10534,35 +11011,79 @@ return resolveDynamic(bestMatch);
                             const roleRadioParent = input.closest('[role="radio"]');
                             if (roleRadioParent) {
                                 window.__SENTINEL_DEBUG__&&console.log('Clicking role=radio container:', roleRadioParent.innerText);
-                                roleRadioParent.scrollIntoView({ block: 'center' });
+                                try { roleRadioParent.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
+                                roleRadioParent.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                                roleRadioParent.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                roleRadioParent.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                                roleRadioParent.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
                                 roleRadioParent.click();
                                 input.checked = true;
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
                                 input.dispatchEvent(new Event('change', { bubbles: true }));
                                 return;
                             }
                             
+                            // LinkedIn: check for <div role="checkbox"> or .artdeco-checkbox / .fb-checkbox container
+                            const roleCheckboxParent = input.closest('[role="checkbox"], .fb-checkbox, .artdeco-checkbox, [data-test-checkbox]');
+
                             let label = null;
                             if (input.id) {
-                                label = document.querySelector(`label[for="${input.id}"]`);
+                                try {
+                                    const escapedId = (window.CSS && CSS.escape) ? CSS.escape(input.id) : input.id.replace(/([ #;?%&,.+*~\':"!^$[\\]()=>|/@])/g, '\\$1');
+                                    label = (typeof queryDeep === 'function' ? queryDeep(`label[for="${escapedId}"]`, modal) : null) || document.querySelector(`label[for="${escapedId}"]`);
+                                } catch(e) {}
                             }
                             if (!label) {
-                                label = input.closest('label');
+                                const directLabel = input.closest('label');
+                                if (directLabel && !directLabel.classList.contains('fb-dash-form-element__label') && !isQuestionText(directLabel.innerText)) {
+                                    label = directLabel;
+                                }
                             }
-                            if (!label && input.parentElement) {
-                                label = input.parentElement.querySelector('label');
+                            if (!label) {
+                                const optContainer = input.closest('[data-test-form-builder-radio-button], .fb-radio, .artdeco-radio');
+                                if (optContainer) {
+                                    const lbl = optContainer.querySelector('label');
+                                    if (lbl && !isQuestionText(lbl.innerText)) label = lbl;
+                                }
+                            }
+                            if (!label && roleCheckboxParent) {
+                                label = roleCheckboxParent.querySelector('label');
                             }
                             
+                            try { input.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
+
+                            if (roleCheckboxParent) {
+                                window.__SENTINEL_DEBUG__&&console.log('Clicking role=checkbox/artdeco container:', roleCheckboxParent.innerText || '(custom checkbox)');
+                                roleCheckboxParent.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                                roleCheckboxParent.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                roleCheckboxParent.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                                roleCheckboxParent.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                                roleCheckboxParent.click();
+                            }
+
                             if (label) {
                                 window.__SENTINEL_DEBUG__&&console.log('Clicking input label:', label.innerText || label.textContent);
-                                label.scrollIntoView({ block: 'center' });
+                                try { label.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
+                                label.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                                label.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                                label.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                                label.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
                                 label.click();
-                            } else {
-                                window.__SENTINEL_DEBUG__&&console.log('Clicking input directly:', input.id || input.name);
-                                input.scrollIntoView({ block: 'center' });
-                                input.click();
+                            }
+                            
+                            // Always also click and check input directly
+                            input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                            input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                            input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                            input.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                            input.click();
+                            
+                            if (input.type === 'checkbox' || input.type === 'radio') {
+                                input.checked = true;
                             }
                             input.dispatchEvent(new Event('change', { bubbles: true }));
                             input.dispatchEvent(new Event('click', { bubbles: true }));
+                            input.dispatchEvent(new Event('blur', { bubbles: true }));
                         };
                         
                         // Helper: Read the visible value of a field from multiple sources.
@@ -11212,7 +11733,8 @@ return resolveDynamic(bestMatch);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
-                            if (answer && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days|months?/i.test(labelText))) {
+                            const isSalaryCompField = /salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration|stipend|earn/i.test(lowerLabel);
+                            if (answer && !isSalaryCompField && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days|months?/i.test(labelText))) {
                                 if (/month/i.test(labelText)) {
                                     answer = '0.5';
                                 } else {
@@ -11228,9 +11750,17 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Special handling for currency / salary text fields (preserve compound / textarea answers)
-                            if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\\bpay\\b|\\bpackage\\b|remuneration/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
-                                if (/usd|dollar|\\$/i.test(lowerLabel)) {
-                                    answer = /current|present|cctc/i.test(lowerLabel) ? '40000' : '60000';
+                            if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
+                                if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(lowerLabel)) {
+                                    answer = /current|present|cctc/i.test(lowerLabel) ? '2300000' : '3000000';
+                                } else if (/usd|dollar|\\$/i.test(lowerLabel)) {
+                                    if (/monthly|per month|p\\.m\\./i.test(lowerLabel)) {
+                                        answer = /current|present|cctc/i.test(lowerLabel) ? '3500' : '5000';
+                                    } else {
+                                        answer = /current|present|cctc/i.test(lowerLabel) ? '40000' : '60000';
+                                    }
+                                } else if (/monthly|per month/i.test(lowerLabel)) {
+                                    answer = /current|present|cctc/i.test(lowerLabel) ? '191667' : '250000';
                                 } else if (/lakh|lac|lpa/i.test(lowerLabel)) {
                                     answer = /current|present|cctc/i.test(lowerLabel) ? '23' : '30';
                                 }
@@ -11304,12 +11834,22 @@ return resolveDynamic(bestMatch);
                                         answer = domainEssay;
                                         window.__SENTINEL_DEBUG__&&console.log('Provided technical summary fallback for open-ended textarea field:', labelText);
                                     } else if (isCompPrompt) {
-                                        if (/current|present|cctc/i.test(lowerLabel) && /expected|expectation|ectc/i.test(lowerLabel)) {
-                                            answer = 'Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)';
-                                        } else if (/expected|expectation|ectc/i.test(lowerLabel)) {
-                                            answer = '30 LPA (Fixed)';
+                                        if (input.tagName === 'TEXTAREA') {
+                                            if (/current|present|cctc/i.test(lowerLabel) && /expected|expectation|ectc/i.test(lowerLabel)) {
+                                                answer = 'Current CTC: 23 LPA, Expected CTC: 30 LPA (Fixed)';
+                                            } else if (/expected|expectation|ectc/i.test(lowerLabel)) {
+                                                answer = '30 LPA (Fixed)';
+                                            } else {
+                                                answer = '23 LPA (Fixed)';
+                                            }
                                         } else {
-                                            answer = '23 LPA (Fixed)';
+                                            if (/current|present|cctc/i.test(lowerLabel) && /expected|expectation|ectc/i.test(lowerLabel)) {
+                                                answer = /lpa/i.test(lowerLabel) ? '23 LPA / 30 LPA' : '2300000 / 3000000';
+                                            } else if (/expected|expectation|ectc|desired|asking/i.test(lowerLabel)) {
+                                                answer = /lpa|lakh|lac/i.test(lowerLabel) ? '30' : '3000000';
+                                            } else {
+                                                answer = /lpa|lakh|lac/i.test(lowerLabel) ? '23' : '2300000';
+                                            }
                                         }
                                     } else if (isNoticePrompt) {
                                         answer = '15 days (serving notice period)';
@@ -11521,9 +12061,9 @@ return resolveDynamic(bestMatch);
                                     if (lbl) pfLabel = lbl.innerText || lbl.textContent || '';
                                 }
                                 if (!pfLabel) {
-                                    const fbParent = select.closest('.fb-dash-form-element');
+                                    const fbParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
                                     if (fbParent) {
-                                        const lbl = fbParent.querySelector('label');
+                                        const lbl = fbParent.querySelector('label, legend, .artdeco-form-field__label');
                                         if (lbl) pfLabel = lbl.innerText || lbl.textContent || '';
                                     }
                                 }
@@ -11531,6 +12071,9 @@ return resolveDynamic(bestMatch);
                                     formResults.push({ question: pfLabel, answer: pfOpt.text, inputType: 'select', prefilled: true });
                                     window.__SENTINEL_DEBUG__&&console.log('Pre-filled select captured:', pfLabel, '=', pfOpt.text);
                                 }
+                                select.setAttribute('data-sentinel-handled', 'true');
+                                const container = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
+                                if (container) container.setAttribute('data-sentinel-handled', 'true');
                                 continue;
                             }
                             
@@ -12627,6 +13170,15 @@ return resolveDynamic(bestMatch);
                             if (!isVisible(dropdown) || dropdown.tagName === 'SELECT') continue;
                             if (dropdown.getAttribute('data-sentinel-handled') === 'true') continue;
                             
+                            const parentFormEl = dropdown.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
+                            if (parentFormEl && (parentFormEl.getAttribute('data-sentinel-handled') === 'true' || parentFormEl.querySelector('[data-sentinel-handled="true"]'))) {
+                                continue;
+                            }
+                            const siblingSelect = parentFormEl ? parentFormEl.querySelector('select') : null;
+                            if (siblingSelect && isFieldPreFilled(siblingSelect)) {
+                                continue;
+                            }
+
                             // Check if dropdown needs filling: read value from multiple sources
                             const directVal = (readFieldValue(dropdown) || 
                                               (dropdown.value !== undefined && dropdown.value !== null ? String(dropdown.value) : '') || 
@@ -12636,14 +13188,15 @@ return resolveDynamic(bestMatch);
                             const isChildFilled = childInput && isFieldPreFilled(childInput);
                             const isDirectFilled = isFieldPreFilled(dropdown);
                             const isPlaceholder = isSelectPlaceholderText(directVal);
+                            const hasCountryOrValue = directVal.includes('+91') || directVal.includes('India') || directVal.includes('(+91)');
                             
-                            if ((!isPlaceholder && directVal.length > 0 && directVal !== '--' && directVal !== '-') || isChildFilled || isDirectFilled) {
-                                // window.__SENTINEL_DEBUG__&&console.log('Skipping pre-filled custom dropdown:', directVal.substring(0, 40));
+                            if ((!isPlaceholder && directVal.length > 0 && directVal !== '--' && directVal !== '-') || isChildFilled || isDirectFilled || hasCountryOrValue) {
+                                dropdown.setAttribute('data-sentinel-handled', 'true');
+                                if (parentFormEl) parentFormEl.setAttribute('data-sentinel-handled', 'true');
                                 continue;
                             }
                             
                             // Get label text from parent element
-                            const parentFormEl = dropdown.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
                             let labelText = (parentFormEl?.querySelector('label')?.innerText || 
                                             dropdown.getAttribute('aria-label') || 
                                             dropdown.closest('div')?.querySelector('label')?.innerText || '').trim();
@@ -12819,20 +13372,34 @@ return resolveDynamic(bestMatch);
                         for (const fieldset of fieldsets) {
                             let legend = fieldset.querySelector('legend')?.innerText || '';
                             if (!legend) {
+                                const directLabel = fieldset.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], .artdeco-form-field__label, .jobs-easy-apply-form-section__question-label');
+                                if (directLabel) legend = directLabel.innerText || directLabel.textContent || '';
+                            }
+                            if (!legend) {
                                 legend = fieldset.getAttribute('aria-label') || '';
+                            }
+                            // Fallback: check if radio itself has question text in aria-label
+                            if (!legend) {
+                                for (const r of fieldset.querySelectorAll('input[type="radio"], [role="radio"]')) {
+                                    const al = r.getAttribute('aria-label');
+                                    if (al && isQuestionText(al)) {
+                                        legend = al;
+                                        break;
+                                    }
+                                }
                             }
                             // Fallback: get question text from parent section if no legend
                             if (!legend) {
-                                const parentSection = fieldset.closest('.jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element], [data-test-form-builder-radio-button-group]');
+                                const parentSection = fieldset.closest('.jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element], [data-test-form-builder-radio-button-group], [data-test-form-builder-radio-button-form-component]');
                                 if (parentSection) {
-                                    const sectionLabel = parentSection.querySelector('label, span.fb-dash-form-element__label, legend, p, h3');
+                                    const sectionLabel = parentSection.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], legend, p.t-14, span.t-14, label, p, h3');
                                     if (sectionLabel) legend = sectionLabel.innerText || '';
                                 }
                                 // Walk up parent tree
                                 if (!legend) {
                                     let parent = fieldset.parentElement;
                                     for (let i = 0; i < 4 && parent && parent !== modal; i++) {
-                                        const labelEl = parent.querySelector('label, .fb-dash-form-element__label');
+                                        const labelEl = parent.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], legend');
                                         if (labelEl && labelEl.innerText && labelEl.innerText.trim().length > 5) {
                                             legend = labelEl.innerText.trim();
                                             break;
@@ -12844,16 +13411,46 @@ return resolveDynamic(bestMatch);
                             
                             legend = legend.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             const radios = Array.from(fieldset.querySelectorAll('input[type="radio"]'));
+
+                            // Fallback: if legend is still empty, check fieldset aria-label / aria-labelledby or radio elements
+                            if (!legend) {
+                                if (fieldset.getAttribute('aria-label')) {
+                                    legend = fieldset.getAttribute('aria-label').trim();
+                                } else if (fieldset.getAttribute('aria-labelledby')) {
+                                    const lblEl = document.getElementById(fieldset.getAttribute('aria-labelledby'));
+                                    if (lblEl) legend = (lblEl.innerText || lblEl.textContent || '').trim();
+                                }
+                            }
+                            if (!legend) {
+                                for (const r of radios) {
+                                    const al = r.getAttribute('aria-label');
+                                    if (al && isQuestionText(al)) {
+                                        legend = al.trim();
+                                        break;
+                                    }
+                                    const v = r.value;
+                                    if (v && isQuestionText(v)) {
+                                        legend = v.trim();
+                                        break;
+                                    }
+                                }
+                            }
+                            if (legend) {
+                                legend = legend.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
+                            }
                             
                             // Check if any radio is already checked (standard or LinkedIn aria-checked)
                             const hasCheckedRadio = radios.some(r => r.checked) || 
                                 Array.from(fieldset.querySelectorAll('[role="radio"]')).some(el => el.getAttribute('aria-checked') === 'true');
                             
                             if (radios.length > 0 && !hasCheckedRadio) {
-                                const radioOptions = radios.map(r => {
+                                let radioOptions = radios.map(r => {
                                     const lbl = getInputLabelText(r);
                                     return (lbl || (r.value !== 'on' ? r.value : '') || '').trim();
                                 }).filter(Boolean);
+                                if (radios.length === 2 && (radioOptions.length === 0 || radioOptions.every(o => isQuestionText(o)))) {
+                                    radioOptions = ['Yes', 'No'];
+                                }
                                 const answer = legend ? fuzzyMatch(legend) : null;
                                 if (answer) {
                                     let bestRadio = findBestRadioMatch(answer, radios);
@@ -12863,7 +13460,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         clickInput(bestRadio);
-                                        const selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
                                         formResults.push({ question: legend, answer: selectedVal, inputType: 'radio', options: radioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
@@ -12880,14 +13478,17 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(legend);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText)) {
                                             const defaultNo = shouldDefaultToNo(legend);
                                             const targetValue = defaultNo ? 'no' : 'yes';
-                                            const targetRadio = radios.find(r => {
+                                            let targetRadio = radios.find(r => {
                                                 const val = (r.value || '').toLowerCase();
                                                 const labelText = getInputLabelText(r);
                                                 return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
+                                            if (!targetRadio && radios.length === 2) {
+                                                targetRadio = defaultNo ? radios[1] : radios[0];
+                                            }
                                             if (targetRadio) {
                                                 window.__SENTINEL_DEBUG__&&console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, legend.substring(0, 50));
                                                 clickInput(targetRadio);
@@ -12910,14 +13511,17 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(legend);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ)) {
                                         const defaultNo = shouldDefaultToNo(legend);
                                         const targetValue = defaultNo ? 'no' : 'yes';
-                                        const targetRadio = radios.find(r => {
+                                        let targetRadio = radios.find(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
                                             return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
+                                        if (!targetRadio && radios.length === 2) {
+                                            targetRadio = defaultNo ? radios[1] : radios[0];
+                                        }
                                         if (targetRadio) {
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'} in fieldset:`, legend.substring(0, 50));
                                             clickInput(targetRadio);
@@ -12938,7 +13542,10 @@ return resolveDynamic(bestMatch);
                                         if (chosenRadio) {
                                             window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No radio group in fieldset to option:', getInputLabelText(chosenRadio) || chosenRadio.value);
                                             clickInput(chosenRadio);
-                                            const chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            let chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            if (isQuestionText(chosenVal) || chosenVal === 'on') {
+                                                chosenVal = radios.indexOf(chosenRadio) === 0 ? 'Yes' : 'Selected';
+                                            }
                                             formResults.push({ question: legend.substring(0, 100), answer: chosenVal, inputType: 'radio', options: radioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
@@ -12970,7 +13577,7 @@ return resolveDynamic(bestMatch);
                         for (const container of customRadioContainers) {
                             let questionText = '';
                             
-                            const labelEl = container.querySelector('label, span, p, legend');
+                            const labelEl = container.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], .artdeco-form-field__label, label, span, p, legend');
                             if (labelEl) {
                                 const labelText = (labelEl.innerText || labelEl.textContent || '').trim();
                                 if (labelText.length > 3) questionText = labelText;
@@ -12979,7 +13586,7 @@ return resolveDynamic(bestMatch);
                             if (!questionText) {
                                 const parentSection = container.closest('.jobs-easy-apply-form-section__question, [data-test-form-element]');
                                 if (parentSection) {
-                                    const sectionLabel = parentSection.querySelector('label, span, p');
+                                    const sectionLabel = parentSection.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], label, span, p');
                                     if (sectionLabel) questionText = (sectionLabel.innerText || sectionLabel.textContent || '').trim();
                                 }
                             }
@@ -12987,7 +13594,7 @@ return resolveDynamic(bestMatch);
                             if (!questionText) {
                                 let parent = container.parentElement;
                                 for (let i = 0; i < 4 && parent && parent !== modal; i++) {
-                                    const labelEl2 = parent.querySelector('label');
+                                    const labelEl2 = parent.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], label');
                                     if (labelEl2 && labelEl2.innerText && labelEl2.innerText.trim().length > 5) {
                                         questionText = labelEl2.innerText.trim();
                                         break;
@@ -12996,11 +13603,21 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            questionText = questionText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
-                            
                             const customRadios = Array.from(container.querySelectorAll(
                                 '[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]'
                             ));
+                            
+                            if (!questionText) {
+                                for (const r of customRadios) {
+                                    const al = r.getAttribute('aria-label');
+                                    if (al && isQuestionText(al)) {
+                                        questionText = al;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            questionText = questionText.replace(/\\*+$/g, '').replace(/\\s*This field is required/gi, '').trim();
                             
                             const hasSelected = customRadios.some(el =>
                                 el.getAttribute('aria-checked') === 'true' ||
@@ -13010,7 +13627,10 @@ return resolveDynamic(bestMatch);
                             );
                             
                             if (customRadios.length > 0 && !hasSelected) {
-                                const customRadioOptions = customRadios.map(r => (r.innerText || r.getAttribute('aria-label') || '').trim()).filter(Boolean);
+                                let customRadioOptions = customRadios.map(r => (r.innerText || r.getAttribute('aria-label') || '').trim()).filter(Boolean);
+                                if (customRadios.length === 2 && (customRadioOptions.length === 0 || customRadioOptions.every(o => isQuestionText(o)))) {
+                                    customRadioOptions = ['Yes', 'No'];
+                                }
                                 const answer = questionText ? fuzzyMatch(questionText) : null;
                                 window.__SENTINEL_DEBUG__&&console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
                                 
@@ -13022,7 +13642,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
-                                        const selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || answer).trim();
+                                        let selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || answer).trim();
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = customRadios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: customRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         const hasYes = customRadios.some(r => {
@@ -13035,13 +13656,16 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = customRadios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (customRadios.length === 2 && isYesNoFromText)) {
                                             const defaultNo = shouldDefaultToNo(questionText);
                                             const targetValue = defaultNo ? 'no' : 'yes';
-                                            const targetRadio = customRadios.find(r => {
+                                            let targetRadio = customRadios.find(r => {
                                                 const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
                                                 return t === targetValue || t.includes(targetValue);
                                             });
+                                            if (!targetRadio && customRadios.length === 2) {
+                                                targetRadio = defaultNo ? customRadios[1] : customRadios[0];
+                                            }
                                             if (targetRadio) {
                                                 window.__SENTINEL_DEBUG__&&console.log(`Defaulting custom radio to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
                                                 clickCustomRadio(targetRadio);
@@ -13061,13 +13685,16 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = customRadios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (customRadios.length === 2 && isYesNoQ)) {
                                         const defaultNo = shouldDefaultToNo(questionText);
                                         const targetValue = defaultNo ? 'no' : 'yes';
-                                        const targetRadio = customRadios.find(r => {
+                                        let targetRadio = customRadios.find(r => {
                                             const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
                                             return t === targetValue || t.includes(targetValue);
                                         });
+                                        if (!targetRadio && customRadios.length === 2) {
+                                            targetRadio = defaultNo ? customRadios[1] : customRadios[0];
+                                        }
                                         if (targetRadio) {
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting custom Yes/No to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50));
                                             clickCustomRadio(targetRadio);
@@ -13087,7 +13714,10 @@ return resolveDynamic(bestMatch);
                                         if (chosenCustom) {
                                             window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No custom radio to:', chosenCustom.innerText?.substring(0, 30));
                                             clickCustomRadio(chosenCustom);
-                                            const chosenVal = (chosenCustom.innerText || chosenCustom.getAttribute('aria-label') || 'Selected').trim();
+                                            let chosenVal = (chosenCustom.innerText || chosenCustom.getAttribute('aria-label') || 'Selected').trim();
+                                            if (isQuestionText(chosenVal) || chosenVal === 'on') {
+                                                chosenVal = customRadios.indexOf(chosenCustom) === 0 ? 'Yes' : 'Selected';
+                                            }
                                             formResults.push({ question: questionText.substring(0, 100), answer: chosenVal, inputType: 'radio', options: customRadioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
@@ -13119,11 +13749,20 @@ return resolveDynamic(bestMatch);
                             let questionText = '';
                             const firstRadio = radios[0];
                             
+                            // Check if any radio has an aria-label that looks like a question
+                            for (const r of radios) {
+                                const al = r.getAttribute('aria-label');
+                                if (al && isQuestionText(al)) {
+                                    questionText = al;
+                                    break;
+                                }
+                            }
+
                             // Try .fb-dash-form-element parent label (LinkedIn's structure)
                             if (!questionText) {
                                 const fbParent = firstRadio.closest('.fb-dash-form-element');
                                 if (fbParent) {
-                                    const lbl = fbParent.querySelector('label');
+                                    const lbl = fbParent.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], label');
                                     if (lbl) questionText = lbl.innerText || lbl.textContent || '';
                                 }
                             }
@@ -13164,7 +13803,10 @@ return resolveDynamic(bestMatch);
                             }
                             
                             // Try to find answer for this question
-                            const standaloneRadioOptions = radios.map(r => (getInputLabelText(r) || r.value || '').trim()).filter(Boolean);
+                            let standaloneRadioOptions = radios.map(r => (getInputLabelText(r) || r.value || '').trim()).filter(Boolean);
+                            if (radios.length === 2 && (standaloneRadioOptions.length === 0 || standaloneRadioOptions.every(o => isQuestionText(o)))) {
+                                standaloneRadioOptions = ['Yes', 'No'];
+                            }
                             if (questionText) {
                                 const answer = fuzzyMatch(questionText);
                                 if (answer) {
@@ -13175,7 +13817,8 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
                                         clickInput(bestRadio);
-                                        const selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
@@ -13191,14 +13834,17 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText)) {
                                             const defaultNo = shouldDefaultToNo(questionText);
                                             const targetValue = defaultNo ? 'no' : 'yes';
-                                            const targetRadio = radios.find(r => {
+                                            let targetRadio = radios.find(r => {
                                                 const val = (r.value || '').toLowerCase();
                                                 const labelText = getInputLabelText(r);
                                                 return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                             });
+                                            if (!targetRadio && radios.length === 2) {
+                                                targetRadio = defaultNo ? radios[1] : radios[0];
+                                            }
                                             if (targetRadio) {
                                                 window.__SENTINEL_DEBUG__&&console.log(`Defaulting to ${defaultNo ? 'No' : 'Yes'} for Yes/No question:`, questionText.substring(0, 50));
                                                 clickInput(targetRadio);
@@ -13221,14 +13867,17 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ)) {
                                         const defaultNo = shouldDefaultToNo(questionText);
                                         const targetValue = defaultNo ? 'no' : 'yes';
-                                        const targetRadio = radios.find(r => {
+                                        let targetRadio = radios.find(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
                                             return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
                                         });
+                                        if (!targetRadio && radios.length === 2) {
+                                            targetRadio = defaultNo ? radios[1] : radios[0];
+                                        }
                                         if (targetRadio) {
                                             window.__SENTINEL_DEBUG__&&console.log(`Defaulting Yes/No question to ${defaultNo ? 'No' : 'Yes'}:`, questionText.substring(0, 50) || 'Unknown question');
                                             clickInput(targetRadio);
@@ -13249,7 +13898,10 @@ return resolveDynamic(bestMatch);
                                         if (chosenRadio) {
                                             window.__SENTINEL_DEBUG__&&console.log('Defaulting non-Yes/No standalone radio to:', getInputLabelText(chosenRadio) || chosenRadio.value);
                                             clickInput(chosenRadio);
-                                            const chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            let chosenVal = (getInputLabelText(chosenRadio) || chosenRadio.value || 'Selected').trim();
+                                            if (isQuestionText(chosenVal) || chosenVal === 'on') {
+                                                chosenVal = radios.indexOf(chosenRadio) === 0 ? 'Yes' : 'Selected';
+                                            }
                                             formResults.push({ question: questionText.substring(0, 100), answer: chosenVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: chosenVal, source: 'safe_fallback' });
                                         }
                                     }
@@ -13268,16 +13920,19 @@ return resolveDynamic(bestMatch);
                                 });
                                 const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                 
-                                if (isYesNo) {
-                                    const yesRadio = radios.find(r => {
+                                if (isYesNo || radios.length === 2) {
+                                    let yesRadio = radios.find(r => {
                                         const val = (r.value || '').toLowerCase();
                                         const labelText = getInputLabelText(r);
                                         return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
                                     });
+                                    if (!yesRadio && radios.length === 2) {
+                                        yesRadio = radios[0];
+                                    }
                                     if (yesRadio && !yesRadio.checked) {
                                         window.__SENTINEL_DEBUG__&&console.log('Selecting Yes for unlabeled Yes/No question');
                                         clickInput(yesRadio);
-                                        formResults.push({ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: 'Yes', source: 'default_rule' });
+                                        formResults.push({ question: 'Yes/No question (no label found)', answer: 'Yes', inputType: 'radio', options: standaloneRadioOptions.length ? standaloneRadioOptions : ['Yes', 'No'], selectedOption: 'Yes', source: 'default_rule' });
                                     }
                                 }
                             }
@@ -13653,97 +14308,138 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            // Method 7: If label is short/generic (e.g. "Yes"), scan nearest ancestor
-                            // containers for GDPR/consent text. Handles SmartBear-style checkboxes where
-                            // the checkbox is labeled simply "Yes" but the consent question is a paragraph
-                            // above it. Without this, the bot logs "Skipping checkbox" and gets stuck.
-                            if (!labelText || /^(yes|no|agree|ok|accept|confirm|check)$/i.test(labelText.trim())) {
-                                const ancestors = [
-                                    checkbox.closest('.jobs-easy-apply-form-section__question'),
-                                    checkbox.closest('.fb-dash-form-element'),
-                                    checkbox.closest('[data-test-form-element]'),
-                                    checkbox.closest('fieldset'),
-                                    checkbox.closest('li'),
-                                    checkbox.parentElement ? checkbox.parentElement.parentElement : null,
-                                    (checkbox.parentElement && checkbox.parentElement.parentElement)
-                                        ? checkbox.parentElement.parentElement.parentElement : null,
-                                ].filter(Boolean);
-                                for (const container of ancestors) {
-                                    const containerText = container.innerText || '';
-                                    const ctLower = containerText.toLowerCase();
-                                    if (ctLower.includes('consent') || ctLower.includes('privacy') ||
-                                         ctLower.includes('declare') || ctLower.includes('certify') ||
-                                         ctLower.includes('365 days') || ctLower.includes('days thereafter') ||
-                                         ctLower.includes('considering me for employment') || ctLower.includes('acknowledge') ||
-                                         ctLower.includes('processing of my') || ctLower.includes('personal data')) {
-                                         const overrideText = containerText.substring(0, 500);
-                                         window.__SENTINEL_DEBUG__&&console.log('Method 7: Generic label "' + labelText.trim() + '" — using surrounding consent context: ' + overrideText.substring(0, 80));
-                                         labelText = overrideText;
-                                         break;
-                                     }
-                                 }
-                             }
-                             
-                             window.__SENTINEL_DEBUG__&&console.log('Checkbox label text found:', labelText.substring(0, 100));
-                             const lowerLabel = labelText.toLowerCase();
-                             
-                             // Safeguard: Never treat demographic, visa sponsorship, disability, or criminal record questions as auto-consent checkboxes
-                             const hasNegativeCheckboxIntent = lowerLabel.includes('sponsorship') || 
-                                                              lowerLabel.includes('require visa') ||
-                                                              lowerLabel.includes('need visa') ||
-                                                              lowerLabel.includes('disability') ||
-                                                              lowerLabel.includes('felony') ||
-                                                              lowerLabel.includes('convict') ||
-                                                              lowerLabel.includes('criminal') ||
-                                                              lowerLabel.includes('military') ||
-                                                              lowerLabel.includes('veteran');
-                             
-                             // Check if this is a privacy/consent/acknowledge/confirm checkbox
-                             const isConsentCheckbox = !hasNegativeCheckboxIntent && (
-                                                      lowerLabel.includes('consent') || 
-                                                      lowerLabel.includes('privacy') || 
-                                                      lowerLabel.includes('agree') ||
-                                                      lowerLabel.includes('declare') ||
-                                                      lowerLabel.includes('i consent') ||
-                                                      lowerLabel.includes('has my consent') ||
-                                                      lowerLabel.includes('read and agree') ||
-                                                      lowerLabel.includes('collect, store') ||
-                                                      lowerLabel.includes('collect store and process') ||
-                                                      lowerLabel.includes('considering me for employment') ||
-                                                      lowerLabel.includes('consideration for employment') ||
-                                                      lowerLabel.includes('days thereafter') ||
-                                                      lowerLabel.includes('365 days') ||
-                                                      lowerLabel.includes('730 days') ||
-                                                      lowerLabel.includes('1825 days') ||
-                                                      lowerLabel.includes('acknowledge') ||
-                                                      lowerLabel.includes('i acknowledge') ||
-                                                      lowerLabel.includes('hereby acknowledge') ||
-                                                      lowerLabel.includes('i certify') ||
-                                                      lowerLabel.includes('hereby certify') ||
-                                                      lowerLabel.includes('i confirm') ||
-                                                      lowerLabel.includes('confirmed') ||
-                                                      lowerLabel.includes('i understand and agree') ||
-                                                      lowerLabel.includes('i have read and') ||
-                                                      lowerLabel.includes('read and understood') ||
-                                                      lowerLabel.includes('read and acknowledge') ||
-                                                      lowerLabel.includes('data privacy notice') ||
-                                                      lowerLabel.includes('privacy notice') ||
-                                                      lowerLabel.includes('applicant data privacy') ||
-                                                      lowerLabel.includes('job applicant data')
-                             );
+                            // Method 7: If label is empty, short, or generic (e.g. "Yes", "Agree"), scan nearest ancestor
+                            // containers and preceding sibling elements for GDPR/consent/disclosure text.
+                            // Handles SmartBear/Energy Exemplar-style checkboxes where the checkbox is labeled simply "Yes"
+                            // but the consent question is a paragraph/div above it.
+                            let surroundingContext = '';
+                            const ancestors = [
+                                checkbox.closest('.jobs-easy-apply-form-element'),
+                                checkbox.closest('[data-test-form-builder-checkbox-form-component]'),
+                                checkbox.closest('.jobs-easy-apply-form-section__grouping'),
+                                checkbox.closest('.jobs-easy-apply-form-section__question'),
+                                checkbox.closest('.fb-dash-form-element'),
+                                checkbox.closest('[data-test-form-element]'),
+                                checkbox.closest('.artdeco-form-field'),
+                                checkbox.closest('fieldset'),
+                                checkbox.closest('li'),
+                                checkbox.parentElement,
+                                checkbox.parentElement ? checkbox.parentElement.parentElement : null,
+                                (checkbox.parentElement && checkbox.parentElement.parentElement)
+                                    ? checkbox.parentElement.parentElement.parentElement : null,
+                            ].filter(Boolean);
+
+                            for (const container of ancestors) {
+                                const containerText = (container.innerText || container.textContent || '').trim();
+                                if (containerText.length > surroundingContext.length) {
+                                    surroundingContext = containerText;
+                                }
+                            }
+
+                            // Sibling traversal: check preceding sibling elements (paragraphs, spans, divs) for question text
+                            let ancestorEl = checkbox;
+                            for (let lvl = 0; lvl < 3 && ancestorEl; lvl++) {
+                                let sib = ancestorEl.previousElementSibling;
+                                while (sib) {
+                                    const sibText = (sib.innerText || sib.textContent || '').trim();
+                                    if (sibText.length >= 3 && sibText.length < 500 &&
+                                        !sib.querySelector('input[type="checkbox"], input[type="radio"]')) {
+                                        if (sibText.length > surroundingContext.length) {
+                                            surroundingContext = sibText;
+                                        }
+                                    }
+                                    sib = sib.previousElementSibling;
+                                }
+                                ancestorEl = ancestorEl.parentElement;
+                            }
+
+                            if (!labelText || /^(yes|no|agree|ok|accept|confirm|check|i agree|i consent|true)$/i.test(labelText.trim())) {
+                                if (surroundingContext && surroundingContext.length > 5) {
+                                    const overrideText = surroundingContext.substring(0, 500);
+                                    window.__SENTINEL_DEBUG__&&console.log('Method 7: Generic/empty label "' + (labelText || '').trim() + '" — using surrounding context: ' + overrideText.substring(0, 80));
+                                    labelText = overrideText;
+                                }
+                            }
+                            window.__SENTINEL_DEBUG__&&console.log('Checkbox label text found:', (labelText || '').substring(0, 100));
+                            const combinedContextText = ((labelText || '') + ' ' + surroundingContext).toLowerCase();
                             
+                            // Safeguard: Never treat demographic, visa sponsorship, disability, or criminal record questions as auto-consent checkboxes
+                            const hasNegativeCheckboxIntent = combinedContextText.includes('sponsorship') || 
+                                                              combinedContextText.includes('require visa') ||
+                                                              combinedContextText.includes('need visa') ||
+                                                              combinedContextText.includes('require sponsorship') ||
+                                                              combinedContextText.includes('need sponsorship') ||
+                                                              combinedContextText.includes('disability') ||
+                                                              combinedContextText.includes('felony') ||
+                                                              combinedContextText.includes('convict') ||
+                                                              combinedContextText.includes('criminal') ||
+                                                              combinedContextText.includes('military') ||
+                                                              combinedContextText.includes('veteran') ||
+                                                              combinedContextText.includes('non-compete restriction');
+                            
+                            // Check if this is a privacy/consent/acknowledge/confirm checkbox
+                            const isConsentCheckbox = !hasNegativeCheckboxIntent && (
+                                                      combinedContextText.includes('consent') || 
+                                                      combinedContextText.includes('privacy') || 
+                                                      combinedContextText.includes('agree') ||
+                                                      combinedContextText.includes('declare') ||
+                                                      combinedContextText.includes('i consent') ||
+                                                      combinedContextText.includes('has my consent') ||
+                                                      combinedContextText.includes('read and agree') ||
+                                                      combinedContextText.includes('collect, store') ||
+                                                      combinedContextText.includes('collect store and process') ||
+                                                      combinedContextText.includes('considering me for employment') ||
+                                                      combinedContextText.includes('consideration for employment') ||
+                                                      combinedContextText.includes('days thereafter') ||
+                                                      combinedContextText.includes('365 days') ||
+                                                      combinedContextText.includes('730 days') ||
+                                                      combinedContextText.includes('1825 days') ||
+                                                      combinedContextText.includes('acknowledge') ||
+                                                      combinedContextText.includes('i acknowledge') ||
+                                                      combinedContextText.includes('hereby acknowledge') ||
+                                                      combinedContextText.includes('i certify') ||
+                                                      combinedContextText.includes('hereby certify') ||
+                                                      combinedContextText.includes('i confirm') ||
+                                                      combinedContextText.includes('confirmed') ||
+                                                      combinedContextText.includes('i understand and agree') ||
+                                                      combinedContextText.includes('i have read and') ||
+                                                      combinedContextText.includes('read and understood') ||
+                                                      combinedContextText.includes('read and acknowledge') ||
+                                                      combinedContextText.includes('data privacy notice') ||
+                                                      combinedContextText.includes('privacy notice') ||
+                                                      combinedContextText.includes('applicant data privacy') ||
+                                                      combinedContextText.includes('job applicant data') ||
+                                                      combinedContextText.includes('background check') ||
+                                                      combinedContextText.includes('terms and conditions') ||
+                                                      combinedContextText.includes('terms of use') ||
+                                                      combinedContextText.includes('policy') ||
+                                                      combinedContextText.includes('authorization') ||
+                                                      combinedContextText.includes('authorized')
+                            );
+                            
+                            // Check if raw option label or direct checkbox label is affirmative (e.g. "Yes", "Agree", "I Agree", "Accept", "Confirm", "Understood")
+                            const rawOptLabel = (typeof getOptionLabel === 'function' ? getOptionLabel(checkbox) : '').trim().toLowerCase();
+                            const isAffirmativeLabel = /^(yes|agree|i agree|accept|i accept|consent|i consent|confirm|i confirm|understood|i understand|acknowledged|i acknowledge|true|correct|ok)$/i.test(rawOptLabel) ||
+                                                       /^(yes|agree|accept|consent|confirm|understood|acknowledged|true)\b/i.test(rawOptLabel) ||
+                                                       /^(yes|agree|i agree|accept|i accept|consent|i consent|confirm|i confirm|understood|i understand|acknowledged|i acknowledge|true|correct|ok)$/i.test((labelText || '').trim().toLowerCase());
+
+                            // Check if checkbox is required in DOM
+                            const isRequiredCheckbox = checkbox.required || 
+                                                       checkbox.getAttribute('aria-required') === 'true' ||
+                                                       ancestors.some(a => a.querySelector && (a.querySelector('.artdeco-inline-feedback--error, [class*="error"]') || a.innerText.includes('*') || /this field is required/i.test(a.innerText)));
+
                             // Check if this is a "currently working here" checkbox in experience section
-                            const isCurrentJobCheckbox = lowerLabel.includes('currently work') ||
-                                                         lowerLabel.includes('current role') ||
-                                                         lowerLabel.includes('present role') ||
-                                                         lowerLabel.includes('working here') ||
-                                                         lowerLabel.includes('currently employed') ||
-                                                         lowerLabel.includes('work in this role') ||
-                                                         lowerLabel.includes('work here') ||
-                                                         lowerLabel.includes('huidige functie') ||
-                                                         lowerLabel.includes('ik werk hier');
+                            const isCurrentJobCheckbox = combinedContextText.includes('currently work') ||
+                                                         combinedContextText.includes('current role') ||
+                                                         combinedContextText.includes('present role') ||
+                                                         combinedContextText.includes('working here') ||
+                                                         combinedContextText.includes('currently employed') ||
+                                                         combinedContextText.includes('work in this role') ||
+                                                         combinedContextText.includes('work here') ||
+                                                         combinedContextText.includes('huidige functie') ||
+                                                         combinedContextText.includes('ik werk hier');
                             
-                            let shouldCheck = isConsentCheckbox;
+                            let shouldCheck = isConsentCheckbox || (!hasNegativeCheckboxIntent && (isAffirmativeLabel || isRequiredCheckbox));
                             if (isCurrentJobCheckbox) {
                                 // Find company name from any text input in this modal
                                 let companyVal = '';
@@ -13777,11 +14473,11 @@ return resolveDynamic(bestMatch);
                             }
                             
                             if (shouldCheck) {
-                                window.__SENTINEL_DEBUG__&&console.log('Checking checkbox:', labelText.substring(0, 50));
+                                window.__SENTINEL_DEBUG__&&console.log('Checking checkbox:', (labelText || 'Affirmative/Consent Checkbox').substring(0, 50));
                                 clickInput(checkbox);
-                                formResults.push({ question: labelText, answer: 'Checked', inputType: 'checkbox', options: [labelText], selectedOption: 'Checked', source: 'rule' });
+                                formResults.push({ question: labelText || 'Consent/Terms Checkbox', answer: 'Checked', inputType: 'checkbox', options: [labelText || 'Yes'], selectedOption: 'Checked', source: 'rule' });
                             } else {
-                                window.__SENTINEL_DEBUG__&&console.log('Skipping checkbox - not consent/privacy related or no matching skill:', labelText.substring(0, 50));
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping checkbox - not consent/privacy related or no matching skill:', (labelText || '').substring(0, 50));
                             }
                         }
                         
@@ -13976,7 +14672,8 @@ return resolveDynamic(bestMatch);
 
                         // Find action buttons (Review, Next, Submit)
                         window.__SENTINEL_DEBUG__&&console.log('Searching for primary action button...');
-                        const modalFooter = queryDeep('footer, .artdeco-modal__actionbar, .jobs-easy-apply-modal__actionbar', modal) || modal;
+                        const modalDialog = modal.closest ? (modal.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [data-test-modal], div[aria-modal="true"]') || modal) : modal;
+                        const modalFooter = queryDeep('footer, .artdeco-modal__actionbar, .jobs-easy-apply-modal__actionbar, [class*="actionbar"], [class*="footer"]', modalDialog) || modalDialog;
                         const buttonCandidates = [
                             queryDeep('button[aria-label*="Submit application"]', modalFooter),
                             queryDeep('button[aria-label*="Review your application"]', modalFooter),
@@ -13993,14 +14690,14 @@ return resolveDynamic(bestMatch);
                             findByText('button', 'continue', false, modalFooter),
                             queryDeep('button.artdeco-button--primary', modalFooter),
                             queryDeep('.jobs-apply-button--primary', modalFooter),
-                            // Fallback to whole modal if not found in footer
-                            queryDeep('button[aria-label*="Submit application"]', modal),
-                            queryDeep('button[aria-label*="Review your application"]', modal),
-                            queryDeep('button[aria-label*="Continue to next step"]', modal),
-                            findByText('button', 'submit application', false, modal),
-                            findByText('button', 'review your application', false, modal),
-                            findByText('button', 'next', true, modal),
-                            findByText('button', 'next', false, modal)
+                            // Fallback to whole modal dialog if not found in footer
+                            queryDeep('button[aria-label*="Submit application"]', modalDialog),
+                            queryDeep('button[aria-label*="Review your application"]', modalDialog),
+                            queryDeep('button[aria-label*="Continue to next step"]', modalDialog),
+                            findByText('button', 'submit application', false, modalDialog),
+                            findByText('button', 'review your application', false, modalDialog),
+                            findByText('button', 'next', true, modalDialog),
+                            findByText('button', 'next', false, modalDialog)
                         ];
 
                         let primaryBtn = null;
@@ -14021,8 +14718,10 @@ return resolveDynamic(bestMatch);
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
+                                const allCheckboxesFilled = !queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal)
+                                    .some(cb => isVisible(cb) && !cb.checked);
                                 
-                                if (allInputsFilled && allSelectsFilled) {
+                                if (allInputsFilled && allSelectsFilled && allCheckboxesFilled) {
                                     // Guard against empty file input / missing resume upload: block force-click
                                     const fileInputs = queryAllDeep('input[type="file"]', modal);
                                     const hasEmptyRequiredFile = fileInputs.some(inp => {
@@ -14073,6 +14772,10 @@ return resolveDynamic(bestMatch);
                         // job search results filters or company reviews.
                         window.__SENTINEL_DEBUG__&&console.log('No button found in modal, trying conservative global fallback (no generic next)...');
                         const globalCandidates = [
+                            queryDeep('button[data-easy-apply-next-button]'),
+                            queryDeep('button[data-live-test-easy-apply-next-button]'),
+                            queryDeep('button[aria-label*="Continue to next step"]'),
+                            queryDeep('button[aria-label*="next step"]'),
                             queryDeep('button[aria-label*="Review your application"]'),
                             queryDeep('button[aria-label*="Submit application"]'),
                             queryDeep('button[data-live-test-easy-apply-review-button]'),
@@ -14094,7 +14797,9 @@ return resolveDynamic(bestMatch);
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled2 = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
-                                if (!(allInputsFilled2 && allSelectsFilled2)) {
+                                const allCheckboxesFilled2 = !queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal)
+                                    .some(cb => isVisible(cb) && !cb.checked);
+                                if (!(allInputsFilled2 && allSelectsFilled2 && allCheckboxesFilled2)) {
                                     window.__SENTINEL_DEBUG__&&console.log('Form has errors. Waiting...');
                                     return 'LINKEDIN_FORM_STUCK: Validation errors';
                                 }
@@ -14120,10 +14825,12 @@ return resolveDynamic(bestMatch);
 
                     // Helper: Check if element is a messaging overlay (NOT an Easy Apply modal)
                     const isMessagingOverlay = (el) => {
-                        const cls = (el.className || '').toLowerCase();
+                        if (!el) return false;
+                        const cls = (typeof el.className === 'string' ? el.className : (el.getAttribute && el.getAttribute('class')) || '').toLowerCase();
                         return cls.includes('msg-overlay') || cls.includes('msg-convo') || 
                                cls.includes('msg-form') || cls.includes('messaging') ||
-                               cls.includes('msg-s-message-list') || cls.includes('msg-thread');
+                               cls.includes('msg-s-message-list') || cls.includes('msg-thread') ||
+                               (el.closest && el.closest('.msg-overlay-container, .msg-overlay-list-bubble, .msg-overlay-conversation-bubble') !== null);
                     };
 
                     // ──────────────────────────────────────────────────
@@ -14178,8 +14885,8 @@ return resolveDynamic(bestMatch);
                     // LinkedIn's new UI uses fully obfuscated CSS class names — we can't rely on
                     // class selectors. These heuristics detect the modal by its content/structure.
                     const checkEasyApplyModalOpen = () => {
-                        // Heuristic 1: visible SVG role="progressbar" with aria-valuenow (% complete bar)
-                        const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+                        // Heuristic 1: visible SVG/div role="progressbar" or aria-valuenow (% complete bar)
+                        const pb = document.querySelector('svg[role="progressbar"], div[role="progressbar"], [aria-valuenow]');
                         if (pb && isVisible(pb)) {
                             window.__SENTINEL_DEBUG__&&console.log('Modal detected via progressbar heuristic');
                             return true;
@@ -14190,17 +14897,19 @@ return resolveDynamic(bestMatch);
                             '.artdeco-modal',
                             '.jobs-easy-apply-modal',
                             '[role="dialog"]',
-                            '[class*="easy-apply-modal"]'
+                            '[class*="easy-apply-modal"]',
+                            '[data-test-modal]',
+                            'div[aria-modal="true"]'
                         ];
                         for (const selector of dialogSelectors) {
                             const elements = document.querySelectorAll(selector);
                             for (const el of elements) {
                                 if (el && isVisible(el) && !isMessagingOverlay(el)) {
-                                    const cls = (el.className || '').toLowerCase();
-                                    if (cls.includes('dropdown-to-modal') || cls.includes('filter__dropdown') || cls.includes('artdeco-dropdown')) {
+                                    const cls = (typeof el.className === 'string' ? el.className : (el.getAttribute && el.getAttribute('class')) || '').toLowerCase();
+                                    if (cls.includes('dropdown-to-modal') || cls.includes('filter__dropdown') || cls.includes('artdeco-dropdown') || cls.includes('search-s-facet')) {
                                         continue;
                                     }
-                                    if (el.querySelector('input, select, textarea, button[aria-label*="Submit"], button[aria-label*="next step"], button[aria-label*="Review"]')) {
+                                    if (el.querySelector('input, select, textarea, button, form, fieldset, [class*="form"], [class*="apply"]')) {
                                         window.__SENTINEL_DEBUG__&&console.log('Modal detected via active dialog container:', selector);
                                         return true;
                                     }
@@ -14211,7 +14920,7 @@ return resolveDynamic(bestMatch);
                         const allSpans = document.querySelectorAll('p, span, div');
                         for (const el of allSpans) {
                             if (/\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(el.innerText) && isVisible(el)) {
-                                const parentDialog = el.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, form');
+                                const parentDialog = el.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, form, [data-test-modal]');
                                 if (parentDialog && !isMessagingOverlay(parentDialog)) {
                                     window.__SENTINEL_DEBUG__&&console.log('Modal detected via pages-text heuristic in dialog:', el.innerText.trim().substring(0, 30));
                                     return true;
@@ -14221,25 +14930,47 @@ return resolveDynamic(bestMatch);
                         // Heuristic 4: componentkey inside a dialog container ONLY
                         const compKeyEl = document.querySelector('[componentkey]');
                         if (compKeyEl && isVisible(compKeyEl)) {
-                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
-                            if (parentDialog && !isMessagingOverlay(parentDialog) && compKeyEl.querySelector('input, select, textarea')) {
+                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"], [data-test-modal]');
+                            if (parentDialog && !isMessagingOverlay(parentDialog) && compKeyEl.querySelector('input, select, textarea, button')) {
                                 window.__SENTINEL_DEBUG__&&console.log('Modal detected via componentkey inside dialog');
                                 return true;
                             }
                         }
+                        // Heuristic 5: "Apply to" header visible outside messaging
+                        const applyHeaders = queryAllDeep('h1, h2, h3, header, [data-test-modal-header], div');
+                        for (const el of applyHeaders) {
+                            if (isMessagingOverlay(el)) continue;
+                            const t = (el.innerText || el.textContent || '').trim().toLowerCase();
+                            if ((t.startsWith('apply to ') || t === 'apply to') && isVisible(el)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Modal detected via "Apply to" header heuristic');
+                                return true;
+                            }
+                        }
+                        // Heuristic 6: Easy Apply action button visible outside messaging
+                        const actionBtn = queryDeep('button[data-easy-apply-next-button], button[data-live-test-easy-apply-next-button], button[data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review your application" i], button[aria-label*="Submit application" i]');
+                        if (actionBtn && isVisible(actionBtn) && !isMessagingOverlay(actionBtn)) {
+                            window.__SENTINEL_DEBUG__&&console.log('Modal detected via action button heuristic');
+                            return true;
+                        }
+                        // Heuristic 7: Easy Apply form content or document upload section visible
+                        const formSection = queryDeep('.jobs-easy-apply-content, .jobs-document-upload-redesign, .jobs-easy-apply-form-section, .jobs-easy-apply-modal__content');
+                        if (formSection && isVisible(formSection) && !isMessagingOverlay(formSection)) {
+                            window.__SENTINEL_DEBUG__&&console.log('Modal detected via formSection heuristic');
+                            return true;
+                        }
                         return false;
                     };
 
-// Helper: Get the modal element for form handling
+                    // Helper: Get the modal element for form handling
                     const findEasyApplyModalEl = () => {
                         // Strategy 1: Walk up from progress bar if found (Guaranteed correct modal container)
-                        // Prefer .artdeco-modal__content / .artdeco-modal / [role="dialog"] over FORM,
-                        // because the content container is the actual scrollable element and contains
-                        // the footer buttons (Next/Review/Submit). Returning FORM breaks scrolling.
-                        const pb = document.querySelector('svg[role="progressbar"][aria-valuenow]');
+                        // Return the outer modal/dialog container so that the actionbar footer buttons
+                        // (Next/Review/Submit) are enclosed inside the returned modal element.
+                        const pb = document.querySelector('svg[role="progressbar"], div[role="progressbar"], [aria-valuenow]');
                         if (pb) {
                             let el = pb.parentElement;
                             let formFallback = null;
+                            let contentFallback = null;
                             while (el && el !== document.body) {
                                 const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
                                 const lowerCls = cls.toLowerCase();
@@ -14247,52 +14978,91 @@ return resolveDynamic(bestMatch);
                                                       lowerCls.includes('msg-overlay') || 
                                                       lowerCls.includes('msg-convo') || 
                                                       lowerCls.includes('messaging') ||
-                                                      lowerCls.includes('filter__dropdown');
+                                                      lowerCls.includes('filter__dropdown') ||
+                                                      lowerCls.includes('search-s-facet');
                                                   
                                 if (!isBlacklisted) {
-                                    // Priority 1: modal content container (scrollable, contains footer buttons)
-                                    if (el.matches && (el.matches('.artdeco-modal__content') || lowerCls.includes('modal__content'))) {
+                                    // Priority 1: outer modal/dialog container (contains both content AND actionbar footer)
+                                    if (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal') || el.hasAttribute('data-test-modal') || el.getAttribute('aria-modal') === 'true')) {
                                         return el;
                                     }
-                                    // Priority 2: outer modal/dialog container
-                                    if (el.matches && (el.matches('.artdeco-modal') || el.matches('[role="dialog"]') || el.classList.contains('jobs-easy-apply-modal'))) {
-                                        return el;
+                                    // Remember modal content container
+                                    if (!contentFallback && el.matches && (el.matches('.artdeco-modal__content') || lowerCls.includes('modal__content'))) {
+                                        contentFallback = el;
                                     }
-                                    // Priority 3 (fallback): FORM or componentkey — remember but keep walking
+                                    // Remember FORM or componentkey fallback
                                     if (!formFallback && (el.tagName === 'FORM' || el.hasAttribute('componentkey'))) {
                                         formFallback = el;
                                     }
                                 }
                                 el = el.parentElement;
                             }
-                            // Return FORM fallback only if no modal container was found walking up
+                            if (contentFallback) return contentFallback;
                             if (formFallback) return formFallback;
+                        }
+
+                        // Strategy 1.5: Walk up from "Apply to" header if found
+                        const applyHeader = Array.from(queryAllDeep('h1, h2, h3, header, [data-test-modal-header], div')).find(el => {
+                            if (isMessagingOverlay(el)) return false;
+                            const t = (el.innerText || el.textContent || '').trim().toLowerCase();
+                            return (t.startsWith('apply to ') || t === 'apply to') && isVisible(el);
+                        });
+                        if (applyHeader) {
+                            let p = applyHeader.parentElement;
+                            let best = null;
+                            while (p && p !== document.body) {
+                                if (!isMessagingOverlay(p)) {
+                                    if (p.matches && (p.matches('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal"], [data-test-modal], dialog') || p.getAttribute('aria-modal') === 'true')) {
+                                        best = p;
+                                        break;
+                                    }
+                                    if (p.querySelector && p.querySelector('button[data-easy-apply-next-button], button[data-live-test-easy-apply-next-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit" i]')) {
+                                        best = p;
+                                    }
+                                }
+                                p = p.parentElement;
+                            }
+                            if (best) return best;
+                            if (applyHeader.closest('.artdeco-modal-overlay')) return applyHeader.closest('.artdeco-modal-overlay');
                         }
 
                         // Strategy 2: Check standard modal container selectors next
                         // Skip messaging overlays and background filter dropdowns
                         const selectors = [
-                            '.artdeco-modal__content',
-                            '.artdeco-modal',
                             '.jobs-easy-apply-modal',
+                            '.artdeco-modal',
                             '[role="dialog"]',
+                            '[data-test-modal]',
+                            'div[aria-modal="true"]',
                             '[class*="easy-apply-modal"]',
-                            '[class*="modal-container"]'
+                            '[class*="modal-container"]',
+                            '.artdeco-modal__content',
+                            'dialog'
                         ];
                         for (const selector of selectors) {
-                            const elements = document.querySelectorAll(selector);
+                            const elements = queryAllDeep(selector);
                             for (const el of elements) {
                                 if (el && isVisible(el)) {
                                     const cls = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
                                     const lowerCls = cls.toLowerCase();
                                     if (lowerCls.includes('msg-overlay') || lowerCls.includes('msg-convo') || 
                                         lowerCls.includes('msg-form') || lowerCls.includes('messaging') ||
-                                        lowerCls.includes('dropdown-to-modal') || lowerCls.includes('filter__dropdown')) {
+                                        lowerCls.includes('dropdown-to-modal') || lowerCls.includes('filter__dropdown') ||
+                                        lowerCls.includes('search-s-facet')) {
                                         continue;
                                     }
                                     return el;
                                 }
                             }
+                        }
+
+                        // Strategy 2.5: Walk up from Easy Apply action button or form container
+                        const formSectionEl = queryDeep('button[data-easy-apply-next-button], button[data-live-test-easy-apply-next-button], button[data-live-test-easy-apply-review-button], .jobs-easy-apply-content, .jobs-document-upload-redesign, .jobs-easy-apply-form-section, .jobs-easy-apply-modal__content');
+                        if (formSectionEl && isVisible(formSectionEl) && !isMessagingOverlay(formSectionEl)) {
+                            const parent = formSectionEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal"], [data-test-modal], div[aria-modal="true"], dialog') ||
+                                           formSectionEl.closest('.artdeco-modal-overlay') ||
+                                           formSectionEl.parentElement?.parentElement;
+                            if (parent && !isMessagingOverlay(parent)) return parent;
                         }
 
                         // Strategy 3: Walk up from pages text element
@@ -14307,11 +15077,12 @@ return resolveDynamic(bestMatch);
                                                           lowerCls.includes('msg-overlay') || 
                                                           lowerCls.includes('msg-convo') || 
                                                           lowerCls.includes('messaging') ||
-                                                          lowerCls.includes('filter__dropdown');
+                                                          lowerCls.includes('filter__dropdown') ||
+                                                          lowerCls.includes('search-s-facet');
                                                           
                                     if (!isBlacklisted) {
                                         if (parent.tagName === 'FORM' || 
-                                            (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal')))) {
+                                            (parent.matches && (parent.matches('.artdeco-modal') || parent.matches('[role="dialog"]') || parent.classList.contains('jobs-easy-apply-modal') || parent.hasAttribute('data-test-modal') || parent.getAttribute('aria-modal') === 'true'))) {
                                             return parent;
                                         }
                                     }
@@ -14323,9 +15094,12 @@ return resolveDynamic(bestMatch);
                         // Strategy 4: Try componentkey element ONLY IF inside a dialog
                         const compKeyEl = document.querySelector('[componentkey]');
                         if (compKeyEl && isVisible(compKeyEl)) {
-                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"]');
+                            const parentDialog = compKeyEl.closest('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, div[aria-modal="true"], [data-test-modal]');
                             if (parentDialog && !isMessagingOverlay(parentDialog)) return compKeyEl;
                         }
+
+                        // Fallback: If any form section exists, return it directly to allow interaction
+                        if (formSectionEl) return formSectionEl;
 
                         // Fallback: Use dummy element rather than document.body to isolate queries
                         console.warn('Easy Apply modal container not found, using dummy fallback to prevent background interactions');
@@ -14339,7 +15113,7 @@ return resolveDynamic(bestMatch);
                         // PRIORITY 1: Scan all visible dialogs for safety/success/limit modals
                         // This runs BEFORE the Easy Apply heuristic to prevent the componentkey
                         // heuristic from misclassifying a safety modal as a form modal.
-                        const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"], [class*="modal"]');
+                        const dialogs = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="modal-container"], [class*="modal"], [data-test-modal], div[aria-modal="true"]');
                         for (const dialog of dialogs) {
                             if (!isVisible(dialog)) continue;
                             if (isMessagingOverlay(dialog)) continue;
@@ -14368,7 +15142,11 @@ return resolveDynamic(bestMatch);
 
                             // Active form controls check — a modal with inputs/form buttons is an active form, NEVER success!
                             const hasActiveFormControls = (
-                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], svg[role="progressbar"][aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-form-section') !== null
+                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], [data-live-test-easy-apply-next-button], [data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], button[aria-label*="Continue" i], svg[role="progressbar"], div[role="progressbar"], [aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-modal__content, .jobs-easy-apply-form-section, .artdeco-modal__content, form, fieldset, [class*="fb-dash-form-element"], [class*="jobs-document-upload"]') !== null ||
+                                Array.from(dialog.querySelectorAll('button')).some(b => {
+                                    const bText = normText(b.innerText || b.getAttribute('aria-label') || '');
+                                    return ['next', 'review', 'submit', 'submit application', 'review your application', 'continue to next step', 'continue', 'save', 'opslaan'].includes(bText) || bText.includes('next') || bText.includes('submit') || bText.includes('review');
+                                })
                             );
                             if (hasActiveFormControls) {
                                 return { type: 'form', element: dialog };
@@ -14399,7 +15177,7 @@ return resolveDynamic(bestMatch);
                         if (checkEasyApplyModalOpen()) {
                             const modalEl = findEasyApplyModalEl();
                             // If findEasyApplyModalEl returned dummy div (no real modal), do not report as form modal
-                            if (!modalEl || !modalEl.parentElement || modalEl.tagName === 'DIV' && !modalEl.className && !modalEl.id) {
+                            if (!modalEl || !modalEl.parentElement || (modalEl.tagName === 'DIV' && !modalEl.className && !modalEl.id)) {
                                 if (!modalEl || !modalEl.querySelector('input, select, textarea, button')) {
                                     return null;
                                 }
@@ -14419,9 +15197,11 @@ return resolveDynamic(bestMatch);
                             if (!isVisible(dialog)) continue;
                             if (isMessagingOverlay(dialog)) continue;
                             const text = (dialog.innerText || '').toLowerCase();
-                            if (text.includes('apply to') || dialog.querySelector('.jobs-easy-apply-content') ||
+                            if (text.includes('apply to') || dialog.querySelector('.jobs-easy-apply-content, .jobs-easy-apply-modal__content') ||
                                 dialog.querySelector('form') || text.includes('contact info') ||
-                                text.includes('resume') || text.includes('additional questions')) {
+                                text.includes('resume') || text.includes('additional questions') ||
+                                text.includes('work experience') || text.includes('education') ||
+                                text.includes('screening questions')) {
                                 return { type: 'form', element: dialog };
                             }
                         }
@@ -14623,13 +15403,19 @@ return resolveDynamic(bestMatch);
                     // CRITICAL: If a REAL modal is present in DOM (even if loading/transitioning), do NOT click Easy Apply
                     // Must exclude messaging overlays which also match [role="dialog"]
                     // IMPROVED: Also check if it's actually an Easy Apply modal by checking for specific indicators
-                    const modals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"]');
-                    const anyModal = Array.from(modals).find(m => isVisible(m) && !isMessagingOverlay(m));
+                    const modals = queryAllDeep('.artdeco-modal, [role="dialog"], .jobs-easy-apply-modal, [class*="easy-apply-modal"], [data-test-modal], div[aria-modal="true"], dialog');
+                    let anyModal = Array.from(modals).find(m => isVisible(m) && !isMessagingOverlay(m));
+                    if (!anyModal && checkEasyApplyModalOpen()) {
+                        const candidate = findEasyApplyModalEl();
+                        if (candidate && candidate.parentElement && (candidate.offsetWidth > 0 || candidate.offsetHeight > 0)) {
+                            anyModal = candidate;
+                        }
+                    }
                     if (anyModal) {
                         const hasInteractiveElements = queryDeep('input, select, textarea, button', anyModal) !== null;
                         
                         // IMPROVED: Check for Easy Apply specific indicators
-                        const hasProgressBar = anyModal.querySelector('svg[role="progressbar"][aria-valuenow]') !== null;
+                        const hasProgressBar = anyModal.querySelector('svg[role="progressbar"], div[role="progressbar"], [aria-valuenow]') !== null;
                         const hasPageIndicator = /\\d+\\s*\\/\\s*\\d+\\s*pages?/i.test(anyModal.innerText || '');
                         const hasEasyApplyContent = (anyModal.innerText || '').toLowerCase().includes('easy apply') ||
                                                     (anyModal.innerText || '').toLowerCase().includes('apply to') ||
@@ -14637,12 +15423,13 @@ return resolveDynamic(bestMatch);
                                                     (anyModal.innerText || '').toLowerCase().includes('resume');
                         
                         // Only wait for transitioning if it looks like an actual Easy Apply modal
-                        const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent;
+                        // If we are inside autopilot mode, any non-messaging modal is presumed to be the Easy Apply modal!
+                        const isLikelyEasyApplyModal = hasProgressBar || hasPageIndicator || hasEasyApplyContent || !!window.__SENTINEL_IN_AUTOPILOT__;
                         
                         if (hasInteractiveElements) {
                             window.__eaTransitionSince = null;
                             window.__eaTransitionSinceJob = null;
-                            window.__SENTINEL_DEBUG__&&console.log('Unknown modal detected via deep query. Handling as generic form...');
+                            window.__SENTINEL_DEBUG__&&console.log('Modal detected via deep query. Handling form...');
                             return handleLinkedInForm(anyModal);
                         } else if (isLikelyEasyApplyModal) {
                             const urlParamsWatchdog = new URLSearchParams(window.location.search);
@@ -14686,6 +15473,13 @@ return resolveDynamic(bestMatch);
                         window.__eaTransitionSinceJob = null;
                     }
 
+                    // SAFETY GUARD: If inside autopilot mode, checkModals() or intercepts did not find an active modal.
+                    // NEVER proceed to skip checks or sidebar job selection — return waiting signal to allow modal to mount/render.
+                    if (window.__SENTINEL_IN_AUTOPILOT__) {
+                        window.__SENTINEL_DEBUG__&&console.log('Inside autopilot mode but no modal detected yet. Returning LINKEDIN_WAITING_FOR_MODAL');
+                        return 'LINKEDIN_WAITING_FOR_MODAL';
+                    }
+
                     // Persistent skip-list across invocations (survives between evaluate calls)
                     if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
 
@@ -14709,7 +15503,15 @@ return resolveDynamic(bestMatch);
                         window.__SENTINEL_DEBUG__&&console.log('No modal detected. Checking for Easy Apply button...');
                         const easyApplyBtn = findEasyApplyButton();
                         if (easyApplyBtn) {
-                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply button found, clicking...');
+                            window.__SENTINEL_DEBUG__&&console.log('Easy Apply button found, clicking with full event dispatch...');
+                            try { easyApplyBtn.scrollIntoView({block: 'center', behavior: 'instant'}); } catch(e) {}
+                            try {
+                                easyApplyBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true }));
+                                easyApplyBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                easyApplyBtn.focus();
+                                easyApplyBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true }));
+                                easyApplyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                            } catch(e) {}
                             easyApplyBtn.click();
                             return 'LINKEDIN_EASY_APPLY_CLICKED';
                         }
@@ -15314,6 +16116,13 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
+                            if (!clickedBtn && qLower.includes('gap')) {
+                                clickedBtn = optBtns.find(b => {
+                                    const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                    return t.includes('none of the above') || t.includes('no gap') || t.includes('not much gap') || t.includes('0 gap') || t.includes('no career gap');
+                                });
+                            }
+
                             if (!clickedBtn) {
                                 const allSkip = optBtns.every(b => (b.innerText || b.textContent || '').toLowerCase().includes('skip'));
                                 const hasOtherInputs = document.querySelector('input[type="radio"], input[type="checkbox"], select, div.textArea[contenteditable="true"]') !== null;
@@ -16389,7 +17198,7 @@ return resolveDynamic(bestMatch);
                         // 1. Skills - First enter skills
                         const skillsToAdd = (window.__SENTINEL_INSTAHYRE_SKILLS__ && window.__SENTINEL_INSTAHYRE_SKILLS__.length)
                             ? window.__SENTINEL_INSTAHYRE_SKILLS__
-                            : ['Java', 'JavaScript', 'TypeScript', 'SpringBoot', 'ReactJS', 'AWS', 'Git', 'OpenAI', 'LLMs', 'Claude', 'FastAPI', 'Machine Learning', 'Generative AI'];
+                            : ['Java', 'Spring Boot', 'Python', 'React', 'TypeScript', 'Microservices', 'AWS', 'Docker', 'Kubernetes', 'Apache Kafka', 'PostgreSQL', 'Redis', 'CI/CD', 'Generative AI', 'System Design'];
                         const skillsSelectize = getSelectize('skills-drop-select-job-search') || getSelectize('skills') || getSelectize('skills-drop-select');
                         const skillsInput = document.querySelector('input#skills-drop-select-job-search-selectized, input#skills-selectized, input[placeholder*="skills or title" i], input[placeholder*="Skills" i]');
                         let skillsConfigured = false;

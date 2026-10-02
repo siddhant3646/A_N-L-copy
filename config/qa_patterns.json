@@ -516,10 +516,10 @@
     "current_salary": {
       "patterns": [
         "what's your current ctc (cost to company)?",
-        "what\u2019s your current ctc (cost to company)?",
+        "what’s your current ctc (cost to company)?",
         "what is your current ctc (cost to company)?",
         "what's your current ctc (cost to company)",
-        "what\u2019s your current ctc (cost to company)",
+        "what’s your current ctc (cost to company)",
         "current ctc (cost to company)",
         "current ctc (cost to company)?",
         "ctc",
@@ -579,10 +579,10 @@
     "expected_salary": {
       "patterns": [
         "what's your expected ctc (cost to company)?",
-        "what\u2019s your expected ctc (cost to company)?",
+        "what’s your expected ctc (cost to company)?",
         "what is your expected ctc (cost to company)?",
         "what's your expected ctc (cost to company)",
-        "what\u2019s your expected ctc (cost to company)",
+        "what’s your expected ctc (cost to company)",
         "expected ctc (cost to company)",
         "expected ctc (cost to company)?",
         "gross expected salary",
@@ -739,7 +739,10 @@
         "checkbox": "Yes",
         "number": "7905828880"
       },
-      "priority": 9
+      "priority": 9,
+      "negative_patterns": [
+        "email"
+      ]
     },
     "contact_email": {
       "patterns": [
@@ -762,7 +765,13 @@
         "checkbox": "Yes",
         "number": "3646."
       },
-      "priority": 9
+      "priority": 9,
+      "negative_patterns": [
+        "phone",
+        "mobile",
+        "contact number",
+        "contact no"
+      ]
     },
     "email_and_phone": {
       "patterns": [
@@ -796,16 +805,24 @@
         "mobile and email",
         "contact details",
         "share contact details",
-        "your contact details"
+        "your contact details",
+        "your email and contact number?",
+        "your email and contact number",
+        "email and contact number",
+        "email & contact number",
+        "email and contact no",
+        "email & contact no",
+        "email id and contact number",
+        "email and contact"
       ],
       "category": "personal_info",
-      "default": "siddhant3646@gmail.com / 7905828880",
+      "default": "siddhant3646@gmail.com, 7905828880",
       "sensitive": true,
       "input_type_defaults": {
         "radio": "siddhant3646@gmail.com / 7905828880",
         "select": "siddhant3646@gmail.com / 7905828880",
-        "text": "siddhant3646@gmail.com / 7905828880",
-        "textarea": "siddhant3646@gmail.com / 7905828880",
+        "text": "siddhant3646@gmail.com, 7905828880",
+        "textarea": "siddhant3646@gmail.com, 7905828880",
         "checkbox": "Yes"
       },
       "priority": 18
@@ -1057,7 +1074,6 @@
         "previously attended interview",
         "friend referral",
         "previous interview with us",
-        "referred by",
         "any offers",
         "have you ever been employed by",
         "applied to us before",
@@ -5189,16 +5205,15 @@
         "profile summary"
       ],
       "category": "preference",
-      "default": "SDE-2 with 4 Years Experience at Everbridge",
+      "default": "Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS",
       "input_type_defaults": {
-        "radio": "SDE-2 with 4 Years Experience at Everbridge",
-        "select": "SDE-2 with 4 Years Experience at Everbridge",
-        "text": "SDE-2 with 4 Years Experience at Everbridge",
-        "textarea": "SDE-2 with 4 Years Experience at Everbridge",
-        "checkbox": "Yes",
-        "number": "24"
+        "radio": "Software Engineer 2 (SDE-2)",
+        "select": "Software Engineer 2 (SDE-2)",
+        "text": "Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS",
+        "textarea": "Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS",
+        "checkbox": "Yes"
       },
-      "priority": 7
+      "priority": 18
     },
     "naukri_key_skills": {
       "patterns": [
@@ -5282,6 +5297,26 @@
     },
     "naukri_total_experience": {
       "patterns": [
+        "what is your total working expr in software engineering",
+        "what is your total working expr in software engineering?",
+        "what is your total working experience in software engineering",
+        "what is your total working experience in software engineering?",
+        "what is your total working expr",
+        "what is your total working expr?",
+        "what is your total working experience",
+        "what is your total working experience?",
+        "what is your total experience in software engineering",
+        "what is your total exp in software engineering",
+        "what is your total expr in software engineering",
+        "total working expr in software engineering",
+        "total working experience in software engineering",
+        "working expr in software engineering",
+        "working experience in software engineering",
+        "total working expr",
+        "working expr",
+        "total working experience",
+        "working expr in software",
+        "working experience in software",
         "total exp",
         "total experience",
         "overall exp",
@@ -5291,6 +5326,12 @@
       ],
       "category": "experience",
       "default": "4.2 Years",
+      "numeric_default": "4.2",
+      "priority": 12,
+      "platform_overrides": {
+        "linkedin": "4",
+        "naukri": "4.2 Years"
+      },
       "input_type_defaults": {
         "radio": "4.2",
         "select": "4.2 Years",
@@ -5298,8 +5339,7 @@
         "number": "4.2",
         "textarea": "4.2 Years",
         "checkbox": "Yes"
-      },
-      "priority": 8
+      }
     },
     "naukri_relevant_experience": {
       "patterns": [
@@ -5855,8 +5895,8 @@
         "relocation",
         "relocate to",
         "willingness to travel",
-        "are you comfortable commuting to this job\u2019s location",
-        "are you comfortable commuting to this job\u2019s location?",
+        "are you comfortable commuting to this job’s location",
+        "are you comfortable commuting to this job’s location?",
         "comfortable relocating",
         "relocating",
         "relocating to",
@@ -10032,13 +10072,21 @@
     "drug_test_consent": {
       "patterns": [
         "willing to take drug test",
+        "willing to take a drug test",
+        "are you willing to take a drug test",
+        "are you willing to take a drug test, in accordance with local law/regulations",
+        "are you willing to take a drug test, in accordance with local law/regulations?",
+        "are you willing to take a drug test in accordance with local law/regulations",
+        "willing to undergo drug test",
+        "willing to undergo drug screening",
+        "drug test in accordance with local law",
         "drug screening consent",
         "pre employment drug test",
         "substance abuse test"
       ],
       "category": "compliance",
       "default": "Yes",
-      "priority": 2,
+      "priority": 15,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
@@ -10987,12 +11035,12 @@
         "can speak write and understand english"
       ],
       "category": "skills",
-      "default": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+      "default": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
       "input_type_defaults": {
-        "radio": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
-        "select": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
-        "text": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
-        "textarea": "Advanced (C1/C2) \u2013 I can speak, write, and understand English fluently.",
+        "radio": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+        "select": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+        "text": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
+        "textarea": "Advanced (C1/C2) – I can speak, write, and understand English fluently.",
         "checkbox": "Yes",
         "number": "12."
       },
@@ -17813,7 +17861,15 @@
         "checkbox": "Yes",
         "number": "810"
       },
-      "priority": 8
+      "priority": 8,
+      "negative_patterns": [
+        "1-5",
+        "1 to 5",
+        "scale of 1-5",
+        "scale of 1 to 5",
+        "out of 5",
+        "/5"
+      ]
     },
     "self_assess_python": {
       "patterns": [
@@ -63967,7 +64023,18 @@
       "patterns": [
         "graduation details",
         "percentage in graduation",
-        "grade"
+        "graduation grade",
+        "academic grade",
+        "percentage or grade",
+        "grade in graduation"
+      ],
+      "negative_patterns": [
+        "production-grade",
+        "production grade",
+        "enterprise-grade",
+        "enterprise grade",
+        "pay grade",
+        "grade of"
       ],
       "category": "education",
       "default": "B.E / B.Tech",
@@ -83795,7 +83862,7 @@
     },
     "current_org_description": {
       "category": "preference",
-      "default": "Fiserv \u2014 a global fintech company specializing in financial services technology",
+      "default": "Fiserv — a global fintech company specializing in financial services technology",
       "priority": 8,
       "patterns": [
         "briefly describe the focus of your current or last organization",
@@ -83805,10 +83872,10 @@
         "current company focus"
       ],
       "input_type_defaults": {
-        "textarea": "Fiserv \u2014 a global fintech company specializing in financial services technology",
-        "text": "Fiserv \u2014 a global fintech company specializing in financial services technology",
-        "radio": "Fiserv \u2014 a global fintech comp",
-        "select": "Fiserv \u2014 a global fintech company specializing in financial services technology",
+        "textarea": "Fiserv — a global fintech company specializing in financial services technology",
+        "text": "Fiserv — a global fintech company specializing in financial services technology",
+        "radio": "Fiserv — a global fintech comp",
+        "select": "Fiserv — a global fintech company specializing in financial services technology",
         "checkbox": "Yes"
       }
     },
@@ -83863,7 +83930,7 @@
       ],
       "input_type_defaults": {
         "textarea": "I worked on an AI Document Intelligence Platform that automated data extraction from complex PDFs using OCR and LLMs, serving 50+ enterprise clients at Fiserv.",
-        "text": "AI Document Intelligence Platform at Fiserv \u2014 OCR + LLM for automated PDF data extraction",
+        "text": "AI Document Intelligence Platform at Fiserv — OCR + LLM for automated PDF data extraction",
         "radio": "I worked on an AI Document Int",
         "select": "I worked on an AI Document Intelligence Platform that automated data extraction from complex PDFs using OCR and LLMs, serving 50+ enterprise clients at Fiserv.",
         "checkbox": "Yes",
@@ -84142,7 +84209,7 @@
     },
     "problem_statement": {
       "category": "preference",
-      "default": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+      "default": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
       "priority": 13,
       "patterns": [
         "using your past experience describe a problem statement you contributed to solving",
@@ -84151,10 +84218,10 @@
         "describe a problem you solved"
       ],
       "input_type_defaults": {
-        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+        "textarea": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
         "text": "Reduced manual document processing time by 70% with AI-powered OCR pipeline at Fiserv",
         "radio": "I contributed to solving docum",
-        "select": "I contributed to solving document extraction bottlenecks at Fiserv \u2014 reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
+        "select": "I contributed to solving document extraction bottlenecks at Fiserv — reducing manual processing time by 70% using an AI-powered pipeline combining OCR, LLMs, and microservices.",
         "checkbox": "Yes",
         "number": "70."
       }
@@ -84876,7 +84943,18 @@
         "personal or family relationships with employees",
         "family relationships with employees",
         "relatives employed at",
-        "relatives employed at clearwater"
+        "relatives employed at clearwater",
+        "do you or a close family member have any financial interest in an endava competitor, supplier, or client",
+        "do you or a close family member have any financial interest in an endava competitor, supplier, or client?",
+        "financial interest in an endava competitor, supplier, or client",
+        "financial interest in an endava competitor",
+        "financial interest in a competitor, supplier, or client",
+        "financial interest in competitor, supplier, or client",
+        "do you have any personal or family relationships with employees, contractors, suppliers, or clients of endava",
+        "do you have any personal or family relationships with employees, contractors, suppliers, or clients of endava?",
+        "personal or family relationships with employees, contractors, suppliers, or clients of endava",
+        "personal or family relationships with employees, contractors, suppliers, or clients",
+        "relationships with employees, contractors, suppliers, or clients"
       ],
       "category": "yes_no",
       "default": "No",
@@ -85436,9 +85514,9 @@
     },
     "rating_scale_dsa": {
       "patterns": [
-        "rate your proficiency with data structures, algorithms, and design patterns. (1\u20135 scale)",
+        "rate your proficiency with data structures, algorithms, and design patterns. (1–5 scale)",
         "rate your proficiency with data structures",
-        "data structures, algorithms, and design patterns. (1\u20135 scale)"
+        "data structures, algorithms, and design patterns. (1–5 scale)"
       ],
       "category": "technical_screening",
       "default": "5",
@@ -85461,7 +85539,7 @@
     },
     "rating_scale_communication": {
       "patterns": [
-        "how would you rate your communication and stakeholder engagement skills? (scale of 1\u20135)",
+        "how would you rate your communication and stakeholder engagement skills? (scale of 1–5)",
         "rate your communication and stakeholder engagement skills"
       ],
       "category": "technical_screening",
@@ -85970,7 +86048,10 @@
         "flux",
         "machine state",
         "finite state",
-        "solid state"
+        "solid state",
+        "city",
+        "city and state",
+        "current city"
       ]
     },
     "location_zip": {
@@ -86154,6 +86235,10 @@
         "any career or educational gap",
         "career or educational gap if any",
         "any career or educational gaps",
+        "have you had any educational gap",
+        "any gap in education or career",
+        "gap in graduation",
+        "more than 1 year education gap",
         "any gaps in education",
         "any gap in career",
         "career gap",
@@ -86163,12 +86248,32 @@
       ],
       "category": "compliance",
       "default": "No",
-      "priority": 15,
+      "priority": 18,
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
         "text": "No",
-        "textarea": "No",
+        "textarea": "No, I have continuous employment and education with no gaps.",
+        "checkbox": "No"
+      }
+    },
+    "career_education_gap_range": {
+      "patterns": [
+        "you should not have much gaps from education to job and between jobs",
+        "you should not have much gaps from education to job and between jobs. what are your gap",
+        "you should not have much gaps from education to job and between jobs. what are your gap?",
+        "what are your gap in education to job / between jobs",
+        "what are your gap in education to job",
+        "what are your gaps in education to job"
+      ],
+      "category": "compliance",
+      "default": "None of the above and not much gap",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "None of the above and not much gap",
+        "select": "None of the above and not much gap",
+        "text": "None of the above and not much gap",
+        "textarea": "None of the above and not much gap",
         "checkbox": "No"
       }
     },
@@ -86280,10 +86385,15 @@
       },
       "priority": 18,
       "negative_patterns": [
-        "expected ctc",
+        "expected",
+        "notice period",
+        "years",
         "expected salary",
+        "expected ctc",
         "ectc",
-        "expected"
+        "notice",
+        "experience",
+        "how many years"
       ]
     },
     "expected_ctc_in_lacs": {
@@ -86314,10 +86424,15 @@
       },
       "priority": 18,
       "negative_patterns": [
-        "current ctc",
-        "current salary",
+        "notice",
         "cctc",
-        "current"
+        "current ctc",
+        "notice period",
+        "current",
+        "years",
+        "current salary",
+        "experience",
+        "how many years"
       ]
     },
     "niche_non_resume_skills": {
@@ -87022,11 +87137,27 @@
     },
     "compliance_non_compete": {
       "patterns": [
+        "restrict you from performing this job",
+        "restrict you performing this job",
+        "noncompete/confidentiality agreements",
+        "noncompete agreements",
+        "restrictive covenant",
+        "restrictive covenants",
+        "do you have any restrictive covenants",
+        "do you have any restrictive covenants e.g.noncompete/confidentiality agreements with current/previous employer,which restrict you performing this job",
+        "do you have any restrictive covenants e.g.noncompete/confidentiality agreements with current/previous employer,which restrict you performing this job?",
         "are you bound by any non-compete or confidentiality agreement",
         "are you bound by any non-compete or confidentiality agreement?",
         "are you subject to any non-compete clause",
         "non-compete or non-solicitation agreement",
-        "do you have any post-employment restrictions"
+        "do you have any post-employment restrictions",
+        "are you currently bound by non-compete agreements with your current or previous employers that would restrict your ability to work for endava",
+        "are you currently bound by non-compete agreements with your current or previous employers that would restrict your ability to work for endava?",
+        "are you currently bound by non-compete agreements with your current or previous employers that would restrict your ability to work",
+        "are you currently bound by non-compete agreements",
+        "bound by non-compete agreements",
+        "bound by non compete agreements",
+        "bound by non-compete agreements with your current or previous employers"
       ],
       "category": "compliance",
       "default": "No",
@@ -87037,7 +87168,7 @@
         "text": "No",
         "textarea": "No"
       },
-      "priority": 15,
+      "priority": 20,
       "negative_patterns": []
     },
     "compliance_disciplinary": {
@@ -88808,10 +88939,10 @@
         "monolithic and microservices architecture differences"
       ],
       "category": "skills",
-      "default": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+      "default": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
       "input_type_defaults": {
-        "text": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
-        "textarea": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit\u2014simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+        "text": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
+        "textarea": "Monolithic architecture bundles all business logic and database into a single codebase and deployment unit—simpler to start but harder to scale and deploy independently. Microservices decompose functionality into domain-specific, loosely coupled services communicating via REST/gRPC/Kafka, enabling independent scalability, fault isolation, and autonomous deployments at the expense of distributed complexity.",
         "radio": "Microservices",
         "select": "Microservices",
         "checkbox": "Yes",
@@ -232485,7 +232616,6 @@
         "are you localite",
         "are you from this city",
         "do you stay in this city",
-        "current city of residence",
         "are you based in this location"
       ],
       "category": "location",
@@ -233094,7 +233224,16 @@
         "text": "Fiserv",
         "textarea": "Fiserv (June 2022 - June 2026, Software Engineer)",
         "checkbox": "Yes"
-      }
+      },
+      "negative_patterns": [
+        "restrictive",
+        "covenant",
+        "covenants",
+        "non-compete",
+        "noncompete",
+        "confidentiality",
+        "restrict"
+      ]
     },
     "nri_overseas_candidate": {
       "patterns": [
@@ -233707,10 +233846,10 @@
     },
     "country_phone_code_es": {
       "patterns": [
-        "c\u00f3digo del pa\u00eds",
+        "código del país",
         "codigo del pais",
         "codigo de pais",
-        "c\u00f3digo de pa\u00eds"
+        "código de país"
       ],
       "category": "personal_info",
       "default": "India (+91)",
@@ -233836,11 +233975,11 @@
     },
     "employee_referral_name_if_yes": {
       "patterns": [
-        "if you answered yes to the last question, please provide the employee\u2019s first and last name",
+        "if you answered yes to the last question, please provide the employee’s first and last name",
         "if you answered yes to the last question, please provide the employee's first and last name",
         "if you answered yes to the last question please provide the employee's first and last name",
         "please provide the employee's first and last name",
-        "please provide the employee\u2019s first and last name"
+        "please provide the employee’s first and last name"
       ],
       "category": "personal_info",
       "default": "N/A",
@@ -233951,24 +234090,25 @@
     },
     "internal_referral_employee_name": {
       "patterns": [
-        "if you answered yes to the last question, please provide the employee's first and last name",
-        "if you answered yes to the last question, please provide the employee\u2019s first and last name",
-        "please provide the employee's first and last name",
-        "please provide the employee\u2019s first and last name",
-        "provide the employee's first and last name",
-        "provide the employee\u2019s first and last name",
-        "employee's first and last name",
-        "employee\u2019s first and last name"
+        "if you were referred by a kobie employee, please list their name. if not referred, put n/a",
+        "if you were referred by an employee, please list their name. if not referred, put n/a",
+        "if you were referred by an employee, please list their name",
+        "if you were referred by a current employee, please list their name",
+        "if not referred, put n/a",
+        "if not referred put n/a",
+        "please list their name. if not referred, put n/a",
+        "please list their name if not referred put n/a",
+        "please list the name of the employee who referred you. if not applicable, enter n/a",
+        "employee who referred you. if not applicable, enter n/a"
       ],
-      "category": "personal_info",
+      "category": "compliance",
       "default": "N/A",
-      "priority": 18,
+      "priority": 19,
       "input_type_defaults": {
         "text": "N/A",
-        "select": "N/A",
-        "radio": "N/A",
         "textarea": "N/A",
-        "checkbox": "No"
+        "radio": "N/A",
+        "select": "N/A"
       }
     },
     "ex_employee_freshworks": {
@@ -234273,14 +234413,14 @@
       "patterns": [
         "specify your relevant years of experience",
         "relevant years of experience",
-        "especifica tus a\u00f1os de experiencia relevantes",
-        "especifica tus a\u00f1os de experiencia",
-        "indica tus a\u00f1os de experiencia",
-        "a\u00f1os de experiencia relevantes",
-        "a\u00f1os de experiencia",
-        "selecciona tus a\u00f1os de experiencia",
-        "indique sus a\u00f1os de experiencia",
-        "experiencia relevante en a\u00f1os"
+        "especifica tus años de experiencia relevantes",
+        "especifica tus años de experiencia",
+        "indica tus años de experiencia",
+        "años de experiencia relevantes",
+        "años de experiencia",
+        "selecciona tus años de experiencia",
+        "indique sus años de experiencia",
+        "experiencia relevante en años"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -234301,15 +234441,15 @@
       "patterns": [
         "gender",
         "gender self-identification",
-        "selecciona una opci\u00f3n gender",
-        "g\u00e9nero",
+        "selecciona una opción gender",
+        "género",
         "sexo",
-        "identidad de g\u00e9nero",
-        "con qu\u00e9 g\u00e9nero te identificas",
+        "identidad de género",
+        "con qué género te identificas",
         "con que genero te identificas",
-        "seleccione su g\u00e9nero",
-        "indique su g\u00e9nero",
-        "cu\u00e1l es su g\u00e9nero"
+        "seleccione su género",
+        "indique su género",
+        "cuál es su género"
       ],
       "category": "personal_info",
       "default": "Male",
@@ -234603,15 +234743,32 @@
     },
     "interview_time_slot_specific": {
       "patterns": [
+        "time slot in between 9-3 pm",
+        "time slot in between 9- 3 pm",
+        "kindly mention the time slot in between 9- 3 pm",
+        "kindly mention the time slot in between 9- 3 pm at what time you will be available",
+        "kindly mention the time slot in between 9- 3 pm at what time you will be available?",
         "time slot for interview",
         "mention your available time for",
         "please give us a time slot for interview",
         "time slot for interview on saturday",
-        "available time for saturday"
+        "available time for saturday",
+        "please mention the time slot in between 10 am to 4 pm when you will be available for interview",
+        "please mention the time slot in between 10 am to 4 pm",
+        "mention the time slot in between 10 am to 4 pm",
+        "time slot in between 10 am to 4 pm",
+        "time slot in between",
+        "mention the time slot",
+        "mention your available time slot",
+        "available time slot for interview",
+        "available time slot",
+        "what time you will be available",
+        "at what time you will be available",
+        "when you will be available for interview"
       ],
       "category": "availability",
       "default": "Anytime between 10 AM - 4 PM",
-      "priority": 15,
+      "priority": 18,
       "input_type_defaults": {
         "text": "Anytime between 10 AM - 4 PM",
         "textarea": "Anytime between 10 AM - 4 PM",
@@ -234805,8 +234962,8 @@
         "current ctc (in lakhs)",
         "what is your current ctc in lpa",
         "what is your current ctc in lpa?",
-        "what\u2019s your current ctc (cost to company)",
-        "what\u2019s your current ctc (cost to company)?",
+        "what’s your current ctc (cost to company)",
+        "what’s your current ctc (cost to company)?",
         "what is your current ctc (cost to company)",
         "what is your current ctc (cost to company)?",
         "what is your current ctc (in inr)",
@@ -234852,8 +235009,8 @@
         "expected ctc (in lakhs)",
         "what is your expected ctc in lpa",
         "what is your expected ctc in lpa?",
-        "what\u2019s your expected ctc (cost to company)",
-        "what\u2019s your expected ctc (cost to company)?",
+        "what’s your expected ctc (cost to company)",
+        "what’s your expected ctc (cost to company)?",
         "what is your expected ctc (cost to company)",
         "what is your expected ctc (cost to company)?",
         "what is your expected ctc (in inr)",
@@ -234958,9 +235115,9 @@
     "current_salary_cost_to_company": {
       "patterns": [
         "what's your current ctc (cost to company)?",
-        "what\u2019s your current ctc (cost to company)?",
+        "what’s your current ctc (cost to company)?",
         "what's your current ctc (cost to company)",
-        "what\u2019s your current ctc (cost to company)",
+        "what’s your current ctc (cost to company)",
         "what is your current ctc (cost to company)?",
         "what is your current ctc (cost to company)",
         "current ctc (cost to company)",
@@ -234980,18 +235137,23 @@
       },
       "priority": 18,
       "negative_patterns": [
-        "expected ctc",
+        "expected",
+        "notice period",
+        "years",
         "expected salary",
+        "expected ctc",
         "ectc",
-        "expected"
+        "notice",
+        "experience",
+        "how many years"
       ]
     },
     "expected_salary_cost_to_company": {
       "patterns": [
         "what's your expected ctc (cost to company)?",
-        "what\u2019s your expected ctc (cost to company)?",
+        "what’s your expected ctc (cost to company)?",
         "what's your expected ctc (cost to company)",
-        "what\u2019s your expected ctc (cost to company)",
+        "what’s your expected ctc (cost to company)",
         "what is your expected ctc (cost to company)?",
         "what is your expected ctc (cost to company)",
         "expected ctc (cost to company)",
@@ -235011,10 +235173,15 @@
       },
       "priority": 18,
       "negative_patterns": [
-        "current ctc",
-        "current salary",
+        "notice",
         "cctc",
-        "current"
+        "current ctc",
+        "notice period",
+        "current",
+        "years",
+        "current salary",
+        "experience",
+        "how many years"
       ]
     },
     "base_salary_expectation": {
@@ -235044,18 +235211,23 @@
       },
       "priority": 18,
       "negative_patterns": [
+        "notice",
+        "current ctc",
+        "notice period",
         "current base",
+        "years",
         "current salary",
-        "current ctc"
+        "experience",
+        "how many years"
       ]
     },
     "monthly_fixed_salary_pay": {
       "patterns": [
         "what is your current monthly pay? (don't include variable)",
-        "what is your current monthly pay? (don\u2019t include variable)",
+        "what is your current monthly pay? (don’t include variable)",
         "what is your current monthly pay",
         "what is your monthly fixed salary? (don't include variable)",
-        "what is your monthly fixed salary? (don\u2019t include variable)",
+        "what is your monthly fixed salary? (don’t include variable)",
         "what is your monthly fixed salary",
         "monthly fixed salary",
         "current monthly pay",
@@ -235073,7 +235245,14 @@
         "textarea": "191667",
         "checkbox": "Yes"
       },
-      "priority": 18
+      "priority": 18,
+      "negative_patterns": [
+        "notice period",
+        "years",
+        "notice",
+        "experience",
+        "how many years"
+      ]
     },
     "kpmg_ex_employee": {
       "patterns": [
@@ -235314,9 +235493,7 @@
     "expected_ctc_select_hyphen": {
       "patterns": [
         "expected ctc-",
-        "expected ctc -",
-        "current ctc-",
-        "current ctc -"
+        "expected ctc -"
       ],
       "category": "salary",
       "default": "30 LPA",
@@ -235324,13 +235501,667 @@
       "input_type_defaults": {
         "radio": "30",
         "select": "30 LPA",
-        "text": "3000000",
-        "number": "3000000",
+        "text": "30 LPA",
+        "number": "30",
         "select-ctc": "20 - 30 LPA",
+        "text_inr": "3000000",
         "textarea": "30 LPA",
         "checkbox": "Yes"
       },
-      "priority": 18
+      "priority": 18,
+      "negative_patterns": [
+        "experience",
+        "years",
+        "notice period",
+        "notice",
+        "how many years",
+        "current ctc",
+        "current"
+      ]
+    },
+    "sql_skills_rating_scale_1_to_5": {
+      "patterns": [
+        "this interview process will involve a lot of questions on sql databases. how would you rate your sql skills on a scale of 1-5?",
+        "how would you rate your sql skills on a scale of 1-5?",
+        "how would you rate your sql skills on a scale of 1-5",
+        "how would you rate your sql skills on a scale of 1 to 5",
+        "rate your sql skills on a scale of 1-5",
+        "rate your sql skills on a scale of 1 to 5",
+        "rate your sql skills (1-5)",
+        "rate your sql skills (1 to 5)",
+        "sql skills on a scale of 1-5",
+        "sql skills on a scale of 1 to 5"
+      ],
+      "category": "skills",
+      "default": "4",
+      "numeric_default": "4",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "4",
+        "number": "4",
+        "radio": "4",
+        "select": "4",
+        "textarea": "4",
+        "checkbox": "Yes"
+      }
+    },
+    "expected_monthly_compensation": {
+      "patterns": [
+        "what are your expected fixed monthly compensation expectations (in inr)",
+        "what are your expected fixed monthly compensation expectations",
+        "expected fixed monthly compensation expectations (in inr)",
+        "expected fixed monthly compensation expectations",
+        "expected fixed monthly compensation",
+        "expected monthly compensation expectations",
+        "expected monthly compensation",
+        "expected monthly salary",
+        "expected fixed monthly",
+        "expected monthly ctc",
+        "monthly compensation expectations"
+      ],
+      "category": "salary",
+      "default": "250000",
+      "numeric_default": "250000",
+      "inr_default": "250000",
+      "priority": 19,
+      "negative_patterns": [
+        "notice",
+        "experience"
+      ],
+      "input_type_defaults": {
+        "text": "250000",
+        "number": "250000",
+        "radio": "250000",
+        "select": "250000",
+        "textarea": "250000",
+        "checkbox": "Yes"
+      }
+    },
+    "current_monthly_compensation": {
+      "patterns": [
+        "what is your current fixed monthly compensation",
+        "current fixed monthly compensation",
+        "current monthly compensation",
+        "current monthly salary",
+        "current fixed monthly",
+        "current monthly ctc"
+      ],
+      "category": "salary",
+      "default": "191667",
+      "numeric_default": "191667",
+      "inr_default": "191667",
+      "priority": 19,
+      "negative_patterns": [
+        "notice",
+        "experience"
+      ],
+      "input_type_defaults": {
+        "text": "191667",
+        "number": "191667",
+        "radio": "191667",
+        "select": "191667",
+        "textarea": "191667",
+        "checkbox": "Yes"
+      }
+    },
+    "current_ctc_mention_as_700000": {
+      "patterns": [
+        "kindly mention your current ctc in lpa, example if your ctc is 7lpa, mention as 700000",
+        "kindly mention your current ctc in lpa example if your ctc is 7lpa mention as 700000",
+        "example if your ctc is 7lpa, mention as 700000",
+        "example if your ctc is 7lpa mention as 700000",
+        "mention as 700000",
+        "if your ctc is 7lpa, mention as 700000"
+      ],
+      "category": "salary",
+      "default": "2300000",
+      "numeric_default": "2300000",
+      "inr_default": "2300000",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "2300000",
+        "number": "2300000",
+        "radio": "2300000",
+        "select": "2300000",
+        "textarea": "2300000",
+        "checkbox": "Yes"
+      }
+    },
+    "expected_monthly_salary_usd": {
+      "patterns": [
+        "what are your monthly salary expectations (in usd per month)?",
+        "what are your monthly salary expectations (in usd per month)",
+        "what are your monthly salary expectations in usd",
+        "monthly salary expectations in usd",
+        "monthly salary expectations (in usd per month)",
+        "monthly salary expectation in usd",
+        "expected monthly salary in usd",
+        "monthly expected salary in usd",
+        "monthly compensation in usd"
+      ],
+      "category": "salary",
+      "default": "5000",
+      "numeric_default": "5000",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "5000",
+        "number": "5000",
+        "textarea": "5000 USD/month",
+        "radio": "5000",
+        "select": "5000"
+      }
+    },
+    "current_monthly_salary_usd": {
+      "patterns": [
+        "what is your current monthly salary (in usd per month)?",
+        "what is your current monthly salary in usd",
+        "current monthly salary in usd",
+        "current monthly salary expectations in usd",
+        "current monthly compensation in usd"
+      ],
+      "category": "salary",
+      "default": "3500",
+      "numeric_default": "3500",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "3500",
+        "number": "3500",
+        "textarea": "3500 USD/month",
+        "radio": "3500",
+        "select": "3500"
+      }
+    },
+    "current_city_and_state": {
+      "patterns": [
+        "please share your current city and state of residence",
+        "share your current city and state of residence",
+        "current city and state of residence",
+        "city and state of residence",
+        "current city and state"
+      ],
+      "category": "location",
+      "default": "Bangalore, Karnataka",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Bangalore, Karnataka",
+        "textarea": "Bangalore, Karnataka",
+        "select": "Bangalore, Karnataka",
+        "radio": "Bangalore, Karnataka"
+      }
+    },
+    "agentic_ai_use_case_contribution": {
+      "patterns": [
+        "have you built or implemented agentic ai / ai agent solutions? please explain the use case and your contribution.",
+        "have you built or implemented agentic ai / ai agent solutions? please explain the use case and your contribution",
+        "have you built or implemented agentic ai",
+        "explain the use case and your contribution",
+        "agentic ai solutions use case and contribution",
+        "ai agent solutions please explain the use case"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.",
+        "textarea": "Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "postgresql_mysql_sqlserver_experience": {
+      "patterns": [
+        "experience in postgresql / mysql / sql server",
+        "experience in postgresql, mysql, sql server",
+        "experience in postgresql mysql sql server",
+        "postgresql / mysql / sql server",
+        "postgresql, mysql, or sql server experience"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "4-5 years",
+        "select": "4-5 years",
+        "checkbox": "Yes",
+        "textarea": "4+ years of hands-on database experience with PostgreSQL, MySQL, and SQL Server including schema design, query optimization, indexing, and high availability."
+      }
+    },
+    "linux_os_backend_experience": {
+      "patterns": [
+        "what is your experince in storage domain",
+        "what is your experience in storage domain",
+        "storage domain experience",
+        "linux experince",
+        "linux experience",
+        "c++ backend experince",
+        "c++ backend experience",
+        "distrubuted concept",
+        "distributed concept",
+        "distributed concepts"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "4-5 years",
+        "select": "4-5 years",
+        "checkbox": "Yes",
+        "textarea": "4+ years of professional backend and systems experience with Linux environments, distributed concepts, storage, and performant C++/Java microservices."
+      }
+    },
+    "interview_time_slot_9_to_3": {
+      "patterns": [
+        "kindly mention the time slot in between 9- 3 pm at what time you will be available?",
+        "kindly mention the time slot in between 9- 3 pm at what time you will be available",
+        "kindly mention the time slot in between 9- 3 pm",
+        "time slot in between 9- 3 pm",
+        "time slot in between 9-3 pm",
+        "time slot in between 9 to 3 pm",
+        "time slot in between 9 am to 3 pm"
+      ],
+      "category": "availability",
+      "default": "Anytime between 10 AM - 2 PM",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Anytime between 10 AM - 2 PM",
+        "textarea": "Anytime between 10 AM - 2 PM",
+        "radio": "Anytime between 10 AM - 2 PM",
+        "select": "Anytime between 10 AM - 2 PM"
+      }
+    },
+    "spring_boot_modules_worked_with": {
+      "patterns": [
+        "which spring boot modules have you worked with",
+        "which spring boot modules have you worked with?",
+        "spring boot modules have you worked with",
+        "spring boot modules you have worked with",
+        "what spring boot modules have you worked with",
+        "what spring boot modules have you worked with?",
+        "spring boot modules worked with",
+        "which spring boot modules",
+        "spring boot modules"
+      ],
+      "category": "skills",
+      "default": "Spring Boot, Spring MVC, Spring Data JPA/Hibernate, Spring Security (OAuth2/JWT), Spring Cloud, Spring Boot Actuator, and Spring Kafka",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience",
+        "years of work"
+      ],
+      "input_type_defaults": {
+        "text": "Spring Boot, Spring MVC, Spring Data JPA/Hibernate, Spring Security (OAuth2/JWT), Spring Cloud, Spring Boot Actuator, and Spring Kafka",
+        "textarea": "Spring Boot, Spring MVC, Spring Data JPA/Hibernate, Spring Security (OAuth2/JWT), Spring Cloud, Spring Boot Actuator, and Spring Kafka",
+        "radio": "Spring Boot",
+        "select": "Spring Boot",
+        "checkbox": "Yes"
+      }
+    },
+    "rest_api_types_developed": {
+      "patterns": [
+        "what type of rest apis have you developed",
+        "what type of rest apis have you developed?",
+        "type of rest apis have you developed",
+        "what types of rest apis have you developed",
+        "types of rest apis have you developed",
+        "what kind of rest apis have you developed",
+        "rest apis have you developed",
+        "what rest apis have you developed"
+      ],
+      "category": "technical_screening",
+      "default": "Designed and developed secure, scalable RESTful microservices, event-driven APIs with Kafka, webhook integrations, CRUD services with Spring Boot and Node.js, versioned endpoints, and third-party API integrations with OAuth2/JWT authentication and rate limiting.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "Designed and developed secure, scalable RESTful microservices, event-driven APIs with Kafka, webhook integrations, CRUD services with Spring Boot and Node.js, versioned endpoints, and third-party API integrations with OAuth2/JWT authentication and rate limiting.",
+        "textarea": "Designed and developed secure, scalable RESTful microservices, event-driven APIs with Kafka, webhook integrations, CRUD services with Spring Boot and Node.js, versioned endpoints, and third-party API integrations with OAuth2/JWT authentication and rate limiting.",
+        "radio": "REST APIs",
+        "select": "REST APIs",
+        "checkbox": "Yes"
+      }
+    },
+    "postgresql_complex_query_example": {
+      "patterns": [
+        "share an example of a complex postgresql query you have written",
+        "share an example of a complex postgresql query you have written.",
+        "example of a complex postgresql query you have written",
+        "complex postgresql query you have written",
+        "example of a complex postgresql query",
+        "complex postgresql query",
+        "complex sql query you have written",
+        "example of a complex sql query",
+        "complex query you have written"
+      ],
+      "category": "technical_screening",
+      "default": "At Everbridge, I wrote complex queries utilizing Common Table Expressions (CTEs), window functions (ROW_NUMBER, RANK, LEAD/LAG), and multi-table partition joins with indexed JSONB operators to aggregate and deduplicate high-volume transaction records with sub-100ms response times.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "At Everbridge, I wrote complex queries utilizing Common Table Expressions (CTEs), window functions (ROW_NUMBER, RANK, LEAD/LAG), and multi-table partition joins with indexed JSONB operators to aggregate and deduplicate high-volume transaction records with sub-100ms response times.",
+        "textarea": "At Everbridge, I wrote complex queries utilizing Common Table Expressions (CTEs), window functions (ROW_NUMBER, RANK, LEAD/LAG), and multi-table partition joins with indexed JSONB operators to aggregate and deduplicate high-volume transaction records with sub-100ms response times.",
+        "radio": "PostgreSQL",
+        "select": "PostgreSQL",
+        "checkbox": "Yes"
+      }
+    },
+    "database_optimization_techniques": {
+      "patterns": [
+        "what database optimization techniques have you used",
+        "what database optimization techniques have you used?",
+        "database optimization techniques have you used",
+        "database optimization techniques you have used",
+        "database optimization techniques",
+        "sql query optimization techniques",
+        "query optimization techniques",
+        "database performance optimization techniques"
+      ],
+      "category": "technical_screening",
+      "default": "Database indexing (B-Tree, GIN, composite indexes), query plan analysis via EXPLAIN ANALYZE, connection pooling with HikariCP, read replicas, database sharding/partitioning, query caching via Redis, and normalizing/denormalizing schemas to eliminate N+1 query bottlenecks.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "Database indexing (B-Tree, GIN, composite indexes), query plan analysis via EXPLAIN ANALYZE, connection pooling with HikariCP, read replicas, database sharding/partitioning, query caching via Redis, and normalizing/denormalizing schemas to eliminate N+1 query bottlenecks.",
+        "textarea": "Database indexing (B-Tree, GIN, composite indexes), query plan analysis via EXPLAIN ANALYZE, connection pooling with HikariCP, read replicas, database sharding/partitioning, query caching via Redis, and normalizing/denormalizing schemas to eliminate N+1 query bottlenecks.",
+        "radio": "Database Optimization",
+        "select": "Database Optimization",
+        "checkbox": "Yes"
+      }
+    },
+    "jwt_authentication_implementations": {
+      "patterns": [
+        "which jwt authentication implementations have you worked on",
+        "which jwt authentication implementations have you worked on?",
+        "jwt authentication implementations have you worked on",
+        "jwt authentication implementations",
+        "jwt authentication implementations worked on",
+        "what jwt authentication implementations have you worked on",
+        "jwt implementations have you worked on"
+      ],
+      "category": "technical_screening",
+      "default": "Implemented stateless authentication using Spring Security and Nimbus/jjwt with RSA/HMAC-SHA256 signed JWT access and refresh tokens, role-based access control (RBAC), token blacklisting via Redis, and custom OncePerRequestFilter security filters.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "Implemented stateless authentication using Spring Security and Nimbus/jjwt with RSA/HMAC-SHA256 signed JWT access and refresh tokens, role-based access control (RBAC), token blacklisting via Redis, and custom OncePerRequestFilter security filters.",
+        "textarea": "Implemented stateless authentication using Spring Security and Nimbus/jjwt with RSA/HMAC-SHA256 signed JWT access and refresh tokens, role-based access control (RBAC), token blacklisting via Redis, and custom OncePerRequestFilter security filters.",
+        "radio": "JWT",
+        "select": "JWT",
+        "checkbox": "Yes"
+      }
+    },
+    "docker_experience_descriptive": {
+      "patterns": [
+        "describe your experience with docker in development or deployment",
+        "describe your experience with docker in development or deployment.",
+        "experience with docker in development or deployment",
+        "describe your experience with docker",
+        "docker in development or deployment",
+        "experience with docker in development",
+        "experience with docker in deployment"
+      ],
+      "category": "technical_screening",
+      "default": "Extensive experience containerizing Spring Boot and Node.js microservices using multi-stage Dockerfiles for minimal image sizes, managing multi-container local environments with Docker Compose, and deploying containerized services to AWS ECS and Kubernetes (EKS) with automated CI/CD pipelines.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "Extensive experience containerizing Spring Boot and Node.js microservices using multi-stage Dockerfiles for minimal image sizes, managing multi-container local environments with Docker Compose, and deploying containerized services to AWS ECS and Kubernetes (EKS) with automated CI/CD pipelines.",
+        "textarea": "Extensive experience containerizing Spring Boot and Node.js microservices using multi-stage Dockerfiles for minimal image sizes, managing multi-container local environments with Docker Compose, and deploying containerized services to AWS ECS and Kubernetes (EKS) with automated CI/CD pipelines.",
+        "radio": "Docker",
+        "select": "Docker",
+        "checkbox": "Yes"
+      }
+    },
+    "git_repository_tools_used": {
+      "patterns": [
+        "which git repository tools have you used (github, gitlab, bitbucket, svn)?",
+        "which git repository tools have you used (github, gitlab, bitbucket, svn)",
+        "which git repository tools have you used",
+        "git repository tools have you used",
+        "git repository tools you have used",
+        "which git repository tools",
+        "git repository tools",
+        "which git tools have you used",
+        "git tools have you used",
+        "repository tools have you used"
+      ],
+      "category": "skills",
+      "default": "GitHub, GitLab, Bitbucket",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "GitHub, GitLab, Bitbucket",
+        "textarea": "GitHub, GitLab, Bitbucket",
+        "radio": "GitHub",
+        "select": "GitHub",
+        "checkbox": "Yes"
+      }
+    },
+    "javascript_frameworks_libraries_worked_with": {
+      "patterns": [
+        "what javascript frameworks or libraries have you worked with",
+        "what javascript frameworks or libraries have you worked with?",
+        "javascript frameworks or libraries have you worked with",
+        "javascript frameworks or libraries you have worked with",
+        "which javascript frameworks or libraries have you worked with",
+        "what javascript frameworks have you worked with",
+        "javascript frameworks have you worked with",
+        "javascript libraries have you worked with",
+        "javascript frameworks or libraries"
+      ],
+      "category": "skills",
+      "default": "React.js, Node.js, Express.js, TypeScript, Next.js, Redux, and Jest",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "React.js, Node.js, Express.js, TypeScript, Next.js, Redux, and Jest",
+        "textarea": "React.js, Node.js, Express.js, TypeScript, Next.js, Redux, and Jest",
+        "radio": "React.js",
+        "select": "React.js",
+        "checkbox": "Yes"
+      }
+    },
+    "most_complex_backend_application": {
+      "patterns": [
+        "describe the most complex backend application you have developed",
+        "describe the most complex backend application you have developed.",
+        "the most complex backend application you have developed",
+        "most complex backend application you have developed",
+        "most complex backend application you developed",
+        "most complex backend application",
+        "complex backend application you have developed"
+      ],
+      "category": "technical_screening",
+      "default": "At Everbridge, I architected and built a real-time settlement and dispute tracking microservices platform handling 10k+ req/sec using Java, Spring Boot, React, Kafka, and PostgreSQL, deployed on AWS with Kubernetes and achieving sub-200ms latency.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "At Everbridge, I architected and built a real-time settlement and dispute tracking microservices platform handling 10k+ req/sec using Java, Spring Boot, React, Kafka, and PostgreSQL, deployed on AWS with Kubernetes and achieving sub-200ms latency.",
+        "textarea": "At Everbridge, I architected and built a real-time settlement and dispute tracking microservices platform handling 10k+ req/sec using Java, Spring Boot, React, Kafka, and PostgreSQL, deployed on AWS with Kubernetes and achieving sub-200ms latency.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "role_in_designing_application_architecture": {
+      "patterns": [
+        "what was your role in designing application architecture",
+        "what was your role in designing application architecture?",
+        "your role in designing application architecture",
+        "role in designing application architecture",
+        "what was your role in application architecture",
+        "role in application architecture"
+      ],
+      "category": "technical_screening",
+      "default": "As a Software Engineer 2, I led the architectural design for microservices and data pipelines, defining REST API contracts, domain-driven service boundaries, Kafka event schemas, database schema modeling, connection pooling, and fault tolerance patterns deployed on AWS.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "As a Software Engineer 2, I led the architectural design for microservices and data pipelines, defining REST API contracts, domain-driven service boundaries, Kafka event schemas, database schema modeling, connection pooling, and fault tolerance patterns deployed on AWS.",
+        "textarea": "As a Software Engineer 2, I led the architectural design for microservices and data pipelines, defining REST API contracts, domain-driven service boundaries, Kafka event schemas, database schema modeling, connection pooling, and fault tolerance patterns deployed on AWS.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "why_strong_fit_kotlin_java_role": {
+      "patterns": [
+        "describe why you believe you are a strong fit for this kotlin & java developer role",
+        "describe why you believe you are a strong fit for this kotlin & java developer role.",
+        "why you believe you are a strong fit for this kotlin & java developer role",
+        "why believe you are a strong fit for this kotlin & java developer role",
+        "strong fit for this kotlin & java developer role",
+        "fit for this kotlin & java developer role"
+      ],
+      "category": "screening",
+      "default": "With 4+ years of professional backend software engineering experience specializing in Java and Kotlin microservices, Spring Boot, high-throughput distributed systems, and AWS cloud infrastructure, I have a proven track record of designing resilient architectures, writing clean and maintainable code, and delivering scalable enterprise applications.",
+      "priority": 18,
+      "negative_patterns": [
+        "how many years",
+        "years of experience"
+      ],
+      "input_type_defaults": {
+        "text": "With 4+ years of professional backend software engineering experience specializing in Java and Kotlin microservices, Spring Boot, high-throughput distributed systems, and AWS cloud infrastructure, I have a proven track record of designing resilient architectures, writing clean and maintainable code, and delivering scalable enterprise applications.",
+        "textarea": "With 4+ years of professional backend software engineering experience specializing in Java and Kotlin microservices, Spring Boot, high-throughput distributed systems, and AWS cloud infrastructure, I have a proven track record of designing resilient architectures, writing clean and maintainable code, and delivering scalable enterprise applications.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "cicd_automated_testing_contract_quality_gates": {
+      "patterns": [
+        "what is your experience in ci/cd pipelines and automated testing? have you work with unit, integration, contract and quality gates?",
+        "what is your experience in ci/cd pipelines and automated testing? have you work with unit, integration, contract and quality gates",
+        "what is your experience in ci/cd pipelines and automated testing",
+        "experience in ci/cd pipelines and automated testing",
+        "ci/cd pipelines and automated testing",
+        "have you work with unit, integration, contract and quality gates",
+        "unit, integration, contract and quality gates"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, extensive experience designing and maintaining CI/CD pipelines with Jenkins and GitHub Actions, automated unit testing with JUnit/Mockito, integration testing, contract testing with Pact, SonarQube quality gates, and automated Docker deployments.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Yes, extensive experience designing and maintaining CI/CD pipelines with Jenkins and GitHub Actions, automated unit testing with JUnit/Mockito, integration testing, contract testing with Pact, SonarQube quality gates, and automated Docker deployments.",
+        "textarea": "Yes, extensive experience designing and maintaining CI/CD pipelines with Jenkins and GitHub Actions, automated unit testing with JUnit/Mockito, integration testing, contract testing with Pact, SonarQube quality gates, and automated Docker deployments.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "company_unique_id_if_employed_na": {
+      "patterns": [
+        "if currently employed by fe fundinfo or zenith investment partners, please provide your 7-digit unique id",
+        "if currently employed by fe fundinfo or zenith investment partners, please provide your 7-digit unique id.  if you are unsure of your unique id, please contact your local hr to obtain it. you must also use your work email when completing the email field above.",
+        "if currently employed by fe fundinfo or zenith investment partners, please provide your 7-digit unique id.",
+        "please provide your 7-digit unique id",
+        "7-digit unique id",
+        "provide your 7-digit unique id",
+        "if currently employed by fe fundinfo",
+        "if currently employed by zenith investment partners",
+        "unique id if unsure of your unique id",
+        "provide your unique id"
+      ],
+      "category": "compliance",
+      "default": "N/A",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "N/A",
+        "textarea": "N/A",
+        "number": "0",
+        "radio": "N/A",
+        "select": "N/A"
+      }
+    },
+    "fe_fundinfo_zenith_association": {
+      "patterns": [
+        "have you previously worked for, or are you currently employed by, fe fundinfo or zenith investment partners in any capacity?",
+        "have you previously worked for, or are you currently employed by, fe fundinfo or zenith investment partners in any capacity",
+        "have you previously worked for, or are you currently employed by, fe fundinfo",
+        "previously worked for, or are you currently employed by, fe fundinfo",
+        "employed by, fe fundinfo or zenith investment partners in any capacity",
+        "fe fundinfo or zenith investment partners"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "azure_certifications_specify": {
+      "patterns": [
+        "do you have any azure certifications?(if yes,specify)",
+        "do you have any azure certifications? (if yes,specify)",
+        "do you have any azure certifications?(if yes, specify)",
+        "do you have any azure certifications? if yes specify",
+        "do you have any azure certifications",
+        "any azure certifications"
+      ],
+      "category": "skills",
+      "default": "Yes, Azure Fundamentals (AZ-900)",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, Azure Fundamentals (AZ-900)",
+        "textarea": "Yes, Azure Fundamentals (AZ-900)",
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes"
+      }
+    },
+    "reusable_software_components_libraries_example": {
+      "patterns": [
+        "have you developed / owned reusable software components, libraries by multiple applications/teams? please provide an exp.",
+        "have you developed / owned reusable software components, libraries by multiple applications/teams? please provide an exp",
+        "have you developed / owned reusable software components, libraries by multiple applications/teams",
+        "reusable software components, libraries by multiple applications/teams",
+        "owned reusable software components, libraries",
+        "reusable software components libraries please provide an exp"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, at Everbridge I designed and developed reusable Java Spring Boot starter libraries for standardized JWT authentication, centralized distributed logging, and a shared Kafka event-processing toolkit adopted across multiple teams.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, at Everbridge I designed and developed reusable Java Spring Boot starter libraries for standardized JWT authentication, centralized distributed logging, and a shared Kafka event-processing toolkit adopted across multiple teams.",
+        "textarea": "Yes, at Everbridge I designed and developed reusable Java Spring Boot starter libraries for standardized JWT authentication, centralized distributed logging, and a shared Kafka event-processing toolkit adopted across multiple teams.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
     }
   },
   "categories": {

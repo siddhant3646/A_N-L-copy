@@ -1024,6 +1024,7 @@ async def main():
                 )
                 current_browser = intersession_browser
 
+                exhausted_instahyre = False
                 try:
                     print(f"🌐 [INTERSESSION Pass #{intersession_iter}] Launching Browser...")
                     await intersession_browser.start()
@@ -1043,6 +1044,9 @@ async def main():
                     print(f"▶️  [INTERSESSION Pass #{intersession_iter}] Running Instahyre task...")
                     await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
                     print(f"🎉 [INTERSESSION Pass #{intersession_iter}] Instahyre task pass completed!")
+                    if getattr(agent, '_last_instahyre_no_more_jobs', False):
+                        print(f"📭 [INTERSESSION Pass #{intersession_iter}] All Instahyre opportunities exhausted for this cycle.")
+                        exhausted_instahyre = True
 
                 except (KeyboardInterrupt, asyncio.CancelledError):
                     shutdown_requested = True
@@ -1056,6 +1060,16 @@ async def main():
                         await reset_shared_playwright()
                         print("   🔄 Playwright pipe refreshed after intersession pass")
                     current_browser = None
+
+                if exhausted_instahyre and not shutdown_requested:
+                    remaining_after_pass = deadline - time.time()
+                    if remaining_after_pass > 0:
+                        print(f"😴 No more Instahyre jobs found. Sleeping {remaining_after_pass/60:.1f} mins until Cycle {cycle_count + 1} deadline ({time.strftime('%H:%M:%S', time.localtime(deadline))})...")
+                        try:
+                            await asyncio.sleep(remaining_after_pass)
+                        except (KeyboardInterrupt, asyncio.CancelledError):
+                            shutdown_requested = True
+                    break
 
             if shutdown_requested:
                 break

@@ -57,6 +57,55 @@ class TestInstahyreRandomSkills(unittest.TestCase):
         self.assertEqual(second[:8], ['X%d' % i for i in range(8)])
         self.assertNotEqual(first, second)
 
+    def test_skills_pool_completeness_and_uniqueness(self):
+        """Verify that all 205 skills are present without duplicates."""
+        expected_skills = {
+            "Java", "Java 17", "Java 21", "Python", "JavaScript", "TypeScript", "Golang", "Go",
+            "C++", "C#", "SQL", "Kotlin", "Scala", "Rust", "Shell Scripting", "Bash", "Node.js",
+            "NodeJS", "Core Java", "JVM", "Spring", "Spring Boot", "Spring Cloud", "Spring Security",
+            "Spring Data JPA", "Spring MVC", "Spring WebFlux", "Hibernate", "JPA", "Microservices",
+            "RESTful APIs", "REST API", "gRPC", "GraphQL", "SOAP", "Fastify", "Express.js", "NestJS",
+            "Django", "FastAPI", "Flask", "Dropwizard", "Micronaut", "Quarkus", "Reactive Programming",
+            "React", "React.js", "ReactJS", "Redux", "Redux Toolkit", "Next.js", "HTML5", "CSS3",
+            "Tailwind CSS", "Bootstrap", "Material UI", "Webpack", "Vite", "NPM", "Yarn", "WebSockets",
+            "Front-End Development", "Full Stack", "System Design", "High-Level Design (HLD)",
+            "Low-Level Design (LLD)", "Object-Oriented Programming (OOP)", "SOLID Principles",
+            "Design Patterns", "Distributed Systems", "Event-Driven Architecture",
+            "Service-Oriented Architecture (SOA)", "Domain-Driven Design (DDD)",
+            "Microservices Architecture", "CAP Theorem", "BASE Properties", "Concurrency",
+            "Multithreading", "Rate Limiting", "Load Balancing", "Caching Strategies",
+            "Data Consistency", "High Availability", "Fault Tolerance", "Scalability",
+            "Relational Databases (RDBMS)", "MySQL", "PostgreSQL", "Oracle SQL", "MS SQL Server",
+            "NoSQL", "MongoDB", "Cassandra", "Redis", "DynamoDB", "Elasticsearch", "OpenSearch",
+            "Memcached", "Database Indexing", "Query Optimization", "Database Sharding",
+            "Connection Pooling", "Replication", "Vector Databases", "ChromaDB", "Pinecone",
+            "Milvus", "Apache Kafka", "Kafka Streams", "Apache Flink", "Apache Spark",
+            "Spark Streaming", "Apache Airflow", "Apache Storm", "RabbitMQ", "ActiveMQ", "AWS SQS",
+            "AWS SNS", "Pub/Sub", "Event Streaming", "Data Streaming", "Real-Time Analytics",
+            "ETL Pipelines", "Data Engineering", "DBT (Data Build Tool)", "Data Warehousing",
+            "Snowflake", "AWS", "Amazon Web Services", "Microsoft Azure",
+            "GCP (Google Cloud Platform)", "Cloud Computing", "Amazon EC2", "AWS S3", "AWS Lambda",
+            "AWS RDS", "AWS CloudWatch", "AWS ECS", "AWS EKS", "AWS IAM", "AWS API Gateway",
+            "Cloud Architecture", "Serverless", "PCF (Pivotal Cloud Foundry)", "Azure DevOps",
+            "Azure Functions", "Azure Blob Storage", "Docker", "Kubernetes (K8s)", "CI/CD",
+            "Jenkins", "GitLab CI", "GitHub Actions", "Terraform", "Ansible", "Helm", "Linux",
+            "Maven", "Gradle", "Git", "GitHub", "GitLab", "Bitbucket", "Containerization",
+            "Orchestration", "Infrastructure as Code (IaC)", "DevOps", "Splunk", "Grafana",
+            "Prometheus", "ELK Stack", "Datadog", "New Relic", "Distributed Tracing",
+            "APM (Application Performance Monitoring)", "OpenTelemetry", "Fortify", "SonarQube",
+            "Application Security", "SAST / DAST", "SOC 2", "FedRAMP", "OWASP Top 10",
+            "OAuth 2.0", "JWT (JSON Web Tokens)", "Generative AI", "Large Language Models (LLMs)",
+            "RAG (Retrieval-Augmented Generation)", "LangChain", "LlamaIndex", "Hugging Face",
+            "OpenAI API", "Ollama", "DeepSeek", "Qwen", "Gemma", "Vector Search", "Semantic Search",
+            "Prompt Engineering", "Computer Vision", "YOLO", "MediaPipe", "PyTorch",
+            "Machine Learning", "AI Platform",
+        }
+        all_pool_skills = set(self.agent.INSTAHYRE_SKILL_LANGUAGES) | set(self.agent.INSTAHYRE_SKILL_TOOLS)
+        self.assertEqual(all_pool_skills, expected_skills)
+        self.assertEqual(len(self.agent.INSTAHYRE_SKILL_LANGUAGES) + len(self.agent.INSTAHYRE_SKILL_TOOLS), 205)
+        # Check no overlap between the two pools
+        self.assertEqual(set(self.agent.INSTAHYRE_SKILL_LANGUAGES) & set(self.agent.INSTAHYRE_SKILL_TOOLS), set())
+
 
 class TestInstahyreSkillsInjection(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):

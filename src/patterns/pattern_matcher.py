@@ -61,6 +61,8 @@ class PatternMatcher:
         text = re.sub(r'\bc\+\+\b', 'cpp', text)
         text = re.sub(r'\bc#\b', 'csharp', text)
         text = re.sub(r'\.net\b', 'dotnet', text)
+        # Normalize common abbreviations and typos in experience questions
+        text = re.sub(r'\b(expr|experince|experiance)\b', 'experience', text)
         # Strip common form label boilerplates
         text = re.sub(r'\b(this field is required|required|optional)\b', '', text)
         text = re.sub(r'[^\w\s]', ' ', text)
@@ -217,10 +219,54 @@ class PatternMatcher:
             return 'https://github.com/siddhant3646', max(score, 0.98)
 
         # 0r. Rating scale (1-5) bounded proficiency (guard against 1-10 or experience overrides)
-        is_rating_scale_5 = bool(re.search(r'\b(rate\s+(your\s+)?proficiency|proficiency\s*\(1[-–]5\)|rate\s+(yourself\s+)?(1[-–]5|1\s+to\s+5)|scale\s+of\s+1\s+(to|[-–])\s*5|rating\s*\(1[-–]5\))\b', ql))
-        if is_rating_scale_5 and not bool(re.search(r'\b(years?|how many years)\b', ql)):
-            if al in ('9', '10', '4.2', '4.2 Years', '4 Years', 'Yes', 'No') or not al:
+        is_rating_scale_5 = bool(re.search(r'\b(rate\s+(your\s+)?proficiency|proficiency\s*\(1[-–]5\)|rate\s+(yourself\s+)?(1[-–]5|1\s+to\s+5)|scale\s+of\s+1\s*(to|[-–])\s*5|rating\s*\(1[-–]5\)|scale\s+1[-–]5)\b', ql) or ('scale of 1-5' in ql) or ('scale of 1 to 5' in ql))
+        if is_rating_scale_5 and not bool(re.search(r'\b(how many years)\b', ql)):
+            if al in ('8/10', '9/10', '10/10', '7/10', '8', '9', '10', '4.2', '4.2 Years', '4 Years', 'Yes', 'No') or '/' in al or not al:
                 return '4', max(score, 0.98)
+
+        # 0b. Restrictive covenants / Non-compete compliance
+        if any(w in ql for w in ('restrictive covenant', 'restrictive covenants', 'noncompete', 'non-compete', 'non-solicitation')) or (
+            'confidentiality agreement' in ql and any(r in ql for r in ('restrict', 'bound', 'covenant', 'employer', 'perform'))
+        ):
+            return 'No', max(score, 0.99)
+
+        # 0g. Career gaps
+        if 'gap' in ql and any(w in ql for w in ('education to job', 'between jobs', 'what are your gap')):
+            return 'None of the above and not much gap', max(score, 0.98)
+
+        # 0e. Agentic AI / AI Agent use case and contribution
+        if ('agentic ai' in ql or 'ai agent' in ql) and any(w in ql for w in ('explain', 'use case', 'contribution', 'describe')):
+            essay = 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.'
+            return essay, max(score, 0.99)
+
+        # 0p. Yes/No question asking "Do you have 3-4+ years of experience..."
+        is_yn_exp_req = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', ql))
+        if is_yn_exp_req and not any(w in ql for w in ('how many', 'how much', 'what is your', 'total years')):
+            return 'Yes', max(score, 0.98)
+
+        # 0k. Email and contact number combined
+        is_email_and_contact = bool(re.search(r'\b(email)\b', ql) and re.search(r'\b(phone|contact number|contact no|mobile)\b', ql))
+        if is_email_and_contact:
+            return 'siddhant3646@gmail.com, 7905828880', max(score, 0.98)
+
+        # 0m. Referral by employee name or put N/A
+        if ('referred' in ql or 'referral' in ql or 'who referred' in ql) and any(w in ql for w in ('put n/a', 'enter n/a', 'type n/a', 'write n/a', 'put na', 'enter na', 'if not referred', 'list their name')):
+            return 'N/A', max(score, 0.98)
+
+        # 0n. City and state of residence
+        if any(w in ql for w in ('city and state', 'city & state', 'city and state of residence', 'current city and state')):
+            return 'Bangalore, Karnataka', max(score, 0.98)
+
+        # 0s. Interview time slot availability
+        if any(w in ql for w in ('9- 3 pm', '9-3 pm', '9 to 3 pm', '9 am to 3 pm')):
+            return 'Anytime between 10 AM - 2 PM', max(score, 0.98)
+        if any(w in ql for w in ('time slot in between', 'mention the time slot', 'available time slot', 'time slot for interview', 'what time you will be available', 'at what time you will be available')):
+            return 'Anytime between 10 AM - 4 PM', max(score, 0.98)
+
+        # 0t. Notice period and LWD combined
+        if ('notice' in ql or 'np' in ql) and any(w in ql for w in ('lwd', 'last working day', 'ldw')):
+            lwd_date = datetime.now() + timedelta(days=15)
+            return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", max(score, 0.98)
 
         # 1. Disability safety guard: Candidate has NO disability
         if 'disability' in ql:
@@ -245,13 +291,25 @@ class PatternMatcher:
             is_combined_ctc = bool(re.search(r'\b(current|present|cctc)\b', ql) and re.search(r'\b(expected|expectation|ectc)\b', ql))
             if is_combined_ctc:
                 return 'Current CTC: 23 LPA, Expected CTC: 30 LPA', max(score, 0.98)
+            is_current = bool(re.search(r'\b(current|present|cctc)\b', ql))
+            is_raw_inr_example = bool(re.search(r'\b(700000|mention as \d{6,}|example.*\d{6,})\b', ql))
+            is_take_home = bool(re.search(r'\b(take[- ]home|in[- ]hand|net pay)\b', ql))
+            is_compliance_yes_no = bool(re.search(r'^(does|is|can|are|do|will|have)\b', ql) and re.search(r'\b(match|agree|confirm|credit|payslip)\b', ql))
+            is_monthly = bool(re.search(r'\b(monthly compensation|fixed monthly|monthly salary|gross monthly|per month)\b', ql) or ('monthly' in ql and 'compensation' in ql))
+            if not is_take_home and not is_compliance_yes_no:
+                if is_raw_inr_example:
+                    return ('2300000' if is_current else '3000000'), max(score, 0.98)
+                elif is_monthly and (al in ('0.5', '15', '23', '30', '3000000', '2300000') or not al or '0.5' in al or 'month' in al.lower()):
+                    return ('191667' if is_current else '250000'), max(score, 0.98)
             is_usd = bool(re.search(r'\b(usd|dollars?|\$)\b', ql))
             is_in_lakhs = bool(re.search(r'\b(lakhs?|lacs?|lpa)\b', ql))
-            is_current = bool(re.search(r'\b(current|present|cctc)\b', ql))
-            if is_usd:
-                return ('40000' if is_current else '60000'), max(score, 0.98)
-            elif is_in_lakhs:
-                return ('23' if is_current else '30'), max(score, 0.98)
+            if not is_take_home and not is_compliance_yes_no:
+                if is_usd:
+                    if is_monthly or 'per month' in ql or 'monthly' in ql:
+                        return ('3500' if is_current else '5000'), max(score, 0.98)
+                    return ('40000' if is_current else '60000'), max(score, 0.98)
+                elif is_in_lakhs:
+                    return ('23' if is_current else '30'), max(score, 0.98)
 
         # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits in open-ended technical essays)
         is_yes_no_q = bool(
@@ -314,9 +372,9 @@ class PatternMatcher:
 
         # 10. Detect if the question is asking for numeric years of experience
         is_num_years = bool(re.search(
-            r'\b(how many years|how many yrs|how much experience|experience you hold|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp)\b',
+            r'\b(how many years|how many yrs|how much experience|experience you hold|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp|total exp|working expr|total working|total expr|working experience)\b',
             ql
-        ))
+        ) or (re.search(r'\b(expr|experience)\b', ql) and re.search(r'\b(total|working|years|yrs)\b', ql)))
 
         # 11. Detect if the question is a Yes/No boolean question
         is_yes_no = bool(
@@ -337,6 +395,8 @@ class PatternMatcher:
                 num_m = re.search(r'\d+(\.\d+)?', al)
                 val = float(num_m.group(0)) if num_m else 0.0
                 return ('Yes' if val > 0 else 'No'), max(score, 0.95)
+            if al.lower().startswith(('no', 'never', 'none', 'not')):
+                return answer, score
             if al.lower() not in ('yes', 'no') and (al.startswith('http') or len(al) > 20):
                 return 'Yes', max(score, 0.95)
 

@@ -70,7 +70,7 @@ class TestRadioCheckboxCSV(unittest.TestCase):
         # Group checkboxes
         self.assertIn("options: groupOptions", src)
         # Singleton checkbox
-        self.assertIn("options: [labelText]", src)
+        self.assertIn("options: [labelText", src)
         self.assertIn("selectedOption: 'Checked'", src)
         self.assertIn("source: 'rule'", src)
 

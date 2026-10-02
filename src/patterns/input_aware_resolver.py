@@ -261,14 +261,26 @@ class InputAwareResolver:
                         match_type='compliance_company_boolean',
                         original_answer=answer
                     )
-            # Conflict of interest / Criminal / Sponsorship required / Holding offers guard
-            if bool(re.search(r'\b(conflict of interest|close relative|relatives in company|relatives working|family member|criminal record|convicted|cooling period|applied in (?:the )?past|require (?:visa )?sponsorship|holding (?:counter )?offer|competing offer)\b', ql)):
+            # Conflict of interest / Criminal / Sponsorship required / Holding offers / Restrictive covenants guard
+            if bool(re.search(r'\b(conflict of interest|close relative|relatives in company|relatives working|family member|criminal record|convicted|cooling period|applied in (?:the )?past|require (?:visa )?sponsorship|holding (?:counter )?offer|competing offer|restrictive covenant|restrictive covenants|noncompete|non-compete|confidentiality agreement)\b', ql)):
                 return MatchResult(
                     matched_option=has_no_opt,
                     confidence=0.98,
                     match_type='compliance_negative_boolean',
                     original_answer=answer
                 )
+
+        # Career / Education gap option matching
+        if ql and bool(re.search(r'\b(gap|gaps)\b', ql)):
+            for opt in options:
+                lbl = opt.label.lower().strip()
+                if any(k in lbl for k in ['none of the above', 'no gap', 'not much gap', '0 gap', 'no career gap', 'never had any gap', "don't have any gap", 'do not have any gap']):
+                    return MatchResult(
+                        matched_option=opt,
+                        confidence=0.98,
+                        match_type='gap_negative_option',
+                        original_answer=answer
+                    )
 
         for opt in options:
             if opt.label.lower() == answer_lower:

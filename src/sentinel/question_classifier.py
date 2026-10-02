@@ -102,13 +102,15 @@ CATEGORY_PATTERNS = {
     },
     QuestionCategory.EXPERIENCE: {
         "keywords": [
-            "experience", "years", "exp", "tenure", "yrs",
+            "experience", "years", "exp", "expr", "tenure", "yrs",
             "work experience", "professional experience", "total exp",
-            "how long", "duration", "period"
+            "working expr", "total working expr", "working experience",
+            "total working experience", "how long", "duration", "period"
         ],
         "regex_patterns": [
             r"\d+\+?\s*years?\s*of\s*experience",
-            r"total\s*exp",
+            r"total\s*(?:working\s*)?(?:exp|expr|experience)",
+            r"working\s*(?:expr|experience)",
             r"overall\s*experience",
             r"years?\s*of\s*work",
             r"experience\s*in\s*years",

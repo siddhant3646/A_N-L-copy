@@ -100,7 +100,7 @@ DETAILS TO USE:
 """
 
 LINKEDIN_JOB_APPLY_TASK = COMMON_CONTEXT + """
-NAVIGATE to https://www.linkedin.com/jobs/search-results/?currentJobId=4465964530&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=%2BwZjKLMP0hIfZu3X9nxkoA%3D%3D&f_TPR=r86400&f_AL=true immediately.
+NAVIGATE to https://www.linkedin.com/jobs/search-results/?currentJobId=4475096962&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%20OR%20%22Backend%20Developer%22%20OR%20%22JAVA%20Backend%20Developer%22%20OR%20%22JAVA%20AI%20Developer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=fh2mUpxEErxKDOF%2Blfnn%2Fg%3D%3D&geoId=102713980&distance=-0.621371&f_TPR=r86400&f_AL=true&f_SAL=f_SA_id_227001%3A277001%24f_SA_id_226001%3A272015 immediately.
 
 GOAL: Click 'Easy Apply' and submit applications.
 

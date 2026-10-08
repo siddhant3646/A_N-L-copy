@@ -497,7 +497,7 @@ class SentinelAgent:
             match = re.search(r'https?://[^\s]*linkedin\.com/jobs/[^\s]*', self._task_description)
             if match:
                 return match.group(0).rstrip('.,;')
-        return "https://www.linkedin.com/jobs/search-results/?currentJobId=4465964530&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=%2BwZjKLMP0hIfZu3X9nxkoA%3D%3D&f_TPR=r86400&f_AL=true"
+        return "https://www.linkedin.com/jobs/search-results/?currentJobId=4475096962&keywords=%22hiring%22%20AND%20%28%22Java%22%20OR%20%22JAVA%20FULL%20STACK%22%20OR%20%22React.js%22%20OR%20%22Software%20Engineer%22%20OR%20%22Backend%20Developer%22%20OR%20%22JAVA%20Backend%20Developer%22%20OR%20%22JAVA%20AI%20Developer%22%29%20AND%20India&origin=JOB_SEARCH_PAGE_JOB_FILTER&referralSearchId=fh2mUpxEErxKDOF%2Blfnn%2Fg%3D%3D&geoId=102713980&distance=-0.621371&f_TPR=r86400&f_AL=true&f_SAL=f_SA_id_227001%3A277001%24f_SA_id_226001%3A272015"
 
     def _detect_negation(self, question: str) -> bool:
         """Detect if question contains negation words."""
@@ -581,14 +581,85 @@ class SentinelAgent:
         if any(kw in question_lower for kw in ['city and state', 'city & state', 'city and state of residence', 'current city and state']):
             return 'Bangalore, Karnataka', 0.98
 
-        # Yes/No question asking "Do you have 3-4+ years of experience..."
-        is_yn_exp_req = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', question_lower))
-        if is_yn_exp_req and not any(w in question_lower for w in ('how many', 'how much', 'what is your', 'total years')):
+        # WFO Bangalore HSR Layout + F2F interview + location readiness
+        if ('wfo' in question_lower or 'face to face' in question_lower or 'f2f' in question_lower) and ('bangalore' in question_lower or 'hsr' in question_lower) and any(w in question_lower for w in ('ready', 'located', 'location')):
+            return 'Yes, I am ready for face-to-face interviews and WFO at Bangalore office (HSR layout). Currently located in Bangalore, India.', 0.98
+
+        # Data Structures & Algorithms experience brief
+        if any(d in question_lower for d in ('data structures', 'dsa', 'algorithms', 'data structure')) and any(b in question_lower for b in ('give brief', 'brief on', 'give a brief', 'describe', 'briefly explain', 'briefly describe', 'summary of')):
+            return 'Yes, strong foundation in Data Structures and Algorithms with 4.2 years of backend engineering experience. Proficient in Trees, Graphs, Dynamic Programming, Hash Maps, Heaps, and optimizing time and space complexity in distributed systems.', 0.98
+
+        # Yes/No experience questions (numeric threshold or specific tech stack)
+        is_yn_num_exp = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', question_lower))
+        is_yn_tech_exp = (
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b.*?\b(experience|hands-on|knowledge)\b', question_lower)) or
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(experience|hands-on|knowledge)\b.*?\b(in|with|developing|working with)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b', question_lower))
+        )
+        is_descriptive_exp = any(w in question_lower for w in ('which ones', 'explain', 'describe', 'details', 'cloud', 'bfsi', 'fintech', 'banking', 'production', 'on-call', 'oncall', 'support', 'give brief', 'brief on', 'give a brief'))
+        if (is_yn_num_exp or is_yn_tech_exp) and not is_descriptive_exp and not any(w in question_lower for w in ('how many', 'how much', 'what is your', 'total years', 'number of years', 'rate your', 'scale of')):
             return 'Yes', 0.98
 
-        # Referral by employee name or put N/A
-        if ('referred' in question_lower or 'referral' in question_lower or 'who referred' in question_lower) and any(w in question_lower for w in ('put n/a', 'enter n/a', 'type n/a', 'write n/a', 'put na', 'enter na', 'if not referred', 'list their name')):
+        # Fastest ETA achieved from BRD to live in days
+        if 'fastest eta' in question_lower or ('brd' in question_lower and 'live' in question_lower and 'eta' in question_lower):
+            return '14 Days', 0.98
+
+        # Role / Roles applying for
+        if ('role' in question_lower or 'roles' in question_lower) and any(w in question_lower for w in ('applying for', 'you are applying', 'applied for')):
+            return 'Software Engineer 2 (SDE-2)', 0.98
+
+        # Relevant full-time experience excluding internship
+        if 'excluding internship' in question_lower or ('full-time experience' in question_lower and 'internship' in question_lower):
+            return '3-5 Years', 0.98
+
+        # Employee referral name or relationship
+        if ('employee' in question_lower or 'referral' in question_lower) and any(w in question_lower for w in ("name", "who referred", "how you know", "indicate how", "put n/a", "enter n/a", "type n/a", "write n/a", "put na", "enter na", "if not referred", "list their name")):
             return 'N/A', 0.98
+
+        # Deloitte auditor association
+        if 'deloitte' in question_lower or 'independent auditor' in question_lower:
+            return 'No, I have never been associated with Deloitte', 0.98
+
+        # Company affiliations / former employee (Agoda, Booking Holdings, Strategy, Nextiva, Simplify360)
+        if any(c in question_lower for c in ('agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360')) and any(w in question_lower for w in ('personal relationship', 'employed by', 'former employee', 'subsidiaries', 'affiliated', 'associated')):
+            return 'No', 0.98
+
+        # Veteran status
+        if any(w in question_lower for w in ('veteran', 'military service', 'military spouse', 'protected veteran')):
+            return 'No', 0.98
+
+        # Visa sponsorship
+        if ('sponsorship' in question_lower or 'visa' in question_lower) and any(w in question_lower for w in ('require', 'need', 'now or in the future', 'will you require')):
+            return 'No', 0.98
+
+        # AI coding tools adoption and impact
+        if 'ai coding tools' in question_lower or ('coding tools' in question_lower and any(w in question_lower for w in ('adopted', 'adoption', 'velocity', 'copilot'))):
+            essay = 'I actively drove the adoption of GitHub Copilot and Claude within our backend engineering workflows. By establishing clear prompt engineering guidelines, pair-programming patterns, and automated test generation templates, we increased sprint velocity by over 25% while maintaining strict code quality and test coverage standards.'
+            return essay, 0.98
+
+        # Cloud & AI Platform Architecture
+        if 'architecture' in question_lower and ('cloud' in question_lower or 'ai platform' in question_lower) and any(w in question_lower for w in ('what', 'which', 'worked on', 'describe')):
+            essay = 'Architected and built scalable cloud-native microservices on AWS (ECS, Lambda, S3, RDS PostgreSQL, DynamoDB, Kafka) and integrated LLM-based Agentic workflows using LangChain, LangGraph, and Amazon Bedrock with robust observability via CloudWatch and distributed tracing.'
+            return essay, 0.98
+
+        # Locations willing to relocate to
+        if ('relocate' in question_lower or 'relocating' in question_lower) and any(w in question_lower for w in ('which of these locations', 'which locations', 'locations are you willing', 'city you are currently residing or willing')):
+            return 'Bangalore, Hyderabad, Pune, Remote', 0.98
+
+        # Education discipline / field of study
+        if question_lower in ('discipline', 'field of study', 'major') or ('discipline' in question_lower and 'education' in question_lower):
+            return 'Computer Science', 0.98
+
+        # Currently attend institution
+        if 'currently attend' in question_lower and 'institution' in question_lower:
+            return 'No', 0.98
+
+        # Bengaluru office location alignment
+        if 'bengaluru office' in question_lower and any(w in question_lower for w in ('align with your location', 'ability to work', 'onsite four days', 'location alignment', 'alignment')):
+            return 'I live in Bengaluru and can work onsite/hybrid', 0.98
+
+        # Flexible working from location / open to location
+        if ('flexible working' in question_lower or 'comfortable working' in question_lower or 'willing to work' in question_lower) and any(loc in question_lower for loc in ('hyderabad', 'bangalore', 'bengaluru', 'pune', 'chennai', 'gurgaon', 'delhi', 'mumbai', 'noida')):
+            return 'Yes', 0.98
 
         # Interview time slot availability
         if any(kw in question_lower for kw in ['9- 3 pm', '9-3 pm', '9 to 3 pm', '9 am to 3 pm']):
@@ -625,9 +696,15 @@ class SentinelAgent:
 
         # Relatives / Family / Conflict of interest in company
         conflict_keywords = ['conflict of interest', 'close relative', 'family member', 'family members',
-                            'personal relationship', 'personal relationships',
+                            'personal relationship', 'personal relationships', 'financial interest',
                             'relative working', 'relatives working', 'relatives in', 'family in company', 'relatives in company', 'relatives working with us', 'relative working with us']
-        if any(kw in question_lower for kw in conflict_keywords) or (('relative' in question_lower or 'family' in question_lower or 'personal relationship' in question_lower) and ('company' in question_lower or 'vendor' in question_lower or 'supplier' in question_lower or 'partner' in question_lower or 'okta' in question_lower)):
+        if any(kw in question_lower for kw in conflict_keywords) or (('relative' in question_lower or 'family' in question_lower or 'personal relationship' in question_lower or 'financial interest' in question_lower) and ('company' in question_lower or 'vendor' in question_lower or 'supplier' in question_lower or 'partner' in question_lower or 'okta' in question_lower or 'competitor' in question_lower or 'endava' in question_lower)):
+            return 'No', 0.98
+
+        # FE fundinfo / Zenith Investment Partners association & Unique ID
+        if 'fe fundinfo' in question_lower or 'zenith investment' in question_lower:
+            if any(w in question_lower for w in ('unique id', '7-digit', 'id number', 'if currently employed')):
+                return 'N/A', 0.98
             return 'No', 0.98
 
         # Outside business activities / Advisory / Side business / Moonlighting
@@ -691,6 +768,8 @@ class SentinelAgent:
             'how early you can join', 'when can you join us', 'when can you join',
             'how soon would you be available to start', 'how soon you will be able to join us'
         ]) and not any(exp_kw in question_lower for exp_kw in ['join on or before', 'join before', 'join by', 'able to join on or before']):
+            if any(days_kw in question_lower for days_kw in ['in days', 'mention in days', 'number of days']):
+                return '15', 0.98
             return '15 Days (Serving Notice Period)', 0.98
 
         # Spanish country phone code (Código del país)
@@ -1065,7 +1144,7 @@ class SentinelAgent:
         
         # Database NAME questions (not experience) - CHECK BEFORE EXPERIENCE
         db_name_keywords = ['which database', 'what database', 'database do you have', 'database have you', 'database experience working', 'database worked', 'databases do you', 'databases have you']
-        is_db_name_question = any(kw in question_lower for kw in db_name_keywords)
+        is_db_name_question = any(kw in question_lower for kw in db_name_keywords) and not any(kw in question_lower for kw in ['optimization', 'tuning', 'query', 'queries', 'performance', 'technique', 'techniques', 'design', 'architecture', 'schema'])
         
         # Location specific questions - "based in X", "located in X", "from X", "stay in X"
         location_specific_keywords = ['based in', 'located in', 'from mumbai', 'from bangalore', 'from pune', 'from hyderabad', 'from chennai', 'from delhi', 'stay currently', 'where do you stay', 'which city do you', 'candidates from', 'need candidates from', 'andheri']  # Added Mumbai-specific patterns
@@ -1103,7 +1182,7 @@ class SentinelAgent:
             'do you have hands on experience', 'do u have hands on experience', 'any exp in', 'any experience in',
             'trading or capital market', 'capital markets', 'capital market'
         ]
-        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years'])
+        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years', 'give brief', 'brief on', 'give a brief', 'describe', 'elaborate', 'explain', 'briefly'])
         
         # E-commerce domain experience
         ecommerce_keywords = ['e-commerce', 'ecommerce', 'e commerce']
@@ -7414,7 +7493,7 @@ class SentinelAgent:
                     // PRE-CHECK: "How many years of exp/experience in X?" -> force experience pattern
                     // This prevents tech-specific patterns (microservices, cloud, etc.) from
                     // overriding when the question is clearly asking for numeric years.
-                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years|what is your experience|working expr|working experience|total working/.test(qNormalized);
+                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years|working expr|working experience|total working/.test(qNormalized) && !/what is your experience in|describe your experience/i.test(qNormalized);
                     if (isYearsOfExpQuestion) {{
                         // Find the experience pattern key explicitly
                         const expKeys = [
@@ -7606,15 +7685,16 @@ class SentinelAgent:
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (!defaultObj || defaultObj.category !== 'experience') return;
                         const flatVal = KNOWN_PATTERNS[k];
-                        if (typeof flatVal === 'string' && /\\d+\\s*Years?/i.test(flatVal)) {{
-                            const m = flatVal.match(/(\\d+(?:\\.\\d+)?)/);
+                        if (typeof flatVal === 'string' && /^\s*\d+(?:\.\d+)?\s*Years?\s*$/i.test(flatVal.trim())) {{
+                            const m = flatVal.match(/(\d+(?:\.\d+)?)/);
                             KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
                         }}
                         if (defaultObj.input_type_defaults) {{
                             Object.keys(defaultObj.input_type_defaults).forEach(t => {{
+                                if (t === 'textarea') return;
                                 const tv = defaultObj.input_type_defaults[t];
-                                if (typeof tv === 'string' && /\\d+\\s*Years?/i.test(tv)) {{
-                                    const m = tv.match(/(\\d+(?:\\.\\d+)?)/);
+                                if (typeof tv === 'string' && /^\s*\d+(?:\.\d+)?\s*Years?\s*$/i.test(tv.trim())) {{
+                                    const m = tv.match(/(\d+(?:\.\d+)?)/);
                                     defaultObj.input_type_defaults[t] = m ? m[1] : tv;
                                 }}
                             }});
@@ -7780,13 +7860,19 @@ class SentinelAgent:
                         qLower.includes('night shift') ||
                         qLower.includes('rotational shift') ||
                         qLower.includes('bond') ||
-                        qLower.includes('contract') ||
+                        (qLower.includes('contract') && !qLower.includes('contract test') && !qLower.includes('contract and quality') && !qLower.includes('quality gate') && !qLower.includes('smart contract')) ||
                         qLower.includes('agreement')
                     );
                     
-                    // Exclude questions that are genuinely asking for years/numbers
+                    // Exclude questions that are genuinely asking for years/numbers or descriptive details
                     // e.g., "Do you have 4+ years of experience?" should NOT be overridden
+                    const isWhQuestion = /^(what|which|where|who)\b/i.test(qLower.trim()) && !/yes\s*(or|\/)\s*no/i.test(qLower);
                     const isNumericQuestion = (
+                        isWhQuestion ||
+                        qLower.includes('which of these') ||
+                        qLower.includes('what role') ||
+                        qLower.includes('what cloud') ||
+                        qLower.includes('which locations') ||
                         qLower.includes('how many years') ||
                         qLower.includes('years of experience') ||
                         qLower.includes('how much') ||
@@ -7794,10 +7880,15 @@ class SentinelAgent:
                         qLower.includes('on a scale') ||
                         qLower.includes('proficiency') ||
                         qLower.includes('salary') ||
-                        qLower.includes('ctc')
+                        qLower.includes('ctc') ||
+                        qLower.includes('describe') ||
+                        qLower.includes('provide an exp') ||
+                        qLower.includes('please provide') ||
+                        qLower.includes('if yes, specify') ||
+                        qLower.includes('if yes,specify')
                     );
                     
-                    if (isYesNoQuestion && !isNumericQuestion) {{
+                    if (isYesNoQuestion && !isNumericQuestion && !isWhQuestion) {{
                         // Override if answer is null, "1", starts with a digit (numeric result
                         // from generic "experience" pattern matching "Do you have experience..."),
                         // OR is a non-yes/no answer that's not a known exception
@@ -7805,16 +7896,17 @@ class SentinelAgent:
                         const answerLowerYN = answer ? answer.toLowerCase().trim() : '';
                         // Use word-boundary regex to avoid false matches like "Noida" containing "no"
                         const hasYesOrNo = /\\byes\\b/.test(answerLowerYN) || /\\bno\\b/.test(answerLowerYN);
-                        const knownExceptions = ['serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer'];
+                        const knownExceptions = ['serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer', 'software engineer', 'bangalore', 'bengaluru', 'hyderabad', 'pune', 'remote', 'aws', 'langchain', 'microservices', 'architecture'];
                         const isException = knownExceptions.some(e => answerLowerYN.includes(e));
                         
                         if (!answer || answer === '1' || isNumericResult || (!hasYesOrNo && !isException)) {{
                             // Check negative indicators for No vs Yes
+                            const isTechnicalQ = qLower.includes('testing') || qLower.includes('pipeline') || qLower.includes('quality gate') || qLower.includes('ci/cd') || qLower.includes('cicd');
                             const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
-                                'currently employed', 'worked at', 'worked for', 'worked with',
-                                'work at', 'work for', 'work with', 'worked with us', 'work with us',
+                                'currently employed', 'worked at', 'worked for',
+                                'work at', 'work for', 'worked with us', 'work with us',
                                 'worked before', 'work before', 'employed by', 'employed with', 'employed at',
                                 'ex-employee', 'former employee', 'employed before', 'backlog', 'backlogs',
                                 'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
@@ -7823,7 +7915,7 @@ class SentinelAgent:
                                 'counter offer', 'holding counter offer', 'any offer', 'outside business', 'side business',
                                 'advisory', 'consulting', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
                                 'personal relationship', 'referred by', 'internal employee'];
-                            const isNegative = negativeIndicators.some(p => qLower.includes(p));
+                            const isNegative = !isTechnicalQ && negativeIndicators.some(p => qLower.includes(p));
                             answer = isNegative ? 'No' : 'Yes';
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Yes/no override, answer:', answer, '| was:', answerLowerYN.substring(0, 50));
                         }}
@@ -9561,9 +9653,9 @@ class SentinelAgent:
                     Object.keys(KNOWN_PATTERNS).forEach(k => {
                         const v = KNOWN_PATTERNS[k];
                         if (typeof v === 'string') {
-                            if (/4(?:\\.2)?\\s*Years?/i.test(v) || v === '4.2' || v === '4.2 Years' || v === '4 Years') {
+                            if (/^\\s*4(?:\\.2)?\\s*Years?\\s*$/i.test(v.trim()) || v === '4.2' || v === '4.2 Years' || v === '4 Years') {
                                 KNOWN_PATTERNS[k] = '4';
-                            } else if (/2(?:\\.0)?\\s*Years?/i.test(v) || v === '2' || v === '2 Years') {
+                            } else if (/^\\s*2(?:\\.0)?\\s*Years?\\s*$/i.test(v.trim()) || v === '2' || v === '2 Years') {
                                 KNOWN_PATTERNS[k] = '2';
                             }
                         }
@@ -9697,14 +9789,15 @@ class SentinelAgent:
                         const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[k];
                         if (!defaultObj || defaultObj.category !== 'experience') return;
                         const flatVal = KNOWN_PATTERNS[k];
-                        if (typeof flatVal === 'string' && (/\\d+\\s*Years?/i.test(flatVal) || /^\\d+(\\.\\d+)?$/.test(flatVal.trim()))) {
+                        if (typeof flatVal === 'string' && (/^\\s*\\d+(?:\\.\\d+)?\\s*Years?\\s*$/i.test(flatVal.trim()) || /^\\d+(\\.\\d+)?$/.test(flatVal.trim()))) {
                             const m = flatVal.match(/(\\d+)/);
                             KNOWN_PATTERNS[k] = m ? m[1] : flatVal;
                         }
                         if (defaultObj.input_type_defaults) {
                             Object.keys(defaultObj.input_type_defaults).forEach(t => {
+                                if (t === 'textarea') return;
                                 const tv = defaultObj.input_type_defaults[t];
-                                if (typeof tv === 'string' && (/\\d+\\s*Years?/i.test(tv) || /^\\d+(\\.\\d+)?$/.test(tv.trim()))) {
+                                if (typeof tv === 'string' && (/^\\s*\\d+(?:\\.\\d+)?\\s*Years?\\s*$/i.test(tv.trim()) || /^\\d+(\\.\\d+)?$/.test(tv.trim()))) {
                                     const m = tv.match(/(\\d+)/);
                                     defaultObj.input_type_defaults[t] = m ? m[1] : tv;
                                 }
@@ -10222,10 +10315,13 @@ class SentinelAgent:
                     const expVal = effectiveExpVal;
                     
                     for (const radio of radios) {
-                        let label = '';
-                        if (radio.id) {
-                            const lblEl = document.querySelector('label[for="' + radio.id + '"]');
-                            if (lblEl) label = lblEl.innerText.trim();
+                        let label = (typeof getInputLabelText === 'function') ? getInputLabelText(radio) : '';
+                        if (!label && radio.id) {
+                            try {
+                                const escapedId = (window.CSS && CSS.escape) ? CSS.escape(radio.id) : radio.id.replace(/([ #;?%&,.+*~':"!^$[\\]()=>|/@])/g, '\\$1');
+                                const lblEl = document.querySelector('label[for="' + escapedId + '"]');
+                                if (lblEl) label = lblEl.innerText.trim();
+                            } catch(e) {}
                         }
                         if (!label && radio.getAttribute('aria-label')) {
                             label = radio.getAttribute('aria-label');
@@ -10244,24 +10340,24 @@ class SentinelAgent:
                         if (!label) {
                             label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
                         }
-                        const lowerLabel = label.toLowerCase();
+                        const lowerLabel = label.toLowerCase().trim();
                         let score = 0;
                         
                         // Check if label represents a range or comparative bounds
                         const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
-                        const isLabelYes = /\byes\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.value === 'Yes';
-                        const isLabelNo = (/\bno\b/i.test(lowerLabel) || radio.id === 'No' || radio.value === 'No') && !isLabelYes;
-                        const isAnsYes = /\byes\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
-                        const isAnsNo = (/\bno\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
+                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || radio.id === 'No' || radio.id === 'false' || radio.value === 'No' || radio.value === 'false' || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
+                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.id === 'true' || radio.value === 'Yes' || radio.value === 'true' || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
+                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving');
+                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false');
                         
                         const hasYesRadio = Array.from(radios).some(r => {
                             const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
-                            return /\byes\b/.test(lbl);
+                            return /\byes\b/.test(lbl) || /\btrue\b/.test(lbl) || r.value === 'true' || r.value === 'Yes';
                         });
                         const hasNoRadio = Array.from(radios).some(r => {
                             const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
-                            return /\bno\b/.test(lbl);
+                            return /\bno\b/.test(lbl) || /\bfalse\b/.test(lbl) || r.value === 'false' || r.value === 'No';
                         });
 
                         if (isLabelYes && isAnsYes) {
@@ -10444,25 +10540,28 @@ class SentinelAgent:
                     const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
                     
                     for (const radio of radios) {
-                        const textEl = radio.querySelector('p, span');
-                        const label = textEl?.innerText || radio.getAttribute('aria-label') || radio.innerText || radio.textContent || '';
+                        let label = (typeof getInputLabelText === 'function') ? getInputLabelText(radio) : '';
+                        if (!label) {
+                            const textEl = radio.querySelector('p, span');
+                            label = textEl?.innerText || radio.getAttribute('aria-label') || radio.innerText || radio.textContent || '';
+                        }
                         const lowerLabel = label.toLowerCase().trim();
                         let score = 0;
                         
                         const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
-                        const isLabelYes = /\\byes\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || (radio.value && radio.value.toLowerCase() === 'yes');
-                        const isLabelNo = (/\\bno\\b/i.test(lowerLabel) || (radio.value && radio.value.toLowerCase() === 'no')) && !isLabelYes;
-                        const isAnsYes = /\\byes\\b/i.test(ans) || ans.includes('serving') || ans === 'yes' || ans.includes('true');
-                        const isAnsNo = (/\\bno\\b/i.test(ans) || ans === 'no' || ans.includes('false')) && !isAnsYes;
+                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || (radio.value && (radio.value.toLowerCase() === 'no' || radio.value.toLowerCase() === 'false')) || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
+                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || (radio.value && (radio.value.toLowerCase() === 'yes' || radio.value.toLowerCase() === 'true')) || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
+                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving');
+                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false');
                         
                         const hasYesRadio = Array.from(radios).some(r => {
-                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '').toLowerCase();
-                            return /\\byes\\b/.test(lbl);
+                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || r.value || '').toLowerCase();
+                            return /\byes\b/.test(lbl) || /\btrue\b/.test(lbl) || lbl === 'yes' || lbl === 'true' || r.value === 'true';
                         });
                         const hasNoRadio = Array.from(radios).some(r => {
-                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '').toLowerCase();
-                            return /\\bno\\b/.test(lbl);
+                            const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || r.value || '').toLowerCase();
+                            return /\bno\b/.test(lbl) || /\bfalse\b/.test(lbl) || lbl === 'no' || lbl === 'false' || r.value === 'false';
                         });
 
                         if (isLabelYes && isAnsYes) {
@@ -10750,8 +10849,11 @@ return resolveDynamic(bestMatch);
                         'conflict of interest', 'close relative', 'family member', 'family members',
                         'personal relationship', 'personal relationships',
                         'suppliers', 'supplier', 'vendors', 'vendor', 'partners', 'partner',
-                        'subsidiary', 'subsidiaries',
+                        'subsidiary', 'subsidiaries', 'affiliated companies', 'affiliate', 'affiliates',
                         'relative working', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
+                        'agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360', 'deloitte', 'auditor', 'independent auditor',
+                        'fe fundinfo', 'zenith investment',
+                        'veteran', 'military', 'protected veteran', 'military spouse',
                         'criminal', 'felony', 'convict',
                         'sponsorship', 'visa sponsorship', 'require sponsorship', 'require visa', 'need visa', 'need sponsorship',
                         'outside business', 'side business', 'side businesses', 'advisory', 'board role', 'board roles', 'dual employment', 'moonlighting', 'secondary employment',
@@ -11771,8 +11873,9 @@ return resolveDynamic(bestMatch);
                                 answer = 'https://siddhant3646.github.io/Portfolio/';
                             }
 
-                            // If it's a numeric input, extract just the number from the answer (not for LWD dates, date fields, or textareas)
-                            if (answer && isNumericInput && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA') {
+                            // If it's a numeric input, extract just the number from the answer (not for LWD dates, date fields, textareas, or Yes/No questions)
+                            const isYesNoLabel = isLikelyYesNoQuestion(labelText) || /^(do|does|did|have|has|had|are|is|can|will|would)\b/i.test((labelText || '').trim());
+                            if (answer && isNumericInput && !isYesNoLabel && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA') {
                                 const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
                                 if (numericMatch) {
                                     let numVal = parseFloat(numericMatch[1]);
@@ -11943,7 +12046,10 @@ return resolveDynamic(bestMatch);
                                 
                                 // Universal numeric / text fallback for unfilled fields
                                 if (!answer) {
-                                    if (isNumericInput || /years?|experience|rating|scale|score|rate|ctc|salary|lpa|notice|days|months/i.test(combinedText) || /how many/i.test(combinedText)) {
+                                    if (isLikelyYesNoQuestion(combinedText) || /^(do|does|did|have|has|had|are|is|can|will|would)\b/i.test(combinedText)) {
+                                        answer = shouldDefaultToNo(combinedText) ? 'No' : 'Yes';
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling Yes/No field with default:', answer, '| text:', combinedText.substring(0, 50));
+                                    } else if (isNumericInput || /years?|experience|rating|scale|score|rate|ctc|salary|lpa|notice|days|months/i.test(combinedText) || /how many/i.test(combinedText)) {
                                         if (/salary|ctc|pay|compensation|fixed/i.test(combinedText)) {
                                             answer = /lpa|lakh/i.test(combinedText) ? '30' : '3000000';
                                         } else if (/notice|join|days|serving/i.test(combinedText)) {
@@ -12579,7 +12685,9 @@ return resolveDynamic(bestMatch);
                             
                             // ===== CTC/SALARY/COMPENSATION SELECT HANDLER =====
                             // Handles LinkedIn dropdowns with range options like "20 - 25 LPA", "20,00,000 to 25,00,000 INR", "5-10 Lakhs"
-                            const isCTCQuestion = lowerLabel.includes('ctc') || 
+                            const isConflictOrAffiliation = /deloitte|auditor|subsidiary|conflict|employee|employed/i.test(lowerLabel);
+                            const isCTCQuestion = !isConflictOrAffiliation && (
+                                                  lowerLabel.includes('ctc') || 
                                                   lowerLabel.includes('salary') || 
                                                   lowerLabel.includes('compensation') ||
                                                   lowerLabel.includes('fixed pay') ||
@@ -12587,9 +12695,9 @@ return resolveDynamic(bestMatch);
                                                   lowerLabel.includes('annual fixed') ||
                                                   lowerLabel.includes('lpa') ||
                                                   lowerLabel.includes('remuneration') ||
-                                                  (lowerLabel.includes('annual') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('range') || lowerLabel.includes('comp'))) ||
-                                                  (lowerLabel.includes('current') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range'))) ||
-                                                  (lowerLabel.includes('expected') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('comp') || lowerLabel.includes('package') || lowerLabel.includes('range')));
+                                                  (lowerLabel.includes('annual') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || lowerLabel.includes('range') || /\bcomp\b|\bcompensation\b/i.test(lowerLabel))) ||
+                                                  (lowerLabel.includes('current') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || /\bcomp\b|\bcompensation\b/i.test(lowerLabel) || lowerLabel.includes('package') || lowerLabel.includes('range'))) ||
+                                                  (lowerLabel.includes('expected') && (lowerLabel.includes('inr') || lowerLabel.includes('fixed') || /\bcomp\b|\bcompensation\b/i.test(lowerLabel) || lowerLabel.includes('package') || lowerLabel.includes('range'))));
                             
                             if (isCTCQuestion) {
                                 const ctcOptions = Array.from(select.options).map(o => ({ 
@@ -12740,18 +12848,39 @@ return resolveDynamic(bestMatch);
                             
                             if (isLocationSelect) {
                                 const locOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                
+                                // Check if this is a Yes/No question asking about location flexibility or willingness to relocate
+                                const isLocationYesNo = isLikelyYesNoQuestion(labelText) || /flexible|willing|open to|comfortable|relocat/i.test(lowerLabel);
+                                if (isLocationYesNo) {
+                                    const ynMatch = locOptions.find(o => /^(yes|true)\b/i.test(o.text.trim()));
+                                    if (ynMatch) {
+                                        select.value = ynMatch.value;
+                                        if (select.value !== ynMatch.value) select.selectedIndex = ynMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        formResults.push({ question: labelText, answer: ynMatch.text, inputType: 'select-location' });
+                                        continue;
+                                    }
+                                }
+                                
                                 let locAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!locAnswer) locAnswer = 'Bangalore';
                                 
-                                // PRIORITY 1: Try Bangalore / Bengaluru first (user's primary location)
-                                let locMatch = findBestMatch('Bangalore', locOptions) || findBestMatch('Bengaluru', locOptions);
+                                // Filter out negative location options like "outside of Bengaluru"
+                                const positiveLocOptions = locOptions.filter(o => !/outside\\s+of\\s+(?:bengaluru|bangalore)/i.test(o.text));
+                                
+                                // PRIORITY 1: Try specific positive "live in Bengaluru" or primary city match
+                                let locMatch = positiveLocOptions.find(o => /live\\s+in\\s+(?:bengaluru|bangalore)|onsite|hybrid/i.test(o.text)) ||
+                                               findBestMatch('Bangalore', positiveLocOptions) || 
+                                               findBestMatch('Bengaluru', positiveLocOptions);
                                 if (locMatch) {
                                     window.__SENTINEL_DEBUG__&&console.log('Location Select: matched Bangalore/Bengaluru (primary preference)');
                                 }
                                 
                                 // PRIORITY 2: Try the pattern-matched answer
                                 if (!locMatch) {
-                                    locMatch = findBestMatch(locAnswer, locOptions);
+                                    locMatch = findBestMatch(locAnswer, positiveLocOptions.length ? positiveLocOptions : locOptions);
                                 }
                                 
                                 // If answer is comma-separated (e.g. preferred locations), try each part
@@ -13040,6 +13169,123 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
                                 
+                                // DISCIPLINE / FIELD OF STUDY SELECT HANDLER
+                                if (lowerLabel === 'discipline' || lowerLabel.includes('discipline') || lowerLabel.includes('field of study') || lowerLabel.includes('major')) {
+                                    const discOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let discMatch = discOptions.find(o => /computer\\s*science|computer\\s*engineering|information\\s*technology|software\\s*engineering/i.test(o.text)) ||
+                                                    discOptions.find(o => /\bcomputer\b|\bit\b/i.test(o.text));
+                                    if (discMatch) {
+                                        select.value = discMatch.value;
+                                        if (select.value !== discMatch.value) select.selectedIndex = discMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Discipline match: Selected', discMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: discMatch.text, inputType: 'select-discipline' });
+                                        continue;
+                                    }
+                                }
+
+                                // CURRENTLY ATTEND INSTITUTION SELECT HANDLER
+                                if (lowerLabel.includes('currently attend') || lowerLabel.includes('currently enrolled') || lowerLabel.includes('current student')) {
+                                    const attendOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let attendMatch = attendOptions.find(o => /^(no|false)\b/i.test(o.text.trim()));
+                                    if (attendMatch) {
+                                        select.value = attendMatch.value;
+                                        if (select.value !== attendMatch.value) select.selectedIndex = attendMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Institution attend match: Selected', attendMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: attendMatch.text, inputType: 'select-institution-attend' });
+                                        continue;
+                                    }
+                                }
+
+                                // DELOITTE / AUDITOR COMPLIANCE SELECT HANDLER
+                                if (/deloitte|auditor|subsidiary.*affiliation/i.test(lowerLabel)) {
+                                    const affOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let affMatch = affOptions.find(o => /never\\s*been|not\\s*been/i.test(o.text)) || affOptions.find(o => /^no\b/i.test(o.text.trim()));
+                                    if (affMatch) {
+                                        select.value = affMatch.value;
+                                        if (select.value !== affMatch.value) select.selectedIndex = affMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Deloitte compliance match: Selected', affMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: affMatch.text, inputType: 'select-compliance' });
+                                        continue;
+                                    }
+                                }
+
+                                // VETERAN STATUS SELECT HANDLER
+                                if (lowerLabel.includes('veteran') || lowerLabel.includes('military')) {
+                                    const vetOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let vetMatch = vetOptions.find(o => /not\\s*a\\s*(?:protected\\s*)?veteran|not\\s*a\\s*veteran/i.test(o.text)) ||
+                                                   vetOptions.find(o => /^no\b/i.test(o.text.trim()));
+                                    if (vetMatch) {
+                                        select.value = vetMatch.value;
+                                        if (select.value !== vetMatch.value) select.selectedIndex = vetMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Veteran match: Selected', vetMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: vetMatch.text, inputType: 'select-veteran' });
+                                        continue;
+                                    }
+                                }
+
+                                // EMPLOYEE REFERRAL RELATIONSHIP SELECT HANDLER
+                                if ((lowerLabel.includes('how') && lowerLabel.includes('know') && lowerLabel.includes('employee')) || (lowerLabel.includes('relationship') && lowerLabel.includes('employee'))) {
+                                    const relOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let relMatch = relOptions.find(o => /^(n\\/?a|not applicable|none|no relationship|other)\b/i.test(o.text.trim())) ||
+                                                   relOptions.find(o => !/spouse|domestic\\s*partner|family|friend/i.test(o.text) && !isSelectPlaceholderText(o.text, o.value, o.index));
+                                    if (relMatch) {
+                                        select.value = relMatch.value;
+                                        if (select.value !== relMatch.value) select.selectedIndex = relMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Referral relationship match: Selected', relMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: relMatch.text, inputType: 'select-referral' });
+                                        continue;
+                                    }
+                                }
+
+                                // FORMER EMPLOYEE AFFILIATION SELECT HANDLER
+                                if (/former\\s*employee|current\\s*or\\s*former.*employee|employed\\s*by/i.test(lowerLabel) && /nextiva|simplify360|booking|agoda|strategy/i.test(lowerLabel)) {
+                                    const empOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let empMatch = empOptions.find(o => /^(no|false|never)\b/i.test(o.text.trim())) || empOptions.find(o => /not\\s*applicable/i.test(o.text.trim()));
+                                    if (empMatch) {
+                                        select.value = empMatch.value;
+                                        if (select.value !== empMatch.value) select.selectedIndex = empMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Affiliation match: Selected', empMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: empMatch.text, inputType: 'select-affiliation' });
+                                        continue;
+                                    }
+                                }
+
+                                // RELEVANT EXPERIENCE EXCLUDING INTERNSHIP SELECT HANDLER
+                                if (lowerLabel.includes('relevant') && lowerLabel.includes('experience') && lowerLabel.includes('internship')) {
+                                    const expOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let expMatch = expOptions.find(o => /3\\s*[-–to]\\s*5/i.test(o.text) || /3\\s*a\\s*5/i.test(o.text)) ||
+                                                   findBestMatch('3-5 Years', expOptions) ||
+                                                   findBestMatch('4', expOptions);
+                                    if (expMatch) {
+                                        select.value = expMatch.value;
+                                        if (select.value !== expMatch.value) select.selectedIndex = expMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Excluding internship exp match: Selected', expMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: expMatch.text, inputType: 'select-experience' });
+                                        continue;
+                                    }
+                                }
+                                
                                 // Determine if we should attempt to select "Yes" based on keywords
                                 const isYesNoQuestion = lowerLabel.includes('experience') || 
                                                       lowerLabel.includes('developer') ||
@@ -13109,7 +13355,8 @@ return resolveDynamic(bestMatch);
                                     'veteran', 'military', 'convict', 'felony', 'bankrupt', 'credit check', 'lie detector',
                                     'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12',
                                     'outside business', 'side business', 'advisory', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
-                                    'employed by', 'worked for', 'referral', 'referred by', 'counter offer', 'any offer'
+                                    'employed by', 'worked for', 'referral', 'referred by', 'counter offer', 'any offer',
+                                    'agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360', 'deloitte', 'auditor', 'personal relationship', 'fe fundinfo', 'zenith investment'
                                 ];
                                 const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
                                 const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live/i.test(lowerLabel);

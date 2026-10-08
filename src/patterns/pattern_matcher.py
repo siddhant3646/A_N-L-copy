@@ -239,19 +239,184 @@ class PatternMatcher:
             essay = 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.'
             return essay, max(score, 0.99)
 
-        # 0p. Yes/No question asking "Do you have 3-4+ years of experience..."
-        is_yn_exp_req = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', ql))
-        if is_yn_exp_req and not any(w in ql for w in ('how many', 'how much', 'what is your', 'total years')):
+        # 0u. Spring Boot modules worked with
+        if 'spring boot modules' in ql or ('spring boot' in ql and 'modules' in ql and any(w in ql for w in ('which', 'worked with', 'what'))):
+            return 'Spring Boot, Spring MVC, Spring Data JPA/Hibernate, Spring Security (OAuth2/JWT), Spring Cloud (Config/Eureka), Spring Kafka, and Spring Boot Actuator for health checks and observability.', max(score, 0.98)
+
+        # 0v. REST API types developed
+        if ('rest api' in ql or 'rest apis' in ql) and any(w in ql for w in ('what type', 'types of rest', 'which type', 'have you developed')):
+            return 'Designed and developed secure, scalable RESTful microservices, event-driven APIs (Kafka/RabbitMQ), public-facing webhook listeners, asynchronous batch processing APIs, and CRUD endpoints with OAuth2/JWT security.', max(score, 0.98)
+
+        # 0w. Complex PostgreSQL query example
+        if 'postgresql' in ql and any(w in ql for w in ('complex query', 'example of a complex', 'query you have written', 'written a complex')):
+            return 'At Everbridge, I wrote complex queries utilizing Common Table Expressions (CTEs), window functions (ROW_NUMBER(), RANK(), LEAD/LAG) for financial settlement calculations, partitioned table scans, and optimized execution using EXPLAIN ANALYZE and composite B-tree/GIN indexes.', max(score, 0.98)
+
+        # 0x. Database optimization techniques
+        if 'database' in ql and any(w in ql for w in ('optimization technique', 'optimization techniques', 'techniques have you used', 'optimisation technique')):
+            return 'Database indexing (B-Tree, GIN, composite indexes), query plan analysis with EXPLAIN ANALYZE, connection pooling tuning (HikariCP), database partitioning, query refactoring to avoid N+1 queries, and multi-level caching with Redis.', max(score, 0.98)
+
+        # 0y. JWT authentication implementations
+        if 'jwt' in ql and any(w in ql for w in ('authentication implementation', 'authentication implementations', 'implementations have you', 'worked on')):
+            return 'Implemented stateless authentication using Spring Security and Nimbus/JJWT libraries, RSA/HMAC signing, refresh token rotation with Redis storage, claims-based authorization, and custom OncePerRequestFilter for token validation.', max(score, 0.98)
+
+        # 0z. Docker experience descriptive
+        if 'docker' in ql and any(w in ql for w in ('describe your experience', 'development or deployment', 'experience with docker')):
+            if input_type in ('textarea', 'text') or len(ql) > 40:
+                return 'Extensive experience containerizing Spring Boot and Node.js microservices with multi-stage Dockerfiles, optimizing image sizes, managing local multi-service environments with Docker Compose, and deploying containers to AWS ECS/EKS.', max(score, 0.98)
+
+        # 0aa. Git repository tools
+        if 'git' in ql and any(w in ql for w in ('repository tools', 'repository tool', 'github, gitlab', 'which git')):
+            return 'GitHub, GitLab, Bitbucket', max(score, 0.98)
+
+        # 0ab. JavaScript frameworks or libraries
+        if ('javascript' in ql or 'js' in ql) and any(w in ql for w in ('frameworks or libraries', 'frameworks and libraries', 'libraries have you worked', 'frameworks have you worked')):
+            return 'React.js, Node.js, Express.js, TypeScript, Next.js, Redux, and Jest', max(score, 0.98)
+
+        # 0ac. Most complex backend application
+        if ('complex backend application' in ql or 'most complex backend' in ql) and any(w in ql for w in ('describe', 'developed', 'architected')):
+            return 'At Everbridge, I architected and built a real-time settlement and dispute management microservices engine handling thousands of transactions per second, utilizing Java, Spring Boot, Kafka, Redis, and PostgreSQL with 99.99% uptime.', max(score, 0.98)
+
+        # 0ad. Role in designing application architecture
+        if ('designing application architecture' in ql or 'application architecture' in ql) and any(w in ql for w in ('what was your role', 'role in designing', 'your role')):
+            return 'As a Software Engineer 2, I led the architectural design for microservices, defining API contracts (OpenAPI), schema design in PostgreSQL, Kafka event topics and partition strategies, Redis caching layers, and high-availability patterns.', max(score, 0.98)
+
+        # 0ae. Fit for Kotlin & Java Developer role
+        if ('kotlin' in ql or 'java developer' in ql) and any(w in ql for w in ('strong fit', 'why you believe you are a strong fit', 'fit for this')):
+            return 'With 4+ years of professional backend software engineering experience building scalable microservices in Java and Spring Boot, combined with strong OOP, clean architecture principles, and JVM ecosystem proficiency, I quickly adapt to and excel in Kotlin and modern backend environments.', max(score, 0.98)
+
+        # 0af. FE fundinfo / Zenith Investment Partners
+        if 'fe fundinfo' in ql or 'zenith investment' in ql:
+            if any(w in ql for w in ('unique id', '7-digit', 'id number', 'if currently employed')):
+                return 'N/A', max(score, 0.98)
+            return 'No', max(score, 0.98)
+
+        # 0ag. Reusable software components and libraries example
+        if 'reusable software components' in ql or 'reusable software components, libraries' in ql:
+            return 'Yes, at Everbridge I designed and developed reusable Java Spring Boot starters and shared libraries for authentication/authorization filters, standardized error handling, and distributed Redis caching used by 4+ engineering teams.', max(score, 0.98)
+
+        # 0ah. CI/CD pipelines and automated testing contract gates
+        if ('ci/cd' in ql or 'cicd' in ql) and any(w in ql for w in ('automated testing', 'contract and quality', 'quality gates', 'unit, integration')):
+            return 'Yes, extensive experience designing and maintaining CI/CD pipelines with GitLab CI/GitHub Actions, automated testing using JUnit 5, Mockito, Testcontainers for integration tests, contract testing with Spring Cloud Contract / Pact, and SonarQube quality gates.', max(score, 0.98)
+
+        # 0ai. Endava competitor, supplier, client financial interest or personal relationships
+        if ('endava' in ql or 'competitor' in ql or 'supplier' in ql or 'client' in ql) and any(w in ql for w in ('financial interest', 'personal or family relationships', 'personal relationships', 'family relationships')):
+            return 'No', max(score, 0.98)
+
+        # 0aj. Azure certifications (if yes, specify)
+        if 'azure certification' in ql or 'azure certifications' in ql:
+            if 'specify' in ql or 'if yes' in ql:
+                return 'Yes, Azure Fundamentals (AZ-900)', max(score, 0.98)
+
+        # 0p. Yes/No experience questions (numeric threshold or specific tech stack)
+        is_yn_num_exp = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', ql))
+        is_yn_tech_exp = (
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b.*?\b(experience|hands-on|knowledge)\b', ql)) or
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(experience|hands-on|knowledge)\b.*?\b(in|with|developing|working with)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b', ql))
+        )
+        is_descriptive_exp = any(w in ql for w in ('which ones', 'explain', 'describe', 'details', 'cloud', 'bfsi', 'fintech', 'banking', 'production', 'on-call', 'oncall', 'support'))
+        if (is_yn_num_exp or is_yn_tech_exp) and not is_descriptive_exp and not any(w in ql for w in ('how many', 'how much', 'what is your', 'total years', 'number of years', 'rate your', 'scale of')):
+            return 'Yes', max(score, 0.98)
+
+        # Fastest ETA achieved from BRD to live in days
+        if 'fastest eta' in ql or ('brd' in ql and 'live' in ql and 'eta' in ql):
+            return ('14' if input_type == 'number' else '14 Days'), max(score, 0.98)
+
+        # Role / Roles applying for
+        if ('role' in ql or 'roles' in ql) and any(w in ql for w in ('applying for', 'you are applying', 'applied for')):
+            return 'Software Engineer 2 (SDE-2)', max(score, 0.98)
+
+        # Relevant full-time experience excluding internship
+        if 'excluding internship' in ql or ('full-time experience' in ql and 'internship' in ql):
+            return ('4.2' if input_type == 'number' else '3-5 Years'), max(score, 0.98)
+
+        # Employee referral name or relationship
+        if ('employee' in ql or 'referral' in ql) and any(w in ql for w in ("name", "who referred", "how you know", "indicate how", "put n/a", "enter n/a", "type n/a", "write n/a", "put na", "enter na", "if not referred", "list their name")):
+            return 'N/A', max(score, 0.98)
+
+        # Deloitte auditor association
+        if 'deloitte' in ql or 'independent auditor' in ql:
+            return 'No, I have never been associated with Deloitte', max(score, 0.98)
+
+        # Company affiliations / former employee (Agoda, Booking Holdings, Strategy, Nextiva, Simplify360)
+        if any(c in ql for c in ('agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360')) and any(w in ql for w in ('personal relationship', 'employed by', 'former employee', 'subsidiaries', 'affiliated', 'associated')):
+            return 'No', max(score, 0.98)
+
+        # Veteran status
+        if any(w in ql for w in ('veteran', 'military service', 'military spouse', 'protected veteran')):
+            return 'No', max(score, 0.98)
+
+        # Visa sponsorship
+        if ('sponsorship' in ql or 'visa' in ql) and any(w in ql for w in ('require', 'need', 'now or in the future', 'will you require')):
+            return 'No', max(score, 0.98)
+
+        # AI coding tools adoption and impact
+        if 'ai coding tools' in ql or ('coding tools' in ql and any(w in ql for w in ('adopted', 'adoption', 'velocity', 'copilot'))):
+            essay = 'I actively drove the adoption of GitHub Copilot and Claude within our backend engineering workflows. By establishing clear prompt engineering guidelines, pair-programming patterns, and automated test generation templates, we increased sprint velocity by over 25% while maintaining strict code quality and test coverage standards.'
+            return essay, max(score, 0.98)
+
+        # Cloud & AI Platform Architecture
+        if 'architecture' in ql and ('cloud' in ql or 'ai platform' in ql) and any(w in ql for w in ('what', 'which', 'worked on', 'describe')):
+            essay = 'Architected and built scalable cloud-native microservices on AWS (ECS, Lambda, S3, RDS PostgreSQL, DynamoDB, Kafka) and integrated LLM-based Agentic workflows using LangChain, LangGraph, and Amazon Bedrock with robust observability via CloudWatch and distributed tracing.'
+            return essay, max(score, 0.98)
+
+        # Locations willing to relocate to
+        if ('relocate' in ql or 'relocating' in ql) and any(w in ql for w in ('which of these locations', 'which locations', 'locations are you willing', 'city you are currently residing or willing')):
+            if 'gurugram' in ql or 'gurgaon' in ql:
+                if input_type in ('select', 'radio'):
+                    return 'Gurugram', max(score, 0.98)
+                return 'Bengaluru (Willing to relocate to Gurugram)', max(score, 0.98)
+            if input_type in ('text', 'textarea'):
+                return 'Bangalore, Hyderabad, Pune, Remote', max(score, 0.98)
+            return 'Bengaluru', max(score, 0.98)
+
+        # Education discipline / field of study
+        if ql in ('discipline', 'field of study', 'major') or ('discipline' in ql and 'education' in ql):
+            return 'Computer Science', max(score, 0.98)
+
+        # Currently attend institution
+        if 'currently attend' in ql and 'institution' in ql:
+            return 'No', max(score, 0.98)
+
+        # Bengaluru office location alignment
+        if 'bengaluru office' in ql and any(w in ql for w in ('align with your location', 'ability to work', 'onsite four days', 'location alignment', 'alignment')):
+            return 'I live in Bengaluru and can work onsite/hybrid', max(score, 0.98)
+
+        # WFO Bangalore HSR Layout + F2F interview + location readiness
+        if ('wfo' in ql or 'face to face' in ql or 'f2f' in ql) and ('bangalore' in ql or 'hsr' in ql) and any(w in ql for w in ('ready', 'located', 'location')):
+            if input_type in ('radio', 'select', 'checkbox'):
+                return 'Yes', max(score, 0.98)
+            return 'Yes, I am ready for face-to-face interviews and WFO at Bangalore office (HSR layout). Currently located in Bangalore, India.', max(score, 0.98)
+
+        # Data Structures & Algorithms experience brief
+        if any(d in ql for d in ('data structures', 'dsa', 'algorithms', 'data structure')) and any(b in ql for b in ('give brief', 'brief on', 'give a brief', 'describe', 'briefly explain', 'briefly describe', 'summary of')) and 'lru' not in ql:
+            if input_type in ('radio', 'select', 'checkbox'):
+                return 'Yes', max(score, 0.98)
+            return 'Yes, strong foundation in Data Structures and Algorithms with 4.2 years of backend engineering experience. Proficient in Trees, Graphs, Dynamic Programming, Hash Maps, Heaps, and optimizing time and space complexity in distributed systems.', max(score, 0.98)
+
+        # Experience in Java / Go / Rust
+        if 'java' in ql and any(l in ql for l in ('go', 'rust')) and any(e in ql for e in ('experience', 'years')):
+            if input_type == 'number':
+                return '4.2', max(score, 0.98)
+            return '4.2 Years', max(score, 0.98)
+
+        # Joining timeline with explicit mention in days
+        if any(w in ql for w in ('how soon', 'how quickly', 'when')) and 'join' in ql and any(d in ql for d in ('in days', 'mention in days', 'number of days')):
+            if input_type == 'number':
+                return '15', max(score, 0.98)
+            return '15', max(score, 0.98)
+
+        # Expected CTC in number - LPA (example: 7 if its 7 LPA)
+        if any(w in ql for w in ('expected ctc', 'expected salary', 'ectc')) and any(u in ql for u in ('in number- lpa', 'in number - lpa', 'in number lpa', 'example- 7', 'example 7')):
+            return '30', max(score, 0.98)
+
+        # Flexible working from location / open to location
+        if ('flexible working' in ql or 'comfortable working' in ql or 'willing to work' in ql) and any(loc in ql for loc in ('hyderabad', 'bangalore', 'bengaluru', 'pune', 'chennai', 'gurgaon', 'delhi', 'mumbai', 'noida')):
             return 'Yes', max(score, 0.98)
 
         # 0k. Email and contact number combined
         is_email_and_contact = bool(re.search(r'\b(email)\b', ql) and re.search(r'\b(phone|contact number|contact no|mobile)\b', ql))
         if is_email_and_contact:
             return 'siddhant3646@gmail.com, 7905828880', max(score, 0.98)
-
-        # 0m. Referral by employee name or put N/A
-        if ('referred' in ql or 'referral' in ql or 'who referred' in ql) and any(w in ql for w in ('put n/a', 'enter n/a', 'type n/a', 'write n/a', 'put na', 'enter na', 'if not referred', 'list their name')):
-            return 'N/A', max(score, 0.98)
 
         # 0n. City and state of residence
         if any(w in ql for w in ('city and state', 'city & state', 'city and state of residence', 'current city and state')):
@@ -265,6 +430,8 @@ class PatternMatcher:
 
         # 0t. Notice period and LWD combined
         if ('notice' in ql or 'np' in ql) and any(w in ql for w in ('lwd', 'last working day', 'ldw')):
+            if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
+                return '23102026', max(score, 0.98)
             lwd_date = datetime.now() + timedelta(days=15)
             return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", max(score, 0.98)
 
@@ -397,6 +564,8 @@ class PatternMatcher:
                 return ('Yes' if val > 0 else 'No'), max(score, 0.95)
             if al.lower().startswith(('no', 'never', 'none', 'not')):
                 return answer, score
+            if 'select all' in ql:
+                return answer, max(score, 0.98)
             if al.lower() not in ('yes', 'no') and (al.startswith('http') or len(al) > 20):
                 return 'Yes', max(score, 0.95)
 

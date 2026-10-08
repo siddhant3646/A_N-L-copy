@@ -1886,11 +1886,11 @@
         "mention veteran"
       ],
       "category": "self_identification",
-      "default": "I am not a protected veteran",
+      "default": "No",
       "input_type_defaults": {
-        "radio": "I am not a protected veteran",
+        "radio": "No",
         "select": "I am not a protected veteran",
-        "text": "I am not a protected veteran",
+        "text": "No",
         "textarea": "I am not a protected veteran",
         "checkbox": "Yes"
       },
@@ -4928,12 +4928,12 @@
         "military veteran"
       ],
       "category": "self_identification",
-      "default": "I am not a protected veteran",
+      "default": "No",
       "requires_exact_match": true,
       "input_type_defaults": {
-        "radio": "I am not a protected veteran",
+        "radio": "No",
         "select": "I am not a protected veteran",
-        "text": "I am not a protected veteran",
+        "text": "No",
         "textarea": "I am not a protected veteran",
         "checkbox": "Yes"
       },
@@ -10030,7 +10030,19 @@
         "text": "Any",
         "textarea": "Any",
         "checkbox": "Yes"
-      }
+      },
+      "negative_patterns": [
+        "ok to attend",
+        "willing to attend",
+        "available for",
+        "comfortable to",
+        "comfortable with",
+        "ready to attend",
+        "attend hackerearth",
+        "take hackerearth",
+        "attend test",
+        "take test"
+      ]
     },
     "background_check_consent": {
       "patterns": [
@@ -10520,7 +10532,13 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "in detail",
+        "explain your experience",
+        "describe your experience",
+        "experience in detail"
+      ]
     },
     "docker_experience": {
       "category": "experience",
@@ -16113,11 +16131,12 @@
       "patterns": [
         "stock options",
         "esop",
-        "rsu",
         "equity",
         "interested in equity",
         "stock compensation",
-        "equity compensation"
+        "equity compensation",
+        "rsu equity",
+        "rsus"
       ],
       "category": "salary",
       "default": "Yes",
@@ -16129,7 +16148,13 @@
         "number": "Yes",
         "checkbox": "Yes",
         "textarea": "Yes"
-      }
+      },
+      "negative_patterns": [
+        "pursued",
+        "not pursued",
+        "pg %",
+        "write na"
+      ]
     },
     "benefits_flexible": {
       "patterns": [
@@ -23213,7 +23238,6 @@
     },
     "exp_r": {
       "patterns": [
-        "R experience",
         "years of experience in R",
         "how many years of R experience",
         "R proficiency",
@@ -23232,7 +23256,8 @@
         "competency in R",
         "comfortable with R",
         "have you used R",
-        "do you have experience with R"
+        "do you have experience with R",
+        "experience with R programming"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -23250,7 +23275,9 @@
         "notice period",
         "ctc",
         "expected",
-        "current"
+        "current",
+        "prior experience",
+        "select all"
       ]
     },
     "exp_julia": {
@@ -26292,8 +26319,7 @@
         "familiarity with React",
         "competency in React",
         "comfortable with React",
-        "have you used React",
-        "do you have experience with React"
+        "have you used React"
       ],
       "category": "experience",
       "default": "4.2 Years",
@@ -38481,7 +38507,11 @@
         "notice period",
         "ctc",
         "expected",
-        "current"
+        "current",
+        "in detail",
+        "explain your experience",
+        "describe your experience",
+        "experience in detail"
       ]
     },
     "exp_helm": {
@@ -236161,6 +236191,883 @@
         "radio": "Yes",
         "select": "Yes",
         "checkbox": "Yes"
+      }
+    },
+    "do_you_have_experience_react": {
+      "patterns": [
+        "do you have experience with react",
+        "do you have experience with react?",
+        "experience with react (yes/no)",
+        "have you worked with react",
+        "have you experience with react"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "do_you_have_experience_angular": {
+      "patterns": [
+        "do you have experience with angular",
+        "do you have experience with angular?",
+        "do you have experience in angular",
+        "have you worked with angular"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "do_you_have_experience_rest_apis": {
+      "patterns": [
+        "do you have experience developing rest apis",
+        "do you have experience developing rest apis?",
+        "do you have experience with rest apis",
+        "do you have experience with rest apis?",
+        "experience developing rest apis",
+        "do you have hands-on experience developing rest apis"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "do_you_have_experience_microservices": {
+      "patterns": [
+        "do you have experience working with microservices",
+        "do you have experience working with microservices?",
+        "experience working with microservices",
+        "do you have experience with microservices",
+        "do you have experience in microservices"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "do_you_have_hands_on_experience_java_j2ee": {
+      "patterns": [
+        "do you have strong hands-on experience in java/j2ee",
+        "do you have strong hands-on experience in java/j2ee?",
+        "do you have strong hands-on experience in java",
+        "do you have hands-on experience in java/j2ee",
+        "hands-on experience in java/j2ee"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "fastest_eta_brd_to_live": {
+      "patterns": [
+        "from brd to product live what is the fastest eta you have achieved in days",
+        "from brd to product live what is the fastest eta you have achieved in days?",
+        "fastest eta you have achieved in days",
+        "fastest eta you have achieved in days?",
+        "fastest eta you have achieved",
+        "fastest eta achieved in days"
+      ],
+      "category": "experience",
+      "default": "14",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "14",
+        "number": "14",
+        "textarea": "14 Days from BRD to production deployment",
+        "select": "14 Days"
+      }
+    },
+    "roles_applying_for": {
+      "patterns": [
+        "what role / roles you are applying for",
+        "what role / roles you are applying for?",
+        "what role you are applying for",
+        "what role you are applying for?",
+        "roles you are applying for",
+        "role / roles you are applying for",
+        "which role are you applying for",
+        "what position are you applying for"
+      ],
+      "category": "role",
+      "default": "Software Engineer 2 (SDE-2)",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Software Engineer 2 (SDE-2)",
+        "textarea": "Software Engineer 2 (SDE-2)"
+      }
+    },
+    "employee_referral_name_na": {
+      "patterns": [
+        "what is the employee's name",
+        "what is the employee's name?",
+        "what is the employee’s name",
+        "what is the employee’s name?",
+        "employee's name",
+        "employee’s name",
+        "name of the employee who referred you",
+        "referring employee's name",
+        "if yes, please indicate how you know the employee",
+        "if yes, please indicate how you know the employee?"
+      ],
+      "category": "personal_info",
+      "default": "N/A",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "N/A",
+        "textarea": "N/A",
+        "select": "N/A"
+      }
+    },
+    "relevant_full_time_experience_excluding_internship": {
+      "patterns": [
+        "how many years of relevant full-time experience do you have? (excluding internship)",
+        "how many years of relevant full-time experience do you have? (excluding internship)*",
+        "how many years of relevant full-time experience do you have",
+        "years of relevant full-time experience do you have",
+        "relevant full-time experience do you have? (excluding internship)"
+      ],
+      "category": "experience",
+      "default": "3-5 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "3-5 Years",
+        "radio": "3-5 Years",
+        "text": "4",
+        "number": "4"
+      }
+    },
+    "deloitte_auditor_association": {
+      "patterns": [
+        "confirm if you are currently or formerly have been associated with deloitte",
+        "associated with deloitte or any of its subsidiary entities",
+        "associated with deloitte",
+        "independent auditor – deloitte",
+        "independent auditor - deloitte",
+        "associated with deloitte or any of its subsidiary"
+      ],
+      "category": "compliance",
+      "default": "No, I have never been associated with Deloitte (or its Subsidiary companies)",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No, I have never been associated with Deloitte (or its Subsidiary companies)",
+        "text": "No",
+        "textarea": "No"
+      }
+    },
+    "agoda_personal_relationship": {
+      "patterns": [
+        "do you as a candidate have a personal relationship with a current agoda employee",
+        "do you as a candidate have a personal relationship with a current agoda employee?",
+        "personal relationship with a current agoda employee",
+        "relationship with a current agoda employee",
+        "personal relationship with an agoda employee"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No"
+      }
+    },
+    "booking_holdings_group_employed": {
+      "patterns": [
+        "are you presently employed by any company within the booking holdings group",
+        "are you presently employed by any company within the booking holdings group?",
+        "company within the booking holdings group",
+        "employed by booking holdings",
+        "presently employed by any company within the booking holdings"
+      ],
+      "category": "employment",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No"
+      }
+    },
+    "strategy_former_employee": {
+      "patterns": [
+        "are you a former employee of strategy or any of its past or present subsidiaries",
+        "are you a former employee of strategy or any of its past or present subsidiaries?",
+        "former employee of strategy",
+        "former employee of strategy or any of its past or present subsidiaries or affiliated companies"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No"
+      }
+    },
+    "nextiva_former_employee": {
+      "patterns": [
+        "are you a current or former nextiva/simplify360 employee",
+        "are you a current or former nextiva/simplify360 employee?",
+        "current or former nextiva employee",
+        "current or former nextiva/simplify360 employee"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No"
+      }
+    },
+    "ai_coding_tools_adoption_impact": {
+      "patterns": [
+        "how has your team adopted ai coding tools — did you drive that adoption, and what was the impact on velocity or quality?",
+        "how has your team adopted ai coding tools",
+        "ai coding tools — did you drive that adoption",
+        "how has your team adopted ai coding tools?",
+        "did you drive that adoption, and what was the impact on velocity or quality"
+      ],
+      "category": "behavioral",
+      "default": "I drove the adoption of AI coding assistants (GitHub Copilot and Claude) across our engineering team by establishing best practices for unit test scaffolding, boilerplate generation, and complex query creation, resulting in an estimated 25-30% increase in sprint delivery velocity while maintaining strict PR review standards.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "I drove the adoption of AI coding assistants (GitHub Copilot and Claude) across our engineering team by establishing best practices for unit test scaffolding, boilerplate generation, and complex query creation, resulting in an estimated 25-30% increase in sprint delivery velocity while maintaining strict PR review standards.",
+        "text": "I drove adoption of Copilot and Claude across our team, establishing prompt standards for test generation and boilerplate, lifting sprint velocity by ~25%."
+      }
+    },
+    "cloud_ai_platform_architecture": {
+      "patterns": [
+        "what cloud & ai platform architecture you have worked on",
+        "what cloud & ai platform architecture you have worked on?",
+        "cloud & ai platform architecture you have worked on",
+        "cloud & ai platform architecture",
+        "cloud and ai platform architecture you have worked on"
+      ],
+      "category": "technical",
+      "default": "Extensive experience architecting and deploying distributed microservices and LLM applications on AWS (ECS, EKS, Lambda, S3, RDS, Kafka). Integrated LangChain and LangGraph with Bedrock/OpenAI APIs, designing resilient agentic workflows with asynchronous event streaming and vector search.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "Extensive experience architecting and deploying distributed microservices and LLM applications on AWS (ECS, EKS, Lambda, S3, RDS, Kafka). Integrated LangChain and LangGraph with Bedrock/OpenAI APIs, designing resilient agentic workflows with asynchronous event streaming and vector search.",
+        "text": "AWS (ECS, EKS, Lambda, S3, RDS, Kafka), LangChain, LangGraph, Bedrock, Docker microservices."
+      }
+    },
+    "which_locations_willing_to_relocate": {
+      "patterns": [
+        "which of these locations are you willing to relocate to",
+        "which of these locations are you willing to relocate to?",
+        "which locations are you willing to relocate to",
+        "which location are you willing to relocate to",
+        "locations are you willing to relocate to"
+      ],
+      "category": "location",
+      "default": "Bangalore, Hyderabad, Pune, Remote",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Bangalore, Hyderabad, Pune, Remote",
+        "textarea": "Bangalore, Hyderabad, Pune, Remote",
+        "checkbox": "Bangalore; Hyderabad; Pune",
+        "radio": "Bangalore"
+      }
+    },
+    "education_discipline_field_of_study": {
+      "patterns": [
+        "discipline",
+        "field of study",
+        "major",
+        "area of study",
+        "graduation discipline"
+      ],
+      "category": "education",
+      "default": "Computer Science",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "Computer Science",
+        "text": "Computer Science",
+        "textarea": "Computer Science"
+      }
+    },
+    "currently_attend_institution": {
+      "patterns": [
+        "i currently attend this institution",
+        "currently attend this institution",
+        "currently enrolled in this institution",
+        "are you currently enrolled"
+      ],
+      "category": "education",
+      "default": "No",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "No",
+        "radio": "No",
+        "text": "No"
+      }
+    },
+    "bengaluru_office_location_alignment": {
+      "patterns": [
+        "how does this align with your location and ability to work",
+        "how does this align with your location and ability to work?",
+        "align with your location and ability to work",
+        "team members located near our bengaluru office",
+        "bengaluru office location alignment",
+        "nextiva bengaluru office location alignment",
+        "office location alignment",
+        "we are looking for team members located near our bengaluru office who are able to come into the office four days a week. how does this align with your location and ability to work?"
+      ],
+      "category": "location",
+      "default": "I live in Bengaluru and can work onsite/hybrid",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "I live in Bengaluru and can work onsite/hybrid",
+        "radio": "I live in Bengaluru and can work onsite/hybrid",
+        "text": "I live in Bengaluru and can work onsite/hybrid"
+      }
+    },
+    "experience_java_go_rust": {
+      "patterns": [
+        "how many years of experience do you have in java/ go/ rust",
+        "how many years of experience do you have in java/ go/ rust ?",
+        "how many years of experience do you have in java/go/rust",
+        "how many years of experience do you have in java / go / rust",
+        "years of experience do you have in java/ go/ rust",
+        "years of experience in java/ go/ rust",
+        "years of experience in java or go or rust",
+        "experience in java/ go/ rust",
+        "experience in java / go / rust",
+        "experience do you have in java/ go/ rust"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4.2",
+        "radio": "4.2 Years",
+        "select": "4.2 Years",
+        "textarea": "4.2 Years",
+        "checkbox": "Yes"
+      }
+    },
+    "wfo_bangalore_hsr_f2f_interview_location": {
+      "patterns": [
+        "this is a wfo opportunity in bangalore office (hsr layout) , interviews will be face to face round only, are you ready for it? where are you currently located? (apply only if you are ready for f2f round of interview)",
+        "this is a wfo opportunity in bangalore office (hsr layout) , interviews will be face to face round only, are you ready for it? where are you currently located?",
+        "this is a wfo opportunity in bangalore office (hsr layout), interviews will be face to face round only, are you ready for it? where are you currently located?",
+        "this is a wfo opportunity in bangalore office, interviews will be face to face round only, are you ready for it? where are you currently located?",
+        "interviews will be face to face round only, are you ready for it? where are you currently located?",
+        "interviews will be face to face round only, are you ready for it? where are you currently located",
+        "are you ready for f2f round of interview? where are you currently located?",
+        "are you ready for f2f round of interview? where are you currently located",
+        "are you ready for face to face round? where are you currently located?",
+        "where are you currently located? (apply only if you are ready for f2f round of interview)",
+        "wfo opportunity in bangalore office ... are you ready for it? where are you currently located",
+        "wfo opportunity in bangalore ... interviews will be face to face round only"
+      ],
+      "category": "preference",
+      "default": "Yes, I am ready for face-to-face interviews and WFO at Bangalore office (HSR layout). Currently located in Bangalore, India.",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "Yes, I am ready for face-to-face interviews and WFO at Bangalore office (HSR layout). Currently located in Bangalore, India.",
+        "textarea": "Yes, I am ready for face-to-face interviews and WFO at Bangalore office (HSR layout). Currently located in Bangalore, India.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "dsa_experience_brief": {
+      "patterns": [
+        "do you have experience in data structures and algorithm? give brief on the experience here",
+        "experience in data structures and algorithm? give brief on the experience here",
+        "give brief on the experience here",
+        "give brief on data structures and algorithm experience",
+        "give brief on data structures and algorithms experience"
+      ],
+      "category": "skills",
+      "default": "Yes, strong proficiency in Data Structures & Algorithms (Trees, Graphs, Dynamic Programming, HashMaps). Solved 400+ problems on LeetCode/GeeksforGeeks, regularly applying optimal time and space complexity patterns in production microservices.",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "text": "Yes, proficient in DSA with 400+ LeetCode problems solved; apply optimal algorithms in production",
+        "textarea": "Yes, I have strong proficiency in Data Structures and Algorithms including Trees, Graphs, Dynamic Programming, and Heaps. I have solved 400+ problems across LeetCode and GeeksforGeeks, and actively apply optimal algorithmic techniques for high-performance backend systems."
+      }
+    },
+    "how_soon_can_you_join_mention_in_days": {
+      "patterns": [
+        "how soon can you join ? (mention in days)",
+        "how soon can you join? (mention in days)",
+        "how soon can you join (mention in days)",
+        "how soon can you join in days",
+        "how soon can you join ? (in days)",
+        "how soon can you join? (in days)",
+        "how soon can you join (in days)",
+        "when can you join ? (mention in days)",
+        "when can you join (mention in days)",
+        "when can you join in days",
+        "how soon can you join? mention in days",
+        "how soon can you join, mention in days"
+      ],
+      "category": "notice_period",
+      "default": "15",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "15",
+        "number": "15",
+        "radio": "15",
+        "select": "15",
+        "textarea": "15 Days",
+        "checkbox": "Yes"
+      }
+    },
+    "expected_ctc_in_number_lpa": {
+      "patterns": [
+        "what is your expected ctc ? (answer in number- lpa, example- 7 if its 7 lpa)",
+        "what is your expected ctc? (answer in number- lpa, example- 7 if its 7 lpa)",
+        "what is your expected ctc (answer in number- lpa, example- 7 if its 7 lpa)",
+        "what is your expected ctc ? (answer in number- lpa",
+        "what is your expected ctc? (answer in number- lpa",
+        "expected ctc ? (answer in number- lpa, example- 7 if its 7 lpa)",
+        "expected ctc ? (answer in number- lpa",
+        "expected ctc (answer in number- lpa"
+      ],
+      "category": "salary",
+      "default": "30",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "30",
+        "number": "30",
+        "radio": "30",
+        "select": "30",
+        "textarea": "30",
+        "checkbox": "Yes"
+      }
+    },
+    "ok_to_attend_hackerearth": {
+      "patterns": [
+        "ok to attend hackerearth test",
+        "ok to attend hackerearth",
+        "ok to attend test",
+        "willing to attend hackerearth test",
+        "comfortable to attend hackerearth test",
+        "ready to attend hackerearth test",
+        "ok to attend assessment test"
+      ],
+      "category": "yes_no",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "explain_kubernetes_experience_detail": {
+      "patterns": [
+        "explain your experience in kubernetes in detail",
+        "describe your experience with kubernetes in detail",
+        "explain your kubernetes experience in detail",
+        "kubernetes experience in detail"
+      ],
+      "category": "technical",
+      "default": "I have 4.2 years of hands-on experience using Kubernetes in production environments. I design and manage containerized Spring Boot microservices, configure Deployments, StatefulSets, Services, and Ingress controllers, and implement Horizontal Pod Autoscalers (HPA) for high availability and dynamic scaling. I also maintain Helm charts for multi-environment CI/CD deployments and manage secrets, configmaps, and cluster observability.",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "I have 4.2 years of hands-on experience using Kubernetes in production environments. I design and manage containerized Spring Boot microservices, configure Deployments, StatefulSets, Services, and Ingress controllers, and implement Horizontal Pod Autoscalers (HPA) for high availability and dynamic scaling. I also maintain Helm charts for multi-environment CI/CD deployments and manage secrets, configmaps, and cluster observability.",
+        "textarea": "I have 4.2 years of hands-on experience using Kubernetes in production environments. I design and manage containerized Spring Boot microservices, configure Deployments, StatefulSets, Services, and Ingress controllers, and implement Horizontal Pod Autoscalers (HPA) for high availability and dynamic scaling. I also maintain Helm charts for multi-environment CI/CD deployments and manage secrets, configmaps, and cluster observability."
+      }
+    },
+    "ex_amazon_employee": {
+      "patterns": [
+        "are you an ex-amazon employee",
+        "are you an ex-amazon employee ? (apply if only ' yes')",
+        "ex-amazon employee",
+        "ex amazon employee",
+        "former amazon employee",
+        "ex-amazon candidate",
+        "ex- amazon candidate"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "ex_appian_employee": {
+      "patterns": [
+        "have you been employed by appian before",
+        "employed by appian before",
+        "have you worked at appian before",
+        "previously employed by appian",
+        "employed by appian"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "appian_visa_sponsorship_petition": {
+      "patterns": [
+        "require appian to file a petition or application for employment-based visa status",
+        "require appian to file a petition",
+        "petition or application for employment-based visa status on your behalf",
+        "petition or application for employment-based visa status"
+      ],
+      "category": "work_authorization",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "text": "No",
+        "checkbox": "No"
+      }
+    },
+    "variable_pay_ctc_frequency": {
+      "patterns": [
+        "please mention if you are having any variable pay with ctc and the frequency of recieving it",
+        "any variable pay with ctc and the frequency of recieving it",
+        "variable pay with ctc and the frequency",
+        "variable pay with ctc and the frequency of receiving it",
+        "variable pay with ctc",
+        "any variable pay with ctc"
+      ],
+      "category": "salary",
+      "default": "No variable pay, 100% fixed salary (23 LPA Fixed)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "No variable pay, 100% fixed salary",
+        "textarea": "No variable pay, 100% fixed salary (23 LPA Fixed)",
+        "number": "0",
+        "radio": "No",
+        "select": "No"
+      }
+    },
+    "tenth_percentage_score": {
+      "patterns": [
+        "10th %",
+        "10th score",
+        "10th percentage",
+        "ssc %",
+        "ssc percentage",
+        "tenth percentage",
+        "10th marks %"
+      ],
+      "category": "education",
+      "default": "88%",
+      "numeric_default": "88",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "88%",
+        "number": "88",
+        "textarea": "88%"
+      }
+    },
+    "twelfth_percentage_score": {
+      "patterns": [
+        "12th %",
+        "12th score",
+        "12th percentage",
+        "hsc %",
+        "hsc percentage",
+        "twelfth percentage",
+        "intermediate %",
+        "12th marks %"
+      ],
+      "category": "education",
+      "default": "85%",
+      "numeric_default": "85",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "85%",
+        "number": "85",
+        "textarea": "85%"
+      }
+    },
+    "graduation_percentage_score": {
+      "patterns": [
+        "grad %",
+        "graduation %",
+        "graduation percentage",
+        "b.tech %",
+        "ug %",
+        "undergraduate %"
+      ],
+      "category": "education",
+      "default": "85%",
+      "numeric_default": "85",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "85%",
+        "number": "85",
+        "textarea": "85%"
+      }
+    },
+    "post_graduation_percentage_score": {
+      "patterns": [
+        "pg % (write na if not pursued)",
+        "pg %",
+        "post graduation %",
+        "pg percentage",
+        "post graduation percentage",
+        "masters %"
+      ],
+      "category": "education",
+      "default": "NA",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "NA",
+        "textarea": "NA",
+        "number": "0"
+      }
+    },
+    "traffic_volume_handled": {
+      "patterns": [
+        "what traffic volume is your system currently handling",
+        "traffic volume is your system currently handling",
+        "traffic volume currently handling",
+        "traffic volume handling",
+        "what traffic volume",
+        "volume of traffic handled",
+        "what volume of traffic is your system currently handling"
+      ],
+      "category": "technical",
+      "default": "10M+ daily events (50,000+ peak RPM with sub-50ms latency)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "10M+ daily events (50k peak RPM)",
+        "textarea": "Currently handling 10M+ daily events with peak throughput of 50,000+ RPM and sub-50ms latency across distributed microservices.",
+        "number": "10000000"
+      }
+    },
+    "contractual_employment_arrangement_preference": {
+      "patterns": [
+        "which employment arrangement would you be interested in",
+        "this is a 6-month contractual role. which employment arrangement would you be interested in",
+        "contractual role. which employment arrangement would you be interested in",
+        "contractual role. which employment arrangement",
+        "6-month contractual role. which employment arrangement"
+      ],
+      "category": "preference",
+      "default": "Contract Full-time",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "Contract Full-time",
+        "select": "Contract Full-time",
+        "text": "Contract Full-time"
+      }
+    },
+    "highest_team_size_technically": {
+      "patterns": [
+        "what is the highest team size you handled - technically",
+        "highest team size you handled - technically",
+        "what is the highest team size you handled",
+        "highest team size you handled",
+        "highest team size handled technically",
+        "what is the highest team size you handled - technically? (not - people management, if you haven't handled, please mark as \"0\")"
+      ],
+      "category": "leadership",
+      "default": "8",
+      "numeric_default": "8",
+      "priority": 19,
+      "input_type_defaults": {
+        "number": "8",
+        "text": "8",
+        "textarea": "Technically led and mentored a team of 8 developers, conducting architecture design reviews and sprint planning.",
+        "radio": "8",
+        "select": "8"
+      }
+    },
+    "serving_notice_lwd_numeric_format": {
+      "patterns": [
+        "if you are serving notice period or your last working day is completed, please share the details",
+        "if you are serving notice period or your last working day is completed",
+        "then enter as 19102026, if not serving enter",
+        "last working days is /was 19th oct, 2026 then enter as 19102026",
+        "enter as 19102026",
+        "if not serving enter \"0\""
+      ],
+      "category": "notice_period",
+      "default": "23102026",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "23102026",
+        "number": "23102026",
+        "textarea": "23102026"
+      }
+    },
+    "notice_period_numbered_options": {
+      "patterns": [
+        "what is your notice period? option (1) -- 90 days",
+        "option (1) -- 90 days, (2) -- 60 days, (3) -- 45 days, (4) -- 30 days, (5) -- less than 15 days, (6) --serving notice period",
+        "option (1) -- 90 days",
+        "serving notice period, (7) - immediate joiner"
+      ],
+      "category": "notice_period",
+      "default": "(6) --Serving Notice Period",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "(6) --Serving Notice Period",
+        "select": "(6) --Serving Notice Period",
+        "radio": "(6) --Serving Notice Period"
+      }
+    },
+    "select_all_prior_experience_technologies": {
+      "patterns": [
+        "select all the options you have prior experience with",
+        "select all options you have prior experience with",
+        "select all the options you have experience with",
+        "select all options you have experience with"
+      ],
+      "category": "skills",
+      "default": "Java, JavaScript, AWS, MongoDB, MySQL",
+      "priority": 19,
+      "input_type_defaults": {
+        "checkbox": "Java, JavaScript, AWS, MongoDB, MySQL",
+        "select": "Java, JavaScript, AWS, MongoDB, MySQL",
+        "text": "Java, JavaScript, AWS, MongoDB, MySQL"
+      }
+    },
+    "why_work_with_supersourcing": {
+      "patterns": [
+        "what excites you about working with supersourcing",
+        "why do you want to work with supersourcing",
+        "what excites you about supersourcing",
+        "why work with supersourcing"
+      ],
+      "category": "preference",
+      "default": "I am excited by Supersourcing's mission to connect elite engineering talent with high-impact global products. With my strong background in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and cloud deployments at Everbridge, I look forward to delivering robust, scalable solutions for innovative technology enterprises.",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "I am excited by Supersourcing's mission to connect top engineers with high-impact global products, and look forward to contributing my Java and cloud backend expertise.",
+        "textarea": "I am excited by Supersourcing's mission to connect elite engineering talent with high-impact global products. With my strong background in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and cloud deployments at Everbridge, I look forward to delivering robust, scalable solutions for innovative technology enterprises."
+      }
+    },
+    "ai_tools_experience_and_usage": {
+      "patterns": [
+        "how many years of experience do you have with ai tools & usage? please specify tools you have used",
+        "experience do you have with ai tools & usage",
+        "experience with ai tools & usage? please specify tools you have used",
+        "ai tools & usage? please specify tools you have used",
+        "ai tools & usage"
+      ],
+      "category": "skills",
+      "default": "4.2 Years (GitHub Copilot, ChatGPT, Claude, LangChain, Cursor)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "4.2 Years (GitHub Copilot, ChatGPT, Claude, LangChain, Cursor)",
+        "textarea": "I have 4.2 years of professional experience using AI tools including GitHub Copilot, ChatGPT, Claude Code, LangChain, and Cursor for code generation, API documentation, unit test writing, and building agentic workflows.",
+        "number": "4.2"
+      }
+    },
+    "built_product_zero_to_one_role": {
+      "patterns": [
+        "have you built any product or platform from 0 to 1? what was your role",
+        "have you built any product or platform from 0 to 1",
+        "built any product or platform from 0 to 1? what was your role",
+        "built a product from 0 to 1? what was your role",
+        "built any product or platform from 0 to 1"
+      ],
+      "category": "experience",
+      "default": "Yes, as SDE-2/Lead Backend Engineer at Everbridge, I architected and built our real-time event pipeline and settlement microservices from ground up (0 to 1), handling architecture design, database schema, Kafka streaming, and production deployment.",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "text": "Yes, SDE-2 / Backend Lead designing microservices and event pipelines from 0 to 1",
+        "textarea": "Yes, as SDE-2 / Lead Backend Engineer, I architected and built core microservices and event processing pipelines from 0 to 1, leading technical design, data modeling, API integration, and production deployment."
+      }
+    },
+    "instahyre_section_headers": {
+      "patterns": [
+        "behavioral questions to assess how you have handled specific employment-related situations in your previous jobs",
+        "behavioral questions to assess how you have handled specific employment-related situations",
+        "behavioral questions to assess how you have handled",
+        "technical questions to understand what technologies you have worked on in the past",
+        "technical questions to understand what technologies you have worked on",
+        "technical questions to understand what technologies",
+        "miscellaneous questions"
+      ],
+      "category": "skip",
+      "default": "N/A",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "N/A",
+        "textarea": "N/A",
+        "radio": "N/A",
+        "select": "N/A"
+      }
+    },
+    "relocate_gurugram_city_selection": {
+      "patterns": [
+        "please select the city you are currently residing or willing to relocate to gurugram",
+        "city you are currently residing or willing to relocate to gurugram",
+        "currently residing or willing to relocate to gurugram"
+      ],
+      "category": "location",
+      "default": "Bengaluru (Willing to relocate to Gurugram)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "Bengaluru (Willing to relocate to Gurugram)",
+        "textarea": "Currently residing in Bengaluru, and 100% open and willing to relocate to Gurugram.",
+        "select": "Gurugram",
+        "radio": "Gurugram"
+      }
+    },
+    "hear_about_appian": {
+      "patterns": [
+        "how did you hear about appian",
+        "how did you hear about appian?"
+      ],
+      "category": "preference",
+      "default": "LinkedIn",
+      "priority": 19,
+      "input_type_defaults": {
+        "radio": "LinkedIn",
+        "select": "LinkedIn",
+        "text": "LinkedIn"
       }
     }
   },

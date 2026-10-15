@@ -9,7 +9,7 @@ This module provides intelligent answer resolution that considers:
 """
 
 from difflib import SequenceMatcher
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 import re

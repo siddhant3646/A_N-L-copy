@@ -680,6 +680,217 @@
         "experience"
       ]
     },
+    "current_ctc_lakh_per_annum": {
+      "patterns": [
+        "current ctc (in lakh per annum): ctc includes fix salary , variable pay, pf and any other components",
+        "current ctc (in lakh per annum): ctc includes fix salary, variable pay, pf and any other components",
+        "current ctc (in lakh per annum): ctc includes fixed salary, variable pay, pf and any other components",
+        "current ctc (in lakh per annum)",
+        "current ctc in lakh per annum",
+        "current ctc (in lpa)",
+        "current ctc in lpa",
+        "current ctc (in lakhs)",
+        "current ctc in lakhs"
+      ],
+      "category": "salary",
+      "default": "23 LPA",
+      "numeric_default": "23",
+      "priority": 18,
+      "negative_patterns": [
+        "expected",
+        "expect",
+        "ectc",
+        "desired"
+      ],
+      "input_type_defaults": {
+        "radio": "23",
+        "select": "23 LPA",
+        "text": "23 LPA",
+        "number": "23",
+        "text_inr": "2300000",
+        "textarea": "23 LPA",
+        "checkbox": "Yes"
+      }
+    },
+    "expected_ctc_lakh_per_annum": {
+      "patterns": [
+        "expected ctc (in lakh per annum): ctc includes fix salary , variable pay, pf and any other components",
+        "expected ctc (in lakh per annum): ctc includes fix salary, variable pay, pf and any other components",
+        "expected ctc (in lakh per annum): ctc includes fixed salary, variable pay, pf and any other components",
+        "expected ctc (in lakh per annum)",
+        "expected ctc in lakh per annum",
+        "expected ctc (in lpa)",
+        "expected ctc in lpa",
+        "expected ctc (in lakhs)",
+        "expected ctc in lakhs"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "numeric_default": "30",
+      "priority": 18,
+      "negative_patterns": [
+        "current",
+        "cctc",
+        "present"
+      ],
+      "input_type_defaults": {
+        "radio": "30",
+        "select": "30 LPA",
+        "text": "30 LPA",
+        "number": "30",
+        "text_inr": "3000000",
+        "textarea": "30 LPA",
+        "checkbox": "Yes"
+      }
+    },
+    "backend_java_developer_experience": {
+      "patterns": [
+        "how many years of experience do you have as backend java developer ?",
+        "how many years of experience do you have as backend java developer",
+        "years of experience do you have as backend java developer",
+        "experience as backend java developer",
+        "backend java developer experience",
+        "backend java developer",
+        "backend developer java"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 15,
+      "platform_overrides": {
+        "linkedin": "4",
+        "indeed": "4",
+        "hirist": "4",
+        "naukri": "4.2 Years"
+      },
+      "input_type_defaults": {
+        "radio": "3-6 years",
+        "select": "3-6 years",
+        "text": "4.2 Years",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience as Backend Java Developer",
+        "checkbox": "Yes"
+      }
+    },
+    "react_js_developer_experience": {
+      "patterns": [
+        "how many years of experience do you have as react js developer ?",
+        "how many years of experience do you have as react js developer",
+        "years of experience do you have as react js developer",
+        "experience as react js developer",
+        "react js developer experience",
+        "react developer experience",
+        "react js developer"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 15,
+      "platform_overrides": {
+        "linkedin": "4",
+        "indeed": "4",
+        "hirist": "4",
+        "naukri": "4.2 Years"
+      },
+      "input_type_defaults": {
+        "radio": "2-5 years",
+        "select": "2-5 years",
+        "text": "4.2 Years",
+        "number": "4.2",
+        "textarea": "4.2 Years of experience with React.js",
+        "checkbox": "Yes"
+      }
+    },
+    "work_auth_country_reside": {
+      "patterns": [
+        "are you legally authorized to work in the country you reside?",
+        "are you legally authorized to work in the country you reside",
+        "are you legally authorized to work in the country where you reside?",
+        "are you legally authorized to work in the country where you reside",
+        "are you legally authorized to work in your country of residence?",
+        "are you legally authorized to work in your country of residence",
+        "legally authorized to work in the country you reside",
+        "legally authorized to work in your country of residence",
+        "authorized to work in the country you reside",
+        "authorized to work in your country of residence"
+      ],
+      "category": "work_authorization",
+      "default": "Yes",
+      "priority": 18,
+      "negative_patterns": [
+        "sponsorship",
+        "visa",
+        "require sponsorship",
+        "united states",
+        "u.s."
+      ],
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "checkbox": "Yes"
+      }
+    },
+    "ai_tools_frameworks_used": {
+      "patterns": [
+        "which ai tools/frameworks have you used? (example: github copilot, cursor, chatgpt, claude, langchain, mcp servers, n8n, vector dbs, etc.)",
+        "which ai tools/frameworks have you used",
+        "which ai tools have you used",
+        "what ai tools have you used",
+        "which ai tools or frameworks have you used",
+        "ai tools/frameworks have you used",
+        "ai tools have you used"
+      ],
+      "category": "technical",
+      "default": "GitHub Copilot, Cursor, ChatGPT, Claude, LangChain, MCP servers, Vector DBs",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "GitHub Copilot, Cursor, ChatGPT, Claude, LangChain, MCP servers, Vector DBs",
+        "textarea": "GitHub Copilot, Cursor, ChatGPT, Claude, LangChain, MCP servers, Vector DBs",
+        "radio": "GitHub Copilot",
+        "select": "GitHub Copilot",
+        "checkbox": "Yes"
+      }
+    },
+    "familiar_with_dsa": {
+      "patterns": [
+        "familiar with data structures & algorithms? (select which is applicable from the options)",
+        "familiar with data structures & algorithms",
+        "familiar with data structures and algorithms",
+        "data structures & algorithms? (select which is applicable from the options)",
+        "data structures and algorithms? (select which is applicable from the options)",
+        "familiar with dsa"
+      ],
+      "category": "technical",
+      "default": "Dynamic Programming",
+      "priority": 18,
+      "input_type_defaults": {
+        "checkbox": "Dynamic Programming",
+        "radio": "Dynamic Programming",
+        "select": "Dynamic Programming",
+        "text": "Dynamic Programming, Trees and BST, Graph Algorithms, Time Complexity Analysis",
+        "textarea": "Strong proficiency in Data Structures and Algorithms including Dynamic Programming, Trees and BST, Graph Algorithms, and Time Complexity Analysis with 400+ solved problems."
+      }
+    },
+    "familiar_with_aiml_frameworks": {
+      "patterns": [
+        "familiar with ai / ml fundamentals & frameworks ? (select which is applicable from the options)",
+        "familiar with ai / ml fundamentals & frameworks",
+        "familiar with ai / ml fundamentals and frameworks",
+        "familiar with ai/ml fundamentals & frameworks",
+        "ai / ml fundamentals & frameworks ? (select which is applicable from the options)",
+        "familiar with ai / ml",
+        "familiar with machine learning"
+      ],
+      "category": "technical",
+      "default": "LLMs",
+      "priority": 18,
+      "input_type_defaults": {
+        "checkbox": "LLMs",
+        "radio": "LLMs",
+        "select": "LLMs",
+        "text": "LLMs, PyTorch, Hugging Face, Deploying production AI/ML or LLM-based applications",
+        "textarea": "Hands-on experience with LLMs, PyTorch, Hugging Face, and deploying production AI/ML and LLM-based applications."
+      }
+    },
     "notice_period": {
       "patterns": [
         "how long is your notice period",
@@ -3557,6 +3768,17 @@
       "category": "salary",
       "default": "0",
       "priority": 20,
+      "negative_patterns": [
+        "ctc includes",
+        "salary includes",
+        "total ctc",
+        "total salary",
+        "total annual ctc",
+        "total fixed + variable",
+        "total fixed+variable",
+        "fixed + variable ctc",
+        "fixed+variable ctc"
+      ],
       "input_type_defaults": {
         "radio": "0",
         "select": "0",

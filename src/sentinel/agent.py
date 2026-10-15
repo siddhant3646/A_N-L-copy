@@ -15614,13 +15614,13 @@ return resolveDynamic(bestMatch);
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
                                 if (!resolvedAnswer || (/[a-zA-Z]/.test(resolvedAnswer || '') && (isNumberError || has20CharLimit)) || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && /last working day|lwd|official last|notice|join/i.test(lowerLabel))) {
                                     if (/last working day|lwd|official last|notice|np|how soon|join|serving/i.test(lowerLabel)) resolvedAnswer = '15';
-                                    else if (/first\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
-                                    else if (/last\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
+                                    else if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
+                                    else if (/last\\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
-                                    else if (/your\s*title|job\s*title|designation|role\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
+                                    else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
-                                    else if (/work\s*mode|workplace|mode\s*of\s*work|working\s*model|work\s*type|work\s*preference/i.test(lowerLabel) || /work\s*mode|workplace|mode\s*of\s*work|working\s*model|work\s*type|work\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
+                                    else if (/work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel) || /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
                                     else if (isNumberError || isInvalidError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }
                                 

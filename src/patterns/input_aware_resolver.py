@@ -47,6 +47,10 @@ class MatchResult:
         if self.alternatives is None:
             self.alternatives = []
 
+    @property
+    def selected_option(self) -> str:
+        return self.matched_option.label if self.matched_option else ""
+
 
 class NumericRangeMatcher:
     """Matches numeric values to range options like '3-5 years'."""
@@ -54,7 +58,9 @@ class NumericRangeMatcher:
     RANGE_PATTERNS = [
         (r'(\d+(?:\.\d+)?)\s*[-–to]+\s*(\d+(?:\.\d+)?)', 'range'),
         (r'(\d+(?:\.\d+)?)\s*\+', 'min'),
-        (r'(?:less than|under|below)\s*(\d+(?:\.\d+)?)', 'max'),
+        (r'(?:more\s+than|over|above|>|^>\s*)\s*(\d+(?:\.\d+)?)', 'min'),
+        (r'(?:less\s+than|under|below|<|^<\s*)\s*(\d+(?:\.\d+)?)', 'max'),
+        (r'(\d+(?:\.\d+)?)\s*(?:days?|months?|weeks?|years?|yrs?)?\s*(?:or\s+less|or\s+below|and\s+below|and\s+less)\b', 'max'),
         (r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)', 'min'),
     ]
     
@@ -139,7 +145,7 @@ class InputAwareResolver:
         'senior': ['4', '4-5', '5', '5+', 'senior', 'lead'],
         
         'immediate': ['0', 'immediate', 'now', 'immediately', 'immediate joiner'],
-        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'serving notice', 'serving notice period', 'currently serving'],
+        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than 15 days', '15-30', '15-30 days', '15 - 30 days', '15 to 30 days', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'serving notice', 'serving notice period', 'currently serving'],
         'standard': ['30', '30 days', '1 month', 'one month', 'standard'],
         'long': ['60', '60 days', '2 months', '90', '90 days', '3 months'],
         
@@ -171,13 +177,45 @@ class InputAwareResolver:
         self.threshold = threshold
         self.range_matcher = NumericRangeMatcher()
     
+    def resolve_answer(
+        self,
+        answer: str,
+        input_type: Union[InputType, str] = "radio",
+        options: List[Union[Option, str]] = None,
+        question: str = ""
+    ):
+        """Convenience method returning an object with .selected_option and .matched_option."""
+        norm_options = []
+        if options:
+            for i, opt in enumerate(options):
+                if isinstance(opt, Option):
+                    norm_options.append(opt)
+                else:
+                    norm_options.append(Option(value=str(opt), label=str(opt), index=i))
+        match_res = self.resolve(answer, input_type, norm_options, question=question)
+        
+        class _AnswerResult:
+            def __init__(self, mr):
+                self.matched_option = mr.matched_option
+                self.selected_option = mr.matched_option.label if (mr and mr.matched_option) else answer
+                self.confidence = mr.confidence if mr else 0.5
+                self.match_type = mr.match_type if mr else "fallback"
+                self.original_answer = mr.original_answer if mr else answer
+        return _AnswerResult(match_res)
+
     def resolve(
         self,
         answer: str,
-        input_type: InputType,
-        options: List[Option] = None,
+        input_type: Union[InputType, str],
+        options: List[Union[Option, str]] = None,
         question: str = ""
     ) -> MatchResult:
+        if isinstance(input_type, str):
+            try:
+                input_type = InputType(input_type.lower())
+            except ValueError:
+                input_type = InputType.RADIO
+
         if input_type in [InputType.TEXT, InputType.TEXTAREA, InputType.EMAIL, InputType.TEL]:
             return MatchResult(
                 matched_option=Option(value=answer, label=answer),
@@ -202,8 +240,13 @@ class InputAwareResolver:
                 match_type='fallback',
                 original_answer=answer
             )
+
+        resolved_options = [
+            Option(value=str(o), label=str(o), index=i) if not isinstance(o, Option) else o
+            for i, o in enumerate(options)
+        ]
         
-        return self._match_to_options(answer, options, question)
+        return self._match_to_options(answer, resolved_options, question)
     
     def _match_to_options(
         self,
@@ -282,6 +325,27 @@ class InputAwareResolver:
                         original_answer=answer
                     )
 
+        # Notice period / availability option matching
+        if ql and ('notice' in ql or 'join' in ql or 'availability' in ql):
+            for opt in options:
+                lbl = opt.label.lower().strip()
+                if any(k in lbl for k in ['serving notice', 'currently serving', 'serving np']):
+                    return MatchResult(
+                        matched_option=opt,
+                        confidence=0.98,
+                        match_type='notice_serving',
+                        original_answer=answer
+                    )
+            for opt in options:
+                lbl = opt.label.lower().strip()
+                if any(k in lbl for k in ['15 days or less', '<= 15 days', 'less than 15 days', '< 15 days', 'within 15 days', '15 days', '15-30 days', 'immediate joiner', 'immediately available', 'immediate', '< 1 month', '<= 1 month', 'less than a month']):
+                    return MatchResult(
+                        matched_option=opt,
+                        confidence=0.98,
+                        match_type='notice_short',
+                        original_answer=answer
+                    )
+
         for opt in options:
             if opt.label.lower() == answer_lower:
                 return MatchResult(
@@ -294,18 +358,30 @@ class InputAwareResolver:
         answer_num = self._extract_number(answer)
         if answer_num:
             matching_ranges = []
+            all_ranges = []
             for opt in options:
                 range_info = self.range_matcher.extract_range(opt.label)
-                if range_info and self.range_matcher.value_in_range(float(answer_num), range_info):
-                    min_val = range_info[0]
-                    distance_from_min = abs(float(answer_num) - min_val)
-                    matching_ranges.append((opt, distance_from_min))
+                if range_info:
+                    min_val, max_val, _ = range_info
+                    dist = 0 if (min_val <= float(answer_num) <= max_val) else min(abs(float(answer_num) - min_val), abs(float(answer_num) - max_val))
+                    all_ranges.append((opt, dist))
+                    if self.range_matcher.value_in_range(float(answer_num), range_info):
+                        distance_from_min = abs(float(answer_num) - min_val)
+                        matching_ranges.append((opt, distance_from_min))
             if matching_ranges:
                 matching_ranges.sort(key=lambda x: x[1])
                 return MatchResult(
                     matched_option=matching_ranges[0][0],
                     confidence=0.95,
                     match_type='numeric_range',
+                    original_answer=answer
+                )
+            elif all_ranges:
+                all_ranges.sort(key=lambda x: x[1])
+                return MatchResult(
+                    matched_option=all_ranges[0][0],
+                    confidence=0.90,
+                    match_type='numeric_range_closest',
                     original_answer=answer
                 )
 
@@ -420,3 +496,6 @@ class InputAwareResolver:
                 elif min_val <= value <= max_val:
                     return opt
         return None
+
+    resolve_answer = resolve
+

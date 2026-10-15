@@ -340,7 +340,7 @@ class TestQANewPlatformPatterns(unittest.TestCase):
     def test_kafka_event_streaming(self):
         questions = [
             'Have you worked with Kafka event streaming?',
-            'Years of experience in Apache Kafka / Event streaming?',
+            'Experience in Apache Spark and Apache Flink',
             'Real-time streaming pipelines with Kafka'
         ]
         for q in questions:
@@ -350,6 +350,21 @@ class TestQANewPlatformPatterns(unittest.TestCase):
 
             ans, score = self.agent._fuzzy_match_question(q)
             self.assertIn('Kafka', ans)
+            self.assertGreaterEqual(score, 0.90)
+
+    def test_kafka_quantitative_experience_returns_years(self):
+        questions = [
+            'How many years of experience do you have in Kafka & Elasticsearch (in Years)?',
+            'Years of experience in Apache Kafka / Event streaming?',
+            'Years of experience in Kafka'
+        ]
+        for q in questions:
+            res = self.matcher.match_with_details(q)
+            self.assertTrue(res['matched'], f"PatternMatcher failed on: {q}")
+            self.assertEqual(res['answer'], '4.2 Years')
+
+            ans, score = self.agent._fuzzy_match_question(q)
+            self.assertEqual(ans, '4.2 Years')
             self.assertGreaterEqual(score, 0.90)
 
     def test_production_oncall_support(self):
@@ -539,6 +554,120 @@ class TestQANewPlatformPatterns(unittest.TestCase):
         res8 = self.matcher.match_with_details('Preference of work OS (Mac / Linux / Windows)?')
         self.assertTrue(res8['matched'])
         self.assertIn('Mac', res8['answer'])
+
+    # ==========================================
+    # 12. Indeed & Hirist Platform Support
+    # ==========================================
+    def test_detect_platform_indeed_hirist(self):
+        import types
+        agent = self.agent
+        original_page = agent._page
+        try:
+            agent._page = types.SimpleNamespace(url='https://in.indeed.com/jobs?q=java')
+            self.assertEqual(agent._detect_platform(), 'indeed')
+
+            agent._page = types.SimpleNamespace(url='https://www.hirist.tech/jobfeed')
+            self.assertEqual(agent._detect_platform(), 'hirist')
+
+            agent._page = types.SimpleNamespace(url='https://www.linkedin.com/jobs/')
+            self.assertEqual(agent._detect_platform(), 'linkedin')
+
+            agent._page = types.SimpleNamespace(url='https://www.instahyre.com/candidate/inbox/')
+            self.assertEqual(agent._detect_platform(), 'instahyre')
+        finally:
+            agent._page = original_page
+            agent._current_platform = 'default'
+
+    def test_indeed_hirist_numeric_experience_formatting(self):
+        import types
+        agent = self.agent
+        original_page = agent._page
+        cases = [
+            ('https://in.indeed.com/jobs', '4'),
+            ('https://www.hirist.tech/jobfeed', '4'),
+            ('https://www.linkedin.com/jobs/', '4'),
+            ('https://www.naukri.com/mnjuser/recommendedjobs', '4.2 Years'),
+        ]
+        try:
+            for url, expected in cases:
+                agent._page = types.SimpleNamespace(url=url)
+                ans, score = agent._fuzzy_match_question('yoe in java')
+                self.assertEqual(ans, expected, f"{url} -> expected {expected}, got {ans}")
+        finally:
+            agent._page = original_page
+            agent._current_platform = 'default'
+
+    def test_new_platform_handlers_exist(self):
+        import inspect as _inspect
+        for name in (
+            '_handle_indeed_apply_task',
+            '_handle_hirist_apply_task',
+            '_indeed_run_apply_flow',
+            '_hirist_click_apply',
+        ):
+            method = getattr(SentinelAgent, name, None)
+            self.assertIsNotNone(method, f"{name} is missing")
+            self.assertTrue(_inspect.iscoroutinefunction(method), f"{name} is not async")
+
+    def test_prompts_define_new_platform_tasks(self):
+        from src.sentinel import prompts
+        self.assertTrue(hasattr(prompts, 'INDEED_JOB_APPLY_TASK'))
+        self.assertTrue(hasattr(prompts, 'HIRIST_JOB_APPLY_TASK'))
+        self.assertIn('indeed', prompts.INDEED_JOB_APPLY_TASK.lower())
+        self.assertIn('hirist', prompts.HIRIST_JOB_APPLY_TASK.lower())
+        self.assertIn('data-jk', prompts.INDEED_JOB_APPLY_TASK.lower())
+        self.assertIn('/j/', prompts.HIRIST_JOB_APPLY_TASK)
+
+    def test_indeed_answer_questions_drives_frame_setters(self):
+        """The Indeed question loop must resolve answers via the Sentinel QA
+        engine and then invoke the frame setters for each question type."""
+        import asyncio
+        import types
+
+        class _FakeFrame:
+            def __init__(self, questions):
+                self._questions = questions
+                self._first = True
+                self.calls = []
+
+            async def evaluate(self, script, arg=None):
+                self.calls.append((script, arg))
+                if self._first:
+                    self._first = False
+                    return self._questions
+                return None
+
+            async def query_selector_all(self, selector):
+                return []
+
+        agent = self.agent
+        questions = [
+            {"qid": "sntlq_0", "question": "What is your total experience?",
+             "hasInput": True, "hasSelect": False, "hasRadios": False, "options": []},
+            {"qid": "sntlq_1", "question": "Are you authorized to work in India?",
+             "hasInput": False, "hasSelect": False, "hasRadios": True,
+             "options": [{"value": "Yes", "text": "Yes"}, {"value": "No", "text": "No"}]},
+            {"qid": "sntlq_2", "question": "How many years of notice period do you have?",
+             "hasInput": False, "hasSelect": True, "hasRadios": False,
+             "options": [{"value": "0", "text": "Immediate"}, {"value": "15", "text": "15 Days"}]},
+        ]
+        frame = _FakeFrame(questions)
+        original_page = agent._page
+        try:
+            agent._page = types.SimpleNamespace(url='https://in.indeed.com/jobs')
+            asyncio.run(agent._indeed_answer_questions(frame))
+        finally:
+            agent._page = original_page
+            agent._current_platform = 'default'
+
+        # First evaluate is the scan; every later evaluate with args is a setter.
+        setter_calls = [c for c in frame.calls[1:] if c[1]]
+        set_qids = {c[1][0] for c in setter_calls}
+        self.assertIn('sntlq_0', set_qids)
+        self.assertIn('sntlq_1', set_qids)
+        # Every setter must carry a non-empty answer resolved by the QA engine.
+        for _script, args in setter_calls:
+            self.assertTrue(str(args[1]).strip(), f"empty answer for {args[0]}")
 
 
 if __name__ == '__main__':

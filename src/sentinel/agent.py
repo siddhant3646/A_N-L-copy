@@ -77,65 +77,36 @@ class SentinelAgent:
         "source", "job_id_or_url",
     ]
 
-    # Instahyre skill pools. Each task run randomly picks 8 from LANGUAGES and
-    # 7 from TOOLS (15 total) so every application session presents a varied,
-    # natural-looking profile instead of an identical fixed list.
+    # Instahyre skill pools: Top 30 Languages / Core Stack and Top 30 Cloud, Frameworks & Infrastructure.
+    # Main search task uses a static, high-yield 15-skill list (8 languages + 7 frameworks).
+    # Intersession task dynamically draws a stable random 8 languages and 7 frameworks per run.
     INSTAHYRE_SKILL_LANGUAGES = [
-        # Programming & Scripting Languages
-        "Java", "Java 17", "Java 21", "Core Java", "JVM", "Python", "JavaScript", "TypeScript",
-        "Golang", "Go", "C++", "C#", "SQL", "Kotlin", "Scala", "Rust", "Shell Scripting", "Bash",
-        # Backend Frameworks, APIs & Runtimes
-        "Node.js", "NodeJS", "Spring", "Spring Boot", "Spring Cloud", "Spring Security",
-        "Spring Data JPA", "Spring MVC", "Spring WebFlux", "Hibernate", "JPA", "Microservices",
-        "RESTful APIs", "REST API", "gRPC", "GraphQL", "SOAP", "Fastify", "Express.js", "NestJS",
-        "Django", "FastAPI", "Flask", "Dropwizard", "Micronaut", "Quarkus", "Reactive Programming",
-        # Frontend Frameworks, Libraries & Web Technologies
-        "React", "React.js", "ReactJS", "Redux", "Redux Toolkit", "Next.js", "HTML5", "CSS3",
-        "Tailwind CSS", "Bootstrap", "Material UI", "WebSockets", "Front-End Development", "Full Stack",
-        # Architecture, System Design & Engineering Principles
-        "System Design", "High-Level Design (HLD)", "Low-Level Design (LLD)",
-        "Object-Oriented Programming (OOP)", "SOLID Principles", "Design Patterns",
-        "Distributed Systems", "Event-Driven Architecture", "Service-Oriented Architecture (SOA)",
-        "Domain-Driven Design (DDD)", "Microservices Architecture", "CAP Theorem", "BASE Properties",
-        "Concurrency", "Multithreading", "Rate Limiting", "Load Balancing", "Caching Strategies",
-        "Data Consistency", "High Availability", "Fault Tolerance", "Scalability",
-        # Generative AI, LLMs & Machine Learning
-        "Generative AI", "Large Language Models (LLMs)", "RAG (Retrieval-Augmented Generation)",
-        "LangChain", "LlamaIndex", "Hugging Face", "OpenAI API", "Ollama", "DeepSeek", "Qwen",
-        "Gemma", "Vector Search", "Semantic Search", "Prompt Engineering", "Computer Vision",
-        "YOLO", "MediaPipe", "PyTorch", "Machine Learning", "AI Platform",
+        "Python", "Java", "SQL", "JavaScript", "TypeScript", "Go", "Golang",
+        "C#", "C++", "HTML5", "CSS3", "HTML", "CSS", "Bash", "Shell",
+        "Kotlin", "Scala", "Rust", "PHP", "Ruby", "Swift", "Dart",
+        "R", "Perl", "MS SQL Server", "SQL Server", "SQL*Plus", "SQL Tuning",
+        "J2EE", "JVM",
     ]
     INSTAHYRE_SKILL_TOOLS = [
-        # Build Tools & Package Managers
-        "Webpack", "Vite", "NPM", "Yarn", "Maven", "Gradle",
-        # Databases (Relational, NoSQL, Vector) & DB Optimization
-        "Relational Databases (RDBMS)", "MySQL", "PostgreSQL", "Oracle SQL", "MS SQL Server",
-        "NoSQL", "MongoDB", "Cassandra", "Redis", "DynamoDB", "Elasticsearch", "OpenSearch",
-        "Memcached", "Database Indexing", "Query Optimization", "Database Sharding",
-        "Connection Pooling", "Replication", "Vector Databases", "ChromaDB", "Pinecone", "Milvus",
-        # Messaging, Streaming & Data Engineering
-        "Apache Kafka", "Kafka Streams", "Apache Flink", "Apache Spark", "Spark Streaming",
-        "Apache Airflow", "Apache Storm", "RabbitMQ", "ActiveMQ", "AWS SQS", "AWS SNS",
-        "Pub/Sub", "Event Streaming", "Data Streaming", "Real-Time Analytics", "ETL Pipelines",
-        "Data Engineering", "DBT (Data Build Tool)", "Data Warehousing", "Snowflake",
-        # Cloud Platforms & Cloud Infrastructure
-        "AWS", "Amazon Web Services", "Microsoft Azure", "GCP (Google Cloud Platform)",
-        "Cloud Computing", "Amazon EC2", "AWS S3", "AWS Lambda", "AWS RDS", "AWS CloudWatch",
-        "AWS ECS", "AWS EKS", "AWS IAM", "AWS API Gateway", "Cloud Architecture", "Serverless",
-        "PCF (Pivotal Cloud Foundry)", "Azure DevOps", "Azure Functions", "Azure Blob Storage",
-        # DevOps, CI/CD, Containerization, Infrastructure as Code & VCS
-        "Docker", "Kubernetes (K8s)", "CI/CD", "Jenkins", "GitLab CI", "GitHub Actions",
-        "Terraform", "Ansible", "Helm", "Linux", "Git", "GitHub", "GitLab", "Bitbucket",
-        "Containerization", "Orchestration", "Infrastructure as Code (IaC)", "DevOps",
-        # Observability, Monitoring & APM
-        "Splunk", "Grafana", "Prometheus", "ELK Stack", "Datadog", "New Relic",
-        "Distributed Tracing", "APM (Application Performance Monitoring)", "OpenTelemetry",
-        # Security, Compliance & Authentication
-        "Fortify", "SonarQube", "Application Security", "SAST / DAST", "SOC 2",
-        "FedRAMP", "OWASP Top 10", "OAuth 2.0", "JWT (JSON Web Tokens)",
+        "Amazon Web Services", "Google Cloud", "AWS", "Microsoft Azure", "Azure",
+        "GCP", "CI/CD", "DevOps", "NoSQL", "PostgreSQL",
+        "Microservices", "Kubernetes", "React", "React.js", "MongoDB",
+        "Docker", "Node.js", "Kafka", "MySQL", "Apache Kafka",
+        "Spring Boot", "Terraform", "Spring", "Jenkins", "Selenium",
+        "Redis", "Next.js", "Redux", "Django", "FastAPI",
     ]
+    INSTAHYRE_SKILL_FRAMEWORKS = INSTAHYRE_SKILL_TOOLS  # Alias for frameworks/cloud pool
+
     INSTAHYRE_SKILL_LANGUAGES_COUNT = 8
     INSTAHYRE_SKILL_TOOLS_COUNT = 7
+
+    INSTAHYRE_STATIC_LANGUAGES = [
+        "Python", "Java", "SQL", "JavaScript", "TypeScript", "Go", "C#", "HTML5",
+    ]
+    INSTAHYRE_STATIC_FRAMEWORKS = [
+        "Amazon Web Services", "Google Cloud", "Microsoft Azure", "AWS", "PostgreSQL", "Microservices", "Kubernetes",
+    ]
+    INSTAHYRE_STATIC_SKILLS = INSTAHYRE_STATIC_LANGUAGES + INSTAHYRE_STATIC_FRAMEWORKS
     
     def __init__(self, browser=None):
         self.browser = browser
@@ -145,7 +116,8 @@ class SentinelAgent:
         self.linkedin_applications = 0
         self.linkedin_rate_limit_until = None  # Timestamp when LinkedIn can resume
         self.naukri_rate_limit_until = None  # Timestamp when Naukri can resume
-        self._instahyre_skills = None  # Random 8 langs + 7 tools per task run
+        self._instahyre_skills = None  # Instahyre skills selection for active task
+        self._instahyre_skills_is_intersession = None
         self._current_job_url: str = ""  # Track active job URL / ID across platforms
         self._llm_client = None  # Lazy-loaded Gemma LLM client
         self.resume_file_path: str = os.getenv("RESUME_FILE_PATH", "/Users/siddhant/Desktop/Resume/SiddhantSinghResume2026.pdf")
@@ -306,7 +278,7 @@ class SentinelAgent:
         exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
         exact_match_keys_json = json.dumps(exact_match_keys)
         profile_json = json.dumps(self._profile_store.to_js_dict()) if self._profile_store else '{}'
-        is_intersession = bool(self._task_description and ('intersession' in self._task_description.lower() or '20 jobs' in self._task_description.lower()))
+        is_intersession = self._is_intersession_task()
         
         init_script = (
             f"window.__SENTINEL_DEBUG__ = {'true' if os.getenv('SENTINEL_JS_DEBUG') else 'false'};\n"
@@ -367,7 +339,9 @@ class SentinelAgent:
         self.linkedin_rate_limit_until = None
         self.naukri_rate_limit_until = None
         self._instahyre_skills = None
+        self._instahyre_skills_is_intersession = None
         self._last_instahyre_no_more_jobs = False
+        self._instahyre_consecutive_scrolls = 0
         self._error_detector = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
@@ -385,22 +359,40 @@ class SentinelAgent:
             'success': False
         }
 
-    def _get_instahyre_skills(self) -> List[str]:
-        """Return a stable random selection of 8 language and 7 tool skills.
+    def _is_intersession_task(self) -> bool:
+        """Check if active task is an intersession high-volume application task."""
+        return bool(
+            self._task_description
+            and (
+                'intersession' in self._task_description.lower()
+                or '20 jobs' in self._task_description.lower()
+            )
+        )
 
-        The selection is drawn once per task run and cached so repeated
-        ``_handle_scripted_fallback`` calls during the same task keep the same
-        15 skills (the Selectize field caps at 15). ``reset_per_task_state``
-        clears the cache so each new task gets a fresh draw.
+    def _get_instahyre_skills(self, is_intersession: Optional[bool] = None) -> List[str]:
+        """Return 15 skills for Instahyre job search.
+
+        - Main search task: Returns fixed static list of 15 skills (8 languages +
+          7 frameworks/cloud) giving maximum search results.
+        - Intersession task: Returns a stable random selection of 8 languages (from
+          top 30 languages pool) and 7 frameworks (from top 30 frameworks pool)
+          drawn once per task run and cached for the session.
         """
-        if self._instahyre_skills is None:
-            languages = random.sample(
-                self.INSTAHYRE_SKILL_LANGUAGES, self.INSTAHYRE_SKILL_LANGUAGES_COUNT
-            )
-            tools = random.sample(
-                self.INSTAHYRE_SKILL_TOOLS, self.INSTAHYRE_SKILL_TOOLS_COUNT
-            )
-            self._instahyre_skills = languages + tools
+        if is_intersession is None:
+            is_intersession = self._is_intersession_task()
+
+        if self._instahyre_skills is None or self._instahyre_skills_is_intersession != is_intersession:
+            if is_intersession:
+                languages = random.sample(
+                    self.INSTAHYRE_SKILL_LANGUAGES, self.INSTAHYRE_SKILL_LANGUAGES_COUNT
+                )
+                tools = random.sample(
+                    self.INSTAHYRE_SKILL_TOOLS, self.INSTAHYRE_SKILL_TOOLS_COUNT
+                )
+                self._instahyre_skills = languages + tools
+            else:
+                self._instahyre_skills = list(self.INSTAHYRE_STATIC_SKILLS)
+            self._instahyre_skills_is_intersession = is_intersession
         return self._instahyre_skills
 
     def _format_answer_for_field(self, answer: str, question: str, field_type: str = "text") -> str:
@@ -476,6 +468,10 @@ class SentinelAgent:
                         return 'naukri'
                     elif 'instahyre.com' in url:
                         return 'instahyre'
+                    elif 'indeed.com' in url:
+                        return 'indeed'
+                    elif 'hirist.tech' in url:
+                        return 'hirist'
                 elif callable(page_url) and not inspect.iscoroutinefunction(page_url):
                     val = page_url()
                     if isinstance(val, str):
@@ -486,6 +482,10 @@ class SentinelAgent:
                             return 'naukri'
                         elif 'instahyre.com' in url:
                             return 'instahyre'
+                        elif 'indeed.com' in url:
+                            return 'indeed'
+                        elif 'hirist.tech' in url:
+                            return 'hirist'
         except:
             pass
         return self._current_platform
@@ -561,6 +561,50 @@ class SentinelAgent:
         ):
             return 'No', 0.99
 
+        # Bachelor's degree / College degree Yes/No question
+        if ('degree' in question_lower or 'bachelor' in question_lower or 'undergraduate' in question_lower or 'college degree' in question_lower or 'graduation degree' in question_lower) and any(kw in question_lower for kw in ['do you have', 'have you', 'completed', 'hold a', 'possess', 'require']):
+            return 'Yes', 0.99
+
+        # Career break / Employment gap Yes/No questions -> Always "No"
+        if re.search(r'\b(career\s*breaks?|gap\s*in\s*(?:employment|career|work|education|studies)|employment\s*gaps?|breaks?\s*in\s*career|career\s*gaps?|period\s*of\s*unemployment)\b', question_lower) and not any(kw in question_lower for kw in ['reason', 'why', 'explain', 'describe']):
+            return 'No', 0.99
+
+        # Reason for career break / gap questions -> "Personal"
+        if re.search(r'\b(reason\s*for\s*(?:the\s*)?(?:career\s*|employment\s*)?(?:break|gap)|why\s*(?:did\s*you\s*take|is\s*there)\s*(?:a\s*)?(?:career\s*)?(?:break|gap))\b', question_lower):
+            return 'Personal', 0.98
+
+        # Disability status, type, and percentage
+        if 'disability' in question_lower:
+            if any(w in question_lower for w in ['percent', '%', 'percentage']):
+                return '0', 0.98
+            if any(w in question_lower for w in ['type', 'kind', 'nature', 'what kind']):
+                return 'None', 0.98
+            if self._current_platform == 'linkedin':
+                return 'I don’t have a disability', 0.98
+            return 'No', 0.98
+
+        # Numeric LWD format e.g. 19102026 -> 23102026 and Option (6)
+        if any(w in question_lower for w in ['19102026', 'enter as 19102026', 'ddmmyyyy']) and any(w in question_lower for w in ['lwd', 'last working', 'notice']):
+            return '23102026', 0.99
+        if any(w in question_lower for w in ['option (6)', 'option 6', 'select option (6)']):
+            return '(6) --Serving Notice Period', 0.99
+
+        # Variable compensation / Bonus / Unvested stock
+        if any(w in question_lower for w in ['variable compensation', 'variable pay', 'unvested options', 'rsu value', 'stock rsu', 'bonus component', 'annual variable bonus', 'unvested stock', 'stock options value']):
+            if any(w in question_lower for w in ['details', 'explain', 'describe', 'breakup', 'frequency', 'recieving', 'receiving', 'please provide']):
+                return 'No variable pay, 100% fixed salary (23 LPA Fixed)', 0.98
+            return '0', 0.98
+
+        # AWS years of experience and services used
+        if 'aws' in question_lower and any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used']):
+            return '4.2 years of experience with AWS (S3, EC2, Lambda, SQS, SNS, ECS, CloudWatch, DynamoDB)', 0.98
+
+        # Company interest (Supersourcing / Wissen)
+        if 'supersourcing' in question_lower:
+            return 'I am excited by Supersourcing’s vision of building high-quality, high-velocity engineering solutions. With my strong background in full-stack architecture, backend systems with Java and Python, and modern cloud technologies, I am confident in delivering robust products that drive measurable impact.', 0.98
+        if 'wissen' in question_lower:
+            return 'I am deeply inspired by Wissen Technology’s proven track record of engineering excellence in enterprise and banking fintech solutions. With over 4 years of hands-on experience in Java, Spring Boot, microservices, and distributed architectures, I am passionate about tackling complex technical challenges and contributing high-performance solutions to mission-critical systems.', 0.98
+
         # Career / Education gaps
         if 'gap' in question_lower and any(kw in question_lower for kw in ['education to job', 'between jobs', 'what are your gap']):
             return 'None of the above and not much gap', 0.98
@@ -568,6 +612,18 @@ class SentinelAgent:
         # Agentic AI and AI Agent solution implementation essay
         if ('agentic ai' in question_lower or 'ai agent' in question_lower) and any(kw in question_lower for kw in ['explain', 'use case', 'contribution', 'describe']):
             return 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.', 0.99
+
+        # Most recent AI feature/system shipped to production
+        if any(w in question_lower for w in ['ai feature', 'ai system', 'recent ai']) and any(w in question_lower for w in ['shipped to production', 'production', 'shipped', 'deployed']):
+            return 'Architected and shipped an AI-powered document intelligence platform integrating GPT-4, LangChain, and custom NLP extraction pipelines into production, handling 50,000+ documents monthly with 94% accuracy and 80% manual processing reduction.', 0.99
+
+        # Work / portfolio link (e.g. "Paste a link to some of your work")
+        if any(kw in question_lower for kw in ['paste a link', 'link to some of your work', 'link to your work', 'portfolio link', 'github link', 'share a link to your work']):
+            return 'https://siddhant3646.github.io/Portfolio/', 0.98
+
+        # Product / project description (e.g. "Briefly describe the product/project you last worked on and your role in its development")
+        if ('describe' in question_lower or 'explain' in question_lower) and any(kw in question_lower for kw in ['product/project', 'product or project', 'project you last worked on', 'product you last worked on', 'role in its development', 'one product you built']):
+            return 'Led development of high-throughput distributed microservices for critical event management at Everbridge using Java, Spring Boot, and Kafka, improving system throughput by 40% and ensuring 99.99% uptime.', 0.98
 
         # Locality / Residential neighborhood
         if 'locality' in question_lower:
@@ -624,7 +680,7 @@ class SentinelAgent:
             return 'No', 0.98
 
         # Veteran status
-        if any(w in question_lower for w in ('veteran', 'military service', 'military spouse', 'protected veteran')):
+        if any(w in question_lower for w in ('veteran', 'military', 'armed forces', 'served in the military', 'military service', 'military spouse', 'protected veteran')):
             return 'No', 0.98
 
         # Visa sponsorship
@@ -643,7 +699,7 @@ class SentinelAgent:
 
         # Locations willing to relocate to
         if ('relocate' in question_lower or 'relocating' in question_lower) and any(w in question_lower for w in ('which of these locations', 'which locations', 'locations are you willing', 'city you are currently residing or willing')):
-            return 'Bangalore, Hyderabad, Pune, Remote', 0.98
+            return 'Bengaluru, Bangalore, Hyderabad, Pune, Remote', 0.98
 
         # Education discipline / field of study
         if question_lower in ('discipline', 'field of study', 'major') or ('discipline' in question_lower and 'education' in question_lower):
@@ -667,8 +723,14 @@ class SentinelAgent:
         if any(kw in question_lower for kw in ['time slot in between', 'mention the time slot', 'available time slot', 'time slot for interview', 'what time you will be available', 'at what time you will be available']):
             return 'Anytime between 10 AM - 4 PM', 0.98
 
-        # Notice period and LWD combined
-        if ('notice' in question_lower or 'np' in question_lower) and any(kw in question_lower for kw in ['lwd', 'last working day', 'ldw']):
+        # Notice period and LWD combined (both asked in one question, e.g. "Notice period and LWD", "NP & Last Working Day")
+        is_composite_np_lwd = (
+            ('notice' in question_lower or 'np' in question_lower)
+            and any(kw in question_lower for kw in ['lwd', 'last working day', 'ldw'])
+            and any(sep in question_lower for sep in [' and ', ' & ', ' / ', ' + ', ', lwd', ', last working'])
+            and not any(cond in question_lower for cond in ['if serving', 'if on notice', 'if you are', 'if currently', 'in case of', 'if applicable', 'if any'])
+        )
+        if is_composite_np_lwd:
             from datetime import datetime, timedelta
             lwd_date = datetime.now() + timedelta(days=15)
             return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", 0.98
@@ -687,11 +749,21 @@ class SentinelAgent:
             return 'Security Operations Center (SOC), Threat Detection & Monitoring, Vulnerability Management, Incident Response, SIEM Administration, Cloud Security', 0.98
 
         # Serving notice period vs already left (status choice)
-        if ('currently serving notice period' in question_lower or 'serving notice period? or already left' in question_lower or 'serving notice period or already left' in question_lower or 'serving notice period or immediate' in question_lower):
+        if ('currently serving notice period' in question_lower or 'serving notice period? or already left' in question_lower or 'serving notice period or already left' in question_lower or 'serving notice period or immediate' in question_lower) and not any(w in question_lower for w in ['19102026', 'enter as', 'ddmmyyyy', 'option (6)', 'option 6']):
             return 'Yes- Currently serving notice', 0.98
 
         # AI Coding Assistants / Claude / Agentic Workflows
-        if any(kw in question_lower for kw in ['claude', 'chatgpt', 'copilot', 'cursor', 'ai agent', 'ai agents', 'orchestrated workflows', 'genai', 'generative ai', 'llm']) and any(act in question_lower for act in ['worked', 'experience', 'used', 'use', 'compress', 'scaffolding', 'dev work', 'proficiency', 'tools', 'hands on', 'hands-on', 'debugging', 'test generation', 'automation']):
+        is_ai_tools_qty = (
+            any(w in question_lower for w in (
+                'how many', 'how much', 'what is your', 'total years', 'number of years',
+                'years of', 'years in', 'yoe', 'in years', 'in months', 'rate your',
+                'scale of', 'on a scale', 'out of 10', 'out of 5', 'rating'
+            )) or
+            bool(re.search(r'\b\d+\s*[-–+to]?\s*\d*\s*years?\b', question_lower)) or
+            bool(re.search(r'\b(yoe|exp|experience)\s*[:\-\(]?\s*(?:in\s+)?years?\b', question_lower)) or
+            bool(re.search(r'\(in\s+years\)', question_lower))
+        )
+        if not is_ai_tools_qty and any(kw in question_lower for kw in ['claude', 'chatgpt', 'copilot', 'cursor', 'ai agent', 'ai agents', 'orchestrated workflows', 'genai', 'generative ai', 'llm']) and any(act in question_lower for act in ['worked', 'experience', 'used', 'use', 'compress', 'scaffolding', 'dev work', 'proficiency', 'tools', 'hands on', 'hands-on', 'debugging', 'test generation', 'automation']):
             return 'Yes', 0.98
 
         # Relatives / Family / Conflict of interest in company
@@ -807,7 +879,7 @@ class SentinelAgent:
             return '2300000 / 3000000', 0.98
 
         # Gaps in education/career
-        if ('gap' in question_lower or 'gaps' in question_lower) and ('education' in question_lower or 'career' in question_lower or 'graduation' in question_lower):
+        if ('gap' in question_lower or 'gaps' in question_lower) and ('education' in question_lower or 'career' in question_lower or 'graduation' in question_lower) and not any(kw in question_lower for kw in ['reason', 'why', 'explain', 'describe']):
             return 'No', 0.98
 
         # PF records, payslips, and employment documents available
@@ -1035,7 +1107,7 @@ class SentinelAgent:
 
         # Specific YOE prompts (e.g., "YOE in document parsing / document processing -")
         if question_lower.startswith('yoe in') or question_lower.startswith('yoe on') or question_lower.startswith('yoe with') or 'yoe in document' in question_lower or 'yoe in react' in question_lower or 'yoe in java' in question_lower:
-            if self._current_platform == 'linkedin':
+            if self._current_platform in ('linkedin', 'indeed', 'hirist'):
                 return '4', 0.98
             return '4.2 Years', 0.98
 
@@ -1210,7 +1282,9 @@ class SentinelAgent:
         # Rating scale short ("Rate your experience (1-5)") - without "on a scale"
         rating_scale_short_keywords = ['rate your experience', 'rate your proficiency', 'rate your skills',
                                        'rate your communication', 'rate your stakeholder', 'proficiency (1-5)',
-                                       'rate yourself (1-5)', '(1-5)', '1 to 5', '1-5']
+                                       'rate yourself (1-5)', 'rate yourself (on scale of 5)', 'rate yourself on scale of 5',
+                                       'scale of 5', 'on scale of 5', '(scale of 5)', '(on scale of 5)', 'out of 5', '/5',
+                                       '(1-5)', '1 to 5', '1-5']
         is_rating_scale_short = any(kw in question_lower for kw in rating_scale_short_keywords)
         
         # Last Working Date in specific format ("dd-mmm-yy format")
@@ -1362,8 +1436,9 @@ class SentinelAgent:
         
         # LWD (Last Working Day/Date) questions - calculate actual date 15 days from now
         if is_lwd_question:
+            from datetime import datetime, timedelta
             lwd_date = datetime.now() + timedelta(days=15)
-            if 'serving' in question_lower or 'already left' in question_lower:
+            if 'already left' in question_lower or ('serving' in question_lower and 'left' in question_lower):
                 return f"Serving 15 days notice (LWD: {lwd_date.strftime('%d %b %Y')})", 0.98
             # Format: DD MMM YYYY (e.g., "25 Jul 2026")
             return lwd_date.strftime('%d %b %Y'), 0.98
@@ -1396,15 +1471,15 @@ class SentinelAgent:
             return 'Yes', 0.98
         
         # E-commerce experience (must be BEFORE generic experience)
-        if is_ecommerce_question:
+        if is_ecommerce_question and not is_asking_quantity:
             return 'Yes, I have experience building scalable e-commerce platforms with payment gateway integration (Stripe, Razorpay), inventory management, order processing, and real-time tracking systems.', 0.98
         
         # BFSI / Fintech domain experience
-        if ('bfsi' in question_lower or 'fintech' in question_lower or 'banking domain' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'knowledge' in question_lower):
+        if ('bfsi' in question_lower or 'fintech' in question_lower or 'banking domain' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'knowledge' in question_lower) and not is_asking_quantity:
             return 'Yes, 4+ years in BFSI/Fintech building dispute resolution and transaction microservices at Everbridge.', 0.98
 
         # Kafka / Event streaming experience
-        if ('kafka' in question_lower or 'flink' in question_lower or 'event streaming' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'production' in question_lower or 'streaming' in question_lower or 'pipeline' in question_lower):
+        if ('kafka' in question_lower or 'flink' in question_lower or 'event streaming' in question_lower) and ('experience' in question_lower or 'worked' in question_lower or 'production' in question_lower or 'streaming' in question_lower or 'pipeline' in question_lower) and not is_asking_quantity:
             return 'Yes, engineered high-throughput Kafka streaming pipelines with Flink/Spark for real-time reporting.', 0.98
 
         # Production on-call / L3 / Incident support
@@ -1441,8 +1516,14 @@ class SentinelAgent:
         if ('permanent' in question_lower and 'contract' in question_lower) or 'direct company payroll' in question_lower or 'employment type (permanent' in question_lower:
             return 'Permanent', 0.98
 
+        # Total CTC / Annual Salary with Fixed+Variable mentioned (MUST be before Fixed vs Variable breakup)
+        if any(kw in question_lower for kw in ['total ctc', 'total annual ctc', 'total salary', 'total annual salary', 'total fixed + variable', 'total fixed+variable', 'fixed+variable', 'fixed + variable']) and ('total' in question_lower or 'overall' in question_lower or 'ctc' in question_lower) and not any(b in question_lower for b in ['breakup', 'break up', 'break-up', 'split', 'component']):
+            if any(w in question_lower for w in ['expected', 'expect', 'ectc', 'desired']) or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+                return ('3000000' if any(w in question_lower for w in ['inr', 'rupee', 'annual']) else '30 LPA'), 0.98
+            return ('2300000' if any(w in question_lower for w in ['inr', 'rupee', 'annual']) else '23 LPA'), 0.98
+
         # Fixed vs Variable breakup
-        if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower:
+        if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower or 'fixed salary' in question_lower or 'current variable component' in question_lower:
             return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
 
         # Yes/No proficiency questions (NOT rating scale) - MUST be before is_rating_question
@@ -1580,7 +1661,7 @@ class SentinelAgent:
         
         # Handle total experience (short form) questions
         if is_total_exp_question:
-            if self._current_platform in ('linkedin', 'linkedin_form'):
+            if self._current_platform in ('linkedin', 'linkedin_form', 'indeed', 'hirist'):
                 return '4', 0.95
             elif self._current_platform == 'naukri':
                 return '4.2 Years', 0.98
@@ -1597,8 +1678,8 @@ class SentinelAgent:
             not is_conceptual_tech and
             not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
         )
-        is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question
-        is_notice_question = any(kw in question_lower for kw in notice_keywords)
+        is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question and not any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used'])
+        is_notice_question = any(kw in question_lower for kw in notice_keywords) and not any(kw in question_lower for kw in ['why', 'what excites', 'interested in joining', 'interested to join', 'tell us about yourself', 'motivation', 'supersourcing', 'wissen'])
         is_location_question = any(kw in question_lower for kw in location_keywords)
         
         # Priority patterns based on detected category
@@ -1611,13 +1692,23 @@ class SentinelAgent:
             if is_both_curr_and_exp:
                 return 'Current CTC: 23 LPA, Expected CTC: 30 LPA', 0.98
 
+            # Total CTC / Annual Salary with Fixed+Variable mentioned
+            if any(kw in question_lower for kw in ['total ctc', 'total annual ctc', 'total salary', 'total annual salary', 'total fixed + variable', 'total fixed+variable', 'fixed+variable', 'fixed + variable']) and ('total' in question_lower or 'overall' in question_lower or 'ctc' in question_lower):
+                if any(w in question_lower for w in ['expected', 'expect', 'ectc', 'desired']) or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+                    return ('3000000' if any(w in question_lower for w in ['inr', 'rupee', 'annual']) else '30 LPA'), 0.98
+                return ('2300000' if any(w in question_lower for w in ['inr', 'rupee', 'annual']) else '23 LPA'), 0.98
+
             # Fixed vs Variable salary breakup
-            if 'fixed' in question_lower or 'variable' in question_lower or 'breakup' in question_lower:
+            if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower or 'fixed salary' in question_lower or 'current variable component' in question_lower:
                 return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
+            if any(w in question_lower for w in ['variable compensation', 'variable pay', 'unvested options', 'rsu value', 'stock rsu', 'bonus component', 'annual variable bonus', 'unvested stock']):
+                if any(w in question_lower for w in ['details', 'explain', 'describe', 'frequency', 'recieving', 'receiving', 'please provide']):
+                    return 'No variable pay, 100% fixed salary (23 LPA Fixed)', 0.98
+                return '0', 0.98
 
             # Check for USD / Dollar salary questions
             is_usd = bool(re.search(r'\b(usd|dollars?|\$)\b', question_lower))
-            is_expected = ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or 'ectc' in question_lower)
+            is_expected = ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or 'ectc' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)))
             if is_usd:
                 if 'monthly' in question_lower or 'per month' in question_lower:
                     return ('5000' if is_expected else '3500'), 0.98
@@ -1634,26 +1725,36 @@ class SentinelAgent:
             # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum", "CTC in Lacs" -> "23" or "30"
             if any(u in question_lower for u in ['lpa', 'lakh', 'lakhs', 'lac', 'lacs', 'per annum']):
                 if bool(re.search(r'\b(700000|mention as \d{6,}|example.*\d{6,})\b', question_lower)):
-                    return ('3000000' if ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower) else '2300000'), 0.98
-                if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower:
+                    return ('3000000' if ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower))) else '2300000'), 0.98
+                if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
                     return '30', 0.98
                 return '23', 0.98
 
             # Check for abbreviations CCTC (Current) and ECTC (Expected)
             if 'cctc' in question_lower:
+                if any(w in question_lower for w in ['inr', 'rupee', 'annual']):
+                    return '2300000', 0.98
                 return '23', 0.98
-            if 'ectc' in question_lower:
+            if 'ectc' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+                if any(w in question_lower for w in ['inr', 'rupee', 'annual', 'fixed expected annual']):
+                    return '3000000', 0.98
                 return '30', 0.98
             
             # Check for expected vs current - use plain numbers
-            if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower:
+            if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+                if any(w in question_lower for w in ['inr', 'rupee', 'annual']):
+                    return '3000000', 0.95
                 return '30', 0.95
             elif 'current' in question_lower or 'present' in question_lower:
+                if any(w in question_lower for w in ['inr', 'rupee', 'annual']):
+                    return '2300000', 0.95
                 return '23', 0.95
             # Default to current CTC if unclear (which is standard for generic "CTC" questions)
             return '23', 0.90
         
         # Specific Experience Questions (Priority over generic check)
+        if 'other' in question_lower and 'area' in question_lower and 'experience' in question_lower:
+            return 'Full-stack, AI/ML', 0.98
         if 'area' in question_lower and 'experience' in question_lower:
             return 'Full-stack', 0.98
             
@@ -1669,7 +1770,7 @@ class SentinelAgent:
             if 'whole number' in question_lower or 'enter a number' in question_lower:
                 return '4', 0.98
             # Platform-specific experience format
-            if self._current_platform == 'linkedin':
+            if self._current_platform in ('linkedin', 'indeed', 'hirist'):
                 return '4', 0.95
             else:
                 # Use PatternMatcher instead of KNOWN_QA_PATTERNS
@@ -1686,16 +1787,21 @@ class SentinelAgent:
             lwd_date = datetime.now() + timedelta(days=15)
             lwd_formatted = lwd_date.strftime('%d %B %Y')
             lwd_short = lwd_date.strftime('%d %b %Y')
-            if self._current_platform in ('linkedin', 'linkedin_form'):
+            if self._current_platform in ('linkedin', 'linkedin_form', 'indeed', 'hirist'):
                 return lwd_short, 0.98
             return f'Serving 15 days notice, LWD: {lwd_formatted}', 0.95
 
         if is_notice_question or is_immediate_joiners_only:
+            if any(w in question_lower for w in ['19102026', 'enter as 19102026', 'ddmmyyyy']):
+                return '23102026', 0.99
+            if any(w in question_lower for w in ['option (6)', 'option 6', 'select option (6)']):
+                return '(6) --Serving Notice Period', 0.99
+
             # Notice period in months check
             if any(m in question_lower for m in ['in months', 'in month', '(in months)', '(in month)', 'months', 'month']) and not any(d in question_lower for d in ['days', 'day']):
                 return '0.5', 0.98
 
-            if self._current_platform in ('linkedin', 'linkedin_form'):
+            if self._current_platform in ('linkedin', 'linkedin_form', 'indeed', 'hirist'):
                 # Check if it is a yes/no question about serving notice
                 is_yes_no = 'serving' in question_lower and not any(kw in question_lower for kw in ['days', 'how many', 'duration', 'lwd', 'last working'])
                 if is_yes_no:
@@ -1717,14 +1823,26 @@ class SentinelAgent:
                     return '15 days', 0.95
         
         if is_location_question:
-            # Location verification/confirmation questions (e.g. "Your Current Location is Chennai?", "Is your current location Bangalore?")
+            # Check willingness / interest first: e.g. "The Job Location is Hyderabad and work from Office. Are you interested?"
+            if any(w in question_lower for w in ('are you interested', 'interested in', 'interested?', 'willing to', 'open to', 'ready to', 'comfortable with', 'comfortable working', 'comfortable to')):
+                return 'Yes', 0.98
+
+            # Location verification/confirmation questions (e.g. "Your Current Location is Chennai?", "Is your current location Bangalore?", "Are you currently living in Gurgaon/Gurugram?")
             is_loc_confirm = (
                 question_lower.startswith('is your current location') or
                 question_lower.startswith('your current location is') or
                 question_lower.startswith('are you currently located in') or
                 question_lower.startswith('current location is') or
+                question_lower.startswith('are you currently living in') or
+                question_lower.startswith('are you currently residing in') or
+                question_lower.startswith('do you currently live in') or
+                question_lower.startswith('are you currently based in') or
+                'currently living in' in question_lower or
+                'currently residing in' in question_lower or
+                'currently live in' in question_lower or
+                'currently based in' in question_lower or
                 (question_lower.endswith('?') and 'current location' in question_lower and any(c in question_lower for c in ['chennai', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'bangalore', 'bengaluru']))
-            ) and not any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable with', 'preferred', 'and'))
+            ) and not any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable with', 'preferred', 'and', ' or ', ' / '))
             
             if is_loc_confirm:
                 if 'bangalore' in question_lower or 'bengaluru' in question_lower:
@@ -2957,9 +3075,17 @@ class SentinelAgent:
 
     def _log_js_msg(self, msg):
         """Helper to log JS console messages with filtering for noisy errors."""
-        text = msg.text
-        
-        # Filter out noisy resource loading errors
+        text = (msg.text or '').strip()
+        if not text or text in ('undefined', 'null', 'true', 'false', 'unload'):
+            return
+
+        # Skip site-specific developer console logs and short variable dumps
+        if (text.startswith('AAA --') or text.startswith('[Object') or text.startswith('[,') or 
+            text.startswith('{author:') or text.startswith('{questionnaireId:') or text.startswith('{answerOptions:') or
+            text in ('4.2', '23', '30', '15', '0', '1', '2')):
+            return
+
+        # Filter out noisy resource loading and browser security/CDN errors
         noisy_patterns = [
             'ERR_FAILED',
             'Failed to load resource',
@@ -2969,12 +3095,31 @@ class SentinelAgent:
             'External tag load event',
             'net::ERR_BLOCKED_BY_CLIENT',
             'net::ERR_CONNECTION_REFUSED',
+            'blocked by CORS policy',
+            'Access-Control-Allow-Origin',
+            'Content Security Policy directive',
+            'violates the following Content Security Policy directive',
+            'fontello',
+            'magicsort',
+            'Failed to decode downloaded font',
+            'OTS parsing error',
+            'was preloaded using link preload',
+            '<link rel=preload>',
+            'has an invalid `href` value',
+            'DevTools failed to load source map',
+            'ResizeObserver loop',
+            'favicon.ico',
+            'js-static.hirist.tech',
+            'unsupported-features',
+            'parser-blocking',
+            'document.write',
+            'Checking for visible images',
         ]
-        
+
         # Skip if message contains any noisy pattern
         if any(pattern in text for pattern in noisy_patterns):
             return
-        
+
         # Skip tracking/analytics domains
         noisy_domains = [
             'ads.linkedin.com',
@@ -2985,10 +3130,10 @@ class SentinelAgent:
             'doubleclick',
             'facebook.com/tr',
         ]
-        
+
         if any(domain in text.lower() for domain in noisy_domains):
             return
-        
+
         # Print important messages
         print(f"   🖥️ JS: {text[:200]}")  # Limit length to prevent spam
 
@@ -3116,6 +3261,22 @@ class SentinelAgent:
                 if ('instahyre' in current_url or 'instahyre' in task_desc_lower) and ('inbox' in task_desc_lower or 'questionnaire' in task_desc_lower or 'inbox' in current_url or 'questionnaire' in current_url):
                     print("🚀 Instahyre Inbox & Questionnaire Task Detected...")
                     await self._handle_instahyre_inbox_task()
+                    self.state.task_complete = True
+                    break
+
+                # Indeed in-site apply (Easily apply). Indeed Apply renders inside
+                # nested cross-origin iframes, so it needs a dedicated frame-aware
+                # handler instead of the generic JS-injection engine.
+                if 'indeed' in current_url or 'indeed' in task_desc_lower:
+                    print("🚀 Indeed Apply Task Detected...")
+                    await self._handle_indeed_apply_task()
+                    self.state.task_complete = True
+                    break
+
+                # Hirist in-app apply (Next.js SPA).
+                if 'hirist' in current_url or 'hirist' in task_desc_lower:
+                    print("🚀 Hirist Apply Task Detected...")
+                    await self._handle_hirist_apply_task()
                     self.state.task_complete = True
                     break
                 
@@ -3639,7 +3800,6 @@ class SentinelAgent:
                                     if await current_page.count() > 0:
                                         current_label = await current_page.first.get_attribute('aria-label')
                                         if current_label:
-                                            import re
                                             page_match = re.search(r'Page (\d+)', current_label)
                                             if page_match:
                                                 current_num = int(page_match.group(1))
@@ -5405,6 +5565,16 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
+                # Instahyre: No more jobs
+                if 'INSTAHYRE_NO_MORE_JOBS' in result:
+                    applied_count = getattr(self, '_instahyre_apply_count', 0)
+                    print(f"📭 No more Instahyre jobs found. Applied to {applied_count} jobs.")
+                    self._instahyre_apply_count = 0
+                    self._instahyre_consecutive_scrolls = 0
+                    self._last_instahyre_no_more_jobs = True
+                    self.state.task_complete = True
+                    break
+
                 # Handle NO_MORE_JOBS
                 if 'NO_MORE_JOBS' in result:
                     print(f"   ℹ️ Result: {result}")  # Debug log
@@ -5447,6 +5617,7 @@ class SentinelAgent:
                 
                 # Instahyre: Show Results / Search clicked - continue to View/Apply phase
                 if 'INSTAHYRE_SHOW_RESULTS_CLICKED' in result or 'INSTAHYRE_SEARCH_CLICKED' in result:
+                    self._instahyre_consecutive_scrolls = 0
                     print("🔍 Instahyre search configured, now looking for jobs to apply...")
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for results to load
                     continue  # Continue to View/Apply loop
@@ -5454,15 +5625,18 @@ class SentinelAgent:
                 # Instahyre: Application submitted
                 if 'INSTAHYRE_APPLY_CLICKED' in result:
                     self._instahyre_consecutive_views = 0
+                    self._instahyre_consecutive_scrolls = 0
                     if not hasattr(self, '_instahyre_apply_count'):
                         self._instahyre_apply_count = 0
                     self._instahyre_apply_count += 1
                     self.metrics['applications_submitted'] = self._instahyre_apply_count
-                    print(f"✅ Instahyre Application {self._instahyre_apply_count}/10 submitted!")
+                    target = 20 if self._is_intersession_task() else 5
+                    print(f"✅ Instahyre Application {self._instahyre_apply_count}/{target} submitted!")
                     
-                    if self._instahyre_apply_count >= 10:
-                        print("🎉 Completed 10 Instahyre applications!")
+                    if self._instahyre_apply_count >= target:
+                        print(f"🎉 Completed {target} Instahyre applications!")
                         self._instahyre_apply_count = 0  # Reset for next cycle
+                        self._instahyre_consecutive_scrolls = 0
                         self.state.task_complete = True
                         break
                     
@@ -5471,6 +5645,7 @@ class SentinelAgent:
                 
                 # Instahyre: View clicked - wait for modal
                 if 'INSTAHYRE_VIEW_CLICKED' in result:
+                    self._instahyre_consecutive_scrolls = 0
                     self._instahyre_consecutive_views = getattr(self, '_instahyre_consecutive_views', 0) + 1
                     print(f"👁️ Viewing job details, looking for Apply button... (attempt {self._instahyre_consecutive_views})")
                     if self._instahyre_consecutive_views >= 3:
@@ -5509,6 +5684,7 @@ class SentinelAgent:
                 # Instahyre: Modal closed after success
                 if 'INSTAHYRE_MODAL_CLOSED_SUCCESS' in result:
                     self._instahyre_consecutive_views = 0
+                    self._instahyre_consecutive_scrolls = 0
                     print("✅ Application confirmed, looking for next job...")
                     await asyncio.sleep(random.uniform(1, 2))
                     continue
@@ -5518,6 +5694,7 @@ class SentinelAgent:
                     applied_count = getattr(self, '_instahyre_apply_count', 0)
                     print(f"📭 No more Instahyre jobs found. Applied to {applied_count} jobs.")
                     self._instahyre_apply_count = 0
+                    self._instahyre_consecutive_scrolls = 0
                     self._last_instahyre_no_more_jobs = True
                     self.state.task_complete = True
                     break
@@ -5528,16 +5705,27 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(2, 3))
                     continue
                 
-                # Instahyre: All visible jobs already applied — scrolling for more
-                if 'INSTAHYRE_ALL_APPLIED_SCROLLING' in result:
-                    print("   📜 All visible jobs already applied — scrolling for more...")
+                # Instahyre: All visible jobs already applied or scrolling for more
+                if 'INSTAHYRE_ALL_APPLIED_SCROLLING' in result or 'INSTAHYRE_SCROLLING_FOR_MORE' in result:
+                    self._instahyre_consecutive_scrolls = getattr(self, '_instahyre_consecutive_scrolls', 0) + 1
+                    print(f"   📜 Instahyre: Scrolling for more jobs... (attempt {self._instahyre_consecutive_scrolls}/3)")
+                    if self._instahyre_consecutive_scrolls >= 3:
+                        applied_count = getattr(self, '_instahyre_apply_count', 0)
+                        print(f"📭 End of Instahyre results reached after scrolling. Applied to {applied_count} jobs.")
+                        self._instahyre_apply_count = 0
+                        self._instahyre_consecutive_scrolls = 0
+                        self._last_instahyre_no_more_jobs = True
+                        self.state.task_complete = True
+                        break
                     await asyncio.sleep(random.uniform(2, 3))
                     continue
                 
-                # Instahyre: Other actions (scrolling, etc.)
+                # Instahyre: Other actions (filters, etc.)
                 if 'INSTAHYRE_' in result and 'instahyre.com' in current_url:
                     print(f"   📜 Instahyre: {result}")
                     self._instahyre_no_action_count = 0  # Reset on any action
+                    if not any(k in result for k in ['SCROLL', 'WAIT']):
+                        self._instahyre_consecutive_scrolls = 0
                     await asyncio.sleep(random.uniform(1, 2))
                     continue
                 
@@ -6303,6 +6491,3174 @@ class SentinelAgent:
         self.state.task_complete = True
         return True
 
+    # ==================================================================
+    #  Indeed in-site (Indeed Apply) autonomous handler
+    #
+    #  Indeed Apply renders inside nested CROSS-ORIGIN iframes served from
+    #  smartapply.indeed.com. The top-level JS-injection engine used for
+    #  LinkedIn/Naukri cannot reach into those frames, so this handler drives
+    #  them through Playwright frame handles (frame.evaluate / frame.locator).
+    # ==================================================================
+
+    @staticmethod
+    def _env_int(name: str, default: int) -> int:
+        try:
+            return int(os.getenv(name, str(default)))
+        except Exception:
+            return default
+
+    # Indeed homepage (the canonical entry point when driving the UI by hand).
+    _INDEED_HOME_URL = "https://in.indeed.com/?from=gnav-jobsearch--indeedmobile"
+
+    # Roles rotated through when INDEED_SEARCH_QUERY is not set. Mirrors the
+    # established target-role set used elsewhere (see prompts.COMMON_CONTEXT).
+    _INDEED_SEARCH_ROLES = [
+        "Full Stack Developer",
+        "React Developer",
+        "Java Developer",
+        "Node.js Developer",
+        "MERN Stack Developer",
+    ]
+
+    # Standard stealth patches that remove the most obvious automation tells.
+    # Applied additively (never overrides real values) so it does not disturb
+    # the logged-in profile's genuine fingerprint.
+    _INDEED_STEALTH_JS = r"""
+        (() => {
+            // 1. Remove automation tells without detectable instance getter tampering
+            try {
+                if ('webdriver' in Navigator.prototype) {
+                    delete Navigator.prototype.webdriver;
+                }
+            } catch (e) {}
+            try {
+                if ('webdriver' in navigator) {
+                    delete navigator.webdriver;
+                }
+            } catch (e) {}
+
+            // 2. Standard window.chrome object (matches desktop Chrome)
+            try {
+                if (!window.chrome) {
+                    window.chrome = {};
+                }
+                if (!window.chrome.app) {
+                    window.chrome.app = {
+                        isInstalled: false,
+                        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },
+                        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },
+                        getDetails: function() { return null; },
+                        getIsInstalled: function() { return false; },
+                        runningState: function() { return 'cannot_run'; }
+                    };
+                }
+                if (!window.chrome.csi) {
+                    window.chrome.csi = function() {};
+                }
+                if (!window.chrome.loadTimes) {
+                    window.chrome.loadTimes = function() {};
+                }
+            } catch (e) {}
+
+            // 3. Fallback languages
+            try {
+                const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : ['en-US', 'en'];
+                Object.defineProperty(navigator, 'languages', { get: () => langs });
+            } catch (e) {}
+
+            // 4. Realistic PluginArray (never assign raw array of numbers)
+            try {
+                if (navigator.plugins && navigator.plugins.length === 0) {
+                    const makePlugin = (name, filename, description) => {
+                        const p = Object.create(Plugin.prototype);
+                        Object.defineProperties(p, {
+                            name: { value: name, enumerable: true },
+                            filename: { value: filename, enumerable: true },
+                            description: { value: description, enumerable: true },
+                            length: { value: 0, enumerable: true }
+                        });
+                        return p;
+                    };
+                    const mockPlugins = [
+                        makePlugin('PDF Viewer', 'pdf-viewer.pdf', 'Portable Document Format'),
+                        makePlugin('Chrome PDF Viewer', 'internal-pdf-viewer', 'Portable Document Format'),
+                        makePlugin('Chromium PDF Viewer', 'internal-pdf-viewer', 'Portable Document Format')
+                    ];
+                    const pluginArray = Object.create(PluginArray.prototype);
+                    for (let i = 0; i < mockPlugins.length; i++) {
+                        pluginArray[i] = mockPlugins[i];
+                    }
+                    Object.defineProperty(pluginArray, 'length', { value: mockPlugins.length });
+                    pluginArray.item = function(index) { return this[index] || null; };
+                    pluginArray.namedItem = function(name) {
+                        for (let i = 0; i < this.length; i++) {
+                            if (this[i].name === name) return this[i];
+                        }
+                        return null;
+                    };
+                    pluginArray.refresh = function() {};
+                    Object.defineProperty(navigator, 'plugins', { get: () => pluginArray });
+                }
+            } catch (e) {}
+
+            // 5. Notification permissions query
+            try {
+                const origQuery = window.navigator.permissions && window.navigator.permissions.query;
+                if (origQuery) {
+                    window.navigator.permissions.query = (p) =>
+                        (p && p.name === 'notifications' && window.Notification)
+                            ? Promise.resolve({ state: Notification.permission })
+                            : origQuery(p);
+                }
+            } catch (e) {}
+        })();
+    """
+
+    async def _indeed_apply_stealth(self, page) -> None:
+        """Install automation-stealth patches (context + future navigations + current doc)."""
+        try:
+            if page and hasattr(page, 'context') and page.context:
+                await page.context.add_init_script(self._INDEED_STEALTH_JS)
+        except Exception:
+            pass
+        try:
+            await page.add_init_script(self._INDEED_STEALTH_JS)
+        except Exception:
+            pass
+        try:
+            await page.evaluate(self._INDEED_STEALTH_JS)
+        except Exception:
+            pass
+
+    async def _indeed_prepare_results(self, page) -> Optional[str]:
+        """Get the browser onto a filtered Indeed results page and return its URL.
+
+        Prefers the genuine UI flow (home -> search -> Easily apply filter). If
+        ``INDEED_SEARCH_URL`` is set we honour it directly (tests/advanced use).
+        """
+        explicit = (os.getenv('INDEED_SEARCH_URL') or '').strip()
+        if explicit:
+            if '/jobs' not in (page.url or '') or 'indeed.com' not in (page.url or ''):
+                print(f"📍 Navigating to Indeed search: {explicit}")
+                try:
+                    await page.goto(explicit, wait_until='domcontentloaded', timeout=45000)
+                except Exception as e:
+                    print(f"   ⚠️ Indeed navigation failed: {e}")
+                    return None
+                await asyncio.sleep(random.uniform(2.5, 4.0))
+            return page.url or explicit
+
+        current = page.url or ''
+        if 'indeed.com' in current and '/jobs' in current and '/viewjob' not in current:
+            # Already on a results page (e.g. handed over by the runner).
+            seed = current
+        else:
+            seed = await self._indeed_search_from_home(page)
+            if not seed:
+                return None
+
+        # Ensure the "Easily apply" filter is ON. Idempotent if already set.
+        try:
+            await self._indeed_apply_easily_filter(page)
+        except Exception as e:
+            print(f"   ⚠️ Indeed 'Easily apply' filter step skipped: {e}")
+        return page.url or seed
+
+    async def _indeed_search_from_home(self, page) -> Optional[str]:
+        """Open Indeed home, run a search and return the results-page URL."""
+        query = (os.getenv('INDEED_SEARCH_QUERY') or '').strip()
+        if not query:
+            query = random.choice(self._INDEED_SEARCH_ROLES)
+
+        location = (os.getenv('INDEED_SEARCH_LOCATION') or '').strip()
+        if not location and self._profile_store:
+            location = self._profile_store.get('personal.location', '') or ''
+        if not location:
+            location = 'Bengaluru, Karnataka'
+        # Indeed wants "City, State"; drop a trailing ", India".
+        parts = [p.strip() for p in location.split(',') if p.strip()]
+        if len(parts) >= 2:
+            location = f"{parts[0]}, {parts[1]}"
+        else:
+            location = parts[0] if parts else location
+
+        print(f"🏠 Indeed home search → role: '{query}' | location: '{location}'")
+
+        async def _form_ready() -> bool:
+            try:
+                return (await page.locator('#text-input-what').count()) > 0
+            except Exception:
+                return False
+
+        async def _visit_home() -> bool:
+            try:
+                await page.goto(self._INDEED_HOME_URL, wait_until='domcontentloaded', timeout=45000)
+            except Exception as e:
+                print(f"   ⚠️ Indeed home navigation failed: {e}")
+                return False
+            for _ in range(6):
+                await asyncio.sleep(random.uniform(0.8, 1.3))
+                if await _form_ready():
+                    return True
+            return await _form_ready()
+
+        # Reuse the page when it already shows Indeed's search form. Navigating
+        # to the homepage a SECOND time in quick succession is frequently answered
+        # with an empty (about:blank) document by Indeed's anti-bot layer, which
+        # then breaks the whole search. A real user never reloads the homepage
+        # mid-flow either, so skipping the redundant navigation is also stealthier.
+        if not await _form_ready():
+            if not await _visit_home():
+                # Recover from a blank/aborted load: reload, then re-navigate.
+                for _ in range(2):
+                    try:
+                        await page.reload(wait_until='domcontentloaded', timeout=45000)
+                    except Exception:
+                        try:
+                            await page.goto(self._INDEED_HOME_URL, wait_until='domcontentloaded', timeout=45000)
+                        except Exception:
+                            pass
+                    await asyncio.sleep(random.uniform(1.5, 3.0))
+                    if await _form_ready():
+                        break
+            if not await _form_ready():
+                print("   ⚠️ Indeed search form unavailable after retries")
+                return None
+        await self._indeed_dismiss_overlays(page)
+        if not await _form_ready():
+            print("   ⚠️ Indeed search form disappeared after overlay dismissal")
+            return None
+
+        # 1) Role/keywords.
+        typed_what = await self._indeed_human_type(page, '#text-input-what', query)
+        if not typed_what:
+            typed_what = await self._indeed_human_type(page, 'input[name="q"]', query)
+        await asyncio.sleep(random.uniform(0.5, 1.1))
+
+        # 2) Location.
+        typed_where = await self._indeed_human_type(page, '#text-input-where', location)
+        if not typed_where:
+            typed_where = await self._indeed_human_type(page, 'input[name="l"]', location)
+        await asyncio.sleep(random.uniform(0.5, 1.1))
+
+        # 3) Find jobs.
+        clicked = False
+        for sel in (
+            'button.yosegi-InlineWhatWhere-primaryButton',
+            'button:has-text("Find jobs")',
+            'button[type="submit"]:has-text("Find")',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    await self._human_mouse_move()
+                    await loc.click(timeout=8000)
+                    clicked = True
+                    break
+            except Exception:
+                continue
+        if not clicked:
+            for sel in ('#text-input-where', '#text-input-what'):
+                try:
+                    await page.locator(sel).first.press('Enter')
+                    clicked = True
+                    break
+                except Exception:
+                    continue
+        print(f"   🔎 Submitted Indeed search (clicked={clicked})")
+
+        # 4) Wait for results to render.
+        try:
+            await page.wait_for_selector(
+                '.job_seen_beacon, div[data-jk], #mosaic-provider-jobcards, li[data-jk]',
+                timeout=20000,
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(random.uniform(2.0, 3.5))
+        return page.url
+
+    async def _indeed_human_type(self, page, selector: str, text: str) -> bool:
+        """Type into a field character-by-character with human-like timing."""
+        if not text:
+            return False
+        try:
+            loc = page.locator(selector).first
+            if await loc.count() == 0:
+                return False
+            try:
+                await loc.scroll_into_view_if_needed(timeout=3000)
+            except Exception:
+                pass
+            try:
+                await self._human_mouse_move()
+            except Exception:
+                pass
+            await loc.click(timeout=6000)
+            await asyncio.sleep(random.uniform(0.2, 0.5))
+            try:
+                await loc.fill("")
+            except Exception:
+                pass
+            await asyncio.sleep(random.uniform(0.15, 0.35))
+            await loc.press_sequentially(text, delay=random.uniform(55, 130))
+            await asyncio.sleep(random.uniform(0.3, 0.7))
+            return True
+        except Exception as e:
+            print(f"      ⚠️ Indeed typing failed for {selector}: {e}")
+            return False
+
+    async def _indeed_apply_easily_filter(self, page) -> bool:
+        """Turn on Indeed's "Easily apply" filter through the UI.
+
+        Clicking the filter opens an options popup with "All jobs" / "Easily
+        apply on Indeed"; we select the latter and press Update.
+        """
+        # 1) Open the filter popup.
+        opened = False
+        for sel in (
+            'button[aria-label="Easily apply filter"]',
+            'button[aria-label*="Easily apply" i]',
+            'button:has-text("Easily apply")',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    try:
+                        await self._human_mouse_move()
+                    except Exception:
+                        pass
+                    await loc.click(timeout=8000)
+                    opened = True
+                    break
+            except Exception:
+                continue
+        if not opened:
+            print("   ℹ️ Indeed 'Easily apply' filter control not found (continuing)")
+            return False
+
+        try:
+            await page.wait_for_selector(
+                'ul[aria-label="Easily apply options"], [role="listbox"], [role="option"]',
+                timeout=6000,
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(random.uniform(0.4, 0.9))
+
+        # 2) Select the "Easily apply on Indeed" option.
+        selected = False
+        option_text = 'Easily apply on Indeed'
+        for sel in (
+            'li[data-testid="selection-pill-option-1"]',
+            'li[aria-label="Easily apply on Indeed"]',
+            '[role="option"]:has-text("Easily apply on Indeed")',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    if (await loc.get_attribute('aria-selected')) == 'true':
+                        selected = True
+                        break
+                    await loc.click(timeout=6000)
+                    selected = True
+                    break
+            except Exception:
+                continue
+        if not selected:
+            try:
+                opts = page.locator('[role="option"]')
+                if await opts.count() >= 2:
+                    await opts.nth(1).click(timeout=6000)
+                    selected = True
+            except Exception:
+                pass
+        print(f"   🎚️ Selected '{option_text}' filter option: {selected}")
+        await asyncio.sleep(random.uniform(0.4, 0.9))
+
+        # 3) Press Update.
+        updated = False
+        for sel in (
+            'button:has-text("Update")',
+            '[role="button"]:has-text("Update")',
+        ):
+            try:
+                loc = page.locator(sel).last
+                if await loc.count() > 0 and await loc.is_visible():
+                    try:
+                        await self._human_mouse_move()
+                    except Exception:
+                        pass
+                    await loc.click(timeout=6000)
+                    updated = True
+                    break
+            except Exception:
+                continue
+        if not updated:
+            print("   ℹ️ Indeed 'Easily apply' Update button not found (continuing)")
+            return False
+
+        # 4) Wait for the filtered results.
+        try:
+            await page.wait_for_load_state('domcontentloaded', timeout=8000)
+        except Exception:
+            pass
+        await asyncio.sleep(random.uniform(2.0, 3.5))
+        try:
+            await page.wait_for_selector('.job_seen_beacon, div[data-jk]', timeout=15000)
+        except Exception:
+            pass
+        print("   ✅ Indeed 'Easily apply' filter applied")
+        return True
+
+    async def _handle_indeed_apply_task(self) -> bool:
+        """Autonomous Indeed "Easily apply" workflow.
+
+        Default behaviour mirrors a human: open in.indeed.com, type the role
+        into ``#text-input-what`` and the city into ``#text-input-where``, click
+        "Find jobs", then turn on the "Easily apply" filter before applying to
+        each result through the in-site "Apply now" → SmartApply flow. Skips
+        jobs that only offer "Apply on company site" (external ATS).
+
+        Configuration (all optional):
+          INDEED_SEARCH_QUERY      role/keywords to search for (rotates roles if unset)
+          INDEED_SEARCH_LOCATION   city (defaults to the profile location)
+          INDEED_SEARCH_URL        bypass the search UI and start at this URL
+          INDEED_MAX_APPLICATIONS  hard cap on submitted applications (default 5)
+        """
+        page = self._page
+        if not page:
+            return False
+
+        self._current_platform = "indeed"
+        self.metrics['task_name'] = 'Indeed Application'
+        max_applications = self._env_int('INDEED_MAX_APPLICATIONS', 5)
+
+        # Lightweight stealth: hide the most common automation fingerprints so the
+        # hand-off to smartapply.indeed.com does not immediately trip reCAPTCHA
+        # Enterprise. Page-scoped so other platforms are unaffected.
+        await self._indeed_apply_stealth(page)
+
+        print(f"🟦 Starting Indeed Apply automation (max {max_applications} applications)...")
+
+        # Drive the real search UI (home -> role -> location -> Find jobs ->
+        # "Easily apply" filter), exactly like a human. An explicit
+        # INDEED_SEARCH_URL is honoured as a shortcut for tests/advanced config.
+        seed_url = await self._indeed_prepare_results(page)
+        if not seed_url:
+            self.state.task_complete = True
+            return False
+
+        await self._indeed_dismiss_overlays(page)
+
+        if not await self._indeed_is_logged_in(page):
+            print("   ⚠️ Indeed does not look logged in — attempting anyway...")
+
+        jobs = []
+        for harvest_attempt in range(3):
+            jobs = await self._indeed_collect_jobs(page)
+            if jobs:
+                break
+            await asyncio.sleep(3.0)
+        print(f"🔎 Found {len(jobs)} job card(s) on Indeed results page")
+
+        applied = 0
+        skipped = 0
+        scanned = 0
+        seen_jks = set()
+        attempts = 0
+        # Bound total work so a page of purely external/sponsored cards cannot
+        # loop forever, while still allowing several result pages' worth of tries.
+        max_attempts = max(max_applications * 8, 24)
+
+        while applied < max_applications and attempts < max_attempts:
+            attempts += 1
+            jobs = await self._indeed_collect_jobs(page)
+            if not jobs:
+                await self._indeed_return_to_results(page, seed_url)
+                jobs = await self._indeed_collect_jobs(page)
+
+            # Prefer cards that advertise an in-site ("Easily apply") action,
+            # then fall back to any unprocessed card.
+            target = None
+            for job in jobs:
+                if job.get('jk') and job['jk'] not in seen_jks and job.get('easy'):
+                    target = job
+                    break
+            if target is None:
+                for job in jobs:
+                    if job.get('jk') and job['jk'] not in seen_jks:
+                        target = job
+                        break
+            if target is None:
+                print("   ℹ️ No further job cards to process on Indeed.")
+                break
+
+            jk = target['jk']
+            seen_jks.add(jk)
+            scanned += 1
+            title = target.get('title') or '<untitled>'
+            company = target.get('company') or ''
+
+            try:
+                # Click the card (works for sponsored "/pagead/clk" cards, which
+                # /viewjob?jk= silently redirects away from). Fall back to direct
+                # navigation for plain cards if the click could not be performed.
+                opened = await self._indeed_open_card(page, target)
+                if not opened:
+                    await page.goto(
+                        f"https://in.indeed.com/viewjob?jk={jk}",
+                        wait_until='domcontentloaded', timeout=45000,
+                    )
+                await asyncio.sleep(random.uniform(2.0, 3.5))
+                await self._indeed_dismiss_overlays(page)
+
+                if not await self._indeed_has_easy_apply(page):
+                    skipped += 1
+                    print(f"   ⏭️ Skipping external apply: {title} @ {company}")
+                elif await self._indeed_run_apply_flow(page):
+                    applied += 1
+                    self.metrics['applications_submitted'] = applied
+                    print(f"   ✅ Applied ({applied}/{max_applications}): {title} @ {company}")
+                else:
+                    print(f"   ⚠️ Apply flow incomplete: {title} @ {company}")
+            except Exception as e:
+                print(f"   ⚠️ Indeed job error ({jk}): {e}")
+
+            await self._indeed_return_to_results(page, seed_url)
+            await asyncio.sleep(random.uniform(1.5, 3.0))
+
+        print(f"\n🟦 Indeed task finished: {applied} applied, {skipped} skipped, {scanned} scanned.")
+        self.state.task_complete = True
+        return applied > 0
+
+    async def _indeed_is_logged_in(self, page) -> bool:
+        try:
+            return bool(await page.evaluate("""() => {
+                const t = (document.body ? document.body.innerText : '').toLowerCase();
+                if (t.includes('sign in') && t.includes('to continue')) return false;
+                return !!document.querySelector(
+                    '#gnav-account-menu-button, [data-testid="gnav-account-menu-button"], [aria-label*="Account" i]'
+                );
+            }"""))
+        except Exception:
+            return False
+
+    # JS that dismisses cookie/consent overlays SAFELY. Indeed renders its
+    # off-canvas primary navigation as a ``div[role="dialog"]`` (aria-label
+    # "Primary navigation") whose hidden "Close" button navigates the tab to
+    # ``about:blank`` when clicked. We therefore only act on *visible* modals,
+    # skip navigation/menu dialogs, and never click hidden controls.
+    _INDEED_DISMISS_OVERLAYS_JS = """() => {
+        const vis = n => !!(n && n.getClientRects().length);
+        const cookieBtn = document.querySelector('#onetrust-accept-btn-handler');
+        if (cookieBtn && vis(cookieBtn)) { try { cookieBtn.click(); } catch (e) {} }
+
+        const modals = Array.from(document.querySelectorAll(
+            '[role="dialog"], .icl-Modal, [data-testid="passport-intercept-type-modal"]'
+        ));
+        for (const m of modals) {
+            if (!vis(m)) continue;
+            const aria = (m.getAttribute('aria-label') || '').toLowerCase();
+            if (aria.includes('navigation') || aria.includes('menu')) continue;
+            if (m.querySelector('.gnav-burger-menu-state--init')) continue;
+            const closeBtn = m.querySelector(
+                'button[aria-label*="close" i], [data-testid="close-button"], .icl-Modal-close'
+            );
+            if (closeBtn && vis(closeBtn)) { try { closeBtn.click(); } catch (e) {} break; }
+        }
+    }"""
+
+    async def _indeed_dismiss_overlays(self, page) -> None:
+        """Dismiss cookie/consent overlays without disturbing the page.
+
+        See ``_INDEED_DISMISS_OVERLAYS_JS``: the broad ``[role="dialog"]``
+        selector used to match Indeed's hidden primary-navigation drawer, whose
+        "Close" button blanked the tab (killing the search form) on the
+        homepage.
+        """
+        try:
+            await page.evaluate(self._INDEED_DISMISS_OVERLAYS_JS)
+        except Exception:
+            pass
+        await asyncio.sleep(random.uniform(0.4, 0.9))
+
+        # Defensive: if an overlay interaction ever still navigates us away,
+        # report it so callers can recover instead of silently losing the page.
+        try:
+            u = page.url or ''
+            if not u or 'indeed.com' not in u:
+                print(f"   ⚠️ Indeed page left Indeed after overlay dismissal (url={u!r})")
+        except Exception:
+            pass
+
+    async def _indeed_collect_jobs(self, page) -> List[Dict[str, str]]:
+        try:
+            try:
+                await page.wait_for_selector('[data-jk], div.cardOutline', timeout=12000)
+            except Exception:
+                pass
+            return await page.evaluate("""() => {
+                const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
+                const out = [];
+                const seen = new Set();
+                const cards = document.querySelectorAll(
+                    'div.cardOutline.tapItem.result, .job_seen_beacon, div[data-jk], li[data-jk]'
+                );
+                cards.forEach(card => {
+                    let jk = card.getAttribute('data-jk');
+                    if (!jk) {
+                        const inner = card.querySelector('[data-jk]');
+                        if (inner) jk = inner.getAttribute('data-jk');
+                    }
+                    if (!jk || seen.has(jk)) return;
+                    seen.add(jk);
+                    const titleEl = card.querySelector('h2.jobTitle a, h2.jobTitle span, a.jcs-JobTitle, h2 a');
+                    const compEl = card.querySelector('[data-testid="company-name"], .companyName');
+                    const locEl = card.querySelector('[data-testid="text-location"], .companyLocation');
+                    const salEl = card.querySelector('.salary-snippet-container, [data-testid="attribute_snippet_testid"]');
+                    const linkEl = card.querySelector('h2.jobTitle a, a.jcs-JobTitle, h2 a, a[href*="jk="]');
+                    const blob = norm(card.innerText || card.textContent || '');
+                    // Tag the card so the Python side can click it reliably. Sponsored
+                    // ("/pagead/clk") cards expose a data-jk that /viewjob?jk= cannot
+                    // resolve, so they must be opened via a real click instead.
+                    try { card.setAttribute('data-sentinel-card', String(jk)); } catch (e) {}
+                    out.push({
+                        jk: String(jk),
+                        title: titleEl ? norm(titleEl.innerText || '') : '',
+                        company: compEl ? norm(compEl.innerText || '') : '',
+                        location: locEl ? norm(locEl.innerText || '') : '',
+                        salary: salEl ? norm(salEl.innerText || '') : '',
+                        easy: /easily apply/i.test(blob),
+                        href: linkEl ? (linkEl.getAttribute('href') || '') : ''
+                    });
+                });
+                return out;
+            }""") or []
+        except Exception as e:
+            print(f"   ⚠️ Indeed card harvest failed: {e}")
+            return []
+
+    # JS that marks the result card whose data-jk matches the argument. Used to
+    # turn a collected job back into a precise click target (sponsored cards
+    # cannot be opened via /viewjob?jk=).
+    _INDEED_MARK_CARD_JS = """(jk) => {
+        document.querySelectorAll('[data-sentinel-card]')
+            .forEach(e => e.removeAttribute('data-sentinel-card'));
+        const vis = n => !!(n && n.getClientRects().length);
+        const cards = Array.from(
+            document.querySelectorAll('.job_seen_beacon, div[data-jk], li[data-jk]')
+        );
+        let fallback = null;
+        for (const c of cards) {
+            const el = c.matches('[data-jk]') ? c : c.querySelector('[data-jk]');
+            const cjk = el ? el.getAttribute('data-jk') : (c.getAttribute('data-jk') || '');
+            if (cjk && cjk === jk) {
+                // Indeed renders duplicate (hidden) responsive copies of each
+                // card. Prefer the visible one so the later click can succeed.
+                if (vis(c)) { c.setAttribute('data-sentinel-card', jk); return true; }
+                if (!fallback) fallback = c;
+            }
+        }
+        if (fallback) { fallback.setAttribute('data-sentinel-card', jk); return true; }
+        return false;
+    }"""
+
+    async def _indeed_open_card(self, page, job: Dict[str, str]) -> bool:
+        """Open a job's detail pane by clicking its result card, like a user.
+
+        Direct ``/viewjob?jk=`` navigation is unreliable for sponsored
+        ("/pagead/clk") cards: Indeed silently redirects to an unrelated job,
+        which made every "Easily apply" job look external. Clicking the card
+        always loads the correct job into the detail pane.
+        """
+        jk = str(job.get('jk') or '')
+        if not jk:
+            return False
+        try:
+            await page.evaluate(self._INDEED_MARK_CARD_JS, jk)
+        except Exception:
+            pass
+        try:
+            card = page.locator(f'[data-sentinel-card="{jk}"]').first
+            if await card.count() == 0:
+                return False
+            link = card.locator(
+                'h2.jobTitle a, a.jcs-JobTitle, h2 a, a[href*="jk="]'
+            ).first
+            target = link if await link.count() > 0 else card
+            try:
+                await target.scroll_into_view_if_needed(timeout=4000)
+            except Exception:
+                pass
+            try:
+                await self._human_mouse_move()
+            except Exception:
+                pass
+            try:
+                await target.click(timeout=6000)
+                return True
+            except Exception:
+                # Fallback: force-click or JS-click if overlay or visibility check failed
+                try:
+                    await target.click(force=True, timeout=3000)
+                    return True
+                except Exception:
+                    await target.evaluate("el => (el.querySelector('a') || el).click()")
+                    return True
+        except Exception as e:
+            print(f"      ⚠️ Indeed card click failed ({jk}): {e}")
+            return False
+
+    async def _indeed_return_to_results(self, page, seed_url: str) -> None:
+        """Make sure the active tab is back on the Indeed search results."""
+        try:
+            u = page.url or ''
+            if 'indeed.com' in u and '/jobs' in u and 'smartapply' not in u and '/viewjob' not in u:
+                return
+        except Exception:
+            pass
+        try:
+            await page.goto(seed_url, wait_until='domcontentloaded', timeout=45000)
+            await asyncio.sleep(random.uniform(2.0, 3.5))
+            await self._indeed_dismiss_overlays(page)
+        except Exception:
+            pass
+
+    # JS that decides whether a job can be applied to *inside* Indeed.
+    # Indeed's in-site control is a plain <button> labelled "Easily apply"
+    # (or "Apply now" / "Apply with Indeed") with no stable id/testid, whereas
+    # the external option is an <a data-testid="viewjob-apply"> labelled
+    # "Apply on company site".  Matching on test ids alone missed the real
+    # button, so we match on visible text and hrefs instead, and prefer the
+    # button that lives inside the current job's apply region (not a
+    # "similar jobs" card elsewhere on the page).
+    _INDEED_EASY_APPLY_JS = """() => {
+        const norm = s => (s || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+        document.querySelectorAll('[data-sentinel-apply]')
+            .forEach(e => e.removeAttribute('data-sentinel-apply'));
+
+        // Restrict to the job DETAIL pane. The left-hand results list, the
+        // "similar jobs" cards and the "Easily apply" filter pill all contain
+        // apply-looking controls that must never be mistaken for THIS job's
+        // apply action.
+        //
+        // NOTE: we deliberately do NOT probe global selectors such as
+        // #indeedApplyButton / [data-testid="viewjob-indeed-apply"] here.
+        // Indeed ships those as hidden template nodes on EVERY job (including
+        // external ones), which caused false positives.
+        const pane = document.querySelector('#jobsearch-ViewjobPaneWrapper')
+            || document.querySelector('#viewJobSSRRoot')
+            || document.querySelector('[data-testid="jobsearch-JobComponent"]')
+            || document.querySelector('.jobsearch-JobComponent');
+        if (!pane) return false;
+
+        const visible = n => !!(n && n.getClientRects().length);
+        const label = n => norm(n.innerText || n.textContent || '') + ' ' +
+                          norm(n.getAttribute('aria-label') || '');
+        const inCard = n => !!n.closest(
+            '[data-jk], #mosaic-provider-jobcards, .job_seen_beacon'
+        );
+
+        const candidates = Array.from(
+            pane.querySelectorAll('button, a, [role="button"], [data-testid*="apply" i]')
+        ).filter(visible).filter(n =>
+            /apply/.test(label(n)) ||
+            /apply/i.test(n.getAttribute('data-testid') || '')
+        );
+        if (!candidates.length) return false;
+
+        // Primary control = top-most apply control in the detail pane that is
+        // not nested inside a "similar jobs" card.
+        const inPane = candidates.filter(n => !inCard(n));
+        const pool = inPane.length ? inPane : candidates;
+        pool.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+        const primary = pool[0];
+
+        const t = label(primary);
+        const href = primary.getAttribute('href') || '';
+        const isExternal = t.includes('company site')
+            || href.includes('applystart')
+            || href.includes('/rc/clk')
+            || (primary.tagName === 'A' && href.startsWith('http')
+                && !href.includes('indeed.com'));
+        if (isExternal) return false;
+
+        primary.setAttribute('data-sentinel-apply', '1');
+        return true;
+    }"""
+
+    async def _indeed_has_easy_apply(self, page) -> bool:
+        try:
+            if await page.evaluate(self._INDEED_EASY_APPLY_JS):
+                return True
+        except Exception:
+            pass
+
+        # React hydrates the detail pane slightly late; give it a brief moment.
+        try:
+            await page.wait_for_selector(
+                '#jobsearch-ViewjobPaneWrapper, #viewJobSSRRoot, '
+                '[data-testid="jobsearch-JobComponent"], .jobsearch-JobComponent',
+                timeout=2000,
+            )
+        except Exception:
+            pass
+        try:
+            return bool(await page.evaluate(self._INDEED_EASY_APPLY_JS))
+        except Exception:
+            return False
+
+    async def _indeed_wait_for_apply_frame(self, page, timeout: int = 25):
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
+
+        def _roots():
+            try:
+                if page.context and page.context.pages:
+                    return list(page.context.pages)
+            except Exception:
+                pass
+            return [page]
+
+        while loop.time() < deadline:
+            roots = _roots()
+            for root in roots:
+                for fr in root.frames:
+                    u = (fr.url or '')
+                    if 'smartapply.indeed.com' in u or 'indeed.com/apply' in u:
+                        return fr
+            for root in roots:
+                for fr in root.frames:
+                    if fr == root.main_frame:
+                        continue
+                    try:
+                        if await fr.query_selector('#ia-container, .ia-BasePage, .ia-Questions, form'):
+                            return fr
+                    except Exception:
+                        continue
+            await asyncio.sleep(0.75)
+        return None
+
+    async def _indeed_dismiss_smartapply_cookies(self, target) -> None:
+        for sel in (
+            '#onetrust-accept-btn-handler',
+            'button:has-text("Accept All Cookies")',
+            'button:has-text("Accept all")',
+            'button:has-text("Accept cookies")',
+            'button[id*="accept" i]',
+        ):
+            try:
+                loc = target.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    await loc.click(timeout=3000)
+                    await asyncio.sleep(1.0)
+                    break
+            except Exception:
+                continue
+
+        # Dismiss any preview or informational focus-lock overlays
+        try:
+            if hasattr(target, 'evaluate'):
+                await target.evaluate("""() => {
+                    const focusLock = document.querySelector('[data-focus-lock-disabled="false"]');
+                    if (focusLock) {
+                        const closeBtn = focusLock.querySelector('button[aria-label*="close" i], button[data-testid*="close" i], button:has-text("Got it"), button:has-text("Close")');
+                        if (closeBtn) closeBtn.click();
+                    }
+                }""")
+        except Exception:
+            pass
+
+    async def _indeed_click_apply_control(self, page) -> bool:
+        """Click the primary in-site apply control for the current job.
+
+        `_indeed_has_easy_apply` tags that element with `data-sentinel-apply`.
+        We re-tag (the DOM may have re-rendered) and click exactly that element
+        so we never hit a left-list card or the "Easily apply" filter pill.
+        """
+        try:
+            await page.evaluate(self._INDEED_EASY_APPLY_JS)
+        except Exception:
+            pass
+        try:
+            loc = page.locator('[data-sentinel-apply="1"]').first
+            if await loc.count() > 0 and await loc.is_visible():
+                await self._human_mouse_move()
+                await loc.click(timeout=8000)
+                return True
+        except Exception as e:
+            print(f"      ⚠️ Indeed apply click failed: {e}")
+        return False
+
+    async def _indeed_scroll_review(self, page) -> None:
+        """Scroll the review page so its Submit button is reachable.
+
+        Indeed keeps the review container at scrollTop 0 unless a genuinely
+        scrollable ancestor is moved; scrolling the largest scrollHeight element
+        was not enough because it was often ``overflow: visible``.
+        """
+        try:
+            await page.evaluate("""() => {
+                document.querySelectorAll('div, main, section, [role="main"]').forEach(el => {
+                    const st = window.getComputedStyle(el);
+                    if (/(auto|scroll)/.test(st.overflowY) && el.scrollHeight - el.clientHeight > 50) {
+                        el.scrollTop = el.scrollHeight;
+                    }
+                });
+                if (document.body) window.scrollTo(0, document.body.scrollHeight);
+            }""")
+        except Exception:
+            pass
+
+    async def _indeed_solve_recaptcha(self, page) -> bool:
+        """Tick Indeed SmartApply's reCAPTCHA checkbox and wait for its token.
+
+        The review page renders a *visible* reCAPTCHA Enterprise checkbox
+        (``[data-testid="captcha"]`` -> 304x78 anchor iframe). Until its
+        ``g-recaptcha-response`` token is populated the Submit button stays
+        ``disabled``, so the whole SmartApply flow can never complete.
+        Simulates natural human behavior: reading pause, curved Bézier mouse
+        movement to the checkbox, hover dwell time, natural click duration,
+        and polls for the token.
+        """
+        def _token_js() -> str:
+            return """() => {
+                const ta = document.querySelector('textarea[name="g-recaptcha-response"]');
+                return ta ? (ta.value || '').length : 0;
+            }"""
+
+        # 1. Check if token already exists
+        try:
+            if await page.evaluate(_token_js()):
+                return True
+        except Exception:
+            pass
+
+        # 2. Ensure captcha wrapper is in view with natural scroll
+        try:
+            cap_elem = page.locator('[data-testid="captcha"], #captcha-wrapper').first
+            if await cap_elem.count() > 0:
+                await cap_elem.scroll_into_view_if_needed(timeout=4000)
+                await asyncio.sleep(random.uniform(0.5, 1.0))
+        except Exception:
+            pass
+
+        # 3. Detect presence and get bounding box of reCAPTCHA iframe
+        try:
+            state = await page.evaluate("""() => {
+                const ta = document.querySelector('textarea[name="g-recaptcha-response"]');
+                const cap = document.querySelector('[data-testid="captcha"], #captcha-wrapper');
+                const f = cap ? cap.querySelector('iframe[title="reCAPTCHA"]') : null;
+                const r = f ? f.getBoundingClientRect() : null;
+                return {
+                    present: !!cap,
+                    tokenLen: ta ? (ta.value || '').length : 0,
+                    frame: (r && r.width > 0 && r.height > 0) ? {x: r.x, y: r.y, w: r.width, h: r.height} : null
+                };
+            }""")
+        except Exception:
+            return False
+
+        if state.get('tokenLen'):
+            return True
+        if not state.get('present'):
+            return False
+
+        # 4. Human reading pause before interacting
+        await asyncio.sleep(random.uniform(1.2, 2.2))
+
+        frame = state.get('frame')
+        clicked = False
+
+        # 5. Move mouse with curved trajectory and realistic dwell
+        if frame and frame.get('x') is not None and frame.get('y') is not None:
+            # Inside the 304x78 reCAPTCHA iframe, the checkbox center is at ~(28, 28)
+            cx = float(frame['x']) + 28.0 + random.uniform(-2, 2)
+            cy = float(frame['y']) + 28.0 + random.uniform(-2, 2)
+
+            from src.sentinel.human_behavior import human_mouse_move
+            try:
+                await human_mouse_move(page, int(cx), int(cy), duration=random.uniform(0.6, 1.1))
+                # Hover dwell time (humans pause over checkbox before clicking)
+                await asyncio.sleep(random.uniform(0.25, 0.45))
+                # Natural mousedown with hold time
+                await page.mouse.down()
+                await asyncio.sleep(random.uniform(0.06, 0.14))
+                await page.mouse.up()
+                clicked = True
+                print("      🔒 Naturally clicked Indeed reCAPTCHA checkbox")
+            except Exception:
+                clicked = False
+
+        # 6. Fallback: frame locator click with natural delay if coordinate click did not work
+        if not clicked:
+            try:
+                fl = page.frame_locator('[data-testid="captcha"] iframe[title="reCAPTCHA"]').first
+                anchor = fl.locator('#recaptcha-anchor')
+                if await anchor.count() > 0:
+                    await anchor.scroll_into_view_if_needed(timeout=4000)
+                    await asyncio.sleep(random.uniform(0.2, 0.4))
+                    await anchor.click(delay=random.randint(60, 130), timeout=6000)
+                    clicked = True
+                    print("      🔒 Clicked Indeed reCAPTCHA anchor via frame locator")
+            except Exception:
+                pass
+
+        if not clicked:
+            return False
+
+        # 7. Check if token arrived from immediate 1-click pass
+        for _ in range(6):
+            await asyncio.sleep(0.5)
+            try:
+                if await page.evaluate(_token_js()):
+                    print("      🔓 Indeed reCAPTCHA token received")
+                    return True
+            except Exception:
+                pass
+
+        # 8. If challenge appeared, attempt audio solver with Gemini 3.5 Transcribe
+        has_challenge = False
+        try:
+            has_challenge = await page.locator('iframe[title*="recaptcha challenge" i], iframe[src*="bframe"]').count() > 0
+        except Exception:
+            pass
+
+        if has_challenge:
+            print("      🧩 reCAPTCHA challenge modal detected")
+            if await self._indeed_solve_audio_challenge(page):
+                return True
+
+            # 9. Fallback: Human-in-the-Loop grace period
+            print("      🔔 [ACTION REQUIRED] reCAPTCHA challenge displayed on screen!")
+            print("      👉 Please click/solve the challenge in the open Chrome browser window (waiting up to 45s)...")
+            try:
+                import subprocess
+                subprocess.Popen(['afplay', '/System/Library/Sounds/Glass.aiff'], stderr=subprocess.DEVNULL)
+            except Exception:
+                print("\a", end="", flush=True)
+
+            for sec in range(45):
+                await asyncio.sleep(1.0)
+                try:
+                    if await page.evaluate(_token_js()):
+                        print("      🔓 reCAPTCHA token received! Resuming application...")
+                        return True
+                except Exception:
+                    pass
+
+            print("      ⚠️ reCAPTCHA interaction timed out after 45s. Gracefully skipping to prevent hanging.")
+            return False
+
+        # 10. Fallback poll if no challenge frame was detected
+        for _ in range(10):
+            await asyncio.sleep(1.0)
+            try:
+                if await page.evaluate(_token_js()):
+                    print("      🔓 Indeed reCAPTCHA token received")
+                    return True
+            except Exception:
+                pass
+
+        print("      ⚠️ Indeed reCAPTCHA produced no token")
+        return False
+
+    async def _indeed_solve_audio_challenge(self, page) -> bool:
+        """Attempt to solve reCAPTCHA v2 / Enterprise interactive audio challenge."""
+        def _token_js() -> str:
+            return """() => {
+                const ta = document.querySelector('textarea[name="g-recaptcha-response"]');
+                return ta ? (ta.value || '').length : 0;
+            }"""
+
+        try:
+            fl = page.frame_locator('iframe[title*="recaptcha challenge" i], iframe[src*="bframe"]').first
+            audio_btn = fl.locator('#recaptcha-audio-button, button[title*="audio" i]').first
+            if await audio_btn.count() == 0 or not await audio_btn.is_visible():
+                return False
+
+            print("      🎧 Clicking reCAPTCHA audio challenge button...")
+            await audio_btn.click(delay=random.randint(60, 130))
+            await asyncio.sleep(2.0)
+
+            # Check if Google blocked the audio challenge
+            blocked = await fl.locator('.rc-doscaptcha-header, :has-text("automated queries")').count() > 0
+            if blocked:
+                print("      ⚠️ Indeed reCAPTCHA audio challenge blocked by Google (rate limit)")
+                return False
+
+            # Extract audio download link
+            link_loc = fl.locator('.rc-audiochallenge-tdownload-link, a.rc-audiochallenge-download-link, #audio-source').first
+            if await link_loc.count() == 0:
+                return False
+
+            audio_url = await link_loc.get_attribute('href') or await link_loc.get_attribute('src')
+            if not audio_url:
+                return False
+
+            print("      📥 Downloading reCAPTCHA audio challenge clip...")
+            llm = self._get_llm_client()
+            if not llm:
+                return False
+
+            session = await llm._get_session()
+            if not session:
+                return False
+
+            async with session.get(audio_url) as resp:
+                if resp.status != 200:
+                    return False
+                audio_bytes = await resp.read()
+
+            print(f"      🤖 Transcribing audio ({len(audio_bytes)} bytes) with Gemini 3.5 Transcribe...")
+            transcript = await llm.transcribe_audio(audio_bytes)
+            if not transcript:
+                return False
+
+            # Fill into response field
+            resp_input = fl.locator('#audio-response').first
+            if await resp_input.count() == 0:
+                return False
+
+            await resp_input.fill(transcript)
+            await asyncio.sleep(random.uniform(0.4, 0.8))
+
+            verify_btn = fl.locator('#recaptcha-verify-button').first
+            await verify_btn.click(delay=random.randint(50, 100))
+            await asyncio.sleep(2.0)
+
+            for _ in range(8):
+                await asyncio.sleep(0.5)
+                if await page.evaluate(_token_js()):
+                    print("      🔓 Indeed reCAPTCHA solved via Gemini 3.5 Transcribe!")
+                    return True
+
+            return False
+        except Exception as e:
+            print(f"      ⚠️ reCAPTCHA audio challenge attempt error: {e}")
+            return False
+
+    async def _indeed_submit_review(self, page) -> bool:
+        """Drive the SmartApply review page to a submitted application.
+
+        Waits for "Preparing review" to finish, solves the reCAPTCHA checkbox
+        that gates Submit, scrolls the review, then clicks Submit.
+        """
+        captcha_tried = False
+        for _ in range(40):
+            try:
+                stat = await page.evaluate("""() => {
+                    const btn = document.querySelector('button[data-testid="submit-application-button"]');
+                    const ta = document.querySelector('textarea[name="g-recaptcha-response"]');
+                    const cap = document.querySelector('[data-testid="captcha"], #captcha-wrapper');
+                    const prep = (document.body ? document.body.innerText : '').toLowerCase().includes('preparing review');
+                    return {
+                        hasSubmit: !!btn,
+                        disabled: btn ? btn.disabled : true,
+                        prep: prep,
+                        captcha: !!cap,
+                        token: ta ? (ta.value || '').length : 0
+                    };
+                }""")
+            except Exception:
+                stat = {}
+            if stat.get('hasSubmit') and not stat.get('disabled') and not stat.get('prep'):
+                break
+            if stat.get('captcha') and not stat.get('token') and not captcha_tried:
+                captcha_tried = True
+                try:
+                    await self._indeed_solve_recaptcha(page)
+                except Exception:
+                    pass
+            await self._indeed_scroll_review(page)
+            await asyncio.sleep(1.0)
+
+        # The Submit button may still be disabled if the token arrived late.
+        try:
+            still_disabled = await page.evaluate(
+                "() => { const b = document.querySelector('button[data-testid=\"submit-application-button\"]');"
+                " return b ? b.disabled : true; }")
+            if still_disabled and not captcha_tried:
+                captcha_tried = True
+                await self._indeed_solve_recaptcha(page)
+                for _ in range(15):
+                    still_disabled = await page.evaluate(
+                        "() => { const b = document.querySelector('button[data-testid=\"submit-application-button\"]');"
+                        " return b ? b.disabled : true; }")
+                    if not still_disabled:
+                        break
+                    await asyncio.sleep(1.0)
+        except Exception:
+            pass
+
+        submit_loc = page.locator(
+            'button[data-testid="submit-application-button"]:not([data-testid^="hp-"])').first
+        try:
+            if await submit_loc.count() == 0 or await submit_loc.is_disabled():
+                print("      ⚠️ Indeed review Submit still disabled after reCAPTCHA handling")
+                return False
+        except Exception:
+            return False
+
+        try:
+            await submit_loc.scroll_into_view_if_needed()
+            await asyncio.sleep(random.uniform(0.6, 1.2))
+            await self._human_mouse_move()
+            await submit_loc.click(delay=random.randint(50, 120), timeout=8000)
+            print("      🚀 Clicked Indeed submit button")
+            await asyncio.sleep(random.uniform(3.5, 5.5))
+            return await self._indeed_is_submitted(page)
+        except Exception as e:
+            print(f"      ⚠️ Failed clicking Indeed submit: {e}")
+            try:
+                await page.keyboard.press("Escape")
+                await submit_loc.click(force=True, timeout=8000)
+                print("      🚀 Force-clicked Indeed submit button")
+                await asyncio.sleep(random.uniform(3.5, 5.5))
+                return await self._indeed_is_submitted(page)
+            except Exception:
+                return False
+
+    async def _indeed_run_apply_flow(self, page) -> bool:
+        # Capture the current page set BEFORE clicking: Indeed's "Easily apply"
+        # usually opens SmartApply in a NEW TAB, so we must diff against the
+        # pre-click set to find it. (Previously this snapshot was taken after
+        # the click, so the new tab was already included and never detected.)
+        ctx = page.context
+        initial_page_ids = {id(p) for p in ctx.pages} if ctx else {id(page)}
+
+        if not await self._indeed_click_apply_control(page):
+            print("      ⚠️ Indeed: no in-site apply control to click")
+            return False
+
+        def _is_apply_url(u: str) -> bool:
+            u = u or ''
+            return 'smartapply' in u or 'indeed.com/apply' in u or '/apply/' in u
+
+        # Wait for the apply surface: new tab (SmartApply), same-tab navigation,
+        # or an in-page iframe.
+        apply_page = page
+        for _ in range(20):
+            await asyncio.sleep(0.75)
+            if ctx:
+                for p in ctx.pages:
+                    if id(p) not in initial_page_ids and _is_apply_url(p.url):
+                        apply_page = p
+                        break
+            if apply_page is not page:
+                break
+            if _is_apply_url(page.url):
+                apply_page = page
+                break
+
+        # Fall back to an apply iframe, scanning across ALL open pages.
+        if not _is_apply_url(apply_page.url):
+            fr = await self._indeed_wait_for_apply_frame(page, timeout=12)
+            if fr is None:
+                print("      ⚠️ Indeed apply container not detected")
+                return False
+            # The frame may live in a different tab than `page`.
+            try:
+                apply_page = fr.page or page
+            except Exception:
+                pass
+
+        try:
+            await apply_page.bring_to_front()
+        except Exception:
+            pass
+        # Apply the same stealth patches to the SmartApply tab so the
+        # reCAPTCHA Enterprise check that gates the Submit button sees a
+        # consistent, non-automated browser.
+        try:
+            await self._indeed_apply_stealth(apply_page)
+        except Exception:
+            pass
+        print(f"      📝 Running Smartapply flow on: {(apply_page.url or '')[:60]}")
+
+        # Wait for initial redirects (e.g. applybyapplyablejobid -> /form/) and dismiss cookie overlay
+        for _ in range(12):
+            await self._indeed_dismiss_smartapply_cookies(apply_page)
+            if '/form/' in (apply_page.url or ''):
+                break
+            await asyncio.sleep(1.0)
+
+        submitted = False
+        no_btn_retries = 0
+        last_sig = None
+        stuck = 0
+        review_attempts = 0
+
+        max_steps = self._env_int('SENTINEL_INDEED_MAX_STEPS', 25)
+        for step in range(max_steps):
+            await asyncio.sleep(random.uniform(1.5, 2.5))
+            await self._indeed_dismiss_smartapply_cookies(apply_page)
+
+            # Bail out if the page stops making progress (same URL + same visible
+            # questions for several consecutive steps). Without this a required
+            # field that cannot be answered leads to 25 pointless Continue clicks.
+            try:
+                sig = await apply_page.evaluate("""() => {
+                    const q = Array.from(document.querySelectorAll(
+                        '.ia-Question, .ia-TextQuestion, .ia-SelectQuestion, fieldset'
+                    )).map(n => (n.innerText || '').trim().slice(0, 80)).join('|');
+                    const sb = document.querySelector('button[data-testid="submit-application-button"]');
+                    return location.href + '::' + q + '::' + (sb ? sb.disabled : '');
+                }""")
+            except Exception:
+                sig = None
+            on_review = '/review-module' in (apply_page.url or '')
+            if sig is not None and sig == last_sig and not on_review:
+                stuck += 1
+            else:
+                stuck = 0
+                last_sig = sig
+            if stuck >= 4:
+                print(f"      ⚠️ Indeed apply page stalled at step {step + 1}: "
+                      f"{(apply_page.url or '')[:60]}")
+                break
+
+            if os.getenv('SENTINEL_INDEED_DEBUG'):
+                try:
+                    dbg = await apply_page.evaluate("""() => {
+                        const vis = n => !!(n && n.getClientRects().length);
+                        const errs = [];
+                        document.querySelectorAll('[role="alert"], .ia-Error, .artdeco-inline-feedback--error, [aria-live="polite"], [data-testid*="error" i]').forEach(e => {
+                            const x = (e.innerText || '').trim();
+                            if (x && vis(e)) errs.push(x.replace(/\\s+/g, ' ').slice(0, 160));
+                        });
+                        const qs = [];
+                        document.querySelectorAll('.ia-TextQuestion, .ia-SelectQuestion, .ia-Question, fieldset, .ia-RadioButton-container').forEach(n => {
+                            const box = n.closest('.ia-question, fieldset, .ia-Question, .ia-Questions > div') || n;
+                            const legend = box.querySelector('label, legend, .ia-label, .ia-Question-label, .ia-QuestionLabel');
+                            const raw = (legend ? legend.innerText : box.innerText) || '';
+                            const q = raw.split('\\n').map(s => s.trim()).filter(Boolean)[0] || '';
+                            if (!q) return;
+                            const inputs = Array.from(box.querySelectorAll('input, select, textarea')).map(i => ({
+                                t: i.type || i.tagName,
+                                n: i.name || null,
+                                v: i.value || null,
+                                c: i.checked === undefined ? null : i.checked,
+                                vis: vis(i)
+                            }));
+                            qs.push({q: q.slice(0, 80), inputs});
+                        });
+                        const btns = Array.from(document.querySelectorAll('button')).filter(vis).map(b => ({
+                            txt: (b.innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 40),
+                            tid: b.getAttribute('data-testid') || null,
+                            dis: !!b.disabled
+                        }));
+                        const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).filter(vis).map(c => ({
+                            name: c.name || null,
+                            checked: c.checked,
+                            label: ((c.closest('label') ? c.closest('label').innerText : '') || c.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 70)
+                        }));
+                        let scroller = null;
+                        document.querySelectorAll('div, main, section').forEach(el => {
+                            const dh = el.scrollHeight - el.clientHeight;
+                            if (dh > 150 && el.clientHeight > 150) {
+                                if (!scroller || dh > (scroller.scrollHeight - scroller.clientHeight)) scroller = el;
+                            }
+                        });
+                        const scroll = scroller ? {h: scroller.scrollHeight, c: scroller.clientHeight, t: Math.round(scroller.scrollTop)} : null;
+                        const submit = document.querySelector('button[data-testid="submit-application-button"]');
+                        const submitInfo = submit ? {
+                            dis: !!submit.disabled,
+                            title: submit.getAttribute('title') || null,
+                            desc: submit.getAttribute('aria-describedby') || null,
+                            aria: submit.getAttribute('aria-disabled') || null
+                        } : null;
+                        const controls = Array.from(document.querySelectorAll(
+                            'input, textarea, select, [role="checkbox"], [role="radio"], [role="switch"]'
+                        )).map(i => ({
+                            tag: i.tagName.toLowerCase(),
+                            t: i.type || null,
+                            name: i.name || null,
+                            role: i.getAttribute('role') || null,
+                            c: (i.checked === undefined ? null : i.checked),
+                            req: !!i.required || i.getAttribute('aria-required') === 'true',
+                            vis: vis(i)
+                        })).slice(0, 30);
+                        const bodyText = (document.body ? document.body.innerText : '').slice(0, 1600);
+                        return {url: location.href, errs: errs.slice(0, 8), qs: qs.slice(0, 8), btns: btns.slice(0, 14), boxes: boxes.slice(0, 8), scroll, submitInfo, controls, bodyText};
+                    }""")
+                    print(f"      🐞 step {step + 1} url={dbg.get('url')}")
+                    print(f"         qs={dbg.get('qs')}")
+                    print(f"         errs={dbg.get('errs')}")
+                    print(f"         btns={dbg.get('btns')}")
+                    print(f"         boxes={dbg.get('boxes')} scroll={dbg.get('scroll')} submit={dbg.get('submitInfo')}")
+                    print(f"         controls={dbg.get('controls')}")
+                    print(f"         bodyText={dbg.get('bodyText')!r}")
+                    if 'questions' in (dbg.get('url') or ''):
+                        try:
+                            html = await apply_page.evaluate("""() => {
+                                const c = document.querySelector('.ia-Questions, form, main');
+                                return c ? c.outerHTML : (document.body ? document.body.innerHTML : '');
+                            }""")
+                            dump_path = '/tmp/indeed_questions.html'
+                            with open(dump_path, 'w') as fh:
+                                fh.write(html)
+                            print(f"         dumped questions html ({len(html)} bytes) -> {dump_path}")
+                        except Exception as e:
+                            print(f"         html dump failed: {e}")
+                    if 'review-module' in (dbg.get('url') or ''):
+                        try:
+                            html = await apply_page.evaluate("""() => {
+                                return document.body ? document.body.outerHTML : '';
+                            }""")
+                            dump_path = '/tmp/indeed_review.html'
+                            with open(dump_path, 'w') as fh:
+                                fh.write(html)
+                            print(f"         dumped review html ({len(html)} bytes) -> {dump_path}")
+                        except Exception as e:
+                            print(f"         review html dump failed: {e}")
+                except Exception as e:
+                    print(f"      🐞 debug failed: {e}")
+
+            if await self._indeed_is_submitted(apply_page):
+                submitted = True
+                break
+
+            targets = [apply_page] + [f for f in apply_page.frames if f != apply_page.main_frame]
+
+            # 1. Check if on review page or submit button is ready
+            submit_loc = None
+            is_review_page = '/review-module' in (apply_page.url or '')
+            for target in targets:
+                for sel in (
+                    'button[data-testid="submit-application-button"]:not([data-testid^="hp-"])',
+                    'button:has-text("Submit your application"):not([data-testid^="hp-"])',
+                    'button:has-text("Submit application"):not([data-testid^="hp-"])',
+                    '.ia-submitButton:not([data-testid^="hp-"])',
+                ):
+                    try:
+                        loc = target.locator(sel).first
+                        if await loc.count() > 0 and await loc.is_visible():
+                            submit_loc = loc
+                            break
+                    except Exception:
+                        continue
+                if submit_loc:
+                    break
+
+            if is_review_page or submit_loc:
+                review_attempts += 1
+                if await self._indeed_submit_review(apply_page):
+                    submitted = True
+                    break
+                # Stay on the review page without tripping the "no advance
+                # control" retry counter (Submit is the only control there).
+                if review_attempts >= 3:
+                    break
+                continue
+
+            # Handle file inputs / resume
+            for target in targets:
+                try:
+                    await self._indeed_handle_resume(target)
+                except Exception:
+                    pass
+
+            # Answer any questions
+            for target in targets:
+                try:
+                    await self._indeed_answer_questions(target)
+                except Exception:
+                    pass
+
+            # 2. Check for legitimate Continue / Next / Review button (EXCLUDING honeypots & preview buttons)
+            adv_loc = None
+            adv_text = ""
+            for target in targets:
+                for sel in (
+                    'button[data-testid="continue-button"]',
+                    # NOTE: Indeed wraps the label in a <span>, so a strict
+                    # `:text-is("Continue")` never matches the <button>. Use the
+                    # substring `:has-text` form instead.
+                    'button:has-text("Continue"):not([data-testid^="hp-"]):not([aria-hidden="true"])',
+                    'button:has-text("Review your application"):not([data-testid^="hp-"]):not([aria-hidden="true"])',
+                    'button:has-text("Review application"):not([data-testid^="hp-"]):not([aria-hidden="true"])',
+                    'button:has-text("Next"):not([data-testid^="hp-"]):not([aria-hidden="true"])',
+                    'button:text-is("Next"):not([data-testid^="hp-"]):not([aria-hidden="true"])',
+                    '.ia-continueButton:not([data-testid^="hp-"])',
+                ):
+                    try:
+                        loc = target.locator(sel).first
+                        if await loc.count() > 0 and await loc.is_visible():
+                            btn_txt = (await loc.inner_text()).strip().lower()
+                            if any(bad in btn_txt for bad in ['preview', 'save and close', 'exit', 'close', 'report', 'cookie', 'settings']):
+                                continue
+                            tid = (await loc.get_attribute('data-testid') or '').lower()
+                            if tid.startswith('hp-'):
+                                continue
+                            if await loc.is_disabled():
+                                # A required field may still be validating; give the
+                                # button a few seconds to enable before skipping it.
+                                for _ in range(5):
+                                    await asyncio.sleep(1.0)
+                                    if not await loc.is_disabled():
+                                        break
+                                if await loc.is_disabled():
+                                    continue
+                            adv_loc = loc
+                            adv_text = btn_txt
+                            break
+                    except Exception:
+                        continue
+                if adv_loc:
+                    break
+
+            if adv_loc:
+                no_btn_retries = 0
+                try:
+                    await adv_loc.scroll_into_view_if_needed()
+                    await adv_loc.click(timeout=8000)
+                    print(f"      ➡️ Advanced ({adv_text}) at step {step + 1}")
+                    await asyncio.sleep(random.uniform(2.0, 3.5))
+                    continue
+                except Exception as e:
+                    print(f"      ⚠️ Failed clicking advance ({adv_text}): {e}")
+                    try:
+                        await apply_page.keyboard.press("Escape")
+                        await adv_loc.click(force=True, timeout=5000)
+                        print(f"      ➡️ Force-clicked advance ({adv_text}) at step {step + 1}")
+                        await asyncio.sleep(random.uniform(2.0, 3.5))
+                        continue
+                    except Exception:
+                        pass
+
+            no_btn_retries += 1
+            if no_btn_retries >= 3:
+                print(f"      ⚠️ No advance or submit control found at step {step + 1}")
+                break
+            await asyncio.sleep(2.0)
+
+        # Cleanup popup window if one was opened
+        if apply_page != page and not apply_page.is_closed():
+            try:
+                await apply_page.close()
+            except Exception:
+                pass
+
+        return submitted or await self._indeed_is_submitted(page)
+
+    async def _indeed_is_submitted(self, target) -> bool:
+        try:
+            return bool(await target.evaluate("""() => {
+                const t = (document.body ? document.body.innerText : '').toLowerCase();
+                return t.includes('application submitted') ||
+                       t.includes('your application has been submitted') ||
+                       t.includes('applied successfully') ||
+                       t.includes('you applied to') ||
+                       t.includes('return to job search') ||
+                       (t.includes('applied') && t.includes('successfully'));
+            }"""))
+        except Exception:
+            return False
+
+    async def _indeed_handle_resume(self, frame) -> None:
+        try:
+            file_inputs = await frame.query_selector_all('input[type="file"]')
+        except Exception:
+            return
+        resume_path = os.getenv('RESUME_FILE_PATH')
+        if not resume_path or not os.path.exists(resume_path):
+            return
+        for fi in file_inputs:
+            try:
+                await fi.set_input_files(resume_path)
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                print("      📎 Uploaded resume to Indeed apply")
+                break
+            except Exception:
+                continue
+
+    _INDEED_AFFIRMATIVE_OPTS = (
+        'yes', 'opt in', 'opt-in', 'i agree', 'agree', 'consent', 'allow',
+        'accept', 'authorized', 'authorised', 'willing',
+    )
+
+    def _indeed_align_radio_answer(self, qtext: str, options, answer: str) -> str:
+        """Pick the option that best matches ``answer`` for a radio question.
+
+        The generic Q&A matcher sometimes returns a value that is not one of the
+        offered options (e.g. ``'15'`` for an ``Opt In``/``Opt Out`` consent
+        question, or the job title for a ``Yes``/``No`` question). For yes/no and
+        consent questions that mismatch, fall back to the affirmative option so
+        the form can advance instead of stalling on a required field.
+        """
+        opts = [(o or '').strip() for o in (options or []) if (o or '').strip()]
+        if not opts:
+            return answer
+        a = (answer or '').strip().lower()
+
+        # 1) exact option match
+        for o in opts:
+            if o.lower() == a:
+                return o
+        # 2) substring either way
+        if a:
+            for o in opts:
+                ol = o.lower()
+                if a in ol or ol in a:
+                    return o
+
+        lows = [o.lower() for o in opts]
+        # 3) plain yes/no question
+        if any(x in ('yes', 'no') for x in lows):
+            negative = a in ('no', 'false', 'n', '0', 'none', 'nil') or a.startswith('not ') or 'not willing' in a
+            want = 'no' if negative else 'yes'
+            for o in opts:
+                if o.lower() == want:
+                    return o
+        # 4) consent / opt-in question
+        if any(('opt in' in o or 'opt-in' in o or 'opt out' in o or 'opt-out' in o
+                or 'consent' in o or 'agree' in o) for o in lows):
+            for o in opts:
+                ol = o.lower()
+                if any(h in ol for h in ('opt in', 'opt-in', 'consent', 'agree', 'yes')):
+                    return o
+        # 5) any binary question whose options include a clear affirmative
+        if len(opts) == 2:
+            for o in opts:
+                if any(o.lower() == h or o.lower().startswith(h) for h in self._INDEED_AFFIRMATIVE_OPTS):
+                    return o
+        return answer
+
+    def _indeed_format_input_answer(self, answer: str, placeholder: str = '', input_type: str = '') -> str:
+        """Adapt a generic answer to the concrete field's expected format.
+
+        Indeed renders "When are you available to start?" as a masked date text
+        box (``placeholder="DD/MM/YYYY"``). The generic matcher returns human
+        answers such as ``"15 Days"``/``"25/09/2026"`` for it; the mask rejects
+        the former, so the required field stays invalid and Continue stalls.
+        Convert day counts to a real date rendered in the field's own order.
+        """
+        ans = (answer or '').strip()
+        ph = (placeholder or '').upper()
+        it = (input_type or '').lower()
+        is_date = it == 'date' or ('YYYY' in ph and ('MM' in ph or 'DD' in ph)) or 'DD/MM' in ph or 'MM/DD' in ph
+        if not is_date:
+            return ans
+        d = None
+        m = re.search(r'(\d{1,4})[/\-.](\d{1,2})[/\-.](\d{1,4})', ans)
+        if m:
+            try:
+                a, b, c = m.group(1), m.group(2), m.group(3)
+                if len(a) == 4:
+                    d = datetime(int(a), int(b), int(c))
+                else:
+                    yyyy = int(c)
+                    if yyyy < 100:
+                        yyyy += 2000
+                    d = datetime(yyyy, int(b), int(a))
+            except Exception:
+                d = None
+        if d is None:
+            low = ans.lower()
+            if any(k in low for k in ('immediate', 'asap', 'right away', 'currently serving', 'serving notice')):
+                d = datetime.now()
+            else:
+                md = re.search(r'(\d+)\s*(day|week|month)', low)
+                if md:
+                    n = int(md.group(1))
+                    mult = {'day': 1, 'week': 7, 'month': 30}.get(md.group(2), 1)
+                    d = datetime.now() + timedelta(days=n * mult)
+        if d is None:
+            return ans
+        if 'MM/DD' in ph:
+            return d.strftime('%m/%d/%Y')
+        if 'YYYY-MM-DD' in ph or 'YYYY/MM/DD' in ph:
+            return d.strftime('%Y-%m-%d')
+        sep = '-' if ('-' in ph and 'YYYY' in ph and '/' not in ph) else '/'
+        return d.strftime(f'%d{sep}%m{sep}%Y')
+
+    async def _indeed_answer_questions(self, frame) -> None:
+        try:
+            questions = await frame.evaluate("""() => {
+                const out = [];
+                // Every Indeed SmartApply question (radio group, select, text or
+                // masked date box) is wrapped in a `.ia-Questions-item`. The old
+                // selector set only matched `fieldset`/`.ia-Question`, so plain
+                // text/date questions such as "When are you available to start?"
+                // were silently skipped and the form reported
+                // "Answer this question to continue." forever.
+                let items = Array.from(document.querySelectorAll('.ia-Questions-item'));
+                if (items.length === 0) {
+                    const set = new Set();
+                    document.querySelectorAll('.ia-TextQuestion, .ia-SelectQuestion, .ia-Question, fieldset')
+                        .forEach(n => set.add(n.closest('.ia-question, fieldset, .ia-Question') || n));
+                    items = Array.from(set);
+                }
+                items.forEach((box, idx) => {
+                    const labelEl = box.querySelector('[data-testid$="-label"]');
+                    const legend = box.querySelector('legend, label, .ia-label, .ia-Question-label, .ia-QuestionLabel');
+                    let q = labelEl ? (labelEl.innerText || '').trim() : '';
+                    if (!q) {
+                        const raw = (legend ? legend.innerText : box.innerText) || '';
+                        q = raw.split('\\n').map(s => s.trim()).filter(Boolean)[0] || '';
+                    }
+                    if (!q) return;
+                    const input = box.querySelector(
+                        'input[type="text"], input[type="number"], input[type="date"], textarea, ' +
+                        'input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):not([type="submit"]):not([type="button"])'
+                    );
+                    const select = box.querySelector('select');
+                    const radios = Array.from(box.querySelectorAll('input[type="radio"]'));
+                    const checkboxes = Array.from(box.querySelectorAll('input[type="checkbox"]'));
+                    if (!input && !select && radios.length === 0 && checkboxes.length === 0) return;
+                    const options = [];
+                    radios.forEach(r => {
+                        const l = r.closest('label') || box.querySelector('label[for="' + r.id + '"]');
+                        options.push({ value: r.value, text: (l ? l.innerText : r.value).trim() });
+                    });
+                    checkboxes.forEach(c => {
+                        const l = c.closest('label') || box.querySelector('label[for="' + c.id + '"]');
+                        options.push({ value: c.value, text: (l ? l.innerText : c.value).trim(), checkbox: true });
+                    });
+                    if (select) {
+                        Array.from(select.options).forEach(o => options.push({ value: o.value, text: (o.text || '').trim() }));
+                    }
+                    const qid = 'sntlq_' + (idx++);
+                    box.setAttribute('data-sentinel-qid', qid);
+                    out.push({
+                        qid: qid,
+                        question: q,
+                        hasInput: !!input,
+                        hasSelect: !!select,
+                        hasRadios: radios.length > 0,
+                        hasCheckboxes: checkboxes.length > 0,
+                        options: options,
+                        placeholder: input ? (input.getAttribute('placeholder') || '') : '',
+                        inputType: input ? (input.getAttribute('type') || input.tagName.toLowerCase()) : ''
+                    });
+                });
+                return out;
+            }""") or []
+        except Exception as e:
+            print(f"      ⚠️ Indeed question scan failed: {e}")
+            return
+
+        for q in questions:
+            qtext = q.get('question', '')
+            qid = q.get('qid')
+            if not qtext or not qid:
+                continue
+            answer, _conf = self._fuzzy_match_question(qtext)
+            # Multi-select (checkbox) groups such as "Please share your shift
+            # preference" have no single pattern answer and can still resolve to
+            # None; a sensible option must be checked anyway or the required
+            # field keeps Continue disabled forever.
+            _is_checkbox_group = bool(q.get('hasCheckboxes')) and not q.get('hasRadios')
+            if os.getenv('SENTINEL_INDEED_DEBUG'):
+                print(f"         ❓ {qtext[:70]!r} -> answer={answer!r} "
+                      f"(select={q.get('hasSelect')} radios={q.get('hasRadios')} "
+                      f"checkboxes={q.get('hasCheckboxes')} "
+                      f"input={q.get('hasInput')} opts={[o.get('text') for o in (q.get('options') or [])][:6]})")
+            if not answer and not _is_checkbox_group:
+                try:
+                    llm = self._get_llm_client()
+                    if llm:
+                        raw_opts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
+                        itype = 'select' if q.get('hasSelect') else ('radio' if q.get('hasRadios') else (q.get('inputType') or 'text'))
+                        llm_ans = await asyncio.wait_for(
+                            llm.answer_question(qtext, options=raw_opts if raw_opts else None, input_type=itype),
+                            timeout=10.0
+                        )
+                        if llm_ans:
+                            answer = llm_ans
+                except Exception:
+                    pass
+            if not answer and not _is_checkbox_group:
+                continue
+            try:
+                if q.get('hasSelect'):
+                    await self._indeed_set_select(frame, qid, answer)
+                elif _is_checkbox_group:
+                    opt_texts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
+                    await self._indeed_set_checkboxes(frame, qid, qtext, opt_texts, answer or '')
+                elif q.get('hasRadios'):
+                    opt_texts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
+                    radio_answer = self._indeed_align_radio_answer(qtext, opt_texts, answer)
+                    await self._indeed_set_radio(frame, qid, radio_answer)
+                elif q.get('hasInput'):
+                    text_answer = self._indeed_format_input_answer(
+                        answer, q.get('placeholder') or '', q.get('inputType') or '')
+                    await self._indeed_set_text(frame, qid, text_answer)
+                self.metrics['questions_answered'] = self.metrics.get('questions_answered', 0) + 1
+            except Exception as e:
+                print(f"      ⚠️ Indeed answer error for '{qtext[:40]}': {e}")
+
+    async def _indeed_set_text(self, frame, qid: str, answer: str) -> None:
+        # Prefer a real (trusted) interaction. Indeed's masked date/text inputs
+        # run their formatter and required-field validation on genuine
+        # keystrokes; a raw JS value assignment leaves the control aria-invalid
+        # and the module blocks with "Answer this question to continue.".
+        sel = (
+            f'[data-sentinel-qid="{qid}"] input[type="text"], '
+            f'[data-sentinel-qid="{qid}"] input[type="number"], '
+            f'[data-sentinel-qid="{qid}"] input[type="date"], '
+            f'[data-sentinel-qid="{qid}"] textarea'
+        )
+        try:
+            loc = frame.locator(sel).first
+            if await loc.count() > 0:
+                await loc.scroll_into_view_if_needed(timeout=4000)
+                try:
+                    await loc.click(timeout=4000)
+                except Exception:
+                    pass
+                try:
+                    await loc.fill('')
+                except Exception:
+                    pass
+                try:
+                    await loc.press_sequentially(answer, delay=40)
+                except Exception:
+                    await loc.type(answer, delay=40)
+                try:
+                    await loc.evaluate("el => el.dispatchEvent(new Event('change', {bubbles:true}))")
+                    await loc.evaluate("el => el.blur()")
+                except Exception:
+                    pass
+                if os.getenv('SENTINEL_INDEED_DEBUG'):
+                    try:
+                        cur = await loc.input_value()
+                    except Exception:
+                        cur = '?'
+                    print(f"            ↳ typed text {answer!r} -> value={cur!r}")
+                return
+        except Exception:
+            pass
+        # Fallback for inputs a trusted click cannot reach.
+        await frame.evaluate("""([qid, answer]) => {
+            const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+            if (!box) return;
+            const input = box.querySelector(
+                'input[type="text"], input[type="number"], textarea, ' +
+                'input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):not([type="submit"]):not([type="button"])'
+            );
+            if (!input) return;
+            const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+            setter.call(input, answer);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('blur', { bubbles: true }));
+        }""", [qid, answer])
+
+    async def _indeed_set_radio(self, frame, qid: str, answer: str) -> None:
+        # Pick the matching option in-page, then perform the actual click with a
+        # real (trusted) Playwright click. Indeed's radio component ignores a
+        # programmatic element.click(): the DOM "checked" flag flips, but React's
+        # onChange never fires, so the answer does not register and "Continue"
+        # stalls on the same page forever.
+        pick = await frame.evaluate("""([qid, answer]) => {
+            const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+            if (!box) return false;
+            const ans = (answer || '').toLowerCase().trim();
+            const radios = Array.from(box.querySelectorAll('input[type="radio"]'));
+            let best = null;
+            const isAffirmative = ['yes', 'true', '1', 'y', 'affirmative'].includes(ans) || ans.includes('b.e') || ans.includes('b.tech') || ans.includes('bachelor');
+            const isNegative = ['no', 'false', '0', 'n', 'negative'].includes(ans);
+            for (const r of radios) {
+                const l = r.closest('label') || box.querySelector('label[for="' + r.id + '"]');
+                const text = (l ? l.innerText : r.value).toLowerCase().trim();
+                if (!text) continue;
+                if (text === ans) { best = r; break; }
+                if (isAffirmative && (text === 'yes' || r.value.toLowerCase() === 'yes')) { best = r; break; }
+                if (isNegative && (text === 'no' || r.value.toLowerCase() === 'no')) { best = r; break; }
+                if (!best && (text.includes(ans) || ans.includes(text))) best = r;
+            }
+            if (!best && radios.length === 1) best = radios[0];
+            if (!best) return false;
+            const vis = n => !!(n && n.getClientRects().length);
+            const lbl = best.closest('label') || box.querySelector('label[for="' + best.id + '"]');
+            let target = null;
+            if (vis(lbl)) target = lbl;
+            else if (vis(best)) target = best;
+            else {
+                let p = best.parentElement;
+                while (p && p !== box && !vis(p)) p = p.parentElement;
+                target = p || best;
+            }
+            document.querySelectorAll('[data-sentinel-radio-target]')
+                .forEach(e => e.removeAttribute('data-sentinel-radio-target'));
+            target.setAttribute('data-sentinel-radio-target', '1');
+            return ((target.innerText || best.value || '') + '').trim().slice(0, 40);
+        }""", [qid, answer])
+        if not pick:
+            return
+        try:
+            loc = frame.locator('[data-sentinel-radio-target="1"]').first
+            await loc.scroll_into_view_if_needed(timeout=4000)
+            await loc.click(timeout=6000)
+            if os.getenv('SENTINEL_INDEED_DEBUG'):
+                print(f"            ↳ clicked radio option {pick!r}")
+        except Exception as e:
+            if os.getenv('SENTINEL_INDEED_DEBUG'):
+                print(f"            ↳ trusted radio click failed ({e}); falling back")
+            # Fallback for plain HTML radios whose handler accepts a synthetic click.
+            await frame.evaluate("""([qid, answer]) => {
+                const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+                if (!box) return;
+                const ans = (answer || '').toLowerCase().trim();
+                const radios = Array.from(box.querySelectorAll('input[type="radio"]'));
+                for (const r of radios) {
+                    const l = r.closest('label') || box.querySelector('label[for="' + r.id + '"]');
+                    const text = (l ? l.innerText : r.value).toLowerCase().trim();
+                    if (text && (text === ans || text.includes(ans) || ans.includes(text))) {
+                        r.click();
+                        return;
+                    }
+                }
+            }""", [qid, answer])
+
+    async def _indeed_set_checkboxes(self, frame, qid: str, qtext: str, options, answer: str) -> None:
+        """Tick a required multi-select (checkbox) question on SmartApply.
+
+        Indeed renders these as a group of ``<label for=...><input
+        type="checkbox">...</label>``. They were previously neither scanned nor
+        answered, so a required "shift preference"/consent group stayed empty and
+        the Continue button never enabled. Pick the best-matching option (falling
+        back to a sensible shift) and toggle it with a real Playwright click on
+        the label.
+        """
+        pick = await frame.evaluate("""([qid, answer]) => {
+            const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+            if (!box) return null;
+            const boxes = Array.from(box.querySelectorAll('input[type="checkbox"]'));
+            if (!boxes.length) return null;
+            const ans = (answer || '').toLowerCase().trim();
+            const txt = c => {
+                const l = c.closest('label') || box.querySelector('label[for="' + c.id + '"]');
+                return ((l ? l.innerText : c.value) || '').toLowerCase().trim();
+            };
+            let target = null;
+            for (const c of boxes) {
+                const t = txt(c);
+                if (t && ans && (t === ans || t.includes(ans) || ans.includes(t))) { target = c; break; }
+            }
+            if (!target) {
+                for (const pref of ['day job', 'flex job', 'day shift', 'flexible', 'rotating']) {
+                    for (const c of boxes) { if (txt(c).includes(pref)) { target = c; break; } }
+                    if (target) break;
+                }
+            }
+            if (!target) target = boxes[0];
+            document.querySelectorAll('[data-sentinel-check-target]')
+                .forEach(e => e.removeAttribute('data-sentinel-check-target'));
+            const lbl = target.closest('label') || box.querySelector('label[for="' + target.id + '"]') || target;
+            lbl.setAttribute('data-sentinel-check-target', '1');
+            return (lbl.innerText || target.value || '').trim().slice(0, 40);
+        }""", [qid, answer])
+        if not pick:
+            return
+        try:
+            loc = frame.locator('[data-sentinel-check-target="1"]').first
+            await loc.scroll_into_view_if_needed(timeout=4000)
+            await loc.click(timeout=6000)
+            if os.getenv('SENTINEL_INDEED_DEBUG'):
+                print(f"            ↳ checked option {pick!r}")
+        except Exception:
+            # Fallback for plain HTML checkboxes whose handler accepts a synthetic click.
+            await frame.evaluate("""(qid) => {
+                const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+                if (!box) return;
+                const target = box.querySelector('[data-sentinel-check-target="1"]');
+                if (target) target.click();
+            }""", qid)
+
+    async def _indeed_set_select(self, frame, qid: str, answer: str) -> None:
+        await frame.evaluate("""([qid, answer]) => {
+            const box = document.querySelector('[data-sentinel-qid="' + qid + '"]');
+            if (!box) return;
+            const sel = box.querySelector('select');
+            if (!sel) return;
+            const ans = (answer || '').toLowerCase().trim();
+            let best = null;
+            for (const o of Array.from(sel.options)) {
+                const text = (o.text || '').toLowerCase().trim();
+                if (!text) continue;
+                if (text === ans) { best = o; break; }
+                if (!best && (text.includes(ans) || ans.includes(text))) best = o;
+            }
+            if (best) {
+                sel.value = best.value;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }""", [qid, answer])
+
+    # ==================================================================
+    #  Hirist (hirist.tech) autonomous handler
+    # ==================================================================
+
+    HIRIST_DEFAULT_FALLBACK_URLS = [
+        "https://www.hirist.tech/k/full-stack-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/java-jobs?ref=popular_tag",
+        "https://www.hirist.tech/k/spring-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/reactjs-jobs?ref=topnavigation",
+    ]
+
+    async def _handle_hirist_apply_task(self) -> bool:
+        """Autonomous Hirist Next.js SPA in-app apply workflow.
+
+        Configure the feed url via ``HIRIST_FEED_URL`` and the application cap
+        via ``HIRIST_MAX_APPLICATIONS`` (default 5). If the feed has no jobs or
+        shows 'No result found', randomly falls back to keyword search URLs.
+        Skips jobs that redirect to an external company/recruiter site.
+        """
+        page = self._page
+        if not page:
+            return False
+
+        self._current_platform = "hirist"
+        self.metrics['task_name'] = 'Hirist Application'
+        max_applications = self._env_int('HIRIST_MAX_APPLICATIONS', 5)
+        feed_url = os.getenv('HIRIST_FEED_URL', "https://www.hirist.tech/jobfeed")
+        print(f"🟧 Starting Hirist Apply automation (max {max_applications} applications)...")
+
+        # Fallback search URLs (randomized order when feed has no jobs or is exhausted)
+        raw_fallbacks = [u.strip() for u in os.getenv('HIRIST_FALLBACK_URLS', '').split(',') if u.strip()]
+        if not raw_fallbacks:
+            raw_fallbacks = list(self.HIRIST_DEFAULT_FALLBACK_URLS)
+        shuffled_fallbacks = list(raw_fallbacks)
+        random.shuffle(shuffled_fallbacks)
+
+        if 'hirist.tech' not in (page.url or ''):
+            try:
+                await page.goto(feed_url, wait_until='domcontentloaded', timeout=45000)
+            except Exception as e:
+                print(f"   ⚠️ Hirist navigation failed: {e}")
+                self.state.task_complete = True
+                return False
+            await asyncio.sleep(random.uniform(2.5, 4.0))
+
+        await self._hirist_dismiss_dialogs(page)
+
+        meta = await self._hirist_read_meta(page)
+        if meta and not meta.get('isLoggedIn', True):
+            print("   ⚠️ Hirist session is not logged in — applications may fail.")
+
+        # Build list of search URLs: initial page/feed first, then randomized fallbacks
+        initial_url = page.url if ('hirist.tech' in (page.url or '')) else feed_url
+        search_urls_to_try = [initial_url]
+        for fb in shuffled_fallbacks:
+            if fb not in search_urls_to_try:
+                search_urls_to_try.append(fb)
+
+        applied = 0
+        skipped = 0
+        scanned = 0
+        attempts = 0
+        seen = set()
+
+        for search_idx, search_url in enumerate(search_urls_to_try):
+            if applied >= max_applications or attempts >= max_applications:
+                break
+
+            current_norm = (page.url or '').split('#')[0]
+            if current_norm != search_url.split('#')[0]:
+                print(f"🔀 Navigating to Hirist search URL ({search_idx}/{len(search_urls_to_try) - 1}): {search_url}")
+                try:
+                    await page.goto(search_url, wait_until='domcontentloaded', timeout=45000)
+                    await asyncio.sleep(random.uniform(2.5, 4.0))
+                    await self._hirist_dismiss_dialogs(page)
+                except Exception as e:
+                    print(f"   ⚠️ Hirist search URL navigation failed ({search_url}): {e}")
+                    continue
+
+            no_jobs_shown = await self._hirist_has_no_jobs(page)
+            jobs = await self._hirist_collect_jobs(page)
+
+            # If jobs not found immediately, give dynamic hydration a quick chance or scroll
+            if not jobs and not no_jobs_shown:
+                try:
+                    await page.evaluate("window.scrollBy(0, 350);")
+                    await asyncio.sleep(1.5)
+                    jobs = await self._hirist_collect_jobs(page)
+                    no_jobs_shown = await self._hirist_has_no_jobs(page)
+                except Exception:
+                    pass
+
+            if not jobs or no_jobs_shown:
+                print(f"ℹ️ No jobs found on {search_url} (empty feed or 'No result found'). Checking next fallback URL...")
+                continue
+
+            print(f"🔎 Found {len(jobs)} Hirist job link(s) on {search_url}")
+
+            for job in jobs:
+                # Hard cap on BOTH confirmed applications and apply attempts so we can
+                # never submit more than max_applications.
+                if applied >= max_applications or attempts >= max_applications:
+                    print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
+                    break
+                url = job.get('url')
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                scanned += 1
+                self._current_job_url = url
+
+                try:
+                    await page.goto(url, wait_until='domcontentloaded', timeout=45000)
+                    await asyncio.sleep(random.uniform(2.0, 3.5))
+                    await self._hirist_dismiss_dialogs(page)
+
+                    info = await self._hirist_read_meta(page)
+                    title = info.get('jobTitle') or job.get('title') or '<untitled>'
+                    company = info.get('companyName') or ''
+
+                    status = await self._hirist_click_apply(page)
+                    if status == 'external':
+                        skipped += 1
+                        print(f"   ⏭️ Skipping external apply: {title} @ {company}")
+                    elif status == 'already':
+                        skipped += 1
+                        print(f"   ↩️ Already applied: {title} @ {company}")
+                    elif status == 'applied':
+                        attempts += 1
+                        # 1) Handle a screening questionnaire FIRST. Running the
+                        #    generic confirm-modal helper before this could click the
+                        #    questionnaire's own Submit button and skip the questions.
+                        q_handled = await self._hirist_handle_questionnaire(page)
+                        await asyncio.sleep(random.uniform(1.0, 2.0))
+                        # 2) Only handle a plain confirmation dialog when nothing was
+                        #    submitted yet.
+                        if not q_handled and not await self._hirist_verify_applied(page):
+                            await self._hirist_confirm_modal(page)
+                            await asyncio.sleep(random.uniform(1.0, 2.0))
+                            # A questionnaire may only appear after confirming.
+                            q_handled = await self._hirist_handle_questionnaire(page) or q_handled
+                        await asyncio.sleep(random.uniform(0.5, 1.5))
+                        if q_handled or await self._hirist_verify_applied(page) or await self._hirist_recheck_applied(page, url):
+                            applied += 1
+                            self.metrics['applications_submitted'] = applied
+                            print(f"   ✅ Applied ({applied}/{max_applications}): {title} @ {company}")
+                            if applied >= max_applications:
+                                print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
+                                break
+                        else:
+                            print(f"   ⚠️ Apply not confirmed: {title} @ {company} (attempt {attempts}/{max_applications})")
+                    else:
+                        print(f"   ⚠️ No apply control found: {title} @ {company}")
+                except Exception as e:
+                    print(f"   ⚠️ Hirist job error ({url}): {e}")
+
+        self._current_job_url = ""
+        print(f"\n🟧 Hirist task finished: {applied} applied, {skipped} skipped, {scanned} scanned.")
+        self.state.task_complete = True
+        return applied > 0
+
+    async def _hirist_dismiss_dialogs(self, page) -> None:
+        for sel in (
+            'button:has-text("Accept")',
+            'button:has-text("Got it")',
+            'button[aria-label*="close" i]',
+            '.MuiDialog-root button[aria-label*="close" i]',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    await loc.click(timeout=3000)
+                    await asyncio.sleep(random.uniform(0.3, 0.8))
+            except Exception:
+                continue
+
+    async def _hirist_read_meta(self, page) -> Dict[str, Any]:
+        try:
+            return await page.evaluate("""() => {
+                const nd = window.__NEXT_DATA__;
+                if (!nd) return {};
+                const pp = (nd.props && nd.props.pageProps) || {};
+                const job = pp.jobMandateInfo || pp.jobDetail || {};
+                const state = pp.initialState || {};
+                return {
+                    jobTitle: job.jobTitle || job.title || '',
+                    companyName: job.companyName || job.company || '',
+                    location: job.location || '',
+                    exp: job.exp || job.experience || '',
+                    isLoggedIn: !!(state.auth && state.auth.isLoggedIn),
+                    hasProfile: !!(state.user && state.user.profile),
+                    apply: pp.apply || (state.app && state.app.jobdetail && state.app.jobdetail.apply) || null
+                };
+            }""") or {}
+        except Exception:
+            return {}
+
+    async def _hirist_collect_jobs(self, page) -> List[Dict[str, str]]:
+        try:
+            return await page.evaluate("""() => {
+                const out = [];
+                const seen = new Set();
+                document.querySelectorAll('a[href*="/j/"]').forEach(a => {
+                    let href = a.getAttribute('href') || '';
+                    const marker = '/j/';
+                    const pos = href.indexOf(marker);
+                    if (pos === -1) return;
+                    let tail = href.substring(pos + marker.length);
+                    tail = tail.split('?')[0].split('#')[0];
+                    const id = tail.split('/')[0];
+                    if (!id || seen.has(id)) return;
+                    seen.add(id);
+                    let abs = a.href || href;
+                    if (abs.startsWith('/')) abs = location.origin + abs;
+                    let title = (a.innerText || '').trim();
+                    if (!title) {
+                        const parentCard = a.closest('[class*="job"], [class*="card"], li, div');
+                        if (parentCard) {
+                            const titleEl = parentCard.querySelector('h2, h3, [class*="title"], [class*="designation"]');
+                            if (titleEl) title = (titleEl.innerText || '').trim();
+                        }
+                    }
+                    out.push({
+                        id: id,
+                        url: abs.split('?')[0],
+                        title: title
+                    });
+                });
+                return out;
+            }""") or []
+        except Exception as e:
+            print(f"   ⚠️ Hirist job harvest failed: {e}")
+            return []
+
+    async def _hirist_has_no_jobs(self, page) -> bool:
+        """Detect whether Hirist explicitly shows 'No result found' on the current view."""
+        try:
+            return await page.evaluate("""() => {
+                const text = (document.body ? document.body.innerText : '').toLowerCase();
+                return text.includes('no result found') ||
+                       text.includes('sorry, no result found') ||
+                       text.includes('change your search criteria') ||
+                       text.includes('no jobs found');
+            }""")
+        except Exception:
+            return False
+
+    async def _hirist_click_apply(self, page) -> str:
+        try:
+            flags = await page.evaluate("""() => {
+                const t = (document.body ? document.body.innerText : '').toLowerCase();
+                return {
+                    external: t.includes('apply on company site') || t.includes('apply on recruiter site') || t.includes('apply on external'),
+                    already: t.includes('already applied') || t.includes('application sent') || t.includes('you have applied')
+                };
+            }""")
+        except Exception:
+            flags = {}
+        if flags.get('external'):
+            return 'external'
+        if flags.get('already'):
+            return 'already'
+
+        for sel in (
+            'button:has-text("Apply")',
+            'a:has-text("Apply")',
+            'button:has-text("Apply Now")',
+            'button:has-text("Easy Apply")',
+            '[aria-label*="Apply" i]',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    text = ((await loc.inner_text()) or '').lower()
+                    if 'company site' in text or 'external' in text:
+                        return 'external'
+                    if text.strip() in ('applied', 'already applied'):
+                        return 'already'
+                    await self._human_mouse_move()
+                    await loc.click(timeout=8000)
+                    await asyncio.sleep(random.uniform(1.5, 3.0))
+                    return 'applied'
+            except Exception:
+                continue
+        return 'none'
+
+    async def _hirist_confirm_modal(self, page) -> bool:
+        for sel in (
+            'div[role="dialog"] button:has-text("Apply")',
+            'div[role="dialog"] button:has-text("Submit")',
+            'div[role="dialog"] button:has-text("Confirm")',
+            '.MuiDialog-root button:has-text("Apply")',
+            '.MuiDialog-root button:has-text("Submit")',
+            '.MuiDialog-root button:has-text("Confirm")',
+        ):
+            try:
+                loc = page.locator(sel).first
+                if await loc.count() > 0 and await loc.is_visible():
+                    await loc.click(timeout=5000)
+                    await asyncio.sleep(random.uniform(1.0, 2.0))
+                    return True
+            except Exception:
+                continue
+        return False
+
+    async def _hirist_questionnaire_present(self, page) -> bool:
+        """Detect whether a screening questionnaire ("Submit a Form") is showing."""
+        try:
+            return bool(await page.evaluate("""() => {
+                if (location.pathname.includes('/screening') || location.href.includes('/screening')) return true;
+                if (document.querySelector('div.screening-question-container')) return true;
+                const t = (document.body ? document.body.innerText : '').toLowerCase();
+                if (t.includes('submit a form') || t.includes('mandatory question') ||
+                    t.includes('characters left') || t.includes('answer the following') ||
+                    t.includes('tell the recruiter more about yourself') ||
+                    t.includes('your application is incomplete')) {
+                    return true;
+                }
+                const dialogs = Array.from(document.querySelectorAll('div[role="dialog"], .MuiDialog-root'));
+                for (const d of dialogs) {
+                    if (!d.offsetParent && d.offsetWidth === 0 && d.offsetHeight === 0) continue;
+                    const dt = (d.innerText || '').toLowerCase();
+                    if (dt.includes('submit a form') || dt.includes('tell the recruiter') ||
+                        dt.includes('question')) return true;
+                    if (d.querySelector('textarea, input[type="radio"], input[type="checkbox"], select') &&
+                        (dt.includes('apply') || dt.includes('submit') || dt.includes('next'))) {
+                        return true;
+                    }
+                }
+                return false;
+            }"""))
+        except Exception:
+            return False
+
+    async def _hirist_scan_questionnaire(self, page) -> List[Dict[str, Any]]:
+        """Return descriptors for every fillable questionnaire question.
+
+        Hirist renders the inline "Submit a Form" panel as a list of
+        ``div.screening-question-container`` blocks.  Free-text answers live in
+        a ``textarea.short-answer-text-area``; choice answers are rendered either
+        as ``button.pill-option`` pills or as (visually hidden) radio inputs
+        wrapped by labels.  The question label is a sibling that precedes the
+        control container.
+        """
+        try:
+            return await page.evaluate(r"""() => {
+                const clean = s => (s || '')
+                    .replace(/\u00a0/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                const out = [];
+                let idx = 0;
+                let containers = document.querySelectorAll('div.screening-question-container');
+                if (!containers.length) {
+                    containers = document.querySelectorAll('.question-block, .question-container, .screening-question, .form-question');
+                }
+                containers.forEach(container => {
+                    // Question text = container text with the control subtrees removed.
+                    const clone = container.cloneNode(true);
+                    clone.querySelectorAll(
+                        'textarea, input, select, button, .pill-answer-options, .answer-options, .pill-option, .MuiFormControlLabel-root, .MuiFormGroup-root, [role="radiogroup"], [role="group"]'
+                    ).forEach(e => e.remove());
+                    // Remove labels that wrap or reference form inputs so option text is excluded from question text
+                    clone.querySelectorAll('label').forEach(lbl => {
+                        if (lbl.querySelector('input, textarea, select') || lbl.htmlFor) {
+                            lbl.remove();
+                        }
+                    });
+                    let raw = container.textContent || '';
+                    let maxChars = 0;
+                    const ml = raw.match(/(\d+)\s*characters?\s*left/i);
+                    if (ml) maxChars = parseInt(ml[1], 10);
+                    let q = clean(clone.textContent || '');
+                    q = q.replace(/\d+\s*(?:\/\s*\d+)?\s*characters?\s*left/ig, ' ')
+                         .replace(/pre-?filled from your profile/ig, ' ')
+                         .replace(/mandatory question/ig, ' ')
+                         .replace(/\*/g, ' ')
+                         .replace(/^\s*\d+\.\s*/, '');
+                    q = clean(q);
+                    if (!q) return;
+
+                    const qid = 'sntl_hq_' + (idx++);
+                    container.setAttribute('data-sentinel-hqid', qid);
+
+                    const textarea = container.querySelector('textarea');
+                    const textInput = container.querySelector(
+                        'input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="hidden"]):not([type="file"])'
+                    );
+                    const selectEl = container.querySelector('select');
+                    const options = [];
+                    const pills = container.querySelectorAll('button.pill-option, .pill-answer-options button, .answer-options button');
+                    if (pills.length) {
+                        pills.forEach(b => options.push({ text: clean(b.innerText || b.textContent || '') }));
+                    }
+                    const choiceInputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+                    if (choiceInputs.length) {
+                        choiceInputs.forEach(r => {
+                            const l = r.closest('label') ||
+                                (r.id && container.querySelector('label[for="' + r.id + '"]')) ||
+                                r.closest('.MuiFormControlLabel-root') ||
+                                r.parentElement;
+                            const t = clean((l ? (l.innerText || l.textContent) : r.value) || '');
+                            if (t) options.push({ text: t });
+                        });
+                    }
+                    if (!options.length) {
+                        const customChoiceLabels = container.querySelectorAll('.MuiFormControlLabel-root, [role="radio"], [role="checkbox"]');
+                        customChoiceLabels.forEach(el => {
+                            const t = clean(el.innerText || el.textContent || '');
+                            if (t) options.push({ text: t });
+                        });
+                    }
+                    if (selectEl) {
+                        Array.from(selectEl.options).forEach(opt => {
+                            const t = clean(opt.text || opt.innerText || opt.value || '');
+                            if (t && !/^(select|choose|please select)/i.test(t)) {
+                                options.push({ text: t });
+                            }
+                        });
+                    }
+
+                    const seenOptTexts = new Set();
+                    const cleanOptions = [];
+                    options.forEach(o => {
+                        const t = clean(o.text);
+                        if (t && !seenOptTexts.has(t.toLowerCase())) {
+                            seenOptTexts.add(t.toLowerCase());
+                            cleanOptions.push({ text: t });
+                        }
+                    });
+
+                    let choiceType = 'radio';
+                    if (pills.length) choiceType = 'pill';
+                    else if (selectEl) choiceType = 'select';
+                    else if (container.querySelector('input[type="checkbox"]')) choiceType = 'checkbox';
+
+                    let kind = 'text';
+                    if (cleanOptions.length) kind = 'single';
+                    else if (!textarea && !textInput && !selectEl) return;
+                    if (!maxChars && textarea && textarea.maxLength && textarea.maxLength > 0) {
+                        maxChars = textarea.maxLength;
+                    }
+
+                    let isDateInput = false;
+                    let isNumberInput = false;
+                    let placeholder = '';
+                    if (textInput) {
+                        placeholder = (textInput.placeholder || '').trim();
+                        if (textInput.type === 'number' || (textInput.getAttribute('inputmode') || '').toLowerCase() === 'numeric') {
+                            isNumberInput = true;
+                        }
+                        if (textInput.type === 'date' || /date|lwd|dd[\/-]mm[\/-]yyyy|yyyy[\/-]mm[\/-]dd/i.test(placeholder + ' ' + (textInput.className || '') + ' ' + (textInput.getAttribute('aria-label') || ''))) {
+                            isDateInput = true;
+                        }
+                    }
+
+                    const prefilledVal = (textInput && textInput.value) ? textInput.value.trim() : (textarea && textarea.value ? textarea.value.trim() : '');
+                    const isPrefilledValid = !!prefilledVal && !prefilledVal.includes('15 Days, LWD:') && (!isNumberInput || !isNaN(Number(prefilledVal)));
+
+                    out.push({
+                        qid: qid,
+                        question: q,
+                        kind: kind,
+                        choiceType: choiceType,
+                        options: cleanOptions,
+                        hasTextarea: !!textarea,
+                        hasInput: !!textInput,
+                        isDate: isDateInput,
+                        isNumber: isNumberInput,
+                        placeholder: placeholder,
+                        prefilled: isPrefilledValid,
+                        prefilledValue: prefilledVal,
+                        maxChars: maxChars
+                    });
+                });
+                return out;
+            }""") or []
+        except Exception as e:
+            print(f"      ⚠️ Hirist questionnaire scan failed: {e}")
+            return []
+
+    # --- Notice/availability option helpers ---------------------------------
+    _HIRIST_TIME_UNITS = {'day': 1, 'week': 7, 'month': 30, 'year': 365}
+
+    def _hirist_option_to_days(self, text: str) -> Optional[int]:
+        """Best-effort conversion of a notice/availability label to days."""
+        t = (text or '').lower().strip()
+        if not t:
+            return None
+        if any(k in t for k in ('serving notice', 'serving np', 'serving notice period', 'on notice', 'serving', 'buyout')):
+            return 15
+        if any(k in t for k in ('immediate', 'available now', 'right away', 'asap')):
+            return 0
+        range_m = re.search(r'(\d+)\s*[-–to]+\s*(\d+)\s*(day|week|month|year)?', t)
+        if range_m:
+            unit = range_m.group(3) or 'day'
+            mult = self._HIRIST_TIME_UNITS.get(unit, 1)
+            return int(range_m.group(1)) * mult
+        m = re.search(r'(\d+)\s*(day|week|month|year)', t)
+        if m:
+            return int(m.group(1)) * self._HIRIST_TIME_UNITS.get(m.group(2), 30)
+        if 'more than' in t:
+            n = re.search(r'(\d+)', t)
+            if n:
+                return int(n.group(1)) * 30 + 1
+        n = re.search(r'(\d+)', t)
+        return int(n.group(1)) if n else None
+
+    def _hirist_pick_option(self, answer: str, options: List[str], question: str) -> Optional[str]:
+        """Choose the questionnaire option that best matches ``answer``."""
+        opts = [o for o in (options or []) if o and o.strip()]
+        if not opts:
+            return None
+
+        # 1) Input-aware resolver: exact / synonym / yes-no / numeric-range.
+        try:
+            matched, conf = self._match_answer_to_options(
+                str(answer), opts, question=question, input_type=ResolverInputType.RADIO
+            )
+            if matched and conf >= 0.6 and matched in opts:
+                return matched
+        except Exception:
+            pass
+
+        # Notice period / joining availability priority resolution
+        if re.search(r'notice|joining|join\b|how soon|available to (?:join|start)|start date',
+                     question or '', re.IGNORECASE):
+            # Priority 1: Serving notice period
+            for o in opts:
+                if any(k in o.lower() for k in ('serving notice', 'serving np', 'on notice', 'currently serving')):
+                    return o
+            # Priority 2: 15 days or less / short notice
+            for o in opts:
+                if any(k in o.lower() for k in ('15 days or less', '<= 15 days', 'less than 15', '< 15 days', 'within 15', '15 days', '15-30')):
+                    return o
+            # Priority 3: Immediately available
+            for o in opts:
+                if any(k in o.lower() for k in ('immediately available', 'immediate joiner', 'immediate', 'available now', 'right away', 'asap')):
+                    return o
+            # Priority 4: Less than 1 month / 1 month or less
+            for o in opts:
+                if any(k in o.lower() for k in ('< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month')):
+                    return o
+            # Priority 5: 1 month
+            for o in opts:
+                if any(k in o.lower() for k in ('1 month', '30 days')):
+                    return o
+            # Fallback to days calculation
+            ans_days = self._hirist_option_to_days(answer)
+            if ans_days is not None:
+                ranked = [(o, self._hirist_option_to_days(o)) for o in opts]
+                ranked = [(o, d) for o, d in ranked if d is not None]
+                if ranked:
+                    covering = sorted([r for r in ranked if r[1] >= ans_days], key=lambda r: r[1])
+                    if covering:
+                        return covering[0][0]
+                    return min(ranked, key=lambda r: r[1])[0]
+
+        # 3) Plain token-overlap fallback.
+        ans_tokens = set(re.findall(r'[a-z0-9]+', str(answer).lower()))
+        best, best_score = None, 0.0
+        for o in opts:
+            o_tokens = set(re.findall(r'[a-z0-9]+', o.lower()))
+            if not o_tokens:
+                continue
+            score = len(ans_tokens & o_tokens) / len(o_tokens)
+            if score > best_score:
+                best, best_score = o, score
+        if best and best_score >= 0.5:
+            return best
+        return None
+
+    async def _hirist_fill_text(self, page, qid: str, answer: str) -> bool:
+        try:
+            return bool(await page.evaluate(r"""([qid, answer]) => {
+                const box = document.querySelector('[data-sentinel-hqid="' + qid + '"]');
+                if (!box) return false;
+                const inp = box.querySelector(
+                    'textarea, input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="hidden"]):not([type="file"])'
+                );
+                if (!inp) return false;
+                const isNumType = inp.tagName === 'INPUT' && (inp.type === 'number' || (inp.getAttribute('inputmode') || '').toLowerCase() === 'numeric');
+                if (inp.value && inp.value.trim() && !inp.value.includes('15 Days, LWD:') && (!isNumType || !isNaN(Number(inp.value.trim())))) {
+                    return true;   // keep valid pre-filled values
+                }
+
+                let val = String(answer || '');
+                if (inp.tagName === 'INPUT') {
+                    if (isNumType) {
+                        const numMatch = val.match(/([0-9]+(?:\.[0-9]+)?)/);
+                        if (numMatch) {
+                            val = numMatch[1];
+                            const step = inp.getAttribute('step');
+                            if (step && step !== 'any' && Number.isInteger(Number(step)) && val.includes('.')) {
+                                val = String(Math.round(Number(val)));
+                            }
+                        } else if (/^(yes|true|y|yep|yeah|always|definitely|affirmative)\b/i.test(val)) {
+                            val = '4';
+                        } else if (/^(no|false|n|nope|never|negative|na|n\/a|none)\b/i.test(val)) {
+                            val = '0';
+                        } else {
+                            val = '4';
+                        }
+                    } else {
+                        const m = val.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*(lpa|years?|yrs?|days?|months?)?/i);
+                        if (m && m[2]) val = m[1];
+                    }
+
+                    // Date handling: format dates properly for date inputs or date placeholders
+                    const isDateType = inp.type === 'date';
+                    const ph = (inp.placeholder || '').toLowerCase();
+                    const isDateLike = isDateType || /d{2}[\/\-]m{2}[\/\-]y{4}|y{4}[\/\-]m{2}[\/\-]d{2}|date|lwd/i.test(ph + ' ' + (inp.className || '') + ' ' + (inp.getAttribute('aria-label') || ''));
+
+                    let dateObj = null;
+                    const parsedTs = Date.parse(val);
+                    if (!isNaN(parsedTs)) {
+                        dateObj = new Date(parsedTs);
+                    } else {
+                        const ddmmyyyy = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                        if (ddmmyyyy) {
+                            dateObj = new Date(parseInt(ddmmyyyy[3], 10), parseInt(ddmmyyyy[2], 10) - 1, parseInt(ddmmyyy[1], 10));
+                        }
+                    }
+
+                    if (dateObj && !isNaN(dateObj.getTime()) && (isDateType || isDateLike)) {
+                        const yyyy = dateObj.getFullYear();
+                        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const dd = String(dateObj.getDate()).padStart(2, '0');
+                        if (isDateType || ph.includes('yyyy-mm-dd') || ph.includes('yyyy/mm/dd')) {
+                            val = `${yyyy}-${mm}-${dd}`;
+                        } else if (ph.includes('mm/dd/yyyy') || ph.includes('mm-dd-yyyy')) {
+                            val = `${mm}/${dd}/${yyyy}`;
+                        } else if (ph.includes('dd/mm/yyyy') || ph.includes('dd-mm-yyyy')) {
+                            val = `${dd}/${mm}/${yyyy}`;
+                        } else if (isDateLike && !ph) {
+                            val = `${dd}/${mm}/${yyyy}`;
+                        }
+                    }
+                }
+                if (!val) return false;
+
+                const proto = inp.tagName === 'TEXTAREA'
+                    ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+                setter.call(inp, val);
+                inp.dispatchEvent(new Event('input', { bubbles: true }));
+                inp.dispatchEvent(new Event('change', { bubbles: true }));
+                inp.dispatchEvent(new Event('blur', { bubbles: true }));
+                return true;
+            }""", [qid, answer]))
+        except Exception:
+            return False
+
+    async def _hirist_click_option(self, page, qid: str, option_text: str) -> bool:
+        try:
+            return bool(await page.evaluate(r"""([qid, optText]) => {
+                const box = document.querySelector('[data-sentinel-hqid="' + qid + '"]');
+                if (!box) return false;
+                const target = (optText || '').toLowerCase().trim();
+                if (!target) return false;
+                const close = t => t === target || (t && target && (t.includes(target) || target.includes(t)));
+
+                // 1) Pills / Buttons
+                const pills = Array.from(box.querySelectorAll('button.pill-option, .pill-answer-options button, .answer-options button, button'))
+                    .filter(p => {
+                        const t = (p.innerText || p.textContent || '').toLowerCase().trim();
+                        return t && !['next', 'submit', 'apply', 'back'].includes(t);
+                    });
+                for (const p of pills) {
+                    const t = (p.innerText || p.textContent || '').toLowerCase().trim();
+                    if (t === target) { p.click(); return true; }
+                }
+                for (const p of pills) {
+                    const t = (p.innerText || p.textContent || '').toLowerCase().trim();
+                    if (close(t)) { p.click(); return true; }
+                }
+
+                const activateInput = (inp, lbl) => {
+                    if (inp.type === 'checkbox') {
+                        if (!inp.checked) {
+                            if (lbl && lbl !== inp) {
+                                try { lbl.click(); } catch (e) {}
+                            } else {
+                                try { inp.click(); } catch (e) {}
+                            }
+                            if (!inp.checked) {
+                                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                                if (setter) setter.call(inp, true);
+                                else inp.checked = true;
+                                inp.dispatchEvent(new Event('input', { bubbles: true }));
+                                inp.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                        return true;
+                    } else {
+                        // Radio button
+                        if (lbl && lbl !== inp) { try { lbl.click(); } catch (e) {} }
+                        try { inp.click(); } catch (e) {}
+                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                        if (setter) setter.call(inp, true);
+                        else inp.checked = true;
+                        inp.dispatchEvent(new Event('click', { bubbles: true }));
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        return true;
+                    }
+                };
+
+                // 2) Radio & Checkbox inputs (Pass 1: exact match)
+                const inputs = Array.from(box.querySelectorAll('input[type="radio"], input[type="checkbox"]'));
+                for (const inp of inputs) {
+                    const l = inp.closest('label') ||
+                        (inp.id && box.querySelector('label[for="' + inp.id + '"]')) ||
+                        inp.closest('.MuiFormControlLabel-root') ||
+                        inp.parentElement;
+                    const t = ((l ? (l.innerText || l.textContent) : inp.value) || '').toLowerCase().trim();
+                    if (t === target) {
+                        return activateInput(inp, l);
+                    }
+                }
+
+                // 2) Radio & Checkbox inputs (Pass 2: close match)
+                for (const inp of inputs) {
+                    const l = inp.closest('label') ||
+                        (inp.id && box.querySelector('label[for="' + inp.id + '"]')) ||
+                        inp.closest('.MuiFormControlLabel-root') ||
+                        inp.parentElement;
+                    const t = ((l ? (l.innerText || l.textContent) : inp.value) || '').toLowerCase().trim();
+                    if (close(t)) {
+                        return activateInput(inp, l);
+                    }
+                }
+
+                // 3) Select dropdown
+                const select = box.querySelector('select');
+                if (select) {
+                    const opts = Array.from(select.options);
+                    for (const opt of opts) {
+                        const t = ((opt.text || opt.innerText || opt.value) || '').toLowerCase().trim();
+                        if (t === target || close(t)) {
+                            select.value = opt.value;
+                            select.dispatchEvent(new Event('input', { bubbles: true }));
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                            return true;
+                        }
+                    }
+                }
+
+                // 4) Custom clickable labels / MUI wrappers
+                const labels = Array.from(box.querySelectorAll('label, .MuiFormControlLabel-root, [role="radio"], [role="checkbox"]'));
+                for (const l of labels) {
+                    const t = (l.innerText || l.textContent || '').toLowerCase().trim();
+                    if (t === target || close(t)) {
+                        try { l.click(); return true; } catch (e) {}
+                    }
+                }
+
+                return false;
+            }""", [qid, option_text]))
+        except Exception:
+            return False
+
+    def _hirist_truncate(self, text: str, limit) -> str:
+        """Trim an answer to the field's character limit at a word boundary."""
+        text = (text or '').strip()
+        try:
+            limit = int(limit) if limit else 0
+        except (TypeError, ValueError):
+            limit = 0
+        if not limit or len(text) <= limit:
+            return text
+        cut = text[:limit]
+        idx = cut.rfind(' ')
+        if idx >= limit * 0.6:
+            cut = cut[:idx]
+        return cut.rstrip(' .,;:-')
+
+    async def _hirist_fill_questionnaire(self, page, questions: List[Dict[str, Any]], seen_questions: Optional[Set[str]] = None) -> int:
+        """Fill each questionnaire question with the Sentinel Q&A answer and log to qa_results.csv."""
+        answered = 0
+        llm_budget = 12
+        llm = self._get_llm_client() if llm_budget > 0 else None
+        current_job_url = getattr(self, '_current_job_url', '') or (page.url if page else '')
+        for q in questions:
+            qtext = q.get('question') or ''
+            qid = q.get('qid')
+            if not qid:
+                continue
+
+            qtext_key = qtext.strip().lower()
+            if seen_questions is not None and qtext_key in seen_questions:
+                continue
+
+            is_num_q = bool(q.get('isNumber'))
+            answer, conf = self._fuzzy_match_question(qtext)
+            source = "fingerprint" if conf == 1.0 else ("pattern_match" if answer else "unknown")
+            if is_num_q and (not answer or str(answer).strip().lower() in ('yes', 'no', 'true', 'false')):
+                if self._pattern_matcher:
+                    num_ans, num_conf = self._pattern_matcher.fuzzy_match(qtext, input_type="number")
+                    if num_ans and any(ch.isdigit() for ch in str(num_ans)):
+                        answer, conf, source = num_ans, max(num_conf, 0.95), "pattern_match"
+
+            if q.get('kind') == 'single':
+                raw_opts = [o.get('text', '') for o in q.get('options', []) if o.get('text')]
+                choice_itype = q.get('choiceType') or 'radio'
+                option = self._hirist_pick_option(
+                    answer or '', raw_opts, qtext
+                )
+                if not option and llm is not None and llm_budget > 0 and raw_opts:
+                    llm_budget -= 1
+                    ctx = f"Candidate profile pattern recommendation: {answer} (confidence: {conf})" if answer else None
+                    try:
+                        llm_ans = await asyncio.wait_for(
+                            llm.answer_question(qtext, options=raw_opts, input_type="radio" if choice_itype in ('radio', 'pill') else choice_itype, context=ctx),
+                            timeout=10.0,
+                        )
+                        if llm_ans:
+                            picked = self._hirist_pick_option(llm_ans, raw_opts, qtext) or llm_ans
+                            if picked:
+                                option = picked
+                                source = "llm_gemma"
+                                conf = 0.95
+                    except Exception:
+                        pass
+                if option and await self._hirist_click_option(page, qid, option):
+                    answered += 1
+                    if seen_questions is not None:
+                        seen_questions.add(qtext_key)
+                    self.log_qa_result(
+                        question=qtext,
+                        answer=option,
+                        input_type=choice_itype,
+                        options=raw_opts,
+                        selected_option=option,
+                        confidence=conf if conf is not None else 0.95,
+                        status='submitted',
+                        platform='hirist',
+                        url=current_job_url,
+                        source=source,
+                        job_id_or_url=current_job_url,
+                    )
+                    print(f"      Q: '{qtext}' -> A: '{option}' (conf: {conf}, source: {source})")
+                    await asyncio.sleep(0.35)
+                elif not option:
+                    if seen_questions is not None:
+                        seen_questions.add(qtext_key)
+                    self.log_qa_result(
+                        question=qtext,
+                        answer="",
+                        input_type=choice_itype,
+                        options=raw_opts,
+                        selected_option="",
+                        confidence=conf if conf is not None else "",
+                        status='unknown',
+                        platform='hirist',
+                        url=current_job_url,
+                        source="unknown",
+                        job_id_or_url=current_job_url,
+                    )
+                continue
+
+            # Free-text field. Leave values Hirist pre-filled from the profile.
+            if q.get('prefilled'):
+                val = q.get('prefilledValue', '')
+                if seen_questions is not None:
+                    seen_questions.add(qtext_key)
+                self.log_qa_result(
+                    question=qtext,
+                    answer=val,
+                    input_type='textarea' if q.get('hasTextarea') else 'text',
+                    options=[],
+                    selected_option=val,
+                    confidence=1.0,
+                    status='prefilled',
+                    platform='hirist',
+                    url=current_job_url,
+                    source='profile_prefilled',
+                    job_id_or_url=current_job_url,
+                )
+                continue
+
+            is_textarea = bool(q.get('hasTextarea'))
+
+            # Hirist renders all free-text fields as <textarea.short-answer-text-area>,
+            # including standard profile questions (CTC, notice period, experience).
+            # If Sentinel's QA pattern / fingerprint matcher resolved the question with
+            # good confidence (conf >= 0.65), ALWAYS trust and use the pattern answer directly!
+            # Only invoke the LLM for:
+            # 1. Unknown questions (not answer or conf < 0.65)
+            # 2. Genuine long-form / architectural essay prompts
+            q_lower = qtext.lower()
+            is_standard_profile = any(k in q_lower for k in [
+                'ctc', 'salary', 'lpa', 'fixed', 'variable', 'experience', 'notice',
+                'lwd', 'last working day', 'location', 'relocate', 'current company',
+                'organization', 'skills', 'tools', 'qualification', 'degree', 'education'
+            ])
+            is_essay = is_textarea and any(k in q_lower for k in [
+                'explain', 'describe', 'why should', 'why do you', 'architecture',
+                'system design', 'cover letter', 'project details', 'challenging problem'
+            ]) and not is_standard_profile
+
+            use_llm = llm is not None and (not answer or conf < 0.65 or is_essay) and llm_budget > 0
+            if use_llm:
+                llm_budget -= 1
+                itype = 'textarea' if is_textarea else 'text'
+                char_limit = q.get('maxChars')
+                ctx_parts = []
+                if answer:
+                    ctx_parts.append(f"Candidate profile pattern recommendation: {answer} (confidence: {conf:.2f})")
+                if char_limit:
+                    ctx_parts.append(f"Field character limit: {char_limit} characters. Keep your answer within this limit.")
+                ctx = "\n".join(ctx_parts) if ctx_parts else None
+                for _attempt in range(2):
+                    try:
+                        llm_ans = await asyncio.wait_for(
+                            llm.answer_question(qtext, input_type=itype, context=ctx),
+                            timeout=15.0,
+                        )
+                        if llm_ans:
+                            answer, conf = llm_ans, 0.95
+                            source = "llm_gemma"
+                            break
+                    except Exception:
+                        await asyncio.sleep(1.0)
+
+            if not answer:
+                if seen_questions is not None:
+                    seen_questions.add(qtext_key)
+                self.log_qa_result(
+                    question=qtext,
+                    answer="",
+                    input_type='textarea' if is_textarea else 'text',
+                    options=[],
+                    selected_option="",
+                    confidence=conf if conf is not None else "",
+                    status='unknown',
+                    platform='hirist',
+                    url=current_job_url,
+                    source="unknown",
+                    job_id_or_url=current_job_url,
+                )
+                continue
+
+            # Format adaptation for Hirist questions
+            ans_str = str(answer).strip()
+            if is_num_q:
+                num_m = re.search(r'(\d+(?:\.\d+)?)', ans_str)
+                if num_m:
+                    ans_str = num_m.group(1)
+                elif ans_str.lower() in ('yes', 'true', 'y', 'yep'):
+                    ans_str = '4'
+                elif ans_str.lower() in ('no', 'false', 'n', 'nope'):
+                    ans_str = '0'
+                else:
+                    ans_str = '4'
+            elif 'in lacs' in q_lower or 'in lpa' in q_lower or 'lacs per annum' in q_lower:
+                num_m = re.search(r'(\d+(?:\.\d+)?)', ans_str)
+                if num_m:
+                    ans_str = num_m.group(1)
+            elif any(k in q_lower for k in ['last working day', 'last working date', 'lwd', 'date of joining', 'joining date']):
+                from datetime import datetime, timedelta
+                lwd_dt = datetime.now() + timedelta(days=15)
+                ph = (q.get('placeholder') or '').lower()
+                if 'dd/mm/yyyy' in q_lower or 'dd-mm-yyyy' in q_lower or 'dd/mm/yyyy' in ph or 'dd-mm-yyyy' in ph:
+                    ans_str = lwd_dt.strftime('%d/%m/%Y')
+                elif 'yyyy-mm-dd' in q_lower or 'yyyy-mm-dd' in ph:
+                    ans_str = lwd_dt.strftime('%Y-%m-%d')
+                else:
+                    ans_str = lwd_dt.strftime('%d %b %Y')
+
+            final_answer = self._hirist_truncate(ans_str, q.get('maxChars'))
+            if not final_answer:
+                continue
+            field_itype = 'number' if is_num_q else ('textarea' if is_textarea else 'text')
+            if await self._hirist_fill_text(page, qid, str(final_answer)):
+                answered += 1
+                if seen_questions is not None:
+                    seen_questions.add(qtext_key)
+                self.log_qa_result(
+                    question=qtext,
+                    answer=str(final_answer),
+                    input_type=field_itype,
+                    options=[],
+                    selected_option=str(final_answer),
+                    confidence=conf if conf is not None else 0.95,
+                    status='submitted',
+                    platform='hirist',
+                    url=current_job_url,
+                    source=source,
+                    job_id_or_url=current_job_url,
+                )
+                print(f"      Q: '{qtext}' -> A: '{final_answer}' (conf: {conf}, source: {source})")
+                await asyncio.sleep(0.35)
+            else:
+                self.log_qa_result(
+                    question=qtext,
+                    answer=str(final_answer),
+                    input_type=field_itype,
+                    options=[],
+                    selected_option=str(final_answer),
+                    confidence=conf if conf is not None else 0.95,
+                    status='validation_error',
+                    error_message='Could not fill text/textarea field',
+                    platform='hirist',
+                    url=current_job_url,
+                    source=source,
+                    job_id_or_url=current_job_url,
+                )
+        return answered
+
+    async def _hirist_handle_questionnaire(self, page) -> bool:
+        """Handle Hirist's multi-step screening questionnaire ('Submit a Form').
+
+        Returns True if a questionnaire was submitted (or the job already shows
+        applied), False if no questionnaire was present/handled.
+        """
+        handled = False
+        seen_questions: Set[str] = set()
+        for q_step in range(12):
+            if await self._hirist_verify_applied(page):
+                return True
+
+            if not await self._hirist_questionnaire_present(page):
+                break
+
+            questions = await self._hirist_scan_questionnaire(page)
+            if not questions:
+                break
+            handled = True
+
+            answered = await self._hirist_fill_questionnaire(page, questions, seen_questions=seen_questions)
+            self.metrics['questions_answered'] = self.metrics.get('questions_answered', 0) + answered
+            await asyncio.sleep(random.uniform(0.5, 0.9))
+
+            # Click Next / Submit / Confirm / Continue
+            clicked_btn = False
+            for sel in (
+                'button:has-text("Next"):not([disabled])',
+                'button:has-text("Submit"):not([disabled])',
+                'button:has-text("Submit Application"):not([disabled])',
+                'button:has-text("Continue"):not([disabled])',
+                'button:has-text("Save & Continue"):not([disabled])',
+                'button:has-text("Save and Continue"):not([disabled])',
+                'button:has-text("Save"):not([disabled])',
+                'button:has-text("Confirm"):not([disabled])',
+                'button:has-text("Apply"):not([disabled])',
+                'button:has-text("Apply Now"):not([disabled])',
+                'button:has-text("Proceed"):not([disabled])',
+                'button[type="submit"]:not([disabled])',
+                'button:has-text("Next")',
+                'button:has-text("Submit")',
+                'button:has-text("Continue")',
+                'button:has-text("Save")',
+                'button[type="submit"]',
+            ):
+                try:
+                    loc = page.locator(sel).first
+                    if await loc.count() == 0 or not await loc.is_visible():
+                        continue
+                    if await loc.is_disabled():
+                        await asyncio.sleep(1.0)
+                    if await loc.is_disabled():
+                        continue
+                    try:
+                        await loc.click(timeout=5000)
+                    except Exception:
+                        await loc.evaluate("el => el.click()")
+                    clicked_btn = True
+                    print(f"      📝 Submitted Hirist questionnaire step {q_step + 1} ({answered} field(s) filled)")
+                    await asyncio.sleep(random.uniform(2.0, 3.5))
+                    break
+                except Exception:
+                    continue
+
+            # Fallback JS evaluate click inside dialog/form
+            if not clicked_btn:
+                try:
+                    js_result = await page.evaluate(r"""() => {
+                        const dialog = document.querySelector('div[role="dialog"], .MuiDialog-root, .screening-question-container');
+                        const root = dialog ? (dialog.closest('div[role="dialog"], .MuiDialog-root') || document) : document;
+                        const buttons = Array.from(root.querySelectorAll('button, a[role="button"], input[type="submit"]'));
+                        const targets = ['submit application', 'submit', 'save & continue', 'save and continue', 'continue', 'next', 'confirm', 'apply now', 'apply', 'proceed'];
+                        
+                        for (const target of targets) {
+                            for (const btn of buttons) {
+                                const txt = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
+                                if (txt === target || (target.length > 4 && txt.includes(target))) {
+                                    const isDisabled = btn.disabled || btn.getAttribute('aria-disabled') === 'true' || btn.classList.contains('Mui-disabled') || btn.classList.contains('disabled');
+                                    if (!isDisabled && btn.offsetWidth > 0 && btn.offsetHeight > 0) {
+                                        btn.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                        btn.focus();
+                                        btn.click();
+                                        return { clicked: true, text: txt };
+                                    }
+                                }
+                            }
+                        }
+                        return { clicked: false };
+                    }""")
+                    if js_result and js_result.get('clicked'):
+                        clicked_btn = True
+                        print(f"      📝 Submitted Hirist questionnaire step {q_step + 1} via JS evaluate ({js_result.get('text')})")
+                        await asyncio.sleep(random.uniform(2.0, 3.5))
+                except Exception:
+                    pass
+
+            if not clicked_btn:
+                try:
+                    diag = await page.evaluate(r"""() => {
+                        const errs = Array.from(document.querySelectorAll('.Mui-error, [class*="error"], p.MuiFormHelperText-root'))
+                            .map(e => (e.innerText || '').trim())
+                            .filter(Boolean);
+                        return errs;
+                    }""")
+                    if diag:
+                        print(f"      ⚠️ Hirist questionnaire validation errors detected: {diag}")
+                except Exception:
+                    pass
+                break
+
+        if not handled:
+            return False
+        for _ in range(5):
+            if await self._hirist_verify_applied(page):
+                return True
+            await asyncio.sleep(1.0)
+        return await self._hirist_verify_applied(page)
+
+    async def _hirist_verify_applied(self, page) -> bool:
+        try:
+            return bool(await page.evaluate("""() => {
+                const t = (document.body ? document.body.innerText : '').toLowerCase();
+                if (t.includes('application has been submitted successfully') ||
+                    t.includes('your application has been submitted') ||
+                    t.includes('application has been submitted') ||
+                    t.includes('application submitted') ||
+                    t.includes('application received') ||
+                    t.includes('application sent') ||
+                    t.includes('successfully applied') ||
+                    t.includes('applied successfully') ||
+                    t.includes('already applied') ||
+                    t.includes('you have applied') ||
+                    t.includes("you've applied")) {
+                    return true;
+                }
+                const appliedBtn = Array.from(document.querySelectorAll('button, a, span, div.applied-badge, [class*="applied"]')).find(b => {
+                    const text = (b.innerText || '').trim().toLowerCase();
+                    return text === 'applied' || text === 'already applied' || text === 'application submitted';
+                });
+                return !!appliedBtn;
+            }"""))
+        except Exception:
+            return False
+
+    async def _hirist_recheck_applied(self, page, job_url: str) -> bool:
+        """Re-open the job page to confirm the application stuck.
+
+        Handles the case where a success toast appeared then the SPA redirected
+        away (so the applied badge is only visible back on the job detail page).
+        """
+        try:
+            in_modal = await self._hirist_questionnaire_present(page)
+            if job_url and job_url not in (page.url or '') and not in_modal:
+                await page.goto(job_url, wait_until='domcontentloaded', timeout=30000)
+                await asyncio.sleep(2.5)
+            return await self._hirist_verify_applied(page)
+        except Exception:
+            return False
+
     async def _answer_instahyre_questionnaire(self, q_page, q_url: str) -> bool:
         """Extract all questions from the questionnaire page, answer using QA patterns,
         update Angular scope and DOM inputs, submit via Angular controller, and verify confirmation."""
@@ -6442,7 +9798,9 @@ class SentinelAgent:
                 q_type in (4, 9)
             )
 
-            pattern_ctx = f"Pattern suggestion: {ans_pattern} (confidence: {conf_pattern})" if ans_pattern else None
+            pattern_ctx_parts = []
+            if ans_pattern:
+                pattern_ctx_parts.append(f"Candidate profile pattern recommendation: {ans_pattern} (pattern match confidence: {conf_pattern:.2f})")
             if is_numeric_question:
                 bounds_str = []
                 if min_val is not None:
@@ -6451,7 +9809,8 @@ class SentinelAgent:
                     bounds_str.append(f"maximum {int(max_val)}")
                 range_hint = f" (allowed range: {', '.join(bounds_str)})" if bounds_str else ""
                 numeric_ctx = f"Strict numeric field expecting an integer whole number{range_hint}. Output ONLY a single whole integer number (e.g. 4) without decimals or units."
-                pattern_ctx = f"{pattern_ctx}\n{numeric_ctx}" if pattern_ctx else numeric_ctx
+                pattern_ctx_parts.append(numeric_ctx)
+            pattern_ctx = "\n".join(pattern_ctx_parts) if pattern_ctx_parts else None
 
             if llm_client:
                 opts_labels = [co.get('label', '') for co in choice_options]
@@ -6459,7 +9818,7 @@ class SentinelAgent:
                 try:
                     ans = await asyncio.wait_for(
                         llm_client.answer_question(q_text, options=opts_labels, input_type=input_type_param, context=pattern_ctx),
-                        timeout=35.0
+                        timeout=15.0
                     )
                     if ans:
                         source = "llm_gemma"
@@ -7461,7 +10820,7 @@ class SentinelAgent:
                     return snackbar_result
             
             try:
-                result = await self._page.evaluate(f"""async () => {{
+                result = await self._page.evaluate(rf"""async () => {{
                     // Flat answers for all logic (from window globals set by add_init_script)
                 const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__;
                 // Full objects with input_type_defaults per pattern
@@ -7785,7 +11144,10 @@ class SentinelAgent:
                 const qLower = qText.toLowerCase();
                 
                 // Special pre-match: Combined Notice Period + LWD questions
-                const isNoticeAndLwd = (/notice/i.test(qLower) || /\\bnp\\b/i.test(qLower)) && (/lwd|last working day|ldw/i.test(qLower));
+                const isNoticeAndLwd = (/notice/i.test(qLower) || /\\bnp\\b/i.test(qLower)) &&
+                                       (/lwd|last working day|ldw/i.test(qLower)) &&
+                                       (/ and | & | \/ | \+ |, lwd|, last working/i.test(qLower)) &&
+                                       !(/if serving|if on notice|if you are|if currently|in case of|if applicable|if any/i.test(qLower));
                 const isTimeSlotQ = /time\\s*slot|what\\s+time\\s+(you|will|are|u|can)|available\\s+time\\s+slot|slot\\s+in\\s+between|suitable\\s+time/i.test(qLower);
 
                 // Special pre-match: LWD date questions — must answer with a date, not years
@@ -7797,8 +11159,34 @@ class SentinelAgent:
                                    qLower.includes('last working day') ||
                                    qLower.includes('ldw') ||
                                    qLower.includes('lwd');
+                // Special pre-match: Career break questions -> No
+                const isCareerBreakQ = /\\b(career\\s*break|break\\s*in\\s*career|employment\\s*gaps?|career\\s*gaps?|gap\\s*in\\s*(?:employment|career|work))\\b/i.test(qLower) &&
+                                       !/reason|why|explain|describe/i.test(qLower);
+                const isBreakReasonQ = /reason\\s*for\\s*(the\\s*)?(career\\s*|employment\\s*)?(break|gap)|why\\s*.*(break|gap)/i.test(qLower);
+                const isDisabilityQ = /\\b(disability|differently\\s*abled|pwd|handicap)\\b/i.test(qLower);
+                const isDisabilityPercentQ = isDisabilityQ && /percentage|percent|%/i.test(qLower);
+                const isDisabilityTypeQ = isDisabilityQ && /what\\s*kind|type\\s*of|specify/i.test(qLower);
+                const isMilitaryQ = /\\b(military|veteran|armed\\s*forces)\\b/i.test(qLower);
                 let answer;
-                if (isNoticeAndLwd) {{
+                if (isCareerBreakQ) {{
+                    answer = 'No';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Career break question detected, answering: No');
+                }} else if (isBreakReasonQ) {{
+                    answer = 'Personal';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Break reason question detected, answering: Personal');
+                }} else if (isDisabilityPercentQ) {{
+                    answer = '0';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Disability percentage detected, answering: 0');
+                }} else if (isDisabilityTypeQ) {{
+                    answer = 'None';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Disability type detected, answering: None');
+                }} else if (isDisabilityQ) {{
+                    answer = 'I don’t have a disability';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Disability status detected, answering: I don’t have a disability');
+                }} else if (isMilitaryQ) {{
+                    answer = (chatLayer && chatLayer.querySelector('.chatbot_OptionContainer button, [class*="option"] button')) ? 'Never served' : 'No';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Military service question detected, answering:', answer);
+                }} else if (isNoticeAndLwd) {{
                     const lwd = new Date();
                     lwd.setDate(lwd.getDate() + 15);
                     const dd = String(lwd.getDate()).padStart(2, '0');
@@ -7821,7 +11209,12 @@ class SentinelAgent:
                     answer = '17/12/2000';
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - DOB question detected, answering:', answer);
                 }} else {{
-                    answer = fuzzyMatch(qText, chatLayer) || 'Yes';
+                    const isWorkLinkQ = /paste\s+a\s+link|link\s+to\s+(some\s+of\s+)?your\s+work|portfolio\s+link|github\s+link/i.test(qLower);
+                    const isProjectDescQ = /describe\s+(the\s+)?(product|project)|project\s+you\s+last\s+worked\s+on|product\s+you\s+built/i.test(qLower);
+                    let defaultVal = 'Yes';
+                    if (isWorkLinkQ) defaultVal = 'https://siddhant3646.github.io/Portfolio/';
+                    else if (isProjectDescQ) defaultVal = 'Led development of high-throughput distributed microservices for critical event management at Everbridge using Java, Spring Boot, and Kafka, improving system throughput by 40% and ensuring 99.99% uptime.';
+                    answer = fuzzyMatch(qText, chatLayer) || defaultVal;
                     
                     // Yes/no question detection — override numeric/empty fallbacks
                     // Questions like "Have you worked with X?" or "Do you have experience in X?"
@@ -7866,7 +11259,7 @@ class SentinelAgent:
                     
                     // Exclude questions that are genuinely asking for years/numbers or descriptive details
                     // e.g., "Do you have 4+ years of experience?" should NOT be overridden
-                    const isWhQuestion = /^(what|which|where|who)\b/i.test(qLower.trim()) && !/yes\s*(or|\/)\s*no/i.test(qLower);
+                    const isWhQuestion = /\\b(what|which|where|who|how|describe|paste|share|explain|provide)\\b/i.test(qLower.trim()) && !/yes\s*(or|\/)\s*no/i.test(qLower);
                     const isNumericQuestion = (
                         isWhQuestion ||
                         qLower.includes('which of these') ||
@@ -7896,19 +11289,21 @@ class SentinelAgent:
                         const answerLowerYN = answer ? answer.toLowerCase().trim() : '';
                         // Use word-boundary regex to avoid false matches like "Noida" containing "no"
                         const hasYesOrNo = /\\byes\\b/.test(answerLowerYN) || /\\bno\\b/.test(answerLowerYN);
-                        const knownExceptions = ['serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer', 'software engineer', 'bangalore', 'bengaluru', 'hyderabad', 'pune', 'remote', 'aws', 'langchain', 'microservices', 'architecture'];
+                        const knownExceptions = ['never served', 'serving notice', 'male', 'female', 'single', 'married', 'sde-', 'software developer', 'software engineer', 'bangalore', 'bengaluru', 'hyderabad', 'pune', 'remote', 'aws', 'langchain', 'microservices', 'architecture'];
                         const isException = knownExceptions.some(e => answerLowerYN.includes(e));
                         
                         if (!answer || answer === '1' || isNumericResult || (!hasYesOrNo && !isException)) {{
                             // Check negative indicators for No vs Yes
                             const isTechnicalQ = qLower.includes('testing') || qLower.includes('pipeline') || qLower.includes('quality gate') || qLower.includes('ci/cd') || qLower.includes('cicd');
                             const negativeIndicators = ['sponsorship', 'visa', 'referral', 'referred',
+                                'career break', 'career gap', 'break in career', 'employment gap', 'gap in employment', 'period of unemployment',
                                 'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
                                 'convict', 'disability', 'previously employed', 'ever been employed',
                                 'currently employed', 'worked at', 'worked for',
                                 'work at', 'work for', 'worked with us', 'work with us',
                                 'worked before', 'work before', 'employed by', 'employed with', 'employed at',
                                 'ex-employee', 'former employee', 'employed before', 'backlog', 'backlogs',
+                                'military', 'veteran', 'armed forces', 'served in the military', 'military service',
                                 'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
                                 'last 3 months', 'applied to any', 'applied in the past', 'non-compete', 'non compete',
                                 'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer',
@@ -7924,13 +11319,17 @@ class SentinelAgent:
                 
                 // Special handling for Naukri salary questions - use full INR values
                 const isNaukri = window.location.hostname.includes('naukri');
+                const isVariableQuestion = /\\b(variable|bonus|rsu|option|stock|equity|esop|unvested)\\b/i.test(qText.toLowerCase());
                 const isSalaryQuestion = (qText.toLowerCase().includes('salary') ||
                     qText.toLowerCase().includes('ctc') ||
                     qText.toLowerCase().includes('compensation') ||
                     /\\bpay\\b|\\bpackage\\b|\\bpayslip\\b/i.test(qText)) &&
-                    !/experience|years|how many/i.test(qText);
+                    !/experience|years|how many/i.test(qText) &&
+                    !isVariableQuestion;
 
-                if (isNaukri && isSalaryQuestion) {{
+                if (isNaukri && isVariableQuestion) {{
+                    answer = '0';
+                }} else if (isNaukri && isSalaryQuestion) {{
                     const qLowerSalary = qText.toLowerCase();
                     const isCompoundCtc = (qLowerSalary.includes('current') && qLowerSalary.includes('expected')) ||
                         qLowerSalary.includes('current and expected') || qLowerSalary.includes('current & expected');
@@ -7962,7 +11361,7 @@ class SentinelAgent:
                 // STEP 1: DETECT all available input types on the page
                 const hasSelect = chatLayer.querySelector('select') !== null;
                 const hasRadio = chatLayer.querySelectorAll('input[type="radio"]').length > 0;
-                const hasCheckbox = chatLayer.querySelectorAll('input[type="checkbox"]').length > 0;
+                const hasCheckbox = chatLayer.querySelectorAll('input[type="checkbox"], .mcc__checkbox, [role="checkbox"]').length > 0;
                 let textInput = chatLayer.querySelector('input[type="text"]:not([type="hidden"]):not([type="file"]), textarea');
                 let contentEditableEarly = chatLayer.querySelector('div[contenteditable="true"]') || 
                                           document.querySelector('div[contenteditable="true"]');
@@ -8195,10 +11594,10 @@ class SentinelAgent:
                         const val = (radioEl.value || radioEl.id || '').toLowerCase().trim();
                         
                         // Yes/No matching with strict word boundaries
-                        const isLabelYes = /\\byes\\b/i.test(cleanLabel) || cleanLabel.includes('serving') || cleanLabel.includes('agree') || cleanLabel.includes('consent') || val === 'yes' || val === 'true';
-                        const isLabelNo = (/\\bno\\b/i.test(cleanLabel) || cleanLabel.includes('disagree') || val === 'no' || val === 'false') && !isLabelYes;
-                        const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('serving') || answerLower === 'true';
-                        const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false')) && !isAnsYes;
+                        const isLabelYes = /\\byes\\b/i.test(cleanLabel) || cleanLabel.includes('serving notice') || cleanLabel.includes('agree') || cleanLabel.includes('consent') || val === 'yes' || val === 'true';
+                        const isLabelNo = (/\\bno\\b/i.test(cleanLabel) || cleanLabel.includes('never served') || cleanLabel.includes('not a veteran') || cleanLabel.includes('disagree') || val === 'no' || val === 'false') && !isLabelYes;
+                        const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('serving notice') || answerLower === 'true';
+                        const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false') || answerLower.includes('never')) && !isAnsYes;
                         
                         if (isLabelYes && isAnsYes) return 95;
                         if (isLabelNo && isAnsNo) return 95;
@@ -8208,15 +11607,16 @@ class SentinelAgent:
                         // Numeric range / comparison matching for experience, notice days, salary
                         if (expVal !== null) {{
                             // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9", "2-4 yrs")
-                            const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/i);
+                            const rangeMatch = cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:lpa|lakhs?|lac|cr|years?|yrs?|months?|days?)?\\s*(?:[-–]|\\bto\\b|\\s+)\\s*(?:rs\\.?|inr)?\\s*(\\d+(?:\\.\\d+)?)/i);
                             if (rangeMatch) {{
                                 const rMin = parseFloat(rangeMatch[1]);
                                 const rMax = parseFloat(rangeMatch[2]);
-                                if (expVal >= rMin && expVal <= (rMax + 0.5)) {{
-                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(expVal - Math.min(expVal, rMax)));
+                                const testVal = (expVal >= 100000 && rMax <= 150) ? (expVal / 100000) : expVal;
+                                if (testVal >= rMin && testVal <= (rMax + 0.5)) {{
+                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(testVal - Math.min(testVal, rMax)));
                                 }}
-                                if (expVal > rMax) {{
-                                    const diff = expVal - rMax;
+                                if (testVal > rMax) {{
+                                    const diff = testVal - rMax;
                                     if (diff <= 2.0) {{
                                         return Math.max(70, 85 - diff * 8);
                                     }}
@@ -8228,8 +11628,9 @@ class SentinelAgent:
                             const lessMatch = cleanLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
                             if (lessMatch) {{
                                 const bound = parseFloat(lessMatch[1]);
-                                if (expVal < bound) {{
-                                    return Math.max(75, 88 - (bound - expVal));
+                                const testVal = (expVal >= 100000 && bound <= 150) ? (expVal / 100000) : expVal;
+                                if (testVal < bound) {{
+                                    return Math.max(75, 88 - (bound - testVal));
                                 }}
                                 return 0;
                             }}
@@ -8238,8 +11639,9 @@ class SentinelAgent:
                             const moreMatch = cleanLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || cleanLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/i);
                             if (moreMatch) {{
                                 const bound = parseFloat(moreMatch[1]);
-                                if (expVal >= bound) {{
-                                    return Math.max(75, 91 - (expVal - bound) * 2);
+                                const testVal = (expVal >= 100000 && bound <= 150) ? (expVal / 100000) : expVal;
+                                if (testVal >= bound) {{
+                                    return Math.max(75, 91 - (testVal - bound) * 2);
                                 }}
                                 return 0;
                             }}
@@ -8254,8 +11656,17 @@ class SentinelAgent:
                         
                         // Text keyword match (only if not a range/comparison)
                         const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(cleanLabel);
-                        if (!isComparativeOrRange && (cleanLabel.includes(answerLower) || answerLower.includes(cleanLabel))) {{
-                            return 90;
+                        if (!isComparativeOrRange) {{
+                            if (cleanLabel === answerLower) return 100;
+                            if (cleanLabel.includes(answerLower) || answerLower.includes(cleanLabel)) return 85;
+                            const answerWords = answerLower.replace(/[^a-z0-9]/g, ' ').split(/\\s+/).filter(w => w.length > 2);
+                            const labelWords = cleanLabel.replace(/[^a-z0-9]/g, ' ').split(/\\s+/).filter(w => w.length > 2);
+                            if (answerWords.length > 0 && labelWords.length > 0) {{
+                                const matches = answerWords.filter(aw => labelWords.some(lw => lw.includes(aw) || aw.includes(lw)));
+                                if (matches.length >= Math.min(2, answerWords.length)) {{
+                                    return 80;
+                                }}
+                            }}
                         }}
                         
                         return 0;
@@ -8278,11 +11689,18 @@ class SentinelAgent:
                         }}
                         if (!label) {{
                             const container = radio.closest('.ssrc__radio-btn-container, [class*="radio-btn"], [class*="radio"]') || radio.parentElement;
-                            if (container) {{
+                            if (container && container.querySelectorAll('input[type="radio"]').length <= 1) {{
                                 const lbl = container.querySelector('label, .ssrc__label, span');
                                 if (lbl) label = lbl.innerText.trim();
                                 else label = container.innerText.trim();
+                            }} else if (radio.nextSibling && radio.nextSibling.textContent) {{
+                                label = radio.nextSibling.textContent.trim();
+                            }} else if (radio.parentElement && radio.parentElement.querySelectorAll('input[type="radio"]').length <= 1) {{
+                                label = radio.parentElement.innerText.trim();
                             }}
+                        }}
+                        if (!label && radio.id) {{
+                            label = radio.id;
                         }}
                         
                         const score = scoreRadio(label, radio);
@@ -8359,9 +11777,12 @@ class SentinelAgent:
                             }}
                         }}
                         if (!clickedRadio && allRadioInfo.length > 0) {{
-                            selectRadio(allRadioInfo[0].radio);
+                            let fallbackRadio = allRadioInfo[0];
+                            const positiveRadio = allRadioInfo.find(r => !/\\b(no experience|none|0 years|0 yrs|fresher|<\\s*15|part-time|temporary|internship)\\b/i.test(r.labelLower));
+                            if (positiveRadio) fallbackRadio = positiveRadio;
+                            selectRadio(fallbackRadio.radio);
                             clickedRadio = true;
-                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked first radio fallback:', allRadioInfo[0].label);
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked radio fallback:', fallbackRadio.label);
                         }}
                     }}
                     
@@ -8443,28 +11864,83 @@ class SentinelAgent:
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked partial match option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
-                        if ((answerLower === 'yes' || /\\byes\\b/.test(answerLower) || isPrivacyQ) && 
+                        if (!isMilitaryQ && (answerLower === 'yes' || /\\byes\\b/.test(answerLower) || isPrivacyQ) && 
                             (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {{
                             btn.click();
                             clickedBtn = btn;
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked Yes/Consent option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
-                        if ((answerLower === 'no' || /\\bno\\b/.test(answerLower)) && (btnText === 'no' || btnText.startsWith('no '))) {{
+                        if ((answerLower === 'no' || /\\bno\\b/.test(answerLower) || isMilitaryQ || answerLower.includes('never')) && 
+                            (btnText === 'no' || btnText.startsWith('no ') || btnText.includes('never served') || btnText.includes('not a veteran') || btnText === 'never' || btnText.includes('decline'))) {{
                             btn.click();
                             clickedBtn = btn;
-                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked No option');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked No/Never served option:', (btn.innerText || btn.textContent || '').trim());
                             break;
                         }}
                     }}
                     
+                    if (!clickedBtn && isBreakReasonQ) {{
+                        const reasonBtn = optBtns.find(b => {{
+                            const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                            return t === 'personal' || t.includes('personal') || t.includes('none');
+                        }});
+                        if (reasonBtn) {{
+                            reasonBtn.click();
+                            clickedBtn = reasonBtn;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked break reason option:', (reasonBtn.innerText || reasonBtn.textContent || '').trim());
+                        }}
+                    }}
+
+                    if (!clickedBtn && isMilitaryQ) {{
+                        const milBtn = optBtns.find(b => {{
+                            const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                            return t === 'never served' || t.includes('never served') ||
+                                   t.includes('not a veteran') || t.includes('not a protected veteran') ||
+                                   t === 'never' || t === 'no' || t.startsWith('no ') ||
+                                   t.includes('none') || t.includes('neither') || t.includes('decline');
+                        }});
+                        if (milBtn) {{
+                            milBtn.click();
+                            clickedBtn = milBtn;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked military option:', (milBtn.innerText || milBtn.textContent || '').trim());
+                        }}
+                    }}
+                    
+                    if (!clickedBtn && isDisabilityQ) {{
+                        const disBtn = optBtns.find(b => {{
+                            const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                            return t.includes("don't have") || t.includes("don’t have") || t.includes("no disability") || t === 'none' || t === 'no' || t.startsWith('no ');
+                        }});
+                        if (disBtn) {{
+                            disBtn.click();
+                            clickedBtn = disBtn;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Clicked disability option:', (disBtn.innerText || disBtn.textContent || '').trim());
+                        }}
+                    }}
+
                     if (!clickedBtn && optBtns.length > 0) {{
-                        const hasContentEditable = chatLayer.querySelector('div[contenteditable="true"]') || 
-                                                  document.querySelector('div[contenteditable="true"]');
+                        const hasContentEditable = chatLayer.querySelector('div[contenteditable="true"]');
                         const allSkip = optBtns.every(b => (b.innerText || '').toLowerCase().includes('skip'));
-                        const hasOtherInputs = hasCheckbox || !!textInput || !!hasContentEditable;
+                        const hasOtherInputs = hasCheckbox || !!textInput;
                         if (allSkip && hasContentEditable) {{
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Option buttons are all skip, falling through to contenteditable');
+                        }} else if (isMilitaryQ) {{
+                            const safeMilBtn = optBtns.find(b => {{
+                                const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                return t.includes('never') || t === 'no' || t.startsWith('no ') || t.includes('not');
+                            }}) || optBtns[optBtns.length - 1];
+                            safeMilBtn.click();
+                            clickedBtn = safeMilBtn;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Military fallback, clicked option:', (safeMilBtn.innerText || safeMilBtn.textContent || '').trim());
+                        }} else if (isDisabilityQ) {{
+                            const safeDisBtn = optBtns.find(b => {{
+                                const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                return t.includes("don't have") || t.includes("don’t have") || t.includes("no disability") || t === 'none' || t === 'no' || t.startsWith('no ');
+                            }}) || optBtns[optBtns.length - 1];
+                            safeDisBtn.click();
+                            clickedBtn = safeDisBtn;
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Disability fallback, clicked option:', (safeDisBtn.innerText || safeDisBtn.textContent || '').trim());
                         }} else if (!hasOtherInputs) {{
                             optBtns[0].click();
                             clickedBtn = optBtns[0];
@@ -8529,14 +12005,14 @@ class SentinelAgent:
                     let clickedCheckbox = false;
                     const answerStr = typeof answer === 'string' ? answer : String(answer);
                     const answerLower = answerStr.toLowerCase().trim();
-                    const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('true') || answerLower.includes('serving') || answerLower.includes('agree') || answerLower.includes('consent');
-                    const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false') || answerLower.includes('disagree')) && !isAnsYes;
+                    const isAnsYes = /\\byes\\b/i.test(answerLower) || answerLower.includes('true') || answerLower.includes('serving notice') || answerLower.includes('agree') || answerLower.includes('consent');
+                    const isAnsNo = (/\\bno\\b/i.test(answerLower) || answerLower.includes('false') || answerLower.includes('never') || answerLower.includes('disagree')) && !isAnsYes;
                     
                     const cbInfos = checkboxes.map(cb => {{
                         const lbl = getCheckboxLabel(cb);
                         const lblLower = lbl.toLowerCase();
                         const isLabelYes = /\\byes\\b/i.test(lblLower) || lblLower === 'true' || cb.id === 'Yes' || cb.value === 'Yes' || cb.name === 'Yes';
-                        const isLabelNo = (/\\bno\\b/i.test(lblLower) || lblLower === 'false' || cb.id === 'No' || cb.value === 'No' || cb.name === 'No') && !isLabelYes;
+                        const isLabelNo = (/\\bno\\b/i.test(lblLower) || lblLower === 'false' || lblLower.includes('never served') || cb.id === 'No' || cb.value === 'No' || cb.name === 'No') && !isLabelYes;
                         return {{ cb, lbl, lblLower, isLabelYes, isLabelNo }};
                     }});
                     
@@ -8752,14 +12228,15 @@ class SentinelAgent:
                             mccClicked++;
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - MCC clicked best range index:', bestIdx, 'name:', namedInputs[bestIdx].name);
                         }}
-                    }} else {{
+                        const ansLower = (answer || '').toLowerCase().trim();
+                        const wantsNo = /^(no|false)\\b/i.test(ansLower) || ansLower === 'no';
                         for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
                             const inputName = (namedInputs[i].name || '').toLowerCase().trim();
                             const isSkip = inputName.includes('skip') || inputName.includes('skip this') || isNegativeOption(inputName);
-                            // For Yes/No pairs, skip "no" — only select "yes"
-                            const isNoInPair = mccIsYesNoPair && inputName === 'no';
-                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'isNoInPair:', isNoInPair);
-                            if (isSkip || isNoInPair) {{
+                            // For Yes/No pairs, select based on answer
+                            const shouldSkipInPair = mccIsYesNoPair && (wantsNo ? inputName === 'yes' : inputName === 'no');
+                            window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Pair[' + i + '] input name:', inputName, 'isSkip:', isSkip, 'shouldSkipInPair:', shouldSkipInPair);
+                            if (isSkip || shouldSkipInPair) {{
                                 skipNames.push(inputName);
                                 continue;
                             }}
@@ -9599,14 +13076,14 @@ class SentinelAgent:
         await self._inject_patterns_once()
         
         if self._page:
-            is_intersession = bool(self._task_description and ('intersession' in self._task_description.lower() or '20 jobs' in self._task_description.lower()))
+            is_intersession = self._is_intersession_task()
             try:
                 await self._page.evaluate("isInter => { window.__SENTINEL_IS_INTERSESSION__ = isInter; }", is_intersession)
             except Exception:
                 pass
-            # Stable per-task Instahyre skill selection (8 languages + 7 tools).
+            # Stable per-task Instahyre skill selection (static for main, random 8 langs + 7 frameworks for intersession).
             try:
-                instahyre_skills = self._get_instahyre_skills()
+                instahyre_skills = self._get_instahyre_skills(is_intersession=is_intersession)
                 await self._page.evaluate(
                     "skills => { window.__SENTINEL_INSTAHYRE_SKILLS__ = skills; }",
                     instahyre_skills,
@@ -9615,7 +13092,7 @@ class SentinelAgent:
                 pass
             if self.state.step_count <= 1:
                 try:
-                    await self._page.evaluate("() => { sessionStorage.removeItem('instahyre_results_clicked'); sessionStorage.removeItem('instahyre_pending'); }")
+                    await self._page.evaluate("() => { sessionStorage.removeItem('instahyre_results_clicked'); sessionStorage.removeItem('instahyre_pending'); sessionStorage.removeItem('instahyre_all_applied_scrolls'); sessionStorage.removeItem('instahyre_wait_results_count'); }")
                 except Exception:
                     pass
         
@@ -9670,8 +13147,12 @@ class SentinelAgent:
                         const isSalaryKey = /salary|ctc|\bpay\b|\bpackage\b|compensation|remuneration/i.test(kLower) && !/company|employer|payroll|industry|department/i.test(kLower);
                         
                         if (isSalaryCat || isSalaryKey) {
+                            const isVariableOrEquity = /variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(kLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(kLower);
+                            if (isVariableOrEquity) {
+                                KNOWN_PATTERNS[k] = '0';
+                            }
                             // Compound CTC questions (current AND expected) - MUST be first
-                            if ((kLower.includes('current') && kLower.includes('expected')) ||
+                            else if ((kLower.includes('current') && kLower.includes('expected')) ||
                                 kLower.includes('current and expected') || kLower.includes('current & expected')) {
                                 KNOWN_PATTERNS[k] = 'Current: 2300000, Expected: 3000000';
                             }
@@ -9695,7 +13176,7 @@ class SentinelAgent:
                             // Also override input_type_defaults if present
                             if (defaultObj && defaultObj.input_type_defaults) {
                                 defaultObj.input_type_defaults.text = KNOWN_PATTERNS[k];
-                                defaultObj.input_type_defaults.number = (kLower.includes('lpa') || kLower.includes('lakh')) ? ((/expected|desired/i.test(kLower)) ? '30' : '23') : ((/expected|desired/i.test(kLower)) ? '3000000' : '2300000');
+                                defaultObj.input_type_defaults.number = isVariableOrEquity ? '0' : ((kLower.includes('lpa') || kLower.includes('lakh')) ? ((/expected|desired/i.test(kLower)) ? '30' : '23') : ((/expected|desired/i.test(kLower)) ? '3000000' : '2300000'));
                                 defaultObj.input_type_defaults.textarea = KNOWN_PATTERNS[k];
                             }
                         }
@@ -9710,9 +13191,16 @@ class SentinelAgent:
                                 KNOWN_PATTERNS[k] = '0.5';
                                 return;
                             }
+                            if (kLower.includes('19102026') || kLower.includes('numeric_format')) {
+                                KNOWN_PATTERNS[k] = '23102026';
+                                return;
+                            }
                             const v = KNOWN_PATTERNS[k];
                             if (v && typeof v === 'string') {
-                                if (v !== 'Yes' && v !== 'No' && v !== 'Serving Notice Period') {
+                                if (v.includes('Serving Notice Period') || v.includes('(6)')) {
+                                    return;
+                                }
+                                if (v !== 'Yes' && v !== 'No') {
                                     const match = v.match(/(\\d+)/);
                                     KNOWN_PATTERNS[k] = match ? match[1] : '15';
                                     
@@ -9880,6 +13368,11 @@ class SentinelAgent:
                     let bestKeyLen = 0;
                     let bestScore = 0;
                     
+                    // CRITICAL COMPLIANCE INTERCEPTS (Must precede fuzzy substring matching)
+                    const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)|relatives?\\s*in\\s*the\\s*company/i.test(qLower);
+                    const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|non\\s*compete|confidentiality\\s*agreements?.*restrict|bound\\s*by.*(?:non-compete|noncompete|agreements?)/i.test(qLower);
+                    if (isConflictQ || isRestrictiveQ) return 'No';
+
                     // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
                     
@@ -9896,13 +13389,14 @@ class SentinelAgent:
                             // Anti-collision for generic words
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
+                            if (keyLower === 'ember' && (qLower.includes('september') || qLower.includes('november') || qLower.includes('december'))) continue;
                             if (EXACT_MATCH_KEYS.has(keyLower)) continue;
                             const patternData = (typeof KNOWN_PATTERNS_WITH_DEFAULTS !== 'undefined') ? KNOWN_PATTERNS_WITH_DEFAULTS[keyLower] : null;
                             if (patternData && patternData.requires_exact_match) continue;
                             if (patternData && patternData.negative_patterns && patternData.negative_patterns.length > 0) {
                                 if (patternData.negative_patterns.some(np => qLower.includes(np.toLowerCase()))) continue;
                             }
-                            if (keyLower.length <= 4 || keyLower.includes('#') || keyLower.includes('+') || keyLower.startsWith('.')) {
+                            if (keyLower.length <= 5 || keyLower.includes('#') || keyLower.includes('+') || keyLower.startsWith('.')) {
                                 const escaped = keyLower.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
                                 const startBoundary = /^[a-zA-Z0-9]/.test(keyLower) ? '(?:^|[^a-zA-Z0-9])' : '(?:^|\\\\s)';
                                 const endBoundary = /[a-zA-Z0-9]$/.test(keyLower) ? '(?:[^a-zA-Z0-9]|$)' : '(?:[^a-zA-Z0-9]|$)';
@@ -9983,7 +13477,9 @@ class SentinelAgent:
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isYearsQ = /(?:years\\b|\\byoe\\b)/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
-                        const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)|based\\s*in\\s*(hyderabad|bangalore|bengaluru|pune|delhi|mumbai|gurgaon|noida)|residing\\s*in/i.test(qLower);
+                        const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)/i.test(qLower);
+                        const isLivingNonBangaloreQ = /(based|living|residing)\\s*in\\s*(hyderabad|pune|delhi|mumbai|gurgaon|noida|chennai)/i.test(qLower) && !/relocat|willing|open\\s*to/i.test(qLower);
+                        const isLivingBangaloreQ = /(based|living|residing)\\s*in\\s*(bangalore|bengaluru)/i.test(qLower);
                         const isBgCheckQ = /background\\s*(check|verification)|drug\\s*(screen|screening|test)|reference\\s*check|criminal\\s*record/i.test(qLower);
                         const isAuthIndiaQ = (/authorized\\s*to\\s*work\\s*in\\s*india|legally\\s*authorized.*india|work\\s*authorization/i.test(qLower)) && !isSponsorshipQ;
                         const isTechExpQ = /(?:c#|c\\+\\+|\\.net|dotnet|azure|sql|csharp|cloud)\\s*(?:experience|years)?|years.*(?:c#|c\\+\\+|\\.net|dotnet|azure|sql)/i.test(qLower);
@@ -9996,9 +13492,28 @@ class SentinelAgent:
                         const isCityStateQ = /city\\s*and\\s*state|city\\s*&\\s*state/i.test(qLower);
                         const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|confidentiality\\s*agreements?.*restrict/i.test(qLower);
                         const isGapQ = /gap\\s*from\\s*education|between\\s*jobs.*gap|what\\s*are\\s*your\\s*gap/i.test(qLower);
-                        const isAgenticEssayQ = /agentic\\s*ai|ai\\s*agent/i.test(qLower) && /explain|use\\s*case|contribution|describe/i.test(qLower);
+                        const isAgenticEssayQ = /(agentic\\s*ai|ai\\s*agent)/i.test(qLower) && /(explain|use\\s*case|contribution|describe)/i.test(qLower);
+                        const isCareerBreakQ = /\\b(career\\s*break|break\\s*in\\s*career|employment\\s*gaps?|career\\s*gaps?|gap\\s*in\\s*(?:employment|career|work))\\b/i.test(qLower) &&
+                                               !/reason|why|explain|describe/i.test(qLower);
+                        const isBreakReasonQ = /reason\\s*for\\s*(the\\s*)?(career\\s*|employment\\s*)?(break|gap)|why\\s*.*(break|gap)/i.test(qLower);
+                        const isMilitaryQ = /\\b(military|veteran|armed\\s*forces)\\b/i.test(qLower);
+                        const isDisabilityPercentQ = /disabilit.*(%|percent)/i.test(qLower);
+                        const isDisabilityTypeQ = /what\\s*kind\\s*of\\s*disability|disability\\s*type|type\\s*of\\s*disability/i.test(qLower);
+                        const isDisabilityQ = /\\bdisabilit/i.test(qLower);
 
-                        if (isRestrictiveQ) {
+                        if (isDisabilityPercentQ) {
+                            bestMatch = '0';
+                        } else if (isDisabilityTypeQ) {
+                            bestMatch = 'None';
+                        } else if (isDisabilityQ) {
+                            bestMatch = 'I don’t have a disability';
+                        } else if (isCareerBreakQ) {
+                            bestMatch = 'No';
+                        } else if (isBreakReasonQ) {
+                            bestMatch = 'Personal';
+                        } else if (isMilitaryQ) {
+                            bestMatch = 'Never served';
+                        } else if (isRestrictiveQ) {
                             bestMatch = 'No';
                         } else if (isReferralNaQ) {
                             bestMatch = 'N/A';
@@ -10017,6 +13532,10 @@ class SentinelAgent:
                         } else if (isHoldingOfferQ) {
                             bestMatch = 'No';
                         } else if (isShiftQ) {
+                            bestMatch = 'Yes';
+                        } else if (isLivingNonBangaloreQ) {
+                            bestMatch = 'No';
+                        } else if (isLivingBangaloreQ) {
                             bestMatch = 'Yes';
                         } else if (isRelocateQ) {
                             bestMatch = 'Yes';
@@ -10055,22 +13574,32 @@ class SentinelAgent:
                         } else if (isYearsQ) {
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
-                            bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
+                            if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
+                                bestMatch = '23102026';
+                            } else if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
+                                bestMatch = '(6) --Serving Notice Period';
+                            } else {
+                                bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
+                            }
                         } else if (isSalaryQ) {
-                            // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/usd|dollar|\\$/i.test(qLower)) {
+                            // Smart salary handling: check for variable, monthly, LPA, expected keywords
+                            if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
+                            } else if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(qLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(qLower)) {
+                                bestMatch = '0';
+                            } else if (/usd|dollar|\\$/i.test(qLower)) {
                                 if (/monthly|per month/i.test(qLower)) {
-                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '5000' : '3500';
+                                    bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '5000' : '3500';
                                 } else {
-                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '60000' : '40000';
+                                    bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '60000' : '40000';
                                 }
                             } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '3000000' : '2300000';
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
                             } else if (/monthly|per month/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '250000' : '191667';
                             } else if (/lpa|lakh|lac/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
-                            } else if (/expected|expectations?|expect|ectc|desired|asking/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '30' : '23';
+                            } else if (/expected|expectations?|expect|ectc|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower)) {
                                 bestMatch = '3000000';
                             } else {
                                 bestMatch = '2300000';
@@ -10091,8 +13620,18 @@ class SentinelAgent:
                         const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
                         const isLinkedInHost6 = window.location.hostname.includes('linkedin');
                         
+                        // Strict negative compliance overrides (visa sponsorship, conflicts of interest, non-compete, holding offers)
+                        const isSponsorshipQ = /require\\s+visa\\s+sponsorship|require\\s+sponsorship|need\\s+sponsorship|sponsorship\\s+for\\s+employment|will\\s+you.*require.*sponsorship/i.test(qLower);
+                        const isConflictQ = /conflict\\s+of\\s+interest|disciplinary|criminal|investigation|felony|misdemeanor|relatives?\\s+(employed|working)|family\\s+member.*employed|financial\\s+interest/i.test(qLower);
+                        const isRestrictiveQ = /non-compete|non\\s+compete|restrictive\\s+covenant|confidentiality\\s+agreement.*restrict/i.test(qLower);
+                        const isHoldingOfferQ = /do\\s+you\\s+have\\s+any\\s+(other\\s+)?offers?\\s+in\\s+hand|holding\\s+any\\s+offer/i.test(qLower);
+
+                        if (isSponsorshipQ || isConflictQ || isRestrictiveQ || isHoldingOfferQ) {
+                            bestMatch = 'No';
+                        }
+                        
                         // Disambiguate Yes/No vs numeric experience:
-                        const isYesNoExp = /^(do you have|have you|are you|can you|will you|would you)\b/i.test(qLower.trim()) && !/how many|how much|what is your|total years/i.test(qLower);
+                        const isYesNoExp = /^(do you have|have you|are you|can you|will you|would you)\b/i.test(qLower.trim()) && !/how many|how much|what is your|total years|career break|break in career|career gap|employment gap/i.test(qLower);
                         if (isYesNoExp && (bestMatch === '4' || bestMatch === '4.2 Years' || bestMatch === '4 Years')) {
                             bestMatch = 'Yes';
                         }
@@ -10101,7 +13640,13 @@ class SentinelAgent:
                             bestMatch = isLinkedInHost6 ? '4' : '4.2 Years';
                         }
 
-                        if (isAgeQ) {
+                        if (/disabilit.*(%|percent)/i.test(qLower)) {
+                            bestMatch = '0';
+                        } else if (/what\\s*kind\\s*of\\s*disability|disability\\s*type|type\\s*of\\s*disability/i.test(qLower)) {
+                            bestMatch = 'None';
+                        } else if (/\\bdisabilit/i.test(qLower)) {
+                            bestMatch = 'I don’t have a disability';
+                        } else if (isAgeQ) {
                             bestMatch = 'Yes';
                         } else if (/1-5|1 to 5|out of 5|scale of 5|\\/5/i.test(qLower) && (/10/i.test(bestMatch) || bestMatch === '8/10' || bestMatch === '8' || bestMatch === '9' || bestMatch === '10')) {
                             bestMatch = '4';
@@ -10113,25 +13658,30 @@ class SentinelAgent:
                             // Recover company name if wrongly matched to numeric/years
                             bestMatch = 'Everbridge';
                         } else if (isLwdQ) {
-                            // Ensure LWD returns formatted date, not notice period '15'
-                            if (bestMatch === '15' || !/\\d{4}|[A-Za-z]{3}/.test(bestMatch)) {
+                            if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
+                                bestMatch = '23102026';
+                            } else if (bestMatch === '15' || !/\\d{4}|[A-Za-z]{3}/.test(bestMatch)) {
                                 bestMatch = resolveDynamic('__DYNAMIC_LWD__');
                             }
                         } else if (isSalaryQ && !isCompanyOrPayroll) {
-                            // Smart salary handling: check for monthly, LPA, expected keywords
-                            if (/usd|dollar|\\$/i.test(qLower)) {
+                            // Smart salary handling: check for variable, monthly, LPA, expected keywords
+                            if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
+                            } else if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(qLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(qLower)) {
+                                bestMatch = '0';
+                            } else if (/usd|dollar|\\$/i.test(qLower)) {
                                 if (/monthly|per month/i.test(qLower)) {
-                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '5000' : '3500';
+                                    bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '5000' : '3500';
                                 } else {
-                                    bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '60000' : '40000';
+                                    bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '60000' : '40000';
                                 }
                             } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '3000000' : '2300000';
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
                             } else if (/monthly|per month/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '250000' : '191667';
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '250000' : '191667';
                             } else if (/lpa|lakh|lac/i.test(qLower)) {
-                                bestMatch = /expected|expectations?|expect|desired|asking/i.test(qLower) ? '30' : '23';
-                            } else if (/expected|expectations?|expect|ectc|desired|asking/i.test(qLower)) {
+                                bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '30' : '23';
+                            } else if (/expected|expectations?|expect|ectc|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower)) {
                                 bestMatch = '3000000';
                             } else {
                                 bestMatch = '2300000';
@@ -10141,8 +13691,10 @@ class SentinelAgent:
                                 // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
                             }
-                        } else if (isNoticeQ && !isLwdQ && !/\\d/.test(bestMatch)) {
-                            if (isNoticeQ && !isLwdQ && !/\\d/.test(bestMatch)) {
+                        } else if (isNoticeQ && !isLwdQ) {
+                            if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
+                                bestMatch = '(6) --Serving Notice Period';
+                            } else if (!/\\d/.test(bestMatch)) {
                                 bestMatch = '15';
                             }
                         }
@@ -10243,8 +13795,16 @@ class SentinelAgent:
                                 if (Math.abs(optNum - answerNum) <= 0.5) {
                                     score = 100;
                                 } else {
-                                    // Substring match but numbers are far apart — likely a false positive
-                                    score = 10;
+                                    // Substring match but numbers are far apart — false positive
+                                    score = 0;
+                                }
+                            } else if (hasAnswerNum && /^\\d+$/.test(ans)) {
+                                // Answer is a pure number (e.g. "4"), do not match inside a multi-digit number
+                                const numBoundary = new RegExp('\\b' + ans + '\\b');
+                                if (numBoundary.test(text)) {
+                                    score = 100;
+                                } else {
+                                    score = 0;
                                 }
                             } else {
                                 score = 100;
@@ -10346,10 +13906,10 @@ class SentinelAgent:
                         // Check if label represents a range or comparative bounds
                         const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
-                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || radio.id === 'No' || radio.id === 'false' || radio.value === 'No' || radio.value === 'false' || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
-                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || radio.id === 'Yes' || radio.id === 'true' || radio.value === 'Yes' || radio.value === 'true' || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
-                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving');
-                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false');
+                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || radio.id === 'No' || radio.id === 'false' || radio.value === 'No' || radio.value === 'false' || lowerLabel.includes('never served') || lowerLabel.includes('not a veteran') || lowerLabel.includes('not a protected veteran') || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
+                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving notice') || radio.id === 'Yes' || radio.id === 'true' || radio.value === 'Yes' || radio.value === 'true' || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
+                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving notice');
+                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false') || ans.includes('never');
                         
                         const hasYesRadio = Array.from(radios).some(r => {
                             const lbl = (r.closest('label')?.innerText || r.parentElement?.innerText || r.value || r.id || '').toLowerCase();
@@ -10361,16 +13921,22 @@ class SentinelAgent:
                         });
 
                         if (isLabelYes && isAnsYes) {
-                            score = 90;
+                            score = 110;
                         }
                         else if (isLabelNo && isAnsNo) {
-                            score = 90;
+                            score = 110;
+                        }
+                        else if (isAnsNo && isLabelYes) {
+                            score = 0;
+                        }
+                        else if (isAnsYes && isLabelNo) {
+                            score = 0;
                         }
                         else if (hasYesRadio && hasNoRadio && !isComparativeOrRange && answerNum > 0) {
                             if (isLabelYes) score = 95;
                             else if (isLabelNo) score = 0;
                         }
-                        else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
                             score = 100;
                         }
                         else if (effectiveExpVal > 0) {
@@ -10550,10 +14116,10 @@ class SentinelAgent:
                         
                         const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
-                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || (radio.value && (radio.value.toLowerCase() === 'no' || radio.value.toLowerCase() === 'false')) || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
-                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving') || (radio.value && (radio.value.toLowerCase() === 'yes' || radio.value.toLowerCase() === 'true')) || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
-                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving');
-                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false');
+                        const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || (radio.value && (radio.value.toLowerCase() === 'no' || radio.value.toLowerCase() === 'false')) || lowerLabel.includes('never served') || lowerLabel.includes('not a veteran') || lowerLabel.includes('not a protected veteran') || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
+                        const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving notice') || (radio.value && (radio.value.toLowerCase() === 'yes' || radio.value.toLowerCase() === 'true')) || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
+                        const isAnsYes = /^yes\\b/i.test(ans) || ans === 'yes' || ans.includes('true') || ans.includes('serving notice');
+                        const isAnsNo = /^no\\b/i.test(ans) || ans === 'no' || ans.includes('false') || ans.includes('never');
                         
                         const hasYesRadio = Array.from(radios).some(r => {
                             const lbl = (r.querySelector('p, span')?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || r.value || '').toLowerCase();
@@ -10565,16 +14131,22 @@ class SentinelAgent:
                         });
 
                         if (isLabelYes && isAnsYes) {
-                            score = 90;
+                            score = 110;
                         }
                         else if (isLabelNo && isAnsNo) {
-                            score = 90;
+                            score = 110;
+                        }
+                        else if (isAnsNo && isLabelYes) {
+                            score = 0;
+                        }
+                        else if (isAnsYes && isLabelNo) {
+                            score = 0;
                         }
                         else if (hasYesRadio && hasNoRadio && !isComparativeOrRange && answerNum > 0) {
                             if (isLabelYes) score = 95;
                             else if (isLabelNo) score = 0;
                         }
-                        else if (!isComparativeOrRange && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
                             score = 100;
                         }
                         else if (answerNum > 0) {
@@ -10797,29 +14369,6 @@ return resolveDynamic(bestMatch);
                 const isYes = (ans) => ans && ['yes', 'true', 'agree'].some(w => ans.toLowerCase().includes(w));
                 const isNo = (ans) => ans && ['no', 'false'].some(w => ans.toLowerCase().includes(w));
 
-                // Helper: Detect if question text is a Yes/No question
-                const isLikelyYesNoQuestion = (text) => {
-                    if (!text) return false;
-                    const t = text.replace(/[*?]/g, '').trim().toLowerCase();
-                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\\b/.test(t) ||
-                           t.startsWith('apply only ') ||
-                           t.includes('willing') ||
-                           t.includes('comfortable') ||
-                           t.includes('localite') ||
-                           t.includes('relocate') ||
-                           t.includes('relocation') ||
-                           t.includes('open to') ||
-                           t.includes('offshore') ||
-                           t.includes('shift') ||
-                           t.includes('sponsorship') ||
-                           t.includes('authorized') ||
-                           t.includes('authorization') ||
-                           t.includes('background check') ||
-                           t.includes('drug test') ||
-                           t.includes('drug screen') ||
-                           t.includes('drug screening');
-                };
-
                 // Helper: Detect if a Yes/No question should default to "No"
                 // Catches company employment history, compliance, and conflict-of-interest patterns
                 const shouldDefaultToNo = (text) => {
@@ -10850,7 +14399,7 @@ return resolveDynamic(bestMatch);
                         'personal relationship', 'personal relationships',
                         'suppliers', 'supplier', 'vendors', 'vendor', 'partners', 'partner',
                         'subsidiary', 'subsidiaries', 'affiliated companies', 'affiliate', 'affiliates',
-                        'relative working', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
+                        'relative working', 'relatives working', 'relatives employed', 'relatives in', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
                         'agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360', 'deloitte', 'auditor', 'independent auditor',
                         'fe fundinfo', 'zenith investment',
                         'veteran', 'military', 'protected veteran', 'military spouse',
@@ -10860,9 +14409,34 @@ return resolveDynamic(bestMatch);
                         'disability', 'handicapped',
                         'equity in the current', 'hold equity', 'hold any equity', 'equity in current',
                         'offer in hand', 'holding offer', 'holding any offer', 'competing offer', 'counter offer', 'any offer',
-                        'cooling period', 'non-compete', 'non compete', 'non-solicitation', 'disciplinary proceedings'
+                        'cooling period', 'non-compete', 'non compete', 'non-solicitation', 'disciplinary proceedings', 'financial interest', 'family relationship', 'family relationships', 'bound by non-compete',
+                        'restrictive covenant', 'restrictive covenants', 'confidentiality agreement'
                     ];
                     return negativePatterns.some(p => t.includes(p));
+                };
+
+                // Helper: Detect if question text is a Yes/No question
+                const isLikelyYesNoQuestion = (text) => {
+                    if (!text) return false;
+                    if (shouldDefaultToNo(text)) return true;
+                    const t = text.replace(/[*?]/g, '').trim().toLowerCase();
+                    return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t) ||
+                           t.startsWith('apply only ') ||
+                           t.includes('willing') ||
+                           t.includes('comfortable') ||
+                           t.includes('localite') ||
+                           t.includes('relocate') ||
+                           t.includes('relocation') ||
+                           t.includes('open to') ||
+                           t.includes('offshore') ||
+                           t.includes('shift') ||
+                           t.includes('sponsorship') ||
+                           t.includes('authorized') ||
+                           t.includes('authorization') ||
+                           t.includes('background check') ||
+                           t.includes('drug test') ||
+                           t.includes('drug screen') ||
+                           t.includes('drug screening');
                 };
 
                 const isLinkedIn = document.title.includes('LinkedIn') || window.location.href.includes('linkedin.com');
@@ -11851,9 +15425,15 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
+                            if (/19102026|enter as \\d+|ddmmyyyy/i.test(lowerLabel)) {
+                                answer = '23102026';
+                            }
+                            
                             // Special handling for currency / salary text fields (preserve compound / textarea answers)
                             if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
-                                if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(lowerLabel)) {
+                                if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(lowerLabel) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(lowerLabel)) {
+                                    answer = '0';
+                                } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(lowerLabel)) {
                                     answer = /current|present|cctc/i.test(lowerLabel) ? '2300000' : '3000000';
                                 } else if (/usd|dollar|\\$/i.test(lowerLabel)) {
                                     if (/monthly|per month|p\\.m\\./i.test(lowerLabel)) {
@@ -13037,7 +16617,14 @@ return resolveDynamic(bestMatch);
                             // ===== WORK EXPERIENCE / EMPLOYMENT DATES SELECT HANDLER =====
                             // Handles "Dates of employment", "Month of From", "Year of From", "Month of To", "Year of To",
                             // "Start Date", "End Date" in LinkedIn Easy Apply experience section.
-                            const isExpDateSelect = lowerLabel.includes('dates of employment') ||
+                            const dateOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                            const nonPlaceholderDateOpts = dateOptions.filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
+                            const hasCalendarYearOptions = nonPlaceholderDateOpts.length > 0 &&
+                                                           nonPlaceholderDateOpts.every(o => /^(?:19|20)\\d{2}$/.test(o.text.trim()) || /^(?:19|20)\\d{2}$/.test(o.value.trim()));
+                            const hasCalendarMonthOptions = dateOptions.some(o => /^(?:january|february|march|april|may|june|july|august|september|october|november|december|januari|februari|maand)$/i.test(o.text.trim()));
+
+                            const isExpDateSelect = hasCalendarYearOptions || hasCalendarMonthOptions ||
+                                                    lowerLabel.includes('dates of employment') ||
                                                     lowerLabel.includes('month of from') ||
                                                     lowerLabel.includes('year of from') ||
                                                     lowerLabel.includes('month of to') ||
@@ -13048,7 +16635,9 @@ return resolveDynamic(bestMatch);
                                                     lowerLabel.includes('from year') ||
                                                     lowerLabel.includes('to month') ||
                                                     lowerLabel.includes('to year') ||
-                                                    lowerLabel.includes('date of employment');
+                                                    lowerLabel.includes('date of employment') ||
+                                                    (/^month\b/i.test(lowerLabel) && !lowerLabel.includes('experience')) ||
+                                                    (/^year\b/i.test(lowerLabel) && !lowerLabel.includes('experience'));
 
                             if (isExpDateSelect) {
                                 const dateOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
@@ -13361,6 +16950,8 @@ return resolveDynamic(bestMatch);
                                 const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
                                 const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live/i.test(lowerLabel);
                                 const isContractTypeQ = /type\\s+of\\s+contract|contract\\s+type|employment\\s+type/i.test(lowerLabel);
+                                const isStateProvinceQ = /state|province|region\\s*\\/\\s*state/i.test(lowerLabel);
+                                const isRegionContinentQ = /region|geography|territory/i.test(lowerLabel) && !isStateProvinceQ;
                                 
                                 if (!isFieldPreFilled(select)) {
                                     const options = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
@@ -13371,6 +16962,10 @@ return resolveDynamic(bestMatch);
                                         let fallbackOpt = null;
                                         if (isCountryResidenceQ) {
                                             fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'india' || o.text.toLowerCase().includes('india'));
+                                        } else if (isStateProvinceQ) {
+                                            fallbackOpt = realOptions.find(o => /karnataka|bangalore|bengaluru/i.test(o.text));
+                                        } else if (isRegionContinentQ) {
+                                            fallbackOpt = realOptions.find(o => /asia|apac|india/i.test(o.text));
                                         } else if (isContractTypeQ) {
                                             fallbackOpt = realOptions.find(o => /full[- ]?time|permanent|regular/i.test(o.text));
                                         } else if (isExperienceSelectQ) {
@@ -13698,8 +17293,28 @@ return resolveDynamic(bestMatch);
                                 if (radios.length === 2 && (radioOptions.length === 0 || radioOptions.every(o => isQuestionText(o)))) {
                                     radioOptions = ['Yes', 'No'];
                                 }
-                                const answer = legend ? fuzzyMatch(legend) : null;
+
+                                // Critical compliance / negative-default intercept
+                                if (legend && shouldDefaultToNo(legend)) {
+                                    let targetRadio = findBestRadioMatch('No', radios);
+                                    if (!targetRadio) {
+                                        targetRadio = radios.find(r => {
+                                            const val = (r.value || '').toLowerCase();
+                                            const labelText = getInputLabelText(r).toLowerCase();
+                                            return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                        }) || (radios.length === 2 ? radios[1] : null);
+                                    }
+                                    if (targetRadio) {
+                                        window.__SENTINEL_DEBUG__&&console.log('Explicitly selecting No for compliance fieldset radio:', legend.substring(0, 50));
+                                        clickInput(targetRadio);
+                                        formResults.push({ question: legend.substring(0, 100), answer: 'No', inputType: 'radio', options: radioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                        continue;
+                                    }
+                                }
+
+                                let answer = legend ? fuzzyMatch(legend) : null;
                                 if (answer) {
+                                    if (shouldDefaultToNo(legend)) answer = 'No';
                                     let bestRadio = findBestRadioMatch(answer, radios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
@@ -13708,7 +17323,10 @@ return resolveDynamic(bestMatch);
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         clickInput(bestRadio);
                                         let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
-                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') {
+                                            selectedVal = (answer === 'No' || shouldDefaultToNo(legend)) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                        }
+                                        if (shouldDefaultToNo(legend)) selectedVal = 'No';
                                         formResults.push({ question: legend, answer: selectedVal, inputType: 'radio', options: radioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
@@ -13725,7 +17343,7 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(legend);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText) || shouldDefaultToNo(legend)) {
                                             const defaultNo = shouldDefaultToNo(legend);
                                             const targetValue = defaultNo ? 'no' : 'yes';
                                             let targetRadio = radios.find(r => {
@@ -13758,7 +17376,7 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(legend);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ) || shouldDefaultToNo(legend)) {
                                         const defaultNo = shouldDefaultToNo(legend);
                                         const targetValue = defaultNo ? 'no' : 'yes';
                                         let targetRadio = radios.find(r => {
@@ -13775,6 +17393,18 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: legend.substring(0, 100), answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: radioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
+                                        if (shouldDefaultToNo(legend)) {
+                                            const noRadio = radios.find(r => {
+                                                const val = (r.value || '').toLowerCase();
+                                                const lbl = getInputLabelText(r).toLowerCase();
+                                                return val === 'no' || lbl === 'no' || lbl.includes('no');
+                                            }) || (radios.length === 2 ? radios[1] : null);
+                                            if (noRadio) {
+                                                clickInput(noRadio);
+                                                formResults.push({ question: legend.substring(0, 100), answer: 'No', inputType: 'radio', options: radioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                                continue;
+                                            }
+                                        }
                                         const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
@@ -13878,10 +17508,29 @@ return resolveDynamic(bestMatch);
                                 if (customRadios.length === 2 && (customRadioOptions.length === 0 || customRadioOptions.every(o => isQuestionText(o)))) {
                                     customRadioOptions = ['Yes', 'No'];
                                 }
-                                const answer = questionText ? fuzzyMatch(questionText) : null;
+
+                                // Critical compliance / negative-default intercept
+                                if (questionText && shouldDefaultToNo(questionText)) {
+                                    let targetRadio = findBestCustomRadioMatch('No', customRadios);
+                                    if (!targetRadio) {
+                                        targetRadio = customRadios.find(r => {
+                                            const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                            return t === 'no' || t.includes('no');
+                                        }) || (customRadios.length === 2 ? customRadios[1] : null);
+                                    }
+                                    if (targetRadio) {
+                                        window.__SENTINEL_DEBUG__&&console.log('Explicitly selecting No for compliance custom radio:', questionText.substring(0, 50));
+                                        clickCustomRadio(targetRadio);
+                                        formResults.push({ question: questionText.substring(0, 100), answer: 'No', inputType: 'radio', options: customRadioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                        continue;
+                                    }
+                                }
+
+                                let answer = questionText ? fuzzyMatch(questionText) : null;
                                 window.__SENTINEL_DEBUG__&&console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
                                 
                                 if (answer) {
+                                    if (shouldDefaultToNo(questionText)) answer = 'No';
                                     let bestRadio = findBestCustomRadioMatch(answer, customRadios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, customRadios);
@@ -13890,7 +17539,10 @@ return resolveDynamic(bestMatch);
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
                                         let selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || answer).trim();
-                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = customRadios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') {
+                                            selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (customRadios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                        }
+                                        if (shouldDefaultToNo(questionText)) selectedVal = 'No';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: customRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         const hasYes = customRadios.some(r => {
@@ -13903,7 +17555,7 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = customRadios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (customRadios.length === 2 && isYesNoFromText)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (customRadios.length === 2 && isYesNoFromText) || shouldDefaultToNo(questionText)) {
                                             const defaultNo = shouldDefaultToNo(questionText);
                                             const targetValue = defaultNo ? 'no' : 'yes';
                                             let targetRadio = customRadios.find(r => {
@@ -13932,7 +17584,7 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = customRadios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes) || (customRadios.length === 2 && isYesNoQ)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (customRadios.length === 2 && isYesNoQ) || shouldDefaultToNo(questionText)) {
                                         const defaultNo = shouldDefaultToNo(questionText);
                                         const targetValue = defaultNo ? 'no' : 'yes';
                                         let targetRadio = customRadios.find(r => {
@@ -13948,6 +17600,17 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: customRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
+                                        if (shouldDefaultToNo(questionText)) {
+                                            const noCustom = customRadios.find(r => {
+                                                const t = (r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                                return t === 'no' || t.includes('no');
+                                            }) || (customRadios.length === 2 ? customRadios[1] : null);
+                                            if (noCustom) {
+                                                clickCustomRadio(noCustom);
+                                                formResults.push({ question: questionText.substring(0, 100), answer: 'No', inputType: 'radio', options: customRadioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                                continue;
+                                            }
+                                        }
                                         const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeCustom = null;
                                         for (const kw of safeKeywords) {
@@ -14054,9 +17717,28 @@ return resolveDynamic(bestMatch);
                             if (radios.length === 2 && (standaloneRadioOptions.length === 0 || standaloneRadioOptions.every(o => isQuestionText(o)))) {
                                 standaloneRadioOptions = ['Yes', 'No'];
                             }
+                            // Critical compliance / negative-default intercept
+                            if (questionText && shouldDefaultToNo(questionText)) {
+                                let targetRadio = findBestRadioMatch('No', radios);
+                                if (!targetRadio) {
+                                    targetRadio = radios.find(r => {
+                                        const val = (r.value || '').toLowerCase();
+                                        const labelText = getInputLabelText(r).toLowerCase();
+                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                    }) || (radios.length === 2 ? radios[1] : null);
+                                }
+                                if (targetRadio) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Explicitly selecting No for compliance standalone radio:', questionText.substring(0, 50));
+                                    clickInput(targetRadio);
+                                    formResults.push({ question: questionText.substring(0, 100), answer: 'No', inputType: 'radio', options: standaloneRadioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                    continue;
+                                }
+                            }
+
                             if (questionText) {
-                                const answer = fuzzyMatch(questionText);
+                                let answer = fuzzyMatch(questionText);
                                 if (answer) {
+                                    if (shouldDefaultToNo(questionText)) answer = 'No';
                                     let bestRadio = findBestRadioMatch(answer, radios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
@@ -14065,7 +17747,10 @@ return resolveDynamic(bestMatch);
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
                                         clickInput(bestRadio);
                                         let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
-                                        if (isQuestionText(selectedVal) || selectedVal === 'on') selectedVal = radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected';
+                                        if (isQuestionText(selectedVal) || selectedVal === 'on') {
+                                            selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                        }
+                                        if (shouldDefaultToNo(questionText)) selectedVal = 'No';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
                                     } else {
                                         // Default to Yes if it's a Yes/No question
@@ -14081,7 +17766,7 @@ return resolveDynamic(bestMatch);
                                         });
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(questionText);
-                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText)) {
+                                        if (isYesNoFromRadios || (isYesNoFromText && hasYes) || (radios.length === 2 && isYesNoFromText) || shouldDefaultToNo(questionText)) {
                                             const defaultNo = shouldDefaultToNo(questionText);
                                             const targetValue = defaultNo ? 'no' : 'yes';
                                             let targetRadio = radios.find(r => {
@@ -14114,7 +17799,7 @@ return resolveDynamic(bestMatch);
                                     const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(questionText);
                                     
-                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ)) {
+                                    if (isYesNo || (isYesNoQ && hasYes) || (radios.length === 2 && isYesNoQ) || shouldDefaultToNo(questionText)) {
                                         const defaultNo = shouldDefaultToNo(questionText);
                                         const targetValue = defaultNo ? 'no' : 'yes';
                                         let targetRadio = radios.find(r => {
@@ -14131,6 +17816,18 @@ return resolveDynamic(bestMatch);
                                             formResults.push({ question: questionText.substring(0, 100) || 'Yes/No question', answer: defaultNo ? 'No' : 'Yes', inputType: 'radio', options: standaloneRadioOptions, selectedOption: defaultNo ? 'No' : 'Yes', source: 'default_rule' });
                                         }
                                     } else {
+                                        if (shouldDefaultToNo(questionText)) {
+                                            const noRadio = radios.find(r => {
+                                                const val = (r.value || '').toLowerCase();
+                                                const lbl = getInputLabelText(r).toLowerCase();
+                                                return val === 'no' || lbl === 'no' || lbl.includes('no');
+                                            }) || (radios.length === 2 ? radios[1] : null);
+                                            if (noRadio) {
+                                                clickInput(noRadio);
+                                                formResults.push({ question: questionText.substring(0, 100), answer: 'No', inputType: 'radio', options: standaloneRadioOptions, selectedOption: 'No', source: 'compliance_no' });
+                                                continue;
+                                            }
+                                        }
                                         const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
@@ -15387,19 +19084,7 @@ return resolveDynamic(bestMatch);
                                 return { type: 'easy_apply_limit', element: dialog };
                             }
 
-                            // Active form controls check — a modal with inputs/form buttons is an active form, NEVER success!
-                            const hasActiveFormControls = (
-                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], [data-live-test-easy-apply-next-button], [data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], button[aria-label*="Continue" i], svg[role="progressbar"], div[role="progressbar"], [aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-modal__content, .jobs-easy-apply-form-section, .artdeco-modal__content, form, fieldset, [class*="fb-dash-form-element"], [class*="jobs-document-upload"]') !== null ||
-                                Array.from(dialog.querySelectorAll('button')).some(b => {
-                                    const bText = normText(b.innerText || b.getAttribute('aria-label') || '');
-                                    return ['next', 'review', 'submit', 'submit application', 'review your application', 'continue to next step', 'continue', 'save', 'opslaan'].includes(bText) || bText.includes('next') || bText.includes('submit') || bText.includes('review');
-                                })
-                            );
-                            if (hasActiveFormControls) {
-                                return { type: 'form', element: dialog };
-                            }
-
-                            // Success modal — ONLY evaluated when no active form controls are present
+                            // Success modal — check FIRST so submitted applications aren't treated as stuck forms
                             const isSuccessModal = (
                                 dialog.querySelector('[data-test-icon="signal-success"]') !== null ||
                                 dialog.querySelector('li-icon[type="success-pebble-icon"]') !== null ||
@@ -15413,6 +19098,18 @@ return resolveDynamic(bestMatch);
                             );
                             if (isSuccessModal) {
                                 return { type: 'success', element: dialog };
+                            }
+
+                            // Active form controls check — a modal with inputs/form buttons is an active form
+                            const hasActiveFormControls = (
+                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], [data-live-test-easy-apply-next-button], [data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], button[aria-label*="Continue" i], svg[role="progressbar"], div[role="progressbar"], [aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-modal__content, .jobs-easy-apply-form-section, form, fieldset, [class*="fb-dash-form-element"], [class*="jobs-document-upload"]') !== null ||
+                                Array.from(dialog.querySelectorAll('button')).some(b => {
+                                    const bText = normText(b.innerText || b.getAttribute('aria-label') || '');
+                                    return ['next', 'review', 'submit', 'submit application', 'review your application', 'continue to next step', 'continue', 'save', 'opslaan'].includes(bText) || bText.includes('next') || bText.includes('submit') || bText.includes('review');
+                                })
+                            );
+                            if (hasActiveFormControls) {
+                                return { type: 'form', element: dialog };
                             }
 
                             // Diagnostic logging for visible unclassified dialogs
@@ -16211,8 +19908,39 @@ return resolveDynamic(bestMatch);
                                           qLower.includes('agree') || qLower.includes('permit') || 
                                           qLower.includes('legal') || qLower.includes('authoriz') || 
                                           qLower.includes('declare') || qLower.includes('acknowledge');
+                        const isCareerBreakQ = /\\b(career\\s*break|break\\s*in\\s*career|employment\\s*gaps?|career\\s*gaps?|gap\\s*in\\s*(?:employment|career|work))\\b/i.test(qLower) &&
+                                               !/reason|why|explain|describe/i.test(qLower);
+                        const isBreakReasonQ = /reason\\s*for\\s*(the\\s*)?(career\\s*|employment\\s*)?(break|gap)|why\\s*.*(break|gap)/i.test(qLower);
+                        const isMilitaryQ = /\\b(military|veteran|armed\\s*forces)\\b/i.test(qLower);
+                        const negativeIndicators = [
+                            'sponsorship', 'visa', 'referral', 'referred',
+                            'career break', 'career gap', 'break in career', 'employment gap', 'gap in employment', 'period of unemployment',
+                            'conflict of interest', 'relative', 'family member', 'criminal', 'felony',
+                            'convict', 'disability', 'previously employed', 'ever been employed',
+                            'currently employed', 'worked at', 'worked for',
+                            'work at', 'work for', 'worked with us', 'work with us',
+                            'worked before', 'work before', 'employed by', 'employed with', 'employed at',
+                            'ex-employee', 'former employee', 'employed before', 'backlog', 'backlogs',
+                            'military', 'veteran', 'armed forces', 'served in the military', 'military service',
+                            'military spouse', 'cooling period', 'past 6 months', 'last 6 months', 'past 3 months',
+                            'last 3 months', 'applied to any', 'applied in the past', 'non-compete', 'non compete',
+                            'non-solicitation', 'disciplinary', 'terminated', 'asked to resign', 'offer in hand', 'holding offer',
+                            'counter offer', 'holding counter offer', 'any offer', 'outside business', 'side business',
+                            'advisory', 'consulting', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
+                            'personal relationship', 'referred by', 'internal employee'
+                        ];
+                        const isNegativeQ = isCareerBreakQ || isMilitaryQ || (!qLower.includes('testing') && !qLower.includes('pipeline') && !qLower.includes('ci/cd') && negativeIndicators.some(p => qLower.includes(p)));
                         let answer;
-                        if (isLwdQ) {
+                        if (isCareerBreakQ) {
+                            answer = 'No';
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Career break question detected:', qText, '-> No');
+                        } else if (isBreakReasonQ) {
+                            answer = 'Personal';
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Break reason question detected:', qText, '-> Personal');
+                        } else if (isMilitaryQ) {
+                            answer = 'Never served';
+                            window.__SENTINEL_DEBUG__&&console.log('NAUKRI DEBUG: Military service question detected:', qText, '-> Never served');
+                        } else if (isLwdQ) {
                             const lwd = new Date();
                             lwd.setDate(lwd.getDate() + 15);
                             const dd = String(lwd.getDate()).padStart(2, '0');
@@ -16329,11 +20057,11 @@ return resolveDynamic(bestMatch);
                                     clickedBtn = btn;
                                     break;
                                 }
-                                if ((optAnsLower === 'no' || optAnsLower.startsWith('no') || /\bno\b/.test(optAnsLower)) && (btnText === 'no' || btnText.startsWith('no '))) {
+                                if ((optAnsLower === 'no' || optAnsLower.startsWith('no') || /\\bno\\b/.test(optAnsLower) || isNegativeQ) && (btnText === 'no' || btnText.startsWith('no '))) {
                                     clickedBtn = btn;
                                     break;
                                 }
-                                if ((optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ || (isYesNoQ && !optAnsLower.includes('no'))) &&
+                                if (!isNegativeQ && (optAnsLower === 'yes' || optAnsLower.includes('yes') || isPrivacyQ || (isYesNoQ && !optAnsLower.includes('no'))) &&
                                     (btnText === 'yes' || btnText.includes('yes') || btnText.includes('agree') || btnText.includes('consent') || btnText.includes('accept') || btnText.includes('confirm'))) {
                                     clickedBtn = btn;
                                     break;
@@ -16363,18 +20091,46 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             
-                            if (!clickedBtn && qLower.includes('gap')) {
+                            if (!clickedBtn && isBreakReasonQ) {
                                 clickedBtn = optBtns.find(b => {
                                     const t = (b.innerText || b.textContent || '').trim().toLowerCase();
-                                    return t.includes('none of the above') || t.includes('no gap') || t.includes('not much gap') || t.includes('0 gap') || t.includes('no career gap');
+                                    return t === 'personal' || t.includes('personal') || t.includes('none');
+                                });
+                            }
+
+                            if (!clickedBtn && (qLower.includes('gap') || isCareerBreakQ)) {
+                                clickedBtn = optBtns.find(b => {
+                                    const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                    return t === 'no' || t.includes('none of the above') || t.includes('no gap') || t.includes('not much gap') || t.includes('0 gap') || t.includes('no career gap') || t.includes('no break');
+                                });
+                            }
+
+                            if (!clickedBtn && isMilitaryQ) {
+                                clickedBtn = optBtns.find(b => {
+                                    const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                    return t === 'never served' || t.includes('never served') ||
+                                           t.includes('not a veteran') || t.includes('not a protected veteran') ||
+                                           t === 'never' || t === 'no' || t.startsWith('no ') ||
+                                           t.includes('none') || t.includes('neither') || t.includes('decline');
                                 });
                             }
 
                             if (!clickedBtn) {
                                 const allSkip = optBtns.every(b => (b.innerText || b.textContent || '').toLowerCase().includes('skip'));
-                                const hasOtherInputs = document.querySelector('input[type="radio"], input[type="checkbox"], select, div.textArea[contenteditable="true"]') !== null;
+                                const hasOtherInputs = document.querySelector('input[type="radio"], input[type="checkbox"], select') !== null;
                                 if (!allSkip && !hasOtherInputs) {
-                                    clickedBtn = optBtns[0];
+                                    if (isMilitaryQ) {
+                                        clickedBtn = optBtns.find(b => {
+                                            const t = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                            return t.includes('never') || t === 'no' || t.startsWith('no ') || t.includes('not');
+                                        }) || optBtns[optBtns.length - 1];
+                                    } else if (isNegativeQ || isCareerBreakQ) {
+                                        clickedBtn = optBtns.find(b => (b.innerText || b.textContent || '').trim().toLowerCase() === 'no') || optBtns[0];
+                                    } else if (isBreakReasonQ) {
+                                        clickedBtn = optBtns.find(b => (b.innerText || b.textContent || '').trim().toLowerCase().includes('personal')) || optBtns[0];
+                                    } else {
+                                        clickedBtn = optBtns[0];
+                                    }
                                 }
                             }
                             
@@ -16482,6 +20238,9 @@ return resolveDynamic(bestMatch);
                             let selAnswer = fuzzyMatch(qText) || '';
                             const isLocSelect = qLower.includes('city') || qLower.includes('location') || qLower.includes('relocate');
                             if (isLocSelect) selAnswer = 'Bangalore';
+                            if (isCareerBreakQ) selAnswer = 'No';
+                            if (isBreakReasonQ) selAnswer = 'Personal';
+                            if (isMilitaryQ) selAnswer = 'Never served';
                             if (!selAnswer) selAnswer = answer || '';
 
                             // Try to find a matching option
@@ -16525,7 +20284,7 @@ return resolveDynamic(bestMatch);
                                          document.querySelector('li.botItem .botMsg'))?.innerText || 'Unknown question';
                             
                             // First try fuzzy matching for radio button questions
-                            const fuzzyAnswer = isPrivacyQ ? 'Yes' : fuzzyMatch(qText);
+                            const fuzzyAnswer = isPrivacyQ ? 'Yes' : (isCareerBreakQ ? 'No' : (isBreakReasonQ ? 'Personal' : (isMilitaryQ ? 'No' : fuzzyMatch(qText))));
                             let bestRadio = null;
                             
                             if (fuzzyAnswer) {
@@ -16541,7 +20300,7 @@ return resolveDynamic(bestMatch);
                             if (!bestRadio) {
                                 const hasYes = Array.from(radios).some(r => {
                                     const label = (r.closest('label')?.innerText || r.parentElement?.innerText || '').toLowerCase();
-                                    return label.includes('yes') || label.includes('serving') || label.includes('currently');
+                                    return label.includes('yes') || label.includes('serving notice') || label.includes('agree');
                                 });
                                 const hasNo = Array.from(radios).some(r => {
                                     const label = (r.closest('label')?.innerText || r.parentElement?.innerText || '').toLowerCase();
@@ -16550,22 +20309,21 @@ return resolveDynamic(bestMatch);
                                 const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                 
                                 if (isYesNo || isPrivacyQ) {
-                                    const isNoAnswer = fuzzyAnswer && (/^no\b/i.test(fuzzyAnswer) || fuzzyAnswer.toLowerCase() === 'no');
+                                    const isNoAnswer = (fuzzyAnswer && (/^no\b/i.test(fuzzyAnswer) || fuzzyAnswer.toLowerCase() === 'no')) || isNegativeQ || isCareerBreakQ || isMilitaryQ;
                                     if (isNoAnswer) {
                                         for (const radio of radios) {
                                             const label = (radio.closest('label')?.innerText || radio.parentElement?.innerText || radio.value || radio.id || '').toLowerCase();
-                                            if (label === 'no' || label.startsWith('no ') || label.startsWith('no,')) {
+                                            if (label === 'no' || label.startsWith('no ') || label.startsWith('no,') || label.includes('never served') || label.includes('not a veteran') || label.includes('not a protected veteran')) {
                                                 bestRadio = radio;
                                                 break;
                                             }
                                         }
                                     }
-                                    if (!bestRadio) {
+                                    if (!bestRadio && !isNegativeQ && !isCareerBreakQ && !isMilitaryQ) {
                                         for (const radio of radios) {
                                             const label = radio.closest('label')?.innerText || radio.parentElement?.innerText || '';
                                             if (label.toLowerCase().includes('yes') || 
-                                                label.toLowerCase().includes('serving') ||
-                                                label.toLowerCase().includes('currently') ||
+                                                label.toLowerCase().includes('serving notice') ||
                                                 label.toLowerCase().includes('agree')) {
                                                 bestRadio = radio;
                                                 break;
@@ -16665,22 +20423,41 @@ return resolveDynamic(bestMatch);
                                 );
                             
                             if (isBinaryYesNo || isPrivacyCheckboxQ) {
-                                // Find the Yes/Consent checkbox
-                                const yesCheckbox = checkboxLabels.find((item) => 
-                                    (item.lowerLabel.includes('yes') || item.lowerLabel.includes('agree') || item.lowerLabel.includes('consent') || item.lowerLabel.includes('confirm') || isPrivacyCheckboxQ) && !item.lowerLabel.includes('not') && !item.lowerLabel.includes('no') && !item.lowerLabel.includes('skip')
-                                ) || checkboxLabels[0];
-                                
-                                if (yesCheckbox && !yesCheckbox.cb.checked) {
-                                    yesCheckbox.cb.click();
-                                    if (!yesCheckbox.cb.checked) {
-                                        yesCheckbox.cb.checked = true;
-                                        yesCheckbox.cb.dispatchEvent(new Event('change', { bubbles: true }));
+                                const isTargetNo = isCareerBreakQ || isNegativeQ || (answer && (/^no\b/i.test(answer) || answer.toLowerCase() === 'no'));
+                                if (isTargetNo) {
+                                    const noCheckbox = checkboxLabels.find((item) => 
+                                        item.lowerLabel === 'no' || item.lowerLabel.startsWith('no ') || (item.lowerLabel.includes('no') && !item.lowerLabel.includes('yes'))
+                                    );
+                                    if (noCheckbox && !noCheckbox.cb.checked) {
+                                        noCheckbox.cb.click();
+                                        if (!noCheckbox.cb.checked) {
+                                            noCheckbox.cb.checked = true;
+                                            noCheckbox.cb.dispatchEvent(new Event('change', { bubbles: true }));
+                                        }
+                                        clickedCount = 1;
+                                        debugLog.push("CB: " + noCheckbox.labelText);
+                                    } else if (noCheckbox && noCheckbox.cb.checked) {
+                                        clickedCount = 1;
+                                        debugLog.push("CB: " + noCheckbox.labelText + " (already checked)");
                                     }
-                                    clickedCount = 1;
-                                    debugLog.push("CB: " + yesCheckbox.labelText);
-                                } else if (yesCheckbox && yesCheckbox.cb.checked) {
-                                    clickedCount = 1;
-                                    debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
+                                } else {
+                                    // Find the Yes/Consent checkbox
+                                    const yesCheckbox = checkboxLabels.find((item) => 
+                                        (item.lowerLabel.includes('yes') || item.lowerLabel.includes('agree') || item.lowerLabel.includes('consent') || item.lowerLabel.includes('confirm') || isPrivacyCheckboxQ) && !item.lowerLabel.includes('not') && !item.lowerLabel.includes('no') && !item.lowerLabel.includes('skip')
+                                    ) || checkboxLabels[0];
+                                    
+                                    if (yesCheckbox && !yesCheckbox.cb.checked) {
+                                        yesCheckbox.cb.click();
+                                        if (!yesCheckbox.cb.checked) {
+                                            yesCheckbox.cb.checked = true;
+                                            yesCheckbox.cb.dispatchEvent(new Event('change', { bubbles: true }));
+                                        }
+                                        clickedCount = 1;
+                                        debugLog.push("CB: " + yesCheckbox.labelText);
+                                    } else if (yesCheckbox && yesCheckbox.cb.checked) {
+                                        clickedCount = 1;
+                                        debugLog.push("CB: " + yesCheckbox.labelText + " (already checked)");
+                                    }
                                 }
                             } else if (isCityQuestion) {
                                 // Check if these are actual city checkboxes (not Yes/No)
@@ -17445,7 +21222,7 @@ return resolveDynamic(bestMatch);
                         // 1. Skills - First enter skills
                         const skillsToAdd = (window.__SENTINEL_INSTAHYRE_SKILLS__ && window.__SENTINEL_INSTAHYRE_SKILLS__.length)
                             ? window.__SENTINEL_INSTAHYRE_SKILLS__
-                            : ['Java', 'Spring Boot', 'Python', 'React', 'TypeScript', 'Microservices', 'AWS', 'Docker', 'Kubernetes', 'Apache Kafka', 'PostgreSQL', 'Redis', 'CI/CD', 'Generative AI', 'System Design'];
+                            : ['Python', 'Java', 'SQL', 'JavaScript', 'TypeScript', 'Go', 'C#', 'HTML5', 'Amazon Web Services', 'Google Cloud', 'Microsoft Azure', 'AWS', 'PostgreSQL', 'Microservices', 'Kubernetes'];
                         const skillsSelectize = getSelectize('skills-drop-select-job-search') || getSelectize('skills') || getSelectize('skills-drop-select');
                         const skillsInput = document.querySelector('input#skills-drop-select-job-search-selectized, input#skills-selectized, input[placeholder*="skills or title" i], input[placeholder*="Skills" i]');
                         let skillsConfigured = false;
@@ -17827,6 +21604,7 @@ return resolveDynamic(bestMatch);
                                         btn.setAttribute('data-sentinel-viewed', 'true');
                                         const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
                                         if (card) card.setAttribute('data-sentinel-viewed', 'true');
+                                        sessionStorage.removeItem('instahyre_all_applied_scrolls');
                                         btn.scrollIntoView({ block: 'center' });
                                         btn.click();
                                         return 'INSTAHYRE_VIEW_CLICKED';
@@ -17843,6 +21621,7 @@ return resolveDynamic(bestMatch);
                                     btn.setAttribute('data-sentinel-viewed', 'true');
                                     const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
                                     if (card) card.setAttribute('data-sentinel-viewed', 'true');
+                                    sessionStorage.removeItem('instahyre_all_applied_scrolls');
                                     btn.scrollIntoView({ block: 'center' });
                                     btn.click();
                                     return 'INSTAHYRE_VIEW_CLICKED';
@@ -17850,8 +21629,8 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs
-                        const allViewBtns = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success');
+                        // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs or detect completion
+                        const allViewBtns = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success, button.btn-success');
                         let allAppliedOrViewed = true;
                         let visibleCount = 0;
                         for (const btn of allViewBtns) {
@@ -17864,47 +21643,101 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                         }
+
                         if (visibleCount > 0 && allAppliedOrViewed) {
+                            const bodyText = (document.body.innerText || '');
+                            const showingMatch = bodyText.match(/showing\\s+\\d+\\s*-\\s*(\\d+)\\s+out\\s+of\\s+(\\d+)\\s+jobs/i);
+                            let allMatchingJobsDisplayed = false;
+                            if (showingMatch) {
+                                const curEnd = parseInt(showingMatch[1], 10);
+                                const total = parseInt(showingMatch[2], 10);
+                                if (!isNaN(curEnd) && !isNaN(total) && curEnd >= total) {
+                                    allMatchingJobsDisplayed = true;
+                                }
+                            }
+                            const searchResultsMatch = bodyText.match(/search results\\s*\\(?(\\d+)\\)?/i);
+                            if (searchResultsMatch) {
+                                const searchTotal = parseInt(searchResultsMatch[1], 10);
+                                if (!isNaN(searchTotal) && (searchTotal === 0 || visibleCount >= searchTotal)) {
+                                    allMatchingJobsDisplayed = true;
+                                }
+                            }
+
+                            const isNearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 120);
+                            let scrollAttempts = parseInt(sessionStorage.getItem('instahyre_all_applied_scrolls') || '0', 10);
+
+                            if (allMatchingJobsDisplayed || (isNearBottom && scrollAttempts >= 1) || scrollAttempts >= 3) {
+                                sessionStorage.removeItem('instahyre_all_applied_scrolls');
+                                sessionStorage.removeItem('instahyre_results_clicked');
+                                sessionStorage.removeItem('instahyre_wait_results_count');
+                                return 'INSTAHYRE_NO_MORE_JOBS';
+                            }
+
+                            sessionStorage.setItem('instahyre_all_applied_scrolls', String(scrollAttempts + 1));
                             window.scrollBy(0, 800);
                             return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
                         }
 
-                        // D. Check if no more jobs available — broad detection
-                        const bodyLower = (document.body.innerText || '').toLowerCase();
-                        const noJobsIndicators = [
-                            document.querySelector('.no-jobs, .no-results, .empty-state, [class*="empty-state"]'),
-                            bodyLower.includes('no matching opportunities'),
-                            bodyLower.includes('no matching jobs'),
-                            bodyLower.includes('no jobs found'),
-                            bodyLower.includes('no opportunities found'),
-                            bodyLower.includes('no opportunities'),
-                            bodyLower.includes('no results found'),
-                            bodyLower.includes("couldn't find any matching"),
-                            bodyLower.includes('0 opportunities'),
-                            bodyLower.includes('recommended jobs (0)'),
-                            bodyLower.includes('recommended jobs 0'),
-                            bodyLower.includes('search results (0)'),
-                            bodyLower.includes('search results 0')
-                        ];
-
-                        if (noJobsIndicators.some(Boolean)) {
-                            sessionStorage.removeItem('instahyre_results_clicked');
-                            return 'INSTAHYRE_NO_MORE_JOBS';
-                        }
-
-                        // D2. Check if results page has zero actual job cards
+                        // D. Check for Job Cards or Results Loading State
                         const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card, .employer-row');
                         const viewBtnsExist = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, button.btn-success').length > 0;
-                        if (jobCards.length === 0 && !viewBtnsExist) {
-                            sessionStorage.removeItem('instahyre_results_clicked');
-                            return 'INSTAHYRE_NO_MORE_JOBS';
-                        }
+
                         if (jobCards.length > 0 || viewBtnsExist) {
                             sessionStorage.removeItem('instahyre_results_clicked');
+                            sessionStorage.removeItem('instahyre_wait_results_count');
+                        } else {
+                            // No job cards or view buttons visible yet — check if results are still loading
+                            const resultsClickedTime = parseInt(sessionStorage.getItem('instahyre_results_clicked') || '0', 10);
+                            const timeSinceClick = resultsClickedTime > 0 ? (Date.now() - resultsClickedTime) : 999999;
+                            let waitAttempts = parseInt(sessionStorage.getItem('instahyre_wait_results_count') || '0', 10);
+                            const isLoading = !!document.querySelector('.loading, .spinner, .fa-spinner, [class*="spinner"], [class*="loading"], .loader, [ng-show*="loading"], .preloader, #loading') ||
+                                              (window.angular && window.angular.element && window.angular.element(document.body).injector && (window.angular.element(document.body).injector()?.get('$http')?.pendingRequests?.length > 0));
+
+                            if (isLoading || timeSinceClick < 15000 || waitAttempts < 6) {
+                                sessionStorage.setItem('instahyre_wait_results_count', String(waitAttempts + 1));
+                                return 'INSTAHYRE_WAITING_FOR_RESULTS';
+                            }
+
+                            // D2. Check if no more jobs available after sufficient grace period (15s / 6 attempts)
+                            const bodyLower = (document.body.innerText || '').toLowerCase();
+                            const noJobsIndicators = [
+                                document.querySelector('.no-jobs, .no-results, .empty-state, [class*="empty-state"]'),
+                                bodyLower.includes('no matching opportunities'),
+                                bodyLower.includes('no matching jobs'),
+                                bodyLower.includes('no jobs found'),
+                                bodyLower.includes('no opportunities found'),
+                                bodyLower.includes('no opportunities available'),
+                                bodyLower.includes('no results found'),
+                                bodyLower.includes("couldn't find any matching"),
+                                bodyLower.includes('0 opportunities'),
+                                bodyLower.includes('recommended jobs (0)'),
+                                bodyLower.includes('recommended jobs 0'),
+                                bodyLower.includes('search results (0)'),
+                                bodyLower.includes('search results 0'),
+                                bodyLower.includes('0 out of 0 jobs'),
+                                bodyLower.includes('out of 0 jobs'),
+                                bodyLower.includes('0 jobs that match your search')
+                            ];
+
+                            if (noJobsIndicators.some(Boolean) || (jobCards.length === 0 && !viewBtnsExist)) {
+                                sessionStorage.removeItem('instahyre_all_applied_scrolls');
+                                sessionStorage.removeItem('instahyre_results_clicked');
+                                sessionStorage.removeItem('instahyre_wait_results_count');
+                                return 'INSTAHYRE_NO_MORE_JOBS';
+                            }
                         }
 
                         // E. Scroll to load more jobs if needed
                         if (jobCards.length > 0) {
+                            const isNearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 120);
+                            let scrollAttempts = parseInt(sessionStorage.getItem('instahyre_all_applied_scrolls') || '0', 10);
+                            if (isNearBottom || scrollAttempts >= 3) {
+                                sessionStorage.removeItem('instahyre_all_applied_scrolls');
+                                sessionStorage.removeItem('instahyre_results_clicked');
+                                sessionStorage.removeItem('instahyre_wait_results_count');
+                                return 'INSTAHYRE_NO_MORE_JOBS';
+                            }
+                            sessionStorage.setItem('instahyre_all_applied_scrolls', String(scrollAttempts + 1));
                             const lastCard = jobCards[jobCards.length - 1];
                             lastCard.scrollIntoView({ block: 'end' });
                             return 'INSTAHYRE_SCROLLING_FOR_MORE';

@@ -233,7 +233,7 @@ NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true imm
 GOAL: Configure job search filters on Instahyre and apply to 5 jobs.
 
 PHASE 1 - ENTER SKILLS & SEARCH:
-1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
+1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — static high-yield 15 skills (8 languages + 7 frameworks/cloud) for main search.
 2. Click "Search" button (button.skills-search-btn)
 
 PHASE 2 - CONFIGURE FILTERS:
@@ -268,7 +268,7 @@ NAVIGATE to https://www.instahyre.com/candidate/opportunities/?matching=true imm
 GOAL: Apply to 20 jobs on Instahyre during the intersession period.
 
 PHASE 1 - ENTER SKILLS & SEARCH (Skip if already configured):
-1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 tool skills selected per run. Do not hardcode a fixed list.
+1. Add Skills (one by one): use input#skills-drop-select-job-search-selectized with runtime-injected list (window.__SENTINEL_INSTAHYRE_SKILLS__) — a random 8 language skills + 7 framework skills selected per run from top 30 pools. Do not hardcode a fixed list.
 2. Click "Search" button (button.skills-search-btn)
 
 PHASE 2 - CONFIGURE FILTERS:
@@ -344,6 +344,116 @@ DOM Selectors:
 - Answer Text Input: input.text-answer-input, input[ng-model*="question.answer"], textarea.text-answer-input
 - Submit Button: button[ng-click*="submitQuestionnaire"], button.btn-primary.btn-lg
 - Confirmation: .text-center i.fa-check-circle, h4:has-text("Questionnaire has been sent")
+"""
+
+
+INDEED_JOB_APPLY_TASK = COMMON_CONTEXT + """
+NAVIGATE to https://in.indeed.com/?from=gnav-jobsearch--indeedmobile (Indeed home).
+
+GOAL: Apply to in-site ("Easily apply") jobs through Indeed's own "Apply now"
+flow. Skip jobs that only offer "Apply on company site" (external ATS). Behave
+like a human to avoid the reCAPTCHA that guards the apply flow.
+
+PHASE 1 - SEARCH (do this like a person):
+1. On the home page, type the target role into `#text-input-what`
+   (e.g. "Full Stack Developer", "React Developer", "Java Developer").
+2. Type the location into `#text-input-where` (e.g. "Bengaluru, Karnataka").
+3. Click the primary submit button (`button.yosegi-InlineWhatWhere-primaryButton`,
+   labelled "Find jobs") and wait for the results page to load.
+
+PHASE 2 - FILTER TO IN-SITE JOBS:
+1. Click the "Easily apply" filter button
+   (`button[aria-label="Easily apply filter"]`).
+2. In the options popup (`ul[aria-label="Easily apply options"]`) select the
+   "Easily apply on Indeed" option (`li[data-testid="selection-pill-option-1"]`)
+   and click "Update". Wait for the filtered results to reload.
+
+PHASE 3 - APPLY:
+1. Click a job card (`.job_seen_beacon`, carrying `data-jk`). This loads the job
+   into the right-hand detail pane `#jobsearch-ViewjobPaneWrapper` WITHOUT
+   leaving the results page. Do NOT use `/viewjob?jk=` — sponsored
+   (`/pagead/clk`) cards silently redirect away from it.
+2. In the detail pane, if the primary action is "Apply on company site"
+   (`a[data-testid="viewjob-apply"]`, href contains `applystart`), SKIP the job.
+   If it is "Apply now" (`a[data-testid="viewjob-indeed-apply"]`, href contains
+   `smartapply.indeed.com`), click it. A new tab opens on `smartapply.indeed.com`.
+3. Complete the SmartApply form: fill contact info, upload the resume
+   (`input[type="file"]`, `RESUME_FILE_PATH`), and answer screening questions
+   with the Sentinel Q&A engine. Advance with Continue/Next until the review
+   page appears.
+4. On the review page wait for "Preparing review" to finish, then click the
+   enabled `button[data-testid="submit-application-button"]`.
+5. Confirm success ("application submitted" / "you applied to") and return to
+   the search results for the next job.
+
+TASK COMPLETE: After the configured number of applications are submitted, or when
+no more in-site apply jobs remain on the results page.
+
+DOM Selectors (Indeed in.indeed.com):
+- Home search role: #text-input-what
+- Home search location: #text-input-where
+- Find jobs: button.yosegi-InlineWhatWhere-primaryButton
+- Easily apply filter: button[aria-label="Easily apply filter"]
+- Filter option: li[data-testid="selection-pill-option-1"] (Easily apply on Indeed)
+- Results container: #mosaic-provider-jobcards
+- Job card: .job_seen_beacon, div[data-jk]
+- Detail pane: #jobsearch-ViewjobPaneWrapper
+- In-site apply: a[data-testid="viewjob-indeed-apply"] (href smartapply.indeed.com)
+- External apply: a[data-testid="viewjob-apply"] (href applystart)
+- Apply steps: .ia-BasePage, .ia-Questions, .ia-TextQuestion, .ia-SelectQuestion
+- Continue/Submit: button[data-testid="continue-button"], button[data-testid="submit-application-button"]
+"""
+
+
+HIRIST_JOB_APPLY_TASK = COMMON_CONTEXT + """
+NAVIGATE to https://www.hirist.tech/jobfeed immediately.
+
+GOAL: Apply to tech jobs on Hirist using the in-app "Apply" flow. Skip jobs that
+redirect to an external company site.
+
+PHASE 1 - JOB FEED:
+1. Hirist is a Next.js + MUI single-page app. CSS classes are hashed
+   (`mui-style-*`) and MUST NOT be used as selectors. Match by visible text,
+   ARIA roles, and `href` instead.
+2. Job cards link to job detail pages with `href` matching `/j/<slug>-<id>` or
+   `/j/<id>`. Collect those links (deduplicate).
+3. Job metadata is available in `window.__NEXT_DATA__`
+   (`props.pageProps.jobMandateInfo` -> `jobTitle`, `companyName`, `location`).
+4. Login state is in `window.__NEXT_DATA__.props.pageProps.initialState.auth.isLoggedIn`.
+
+PHASE 2 - JOB DETAIL + APPLY:
+1. Navigate to the job detail page.
+2. Locate the Apply button. Hirist renders a floating/sticky apply button
+   (feature flag `applyFloatingButton`). Match by text: `button:has-text("Apply")`,
+   `a:has-text("Apply")`, `[aria-label*="Apply"]`.
+3. If the button/flow offers an external application ("Apply on company site",
+   "Apply on recruiter site", external redirect), SKIP the job.
+4. Click Apply. If a confirmation dialog/modal appears, confirm it. Hirist applies
+   using the resume already saved on the candidate profile.
+5. If a resume upload field (`input[type="file"]`) is presented, upload
+   `RESUME_FILE_PATH`.
+6. Verify the application was recorded ("Applied", "Application sent", or the job
+   disappearing from the feed). Some jobs allow an optional expected-CTC /
+   notice-period field - answer with the Sentinel Q&A engine.
+7. Return to the job feed and process the next job.
+
+TASK COMPLETE: After the configured number of applications are submitted, or when
+no new jobs remain in the feed.
+
+DOM Selectors (hirist.tech):
+- Job feed URL: https://www.hirist.tech/jobfeed
+- Category feed: https://www.hirist.tech/k/java-jobs
+- Fallback search URLs:
+  - https://www.hirist.tech/k/full-stack-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/java-jobs?ref=popular_tag
+  - https://www.hirist.tech/k/spring-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/reactjs-jobs?ref=topnavigation
+- Job links: a[href^="/j/"], a[href*="/j/"]
+- Job detail metadata: window.__NEXT_DATA__.props.pageProps.jobMandateInfo
+- Login state: window.__NEXT_DATA__.props.pageProps.initialState.auth.isLoggedIn
+- Apply button (floating/sticky): button:has-text("Apply"), a:has-text("Apply"), [aria-label*="Apply"]
+- Resume upload: input[type="file"]
+- Confirmation text: "Applied", "Application sent", "Already applied"
 """
 
 

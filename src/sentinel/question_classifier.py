@@ -657,6 +657,7 @@ class QuestionClassifier:
             "terminated", "asked to resign", "discharged", "disciplinary",
             # Academics backlogs and gaps
             "backlog", "backlogs", "arrears", "educational gap", "education gap", "career gap",
+            "career break", "break in career", "gap in employment", "employment gap", "period of unemployment",
             # Competing holding offers
             "offer in hand", "holding offer", "competing offer",
             # Employment history with specific companies (Workday compliance)

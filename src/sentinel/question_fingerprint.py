@@ -757,7 +757,7 @@ def detect_expected_format(question: str) -> Optional[str]:
         ('current' in q_lower or 'cctc' in q_lower or 'present' in q_lower) and
         ('expected' in q_lower or 'ectc' in q_lower or 'desired' in q_lower)
     )
-    is_breakup = ('fixed' in q_lower and 'variable' in q_lower) or 'breakup' in q_lower
+    is_breakup = ('fixed' in q_lower and 'variable' in q_lower) or 'breakup' in q_lower or 'fixed salary' in q_lower or 'variable component' in q_lower
     is_composite_hr = 'ctc' in q_lower and ('np' in q_lower or 'notice' in q_lower)
     is_profile_summary = ('email' in q_lower and 'experience' in q_lower) or ('name' in q_lower and 'experience' in q_lower)
     is_composite_contact = ('email' in q_lower and ('phone' in q_lower or 'mobile' in q_lower or 'contact' in q_lower or 'no.' in q_lower or 'number' in q_lower))
@@ -862,7 +862,7 @@ class FingerprintMatcher:
         self.exact_question_cache: Dict[str, str] = {}  # exact lowercased question -> answer
         self.question_index: Dict[str, str] = {}  # question -> fingerprint
     
-    def add_pattern(self, question: str, answer: str, priority: int = 10, category: str = ""):
+    def add_pattern(self, question: str, answer: str, priority: int = 10, category: str = "", negative_patterns: Optional[List[str]] = None):
         """Add a question-answer pattern."""
         if not question or not answer:
             return
@@ -874,6 +874,7 @@ class FingerprintMatcher:
             return
             
         self.question_index[q_clean] = fingerprint
+        neg_pats = [np.lower() for np in negative_patterns] if negative_patterns else []
         
         # Priority / collision handling
         if fingerprint in self.fingerprint_cache:
@@ -886,7 +887,8 @@ class FingerprintMatcher:
                     'answer': answer,
                     'priority': priority,
                     'category': category,
-                    'raw_pattern': question
+                    'raw_pattern': question,
+                    'negative_patterns': neg_pats
                 }
             elif priority == existing_priority:
                 # When priority is equal, shorter / more exact pattern wins
@@ -895,14 +897,16 @@ class FingerprintMatcher:
                         'answer': answer,
                         'priority': priority,
                         'category': category,
-                        'raw_pattern': question
+                        'raw_pattern': question,
+                        'negative_patterns': neg_pats
                     }
         else:
             self.fingerprint_cache[fingerprint] = {
                 'answer': answer,
                 'priority': priority,
                 'category': category,
-                'raw_pattern': question
+                'raw_pattern': question,
+                'negative_patterns': neg_pats
             }
     
     def match(self, question: str) -> Optional[Tuple[str, float]]:
@@ -928,8 +932,10 @@ class FingerprintMatcher:
         # 2. Exact fingerprint match
         if fingerprint in self.fingerprint_cache:
             entry = self.fingerprint_cache[fingerprint]
-            ans = entry['answer'] if isinstance(entry, dict) else entry
-            return (ans, 1.0)
+            neg_pats = entry.get('negative_patterns', []) if isinstance(entry, dict) else []
+            if not (neg_pats and any(np in q_clean for np in neg_pats)):
+                ans = entry['answer'] if isinstance(entry, dict) else entry
+                return (ans, 1.0)
         
         # 3. Partial fingerprint match
         fp_words = set(fingerprint.split())
@@ -937,6 +943,9 @@ class FingerprintMatcher:
         best_score = 0.0
         
         for cached_fp, entry in self.fingerprint_cache.items():
+            neg_pats = entry.get('negative_patterns', []) if isinstance(entry, dict) else []
+            if neg_pats and any(np in q_clean for np in neg_pats):
+                continue
             cached_words = set(cached_fp.split())
             common_words = fp_words & cached_words
             
@@ -967,8 +976,9 @@ class FingerprintMatcher:
                 answer = pattern_data.get('default', '')
                 priority = pattern_data.get('priority', 10)
                 category = pattern_data.get('category', '')
+                negative_patterns = pattern_data.get('negative_patterns', [])
                 for question in pattern_data.get('patterns', []):
-                    self.add_pattern(question, answer, priority=priority, category=category)
+                    self.add_pattern(question, answer, priority=priority, category=category, negative_patterns=negative_patterns)
         else:
             # Flat dict format {question: answer}
             for question, answer in patterns.items():

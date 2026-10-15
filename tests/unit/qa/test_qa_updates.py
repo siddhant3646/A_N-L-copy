@@ -109,6 +109,170 @@ class TestQAUpdates(unittest.TestCase):
             self.assertIn('Bangalore', ans, f"Failed for question: {q}")
             self.assertGreater(score, 0.8, f"Low confidence for question: {q}")
 
+    def test_career_break(self):
+        questions = [
+            "Are you on a career break?*",
+            "Are you on a career break?",
+            "Are you currently on a career break?",
+            "Do you have a gap in employment?",
+            "Do you have any break in career?",
+            "career break",
+            "break in career",
+            "gap in employment",
+            "period of unemployment"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'No', f"Failed for question: {q}")
+            self.assertGreaterEqual(score, 0.95, f"Low confidence for question: {q}")
+
+    def test_career_break_reason(self):
+        questions = [
+            "What is the reason for the break?*",
+            "What is the reason for the break?",
+            "What is the reason for the career break?",
+            "What is the reason for the career gap?",
+            "What is the reason for the employment gap?",
+            "reason for break",
+            "reason for career break",
+            "reason for career gap",
+            "reason for employment gap",
+            "reason for gap in career",
+            "reason for gap in employment",
+            "why did you take a break"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'Personal', f"Failed for question: {q}")
+            self.assertGreaterEqual(score, 0.95, f"Low confidence for question: {q}")
+
+    def test_military_service_patterns_agent(self):
+        questions = [
+            "Have you ever served in the military?",
+            "Have you ever served in the military",
+            "Have you served in the military?",
+            "Are you currently serving in the military?",
+            "Served in the armed forces",
+            "Have you ever served in the armed forces?"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertEqual(ans, 'No', f"Failed for question: {q}")
+            self.assertGreaterEqual(score, 0.95, f"Low confidence for question: {q}")
+
+    def test_ai_tools_and_genai_experience(self):
+        # 1. AI tools Yes/No usage questions must return "Yes"
+        yn_questions = [
+            "Have you used AI-assisted development tools (GitHub Copilot, Cursor, Gemini Code Assist, Claude, ChatGPT, etc.) for software development?",
+            "Do you have hands-on experience setting up and managing CI/CD pipelines?",
+            "Do you use AI coding assistants like Claude or ChatGPT?",
+            "Have you worked with AI agents or orchestrated workflows?"
+        ]
+        for q in yn_questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            self.assertEqual(ans, 'Yes', f"Failed for question: {q}")
+            self.assertGreaterEqual(score, 0.95)
+
+        # 2. GenAI experience duration / quantity questions must NEVER return "Yes"
+        qty_questions = [
+            "How many years of experience do you have in Generative AI (in Years)?",
+            "years of experience in generative ai",
+            "how many years of experience do you have in generative ai",
+            "how many years of experience do you have in generative ai in years",
+            "generative ai experience (in years)"
+        ]
+        for q in qty_questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            self.assertNotEqual(ans, 'Yes', f"Quantity question should not return 'Yes': {q}")
+            self.assertTrue(any(ch.isdigit() for ch in str(ans)), f"Expected numeric experience: {ans}")
+            self.assertGreaterEqual(score, 0.90)
+
+    def test_recent_ai_feature_production(self):
+        questions = [
+            "What s the most recent AI feature/system you shipped to production?",
+            "What is the most recent AI feature/system you shipped to production?",
+            "What's the most recent AI feature/system you shipped to production?",
+            "most recent AI feature shipped to production",
+            "recent AI feature shipped to production",
+            "ai feature/system you shipped to production"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            self.assertIsNotNone(ans, f"Failed for question: {q}")
+            self.assertTrue(
+                any(term in ans.lower() for term in ["document intelligence", "gpt-4", "nlp", "ai-powered"]),
+                f"Unexpected answer: {ans}"
+            )
+            self.assertGreaterEqual(score, 0.95, f"Low confidence for: {q}")
+
+    def test_agentic_ai_solution_essay(self):
+        questions = [
+            "Can you explain an agentic AI solution you implemented and your contribution?",
+            "Describe an AI agent use case and your contribution",
+            "Please explain your agentic AI project and use case",
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            self.assertIsNotNone(ans, f"Failed for question: {q}")
+            self.assertTrue(
+                "agentic ai" in ans.lower() or "langchain" in ans.lower(),
+                f"Unexpected answer: {ans}"
+            )
+            self.assertGreaterEqual(score, 0.95, f"Low confidence for: {q}")
+
+    def test_naukri_experience_range_option_matching(self):
+        from src.patterns.input_aware_resolver import InputAwareResolver, Option, InputType
+        resolver = InputAwareResolver()
+        options = [
+            Option("1", "No experience"),
+            Option("2", "<3 years"),
+            Option("3", "3-6 years"),
+            Option("4", "6-10 years"),
+            Option("5", ">10 years")
+        ]
+        res = resolver.resolve(
+            answer="4.2",
+            input_type=InputType.RADIO,
+            options=options,
+            question="How many years of experience do you have in \"Java\" ?"
+        )
+        self.assertIsNotNone(res.matched_option)
+        self.assertEqual(res.matched_option.label, "3-6 years")
+        self.assertGreaterEqual(res.confidence, 0.9)
+
+        # Another range test with different splits
+        options2 = [
+            Option("1", "0 years"),
+            Option("2", "1-3 years"),
+            Option("3", "4-7 years"),
+            Option("4", "8+ years")
+        ]
+        res2 = resolver.resolve(
+            answer="4.2",
+            input_type=InputType.RADIO,
+            options=options2,
+            question="How many years of experience do you have as Java Full Stack Developer?"
+        )
+        self.assertIsNotNone(res2.matched_option)
+        self.assertEqual(res2.matched_option.label, "4-7 years")
+
+    def test_linkedin_agentic_essay_regex(self):
+        # Verify the regex used for isAgenticEssayQ in agent.py handleLinkedInForm
+        regex_ai = r'(agentic\s*ai|ai\s*agent)'
+        regex_essay = r'(explain|use\s*case|contribution|describe)'
+        import re
+        sample_questions = [
+            "Please explain an agentic AI solution you worked on",
+            "Describe an AI agent use case you developed and your contribution",
+            "Can you describe your agentic AI architecture?"
+        ]
+        for q in sample_questions:
+            self.assertTrue(re.search(regex_ai, q, re.I), f"Failed AI match for: {q}")
+            self.assertTrue(re.search(regex_essay, q, re.I), f"Failed essay match for: {q}")
+
 class TestNewPatternsReliability(unittest.TestCase):
     """Tests for the 2026-08-04 pattern additions.
 
@@ -266,6 +430,66 @@ class TestNewPatternsReliability(unittest.TestCase):
     def test_terms_consent(self):
         for q in ["Do you agree to the terms and conditions?", "Do you accept the terms and conditions?", "Do you consent to data processing?"]:
             self.check(q, "Yes")
+
+    def test_career_break_patterns(self):
+        for q in [
+            "are you on a career break",
+            "are you currently on a career break",
+            "career break",
+            "break in career",
+            "gap in employment",
+            "career gap",
+            "employment gap"
+        ]:
+            self.check(q, "No")
+
+    def test_career_break_reason_patterns(self):
+        for q in [
+            "what is the reason for the break",
+            "reason for break",
+            "reason for the break",
+            "reason for career break",
+            "reason for the career break",
+            "reason for career gap",
+            "reason for the career gap",
+            "reason for employment gap",
+            "reason for the employment gap",
+            "reason for gap in career",
+            "reason for the gap in career"
+        ]:
+            self.check(q, "Personal")
+
+    def test_military_service_patterns(self):
+        for q in [
+            "Have you ever served in the military?",
+            "Have you ever served in the military",
+            "Have you served in the military",
+            "Are you currently serving in the military",
+            "military service",
+            "served in the armed forces"
+        ]:
+            self.check(q, "No")
+
+    def test_military_service_input_types(self):
+        q = "Have you ever served in the military?"
+        ans_btn, score = self.matcher.fuzzy_match(q, input_type="button")
+        self.assertEqual(ans_btn, "Never served")
+        self.assertGreater(score, 0.8)
+
+        ans_sel, score = self.matcher.fuzzy_match(q, input_type="select")
+        self.assertEqual(ans_sel, "Never served")
+        self.assertGreater(score, 0.8)
+
+        ans_rad, score = self.matcher.fuzzy_match(q, input_type="radio")
+        self.assertEqual(ans_rad, "No")
+        self.assertGreater(score, 0.8)
+
+    def test_recent_ai_feature_production_matcher(self):
+        q = "What s the most recent AI feature/system you shipped to production?"
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertIsNotNone(ans)
+        self.assertTrue(any(term in ans.lower() for term in ["document intelligence", "gpt-4", "ai"]))
+        self.assertGreaterEqual(score, 0.8)
 
 
 if __name__ == '__main__':

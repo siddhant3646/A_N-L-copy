@@ -16,6 +16,16 @@
       "experience_years": "4.2",
       "experience_months": "48",
       "numeric_only_experience": true
+    },
+    "indeed": {
+      "experience_years": "4.2",
+      "experience_months": "48",
+      "numeric_only_experience": true
+    },
+    "hirist": {
+      "experience_years": "4.2",
+      "experience_months": "48",
+      "numeric_only_experience": true
     }
   },
   "platform_specific_rules": {
@@ -56,6 +66,31 @@
       "boolean_format": "true_false",
       "numeric_defaults": true,
       "suffix_required": true,
+      "work_mode_format": "detailed"
+    },
+    "indeed": {
+      "experience_format": "numeric_only",
+      "experience_example": "4",
+      "salary_format": "numeric_currency",
+      "salary_example": "2300000",
+      "notice_format": "numeric_days",
+      "notice_example": "15",
+      "location_format": "city_only",
+      "boolean_format": "yes_no",
+      "numeric_defaults": true,
+      "prefix_cleanup": true,
+      "work_mode_format": "simple"
+    },
+    "hirist": {
+      "experience_format": "numeric_only",
+      "experience_example": "4",
+      "salary_format": "text_with_lpa",
+      "salary_example": "23 LPA",
+      "notice_format": "numeric_days",
+      "notice_example": "15",
+      "location_format": "detailed",
+      "boolean_format": "yes_no",
+      "numeric_defaults": true,
       "work_mode_format": "detailed"
     }
   },
@@ -573,7 +608,16 @@
         "current organization",
         "current company",
         "employer",
-        "locality"
+        "locality",
+        "variable",
+        "bonus",
+        "rsu",
+        "option",
+        "options",
+        "stock",
+        "equity",
+        "esop",
+        "unvested"
       ]
     },
     "expected_salary": {
@@ -1001,7 +1045,13 @@
         "experience",
         "years",
         "ctc",
-        "salary"
+        "salary",
+        "scale of 5",
+        "out of 5",
+        "/5",
+        "1-5",
+        "1 to 5",
+        "(1-5)"
       ]
     },
     "product_based_org": {
@@ -1205,7 +1255,15 @@
         "ai project",
         "ai based project",
         "artificial intelligence project",
-        "machine learning project"
+        "machine learning project",
+        "what s the most recent ai feature/system you shipped to production",
+        "what is the most recent ai feature/system you shipped to production",
+        "what s the most recent ai feature system you shipped to production",
+        "most recent ai feature/system you shipped to production",
+        "most recent ai feature shipped to production",
+        "recent ai feature shipped to production",
+        "most recent ai system you shipped to production",
+        "ai feature/system you shipped to production"
       ],
       "category": "experience",
       "default": "Yes, I led the development of an AI-powered document intelligence platform that automated data extraction from unstructured documents using GPT-4, LangChain, and custom NLP pipelines. The system processed 50,000+ documents monthly with 94% accuracy, reducing manual data entry by 80%.",
@@ -1313,7 +1371,10 @@
         "checkbox": "Yes",
         "number": "8.51"
       },
-      "priority": 7
+      "priority": 7,
+      "negative_patterns": [
+        "disability"
+      ]
     },
     "education_gpa": {
       "patterns": [
@@ -2648,6 +2709,11 @@
     },
     "stock_rsu_value": {
       "patterns": [
+        "current unvested options",
+        "current unvested options/rsu value",
+        "unvested options/rsu value",
+        "unvested options",
+        "unvested rsu",
         "stock rsu",
         "rsu value",
         "stock value yearly",
@@ -2656,18 +2722,23 @@
         "indicate your last rsu",
         "please indicate your last rsu",
         "last rsu",
-        "current rsu"
+        "current rsu",
+        "unvested stock options value",
+        "unvested stock options",
+        "unvested stock value",
+        "unvested stock"
       ],
       "category": "compensation",
       "default": "0",
-      "priority": 15,
+      "priority": 20,
       "input_type_defaults": {
         "radio": "0",
         "select": "0",
         "text": "0",
         "number": "0",
         "textarea": "0",
-        "checkbox": "No"
+        "checkbox": "No",
+        "text_inr": "0"
       }
     },
     "message_to_hiring_manager": {
@@ -2800,19 +2871,96 @@
     "career_break": {
       "patterns": [
         "are you on a career break",
+        "are you on a career break?",
+        "are you currently on a career break",
         "career break",
-        "gap in employment"
+        "break in career",
+        "gap in employment",
+        "have you taken a career break",
+        "do you have a career break",
+        "is there any career break",
+        "any career break"
+      ],
+      "negative_patterns": [
+        "reason",
+        "why",
+        "explain",
+        "describe"
       ],
       "category": "yes_no",
       "default": "No",
       "input_type_defaults": {
+        "button": "No",
         "radio": "No",
-        "checkbox": "No",
         "select": "No",
         "text": "No",
-        "textarea": "No"
+        "textarea": "No",
+        "checkbox": "No"
       },
-      "priority": 7
+      "priority": 20
+    },
+    "career_break_reason": {
+      "patterns": [
+        "what is the reason for the break",
+        "what is the reason for the break?",
+        "reason for the break",
+        "reason for the career break",
+        "reason for career break",
+        "reason for break",
+        "reason for gap",
+        "reason for the gap",
+        "reason for career gap",
+        "reason for the career gap",
+        "reason for employment gap",
+        "reason for the employment gap",
+        "reason for gap in career",
+        "reason for the gap in career",
+        "reason for gap in employment",
+        "reason for the gap in employment",
+        "what is the reason for your career break",
+        "why did you take a break"
+      ],
+      "category": "soft_skills",
+      "default": "Personal",
+      "input_type_defaults": {
+        "button": "Personal",
+        "radio": "Personal",
+        "select": "Personal",
+        "text": "Not applicable - No career break",
+        "textarea": "Not applicable - No career break",
+        "checkbox": "Personal"
+      },
+      "priority": 20
+    },
+    "military_service": {
+      "patterns": [
+        "have you ever served in the military",
+        "have you ever served in the military?",
+        "have you served in the military",
+        "have you served in the military?",
+        "are you currently serving in the military",
+        "currently serving in the military",
+        "military service",
+        "served in the military",
+        "served in the armed forces",
+        "have you ever served in the armed forces",
+        "have you served in the armed forces",
+        "are you a veteran",
+        "veteran status",
+        "military status",
+        "protected veteran status"
+      ],
+      "category": "yes_no",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "button": "Never served",
+        "radio": "No",
+        "select": "Never served",
+        "text": "No",
+        "textarea": "No, I have never served in the military",
+        "checkbox": "No"
+      }
     },
     "total_exp": {
       "patterns": [
@@ -3110,7 +3258,10 @@
       "patterns": [
         "area have you most experience in",
         "area of most experience",
-        "what area have you most experience in"
+        "what area have you most experience in",
+        "what area have you most  experience in",
+        "what area have you most experience",
+        "area have you most  experience in"
       ],
       "category": "preference",
       "default": "Full-stack",
@@ -3184,7 +3335,8 @@
         "other areas have you previous employment experience in",
         "other areas of previous employment experience",
         "other areas of experience",
-        "previous employment experience in"
+        "previous employment experience in",
+        "what other areas have you previous employment experience in"
       ],
       "category": "preference",
       "default": "Full-stack, AI/ML",
@@ -3314,7 +3466,7 @@
         "textarea": "No, I am currently based in Bangalore, not in Mumbai. I am open to immediate relocation to Mumbai if required.",
         "number": ".."
       },
-      "priority": 7,
+      "priority": 15,
       "negative_patterns": [
         "relocate",
         "relocation",
@@ -3385,22 +3537,35 @@
     },
     "variable_component": {
       "patterns": [
+        "current variable compensation",
+        "variable compensation",
+        "current variable pay",
         "variable pay",
         "variable component",
+        "annual variable bonus",
+        "variable bonus",
+        "bonus component",
         "variable pay numeric input",
-        "variable pay numeric"
+        "variable pay numeric",
+        "current bonus / variable",
+        "bonus / variable",
+        "current bonus",
+        "variable component in current ctc",
+        "annual variable pay",
+        "current variable component"
       ],
       "category": "salary",
       "default": "0",
+      "priority": 20,
       "input_type_defaults": {
         "radio": "0",
         "select": "0",
         "text": "0",
         "number": "0",
         "textarea": "0",
-        "checkbox": "No"
-      },
-      "priority": 9
+        "checkbox": "No",
+        "text_inr": "0"
+      }
     },
     "salary_range": {
       "patterns": [
@@ -4754,8 +4919,8 @@
       "category": "education",
       "default": "B.Tech in Computer Science Engineering",
       "input_type_defaults": {
-        "radio": "B.Tech in Computer Science Engineering",
-        "select": "B.Tech in Computer Science Engineering",
+        "radio": "Yes",
+        "select": "Yes",
         "text": "B.Tech in Computer Science Engineering",
         "textarea": "B.Tech in Computer Science Engineering",
         "checkbox": "Yes",
@@ -5462,6 +5627,11 @@
         "years of experience do you have in generative ai",
         "how many years of experience in generative ai",
         "how many years of experience do you have in generative ai",
+        "how many years of experience do you have in generative ai (in years)?",
+        "how many years of experience do you have in generative ai (in years)",
+        "how many years of experience do you have in generative ai in years",
+        "generative ai experience (in years)",
+        "generative ai experience in years",
         "experience in generative ai",
         "generative ai years",
         "genai years of experience",
@@ -6389,7 +6559,13 @@
         "located in mumbai",
         "from mumbai",
         "stay in mumbai",
-        "currently in mumbai"
+        "currently in mumbai",
+        "currently based in mumbai",
+        "are you currently based in mumbai",
+        "are you currently based in mumbai ?",
+        "currently live in mumbai",
+        "do you currently live in mumbai",
+        "do you currently live in mumbai?"
       ],
       "category": "location",
       "default": "No, I am currently based in Bangalore. However, I am willing to relocate to Mumbai.",
@@ -6401,7 +6577,7 @@
         "textarea": "No, I am currently based in Bangalore. However, I am willing to relocate to Mumbai.",
         "number": ".."
       },
-      "priority": 4,
+      "priority": 15,
       "negative_patterns": [
         "relocate",
         "relocation",
@@ -6420,7 +6596,12 @@
         "located in pune",
         "from pune",
         "stay in pune",
-        "currently in pune"
+        "currently in pune",
+        "currently based in pune",
+        "are you currently based in pune",
+        "currently live in pune",
+        "do you currently live in pune",
+        "do you currently live in pune?"
       ],
       "category": "location",
       "default": "No, I am currently based in Bangalore. However, I am willing to relocate to Pune.",
@@ -6432,7 +6613,7 @@
         "textarea": "No, I am currently based in Bangalore. However, I am willing to relocate to Pune.",
         "number": ".."
       },
-      "priority": 4,
+      "priority": 15,
       "negative_patterns": [
         "relocate",
         "relocation",
@@ -9023,7 +9204,18 @@
         "textarea": "250000",
         "checkbox": "Yes"
       },
-      "priority": 10
+      "priority": 10,
+      "negative_patterns": [
+        "annual",
+        "yearly",
+        "per annum",
+        "lpa",
+        "lakh",
+        "lac",
+        "lacs",
+        "lakhs",
+        "fixed expected annual"
+      ]
     },
     "background_verification": {
       "category": "yes_no",
@@ -9108,7 +9300,12 @@
         "expected annual compensation",
         "expected annual ctc annual cost to the company",
         "expected annual ctc as defined in your current organization",
-        "expected annual ctc annual cost"
+        "expected annual ctc annual cost",
+        "what is your fixed expected annual ctc in inr ?",
+        "what is your fixed expected annual ctc in inr",
+        "fixed expected annual ctc in inr",
+        "fixed expected annual ctc",
+        "expected annual ctc in inr ?"
       ],
       "numeric_default": "3000000",
       "input_type_defaults": {
@@ -10681,7 +10878,15 @@
         "are you currently residing in pune maharashtra",
         "residing in pune maharashtra or have previously worked at pune",
         "currently residing in chennai or willing to attend",
-        "your timeslots for video interview on weekdays are you currently in hyderabad"
+        "your timeslots for video interview on weekdays are you currently in hyderabad",
+        "currently live in hyderabad",
+        "currently based in hyderabad",
+        "currently live in delhi",
+        "currently based in delhi",
+        "currently live in gurgaon",
+        "currently based in gurgaon",
+        "currently live in noida",
+        "currently based in noida"
       ],
       "input_type_defaults": {
         "radio": "No",
@@ -12150,6 +12355,11 @@
       "category": "experience",
       "default": "4.2 Years",
       "priority": 9,
+      "negative_patterns": [
+        "september",
+        "november",
+        "december"
+      ],
       "input_type_defaults": {
         "text": "4.2 Years",
         "number": "4.2",
@@ -13876,7 +14086,8 @@
         "require visa sponsorship",
         "need employer sponsorship",
         "sponsorship required",
-        "will you need sponsorship"
+        "will you need sponsorship",
+        "require visa sponsorship in india"
       ],
       "category": "work_authorization",
       "default": "No",
@@ -16153,7 +16364,15 @@
         "pursued",
         "not pursued",
         "pg %",
-        "write na"
+        "write na",
+        "unvested",
+        "current",
+        "value",
+        "worth",
+        "amount",
+        "holding",
+        "last rsu",
+        "options value"
       ]
     },
     "benefits_flexible": {
@@ -65341,16 +65560,21 @@
         "do you require sponsorship now or in the future",
         "will you require sponsorship now or in the future",
         "do you now or will you in the future require visa sponsorship",
-        "will you now or in the future require visa sponsorship"
+        "will you now or in the future require visa sponsorship",
+        "do you now or will you at any time in the future require sponsorship?",
+        "do you now or will you at any time in the future require sponsorship",
+        "will you at any time in the future require sponsorship",
+        "require sponsorship in the future",
+        "require sponsorship now or in the future"
       ],
       "category": "work_authorization",
       "default": "No",
-      "priority": 16,
+      "priority": 20,
       "input_type_defaults": {
         "radio": "No",
-        "select": "No",
         "text": "No",
-        "textarea": "No, I do not require visa sponsorship now or in the future.",
+        "select": "No",
+        "textarea": "No",
         "checkbox": "No"
       }
     },
@@ -84257,20 +84481,31 @@
       }
     },
     "disability": {
-      "category": "compliance",
-      "default": "No",
-      "priority": 13,
       "patterns": [
         "do you have any kind of disability",
+        "do you have any kind of disability?",
         "any kind of disability",
         "disability of any kind",
         "person with disability",
         "differently abled",
-        "have any kind of disability"
+        "have any kind of disability",
+        "pwd status"
       ],
+      "negative_patterns": [
+        "percentage",
+        "percent",
+        "%",
+        "what kind",
+        "type of",
+        "specify"
+      ],
+      "category": "compliance",
+      "default": "I don’t have a disability",
+      "priority": 20,
       "input_type_defaults": {
-        "radio": "No",
-        "select": "No",
+        "button": "I don’t have a disability",
+        "radio": "I don’t have a disability",
+        "select": "I don’t have a disability",
         "text": "No",
         "textarea": "No",
         "checkbox": "No"
@@ -86848,18 +87083,18 @@
         "what is your current fixed ctc and variable ctc",
         "fixed vs variable component",
         "what is your current fixed salary?",
-        "what is your current variable component?",
-        "breakup of current compensation"
+        "breakup of current compensation",
+        "what is your current variable component?"
       ],
       "category": "salary",
       "default": "Fixed CTC: 21 LPA, Variable: 2 LPA",
       "input_type_defaults": {
-        "radio": "21 LPA Fixed",
-        "select": "Fixed: 21 LPA, Variable: 2 LPA",
+        "radio": "23",
+        "select": "Fixed CTC: 21 LPA, Variable: 2 LPA",
         "text": "Fixed CTC: 21 LPA, Variable: 2 LPA",
         "textarea": "Fixed CTC: 21 LPA, Variable: 2 LPA",
         "checkbox": "Yes",
-        "number": "212"
+        "number": "23"
       },
       "priority": 15,
       "negative_patterns": []
@@ -87347,11 +87582,31 @@
       "priority": 15,
       "negative_patterns": []
     },
+    "kafka_elasticsearch_experience": {
+      "patterns": [
+        "how many years of experience do you have in kafka",
+        "how many years of experience do you have in kafka & elasticsearch",
+        "how many years of experience do you have in kafka & elasticsearch (in years)?",
+        "years of experience in kafka & elasticsearch",
+        "years of experience in kafka and elasticsearch",
+        "years of experience in kafka"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "numeric_default": "4",
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "number": "4",
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "textarea": "4.2 Years"
+      },
+      "priority": 16,
+      "negative_patterns": []
+    },
     "tech_kafka_event_streaming": {
       "patterns": [
         "have you worked with kafka event streaming",
-        "years of experience in apache kafka / event streaming",
-        "years of experience in apache kafka / event streaming?",
         "experience in apache spark and apache flink",
         "real-time streaming pipelines with kafka"
       ],
@@ -87366,7 +87621,13 @@
         "textarea": "Yes, engineered high-throughput Kafka streaming pipelines with Flink/Spark for real-time reporting."
       },
       "priority": 15,
-      "negative_patterns": []
+      "negative_patterns": [
+        "how many years",
+        "years of experience",
+        "(in years)",
+        "in years",
+        "how many yrs"
+      ]
     },
     "support_production_oncall": {
       "patterns": [
@@ -96010,7 +96271,12 @@
         "what is your expected ctc in inr",
         "expected ctc (in inr)",
         "expected annual compensation in inr",
-        "expected salary in inr"
+        "expected salary in inr",
+        "what is your fixed expected annual ctc in inr ?",
+        "what is your fixed expected annual ctc in inr",
+        "fixed expected annual ctc in inr",
+        "fixed expected annual ctc",
+        "expected annual ctc in inr ?"
       ],
       "category": "salary",
       "default": "3000000",
@@ -96223,8 +96489,7 @@
     "form_qa_work_authorization_india": {
       "patterns": [
         "are you legally authorized to work in india without requiring visa sponsorship",
-        "authorized to work in india",
-        "require visa sponsorship in india"
+        "authorized to work in india"
       ],
       "category": "work_authorization",
       "default": "Yes, I am a citizen of India legally authorized to work without any visa sponsorship.",
@@ -231774,9 +232039,7 @@
       "patterns": [
         "what excites you about working with wissen technology",
         "why do you want to work with wissen technology",
-        "why work with wissen technology",
-        "what excites you about working with our company",
-        "why do you want to join our organization"
+        "why work with wissen technology"
       ],
       "category": "behavioral",
       "default": "I am excited by Wissen Technology's strong culture of engineering excellence and its track record of building high-performance, mission-critical systems in financial services and enterprise tech. With my background in architecting high-throughput Java 21 microservices, Kafka streaming pipelines, and distributed data systems at Everbridge, I look forward to tackling complex scalability challenges and contributing to high-impact client solutions.",
@@ -232748,10 +233011,10 @@
       "default": "Fixed CTC: 21 LPA, Variable: 2 LPA",
       "priority": 10,
       "input_type_defaults": {
-        "radio": "21",
+        "radio": "23",
         "select": "Fixed CTC: 21 LPA, Variable: 2 LPA",
         "text": "Fixed CTC: 21 LPA, Variable: 2 LPA",
-        "number": "2100000",
+        "number": "23",
         "textarea": "My CTC breakup is: Fixed CTC: 21 LPA, Variable: 2 LPA, Total: 23 LPA.",
         "checkbox": "Yes"
       }
@@ -233897,7 +234160,15 @@
         "describe one product or feature you owned end to end, from idea to production. what was your specific role, and what did you decide yourself?",
         "describe one product or feature you owned end to end, from idea to production",
         "describe one product or feature you owned end to end",
-        "product or feature you owned end to end"
+        "product or feature you owned end to end",
+        "briefly describe the product/project you last worked on and your role in its development",
+        "describe the product/project you last worked on and your role in its development",
+        "describe the product/project you last worked on",
+        "describe the product or project you last worked on",
+        "product/project you last worked on and your role in its development",
+        "product or project you last worked on",
+        "briefly describe one product you built",
+        "describe one product you built"
       ],
       "category": "technical",
       "default": "Architected and deployed distributed notification pipelines and microservices at Everbridge using Spring Boot and Kafka, reducing latency by 40%.",
@@ -234250,7 +234521,17 @@
         "rate your proficiency 1-5",
         "rate your proficiency (1 to 5)",
         "rate your skills (1-5)",
-        "rate yourself (1-5)"
+        "rate yourself (1-5)",
+        "rate yourself in coding (on scale of 5) - backend & frontend",
+        "rate yourself in coding (on scale of 5)",
+        "rate yourself (on scale of 5)",
+        "rate yourself on scale of 5",
+        "rate yourself (scale of 5)",
+        "on scale of 5",
+        "scale of 5",
+        "(scale of 5)",
+        "(on scale of 5)",
+        "out of 5"
       ],
       "category": "skills",
       "default": "5",
@@ -235596,7 +235877,16 @@
       "priority": 19,
       "negative_patterns": [
         "notice",
-        "experience"
+        "experience",
+        "annual",
+        "yearly",
+        "per annum",
+        "lpa",
+        "lakh",
+        "lac",
+        "lacs",
+        "lakhs",
+        "fixed expected annual"
       ],
       "input_type_defaults": {
         "text": "250000",
@@ -236496,13 +236786,14 @@
         "locations are you willing to relocate to"
       ],
       "category": "location",
-      "default": "Bangalore, Hyderabad, Pune, Remote",
+      "default": "Bengaluru, Bangalore, Hyderabad, Pune, Remote",
       "priority": 18,
       "input_type_defaults": {
-        "text": "Bangalore, Hyderabad, Pune, Remote",
-        "textarea": "Bangalore, Hyderabad, Pune, Remote",
-        "checkbox": "Bangalore; Hyderabad; Pune",
-        "radio": "Bangalore"
+        "text": "Bengaluru, Bangalore, Hyderabad, Pune, Remote",
+        "textarea": "Bengaluru, Bangalore, Hyderabad, Pune, Remote",
+        "checkbox": "Bengaluru, Bangalore, Hyderabad, Pune, Remote",
+        "select": "Bengaluru",
+        "radio": "Bengaluru"
       }
     },
     "education_discipline_field_of_study": {
@@ -236928,7 +237219,8 @@
         "then enter as 19102026, if not serving enter",
         "last working days is /was 19th oct, 2026 then enter as 19102026",
         "enter as 19102026",
-        "if not serving enter \"0\""
+        "if not serving enter \"0\"",
+        "if you are serving notice period or your last working day is completed, please share the details (example - last working days is /was 19th oct, 2026 then enter as 19102026, if not serving enter \"0\")"
       ],
       "category": "notice_period",
       "default": "23102026",
@@ -236980,7 +237272,7 @@
       ],
       "category": "preference",
       "default": "I am excited by Supersourcing's mission to connect elite engineering talent with high-impact global products. With my strong background in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and cloud deployments at Everbridge, I look forward to delivering robust, scalable solutions for innovative technology enterprises.",
-      "priority": 19,
+      "priority": 20,
       "input_type_defaults": {
         "text": "I am excited by Supersourcing's mission to connect top engineers with high-impact global products, and look forward to contributing my Java and cloud backend expertise.",
         "textarea": "I am excited by Supersourcing's mission to connect elite engineering talent with high-impact global products. With my strong background in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and cloud deployments at Everbridge, I look forward to delivering robust, scalable solutions for innovative technology enterprises."
@@ -237068,6 +237360,220 @@
         "radio": "LinkedIn",
         "select": "LinkedIn",
         "text": "LinkedIn"
+      }
+    },
+    "disability_type": {
+      "patterns": [
+        "what kind of disability do you have",
+        "what kind of disability do you have?",
+        "kind of disability",
+        "type of disability",
+        "nature of disability"
+      ],
+      "category": "compliance",
+      "default": "None",
+      "priority": 20,
+      "input_type_defaults": {
+        "button": "None",
+        "radio": "None",
+        "select": "None",
+        "text": "None",
+        "textarea": "None"
+      }
+    },
+    "disability_percentage": {
+      "patterns": [
+        "please specify your disability percentage",
+        "please specify your disability percentage.",
+        "disability percentage",
+        "disability percentage.",
+        "disability percent",
+        "percentage of disability"
+      ],
+      "category": "compliance",
+      "default": "0",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "textarea": "0"
+      }
+    },
+    "variable_pay_details": {
+      "patterns": [
+        "please mention if you are having any variable pay with ctc and the frequency of recieving it",
+        "please mention if you are having any variable pay with ctc",
+        "variable pay with ctc and the frequency"
+      ],
+      "category": "salary",
+      "default": "No variable pay, 100% fixed salary (23 LPA Fixed)",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No variable pay, 100% fixed salary (23 LPA Fixed)",
+        "textarea": "No variable pay, 100% fixed salary (23 LPA Fixed)",
+        "radio": "0",
+        "select": "0"
+      }
+    },
+    "experience_consumer_tech": {
+      "patterns": [
+        "do you have an experience working in consumer tech",
+        "do you have experience working in consumer tech",
+        "experience working in consumer tech",
+        "experience in consumer tech",
+        "worked in consumer tech",
+        "working in consumer tech"
+      ],
+      "category": "experience",
+      "default": "Yes",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, extensive experience building high-scale consumer-facing features, resilient backend services, and high-throughput transaction pipelines.",
+        "checkbox": "Yes"
+      }
+    },
+    "living_in_gurgaon_no": {
+      "patterns": [
+        "are you currently living in gurgaon/gurugram",
+        "are you currently living in gurgaon",
+        "are you currently living in gurugram",
+        "currently living in gurgaon/gurugram",
+        "currently living in gurgaon",
+        "currently living in gurugram",
+        "living in gurgaon",
+        "living in gurugram",
+        "currently residing in gurgaon",
+        "currently residing in gurugram"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 20,
+      "negative_patterns": [
+        "or willing to relocate",
+        "willing to relocate",
+        "ready to relocate",
+        "open to relocate"
+      ],
+      "input_type_defaults": {
+        "radio": "No",
+        "text": "No",
+        "select": "No"
+      }
+    },
+    "living_in_hyderabad_no": {
+      "patterns": [
+        "are you currently living in hyderabad",
+        "currently living in hyderabad",
+        "living in hyderabad",
+        "current location hyderabad?",
+        "current location hyderabad",
+        "are you currently residing in hyderabad"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 20,
+      "negative_patterns": [
+        "or willing to relocate",
+        "willing to relocate",
+        "ready to relocate",
+        "open to relocate"
+      ],
+      "input_type_defaults": {
+        "radio": "No",
+        "text": "No",
+        "select": "No"
+      }
+    },
+    "job_location_interested_wfo": {
+      "patterns": [
+        "the job location is hyderabad and work from office. are you interested",
+        "the job location is hyderabad and work from office. are you interested?",
+        "job location is hyderabad and work from office. are you interested",
+        "the job location is pune and work from office. are you interested",
+        "the job location is gurgaon and work from office. are you interested"
+      ],
+      "category": "preference",
+      "default": "Yes",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am comfortable with working from office and 100% open to relocation.",
+        "select": "Yes"
+      }
+    },
+    "why_work_with_company": {
+      "patterns": [
+        "what excites you about working with our company",
+        "why do you want to join our organization",
+        "why do you want to work with our company",
+        "what excites you about our company"
+      ],
+      "category": "behavioral",
+      "default": "I am excited by the opportunity to contribute my expertise in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and scalable cloud systems to build robust, high-impact enterprise solutions.",
+      "priority": 10,
+      "input_type_defaults": {
+        "text": "I look forward to contributing my expertise in high-throughput Java 21 microservices, Kafka streaming, and scalable distributed systems to deliver high-impact solutions.",
+        "textarea": "I am excited by the opportunity to contribute my expertise in architecting high-throughput Java 21 microservices, event-driven Kafka architectures, and scalable cloud systems to build robust, high-impact enterprise solutions.",
+        "radio": "Yes",
+        "select": "Yes"
+      }
+    },
+    "aws_years_and_services": {
+      "patterns": [
+        "how many years of experience on aws? can you also explain which all aws services you have worked on in recent/current projects?",
+        "how many years of experience on aws? can you also explain which all aws services you have worked on in recent/current projects",
+        "how many years of experience on aws? can you also explain which all aws services you have worked on",
+        "years of experience on aws? can you also explain which all aws services"
+      ],
+      "category": "experience",
+      "default": "4.2 years of experience with AWS. Key services worked with in recent projects include EC2, S3, Lambda, ECS, RDS (PostgreSQL/MySQL), CloudWatch, SQS, SNS, IAM, DynamoDB, and API Gateway.",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "4.2 years of experience with AWS. Key services include EC2, S3, Lambda, ECS, RDS, CloudWatch, SQS, SNS, IAM, DynamoDB, API Gateway.",
+        "textarea": "4.2 years of experience with AWS. Key services worked with in recent projects include EC2, S3, Lambda, ECS, RDS (PostgreSQL/MySQL), CloudWatch, SQS, SNS, IAM, DynamoDB, and API Gateway."
+      }
+    },
+    "have_you_completed_degree": {
+      "patterns": [
+        "have you completed [degree]?",
+        "have you completed [degree]",
+        "have you completed degree",
+        "have you completed your degree",
+        "have you completed a degree",
+        "do you hold a degree",
+        "did you complete your degree"
+      ],
+      "category": "education",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, completed B.Tech in Computer Science Engineering.",
+        "checkbox": "Yes"
+      }
+    },
+    "link_to_your_work": {
+      "patterns": [
+        "paste a link to some of your work",
+        "paste a link to your work",
+        "link to some of your work",
+        "link to your work",
+        "link to your portfolio",
+        "link to your github",
+        "paste your portfolio link",
+        "share a link to your work"
+      ],
+      "category": "preference",
+      "default": "https://siddhant3646.github.io/Portfolio/",
+      "priority": 10,
+      "input_type_defaults": {
+        "text": "https://siddhant3646.github.io/Portfolio/",
+        "textarea": "https://siddhant3646.github.io/Portfolio/"
       }
     }
   },

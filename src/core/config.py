@@ -17,7 +17,29 @@ CHROME_USER_DATA = os.getenv("CHROME_USER_DATA", "/Users/siddhant/Library/Applic
 CHROME_EXECUTABLE_PATH = os.getenv("CHROME_EXECUTABLE_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 # LLM & API Configuration
-GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY", "")
+DEFAULT_GOOGLE_AI_API_KEYS = []
+
+def _parse_google_ai_keys():
+    keys = []
+    env_keys_str = os.getenv("GOOGLE_AI_API_KEYS", "")
+    if env_keys_str:
+        for k in env_keys_str.split(","):
+            k = k.strip().strip("'\"")
+            if k and k not in keys:
+                keys.append(k)
+    single_key = os.getenv("GOOGLE_AI_API_KEY", "")
+    if single_key:
+        for k in single_key.split(","):
+            k = k.strip().strip("'\"")
+            if k and k not in keys:
+                keys.append(k)
+    for dk in DEFAULT_GOOGLE_AI_API_KEYS:
+        if dk not in keys:
+            keys.append(dk)
+    return keys
+
+GOOGLE_AI_API_KEYS = _parse_google_ai_keys()
+GOOGLE_AI_API_KEY = GOOGLE_AI_API_KEYS[0] if GOOGLE_AI_API_KEYS else ""
 
 # Resume Configuration
 RESUME_FILE_PATH = os.getenv("RESUME_FILE_PATH", "/Users/siddhant/Desktop/Resume/SiddhantSinghResume2026.pdf")

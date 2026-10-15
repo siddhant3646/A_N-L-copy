@@ -219,10 +219,10 @@ class PatternMatcher:
             return 'https://github.com/siddhant3646', max(score, 0.98)
 
         # 0r. Rating scale (1-5) bounded proficiency (guard against 1-10 or experience overrides)
-        is_rating_scale_5 = bool(re.search(r'\b(rate\s+(your\s+)?proficiency|proficiency\s*\(1[-–]5\)|rate\s+(yourself\s+)?(1[-–]5|1\s+to\s+5)|scale\s+of\s+1\s*(to|[-–])\s*5|rating\s*\(1[-–]5\)|scale\s+1[-–]5)\b', ql) or ('scale of 1-5' in ql) or ('scale of 1 to 5' in ql))
+        is_rating_scale_5 = bool(re.search(r'\b(rate\s+(your\s+)?proficiency|proficiency\s*\(1[-–]5\)|rate\s+(yourself\s+)?(1[-–]5|1\s+to\s+5)|scale\s+of\s+(?:1\s*(?:to|[-–])\s*)?5|out\s+of\s+5|\/5|rating\s*\(1[-–]5\)|scale\s+1[-–]5)\b', ql) or ('scale of 1-5' in ql) or ('scale of 1 to 5' in ql) or ('scale of 5' in ql) or ('out of 5' in ql))
         if is_rating_scale_5 and not bool(re.search(r'\b(how many years)\b', ql)):
             if al in ('8/10', '9/10', '10/10', '7/10', '8', '9', '10', '4.2', '4.2 Years', '4 Years', 'Yes', 'No') or '/' in al or not al:
-                return '4', max(score, 0.98)
+                return '5', max(score, 0.98)
 
         # 0b. Restrictive covenants / Non-compete compliance
         if any(w in ql for w in ('restrictive covenant', 'restrictive covenants', 'noncompete', 'non-compete', 'non-solicitation')) or (
@@ -366,7 +366,7 @@ class PatternMatcher:
                     return 'Gurugram', max(score, 0.98)
                 return 'Bengaluru (Willing to relocate to Gurugram)', max(score, 0.98)
             if input_type in ('text', 'textarea'):
-                return 'Bangalore, Hyderabad, Pune, Remote', max(score, 0.98)
+                return 'Bengaluru, Bangalore, Hyderabad, Pune, Remote', max(score, 0.98)
             return 'Bengaluru', max(score, 0.98)
 
         # Education discipline / field of study
@@ -428,17 +428,57 @@ class PatternMatcher:
         if any(w in ql for w in ('time slot in between', 'mention the time slot', 'available time slot', 'time slot for interview', 'what time you will be available', 'at what time you will be available')):
             return 'Anytime between 10 AM - 4 PM', max(score, 0.98)
 
-        # 0t. Notice period and LWD combined
-        if ('notice' in ql or 'np' in ql) and any(w in ql for w in ('lwd', 'last working day', 'ldw')):
+        # 0s2. Specific numeric LWD date format request (e.g. "enter as 19102026")
+        if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
+            if any(w in ql for w in ('serving', 'lwd', 'last working day', 'notice')):
+                return '23102026', max(score, 0.98)
+
+        # 0t. Notice period and LWD combined (both asked in one question, e.g. "Notice period and LWD", "NP & Last Working Day")
+        is_composite_np_lwd = (
+            ('notice' in ql or 'np' in ql)
+            and any(w in ql for w in ('lwd', 'last working day', 'ldw'))
+            and any(sep in ql for sep in (' and ', ' & ', ' / ', ' + ', ', lwd', ', last working'))
+            and not any(cond in ql for cond in ('if serving', 'if on notice', 'if you are', 'if currently', 'in case of', 'if applicable', 'if any'))
+        )
+        if is_composite_np_lwd:
             if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
                 return '23102026', max(score, 0.98)
             lwd_date = datetime.now() + timedelta(days=15)
             return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", max(score, 0.98)
 
         # 1. Disability safety guard: Candidate has NO disability
-        if 'disability' in ql:
-            if al.lower() in ('yes', 'true', '1') or 'do you have' in ql or 'any kind of disability' in ql:
+        if 'disability' in ql or 'differently abled' in ql or 'pwd' in ql:
+            if any(w in ql for w in ('percent', '%', 'specify your disability percentage')):
+                return '0', max(score, 0.98)
+            if any(w in ql for w in ('what kind', 'type of', 'disability type', 'nature of', 'kind of', 'type')):
+                return 'None', max(score, 0.98)
+            if input_type in ('button', 'radio', 'select'):
+                return 'I don’t have a disability', max(score, 0.98)
+            return 'No', max(score, 0.98)
+
+        # 1b. Variable compensation, bonus, RSU, stock options: Candidate has 0 variable (100% fixed)
+        if any(w in ql for w in ('variable compensation', 'variable pay', 'unvested options', 'rsu value', 'stock rsu', 'bonus component', 'annual variable bonus', 'unvested stock', 'stock options value')):
+            if any(w in ql for w in ('please mention if', 'frequency of recieving', 'frequency of receiving')):
+                return 'No variable pay, 100% fixed salary (23 LPA Fixed)', max(score, 0.98)
+            if input_type in ('radio', 'checkbox'):
                 return 'No', max(score, 0.98)
+            return '0', max(score, 0.98)
+
+        # 1c. Currently living in non-Bangalore city (without relocation clause): Candidate lives in Bangalore
+        is_multipart_summary = bool(re.search(r'\b(ctc|expected ctc|notice period|total years of experience)\b', ql) and ('fintech' in ql or 'domain' in ql or 'high-scale' in ql or 'managerial' in ql))
+        has_reloc = bool(re.search(r'\b(relocat|willing to|open to|ready to|willing|comfortable with)\b', ql))
+        has_multiple_cities = bool(re.search(r'\b(or|/)\b', ql))
+        if not is_multipart_summary and not has_reloc and not ('bangalore' in ql or 'bengaluru' in ql):
+            is_living_q = any(w in ql for w in ('currently living in', 'currently residing in', 'living in', 'residing in', 'staying in', 'are you currently in', 'currently in', 'currently based in', 'based in', 'live in', 'stay in'))
+            if is_living_q and any(c in ql for c in ('gurgaon', 'gurugram', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'chennai', 'kolkata')):
+                if 'bangalore' in al.lower() and input_type not in ('radio', 'checkbox', 'select'):
+                    return answer, max(score, 0.98)
+                if not has_multiple_cities or input_type in ('radio', 'checkbox', 'select'):
+                    return 'No', max(score, 0.98)
+
+        # 1d. Job location is [City] and work from office. Are you interested?
+        if ('job location' in ql or 'work from office' in ql or 'wfo' in ql) and any(w in ql for w in ('are you interested', 'interested in', 'interested?')):
+            return 'Yes', max(score, 0.98)
 
         # 2. Relocation willingness in city presence questions (e.g. "residing in Chennai or willing to relocate")
         is_reloc_willing = bool(re.search(r'\b(relocat|willing to|open to|ready to|willing)\b', ql))
@@ -538,10 +578,14 @@ class PatternMatcher:
             return al, max(score, 0.98)
 
         # 10. Detect if the question is asking for numeric years of experience
-        is_num_years = bool(re.search(
+        has_years_word = bool(re.search(
             r'\b(how many years|how many yrs|how much experience|experience you hold|years of experience|yrs of experience|relevant years|total years|experience in years|how long have you|number of years|no\.?\s*of\s*years|years of exp|total exp|working expr|total working|total expr|working experience)\b',
             ql
-        ) or (re.search(r'\b(expr|experience)\b', ql) and re.search(r'\b(total|working|years|yrs)\b', ql)))
+        ))
+        has_exp_and_years = bool(re.search(r'\b(expr|experience)\b', ql) and re.search(r'\b(total|years|yrs)\b', ql))
+        is_num_years = has_years_word or has_exp_and_years
+        if is_num_years and re.search(r'^(do you|have you|are you|can you|would you)\b', ql) and not re.search(r'\b(how many|number of|how much|in years|\(in years\))\b', ql):
+            is_num_years = False
 
         # 11. Detect if the question is a Yes/No boolean question
         is_yes_no = bool(

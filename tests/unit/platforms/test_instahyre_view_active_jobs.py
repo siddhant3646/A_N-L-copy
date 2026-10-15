@@ -55,6 +55,24 @@ class TestInstahyreViewActiveJobs(unittest.IsolatedAsyncioTestCase):
             # Check that apply count only incremented once (for INSTAHYRE_APPLY_CLICKED, not for SKIPPED)
             self.assertEqual(self.agent._instahyre_apply_count, 1)
 
+    async def test_consecutive_scrolls_capped_at_three_breaks_task(self):
+        """Verify that 3 consecutive scrolling events terminate the task gracefully without infinite loop."""
+        with patch.object(self.agent, '_handle_scripted_fallback', new=AsyncMock(side_effect=[
+            'INSTAHYRE_ALL_APPLIED_SCROLLING',
+            'INSTAHYRE_ALL_APPLIED_SCROLLING',
+            'INSTAHYRE_ALL_APPLIED_SCROLLING',
+        ])), patch.object(self.agent, '_check_page_health', new=AsyncMock(return_value=True)), \
+           patch.object(self.agent, '_check_login_state', new=AsyncMock(return_value=True)), \
+           patch.object(self.agent._session_manager, 'check_health', new=AsyncMock(return_value={"healthy": True})), \
+           patch.object(self.agent, '_get_max_steps', return_value=10), \
+           patch('asyncio.sleep', new=AsyncMock()):
+
+            await self.agent.run(task_description=prompts.INSTAHYRE_SEARCH_TASK)
+
+            self.assertTrue(self.agent.state.task_complete)
+            self.assertTrue(self.agent._last_instahyre_no_more_jobs)
+            self.assertEqual(self.agent._instahyre_consecutive_scrolls, 0)
+
     def test_js_fallback_contains_view_active_jobs_detection(self):
         """Verify JS code in _handle_scripted_fallback contains View active jobs handling."""
         import inspect
@@ -63,6 +81,16 @@ class TestInstahyreViewActiveJobs(unittest.IsolatedAsyncioTestCase):
         self.assertIn("INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED", src)
         self.assertIn("data-sentinel-skipped", src)
 
+    def test_js_fallback_contains_exhaustion_detection(self):
+        """Verify JS code contains showingMatch, searchResultsMatch and scroll limit detection."""
+        import inspect
+        src = inspect.getsource(self.agent._handle_scripted_fallback)
+        self.assertIn("showingMatch", src)
+        self.assertIn("searchResultsMatch", src)
+        self.assertIn("instahyre_all_applied_scrolls", src)
+        self.assertIn("INSTAHYRE_NO_MORE_JOBS", src)
+
 
 if __name__ == '__main__':
     unittest.main()
+

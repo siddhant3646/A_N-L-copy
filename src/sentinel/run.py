@@ -222,7 +222,6 @@ class Browser:
         
         args = [
             '--disable-blink-features=AutomationControlled',
-            '--test-type',                              # Suppress "unsupported command-line flag" warning bar
             '--disable-infobars',                       # Suppress Chrome infobars
             '--window-position=0,0',                    # Start at top-left
             '--window-size=1920,1080',                  # Full width to eliminate borders
@@ -232,8 +231,6 @@ class Browser:
             '--no-restore-session-state',
             '--ignore-certificate-errors',
             '--ignore-ssl-errors',
-            '--disable-gpu',
-            '--disable-extensions',
             '--no-first-run',
             # Prevent Chrome from downloading on-device AI/ML models (Gemini Nano, Prompt API, OptGuide)
             '--disable-features=OptimizationGuideModelDownloading,OptimizationGuide,OptimizationGuideOnDeviceModel,PromptAPIForGeminiNano,LanguageDetectionModelDownloading,OptimizationHints,OptimizationHintsFetching,OptimizationTargetPrediction,Translate,MediaRouter,DialMediaRouteProvider,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,PrivacySandboxSettings4',
@@ -431,10 +428,14 @@ class Browser:
             if self.context.pages:
                 await self._maximize_page_window(self.context.pages[0])
 
-            # 3. Auto-close unexpected popups/new windows created during automation
+            # 3. Auto-close unexpected popups/new windows created during automation (excluding job application flows)
             async def _auto_close_popup(new_page):
                 try:
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.6)
+                    u = (new_page.url or '').lower()
+                    # Do not close legitimate application/screening flows
+                    if any(allowed in u for allowed in ('smartapply', 'indeed.com', 'hirist', 'instahyre', 'naukri', 'linkedin')):
+                        return
                     if self.context and len(self.context.pages) > 1 and new_page != self.context.pages[0]:
                         if not new_page.is_closed():
                             print(f"   🔒 Automatically closed popup window: {new_page.url or 'about:blank'}")
@@ -767,7 +768,14 @@ async def main():
     
     # Define Tasks: (Task Name, Start URL, Prompt)
     tasks = [
-        # Priority 1: Instahyre Inbox Questionnaire (Testing)
+        # Priority 1: Indeed + Hirist applications
+        # Start on the Indeed homepage: the handler drives the real search UI
+        # (type role -> type location -> Find jobs -> "Easily apply" filter) and
+        # then applies to in-site jobs. Do NOT deep-link a pre-filtered search
+        # URL — the "Easily apply" filter must be applied through the UI.
+        # ("Indeed Application", "https://in.indeed.com/?from=gnav-jobsearch--indeedmobile", prompts.INDEED_JOB_APPLY_TASK),
+        ("Hirist Application", "https://www.hirist.tech/jobfeed", prompts.HIRIST_JOB_APPLY_TASK),
+        # Instahyre Inbox Questionnaire (Testing)
         ("Instahyre Inbox Questionnaire", "https://www.instahyre.com/candidate/inbox/", prompts.INSTAHYRE_INBOX_QUESTIONNAIRE_TASK),
         # Job applications
         ("Naukri Application", "https://www.naukri.com/mnjuser/recommendedjobs", prompts.NAUKRI_JOB_APPLY_TASK),
@@ -795,9 +803,8 @@ async def main():
         pw = await get_shared_playwright()
         args = [
             '--disable-blink-features=AutomationControlled',
-            '--test-type',
             '--disable-infobars',
-            '--disable-gpu', '--disable-extensions', '--no-first-run',
+            '--no-first-run',
             '--start-maximized', '--ignore-certificate-errors',
             '--disable-session-crashed-bubble',
             '--hide-crash-restore-bubble',
@@ -968,6 +975,11 @@ async def main():
                     print("   ⏳ Pausing 60s before next task...")
                     await asyncio.sleep(60)
                 finally:
+                    if hasattr(agent, '_llm_client') and agent._llm_client:
+                        try:
+                            await agent._llm_client.close()
+                        except Exception:
+                            pass
                     print(f"🔒 Closing browser for '{task_name}'...")
                     await browser.stop(fast=shutdown_requested)
                     current_browser = None
@@ -995,14 +1007,9 @@ async def main():
                 remaining_sec = deadline - time.time()
                 remaining_mins = remaining_sec / 60.0
 
-                # Min-time guard: remaining < 5 min → sleep to deadline, break
-                if remaining_mins < 5.0:
-                    print(f"⏳ [INTERSESSION Pass #{intersession_iter}] Less than 5 min remaining ({remaining_mins:.1f}m < 5m). Sleeping to deadline...")
-                    if remaining_sec > 0:
-                        try:
-                            await asyncio.sleep(remaining_sec)
-                        except (KeyboardInterrupt, asyncio.CancelledError):
-                            shutdown_requested = True
+                # If less than 30s remaining, finish intersession and begin next cycle immediately (no long sleeps)
+                if remaining_sec <= 30.0:
+                    print(f"⏳ [INTERSESSION] Deadline reached ({remaining_sec:.0f}s remaining). Transitioning immediately to Cycle {cycle_count + 1}...")
                     break
 
                 print(f"\n🔄 [INTERSESSION Pass #{intersession_iter}] Starting pass ({remaining_mins:.1f} min remaining until deadline)...")
@@ -1045,7 +1052,7 @@ async def main():
                     await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
                     print(f"🎉 [INTERSESSION Pass #{intersession_iter}] Instahyre task pass completed!")
                     if getattr(agent, '_last_instahyre_no_more_jobs', False):
-                        print(f"📭 [INTERSESSION Pass #{intersession_iter}] All Instahyre opportunities exhausted for this cycle.")
+                        print(f"📭 [INTERSESSION Pass #{intersession_iter}] Opportunities for this skill set exhausted.")
                         exhausted_instahyre = True
 
                 except (KeyboardInterrupt, asyncio.CancelledError):
@@ -1061,15 +1068,14 @@ async def main():
                         print("   🔄 Playwright pipe refreshed after intersession pass")
                     current_browser = None
 
-                if exhausted_instahyre and not shutdown_requested:
+                # Continuous mode: Instahyre jobs never sleep away the intersession window.
+                # If there is remaining time, immediately start next pass with a fresh random skill batch.
+                if not shutdown_requested:
                     remaining_after_pass = deadline - time.time()
-                    if remaining_after_pass > 0:
-                        print(f"😴 No more Instahyre jobs found. Sleeping {remaining_after_pass/60:.1f} mins until Cycle {cycle_count + 1} deadline ({time.strftime('%H:%M:%S', time.localtime(deadline))})...")
-                        try:
-                            await asyncio.sleep(remaining_after_pass)
-                        except (KeyboardInterrupt, asyncio.CancelledError):
-                            shutdown_requested = True
-                    break
+                    if remaining_after_pass <= 30.0:
+                        print(f"⏳ [INTERSESSION] Intersession window complete ({remaining_after_pass:.0f}s left). Transitioning to Cycle {cycle_count + 1}...")
+                        break
+                    print(f"⚡ [INTERSESSION] Continuous mode active — starting next pass with fresh skills ({remaining_after_pass/60:.1f} min remaining)...")
 
             if shutdown_requested:
                 break

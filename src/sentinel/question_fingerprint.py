@@ -704,6 +704,7 @@ VALIDATION_RULES = {
         'patterns': [
             r'^\d+(\.\d+)?$',  # Numeric
             r'^\d+(\.\d+)?\s*(?:lpa|lac|lakhs?|cr)?$',  # Numeric with LPA unit
+            r'^\d+(\.\d+)?\s*[-–to]\s*\d+(\.\d+)?\s*(?:lpa|lac|lakhs?|cr)?$',  # Range (e.g. 28-32 LPA)
         ],
         'range': (0, 100),
         'message': 'Salary should be numeric (in LPA)'
@@ -778,7 +779,7 @@ def detect_expected_format(question: str) -> Optional[str]:
         return 'year'
     
     # Percentage/CGPA
-    if any(x in q_lower for x in ['percentage', 'percent', '%']):
+    if any(x in q_lower for x in ['percentage', 'percent', '%']) and not any(w in q_lower for w in ['remote', 'wfh', 'work from home', 'relocat']):
         return 'percentage'
     if any(re.search(rf'(?<![-_\w]){re.escape(x)}(?![-_\w])', q_lower) for x in ['cgpa', 'gpa', 'grade point', 'academic grade']) or (re.search(r'(?<![-_\w])grade(?![-_\w])', q_lower) and not any(w in q_lower for w in ['production', 'enterprise', 'commercial', 'industry', 'industrial', 'server', 'client'])):
         return 'cgpa'

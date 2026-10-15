@@ -563,6 +563,57 @@ class SentinelAgent:
         ):
             return 'No', 0.99
 
+        # Bring Your Own Device (BYOD)
+        if 'bring your own device' in question_lower or 'byod' in question_lower:
+            return 'Yes', 0.99
+
+        # 100% remote / Fully remote position comfort
+        if '100% remote' in question_lower or 'fully remote' in question_lower or ('remote' in question_lower and any(kw in question_lower for kw in ['comfortable working in a remote', 'comfortable working remotely', 'comfortable in a remote', 'comfortable working in a 100% remote', 'comfortable in a 100% remote', '100% remote position'])):
+            return 'Yes', 0.99
+
+        # US Time Zones (Outside US candidates)
+        if ('us time zone' in question_lower or 'us time zones' in question_lower or 'us timezone' in question_lower or 'us timezones' in question_lower or 'us hours' in question_lower or 'est hours' in question_lower or 'pst hours' in question_lower or 'cst hours' in question_lower) and any(w in question_lower for w in ['able to work', 'comfortable working', 'willing to work', 'overlap', 'shift', 'candidates outside the us', 'work in us', 'outside the us']):
+            return 'Yes', 0.99
+
+        # US & Foreign Work Authorization & Visa Sponsorship
+        is_us_foreign = any(c in question_lower for c in ['united states', 'u.s.', 'us based', 'in the us', 'roles posted in the us', 'for us based', 'usa', 'canada', 'united kingdom', 'australia', 'europe', 'h-1b', 'h1b'])
+        if is_us_foreign:
+            if any(kw in question_lower for kw in [
+                'authorized to work', 'legally permitted to work', 'legally authorized',
+                'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
+            ]):
+                return 'Not Applicable', 0.99
+            if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower:
+                return 'Not applicable', 0.99
+
+        # Background check / verification compliance
+        if ('background check' in question_lower or 'background verification' in question_lower or 'background investigation' in question_lower or 'bgv' in question_lower) and any(w in question_lower for w in ['willing', 'consent', 'agree', 'undergo', 'subject to', 'comfortable', 'clear', 'accordance']):
+            return 'Yes', 0.99
+
+        # Referral candidate check ("Are you a referral?")
+        if any(kw in question_lower for kw in ['are you a referral', 'are you an internal referral', 'is this a referral', 'candidate referral']) and not any(w in question_lower for w in ['name', 'who referred', 'how you know', 'indicate how', 'list their name']):
+            return 'No', 0.99
+
+        # Official notice period (handling typo "peroid")
+        if 'official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower)):
+            return 'Less than 30 days', 0.99
+
+        # Desired / Expected salary range
+        if ('desired' in question_lower or 'expected' in question_lower) and ('salary' in question_lower or 'compensation' in question_lower or 'ctc' in question_lower) and 'range' in question_lower:
+            return '28-32 LPA', 0.99
+
+        # Profile / Resume Headline
+        if question_lower in ['headline', 'linkedin headline', 'profile headline', 'resume headline'] or question_lower.startswith('headline'):
+            return 'Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS', 0.99
+
+        # Profile / Candidate Summary
+        if question_lower in ['summary', 'profile summary', 'professional summary', 'executive summary', 'brief summary', 'about you', 'about yourself'] or question_lower == 'summary':
+            return 'Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS.', 0.99
+
+        # How did you hear about us / Source channel
+        if any(kw in question_lower for kw in ['how did you hear about us', 'how did you hear about this', 'where did you hear about us', 'where did you find this', 'how did you find out about this role', 'how did you come across this', 'how did you find this role', 'source of application', 'how did you hear about this opportunity', 'how did you hear about this job', 'where did you hear about this']):
+            return 'LinkedIn', 0.99
+
         # Bachelor's degree / College degree Yes/No question
         if ('degree' in question_lower or 'bachelor' in question_lower or 'undergraduate' in question_lower or 'college degree' in question_lower or 'graduation degree' in question_lower) and any(kw in question_lower for kw in ['do you have', 'have you', 'completed', 'hold a', 'possess', 'require']):
             return 'Yes', 0.99
@@ -1041,6 +1092,16 @@ class SentinelAgent:
             return 'He/Him/His', 0.98
 
         # Work Authorization in India & Visa Sponsorship
+        is_us_foreign = any(c in question_lower for c in ['united states', 'u.s.', 'us based', 'in the us', 'roles posted in the us', 'for us based', 'usa', 'canada', 'united kingdom', 'australia', 'europe', 'h-1b', 'h1b'])
+        if is_us_foreign:
+            if any(kw in question_lower for kw in [
+                'authorized to work', 'legally permitted to work', 'legally authorized',
+                'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
+            ]):
+                return 'Not Applicable', 0.98
+            if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower:
+                return 'Not applicable', 0.98
+
         if (any(kw in question_lower for kw in [
             'authorized to work', 'legally permitted to work', 'legally authorized',
             'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
@@ -13395,10 +13456,23 @@ class SentinelAgent:
                     let bestKeyLen = 0;
                     let bestScore = 0;
                     
-                    // CRITICAL COMPLIANCE INTERCEPTS (Must precede fuzzy substring matching)
+                    // CRITICAL COMPLIANCE & SCREENSHOT FLOW INTERCEPTS (Must precede fuzzy substring matching)
                     const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)|relatives?\\s*in\\s*the\\s*company/i.test(qLower);
                     const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|non\\s*compete|confidentiality\\s*agreements?.*restrict|bound\\s*by.*(?:non-compete|noncompete|agreements?)/i.test(qLower);
                     if (isConflictQ || isRestrictiveQ) return 'No';
+
+                    if (/bring\\s*your\\s*own\\s*device|byod/i.test(qLower)) return 'Yes';
+                    if (/100%\\s*remote|fully\\s*remote|comfortable\\s*(working\\s*)?(in\\s*a\\s*)?(100%\\s*)?remote/i.test(qLower)) return 'Yes';
+                    if (/us\\s*time\\s*zones?|us\\s*timezones?|candidates\\s*outside\\s*the\\s*us/i.test(qLower)) return 'Yes';
+                    if (/(authorized\\s*to\\s*work|work\\s*authorization|legally\\s*authorized).*(united\\s*states|u\\.?s\\.?|us\\s*based)/i.test(qLower)) return 'Not Applicable';
+                    if (/(sponsorship|visa\\s*status|h-?1b).*(roles\\s*posted\\s*in\\s*the\\s*us|united\\s*states|u\\.?s\\.?|us\\s*only)/i.test(qLower)) return 'Not applicable';
+                    if (/are\\s*you\\s*(a|an\\s*internal)?\\s*referral/i.test(qLower)) return 'No';
+                    if (/official\\s*notice\\s*(?:period|peroid)|what\\s*is\\s*your\\s*official\\s*notice/i.test(qLower)) return 'Less than 30 days';
+                    if (/how\\s*did\\s*you\\s*hear\\s*about\\s*(us|this)|where\\s*did\\s*you\\s*hear/i.test(qLower)) return 'LinkedIn';
+                    if (/^headline$/i.test(cleanQ) || /^profile\\s*headline$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS';
+                    if (/^summary$/i.test(cleanQ) || /^profile\\s*summary$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS.';
+                    if (/desired.*range|expected.*range|salary.*range|compensation.*range/i.test(qLower)) return '28-32 LPA';
+                    if (/background\\s*(check|verification)|drug\\s*(screen|screening|test)|reference\\s*check/i.test(qLower) && /willing|undergo|consent|agree|clear/i.test(qLower)) return 'Yes';
 
                     // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
@@ -13501,7 +13575,14 @@ class SentinelAgent:
                         const isSalaryQ = (/salary|ctc|\\bpay\\b|\\bpackage\\b|compensation|remuneration/i.test(qLower)) && !isCompanyOrPayroll;
                         const isExpQ = /experience|years|\\byear\\b|months|exp\\.?\\b|\\bexpr\\b|working\\s+expr|\\byoe\\b/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isLwdQ = /last\\s*working\\s*day|last\\s*working\\s*date|official\\s*last|lwd/i.test(qLower);
-                        const isNoticeQ = /notice\\s*period|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
+                        const isNoticeQ = /notice\\s*(?:period|peroid)|serving\\s*notice|how\\s*soon.*join|how\\s*quickly.*join|when\\s*can\\s*you\\s*join|joining\\s*time|availability\\s*to\\s*join/i.test(qLower) || isLwdQ;
+                        const isByodQ = /bring\\s*your\\s*own\\s*device|byod/i.test(qLower);
+                        const isRemoteQ = /100%\\s*remote|fully\\s*remote|comfortable\\s*(working\\s*)?(in\\s*a\\s*)?(100%\\s*)?remote/i.test(qLower);
+                        const isUsTimeZoneQ = /us\\s*time\\s*zones?|us\\s*timezones?|candidates\\s*outside\\s*the\\s*us/i.test(qLower);
+                        const isAuthUsQ = /(authorized\\s*to\\s*work|work\\s*authorization|legally\\s*authorized).*(united\\s*states|u\\.?s\\.?|us\\s*based)/i.test(qLower);
+                        const isSponsorUsQ = /(sponsorship|visa\\s*status|h-?1b).*(roles\\s*posted\\s*in\\s*the\\s*us|united\\s*states|u\\.?s\\.?|us\\s*only)/i.test(qLower);
+                        const isReferralCandidateQ = /are\\s*you\\s*(a|an\\s*internal)?\\s*referral/i.test(qLower);
+                        const isHearAboutUsQ = /how\\s*did\\s*you\\s*hear\\s*about\\s*(us|this)|where\\s*did\\s*you\\s*hear/i.test(qLower);
                         const isYearsQ = /(?:years\\b|\\byoe\\b)/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
                         const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)/i.test(qLower);
@@ -13601,7 +13682,9 @@ class SentinelAgent:
                         } else if (isYearsQ) {
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
-                            if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
+                            if (/official/i.test(qLower)) {
+                                bestMatch = 'Less than 30 days';
+                            } else if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
                                 bestMatch = '23102026';
                             } else if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
                                 bestMatch = '(6) --Serving Notice Period';
@@ -13609,8 +13692,10 @@ class SentinelAgent:
                                 bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
                             }
                         } else if (isSalaryQ) {
-                            // Smart salary handling: check for variable, monthly, LPA, expected keywords
-                            if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
+                            // Smart salary handling: check for range, variable, monthly, LPA, expected keywords
+                            if (/range/i.test(qLower)) {
+                                bestMatch = '28-32 LPA';
+                            } else if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
                             } else if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(qLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(qLower)) {
                                 bestMatch = '0';
@@ -13631,6 +13716,20 @@ class SentinelAgent:
                             } else {
                                 bestMatch = '2300000';
                             }
+                        } else if (isByodQ) {
+                            bestMatch = 'Yes';
+                        } else if (isRemoteQ) {
+                            bestMatch = 'Yes';
+                        } else if (isUsTimeZoneQ) {
+                            bestMatch = 'Yes';
+                        } else if (isAuthUsQ) {
+                            bestMatch = 'Not Applicable';
+                        } else if (isSponsorUsQ) {
+                            bestMatch = 'Not applicable';
+                        } else if (isReferralCandidateQ) {
+                            bestMatch = 'No';
+                        } else if (isHearAboutUsQ) {
+                            bestMatch = 'LinkedIn';
                         } else if (isExpQ) {
                             bestMatch = yearsDefault;
                         }
@@ -13813,6 +13912,10 @@ class SentinelAgent:
                         else if (text === ans) {
                             score = 105;
                         }
+                        // PRIORITY 3b: Not Applicable fallback to No if only Yes/No options available
+                        else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && (text === 'no' || text === 'false')) {
+                            score = 95;
+                        }
                         // PRIORITY 4: Text contains answer OR answer contains text
                         // BUT protect against "4 years".includes("4 years") false positive
                         else if (text.includes(ans) || ans.includes(text)) {
@@ -13947,11 +14050,20 @@ class SentinelAgent:
                             return /\bno\b/.test(lbl) || /\bfalse\b/.test(lbl) || r.value === 'false' || r.value === 'No';
                         });
 
-                        if (isLabelYes && isAnsYes) {
+                        if (lowerLabel === ans) {
+                            score = 125;
+                        }
+                        else if (isLabelYes && isAnsYes) {
                             score = 110;
                         }
                         else if (isLabelNo && isAnsNo) {
                             score = 110;
+                        }
+                        else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && isLabelNo) {
+                            score = 105;
+                        }
+                        else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && isLabelYes) {
+                            score = 0;
                         }
                         else if (isAnsNo && isLabelYes) {
                             score = 0;
@@ -14157,11 +14269,20 @@ class SentinelAgent:
                             return /\bno\b/.test(lbl) || /\bfalse\b/.test(lbl) || lbl === 'no' || lbl === 'false' || r.value === 'false';
                         });
 
-                        if (isLabelYes && isAnsYes) {
+                        if (lowerLabel === ans) {
+                            score = 125;
+                        }
+                        else if (isLabelYes && isAnsYes) {
                             score = 110;
                         }
                         else if (isLabelNo && isAnsNo) {
                             score = 110;
+                        }
+                        else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && isLabelNo) {
+                            score = 105;
+                        }
+                        else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && isLabelYes) {
+                            score = 0;
                         }
                         else if (isAnsNo && isLabelYes) {
                             score = 0;
@@ -15632,8 +15753,17 @@ return resolveDynamic(bestMatch);
                                     answer = 'Siddhant Singh';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling name field');
                                 } else if (combinedText.includes('summary') || combinedText.includes('cover letter') || combinedText.includes('about yourself') || combinedText.includes('why should') || combinedText.includes('why do you want') || combinedText.includes('tell us about') || combinedText.includes('anything else') || combinedText.includes('description')) {
-                                    answer = 'I am a Java Full Stack Developer with 4 years of experience in building scalable applications using Java, Spring Boot, React.js, and cloud technologies. I am eager to contribute my skills to your team.';
+                                    answer = 'Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS.';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling summary/cover letter/description');
+                                } else if (combinedText.includes('headline')) {
+                                    answer = 'Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling headline');
+                                } else if ((combinedText.includes('desired') || combinedText.includes('expected')) && (combinedText.includes('salary') || combinedText.includes('compensation') || combinedText.includes('ctc')) && combinedText.includes('range')) {
+                                    answer = '28-32 LPA';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling desired salary range');
+                                } else if (combinedText.includes('referral') || /are you a referral/i.test(combinedText)) {
+                                    answer = 'No';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling referral');
                                 } else if (combinedText.includes('notice') || combinedText.includes('lwd') || combinedText.includes('how soon')) {
                                     answer = '7';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling notice/join period');

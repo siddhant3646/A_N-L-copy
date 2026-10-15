@@ -133,6 +133,7 @@ class SentinelAgent:
         self._last_result = ""  # Track last result for loop detection
         self._same_result_count = 0  # Counter for repeated results
         self._instahyre_no_action_count = 0  # Track consecutive NO_ACTION on Instahyre
+        self._instahyre_wait_count = 0  # Track consecutive INSTAHYRE_WAITING_FOR_RESULTS
         self._processed_questionnaires = set()  # Track processed Instahyre questionnaire URLs
         self._instahyre_inbox_no_conv_count = 0
         self._linkedin_stuck_count = 0  # Track consecutive LINKEDIN_FORM_STUCK in outer loop
@@ -342,6 +343,7 @@ class SentinelAgent:
         self._instahyre_skills_is_intersession = None
         self._last_instahyre_no_more_jobs = False
         self._instahyre_consecutive_scrolls = 0
+        self._instahyre_wait_count = 0
         self._error_detector = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
@@ -5571,6 +5573,7 @@ class SentinelAgent:
                     print(f"📭 No more Instahyre jobs found. Applied to {applied_count} jobs.")
                     self._instahyre_apply_count = 0
                     self._instahyre_consecutive_scrolls = 0
+                    self._instahyre_wait_count = 0
                     self._last_instahyre_no_more_jobs = True
                     self.state.task_complete = True
                     break
@@ -5617,6 +5620,7 @@ class SentinelAgent:
                 
                 # Instahyre: Show Results / Search clicked - continue to View/Apply phase
                 if 'INSTAHYRE_SHOW_RESULTS_CLICKED' in result or 'INSTAHYRE_SEARCH_CLICKED' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_scrolls = 0
                     print("🔍 Instahyre search configured, now looking for jobs to apply...")
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for results to load
@@ -5624,6 +5628,7 @@ class SentinelAgent:
                 
                 # Instahyre: Application submitted
                 if 'INSTAHYRE_APPLY_CLICKED' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
                     self._instahyre_consecutive_scrolls = 0
                     if not hasattr(self, '_instahyre_apply_count'):
@@ -5637,6 +5642,7 @@ class SentinelAgent:
                         print(f"🎉 Completed {target} Instahyre applications!")
                         self._instahyre_apply_count = 0  # Reset for next cycle
                         self._instahyre_consecutive_scrolls = 0
+                        self._instahyre_wait_count = 0
                         self.state.task_complete = True
                         break
                     
@@ -5645,6 +5651,7 @@ class SentinelAgent:
                 
                 # Instahyre: View clicked - wait for modal
                 if 'INSTAHYRE_VIEW_CLICKED' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_scrolls = 0
                     self._instahyre_consecutive_views = getattr(self, '_instahyre_consecutive_views', 0) + 1
                     print(f"👁️ Viewing job details, looking for Apply button... (attempt {self._instahyre_consecutive_views})")
@@ -5661,6 +5668,7 @@ class SentinelAgent:
                 
                 # Instahyre: View active jobs button found in modal (inactive / redirected job)
                 if 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
                     print("   ⏭️ Instahyre: Job has 'View active jobs' instead of Apply — skipping and closing modal...")
                     try:
@@ -5672,6 +5680,7 @@ class SentinelAgent:
 
                 # Instahyre: Modal closed (post-apply or blocked modal)
                 if 'INSTAHYRE_MODAL_CLOSED' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
                     print("   📜 Instahyre: Modal closed, continuing...")
                     try:
@@ -5683,6 +5692,7 @@ class SentinelAgent:
                 
                 # Instahyre: Modal closed after success
                 if 'INSTAHYRE_MODAL_CLOSED_SUCCESS' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
                     self._instahyre_consecutive_scrolls = 0
                     print("✅ Application confirmed, looking for next job...")
@@ -5695,18 +5705,29 @@ class SentinelAgent:
                     print(f"📭 No more Instahyre jobs found. Applied to {applied_count} jobs.")
                     self._instahyre_apply_count = 0
                     self._instahyre_consecutive_scrolls = 0
+                    self._instahyre_wait_count = 0
                     self._last_instahyre_no_more_jobs = True
                     self.state.task_complete = True
                     break
                 
                 # Instahyre: Waiting for results to load (grace period after Show Results)
                 if 'INSTAHYRE_WAITING_FOR_RESULTS' in result:
-                    print("   ⏳ Instahyre: Waiting for results to load...")
+                    self._instahyre_wait_count = getattr(self, '_instahyre_wait_count', 0) + 1
+                    print(f"   ⏳ Instahyre: Waiting for results to load... ({self._instahyre_wait_count}/5)")
+                    if self._instahyre_wait_count >= 5:
+                        applied = getattr(self, '_instahyre_apply_count', 0)
+                        print(f"📭 Instahyre: No more jobs appeared after waiting. Applied to {applied} jobs. Ending task.")
+                        self._instahyre_apply_count = 0
+                        self._instahyre_wait_count = 0
+                        self._last_instahyre_no_more_jobs = True
+                        self.state.task_complete = True
+                        break
                     await asyncio.sleep(random.uniform(2, 3))
                     continue
                 
                 # Instahyre: All visible jobs already applied or scrolling for more
                 if 'INSTAHYRE_ALL_APPLIED_SCROLLING' in result or 'INSTAHYRE_SCROLLING_FOR_MORE' in result:
+                    self._instahyre_wait_count = 0
                     self._instahyre_consecutive_scrolls = getattr(self, '_instahyre_consecutive_scrolls', 0) + 1
                     print(f"   📜 Instahyre: Scrolling for more jobs... (attempt {self._instahyre_consecutive_scrolls}/3)")
                     if self._instahyre_consecutive_scrolls >= 3:
@@ -5714,6 +5735,7 @@ class SentinelAgent:
                         print(f"📭 End of Instahyre results reached after scrolling. Applied to {applied_count} jobs.")
                         self._instahyre_apply_count = 0
                         self._instahyre_consecutive_scrolls = 0
+                        self._instahyre_wait_count = 0
                         self._last_instahyre_no_more_jobs = True
                         self.state.task_complete = True
                         break
@@ -5724,6 +5746,7 @@ class SentinelAgent:
                 if 'INSTAHYRE_' in result and 'instahyre.com' in current_url:
                     print(f"   📜 Instahyre: {result}")
                     self._instahyre_no_action_count = 0  # Reset on any action
+                    self._instahyre_wait_count = 0
                     if not any(k in result for k in ['SCROLL', 'WAIT']):
                         self._instahyre_consecutive_scrolls = 0
                     await asyncio.sleep(random.uniform(1, 2))
@@ -5737,6 +5760,8 @@ class SentinelAgent:
                         applied = getattr(self, '_instahyre_apply_count', 0)
                         print(f"📭 Instahyre: No jobs available after 8 attempts. Applied to {applied} jobs. Ending task.")
                         self._instahyre_apply_count = 0
+                        self._instahyre_wait_count = 0
+                        self._last_instahyre_no_more_jobs = True
                         self.state.task_complete = True
                         break
                     continue
@@ -9025,18 +9050,20 @@ class SentinelAgent:
             for o in opts:
                 if any(k in o.lower() for k in ('15 days or less', '<= 15 days', 'less than 15', '< 15 days', 'within 15', '15 days', '15-30')):
                     return o
-            # Priority 3: Immediately available
-            for o in opts:
-                if any(k in o.lower() for k in ('immediately available', 'immediate joiner', 'immediate', 'available now', 'right away', 'asap')):
-                    return o
-            # Priority 4: Less than 1 month / 1 month or less
+            # Priority 3: Less than 1 month / 1 month or less
             for o in opts:
                 if any(k in o.lower() for k in ('< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month')):
                     return o
-            # Priority 5: 1 month
+            # Priority 4: 1 month / 30 days (covers 15 days notice when no 15-day option exists)
             for o in opts:
                 if any(k in o.lower() for k in ('1 month', '30 days')):
                     return o
+            # Priority 5: Immediately available (only if candidate is immediate or answer indicates immediate)
+            ans_days = self._hirist_option_to_days(answer)
+            if ans_days == 0 or any(k in str(answer).lower() for k in ('immediate', '0 day', 'ready', 'asap')):
+                for o in opts:
+                    if any(k in o.lower() for k in ('immediately available', 'immediate joiner', 'immediate', 'available now', 'right away', 'asap')):
+                        return o
             # Fallback to days calculation
             ans_days = self._hirist_option_to_days(answer)
             if ans_days is not None:
@@ -21629,22 +21656,64 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        // C2. All visible view buttons say "Applied" or already viewed — scroll down for fresh jobs or detect completion
-                        const allViewBtns = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, .opportunity-action-links button.btn-success, button.btn-success');
-                        let allAppliedOrViewed = true;
-                        let visibleCount = 0;
-                        for (const btn of allViewBtns) {
-                            if (btn.offsetParent !== null) {
-                                visibleCount++;
-                                const t = (btn.innerText || '').toLowerCase();
-                                if (!t.includes('applied') && !t.includes('saved') && !btn.disabled && !isAlreadyViewed(btn)) {
-                                    allAppliedOrViewed = false;
-                                    break;
-                                }
-                            }
+                        // C2. All visible job cards or view buttons say "Applied" or already viewed — scroll down for fresh jobs or detect completion
+                        const allCards = Array.from(document.querySelectorAll(
+                            '.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card, .employer-row, .opportunity-container, [ng-repeat*="opportunity in opportunities"]'
+                        )).filter(el => el.offsetParent !== null || el.offsetWidth > 0 || el.offsetHeight > 0);
+
+                        const allViewBtns = Array.from(document.querySelectorAll(
+                            'button.btn-interested, button#interested-btn, button.button-interested, .opportunity-action-links button, .opportunity-card button, .employer-row button, button.btn-success'
+                        )).filter(btn => btn.offsetParent !== null && !btn.closest('.modal, [class*="modal"]'));
+
+                        // Check if explicit empty state / no jobs indicators exist anywhere on page
+                        const bodyLower = (document.body.innerText || '').toLowerCase();
+                        const noJobsIndicators = [
+                            document.querySelector('.no-jobs, .no-results, .empty-state, [class*="empty-state"], [class*="no-opportunities"], .no-opp'),
+                            bodyLower.includes('no matching opportunities'),
+                            bodyLower.includes('no matching jobs'),
+                            bodyLower.includes('no jobs found'),
+                            bodyLower.includes('no opportunities found'),
+                            bodyLower.includes('no opportunities available'),
+                            bodyLower.includes('no results found'),
+                            bodyLower.includes("couldn't find any matching"),
+                            bodyLower.includes('0 opportunities'),
+                            bodyLower.includes('recommended jobs (0)'),
+                            bodyLower.includes('recommended jobs 0'),
+                            bodyLower.includes('search results (0)'),
+                            bodyLower.includes('search results 0'),
+                            bodyLower.includes('0 out of 0 jobs'),
+                            bodyLower.includes('out of 0 jobs'),
+                            bodyLower.includes('0 jobs that match your search'),
+                            (function() {
+                                try {
+                                    if (window.angular) {
+                                        const el = document.querySelector('[ng-controller], .opportunities-container, #job-search, body');
+                                        if (el) {
+                                            const scope = window.angular.element(el).scope();
+                                            if (scope) {
+                                                if (scope.opportunities && scope.opportunities.length === 0) return true;
+                                                if (scope.total_opportunities === 0 || scope.totalOpportunities === 0) return true;
+                                            }
+                                        }
+                                    }
+                                } catch(e) {}
+                                return false;
+                            })()
+                        ];
+
+                        const isNoJobsConfirmed = noJobsIndicators.some(Boolean);
+
+                        // If page confirms no matching jobs or 0 opportunities, stop immediately
+                        if (isNoJobsConfirmed) {
+                            sessionStorage.removeItem('instahyre_all_applied_scrolls');
+                            sessionStorage.removeItem('instahyre_results_clicked');
+                            sessionStorage.removeItem('instahyre_wait_results_count');
+                            return 'INSTAHYRE_NO_MORE_JOBS';
                         }
 
-                        if (visibleCount > 0 && allAppliedOrViewed) {
+                        // Check if there are cards on screen but all are applied / viewed / saved
+                        const totalVisibleCards = Math.max(allCards.length, allViewBtns.length);
+                        if (totalVisibleCards > 0) {
                             const bodyText = (document.body.innerText || '');
                             const showingMatch = bodyText.match(/showing\\s+\\d+\\s*-\\s*(\\d+)\\s+out\\s+of\\s+(\\d+)\\s+jobs/i);
                             let allMatchingJobsDisplayed = false;
@@ -21658,15 +21727,15 @@ return resolveDynamic(bestMatch);
                             const searchResultsMatch = bodyText.match(/search results\\s*\\(?(\\d+)\\)?/i);
                             if (searchResultsMatch) {
                                 const searchTotal = parseInt(searchResultsMatch[1], 10);
-                                if (!isNaN(searchTotal) && (searchTotal === 0 || visibleCount >= searchTotal)) {
+                                if (!isNaN(searchTotal) && (searchTotal === 0 || totalVisibleCards >= searchTotal)) {
                                     allMatchingJobsDisplayed = true;
                                 }
                             }
 
-                            const isNearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 120);
+                            const isNearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 150);
                             let scrollAttempts = parseInt(sessionStorage.getItem('instahyre_all_applied_scrolls') || '0', 10);
 
-                            if (allMatchingJobsDisplayed || (isNearBottom && scrollAttempts >= 1) || scrollAttempts >= 3) {
+                            if (allMatchingJobsDisplayed || (isNearBottom && scrollAttempts >= 1) || scrollAttempts >= 2) {
                                 sessionStorage.removeItem('instahyre_all_applied_scrolls');
                                 sessionStorage.removeItem('instahyre_results_clicked');
                                 sessionStorage.removeItem('instahyre_wait_results_count');
@@ -21678,70 +21747,39 @@ return resolveDynamic(bestMatch);
                             return 'INSTAHYRE_ALL_APPLIED_SCROLLING';
                         }
 
-                        // D. Check for Job Cards or Results Loading State
-                        const jobCards = document.querySelectorAll('.job-card, [class*="opportunity-card"], [class*="job-listing"], .opportunity-card, .employer-row');
-                        const viewBtnsExist = document.querySelectorAll('button.btn-interested, button#interested-btn, button.button-interested, button.btn-success').length > 0;
-
-                        if (jobCards.length > 0 || viewBtnsExist) {
-                            sessionStorage.removeItem('instahyre_results_clicked');
-                            sessionStorage.removeItem('instahyre_wait_results_count');
-                        } else {
-                            // No job cards or view buttons visible yet — check if results are still loading
-                            const resultsClickedTime = parseInt(sessionStorage.getItem('instahyre_results_clicked') || '0', 10);
-                            const timeSinceClick = resultsClickedTime > 0 ? (Date.now() - resultsClickedTime) : 999999;
-                            let waitAttempts = parseInt(sessionStorage.getItem('instahyre_wait_results_count') || '0', 10);
-                            const isLoading = !!document.querySelector('.loading, .spinner, .fa-spinner, [class*="spinner"], [class*="loading"], .loader, [ng-show*="loading"], .preloader, #loading') ||
-                                              (window.angular && window.angular.element && window.angular.element(document.body).injector && (window.angular.element(document.body).injector()?.get('$http')?.pendingRequests?.length > 0));
-
-                            if (isLoading || timeSinceClick < 15000 || waitAttempts < 6) {
-                                sessionStorage.setItem('instahyre_wait_results_count', String(waitAttempts + 1));
-                                return 'INSTAHYRE_WAITING_FOR_RESULTS';
+                        // D. No cards or view buttons visible — handle search in-flight loading or empty result
+                        const isSpinnerVisible = () => {
+                            const spinners = document.querySelectorAll(
+                                '.loading:not(.ng-hide), .spinner:not(.ng-hide), .fa-spinner:not(.ng-hide), ' +
+                                '[class*="spinner"]:not(.ng-hide), .loader:not(.ng-hide), [class*="loader"]:not(.ng-hide), #loading:not(.ng-hide), ' +
+                                '.preloader:not(.ng-hide), .loading-bar:not(.ng-hide)'
+                            );
+                            for (const s of spinners) {
+                                if (s && s.offsetParent !== null && s.offsetWidth > 0 && s.offsetHeight > 0) {
+                                    const style = window.getComputedStyle(s);
+                                    if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+                                        return true;
+                                    }
+                                }
                             }
+                            return false;
+                        };
 
-                            // D2. Check if no more jobs available after sufficient grace period (15s / 6 attempts)
-                            const bodyLower = (document.body.innerText || '').toLowerCase();
-                            const noJobsIndicators = [
-                                document.querySelector('.no-jobs, .no-results, .empty-state, [class*="empty-state"]'),
-                                bodyLower.includes('no matching opportunities'),
-                                bodyLower.includes('no matching jobs'),
-                                bodyLower.includes('no jobs found'),
-                                bodyLower.includes('no opportunities found'),
-                                bodyLower.includes('no opportunities available'),
-                                bodyLower.includes('no results found'),
-                                bodyLower.includes("couldn't find any matching"),
-                                bodyLower.includes('0 opportunities'),
-                                bodyLower.includes('recommended jobs (0)'),
-                                bodyLower.includes('recommended jobs 0'),
-                                bodyLower.includes('search results (0)'),
-                                bodyLower.includes('search results 0'),
-                                bodyLower.includes('0 out of 0 jobs'),
-                                bodyLower.includes('out of 0 jobs'),
-                                bodyLower.includes('0 jobs that match your search')
-                            ];
+                        const resultsClickedTime = parseInt(sessionStorage.getItem('instahyre_results_clicked') || '0', 10);
+                        const timeSinceClick = resultsClickedTime > 0 ? (Date.now() - resultsClickedTime) : 999999;
+                        let waitAttempts = parseInt(sessionStorage.getItem('instahyre_wait_results_count') || '0', 10);
 
-                            if (noJobsIndicators.some(Boolean) || (jobCards.length === 0 && !viewBtnsExist)) {
-                                sessionStorage.removeItem('instahyre_all_applied_scrolls');
-                                sessionStorage.removeItem('instahyre_results_clicked');
-                                sessionStorage.removeItem('instahyre_wait_results_count');
-                                return 'INSTAHYRE_NO_MORE_JOBS';
-                            }
+                        // Only wait if search was recently clicked (< 12s) AND under 5 attempts AND (a visible spinner is active OR first 2 attempts grace period)
+                        if (waitAttempts < 5 && timeSinceClick < 12000 && (isSpinnerVisible() || waitAttempts < 2)) {
+                            sessionStorage.setItem('instahyre_wait_results_count', String(waitAttempts + 1));
+                            return 'INSTAHYRE_WAITING_FOR_RESULTS';
                         }
 
-                        // E. Scroll to load more jobs if needed
-                        if (jobCards.length > 0) {
-                            const isNearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 120);
-                            let scrollAttempts = parseInt(sessionStorage.getItem('instahyre_all_applied_scrolls') || '0', 10);
-                            if (isNearBottom || scrollAttempts >= 3) {
-                                sessionStorage.removeItem('instahyre_all_applied_scrolls');
-                                sessionStorage.removeItem('instahyre_results_clicked');
-                                sessionStorage.removeItem('instahyre_wait_results_count');
-                                return 'INSTAHYRE_NO_MORE_JOBS';
-                            }
-                            sessionStorage.setItem('instahyre_all_applied_scrolls', String(scrollAttempts + 1));
-                            const lastCard = jobCards[jobCards.length - 1];
-                            lastCard.scrollIntoView({ block: 'end' });
-                            return 'INSTAHYRE_SCROLLING_FOR_MORE';
-                        }
+                        // Wait attempts exhausted or no spinner and no cards: opportunities exhausted
+                        sessionStorage.removeItem('instahyre_all_applied_scrolls');
+                        sessionStorage.removeItem('instahyre_results_clicked');
+                        sessionStorage.removeItem('instahyre_wait_results_count');
+                        return 'INSTAHYRE_NO_MORE_JOBS';
                     }
                 }
 

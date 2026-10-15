@@ -329,7 +329,7 @@ class InputAwareResolver:
         if ql and ('notice' in ql or 'join' in ql or 'availability' in ql):
             for opt in options:
                 lbl = opt.label.lower().strip()
-                if any(k in lbl for k in ['serving notice', 'currently serving', 'serving np']):
+                if any(k in lbl for k in ['serving notice', 'currently serving', 'serving np', 'on notice']):
                     return MatchResult(
                         matched_option=opt,
                         confidence=0.98,
@@ -338,13 +338,42 @@ class InputAwareResolver:
                     )
             for opt in options:
                 lbl = opt.label.lower().strip()
-                if any(k in lbl for k in ['15 days or less', '<= 15 days', 'less than 15 days', '< 15 days', 'within 15 days', '15 days', '15-30 days', 'immediate joiner', 'immediately available', 'immediate', '< 1 month', '<= 1 month', 'less than a month']):
+                if any(k in lbl for k in ['15 days or less', '<= 15 days', 'less than 15 days', '< 15 days', 'within 15 days', '15 days', '15-30 days', '15-30']):
                     return MatchResult(
                         matched_option=opt,
                         confidence=0.98,
                         match_type='notice_short',
                         original_answer=answer
                     )
+            for opt in options:
+                lbl = opt.label.lower().strip()
+                if any(k in lbl for k in ['< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month']):
+                    return MatchResult(
+                        matched_option=opt,
+                        confidence=0.98,
+                        match_type='notice_short',
+                        original_answer=answer
+                    )
+            for opt in options:
+                lbl = opt.label.lower().strip()
+                if any(k in lbl for k in ['1 month', '30 days', 'upto 30 days', 'up to 30 days']):
+                    return MatchResult(
+                        matched_option=opt,
+                        confidence=0.95,
+                        match_type='notice_1month',
+                        original_answer=answer
+                    )
+            ans_str = str(answer).lower()
+            if any(k in ans_str for k in ['immediate', '0 day', '0 month', 'ready']):
+                for opt in options:
+                    lbl = opt.label.lower().strip()
+                    if any(k in lbl for k in ['immediate joiner', 'immediately available', 'immediate', 'available now']):
+                        return MatchResult(
+                            matched_option=opt,
+                            confidence=0.98,
+                            match_type='notice_immediate',
+                            original_answer=answer
+                        )
 
         for opt in options:
             if opt.label.lower() == answer_lower:

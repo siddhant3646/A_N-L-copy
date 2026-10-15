@@ -34,7 +34,7 @@ class TestGemmaLLMClient(unittest.IsolatedAsyncioTestCase):
         mock_response.status = 200
         mock_response.json = AsyncMock(return_value={
             "models": [
-                {"name": "models/gemini-1.5-flash", "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/text-embedding-004", "supportedGenerationMethods": ["embedContent"]},
                 {"name": "models/gemma-3-27b-it", "supportedGenerationMethods": ["generateContent"]},
                 {"name": "models/gemma-2-31b-it", "supportedGenerationMethods": ["generateContent"]},
                 {"name": "models/gemma-2-9b-it", "supportedGenerationMethods": ["generateContent"]}
@@ -52,6 +52,30 @@ class TestGemmaLLMClient(unittest.IsolatedAsyncioTestCase):
         self.client._session = mock_session
         model = await self.client.verify_and_select_model()
         self.assertEqual(model, "gemma-2-31b-it")
+
+    async def test_discover_models_selects_gemini_flash(self):
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={
+            "models": [
+                {"name": "models/gemini-1.5-flash", "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/gemma-3-27b-it", "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/gemma-2-31b-it", "supportedGenerationMethods": ["generateContent"]},
+            ]
+        })
+
+        mock_session = MagicMock()
+        get_cm = MagicMock()
+        get_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        get_cm.__aexit__ = AsyncMock(return_value=None)
+        mock_session.get.return_value = get_cm
+        mock_session.closed = False
+        mock_session.close = AsyncMock()
+
+        client = GemmaLLMClient(api_key="test-key")
+        client._session = mock_session
+        model = await client.verify_and_select_model()
+        self.assertEqual(model, "gemini-1.5-flash")
 
     async def test_discover_models_selects_26b_when_no_31b(self):
         mock_response = MagicMock()
@@ -86,7 +110,7 @@ class TestGemmaLLMClient(unittest.IsolatedAsyncioTestCase):
         client = GemmaLLMClient(api_key="test-key")
         client._session = mock_session
         model = await client.verify_and_select_model()
-        self.assertEqual(model, "gemma-3-27b-it")
+        self.assertEqual(model, client._fallback_chain[0])
 
     def test_prompt_constraints(self):
         prompt = self.client._build_prompt(

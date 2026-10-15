@@ -443,6 +443,8 @@ class PatternMatcher:
         if is_composite_np_lwd:
             if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
                 return '23102026', max(score, 0.98)
+            if input_type == 'number':
+                return '15', max(score, 0.98)
             lwd_date = datetime.now() + timedelta(days=15)
             return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", max(score, 0.98)
 

@@ -583,7 +583,7 @@ class SentinelAgent:
                 'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
             ]):
                 return 'Not Applicable', 0.99
-            if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower:
+            if not any(sw in question_lower for sw in ['support', 'o-1', 'tn']) and ('sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower):
                 return 'Not applicable', 0.99
 
         # Background check / verification compliance
@@ -1099,7 +1099,7 @@ class SentinelAgent:
                 'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
             ]):
                 return 'Not Applicable', 0.98
-            if 'sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower:
+            if not any(sw in question_lower for sw in ['support', 'o-1', 'tn']) and ('sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower):
                 return 'Not applicable', 0.98
 
         if (any(kw in question_lower for kw in [
@@ -1166,6 +1166,18 @@ class SentinelAgent:
 
         # Role fit rating (e.g., "Rate your fit for this role (1 10)...")
         if ('rate your fit' in question_lower or 'fit for this role' in question_lower or 'fit for this position' in question_lower) and any(r in question_lower for r in ['1-10', '1 to 10', '1 10', 'scale', 'rate']):
+            return '9', 0.98
+
+        # Team management / leadership experience (3 years leading teams / mentor)
+        if ('team management' in question_lower or 'leading a team' in question_lower or 'lead a team' in question_lower or 'managed teams' in question_lower) and any(kw in question_lower for kw in ['year', 'how many', 'yoe', 'experience', 'much']):
+            if self._current_platform in ('linkedin', 'indeed', 'hirist'):
+                return '3', 0.98
+            return '3 Years', 0.98
+
+        # Rating scale (1-10 or 1-5) for technical skills, ability, or understanding
+        if any(p in question_lower for p in ['out of 10', 'scale of 10', '1 to 10', '1-10', 'out of 5', 'scale of 5', '1 to 5', '1-5']) and any(p in question_lower for p in ['rate your', 'rate yourself', 'rating', 'rate proficiency', 'rate understanding', 'rate ability']):
+            if any(p in question_lower for p in ['out of 5', 'scale of 5', '1 to 5', '1-5']):
+                return '5', 0.98
             return '9', 0.98
 
         # Specific YOE prompts (e.g., "YOE in document parsing / document processing -")
@@ -1252,7 +1264,7 @@ class SentinelAgent:
         is_conceptual_tech = any(kw in question_lower for kw in ['design', 'explain', 'approach', 'how does', 'what steps', 'trade-off', 'tradeoffs', 'stabilize', 'implementing', 'architecture'])
 
         # Rating/Proficiency questions (1-10 scale) - CHECK BEFORE EXPERIENCE
-        rating_keywords = ['self rating', 'self-rating', 'rating in', 'rate proficiency', 'rate yourself', 'rate your', 'on a scale', '1-10', '1 to 10', 'proficiency in']
+        rating_keywords = ['self rating', 'self-rating', 'rating in', 'rate proficiency', 'rate yourself', 'rate your', 'on a scale', '1-10', '1 to 10', 'proficiency in', 'out of 10', 'out of 5', 'scale of 10', 'scale of 5']
         is_rating_question = any(kw in question_lower for kw in rating_keywords) and not is_conceptual_tech
         
         # Preferred position questions
@@ -1599,6 +1611,8 @@ class SentinelAgent:
             return '5', 0.95
 
         if is_rating_question:
+            if any(w in question_lower for w in ['1-5', '1 to 5', 'out of 5', 'scale of 5', '(1-5)', '/5']):
+                return '5', 0.95
             return '9', 0.95
         
         if is_position_question:
@@ -10937,10 +10951,21 @@ class SentinelAgent:
                     let bestKeyLen = 0;
                     const detectedType = detectInputType(chatLayer);
                     
-                    // PRE-CHECK: "How many years of exp/experience in X?" -> force experience pattern
+                    // PRE-CHECK 1: Rating scale questions (e.g. "Rate your understanding ... out of 10")
+                    const isRatingScaleQ = /out of 10|scale of 10|1 to 10|1-10|out of 5|scale of 5|1 to 5|1-5|rate your (understanding|ability|knowledge|skill|proficiency)|rate yourself/i.test(qNormalized);
+                    if (isRatingScaleQ && !/years|how many years/i.test(qNormalized)) {{
+                        return /out of 5|scale of 5|1 to 5|1-5/.test(qNormalized) ? '5' : '9';
+                    }}
+
+                    // PRE-CHECK 2: Team management / leading a team experience
+                    if (/team management|leading a team|lead a team|managed a team|manage a team|people management/i.test(qNormalized)) {{
+                        return (detectedType === 'radio' || detectedType === 'number') ? '3' : '3 Years';
+                    }}
+
+                    // PRE-CHECK 3: "How many years of exp/experience in X?" -> force experience pattern
                     // This prevents tech-specific patterns (microservices, cloud, etc.) from
                     // overriding when the question is clearly asking for numeric years.
-                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years|working expr|working experience|total working/.test(qNormalized) && !/what is your experience in|describe your experience/i.test(qNormalized);
+                    const isYearsOfExpQuestion = /how many years|years of exp|years of experience|total years|working expr|working experience|total working/.test(qNormalized) && !/what is your experience in|describe your experience/i.test(qNormalized) && !/team management|leading a team|lead a team/i.test(qNormalized);
                     if (isYearsOfExpQuestion) {{
                         // Find the experience pattern key explicitly
                         const expKeys = [
@@ -11221,12 +11246,22 @@ class SentinelAgent:
                 }}
                 
                 const qEls = chatLayer.querySelectorAll('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
-                let questionEl = qEls.length > 0 ? qEls[qEls.length - 1] : null;
+                let questionEl = null;
+                for (let i = qEls.length - 1; i >= 0; i--) {{
+                    const t = (qEls[i].innerText || '').trim();
+                    if (t.length > 0 && t !== '...' && !t.includes('typing')) {{
+                        questionEl = qEls[i];
+                        break;
+                    }}
+                }}
                 let qText = '';
                 if (questionEl) {{
-                    qText = questionEl.innerText || '';
+                    qText = questionEl.innerText.trim();
                 }} else {{
-                    qText = chatLayer.innerText || '';
+                    qText = (chatLayer.innerText || '').trim();
+                }}
+                if (!qText || qText.length < 2) {{
+                    return 'CHATBOT_WAITING';
                 }}
                 
                 const qLower = qText.toLowerCase();
@@ -11296,12 +11331,20 @@ class SentinelAgent:
                 }} else if (qLower.includes('date of birth') || qLower.includes('dob') || qLower.includes('birth date')) {{
                     answer = '17/12/2000';
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - DOB question detected, answering:', answer);
+                }} else if (/out of 10|scale of 10|1 to 10|1-10|rate your (understanding|ability|knowledge|skill|proficiency)|rate yourself/i.test(qLower) && !/years|how many years/i.test(qLower)) {{
+                    answer = /out of 5|scale of 5|1 to 5|1-5/.test(qLower) ? '5' : '9';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Rating scale question detected, answering:', answer);
+                }} else if (/team management|leading a team|lead a team|managed a team|manage a team|people management/i.test(qLower) && /years|how many|experience/i.test(qLower)) {{
+                    answer = '3 Years';
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Team management question detected, answering:', answer);
                 }} else {{
                     const isWorkLinkQ = /paste\s+a\s+link|link\s+to\s+(some\s+of\s+)?your\s+work|portfolio\s+link|github\s+link/i.test(qLower);
                     const isProjectDescQ = /describe\s+(the\s+)?(product|project)|project\s+you\s+last\s+worked\s+on|product\s+you\s+built/i.test(qLower);
                     let defaultVal = 'Yes';
                     if (isWorkLinkQ) defaultVal = 'https://siddhant3646.github.io/Portfolio/';
                     else if (isProjectDescQ) defaultVal = 'Led development of high-throughput distributed microservices for critical event management at Everbridge using Java, Spring Boot, and Kafka, improving system throughput by 40% and ensuring 99.99% uptime.';
+                    else if (/out of 5|scale of 5|1 to 5|1-5/.test(qLower)) defaultVal = '5';
+                    else if (/out of 10|scale of 10|1 to 10|1-10|rate your/i.test(qLower) && !/years|how many/i.test(qLower)) defaultVal = '9';
                     answer = fuzzyMatch(qText, chatLayer) || defaultVal;
                     
                     // Yes/no question detection — override numeric/empty fallbacks
@@ -11673,8 +11716,9 @@ class SentinelAgent:
                     const answerLower = answer.toLowerCase();
                     const answerNumericMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNumeric = answerNumericMatch ? parseFloat(answerNumericMatch[1]) : null;
+                    const isTeamLeadQ = /team management|leading a team|lead a team|managed a team|manage a team|people management/i.test(qLower);
                     const isExpQ = /experience|\bexpr\b|years|hands-on|hands on|worked on|indicate your experience/i.test(qLower);
-                    const expVal = (answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : (answerNumeric !== null ? answerNumeric : (isExpQ ? 4.2 : null));
+                    const expVal = isTeamLeadQ ? 3.0 : ((answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : (answerNumeric !== null ? answerNumeric : (isExpQ ? 4.2 : null)));
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
                     const scoreRadio = (label, radioEl) => {{
@@ -11745,8 +11789,35 @@ class SentinelAgent:
                         // Text keyword match (only if not a range/comparison)
                         const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(cleanLabel);
                         if (!isComparativeOrRange) {{
+                            const normCity = (s) => (s || '').toLowerCase()
+                                .replace(/\\bbengaluru\\b/g, 'bangalore')
+                                .replace(/\\bgurgaon\\b/g, 'gurugram')
+                                .replace(/\\bbombay\\b/g, 'mumbai')
+                                .replace(/\\bcalcutta\\b/g, 'kolkata')
+                                .replace(/\\bmadras\\b/g, 'chennai')
+                                .trim();
+
+                            const isLocationQ = /location|relocate|relocation|city|cities|office/i.test(qLower);
+                            if (isLocationQ) {{
+                                const normLbl = normCity(cleanLabel);
+                                const normAns = normCity(answerLower);
+                                if (normLbl === normAns || (normAns.length > 2 && normLbl.includes(normAns))) {{
+                                    return 99;
+                                }}
+                                if (normLbl.includes('bangalore')) {{
+                                    return 98;
+                                }}
+                                if (normLbl.includes('hyderabad') || normLbl.includes('pune') || normLbl.includes('remote') || normLbl.includes('any')) {{
+                                    return 85;
+                                }}
+                            }}
+
                             if (cleanLabel === answerLower) return 100;
                             if (cleanLabel.includes(answerLower) || answerLower.includes(cleanLabel)) return 85;
+                            const normLbl = normCity(cleanLabel);
+                            const normAns = normCity(answerLower);
+                            if (normLbl === normAns) return 98;
+                            if (normAns.length > 2 && (normLbl.includes(normAns) || normAns.includes(normLbl))) return 88;
                             const answerWords = answerLower.replace(/[^a-z0-9]/g, ' ').split(/\\s+/).filter(w => w.length > 2);
                             const labelWords = cleanLabel.replace(/[^a-z0-9]/g, ' ').split(/\\s+/).filter(w => w.length > 2);
                             if (answerWords.length > 0 && labelWords.length > 0) {{
@@ -11766,8 +11837,10 @@ class SentinelAgent:
                     for (const radio of radios) {{
                         let label = '';
                         if (radio.id) {{
-                            const labelEl = chatLayer.querySelector('label[for="' + radio.id + '"]') || document.querySelector('label[for="' + radio.id + '"]');
-                            if (labelEl) label = labelEl.innerText.trim();
+                            try {{
+                                const labelEl = chatLayer.querySelector('label[for="' + radio.id + '"]') || document.querySelector('label[for="' + radio.id + '"]');
+                                if (labelEl) label = labelEl.innerText.trim();
+                            }} catch (e) {{}}
                         }}
                         if (!label && radio.getAttribute('aria-label')) {{
                             label = radio.getAttribute('aria-label');
@@ -11839,14 +11912,27 @@ class SentinelAgent:
                     
                     if (!clickedRadio) {{
                         const allRadioInfo = radios.filter(r => !r.checked).map(r => {{
-                            const label = r.parentElement?.innerText || r.nextSibling?.textContent || r.id || r.value || '';
+                            let label = '';
+                            if (r.id) {{
+                                try {{
+                                    const lblEl = chatLayer.querySelector('label[for="' + r.id + '"]') || document.querySelector('label[for="' + r.id + '"]');
+                                    if (lblEl) label = lblEl.innerText.trim();
+                                }} catch (e) {{}}
+                            }}
+                            if (!label && r.getAttribute('aria-label')) label = r.getAttribute('aria-label');
+                            if (!label && r.value && r.value !== 'on') label = r.value;
+                            if (!label) {{
+                                label = r.parentElement?.innerText || r.nextSibling?.textContent || r.id || '';
+                            }}
                             return {{ radio: r, label: label, labelLower: label.toLowerCase().trim() }};
                         }});
                         
                         if (/\\bno\\b/.test(answerLower) || answerLower.includes('false')) {{
                             const noRadio = allRadioInfo.find(r => 
                                 r.labelLower === 'no' || r.labelLower.startsWith('no,') || 
-                                r.labelLower.startsWith('no ') || r.labelLower.startsWith('no.') || r.radio.id === 'No'
+                                r.labelLower.startsWith('no.') || 
+                                (r.labelLower.startsWith('no ') && !r.labelLower.includes('experience') && !r.labelLower.includes('preference')) ||
+                                r.radio.id === 'No'
                             );
                             if (noRadio) {{
                                 selectRadio(noRadio.radio);
@@ -14523,15 +14609,14 @@ return resolveDynamic(bestMatch);
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
                     
-                    // Technical skill, tool, framework, AI workflow, PF account, or joining date questions must NOT default to No
-                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad/i.test(t);
+                    // Technical skill, tool, framework, AI workflow, PF account, time zone, or joining date questions must NOT default to No
+                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad|time\\s*zone|timezone|us\\s*time|est\\s*hours|pst\\s*hours|cst\\s*hours|able\\s*to\\s*work|willing\\s*to\\s*work|overlap/i.test(t);
                     if (isPositiveIntent) return false;
                     
                     const negativePatterns = [
-                        'worked with', 'worked for', 'worked at',
-                        'work with', 'work for', 'work at',
-                        'worked in', 'work in',
                         'worked with us', 'work with us', 'work for us', 'worked for us',
+                        'worked at our', 'work at our', 'worked in our', 'work in our',
+                        'worked with the company', 'worked for the company', 'worked at this company', 'worked in this company',
                         'work before', 'worked before', 'ex-employee', 'former employee', 'employed before',
                         'employed by', 'employed at', 'employed with',
                         'previously employed', 'ever been employed', 'currently employed',
@@ -14831,6 +14916,12 @@ return resolveDynamic(bestMatch);
                         const clickInput = (input) => {
                             if (!input) return;
                             
+                            // If checkbox is already checked, never click or toggle it again
+                            if (input.type === 'checkbox' && input.checked) {
+                                window.__SENTINEL_DEBUG__&&console.log('clickInput: checkbox is already checked, skipping');
+                                return;
+                            }
+
                             // LinkedIn: click the <div role="radio"> container
                             const roleRadioParent = input.closest('[role="radio"]');
                             if (roleRadioParent) {
@@ -14876,37 +14967,31 @@ return resolveDynamic(bestMatch);
                             
                             try { input.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
 
-                            if (roleCheckboxParent) {
-                                window.__SENTINEL_DEBUG__&&console.log('Clicking role=checkbox/artdeco container:', roleCheckboxParent.innerText || '(custom checkbox)');
-                                roleCheckboxParent.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-                                roleCheckboxParent.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                                roleCheckboxParent.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-                                roleCheckboxParent.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                                roleCheckboxParent.click();
-                            }
+                            // Target element to activate: pick exactly ONE element to click (never multiple)
+                            // In React-controlled inputs, firing clicks on both label and input (or container and input)
+                            // triggers onChange twice in the same microtask, canceling the checked state.
+                            const clickTarget = label || roleCheckboxParent || input;
+                            window.__SENTINEL_DEBUG__&&console.log('clickInput: activating single target:', clickTarget.tagName, clickTarget.className || clickTarget.innerText);
+                            try { clickTarget.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
+                            clickTarget.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                            clickTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                            clickTarget.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                            clickTarget.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                            clickTarget.click();
 
-                            if (label) {
-                                window.__SENTINEL_DEBUG__&&console.log('Clicking input label:', label.innerText || label.textContent);
-                                try { label.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) {}
-                                label.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-                                label.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                                label.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-                                label.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                                label.click();
-                            }
-                            
-                            // Always also click and check input directly
-                            input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-                            input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                            input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-                            input.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                            input.click();
-                            
+                            // Ensure checked state for checkbox and radio inputs using native descriptor
                             if (input.type === 'checkbox' || input.type === 'radio') {
-                                input.checked = true;
+                                if (!input.checked) {
+                                    const nativeCheckedSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                                    if (nativeCheckedSetter) {
+                                        nativeCheckedSetter.call(input, true);
+                                    } else {
+                                        input.checked = true;
+                                    }
+                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                             }
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            input.dispatchEvent(new Event('click', { bubbles: true }));
                             input.dispatchEvent(new Event('blur', { bubbles: true }));
                         };
                         
@@ -15140,9 +15225,56 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
+                        // Helper: Check if an element is inside an Experience, Education, or Sub-form Editor that shouldn't be filled
+                        const isInsideExperienceOrEducationEditor = (el) => {
+                            if (!el) return false;
+                            
+                            // Explicit LinkedIn subform/repeater selectors
+                            const subformContainer = el.closest(
+                                '[data-test-form-builder-repeater-form], ' +
+                                '[data-test-single-typeahead-entity-form], ' +
+                                '[data-test-form-section*="experience" i], ' +
+                                '[data-test-form-section*="education" i], ' +
+                                '.jobs-easy-apply-form-section--experience, ' +
+                                '.jobs-easy-apply-form-section--education, ' +
+                                'div[data-test-repeater-item]'
+                            );
+                            if (subformContainer) return true;
+                            
+                            // Check if within any container with heading "Work experience", "Education", "Edit experience", "Add experience"
+                            let p = el.parentElement;
+                            for (let i = 0; i < 7 && p && p !== modal; i++) {
+                                if (p.querySelector('button[aria-label*="Delete experience" i], button[aria-label*="Add work experience" i], button[aria-label*="Edit experience" i], button[aria-label*="Delete education" i]')) {
+                                    return true;
+                                }
+                                const h = p.querySelector('h1, h2, h3, h4, .jobs-easy-apply-form-section__heading, legend');
+                                if (h) {
+                                    const hText = (h.innerText || h.textContent || '').toLowerCase().trim();
+                                    if ((hText.includes('work experience') || hText.includes('edit experience') || hText.includes('add experience') || hText.includes('edit education')) &&
+                                        !hText.includes('additional') && !hText.includes('screening') && !hText.includes('question') && !hText.includes('general')) {
+                                        return true;
+                                    }
+                                }
+                                p = p.parentElement;
+                            }
+                            
+                            // Also check input/select label or context
+                            const label = (el.getAttribute('aria-label') || el.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || '').toLowerCase();
+                            if (label.includes('your title') || label.includes('dates of employment') || label.includes('i currently work here') ||
+                                label.includes('from month') || label.includes('from year') || label.includes('to month') || label.includes('to year')) {
+                                return true;
+                            }
+                            
+                            return false;
+                        };
+
                         // 1. Handle text/numeric inputs
                         const textInputs = queryAllDeep('input[type="text"], input[type="number"], input:not([type]), textarea', modal);
                         for (const input of textInputs) {
+                            if (isInsideExperienceOrEducationEditor(input)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field inside work experience/education sub-form:', input);
+                                continue;
+                            }
                             // DATE PICKER HANDLING: LinkedIn date pickers use data-testid="date-picker-input"
                             // These are React-controlled text inputs that accept a typed mm/dd/yyyy value.
                             // NOTE: This IIFE is synchronous (Playwright evaluate runs it in one microtask —
@@ -15430,19 +15562,22 @@ return resolveDynamic(bestMatch);
                                 let existingValue = readFieldValue(input);
                                 const errorText = (inputParent?.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field')?.innerText || '').toLowerCase();
                                 const isNumberError = errorText.includes('number') || errorText.includes('decimal') || errorText.includes('numeric') || /numeric/i.test(input.id || '') || /numeric/i.test(input.name || '') || input.type === 'number';
+                                const isInvalidError = errorText.includes('invalid') || errorText.includes('valid') || errorText.includes('enter a') || errorText.includes('please enter') || errorText.includes('required');
                                 const isObviousInvalid = !existingValue || 
+                                                         isInvalidError ||
                                                          /please provide|not applicable|unanswered/i.test(existingValue) ||
                                                          (isNumberError && !/^\\d+(\\.\\d+)?$/.test((existingValue || '').trim()));
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
-                                if (!resolvedAnswer) {
-                                    if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
+                                if (!resolvedAnswer || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && /last working day|lwd|official last|notice|join/i.test(lowerLabel))) {
+                                    if (/last working day|lwd|official last|notice|np|how soon|join/i.test(lowerLabel)) resolvedAnswer = '15';
+                                    else if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
                                     else if (/last\\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
                                     else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
                                     else if (/work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel) || /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
-                                    else if (isNumberError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
+                                    else if (isNumberError || isInvalidError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }
                                 
                                 let finalValue;
@@ -15456,7 +15591,7 @@ return resolveDynamic(bestMatch);
                                 // FIX: If the field id contains "numeric" or input is number type,
                                 // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
                                 const fieldId = input.id || '';
-                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number';
+                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText));
                                 if (isNumericField) {
                                     const numericVal = (finalValue || '').replace(/[^0-9.]/g, '');
                                     if (numericVal) {
@@ -15601,23 +15736,28 @@ return resolveDynamic(bestMatch);
                                 answer = 'https://siddhant3646.github.io/Portfolio/';
                             }
 
-                            // If it's a numeric input, extract just the number from the answer (not for LWD dates, date fields, textareas, or Yes/No questions)
+                            // If it's a numeric input, extract just the number from the answer (not for date fields, textareas, or Yes/No questions)
                             const isYesNoLabel = isLikelyYesNoQuestion(labelText) || /^(do|does|did|have|has|had|are|is|can|will|would)\b/i.test((labelText || '').trim());
-                            if (answer && isNumericInput && !isYesNoLabel && !isLwdDateQuestion && !isDateField && input.tagName !== 'TEXTAREA') {
-                                const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
-                                if (numericMatch) {
-                                    let numVal = parseFloat(numericMatch[1]);
-                                    // LinkedIn rejects decimals in experience/skill fields — format as whole integer
-                                    if (numVal % 1 !== 0 && !/month/i.test(labelText)) {
-                                        numVal = Math.round(numVal);
-                                        window.__SENTINEL_DEBUG__&&console.log('Rounded numeric field for LinkedIn:', numericMatch[1], '->', numVal);
+                            if (answer && isNumericInput && !isYesNoLabel && !isDateField && input.tagName !== 'TEXTAREA') {
+                                if (isLwdDateQuestion) {
+                                    answer = '15';
+                                    window.__SENTINEL_DEBUG__&&console.log('Numeric field for LWD question — using numeric notice days: 15');
+                                } else {
+                                    const numericMatch = answer.match(/(\\d+\\.?\\d*)/);
+                                    if (numericMatch) {
+                                        let numVal = parseFloat(numericMatch[1]);
+                                        // LinkedIn rejects decimals in experience/skill fields — format as whole integer
+                                        if (numVal % 1 !== 0 && !/month/i.test(labelText)) {
+                                            numVal = Math.round(numVal);
+                                            window.__SENTINEL_DEBUG__&&console.log('Rounded numeric field for LinkedIn:', numericMatch[1], '->', numVal);
+                                        }
+                                        answer = String(numVal);
+                                        window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
+                                    } else if (isExplicitNumberField) {
+                                        // Fallback ONLY if the HTML input element is strictly numeric
+                                        answer = !isWorkModeQ && /notice|np|how soon|how quickly|when can you join|joining|lwd|last working/i.test(labelText) ? '15' : '4';
+                                        window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                     }
-                                    answer = String(numVal);
-                                    window.__SENTINEL_DEBUG__&&console.log('Extracted numeric value for number field:', answer);
-                                } else if (isExplicitNumberField) {
-                                    // Fallback ONLY if the HTML input element is strictly numeric
-                                    answer = !isWorkModeQ && /notice|np|how soon|how quickly|when can you join|joining/i.test(labelText) ? '15' : '4';
-                                    window.__SENTINEL_DEBUG__&&console.log('Fallback numeric value for number field:', answer);
                                 }
                             }
 
@@ -15882,6 +16022,10 @@ return resolveDynamic(bestMatch);
                         // Process native <select> elements
                         for (const select of nativeSelects) {
                             if (!isVisible(select)) continue;
+                            if (isInsideExperienceOrEducationEditor(select)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping select inside work experience/education sub-form:', select);
+                                continue;
+                            }
                             
                             // Capture pre-filled selects before label detection (only if truly filled, not placeholder, and no error)
                             let hasSelectError = select.getAttribute('aria-invalid') === 'true' || 
@@ -17167,6 +17311,7 @@ return resolveDynamic(bestMatch);
                         // Process custom LinkedIn dropdowns (comboboxes)
                         for (const dropdown of customDropdowns) {
                             if (!isVisible(dropdown) || dropdown.tagName === 'SELECT') continue;
+                            if (isInsideExperienceOrEducationEditor(dropdown)) continue;
                             if (dropdown.getAttribute('data-sentinel-handled') === 'true') continue;
                             
                             const parentFormEl = dropdown.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
@@ -17369,6 +17514,7 @@ return resolveDynamic(bestMatch);
                         // 3. Handle Radio buttons (e.g., Yes/No questions)
                         const fieldsets = queryAllDeep('fieldset, [role="radiogroup"]', modal);
                         for (const fieldset of fieldsets) {
+                            if (isInsideExperienceOrEducationEditor(fieldset)) continue;
                             let legend = fieldset.querySelector('legend')?.innerText || '';
                             if (!legend) {
                                 const directLabel = fieldset.querySelector('.fb-dash-form-element__label, [data-test-form-element-label], .artdeco-form-field__label, .jobs-easy-apply-form-section__question-label');
@@ -18047,20 +18193,45 @@ return resolveDynamic(bestMatch);
 
                         // Helper: get the question text for a group/fieldset (legend or heading)
                         function getGroupQuestionText(fieldset) {
+                            const cleanText = (str) => (str || '').replace(/\\*$/, '').replace(/\\*\\s*This field is required/gi, '').trim();
+
+                            // 1. Check legend inside fieldset
                             const legend = fieldset.querySelector('legend');
-                            if (legend && legend.innerText.trim().length > 3) return legend.innerText.trim();
-                            const heading = fieldset.querySelector('label, [class*="label"], [class*="header"], [class*="question"], .artdeco-form-field__label, [data-test-form-element-label]');
-                            if (heading && heading.innerText.trim().length > 3) return heading.innerText.trim();
-                            
-                            // Check parent container label
-                            const parentContainer = fieldset.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element]');
-                            if (parentContainer) {
-                                const pLabel = parentContainer.querySelector('label, [class*="label"], legend');
-                                if (pLabel && pLabel.innerText.trim().length > 3) return pLabel.innerText.trim();
+                            if (legend && legend.innerText.trim().length > 2) return cleanText(legend.innerText);
+
+                            // 2. Explicit question label selectors (exclude option labels)
+                            const questionSelectors = [
+                                '.fb-dash-form-element__label',
+                                '[data-test-form-element-label]',
+                                '.artdeco-form-field__label',
+                                '.jobs-easy-apply-form-section__question-label',
+                                '[data-test-form-builder-fieldset-label-title]',
+                                '[class*="question-title"]',
+                                '[class*="question-text"]',
+                                'h3', 'h4', 'p.fb-dash-form-element__title'
+                            ];
+                            for (const sel of questionSelectors) {
+                                const qEl = fieldset.querySelector(sel);
+                                if (qEl && qEl.innerText.trim().length > 2 && !qEl.querySelector('input')) {
+                                    return cleanText(qEl.innerText);
+                                }
                             }
                             
-                            // EXTENDED: LinkedIn places question text OUTSIDE the fieldset as a preceding sibling.
-                            // Walk up to 3 ancestor levels looking at previous siblings.
+                            // 3. Check parent container label
+                            const parentContainer = fieldset.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field');
+                            if (parentContainer && parentContainer !== fieldset) {
+                                const pLegend = parentContainer.querySelector('legend');
+                                if (pLegend && pLegend.innerText.trim().length > 2) return cleanText(pLegend.innerText);
+
+                                for (const sel of questionSelectors) {
+                                    const pLabel = parentContainer.querySelector(sel);
+                                    if (pLabel && pLabel.innerText.trim().length > 2 && !pLabel.querySelector('input')) {
+                                        return cleanText(pLabel.innerText);
+                                    }
+                                }
+                            }
+                            
+                            // 4. Preceding siblings (walk up to 3 ancestor levels)
                             let ancestor = fieldset;
                             for (let lvl = 0; lvl < 3; lvl++) {
                                 let sib = ancestor.previousElementSibling;
@@ -18070,12 +18241,25 @@ return resolveDynamic(bestMatch);
                                         !sib.querySelector('input[type="checkbox"], input[type="radio"]') &&
                                         !t.toLowerCase().includes('this field is required')) {
                                         window.__SENTINEL_DEBUG__&&console.log('getGroupQuestionText: found label in prev-sibling (lvl', lvl, '):', t.substring(0, 80));
-                                        return t.replace(/\\*$/, '').replace(/\\* This field is required/gi, '').trim();
+                                        return cleanText(t);
                                     }
                                     sib = sib.previousElementSibling;
                                 }
                                 if (!ancestor.parentElement) break;
                                 ancestor = ancestor.parentElement;
+                            }
+
+                            // 5. Only check generic label if it is NOT an option label
+                            const cbIds = new Set(Array.from(fieldset.querySelectorAll('input[type="checkbox"]')).map(c => c.id).filter(Boolean));
+                            const labels = Array.from(fieldset.querySelectorAll('label'));
+                            for (const lbl of labels) {
+                                const forAttr = lbl.getAttribute('for');
+                                if (forAttr && cbIds.has(forAttr)) continue;
+                                if (lbl.closest('.fb-checkbox, .artdeco-checkbox, [data-test-checkbox]')) continue;
+                                const t = cleanText(lbl.innerText);
+                                if (t.length > 2 && isQuestionText(t)) {
+                                    return t;
+                                }
                             }
                             return '';
                         }
@@ -18120,13 +18304,27 @@ return resolveDynamic(bestMatch);
 
                         // Phase 1: Handle multi-checkbox fieldsets group-by-group
                         const handledCheckboxes = new Set();
-                        const multiCheckboxFieldsets = Array.from(
-                            modal.querySelectorAll('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field')
-                        ).filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
+                        const rawCheckboxGroups = queryAllDeep('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field', modal)
+                            .filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
+
+                        const seenCbKeySets = new Set();
+                        const multiCheckboxFieldsets = [];
+                        for (const el of rawCheckboxGroups) {
+                            const cbs = Array.from(el.querySelectorAll('input[type="checkbox"]'));
+                            const key = cbs.map(c => c.id || c.name || c.value || Array.from(c.parentElement?.children || []).indexOf(c)).join('|');
+                            if (!seenCbKeySets.has(key)) {
+                                seenCbKeySets.add(key);
+                                multiCheckboxFieldsets.push(el);
+                            }
+                        }
 
                         window.__SENTINEL_DEBUG__&&console.log('Found', multiCheckboxFieldsets.length, 'multi-checkbox fieldsets');
 
                         for (const fieldset of multiCheckboxFieldsets) {
+                            if (isInsideExperienceOrEducationEditor(fieldset)) continue;
+                            const groupCbsCheck = fieldset.querySelectorAll('input[type="checkbox"]');
+                            if (Array.from(groupCbsCheck).every(cb => handledCheckboxes.has(cb) || cb.checked)) continue;
+
                             const groupQuestion = getGroupQuestionText(fieldset);
                             window.__SENTINEL_DEBUG__&&console.log('Checkbox group question:', groupQuestion.substring(0, 80));
 
@@ -18188,7 +18386,7 @@ return resolveDynamic(bestMatch);
                                 }
                             }
 
-                            const groupAnswer = groupQuestion ? fuzzyMatch(groupQuestion) : null;
+                            const groupAnswer = groupQuestion ? (shouldDefaultToNo(groupQuestion) ? 'No' : fuzzyMatch(groupQuestion)) : null;
                             window.__SENTINEL_DEBUG__&&console.log('Checkbox group answer:', groupAnswer);
 
                             const groupCbs = fieldset.querySelectorAll('input[type="checkbox"]');
@@ -18331,15 +18529,56 @@ return resolveDynamic(bestMatch);
                             //      undetectable with answer resolved to "Not Applicable").
                             // On LinkedIn these fieldsets always list "Not Applicable" first, so this
                             // safely unblocks the form.
+                            // ===== YES/NO & NOT-APPLICABLE FALLBACK =====
                             if (!anyCheckedInGroup) {
-                                const isNotApplicable = groupAnswer && groupAnswer.toLowerCase() === 'not applicable';
-                                const noAnswer = !groupAnswer;
-                                if ((groupAllLabelsEmpty && noAnswer) || isNotApplicable) {
-                                    const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
-                                    if (firstUnchecked) {
-                                        window.__SENTINEL_DEBUG__&&console.log('NOT-APPLICABLE FALLBACK: no checkbox matched → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
-                                        clickInput(firstUnchecked);
-                                        formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox', options: groupOptions, selectedOption: 'Not Applicable (auto)', source: 'default_rule' });
+                                // 1. Yes/No Group Fallback: if group has Yes and No options, pick Yes (or No if compliance/conflict)
+                                const optMap = new Map();
+                                for (const cb of groupCbs) {
+                                    const lbl = getOptionLabel(cb).toLowerCase().trim();
+                                    if (lbl) optMap.set(lbl, cb);
+                                }
+                                const isOptionYes = (k) => {
+                                    if (!k) return false;
+                                    const s = k.toLowerCase().trim();
+                                    return s === 'yes' || s.startsWith('yes ') || s.startsWith('yes,') || s.startsWith('yes -') || s.startsWith('yes(') || s.startsWith('yes/') || s.endsWith(' yes') || s.includes(' yes ');
+                                };
+                                const isOptionNo = (k) => {
+                                    if (!k) return false;
+                                    const s = k.toLowerCase().trim();
+                                    return (s === 'no' || s.startsWith('no ') || s.startsWith('no,') || s.startsWith('no -') || s.startsWith('no(') || s.startsWith('no/') || s.endsWith(' no') || s.includes(' no ')) && !isOptionYes(s);
+                                };
+                                const hasYes = Array.from(optMap.keys()).some(isOptionYes);
+                                const hasNo = Array.from(optMap.keys()).some(isOptionNo);
+                                
+                                if (hasYes && hasNo) {
+                                    const defNo = shouldDefaultToNo(groupQuestion);
+                                    const matchFn = defNo ? isOptionNo : isOptionYes;
+                                    let targetCb = null;
+                                    for (const [k, cb] of optMap.entries()) {
+                                        if (matchFn(k)) {
+                                            targetCb = cb;
+                                            break;
+                                        }
+                                    }
+                                    if (targetCb && isVisible(targetCb) && !targetCb.checked) {
+                                        window.__SENTINEL_DEBUG__&&console.log('YES/NO CHECKBOX GROUP FALLBACK: Selecting', defNo ? 'No' : 'Yes', 'for group:', groupQuestion.substring(0, 60));
+                                        clickInput(targetCb);
+                                        anyCheckedInGroup = true;
+                                        formResults.push({ question: groupQuestion || 'Yes/No Checkbox', answer: defNo ? 'No' : 'Yes', inputType: 'checkbox', options: groupOptions, selectedOption: defNo ? 'No' : 'Yes', source: 'default_rule' });
+                                    }
+                                }
+
+                                // 2. Not-Applicable fallback
+                                if (!anyCheckedInGroup) {
+                                    const isNotApplicable = groupAnswer && groupAnswer.toLowerCase() === 'not applicable';
+                                    const noAnswer = !groupAnswer;
+                                    if ((groupAllLabelsEmpty && noAnswer) || isNotApplicable) {
+                                        const firstUnchecked = Array.from(groupCbs).find(cb => isVisible(cb) && !cb.checked);
+                                        if (firstUnchecked) {
+                                            window.__SENTINEL_DEBUG__&&console.log('NOT-APPLICABLE FALLBACK: no checkbox matched → clicking first checkbox for group:', groupQuestion.substring(0, 60) || '(unknown)');
+                                            clickInput(firstUnchecked);
+                                            formResults.push({ question: groupQuestion || 'Affiliation/EmploymentType', answer: 'Not Applicable (auto)', inputType: 'checkbox', options: groupOptions, selectedOption: 'Not Applicable (auto)', source: 'default_rule' });
+                                        }
                                     }
                                 }
                             }
@@ -18349,6 +18588,7 @@ return resolveDynamic(bestMatch);
                         for (const checkbox of checkboxes) {
                             if (handledCheckboxes.has(checkbox)) continue;
                             if (!isVisible(checkbox) || checkbox.checked) continue;
+                            if (isInsideExperienceOrEducationEditor(checkbox)) continue;
                             
                             // Get label text for the checkbox - try multiple methods
                             let labelText = '';
@@ -18612,6 +18852,51 @@ return resolveDynamic(bestMatch);
                             }
                         }
                         
+                        // 3.6 Checkbox group error recovery:
+                        // If any container has an active error (.artdeco-inline-feedback--error)
+                        // and contains unchecked checkboxes, attempt to resolve it by selecting the matching or "Yes" option
+                        const errorFeedbackEls = queryAllDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                        for (const errEl of errorFeedbackEls) {
+                            if (!isVisible(errEl)) continue;
+                            const container = errEl.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question');
+                            if (!container || isInsideExperienceOrEducationEditor(container)) continue;
+                            const groupCbs = Array.from(container.querySelectorAll('input[type="checkbox"]')).filter(c => isVisible(c));
+                            if (groupCbs.length > 0 && !groupCbs.some(c => c.checked)) {
+                                const qText = getGroupQuestionText(container);
+                                const qAns = qText ? (shouldDefaultToNo(qText) ? 'No' : fuzzyMatch(qText)) : null;
+                                const isOptionYes = (k) => {
+                                    if (!k) return false;
+                                    const s = k.toLowerCase().trim();
+                                    return s === 'yes' || s.startsWith('yes ') || s.startsWith('yes,') || s.startsWith('yes -') || s.startsWith('yes(') || s.startsWith('yes/') || s.endsWith(' yes') || s.includes(' yes ');
+                                };
+                                const isOptionNo = (k) => {
+                                    if (!k) return false;
+                                    const s = k.toLowerCase().trim();
+                                    return (s === 'no' || s.startsWith('no ') || s.startsWith('no,') || s.startsWith('no -') || s.startsWith('no(') || s.startsWith('no/') || s.endsWith(' no') || s.includes(' no ')) && !isOptionYes(s);
+                                };
+                                let chosenCb = null;
+                                for (const cb of groupCbs) {
+                                    const opt = getOptionLabel(cb).toLowerCase().trim();
+                                    if (qAns) {
+                                        const qAnsLower = qAns.toLowerCase().trim();
+                                        if (opt === qAnsLower || opt.startsWith(qAnsLower + ' ') || opt.endsWith(' ' + qAnsLower) || opt.includes(' ' + qAnsLower + ' ')) {
+                                            chosenCb = cb;
+                                            break;
+                                        }
+                                    }
+                                    if (isOptionYes(opt) && (!qAns || !isOptionNo(qAns))) {
+                                        chosenCb = cb;
+                                    }
+                                }
+                                if (!chosenCb && groupCbs.length > 0) chosenCb = groupCbs[0];
+                                if (chosenCb && !chosenCb.checked) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Error recovery: activating checkbox in error container:', getOptionLabel(chosenCb));
+                                    clickInput(chosenCb);
+                                    formResults.push({ question: qText || 'Error recovery checkbox', answer: getOptionLabel(chosenCb), inputType: 'checkbox', options: groupCbs.map(c => getOptionLabel(c)), selectedOption: getOptionLabel(chosenCb), source: 'error_recovery' });
+                                }
+                            }
+                        }
+
                         // 4. Form Validation Check: Are we missing anything required?
                         const checkForErrors = () => {
                             const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
@@ -18732,15 +19017,16 @@ return resolveDynamic(bestMatch);
                             return false;
                         };
 
-                        // 1. If an inner sub-form (e.g. Work Experience / Education editor) has a Save/Opslaan button,
+                        // 1. If an inner sub-form (e.g. non-experience subform) has a Save/Opslaan button,
                         // click Save to commit the entry before clicking footer Next.
+                        // NEVER click Save if it belongs to a Work Experience or Education editor (we do not edit profile experience).
                         const innerSaveBtn = queryDeep('button[aria-label*="Save"], button[aria-label*="Opslaan"]', modal) ||
                                              findByText('button', 'opslaan', true, modal) ||
                                              findByText('button', 'save', true, modal) ||
                                              findByText('button', 'opslaan', false, modal) ||
                                              findByText('button', 'save', false, modal);
                         
-                        if (innerSaveBtn && isVisible(innerSaveBtn) && !isInvalidActionButton(innerSaveBtn)) {
+                        if (innerSaveBtn && isVisible(innerSaveBtn) && !isInvalidActionButton(innerSaveBtn) && !isInsideExperienceOrEducationEditor(innerSaveBtn)) {
                             window.__SENTINEL_DEBUG__&&console.log('Found sub-form Save/Opslaan button — clicking to commit entry:', innerSaveBtn.innerText || innerSaveBtn.getAttribute('aria-label'));
                             try { innerSaveBtn.scrollIntoView({block: 'center', behavior: 'instant'}); } catch(e) {}
                             innerSaveBtn.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}));
@@ -18751,23 +19037,27 @@ return resolveDynamic(bestMatch);
                             return 'LINKEDIN_FORM_STEP_CONTINUED' + (formResults.length > 0 ? '|' + JSON.stringify(formResults) : '');
                         }
 
-                        // 2. If sitting on review summary list with an invalid card (red error) and no active editing input,
-                        // try to click Remove on the invalid card to unblock the form.
-                        const visibleErrorEl = queryDeep('.artdeco-inline-feedback--error', modal);
-                        const hasActiveInputs = queryAllDeep('input[type="text"], textarea', modal).some(i => isVisible(i) && !i.disabled);
-                        if (visibleErrorEl && !hasActiveInputs) {
-                            const errorCard = visibleErrorEl.closest('[class*="card"], [class*="item"], li, .jobs-easy-apply-form-section__grouping, div[data-test*="card"]');
-                            if (errorCard) {
-                                const removeBtn = findByText('button', 'remove', true, errorCard) ||
-                                                  findByText('button', 'verwijderen', true, errorCard) ||
-                                                  findByText('button', 'remove', false, errorCard) ||
-                                                  findByText('button', 'verwijderen', false, errorCard) ||
-                                                  queryDeep('button[aria-label*="Remove"], button[aria-label*="Verwijderen"]', errorCard);
-                                if (removeBtn && isVisible(removeBtn)) {
-                                    window.__SENTINEL_DEBUG__&&console.log('Found Remove button on invalid review card — clicking Remove to unblock Next:', removeBtn.innerText);
-                                    removeBtn.click();
-                                    return 'LINKEDIN_INVALID_CARD_REMOVED';
-                                }
+                        // 2. If sitting on review summary list or form step with an invalid card (red error) or stuck experience editor,
+                        // try to click Delete experience / Remove / Cancel on the invalid card to unblock the form.
+                        const visibleErrorEl = queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                        const isExpEditorError = visibleErrorEl && isInsideExperienceOrEducationEditor(visibleErrorEl);
+                        const hasActiveInputs = queryAllDeep('input[type="text"], textarea', modal).some(i => isVisible(i) && !i.disabled && !isInsideExperienceOrEducationEditor(i));
+                        if (visibleErrorEl && (!hasActiveInputs || isExpEditorError)) {
+                            const errorCard = visibleErrorEl.closest('[class*="card"], [class*="item"], li, .jobs-easy-apply-form-section__grouping, div[data-test*="card"], div[class*="experience"], div[class*="editor"]');
+                            const deleteBtn = findByText('button', 'delete experience', false, modal) ||
+                                              (errorCard ? findByText('button', 'delete experience', false, errorCard) : null) ||
+                                              (errorCard ? findByText('button', 'delete', true, errorCard) : null) ||
+                                              (errorCard ? queryDeep('button[aria-label*="Delete" i]', errorCard) : null);
+                            const removeBtn = (errorCard ? (findByText('button', 'remove', true, errorCard) ||
+                                              findByText('button', 'verwijderen', true, errorCard) ||
+                                              findByText('button', 'remove', false, errorCard) ||
+                                              findByText('button', 'verwijderen', false, errorCard) ||
+                                              queryDeep('button[aria-label*="Remove"], button[aria-label*="Verwijderen"]', errorCard)) : null) ||
+                                              deleteBtn;
+                            if (removeBtn && isVisible(removeBtn)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Found Delete/Remove button on invalid review/experience card — clicking to unblock Next:', removeBtn.innerText);
+                                removeBtn.click();
+                                return 'LINKEDIN_INVALID_CARD_REMOVED';
                             }
                         }
 

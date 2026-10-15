@@ -9424,10 +9424,21 @@
         "official notice period if serving np mention lwd",
         "official notice period if serving np mention lwd:",
         "notice period last working date if serving notice?",
-        "if you are serving the np then what would be your lwd?"
+        "if you are serving the np then what would be your lwd?",
+        "we need immediate joiners only? serving candidates like 10 to 20 days? please mentioned your last working day?",
+        "we need immediate joiners only serving candidates like 10 to 20 days please mentioned your last working day",
+        "we need immediate joiners only? serving candidates like 10 to 20 days? please mention your last working day?",
+        "we need immediate joiners only serving candidates like 10 to 20 days please mention your last working day",
+        "serving candidates like 10 to 20 days? please mentioned your last working day?",
+        "serving candidates like 10 to 20 days please mentioned your last working day",
+        "serving candidates like 10 to 20 days? please mention your last working day?",
+        "serving candidates like 10 to 20 days please mention your last working day",
+        "please mentioned your last working day",
+        "please mentioned your last working day?"
       ],
       "input_type_defaults": {
         "text": "__DYNAMIC_LWD__",
+        "number": "15",
         "radio": "1 Month",
         "select": "Serving Notice Period",
         "textarea": "__DYNAMIC_LWD__",
@@ -85023,7 +85034,13 @@
         "do you have all your previous company documents offer letter and relieving letters",
         "previous company documents offer letter and relieving letters",
         "company documents offer letter relieving letters",
-        "do you have offer letter and relieving letters"
+        "do you have offer letter and relieving letters",
+        "do you have all the companies supporting documents like(pf deduction, expereince letter, reliving letter, pay slips etc) yes/no?",
+        "do you have all the companies supporting documents",
+        "all the companies supporting documents",
+        "supporting documents like pf deduction experience letter relieving letter pay slips",
+        "supporting documents like(pf deduction, expereince letter, reliving letter, pay slips etc)",
+        "pf deduction, expereince letter, reliving letter, pay slips"
       ],
       "input_type_defaults": {
         "select-aggressive": "Yes",
@@ -237649,9 +237666,14 @@
     "us_time_zone_candidates_outside_us": {
       "patterns": [
         "are you able to work in us time zones?(for candidates outside the us only)",
+        "are you able to work in us time zones? (for candidates outside the us only)",
+        "are you able to work in us time zones (for candidates outside the us only)",
+        "are you able to work in us time zones?(for candidates outside the us only)*",
+        "are you able to work in us time zones? (for candidates outside the us only)*",
         "are you able to work in us time zones",
         "work in us time zones",
         "work in us time zones(for candidates outside the us only)",
+        "work in us time zones (for candidates outside the us only)",
         "for candidates outside the us only",
         "able to work in us time zones"
       ],

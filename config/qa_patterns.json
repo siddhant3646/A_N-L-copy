@@ -9425,14 +9425,6 @@
         "official notice period if serving np mention lwd:",
         "notice period last working date if serving notice?",
         "if you are serving the np then what would be your lwd?",
-        "we need immediate joiners only? serving candidates like 10 to 20 days? please mentioned your last working day?",
-        "we need immediate joiners only serving candidates like 10 to 20 days please mentioned your last working day",
-        "we need immediate joiners only? serving candidates like 10 to 20 days? please mention your last working day?",
-        "we need immediate joiners only serving candidates like 10 to 20 days please mention your last working day",
-        "serving candidates like 10 to 20 days? please mentioned your last working day?",
-        "serving candidates like 10 to 20 days please mentioned your last working day",
-        "serving candidates like 10 to 20 days? please mention your last working day?",
-        "serving candidates like 10 to 20 days please mention your last working day",
         "please mentioned your last working day",
         "please mentioned your last working day?"
       ],
@@ -9448,6 +9440,31 @@
         "notice period in days",
         "days notice"
       ]
+    },
+    "immediate_joiners_serving_notice_days": {
+      "category": "notice_period",
+      "default": "15",
+      "priority": 18,
+      "patterns": [
+        "we need immediate joiners only? serving candidates like 10 to 20 days? please mentioned your last working day?",
+        "we need immediate joiners only serving candidates like 10 to 20 days please mentioned your last working day",
+        "we need immediate joiners only? serving candidates like 10 to 20 days? please mention your last working day?",
+        "we need immediate joiners only serving candidates like 10 to 20 days please mention your last working day",
+        "serving candidates like 10 to 20 days? please mentioned your last working day?",
+        "serving candidates like 10 to 20 days please mentioned your last working day",
+        "serving candidates like 10 to 20 days? please mention your last working day?",
+        "serving candidates like 10 to 20 days please mention your last working day",
+        "serving candidates like 10 to 20 days",
+        "immediate joiners only? serving candidates like 10 to 20 days"
+      ],
+      "input_type_defaults": {
+        "text": "15",
+        "number": "15",
+        "radio": "Serving Notice Period",
+        "select": "Serving Notice Period",
+        "textarea": "Currently serving notice period with 15 days remaining.",
+        "checkbox": "Yes"
+      }
     },
     "ai_coding_tools_used": {
       "category": "skills",

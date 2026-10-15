@@ -1508,6 +1508,10 @@ class SentinelAgent:
         # NP abbreviation (Notice Period) - after composite check
         if is_np_abbreviation:
             return '15', 0.98
+
+        # Immediate joiners / serving candidates 10 to 20 days - numeric notice days filter
+        if any(phrase in question_lower for phrase in ['10 to 20 days', '10-20 days', 'serving candidates like', 'immediate joiners only', 'immediate joiner only']):
+            return '15', 0.99
         
         # LWD (Last Working Day/Date) questions - calculate actual date 15 days from now
         if is_lwd_question:
@@ -3759,12 +3763,10 @@ class SentinelAgent:
                                 }
                                 if (allOpts.length === 0) return null;
                                 // Prefer options containing "bangalore", "bengaluru", "karnataka", "india"
-                                let best = allOpts.find(o =>
-                                    o.text.toLowerCase().includes('bangalore') ||
-                                    o.text.toLowerCase().includes('bengaluru') ||
-                                    o.text.toLowerCase().includes('karnataka') ||
-                                    o.text.toLowerCase().includes('india')
-                                );
+                                let best = allOpts.find(o => {
+                                    const t = o.text.toLowerCase();
+                                    return (t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india')) && !t.includes('cape verde');
+                                });
                                 if (!best) return null;
                                 best.el.click();
                                 best.el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
@@ -3775,20 +3777,30 @@ class SentinelAgent:
                             if clicked_text:
                                 print(f"   ✅ Clicked location option: {clicked_text}")
                             else:
-                                # Fallback: Playwright locator click
+                                # Fallback: Playwright locator click ONLY if option text matches Bangalore/India
                                 found = False
                                 for sel in option_selectors:
                                     try:
-                                        opt = self._page.locator(sel).first
-                                        if await opt.count() > 0 and await opt.is_visible():
-                                            await opt.click(force=True, timeout=2000)
-                                            print(f"   ✅ Clicked location typeahead option via locator: {sel}")
-                                            found = True
+                                        opts = self._page.locator(sel)
+                                        opt_cnt = await opts.count()
+                                        for oi in range(opt_cnt):
+                                            cur_opt = opts.nth(oi)
+                                            if await cur_opt.is_visible():
+                                                cur_txt = (await cur_opt.inner_text() or '').strip().lower()
+                                                if any(c in cur_txt for c in ['bangalore', 'bengaluru', 'karnataka', 'india']) and 'cape verde' not in cur_txt:
+                                                    await cur_opt.click(force=True, timeout=2000)
+                                                    print(f"   ✅ Clicked location typeahead option via locator ({sel}): {cur_txt}")
+                                                    found = True
+                                                    break
+                                        if found:
                                             break
                                     except Exception:
                                         continue
                                 if not found:
-                                    print("   ⚠️ No location dropdown options found")
+                                    print("   ⚠️ No location dropdown option matched Bangalore/India; pressing ArrowDown + Enter")
+                                    await self._page.keyboard.press('ArrowDown')
+                                    await asyncio.sleep(0.2)
+                                    await self._page.keyboard.press('Enter')
 
                             await asyncio.sleep(0.5)
                             continue
@@ -13762,7 +13774,7 @@ class SentinelAgent:
                         } else if (isCompanyOrPayroll) {
                             bestMatch = 'Everbridge';
                         } else if (isLwdQ) {
-                            bestMatch = resolveDynamic('__DYNAMIC_LWD__');
+                            bestMatch = (/10 to 20 days|10-20 days|immediate joiner/i.test(qLower)) ? '15' : resolveDynamic('__DYNAMIC_LWD__');
                         } else if (isTechExpQ && (isExpQ || isYearsQ)) {
                             bestMatch = yearsDefault;
                         } else if (isYearsQ) {
@@ -13775,7 +13787,7 @@ class SentinelAgent:
                             } else if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
                                 bestMatch = '(6) --Serving Notice Period';
                             } else {
-                                bestMatch = isLwdQ ? resolveDynamic('__DYNAMIC_LWD__') : '15';
+                                bestMatch = (isLwdQ && !/10 to 20 days|10-20 days|immediate joiner/i.test(qLower)) ? resolveDynamic('__DYNAMIC_LWD__') : '15';
                             }
                         } else if (isSalaryQ) {
                             // Smart salary handling: check for range, variable, monthly, LPA, expected keywords
@@ -13872,6 +13884,8 @@ class SentinelAgent:
                         } else if (isLwdQ) {
                             if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
                                 bestMatch = '23102026';
+                            } else if (/10 to 20 days|10-20 days|immediate joiner/i.test(qLower)) {
+                                bestMatch = '15';
                             } else if (bestMatch === '15' || !/\\d{4}|[A-Za-z]{3}/.test(bestMatch)) {
                                 bestMatch = resolveDynamic('__DYNAMIC_LWD__');
                             }
@@ -14609,8 +14623,8 @@ return resolveDynamic(bestMatch);
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
                     
-                    // Technical skill, tool, framework, AI workflow, PF account, time zone, or joining date questions must NOT default to No
-                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad|time\\s*zone|timezone|us\\s*time|est\\s*hours|pst\\s*hours|cst\\s*hours|able\\s*to\\s*work|willing\\s*to\\s*work|overlap/i.test(t);
+                    // Technical skill, tool, framework, AI workflow, PF account, time zone, consent/privacy agreement, or joining date questions must NOT default to No
+                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad|time\\s*zone|timezone|us\\s*time|est\\s*hours|pst\\s*hours|cst\\s*hours|able\\s*to\\s*work|willing\\s*to\\s*work|overlap|agree|consent|privacy|personal\\s*data|data\\s*process|terms|condition|policy|authorization|sms|updates|notice|text\\s*message/i.test(t);
                     if (isPositiveIntent) return false;
                     
                     const negativePatterns = [
@@ -14633,7 +14647,13 @@ return resolveDynamic(bestMatch);
                         'suppliers', 'supplier', 'vendors', 'vendor', 'partners', 'partner',
                         'subsidiary', 'subsidiaries', 'affiliated companies', 'affiliate', 'affiliates',
                         'relative working', 'relatives working', 'relatives employed', 'relatives in', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
-                        'agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360', 'deloitte', 'auditor', 'independent auditor',
+                        'employed by agoda', 'worked at agoda', 'worked with agoda', 'work for agoda', 'employed with agoda', 'previous agoda', 'prior agoda',
+                        'employed by booking', 'worked at booking', 'work for booking',
+                        'employed by strategy', 'worked at strategy', 'work for strategy',
+                        'employed by nextiva', 'worked at nextiva', 'work for nextiva',
+                        'employed by simplify360', 'worked at simplify360', 'work for simplify360',
+                        'employed by deloitte', 'worked at deloitte', 'work for deloitte',
+                        'auditor', 'independent auditor',
                         'fe fundinfo', 'zenith investment',
                         'veteran', 'military', 'protected veteran', 'military spouse',
                         'criminal', 'felony', 'convict',
@@ -15153,16 +15173,19 @@ return resolveDynamic(bestMatch);
                                 if (candidateOpts.length === 0) return false;
                                 let best = candidateOpts.find(o => {
                                     const t = o.text.toLowerCase();
-                                    return t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india');
+                                    return (t.includes('bangalore') || t.includes('bengaluru') || t.includes('karnataka') || t.includes('india')) && !t.includes('cape verde');
                                 });
                                 if (!best) {
                                     const val = (input.value || '').toLowerCase().trim();
-                                    if (val && val.length > 2) {
-                                        best = candidateOpts.find(o => o.text.toLowerCase().includes(val));
+                                    if (val && val.length > 2 && (val.includes('bangalore') || val.includes('bengaluru') || val.includes('karnataka') || val.includes('india'))) {
+                                        best = candidateOpts.find(o => o.text.toLowerCase().includes(val) && !o.text.toLowerCase().includes('cape verde'));
                                     }
                                 }
                                 if (!best && candidateOpts.length === 1) {
-                                    best = candidateOpts[0];
+                                    const singleText = candidateOpts[0].text.toLowerCase();
+                                    if ((singleText.includes('bangalore') || singleText.includes('bengaluru') || singleText.includes('karnataka') || singleText.includes('india')) && !singleText.includes('cape verde')) {
+                                        best = candidateOpts[0];
+                                    }
                                 }
                                 if (best) {
                                     window.__SENTINEL_DEBUG__&&console.log('LOC_SETTIMEOUT: clicking option (attempt ' + attempt + '):', best.text);
@@ -15463,22 +15486,32 @@ return resolveDynamic(bestMatch);
                             const lowerLabel = labelText.toLowerCase();
                             const isLocationField = lowerLabel.includes('location') || lowerLabel.includes('city');
                             
-                            // Special handling: Location fields that have text but show validation errors
+                            // Special handling: Location fields that have text but show validation errors or invalid non-candidate locations
                             // LinkedIn requires selecting from autocomplete dropdown, not just text
                             if (isLocationField && isFieldPreFilled(input) && isVisible(input)) {
-                                // Check if there's a visible validation error on THIS field specifically.
-                                // Do NOT use a global section check — if the error is on a different field,
-                                // re-triggering the location won't help and causes an infinite loop.
+                                // Check if there's a visible validation error on THIS field specifically,
+                                // or if the pre-filled value is completely wrong (e.g. Cape Verde).
                                 const parentContainer = input.closest('.fb-dash-form-element') || input.closest('.artdeco-text-input--error') || input.parentElement;
-                                const hasLocationError = !!(
+                                const valLower = (input.value || '').toLowerCase().trim();
+                                const isCandidateLocation = valLower.includes('bangalore') || valLower.includes('bengaluru') || valLower.includes('karnataka') || (valLower.includes('india') && !valLower.includes('cape verde'));
+                                const hasLocationError = !isCandidateLocation || !!(
                                     input.getAttribute('aria-invalid') === 'true' ||
                                     input.classList.contains('artdeco-text-input--error') ||
                                     (parentContainer && (parentContainer.querySelector('.artdeco-inline-feedback--error') || parentContainer.querySelector('.fb-dash-form-element__error-field')))
                                 );
                                 
                                 if (hasLocationError) {
-                                    window.__SENTINEL_DEBUG__&&console.log('Location field has text but validation error — re-triggering autocomplete for:', labelText, 'current value:', input.value);
-                                    const currentVal = input.value;
+                                    window.__SENTINEL_DEBUG__&&console.log('Location field invalid/error (current: ' + input.value + ') — clearing and re-triggering autocomplete for:', labelText);
+                                    if (!isCandidateLocation) {
+                                        try {
+                                            const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                            const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                                            if (nativeSetter) nativeSetter.call(input, '');
+                                            else input.value = '';
+                                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        } catch(e) {}
+                                    }
                                     
                                     // Mark this input so the Python handler can find it via Playwright
                                     input.setAttribute('data-sentinel-location', 'true');
@@ -15516,10 +15549,10 @@ return resolveDynamic(bestMatch);
                             
                             // Check if this field has a validation error — if so, clear and refill
                             const inputParent = input.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
-                            let hasError = !!(inputParent && inputParent.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field'));
+                            let hasError = !!(inputParent && inputParent.querySelector('.artdeco-inline-feedback--error, .artdeco-inline-feedback, .fb-dash-form-element__error-field, [data-test-form-element-error-messages]'));
                             if (!hasError && inputParent) {
                                 // Check for helper-text/error paragraphs
-                                const helperPs = inputParent.querySelectorAll('[data-testid*="helper-text"] p, [data-testid*="error"] p, [class*="error"] p, [class*="feedback"] p');
+                                const helperPs = inputParent.querySelectorAll('[data-testid*="helper-text"] p, [data-testid*="error"] p, [class*="error"] p, [class*="feedback"] p, .artdeco-inline-feedback__message');
                                 for (const hp of helperPs) {
                                     const t = (hp.innerText || '').toLowerCase();
                                     if ((t.includes('invalid') || t.includes('required') || t.includes('enter a valid') || t.includes('please enter')) && hp.offsetParent !== null) {
@@ -15529,7 +15562,13 @@ return resolveDynamic(bestMatch);
                                 }
                             }
                             // Also check aria-invalid and red border indicators on input itself
-                            if (!hasError && (input.getAttribute('aria-invalid') === 'true' || input.getAttribute('aria-describedby')?.includes('error'))) {
+                            if (!hasError && (
+                                input.getAttribute('aria-invalid') === 'true' || 
+                                input.getAttribute('aria-describedby')?.includes('error') ||
+                                input.classList.contains('artdeco-text-input--error') ||
+                                input.classList.contains('artdeco-text-input--invalid') ||
+                                input.classList.contains('error')
+                            )) {
                                 hasError = true;
                             }
                             // Check for any visible red text sibling near the input
@@ -15537,8 +15576,8 @@ return resolveDynamic(bestMatch);
                                 const allSpans = inputParent.querySelectorAll('span, div, p');
                                 for (const sp of allSpans) {
                                     const t = (sp.innerText || '').trim().toLowerCase();
-                                    if (t === 'this field is required' || t === 'required' || t === 'please enter a valid answer') {
-                                        if (sp.offsetParent !== null) {
+                                    if (t === 'this field is required' || t === 'required' || t === 'please enter a valid answer' || t === 'invalid input' || t.includes('invalid input') || t.includes('please enter a valid')) {
+                                        if (sp.offsetParent !== null || sp.classList.contains('artdeco-inline-feedback__message')) {
                                             hasError = true;
                                             break;
                                         }
@@ -15560,23 +15599,28 @@ return resolveDynamic(bestMatch);
                             // Try to resolve the real answer instead of repeating a broken value (like "Please provide")
                             if (isFieldPreFilled(input) && hasError) {
                                 let existingValue = readFieldValue(input);
-                                const errorText = (inputParent?.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field')?.innerText || '').toLowerCase();
-                                const isNumberError = errorText.includes('number') || errorText.includes('decimal') || errorText.includes('numeric') || /numeric/i.test(input.id || '') || /numeric/i.test(input.name || '') || input.type === 'number';
-                                const isInvalidError = errorText.includes('invalid') || errorText.includes('valid') || errorText.includes('enter a') || errorText.includes('please enter') || errorText.includes('required');
+                                const has20CharLimit = input.getAttribute('maxlength') === '20' || input.maxLength === 20;
+                                let errorText = (inputParent?.querySelector('.artdeco-inline-feedback, .artdeco-inline-feedback--error, .fb-dash-form-element__error-field, [data-test-form-element-error-messages], [data-testid*="error"], [class*="error"], [class*="feedback"]')?.innerText || '').toLowerCase();
+                                if (!errorText && inputParent) {
+                                    const errEl = inputParent.querySelector('.artdeco-inline-feedback__message, [data-testid*="helper-text"] p');
+                                    if (errEl) errorText = (errEl.innerText || '').toLowerCase();
+                                }
+                                const isNumberError = errorText.includes('number') || errorText.includes('decimal') || errorText.includes('numeric') || /numeric/i.test(input.id || '') || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || has20CharLimit;
+                                const isInvalidError = errorText.includes('invalid') || errorText.includes('valid') || errorText.includes('enter a') || errorText.includes('please enter') || errorText.includes('required') || hasError;
                                 const isObviousInvalid = !existingValue || 
                                                          isInvalidError ||
                                                          /please provide|not applicable|unanswered/i.test(existingValue) ||
                                                          (isNumberError && !/^\\d+(\\.\\d+)?$/.test((existingValue || '').trim()));
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
-                                if (!resolvedAnswer || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && /last working day|lwd|official last|notice|join/i.test(lowerLabel))) {
-                                    if (/last working day|lwd|official last|notice|np|how soon|join/i.test(lowerLabel)) resolvedAnswer = '15';
-                                    else if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
-                                    else if (/last\\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
+                                if (!resolvedAnswer || (/[a-zA-Z]/.test(resolvedAnswer || '') && (isNumberError || has20CharLimit)) || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && /last working day|lwd|official last|notice|join/i.test(lowerLabel))) {
+                                    if (/last working day|lwd|official last|notice|np|how soon|join|serving/i.test(lowerLabel)) resolvedAnswer = '15';
+                                    else if (/first\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
+                                    else if (/last\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
                                     else if (/email/i.test(lowerLabel)) resolvedAnswer = 'siddhant3646@gmail.com';
-                                    else if (/your\\s*title|job\\s*title|designation|role\\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
+                                    else if (/your\s*title|job\s*title|designation|role\s*title/i.test(lowerLabel)) resolvedAnswer = 'Software Engineer';
                                     else if (/company|employer/i.test(lowerLabel) && !/relatives|worked with|associated with|promoted|industry|size|sector|domain|type|headcount|revenue|turnover|product|service|description|capacity|department/i.test(lowerLabel)) resolvedAnswer = 'Everbridge';
-                                    else if (/work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(lowerLabel) || /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
+                                    else if (/work\s*mode|workplace|mode\s*of\s*work|working\s*model|work\s*type|work\s*preference/i.test(lowerLabel) || /work\s*mode|workplace|mode\s*of\s*work|working\s*model|work\s*type|work\s*preference/i.test(labelText)) resolvedAnswer = 'Remote';
                                     else if (isNumberError || isInvalidError) resolvedAnswer = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
                                 }
                                 
@@ -15588,17 +15632,21 @@ return resolveDynamic(bestMatch);
                                 }
                                 window.__SENTINEL_DEBUG__&&console.log('Pre-filled field with error:', labelText, '| existing:', existingValue, '| isObviousInvalid:', isObviousInvalid, '-> final:', finalValue);
                                 
-                                // FIX: If the field id contains "numeric" or input is number type,
+                                // FIX: If the field id contains "numeric", input is number type, or has20CharLimit,
                                 // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
                                 const fieldId = input.id || '';
-                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText));
+                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || has20CharLimit || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText));
                                 if (isNumericField) {
-                                    const numericVal = (finalValue || '').replace(/[^0-9.]/g, '');
-                                    if (numericVal) {
-                                        finalValue = numericVal;
+                                    if (/notice|np|lwd|days|serving|join/i.test(labelText) && (has20CharLimit || /10 to 20|10-20|immediate/i.test(labelText))) {
+                                        finalValue = '15';
                                     } else {
-                                        finalValue = /notice|np|lwd|days/i.test(labelText) ? '15' : '4';
-                                        window.__SENTINEL_DEBUG__&&console.log('Numeric field had non-numeric text — replaced with numeric default:', finalValue);
+                                        const numericVal = (finalValue || '').replace(/[^0-9.]/g, '');
+                                        if (numericVal && !/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(finalValue || '')) {
+                                            finalValue = numericVal;
+                                        } else {
+                                            finalValue = /notice|np|lwd|days|join/i.test(labelText) ? '15' : '4';
+                                            window.__SENTINEL_DEBUG__&&console.log('Numeric field had non-numeric text — replaced with numeric default:', finalValue);
+                                        }
                                     }
                                 }
                                 
@@ -15622,12 +15670,14 @@ return resolveDynamic(bestMatch);
                             // have a concrete value to refill it with.
                             
                             // Check if input expects numeric values only
+                            const has20CharLimit = input.getAttribute('maxlength') === '20' || input.maxLength === 20;
                             const isExplicitNumberField = input.type === 'number' || 
                                                           input.getAttribute('inputmode') === 'numeric' ||
                                                           /numeric/i.test(input.id || '') ||
                                                           /numeric/i.test(input.name || '') ||
                                                           input.className?.toLowerCase().includes('number') ||
-                                                          input.className?.toLowerCase().includes('decimal');
+                                                          input.className?.toLowerCase().includes('decimal') ||
+                                                          (has20CharLimit && !/name|email|phone|city|postal|zip|address|title|company/i.test(lowerLabel));
                             const isNumericLabel = (labelText && !/^(do|does|did|have|has|had|are|is|which|what|list|describe|share|give|explain)\\b/i.test(labelText.trim()) &&
                                                     /how many years|total years|decimal number|enter a decimal|\\b(in|of)\\s*years\\b|years of experience|experience in years/i.test(labelText));
                             const isNumericInput = isExplicitNumberField || isNumericLabel;
@@ -15687,8 +15737,9 @@ return resolveDynamic(bestMatch);
                             }
 
                             // Distinguish between numeric notice days ("15") and dynamic date LWD ("16 Sep 2026")
-                            const isLwdDateQuestion = /last working day|lwd|official last|last date of working|end date/i.test(labelText) ||
-                                                      /last working day|lwd|official last|last date/i.test(lowerLabel);
+                            const isLwdDateQuestion = (/last working day|lwd|official last|last date of working|end date/i.test(labelText) ||
+                                                      /last working day|lwd|official last|last date/i.test(lowerLabel)) &&
+                                                      !/10 to 20 days|10-20 days|immediate joiner/i.test(labelText);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
@@ -16023,8 +16074,21 @@ return resolveDynamic(bestMatch);
                         for (const select of nativeSelects) {
                             if (!isVisible(select)) continue;
                             if (isInsideExperienceOrEducationEditor(select)) {
-                                window.__SENTINEL_DEBUG__&&console.log('Skipping select inside work experience/education sub-form:', select);
-                                continue;
+                                let hasSelectError = select.getAttribute('aria-invalid') === 'true' || 
+                                                     (select.getAttribute('aria-describedby') || '').includes('error') ||
+                                                     !!select.closest('.artdeco-form-field--error, .fb-dash-form-element--error, [class*="error"]');
+                                if (!hasSelectError) {
+                                    const selParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, [class*="form-element"]');
+                                    if (selParent && selParent.querySelector('.artdeco-inline-feedback--error, [data-testid*="error"]')) {
+                                        hasSelectError = true;
+                                    }
+                                }
+                                const hasAnyModalError = !!queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                                const isDateSelect = Array.from(select.options).some(o => /^(?:january|february|march|april|may|june|july|august|september|october|november|december)/i.test(o.text.trim()) || /^(?:19|20)\\d{2}$/.test(o.text.trim()));
+                                if (!hasSelectError && (!hasAnyModalError || !isDateSelect)) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Skipping select inside work experience/education sub-form:', select);
+                                    continue;
+                                }
                             }
                             
                             // Capture pre-filled selects before label detection (only if truly filled, not placeholder, and no error)
@@ -16064,31 +16128,31 @@ return resolveDynamic(bestMatch);
                                 continue;
                             }
                             
-                            // ROBUST LABEL DETECTION for selects (same as text inputs)
+                            // ROBUST LABEL DETECTION for selects (prioritize direct label[for] & aria-label over wide container)
                             let labelText = '';
                             
-                            // Method 1: .fb-dash-form-element or question parent
+                            // Method 1: direct aria-label on select
                             if (!labelText) {
-                                const fbParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, .jobs-easy-apply-form-element, .artdeco-form-field');
-                                if (fbParent) {
-                                    const lbl = fbParent.querySelector('label, legend, .artdeco-form-field__label');
-                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
-                                }
+                                labelText = select.getAttribute('aria-label') || '';
                             }
-                            // Method 2: label[for]
+                            // Method 2: label[for] matching select.id exactly
                             if (!labelText && select.id) {
                                 const lbl = queryDeep(`label[for="${select.id}"]`, modal);
                                 if (lbl) labelText = lbl.innerText || lbl.textContent || '';
                             }
-                            // Method 3: aria-label
-                            if (!labelText) {
-                                labelText = select.getAttribute('aria-label') || '';
-                            }
-                            // Method 4: aria-labelledby
+                            // Method 3: aria-labelledby
                             if (!labelText) {
                                 const labelledBy = select.getAttribute('aria-labelledby');
                                 if (labelledBy) {
                                     const lbl = document.getElementById(labelledBy);
+                                    if (lbl) labelText = lbl.innerText || lbl.textContent || '';
+                                }
+                            }
+                            // Method 4: .fb-dash-form-element or question parent
+                            if (!labelText) {
+                                const fbParent = select.closest('.fb-dash-form-element, .jobs-easy-apply-form-section__question, .jobs-easy-apply-form-element, .artdeco-form-field');
+                                if (fbParent) {
+                                    const lbl = fbParent.querySelector('label, legend, .artdeco-form-field__label');
                                     if (lbl) labelText = lbl.innerText || lbl.textContent || '';
                                 }
                             }
@@ -16942,35 +17006,55 @@ return resolveDynamic(bestMatch);
 
                             if (isExpDateSelect) {
                                 const dateOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                const isYearSelect = lowerLabel.includes('year') || dateOptions.some(o => /^\\d{4}$/.test(o.text.trim()) || /^\\d{4}$/.test(o.value.trim()));
+                                const isMonthSelect = hasCalendarMonthOptions || (/month/i.test(lowerLabel) && !hasCalendarYearOptions);
+                                const isYearSelect = hasCalendarYearOptions || (!isMonthSelect && (/year/i.test(lowerLabel) || dateOptions.some(o => /^\\d{4}$/.test(o.text.trim()))));
                                 
-                                // Detect position among all date selects in this modal/container
-                                const allDateSelects = Array.from(nativeSelects).filter(s => {
-                                    const sLabel = (s.getAttribute('aria-label') || s.closest('.fb-dash-form-element')?.querySelector('label')?.innerText || '').toLowerCase();
-                                    return sLabel.includes('dates of employment') || sLabel.includes('date') || sLabel.includes('from') || sLabel.includes('to') || sLabel.includes('month') || sLabel.includes('year');
+                                // Detect position among all date selects in this modal/subform
+                                const allMonthSelects = Array.from(nativeSelects).filter(s => {
+                                    return Array.from(s.options).some(o => /^(?:january|february|march|april|may|june|july|august|september|october|november|december|januari|februari)/i.test(o.text.trim()));
                                 });
-                                const yearSelects = allDateSelects.filter(s => Array.from(s.options).some(o => /^\\d{4}$/.test(o.text.trim()) || /^\\d{4}$/.test(o.value.trim())));
-                                const monthSelects = allDateSelects.filter(s => !yearSelects.includes(s));
-                                const isFirstYear = yearSelects.indexOf(select) === 0;
-                                const isFirstMonth = monthSelects.indexOf(select) === 0;
+                                const allYearSelects = Array.from(nativeSelects).filter(s => {
+                                    const nonPh = Array.from(s.options).filter(o => !isSelectPlaceholderText(o.text, o.value, o.index));
+                                    return nonPh.length > 0 && nonPh.every(o => /^(?:19|20)\d{2}$/.test(o.text.trim()) || /^(?:19|20)\d{2}$/.test(o.value.trim()));
+                                });
 
-                                const isStart = lowerLabel.includes('from') || lowerLabel.includes('start') || lowerLabel.includes('begin') || lowerLabel.includes('vanaf') ||
-                                                (select.name && select.name.toLowerCase().includes('start')) || (select.id && select.id.toLowerCase().includes('start')) ||
-                                                (isYearSelect ? isFirstYear : isFirstMonth);
-                                const isEnd = lowerLabel.includes('to') || lowerLabel.includes('end') || lowerLabel.includes('eind') || lowerLabel.includes('tot') ||
-                                              (select.name && select.name.toLowerCase().includes('end')) || (select.id && select.id.toLowerCase().includes('end')) ||
-                                              (!isStart);
+                                const isExplicitStart = lowerLabel.includes('from') || lowerLabel.includes('start') || lowerLabel.includes('begin') || lowerLabel.includes('vanaf') ||
+                                                        (select.name && select.name.toLowerCase().includes('start')) || (select.id && select.id.toLowerCase().includes('start'));
+                                const isExplicitEnd = lowerLabel.includes('to') || lowerLabel.includes('end') || lowerLabel.includes('eind') || lowerLabel.includes('tot') ||
+                                                      (select.name && select.name.toLowerCase().includes('end')) || (select.id && select.id.toLowerCase().includes('end'));
+
+                                let isStart = false;
+                                if (isExplicitStart) {
+                                    isStart = true;
+                                } else if (isExplicitEnd) {
+                                    isStart = false;
+                                } else if (isYearSelect) {
+                                    const yIdx = allYearSelects.indexOf(select);
+                                    isStart = (yIdx <= 0);
+                                } else if (isMonthSelect) {
+                                    const mIdx = allMonthSelects.indexOf(select);
+                                    isStart = (mIdx <= 0);
+                                }
                                 
                                 let targetOpt = null;
                                 if (isYearSelect) {
                                     if (isStart) {
-                                        // Start Year: 2022 (4 years experience before 2026)
+                                        // Start Year: 2022 or 2021 or 2020 (NEVER 2026)
                                         targetOpt = dateOptions.find(o => o.text.trim() === '2022' || o.value.trim() === '2022') ||
-                                                    dateOptions.find(o => o.text.trim() === '2021' || o.text.trim() === '2023');
+                                                    dateOptions.find(o => o.text.trim() === '2021' || o.value.trim() === '2021') ||
+                                                    dateOptions.find(o => o.text.trim() === '2020' || o.value.trim() === '2020') ||
+                                                    dateOptions.find(o => o.text.trim() === '2023' || o.value.trim() === '2023');
+                                        if (!targetOpt) {
+                                            targetOpt = dateOptions.find(o => {
+                                                const yr = parseInt(o.text.trim(), 10);
+                                                return !isNaN(yr) && yr >= 2018 && yr <= 2023;
+                                            });
+                                        }
                                     } else {
-                                        // End Year: 2026 (current year / LWD year)
+                                        // End Year: 2026, 2025, or 2024
                                         targetOpt = dateOptions.find(o => o.text.trim() === '2026' || o.value.trim() === '2026') ||
-                                                    dateOptions.find(o => o.text.trim() === '2025');
+                                                    dateOptions.find(o => o.text.trim() === '2025' || o.value.trim() === '2025') ||
+                                                    dateOptions.find(o => o.text.trim() === '2024' || o.value.trim() === '2024');
                                     }
                                 } else {
                                     // Month select: multilingual support (English + Dutch + numeric values)
@@ -16982,6 +17066,7 @@ return resolveDynamic(bestMatch);
                                     } else {
                                         // End Month: February / Februari / 2
                                         targetOpt = dateOptions.find(o => /^(february|februari|feb|2|02)$/i.test(o.text.trim()) || o.value.trim() === '2' || o.value.trim() === '02') ||
+                                                    dateOptions.find(o => /^(december|dec|12)$/i.test(o.text.trim()) || o.value.trim() === '12') ||
                                                     dateOptions.find(o => /^(january|januari|jan|1|01)$/i.test(o.text.trim()) || o.value.trim() === '1');
                                     }
                                 }
@@ -17246,9 +17331,13 @@ return resolveDynamic(bestMatch);
                                     'polygraph', 'genetic', 'relative', 'family member', 'applied', 'cooling', 'interviewed', '6/12',
                                     'outside business', 'side business', 'advisory', 'board role', 'moonlighting', 'subsidiary', 'subsidiaries',
                                     'employed by', 'worked for', 'referral', 'referred by', 'counter offer', 'any offer',
-                                    'agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360', 'deloitte', 'auditor', 'personal relationship', 'fe fundinfo', 'zenith investment'
+                                    'employed by agoda', 'worked at agoda', 'employed by booking', 'worked at booking',
+                                    'employed by strategy', 'worked at strategy', 'employed by nextiva', 'worked at nextiva',
+                                    'employed by simplify360', 'worked at simplify360', 'employed by deloitte', 'worked at deloitte',
+                                    'auditor', 'personal relationship', 'fe fundinfo', 'zenith investment'
                                 ];
-                                const isDangerousYes = dangerousYesPatterns.some(p => lowerLabel.includes(p));
+                                const isConsentOrAgreement = /agree|consent|privacy|personal\s*data|data\s*process|terms|condition|policy|authorization/i.test(lowerLabel);
+                                const isDangerousYes = !isConsentOrAgreement && dangerousYesPatterns.some(p => lowerLabel.includes(p));
                                 const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live/i.test(lowerLabel);
                                 const isContractTypeQ = /type\\s+of\\s+contract|contract\\s+type|employment\\s+type/i.test(lowerLabel);
                                 const isStateProvinceQ = /state|province|region\\s*\\/\\s*state/i.test(lowerLabel);
@@ -20115,26 +20204,41 @@ return resolveDynamic(bestMatch);
                         return true;
                     });
 
+                    const normalizeJobTitle = t => (t || '').split('\\n')[0].replace(/^selected,?\\s*/i, '').trim().toLowerCase().substring(0, 80);
+
                     // Filter out jobs whose title was skipped by the title-based skip list
                     const titleFilteredCandidates = candidates.filter(card => {
                         if (!window.__skippedJobTitles || window.__skippedJobTitles.size === 0) return true;
-                        const cardTitle = card.innerText.split('\\n')[0].trim().replace(/^selected,?\\s*/i, '').substring(0, 80);
+                        const cardTitle = normalizeJobTitle(card.innerText);
                         return !window.__skippedJobTitles.has(cardTitle);
                     });
 
                     if (titleFilteredCandidates.length > 0) {
                         const nextJob = titleFilteredCandidates[0];
-                        const nextJobTitle = nextJob.innerText.split('\\n')[0].trim().replace(/^selected,?\\s*/i, '');
+                        const nextJobTitle = (nextJob.innerText || '').split('\\n')[0].trim().replace(/^selected,?\\s*/i, '');
+                        const normNextTitle = normalizeJobTitle(nextJobTitle);
                         
                         // Detect infinite loop: if we already clicked this exact job title last time,
                         // it means clicking it did not advance state. Skip it.
-                        if (window.__lastClickedJobTitle === nextJobTitle) {
+                        if (window.__lastClickedJobTitle === normNextTitle) {
                             window.__lastClickedJobSameCount = (window.__lastClickedJobSameCount || 0) + 1;
                             window.__SENTINEL_DEBUG__&&console.log('Same job selected again (' + window.__lastClickedJobSameCount + 'x): ' + nextJobTitle);
                             if (window.__lastClickedJobSameCount >= 2) {
-                                window.__SENTINEL_DEBUG__&&console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip list');
+                                window.__SENTINEL_DEBUG__&&console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip lists');
                                 if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
-                                window.__skippedJobTitles.add(nextJobTitle);
+                                window.__skippedJobTitles.add(normNextTitle);
+                                
+                                const stuckRawId = nextJob.getAttribute('data-job-id') ||
+                                                   nextJob.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
+                                                   nextJob.getAttribute('data-occludable-job-id') ||
+                                                   nextJob.querySelector('[data-occludable-job-id]')?.getAttribute('data-occludable-job-id') ||
+                                                   nextJob.getAttribute('data-entity-urn') ||
+                                                   nextJob.querySelector('[data-entity-urn]')?.getAttribute('data-entity-urn');
+                                const stuckCleanId = stuckRawId ? String(stuckRawId).replace(/^.*:/, '').trim() : null;
+                                if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                                if (stuckCleanId) window.__skippedJobIds.add(stuckCleanId);
+                                if (stuckRawId) window.__skippedJobIds.add(stuckRawId);
+
                                 window.__lastClickedJobTitle = null;
                                 window.__lastClickedJobSameCount = 0;
                                 // Scroll sidebar to reveal next jobs
@@ -20144,7 +20248,7 @@ return resolveDynamic(bestMatch);
                         } else {
                             window.__lastClickedJobSameCount = 0;
                         }
-                        window.__lastClickedJobTitle = nextJobTitle;
+                        window.__lastClickedJobTitle = normNextTitle;
                         
                         window.__SENTINEL_DEBUG__&&console.log('Clicking next job:', nextJobTitle);
                         nextJob.click();

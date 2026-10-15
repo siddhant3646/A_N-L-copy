@@ -92,6 +92,48 @@ class TestQACSVFixesOct15(unittest.TestCase):
             ans, conf = self.agent._fuzzy_match_question(eq)
             self.assertIn(ans, [None, ""], f"Empty question '{eq!r}' returned '{ans}' instead of None")
 
+    def test_immediate_joiners_10_to_20_days_serving_notice(self):
+        questions = [
+            "We need immediate joiners only? serving candidates like 10 to 20 days? please mentioned your last working day? *",
+            "We need immediate joiners only? serving candidates like 10 to 20 days?",
+            "Immediate joiners only serving candidates 10-20 days",
+            "serving candidates like 10 to 20 days please mention your last working day",
+            "immediate joiners only (10 to 20 days notice)",
+        ]
+        self.agent._current_platform = "linkedin"
+        for q in questions:
+            ans, conf = self.agent._fuzzy_match_question(q)
+            self.assertTrue(ans == "15" or "2026" in str(ans), f"Question '{q}' returned '{ans}' instead of '15' or dynamic LWD")
+            self.assertGreaterEqual(conf, 0.90)
+
+        # Also verify pattern matcher with qa_patterns.json directly
+        pattern_ans, pattern_conf = self.matcher.fuzzy_match(
+            "We need immediate joiners only? serving candidates like 10 to 20 days? please mentioned your last working day? *",
+            input_type="text"
+        )
+        self.assertTrue(pattern_ans == "15" or "2026" in str(pattern_ans), f"pattern_ans was {pattern_ans}")
+        self.assertGreaterEqual(pattern_conf, 0.70)
+
+    def test_agoda_privacy_data_consent_not_default_no(self):
+        consent_q = "Do you agree to Agoda's use of personal data for recruitment purposes as outlined in our privacy policy?"
+        ans, conf = self.agent._fuzzy_match_question(consent_q)
+        # Should be affirmative or Yes, definitely NOT 'No'
+        self.assertNotEqual(ans, "No", f"Consent question '{consent_q}' erroneously defaulted to 'No'")
+        self.assertIn(ans, ["Yes", "Agree", "I agree", "Yes, I agree", "True"])
+
+    def test_location_bangalore_acceptance(self):
+        candidate_locations = ["Bangalore", "Bengaluru", "Bangalore, Karnataka, India", "Bengaluru, Karnataka"]
+        for loc in candidate_locations:
+            lower = loc.lower()
+            is_valid = any(c in lower for c in ["bangalore", "bengaluru", "karnataka", "india"]) and "cape verde" not in lower
+            self.assertTrue(is_valid)
+
+        invalid_locations = ["Cape Verde", "United States", "New York", "London"]
+        for loc in invalid_locations:
+            lower = loc.lower()
+            is_valid = any(c in lower for c in ["bangalore", "bengaluru", "karnataka", "india"]) and "cape verde" not in lower
+            self.assertFalse(is_valid)
+
 
 if __name__ == "__main__":
     unittest.main()

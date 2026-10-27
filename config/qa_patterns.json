@@ -1313662,7 +1313662,9 @@
         "text": "4",
         "radio": "4",
         "select": "4",
-        "numeric": "4"
+        "numeric": "4",
+        "textarea": "4",
+        "checkbox": "4"
       }
     },
     "rating_scale_0_to_5_ai": {
@@ -1313682,7 +1313684,9 @@
         "text": "3",
         "radio": "3",
         "select": "3",
-        "numeric": "3"
+        "numeric": "3",
+        "textarea": "3",
+        "checkbox": "3"
       }
     },
     "experience_workday_consultant": {
@@ -1313705,7 +1313709,8 @@
         "textarea": "0 Years",
         "number": "0",
         "radio": "0",
-        "select": "0"
+        "select": "0",
+        "checkbox": "0"
       }
     },
     "workday_functional_modules": {
@@ -1313715,13 +1313720,15 @@
         "workday functional modules"
       ],
       "category": "technical",
-      "default": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
+      "default": "None",
       "priority": 18,
       "input_type_defaults": {
-        "text": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
-        "textarea": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
-        "radio": "No",
-        "select": "No"
+        "text": "None",
+        "textarea": "None",
+        "radio": "N/A",
+        "select": "N/A",
+        "checkbox": "No",
+        "number": "N/A"
       }
     },
     "yes_no_workday_experience": {
@@ -1313738,7 +1313745,9 @@
         "radio": "No",
         "select": "No",
         "text": "No",
-        "checkbox": "No"
+        "checkbox": "No",
+        "textarea": "No",
+        "number": "0"
       }
     },
     "experience_healthcare_domain": {
@@ -1313760,7 +1313769,8 @@
         "text": "0 Years",
         "textarea": "0 Years",
         "radio": "0",
-        "select": "0"
+        "select": "0",
+        "checkbox": "0"
       }
     },
     "located_in_ahmedabad_gandhinagar": {
@@ -1313777,7 +1313787,9 @@
         "radio": "No",
         "select": "No",
         "text": "No",
-        "textarea": "No, I am currently based in Bengaluru, Karnataka, but open to relocation."
+        "textarea": "No, I am currently based in Bengaluru, Karnataka, but open to relocation.",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "currently_servicing_notice_period": {
@@ -1313796,7 +1313808,8 @@
         "select": "Yes",
         "text": "Yes",
         "checkbox": "Yes",
-        "textarea": "Yes, I am currently serving notice period with 15 days remaining."
+        "textarea": "Yes, I am currently serving notice period with 15 days remaining.",
+        "number": "15"
       }
     },
     "experience_gate_8_plus_years": {
@@ -1313812,7 +1313825,10 @@
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
-        "text": "No"
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "4.2"
       }
     },
     "experience_gate_10_to_15_years": {
@@ -1313827,7 +1313843,10 @@
       "input_type_defaults": {
         "radio": "No",
         "select": "No",
-        "text": "No"
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "4.2"
       }
     },
     "experience_req_4_to_9_years": {
@@ -1313844,7 +1313863,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "4.2"
       }
     },
     "experience_backend_technologies_bullet": {
@@ -1313860,7 +1313881,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "git_branching_prs_code_reviews": {
@@ -1313876,7 +1313899,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "ai_assisted_tools_copilot_claude": {
@@ -1313892,7 +1313917,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "interested_in_full_time_hybrid_bangalore": {
@@ -1313908,7 +1313935,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "background_check_and_education_verification_consent": {
@@ -1313924,7 +1313953,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "deloitte_ex_employee_radio": {
@@ -1313939,7 +1313970,9 @@
         "radio": "No",
         "select": "No",
         "text": "No, I am not a current/an ex-employee of Deloitte",
-        "textarea": "No, I am not a current/an ex-employee of Deloitte"
+        "textarea": "No, I am not a current/an ex-employee of Deloitte",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "completed_bachelors_degree_aiml_cse_it": {
@@ -1313956,7 +1313989,10 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1",
+        "select-education": "Yes"
       }
     },
     "compensation_based_on_market_standards": {
@@ -1313972,7 +1314008,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "ctc_up_to_45_lpa": {
@@ -1313989,7 +1314027,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "can_go_to_office_for_interview": {
@@ -1314004,7 +1314044,10 @@
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
-        "text": "Yes"
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
       }
     },
     "relatives_employed_by_company": {
@@ -1314021,7 +1314064,9 @@
         "text": "No",
         "textarea": "No",
         "radio": "No",
-        "select": "No"
+        "select": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "exp_capital_market": {
@@ -1314038,7 +1314083,9 @@
         "text": "Yes, worked on BFSI settlement reporting systems",
         "textarea": "Yes, worked on BFSI and capital market settlement reporting systems at Everbridge and Fiserv.",
         "radio": "Yes",
-        "select": "Yes"
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
       }
     },
     "build_and_deploy_ml_models": {
@@ -1314055,7 +1314102,9 @@
         "text": "Yes, built and deployed ML models and LLM pipelines",
         "textarea": "Yes, built and deployed ML models and LLM pipelines using LangChain, Python, and AWS.",
         "radio": "Yes",
-        "select": "Yes"
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
       }
     },
     "integration_migration_with_products": {
@@ -1314074,7 +1314123,8 @@
         "select": "Yes",
         "text": "Yes",
         "checkbox": "Yes",
-        "textarea": "Yes, led product integrations and legacy API migrations to modern Spring Boot microservices."
+        "textarea": "Yes, led product integrations and legacy API migrations to modern Spring Boot microservices.",
+        "number": "1"
       }
     },
     "deploy_ml_models_production_project": {
@@ -1314090,7 +1314140,9 @@
         "text": "Yes, deployed document evaluation and summarization pipeline using Python and LangChain.",
         "textarea": "Yes, developed and deployed an automated document evaluation and summarization pipeline using Python, LangChain, and AWS ECS with 99.9% uptime.",
         "radio": "Yes",
-        "select": "Yes"
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
       }
     },
     "model_serving_infrastructure": {
@@ -1314106,7 +1314158,9 @@
         "text": "Yes, worked with FastAPI and Docker for model serving",
         "textarea": "Yes, experience with model serving and containerized deployment using Docker, FastAPI, and AWS ECS/Triton.",
         "radio": "Yes",
-        "select": "Yes"
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "15"
       }
     },
     "weightage_backend_frontend": {
@@ -1314122,7 +1314176,10 @@
       "input_type_defaults": {
         "radio": "70-30",
         "select": "70-30",
-        "text": "70-30"
+        "text": "70-30",
+        "textarea": "70-30",
+        "checkbox": "Yes",
+        "number": ""
       }
     },
     "wfo_alternate_saturdays_comfortable": {
@@ -1314138,7 +1314195,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "commute_5_days_a_week": {
@@ -1314155,7 +1314214,9 @@
         "radio": "Yes",
         "select": "Yes",
         "text": "Yes",
-        "checkbox": "Yes"
+        "checkbox": "Yes",
+        "textarea": "Yes",
+        "number": "1"
       }
     },
     "built_supported_high_volume_systems": {
@@ -1314172,7 +1314233,8 @@
         "select": "Yes",
         "text": "Yes",
         "checkbox": "Yes",
-        "textarea": "Yes, at Everbridge I designed and supported distributed notification pipelines handling over 10 million events daily with 99.99% uptime."
+        "textarea": "Yes, at Everbridge I designed and supported distributed notification pipelines handling over 10 million events daily with 99.99% uptime.",
+        "number": "1"
       }
     },
     "rbac_or_row_level_security": {
@@ -1314190,7 +1314252,8 @@
         "select": "Yes",
         "text": "Yes",
         "checkbox": "Yes",
-        "textarea": "Yes, implemented RBAC and multi-tenant access control using Spring Security, OAuth2, JWT, and PostgreSQL row-level security."
+        "textarea": "Yes, implemented RBAC and multi-tenant access control using Spring Security, OAuth2, JWT, and PostgreSQL row-level security.",
+        "number": "1"
       }
     },
     "experience_production_grade_enterprise_apps": {
@@ -1314208,7 +1314271,8 @@
         "select": "Yes",
         "text": "Yes",
         "checkbox": "Yes",
-        "textarea": "Yes, extensive experience building and maintaining production-grade distributed enterprise applications using Java Spring Boot, Kafka, and AWS at Everbridge."
+        "textarea": "Yes, extensive experience building and maintaining production-grade distributed enterprise applications using Java Spring Boot, Kafka, and AWS at Everbridge.",
+        "number": "85"
       }
     }
   },

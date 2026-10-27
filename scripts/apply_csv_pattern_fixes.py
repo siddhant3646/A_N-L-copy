@@ -5,6 +5,12 @@ Apply pattern fixes and additions for questions found in qa_results.csv.
 
 import json
 import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from patterns.input_type_sanitizer import build_input_type_defaults
 
 PATTERNS_FILE = "config/qa_patterns.json"
 
@@ -117,13 +123,15 @@ def apply_fixes():
                 "workday functional modules"
             ],
             "category": "technical",
-            "default": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
+            "default": "None",
             "priority": 18,
             "input_type_defaults": {
-                "text": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
-                "textarea": "I do not have hands-on experience with Workday functional modules; my core expertise is in Java, Spring Boot, Kafka, and AWS cloud microservices.",
-                "radio": "No",
-                "select": "No"
+                "text": "None",
+                "textarea": "None",
+                "radio": "N/A",
+                "select": "N/A",
+                "checkbox": "No",
+                "number": "N/A"
             }
         },
         "yes_no_workday_experience": {
@@ -616,6 +624,7 @@ def apply_fixes():
     }
 
     for pid, pdata in new_patterns.items():
+        pdata["input_type_defaults"] = build_input_type_defaults(pdata, pdata.get("input_type_defaults"))
         patterns[pid] = pdata
         print(f"Added pattern: {pid}")
 

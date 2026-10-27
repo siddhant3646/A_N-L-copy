@@ -247,17 +247,26 @@ class PatternMatcher:
                     t = t / 100000.0
                 return ('Yes' if 30.0 <= t else 'No'), max(score, 0.98)
 
+        # 0l. Legal age requirement (18+)
+        if '18 years of age' in ql or '18 years old' in ql or 'at least 18' in ql or '18 or older' in ql or re.search(r'\b(?:18\s*(?:years?\s*(?:old|of\s+age)|or\s+older|\+)|at\s+least\s+18|legal\s+age)\b', ql):
+            return 'Yes', max(score, 0.98)
+
         # 0m. Experience threshold gate ("Do you have 5+ years...", "candidates with 10-15 years...", etc.)
+        is_age_q = bool(re.search(r'\b(?:years?|yrs?)\s+(?:old|of\s+age)\b|\blegal\s+age\b|\b18\+\s*(?:years?\s*)?(?:old|of\s+age)\b|\bat\s+least\s+18\b|\b18\s+or\s+older\b', ql))
         asks_quantity = bool(re.search(r'^(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)', ql.strip()))
+        has_range = bool(re.search(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(\+)?\s*(?:years?|yrs?)\b', ql))
         gate_context = (
             bool(re.search(r'(?:do\s+you|have\s+you|are\s+you|can\s+you|will\s+you|you\s+have|you\s+possess|we\s+are\s+looking|candidates?\s+with|looking\s+for|required|requirement|only|eligible|qualify|pl\s+confirm|confirm\s+if)', ql))
             or input_type in ('radio', 'checkbox')
             or ql.strip().endswith('?')
+            or (has_range and 'experience' in ql)
+            or ql.startswith(('•', '-', '*'))
         )
-        if gate_context and (not asks_quantity or re.search(r'(?:candidates?\s+with|we\s+are\s+looking|only|required|must\s+have)', ql)):
+        if not is_age_q and gate_context and (not asks_quantity or re.search(r'(?:candidates?\s+with|we\s+are\s+looking|only|required|must\s+have)', ql)):
             reqs = []
-            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)\b', ql):
-                reqs.append(('range', float(m.group(1)), float(m.group(2))))
+            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(\+)?\s*(?:years?|yrs?)\b', ql):
+                upper = float('inf') if m.group(3) else float(m.group(2))
+                reqs.append(('range', float(m.group(1)), upper))
             for m in re.finditer(r'(?:at\s+least|minimum(?:\s+of)?|min\.?|more\s+than|over|above|greater\s+than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)', ql):
                 reqs.append(('min', float(m.group(1)), float('inf')))
             for m in re.finditer(r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)', ql):

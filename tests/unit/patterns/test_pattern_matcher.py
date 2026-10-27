@@ -3,6 +3,7 @@ Tests for pattern_matcher module.
 """
 
 import os
+import re
 from datetime import datetime, timedelta
 
 import pytest
@@ -311,23 +312,23 @@ class TestDynamicLWDMarker:
         assert answer == expected
 
     def test_marker_resolved_for_date_input_type(self, sample_qa_patterns):
-        """Marker in input_type_defaults[date] should resolve correctly."""
+        """Marker in input_type_defaults[date] resolves to an ISO date."""
         patterns_data = {"patterns": sample_qa_patterns}
         matcher = PatternMatcher(patterns_data)
 
         answer, _ = matcher.fuzzy_match("lwd date", input_type="date")
 
-        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        expected = (datetime.now() + timedelta(days=15)).strftime('%Y-%m-%d')
         assert answer == expected
 
     def test_marker_resolved_for_number_input_type(self, sample_qa_patterns):
-        """numeric_default fallback to default marker should resolve correctly."""
+        """Numeric LWD fields receive DDMMYYYY, not a prose date."""
         patterns_data = {"patterns": sample_qa_patterns}
         matcher = PatternMatcher(patterns_data)
 
         answer, _ = matcher.fuzzy_match("your lwd", input_type="number")
 
-        expected = (datetime.now() + timedelta(days=15)).strftime('%d %b %Y')
+        expected = (datetime.now() + timedelta(days=15)).strftime('%d%m%Y')
         assert answer == expected
 
     def test_no_stale_resolved_date_in_config(self):
@@ -347,3 +348,116 @@ class TestDynamicLWDMarker:
 
         # The marker must be present
         assert '"__DYNAMIC_LWD__"' in content, "LWD marker missing from config"
+
+
+class TestGetAllMatchesSafety:
+    """Regression tests for get_all_matches type-safety and filtering."""
+
+    def _matcher(self):
+        return PatternMatcher({
+            "patterns": {
+                "contact_email": {
+                    "patterns": ["email address"],
+                    "category": "personal_info",
+                    "default": "secret@example.com",
+                    "requires_exact_match": True,
+                    "sensitive": True,
+                },
+                "current_salary": {
+                    "patterns": ["current ctc", "current salary"],
+                    "category": "salary",
+                    "default": "23 LPA",
+                    "input_type_defaults": {
+                        "text": "23 LPA",
+                        "textarea": "23 LPA",
+                        "radio": "23 LPA",
+                        "select": "23 LPA",
+                        "checkbox": "Yes",
+                        "number": "23",
+                        "text_inr": "2300000",
+                        "text_lpa": "23",
+                    },
+                    "negative_patterns": ["expected"],
+                },
+                "expected_salary": {
+                    "patterns": ["expected ctc", "expected salary"],
+                    "category": "salary",
+                    "default": "30 LPA",
+                },
+            }
+        })
+
+    def test_skips_exact_match_ids(self):
+        matcher = self._matcher()
+        ids = [pid for pid, _, _ in matcher.get_all_matches("email address", min_confidence=0.5)]
+        assert "contact_email" not in ids
+        # Exact matching still returns the PII answer.
+        assert matcher.fuzzy_match("email address")[0] == "secret@example.com"
+
+    def test_applies_negative_patterns(self):
+        matcher = self._matcher()
+        ids = [pid for pid, _, _ in matcher.get_all_matches("expected current ctc", min_confidence=0.5)]
+        assert "current_salary" not in ids
+
+    def test_returns_typed_answer_when_input_type_supplied(self):
+        matcher = self._matcher()
+        by_id = {
+            pid: answer
+            for pid, answer, _ in matcher.get_all_matches(
+                "current ctc", min_confidence=0.5, input_type="number"
+            )
+        }
+        assert by_id["current_salary"] == "23"
+        by_id = {
+            pid: answer
+            for pid, answer, _ in matcher.get_all_matches(
+                "current ctc", min_confidence=0.5, input_type="text_inr"
+            )
+        }
+        assert by_id["current_salary"] == "2300000"
+
+    def test_returns_raw_default_without_input_type(self):
+        matcher = self._matcher()
+        by_id = {
+            pid: answer
+            for pid, answer, _ in matcher.get_all_matches("current ctc", min_confidence=0.5)
+        }
+        assert by_id["current_salary"] == "23 LPA"
+
+
+class TestGetAnswerSanitization:
+    """Regression tests for _get_answer type sanitization."""
+
+    def _matcher(self):
+        return PatternMatcher({
+            "patterns": {
+                "current_salary": {
+                    "patterns": ["current ctc"],
+                    "category": "salary",
+                    "default": "23 LPA",
+                    "numeric_default": "23",
+                    "input_type_defaults": {
+                        "text": "23 LPA",
+                        "number": "23",
+                        "text_inr": "2300000",
+                    },
+                },
+                "last_working_date": {
+                    "patterns": ["last working day"],
+                    "category": "notice_period",
+                    "default": "__DYNAMIC_LWD_ISO__",
+                    "input_type_defaults": {"date": "__DYNAMIC_LWD_ISO__"},
+                },
+            }
+        })
+
+    def test_sanitizes_when_input_type_supplied(self):
+        matcher = self._matcher()
+        assert matcher._get_answer("current_salary", "number") == "23"
+        assert matcher._get_answer("current_salary", "text_inr") == "2300000"
+        assert matcher._get_answer("current_salary") == "23 LPA"
+
+    def test_resolves_dynamic_marker_for_date(self):
+        matcher = self._matcher()
+        value = matcher._get_answer("last_working_date", "date")
+        assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", value or "")

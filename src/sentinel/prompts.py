@@ -448,6 +448,12 @@ DOM Selectors (hirist.tech):
   - https://www.hirist.tech/k/java-jobs?ref=popular_tag
   - https://www.hirist.tech/k/spring-jobs?ref=topnavigation
   - https://www.hirist.tech/k/reactjs-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/mern-stack-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/restful-api-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/aws-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/azure-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/artificial-intelligence-jobs?ref=topnavigation
+  - https://www.hirist.tech/k/ai-interface-jobs?ref=topnavigation
 - Job links: a[href^="/j/"], a[href*="/j/"]
 - Job detail metadata: window.__NEXT_DATA__.props.pageProps.jobMandateInfo
 - Login state: window.__NEXT_DATA__.props.pageProps.initialState.auth.isLoggedIn

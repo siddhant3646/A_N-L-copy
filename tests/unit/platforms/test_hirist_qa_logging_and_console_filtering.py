@@ -153,6 +153,70 @@ class TestHiristQALoggingAndConsoleFiltering(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(call_kwargs['status'], 'submitted')
         self.assertEqual(call_kwargs['platform'], 'hirist')
 
+    async def test_hirist_fill_questionnaire_logs_rejected_click_to_csv(self):
+        """A chosen option the form never accepts still leaves a validation_error row."""
+        questions = [
+            {
+                'qid': 'sntl_hq_4',
+                'question': 'How many years of Java experience do you have?',
+                'kind': 'single',
+                'options': [{'text': '3-5'}, {'text': '5-7'}],
+                'hasTextarea': False,
+                'hasInput': False,
+                'prefilled': False,
+                'maxChars': 0
+            }
+        ]
+
+        self.agent._hirist_click_option = AsyncMock(return_value=False)
+        self.agent._hirist_pick_option = MagicMock(return_value="3-5")
+        self.agent._fuzzy_match_question = MagicMock(return_value=("3-5", 0.95))
+        self.agent.log_qa_result = MagicMock()
+
+        mock_page = MagicMock()
+        mock_page.url = "https://www.hirist.tech/j/backend-engineer-456"
+
+        answered = await self.agent._hirist_fill_questionnaire(mock_page, questions)
+
+        self.assertEqual(answered, 0)
+        self.agent.log_qa_result.assert_called_once()
+        call_kwargs = self.agent.log_qa_result.call_args[1]
+        self.assertEqual(call_kwargs['status'], 'validation_error')
+        self.assertEqual(call_kwargs['error_message'], 'Option click rejected by form')
+        self.assertEqual(call_kwargs['answer'], '3-5')
+        self.assertEqual(call_kwargs['platform'], 'hirist')
+
+    async def test_hirist_fill_questionnaire_logs_failed_text_fill_to_csv(self):
+        """A text field the form refuses to accept still leaves a validation_error row."""
+        questions = [
+            {
+                'qid': 'sntl_hq_5',
+                'question': 'What is your current CTC in Lacs per annum?',
+                'kind': 'text',
+                'options': [],
+                'hasTextarea': False,
+                'hasInput': True,
+                'prefilled': False,
+                'maxChars': 50
+            }
+        ]
+
+        self.agent._hirist_fill_text = AsyncMock(return_value=False)
+        self.agent._fuzzy_match_question = MagicMock(return_value=("23 LPA", 0.95))
+        self.agent.log_qa_result = MagicMock()
+
+        mock_page = MagicMock()
+        mock_page.url = "https://www.hirist.tech/j/backend-engineer-456"
+
+        answered = await self.agent._hirist_fill_questionnaire(mock_page, questions)
+
+        self.assertEqual(answered, 0)
+        self.agent.log_qa_result.assert_called_once()
+        call_kwargs = self.agent.log_qa_result.call_args[1]
+        self.assertEqual(call_kwargs['status'], 'validation_error')
+        self.assertEqual(call_kwargs['error_message'], 'Could not fill text/textarea field')
+        self.assertEqual(call_kwargs['platform'], 'hirist')
+
     async def test_hirist_fill_questionnaire_logs_unknown_to_csv(self):
         """Unknown/unmatched questions log to qa_results.csv with status='unknown'."""
         questions = [

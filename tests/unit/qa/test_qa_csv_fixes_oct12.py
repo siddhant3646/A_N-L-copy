@@ -1,6 +1,7 @@
 import sys
 import os
 import unittest
+from datetime import datetime, timedelta
 
 # Add src to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
@@ -159,7 +160,8 @@ class TestQACSVFixesOct12(unittest.TestCase):
     def test_serving_notice_lwd_numeric_format(self):
         q = "Please confirm your Last Working Day (LWD) if you are currently serving notice period. (Please enter as DDMMYYYY e.g., if LWD is 19th Oct 2026, enter as 19102026). If not serving notice, please enter NA"
         ans, score = self.agent._fuzzy_match_question(q)
-        self.assertEqual(ans, "23102026")
+        expected = (datetime.now() + timedelta(days=15)).strftime("%d%m%Y")
+        self.assertEqual(ans, expected)
         self.assertGreater(score, 0.8)
 
     def test_notice_period_option_6(self):

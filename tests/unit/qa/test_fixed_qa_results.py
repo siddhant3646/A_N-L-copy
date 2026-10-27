@@ -98,6 +98,17 @@ class TestFixedQAResults(unittest.TestCase):
         options = ["0-1 yrs", "2-4 yrs", "Skip this question"]
         expVal = 4.2
         
+        hasHigher = False
+        for label in options:
+            clean = label.lower().strip()
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:[-–to]|\s+)\s*(\d+(?:\.\d+)?)", clean)
+            if m:
+                rMin = float(m.group(1))
+                rMax = float(m.group(2))
+                if (rMin == 4 or (expVal >= rMin and expVal <= rMax)) and rMax > 4:
+                    hasHigher = True
+                    break
+
         scores = {}
         for label in options:
             clean = label.lower().strip()
@@ -108,10 +119,17 @@ class TestFixedQAResults(unittest.TestCase):
             if m:
                 rMin = float(m.group(1))
                 rMax = float(m.group(2))
-                if expVal >= rMin and expVal <= (rMax + 0.5):
-                    scores[label] = max(85, 99 - (rMax - rMin) - abs(expVal - min(expVal, rMax)))
-                elif expVal > rMax and (expVal - rMax) <= 2.0:
-                    scores[label] = max(70, 85 - (expVal - rMax) * 8)
+                if expVal >= 4.0 and rMax <= 4.0 and hasHigher:
+                    scores[label] = 0
+                elif expVal >= rMin and expVal <= rMax:
+                    minBonus = 5 if (rMin == 4 or int(expVal) == int(rMin)) else 0
+                    scores[label] = max(88, 100 + minBonus - (rMax - rMin) - abs(expVal - rMin))
+                elif expVal > rMax and not hasHigher:
+                    diff = expVal - rMax
+                    if diff <= 2.0:
+                        scores[label] = max(70, 92 - diff * 8)
+                    else:
+                        scores[label] = 0
                 else:
                     scores[label] = 0
             else:
@@ -120,6 +138,114 @@ class TestFixedQAResults(unittest.TestCase):
         best = max(scores.items(), key=lambda x: x[1])
         self.assertEqual(best[0], "2-4 yrs")
         self.assertGreater(best[1], 90)
+
+    def test_experience_bracket_prefers_min_4_over_max_4(self):
+        options = ["No experience", "<2 years", "2-4 years", "4-7 years", "7-10 years"]
+        expVal = 4.2
+
+        hasHigher = False
+        for label in options:
+            clean = label.lower().strip()
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:[-–to]|\s+)\s*(\d+(?:\.\d+)?)", clean)
+            if m:
+                rMin = float(m.group(1))
+                rMax = float(m.group(2))
+                if (rMin == 4 or (expVal >= rMin and expVal <= rMax)) and rMax > 4:
+                    hasHigher = True
+                    break
+
+        scores = {}
+        for label in options:
+            clean = label.lower().strip()
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:[-–to]|\s+)\s*(\d+(?:\.\d+)?)", clean)
+            if m:
+                rMin = float(m.group(1))
+                rMax = float(m.group(2))
+                if expVal >= 4.0 and rMax <= 4.0 and hasHigher:
+                    scores[label] = 0
+                elif expVal >= rMin and expVal <= rMax:
+                    minBonus = 5 if (rMin == 4 or int(expVal) == int(rMin)) else 0
+                    scores[label] = max(88, 100 + minBonus - (rMax - rMin) - abs(expVal - rMin))
+                else:
+                    scores[label] = 0
+            else:
+                scores[label] = 0
+
+        self.assertEqual(scores["2-4 years"], 0)
+        self.assertGreater(scores["4-7 years"], 90)
+        best = max(scores.items(), key=lambda x: x[1])
+        self.assertEqual(best[0], "4-7 years")
+
+    def test_experience_bracket_2_4_vs_4_6(self):
+        options = ["2-4", "4-6"]
+        expVal = 4.2
+
+        hasHigher = False
+        for label in options:
+            clean = label.lower().strip()
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:[-–to]|\s+)\s*(\d+(?:\.\d+)?)", clean)
+            if m:
+                rMin = float(m.group(1))
+                rMax = float(m.group(2))
+                if (rMin == 4 or (expVal >= rMin and expVal <= rMax)) and rMax > 4:
+                    hasHigher = True
+                    break
+
+        scores = {}
+        for label in options:
+            clean = label.lower().strip()
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:[-–to]|\s+)\s*(\d+(?:\.\d+)?)", clean)
+            if m:
+                rMin = float(m.group(1))
+                rMax = float(m.group(2))
+                if expVal >= 4.0 and rMax <= 4.0 and hasHigher:
+                    scores[label] = 0
+                elif expVal >= rMin and expVal <= rMax:
+                    minBonus = 5 if (rMin == 4 or int(expVal) == int(rMin)) else 0
+                    scores[label] = max(88, 100 + minBonus - (rMax - rMin) - abs(expVal - rMin))
+                else:
+                    scores[label] = 0
+
+        self.assertEqual(scores["2-4"], 0)
+        self.assertGreater(scores["4-6"], 95)
+        best = max(scores.items(), key=lambda x: x[1])
+        self.assertEqual(best[0], "4-6")
+
+    def test_virtual_drive_availability(self):
+        questions = [
+            "Available to attend Virtual Drive on 24th October *",
+            "•\tAvailable to attend Virtual Drive on 24th October *",
+            "Are you available to attend Virtual Drive?",
+            "Available for virtual hiring drive?",
+        ]
+        for q in questions:
+            ans, conf = self.agent._fuzzy_match_question(q)
+            self.assertEqual(ans, "Yes", f"Failed for question: {q}")
+            self.assertGreaterEqual(conf, 0.90)
+
+    def test_work_from_office_locations(self):
+        questions = [
+            "Available to work from office in Bengaluru/Chennai/Delhi/Mumbai/Pune *",
+            "•\tAvailable to work from office in Bengaluru/Chennai/Delhi/Mumbai/Pune *",
+            "Available to work from office in Bengaluru",
+            "Work from office in Bangalore?",
+        ]
+        for q in questions:
+            ans, conf = self.agent._fuzzy_match_question(q)
+            self.assertEqual(ans, "Yes", f"Failed for question: {q}")
+            self.assertGreaterEqual(conf, 0.90)
+
+    def test_restful_api_experience_yes_no(self):
+        questions = [
+            "Experience developing and consuming RESTful APIs.*",
+            "•\tExperience developing and consuming RESTful APIs.*",
+            "Do you have experience developing and consuming RESTful APIs?",
+            "Developing and consuming RESTful APIs",
+        ]
+        for q in questions:
+            ans, conf = self.agent._fuzzy_match_question(q)
+            self.assertEqual(ans, "Yes", f"Failed for question: {q}")
+            self.assertGreaterEqual(conf, 0.90)
 
 
 if __name__ == "__main__":

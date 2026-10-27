@@ -347,7 +347,8 @@ class TestPlatformOverridesAdversarial(unittest.TestCase):
         self.assertEqual(p["default"], "30 LPA")
         self.assertEqual(p["platform_overrides"]["instahyre"], "30 LPA")
         self.assertEqual(p["input_type_defaults"]["text"], "30 LPA")
-        self.assertEqual(p["input_type_defaults"]["text_lpa"], "30 LPA")
+        # text_lpa is the numeric LPA value; the "LPA" suffix belongs to text.
+        self.assertEqual(p["input_type_defaults"]["text_lpa"], "30")
 
 
 class TestRuleR4DeepAdversarial(unittest.TestCase):
@@ -511,27 +512,26 @@ class TestEmpiricalChallengerBugDemonstration(unittest.TestCase):
         cls.resolver = InputAwareResolver()
 
     def test_bug_1_linkedin_fingerprint_bypass(self):
-        """BUG 1: On LinkedIn, fingerprint match at Phase 0.5 bypasses platform formatting.
+        """BUG 1: On LinkedIn, fingerprint match at Phase 0.5 applies platform formatting.
 
         Expected: LinkedIn requires whole number ('4').
-        Observed: Phase 0.5 returns early with '4.2 Years' before line 1315 is reached.
         """
         self.agent._current_platform = "linkedin"
         # Standard question matched in fingerprint store
         ans, score = self.agent._fuzzy_match_question("years of experience")
-        # Demonstrating empirical behavior: ans is "4.2 Years" instead of "4"
-        self.assertEqual(ans, "4.2 Years", "Fingerprint bypass confirmed: returns 4.2 Years instead of 4")
+        # Fixed behavior: ans is "4" on LinkedIn
+        self.assertEqual(ans, "4", "LinkedIn platform formatting should return whole number 4")
 
     def test_bug_2_radio_range_collapse_on_rel_exp(self):
-        """BUG 2: For questions lacking 'how many years' / 'how much experience',
+        """BUG 2 (fixed): experience questions without 'how many years' stay numeric.
 
-        pattern_matcher.py coerces numeric experience into 'Yes' when input_type='radio',
-        breaking range resolution in InputAwareResolver.
+        pattern_matcher.py used to coerce numeric experience into 'Yes' when
+        input_type='radio', which broke range resolution in InputAwareResolver.
+        The sanitizer now keeps '4.2', so the matching range resolves correctly.
         """
         q = "Rel Exp in .Netcore:"
         ans, score = self.matcher.fuzzy_match(q, input_type="radio")
-        # Coerced into 'Yes' instead of numeric '4.2'
-        self.assertEqual(ans, "Yes")
+        self.assertEqual(ans, "4.2")
 
         # Now test what happens when range options are presented:
         options = [
@@ -541,8 +541,8 @@ class TestEmpiricalChallengerBugDemonstration(unittest.TestCase):
             Option(value="3", label="6+ yrs"),
         ]
         res = self.resolver.resolve(ans, InputType.RADIO, options=options, question=q)
-        # It fails to match any option!
-        self.assertIsNone(res.matched_option, "Radio range resolution failed due to 'Yes' answer")
+        self.assertIsNotNone(res.matched_option, "Radio range resolution failed for numeric answer")
+        self.assertEqual(res.matched_option.label, "4 - 6 yrs")
 
     def test_bug_3_aem_full_name_omission(self):
         """BUG 3: Pattern 'aem_backend_experience' only defines patterns with acronym 'aem'.
@@ -554,6 +554,184 @@ class TestEmpiricalChallengerBugDemonstration(unittest.TestCase):
         ans, score = self.matcher.fuzzy_match(q, input_type="select")
         self.assertEqual(ans, "4.2", "Fell back to tech_specific_experience instead of AEM pattern")
         self.assertGreaterEqual(score, 0.90, "Score resolved with high confidence")
+
+
+class TestOverlapCollisionBehaviour(unittest.TestCase):
+    """Wrong-answer edge cases caused by overlapping / duplicate pattern strings.
+
+    Each of these questions used to be owned by two pattern groups at the same
+    priority, so the answer depended on JSON insertion order and could be
+    semantically wrong (e.g. "criminal background check" returned a full-stack
+    essay, generic NDA labels returned "No" instead of agreeing, and the
+    emergency-contact phone leaked the candidate's own number).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.matcher = create_matcher("config/qa_patterns.json")
+
+    def test_criminal_background_check_is_not_an_essay(self):
+        for input_type in ("radio", "checkbox", "select", "text"):
+            ans, score = self.matcher.fuzzy_match(
+                "criminal background check", input_type=input_type
+            )
+            self.assertEqual(ans, "No", f"({input_type}) expected No, got {ans!r}")
+            self.assertGreaterEqual(score, 0.90)
+            self.assertNotIn("full-stack software engineering", ans or "")
+
+    def test_criminal_background_check_consent_is_yes(self):
+        """Explicit consent to a background check must be Yes.
+
+        Production evidence: the Greenhouse consent statement "...asked to
+        provide authorization before any such checks are conducted." was
+        answered Yes.
+        """
+        for q in (
+            "willing to undergo an employment education and criminal background check",
+            "employment education and criminal background check",
+            "are you willing to undergo a background check",
+            "comprehensive background check",
+        ):
+            ans, score = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertEqual(ans, "Yes", f"{q!r} -> {ans!r}")
+
+    def test_criminal_conviction_questions_are_no(self):
+        for q in (
+            "do you have any criminal record",
+            "have you ever been convicted for any criminal offence",
+            "any pending criminal cases",
+            "have you been convicted",
+        ):
+            ans, score = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertEqual(ans, "No", f"{q!r} -> {ans!r}")
+            self.assertGreaterEqual(score, 0.90)
+
+    def test_emergency_contact_number_uses_contact_not_candidate_phone(self):
+        for input_type in ("tel", "text", "number"):
+            ans, score = self.matcher.fuzzy_match(
+                "emergency contact number", input_type=input_type
+            )
+            self.assertNotEqual(
+                ans, "7905828880", f"Candidate's own phone leaked for {input_type}"
+            )
+            self.assertEqual(ans, "6263066371", f"({input_type}) got {ans!r}")
+            self.assertGreaterEqual(score, 0.90)
+
+    def test_emergency_contact_details_are_not_redacted(self):
+        ans, _ = self.matcher.fuzzy_match(
+            "provide emergency contact details", input_type="textarea"
+        )
+        self.assertIn("Rohan Singh", ans)
+        self.assertIn("6263066371", ans)
+        self.assertNotIn("XXXX", ans)
+
+    def test_generic_nda_labels_agree(self):
+        """Observed production answer for the LinkedIn 'Non-Disclosure Agreement'
+        field was 'I Agree', so generic NDA labels must resolve to Yes."""
+        for q in (
+            "confidentiality agreement",
+            "non-disclosure agreement",
+            "non disclosure agreement",
+            "nda",
+            "non-disclosure",
+        ):
+            for input_type in ("radio", "checkbox"):
+                ans, _ = self.matcher.fuzzy_match(q, input_type=input_type)
+                self.assertEqual(ans, "Yes", f"{q!r} ({input_type}) -> {ans!r}")
+
+    def test_currently_bound_nda_phrasings_are_false(self):
+        for q in (
+            "do you have nda",
+            "do you have an nda",
+            "bound by confidentiality",
+        ):
+            ans, _ = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertEqual(ans, "No", f"{q!r} -> {ans!r}")
+
+    def test_restrictive_covenant_questions_still_false(self):
+        for q in (
+            "are you bound by any non-compete or confidentiality agreement?",
+            "do you have any restrictive covenants e.g.noncompete/confidentiality agreements with current/previous employer,which restrict you performing this job?",
+            "are you subject to any non-compete clause",
+            "non-compete or non-solicitation agreement",
+            "do you have any post-employment restrictions",
+        ):
+            ans, score = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertEqual(ans, "No", f"{q!r} -> {ans!r}")
+            self.assertGreaterEqual(score, 0.90)
+
+    def test_interview_time_slots_stay_distinct(self):
+        ans, _ = self.matcher.fuzzy_match(
+            "time slot in between 9-3 pm", input_type="text"
+        )
+        self.assertEqual(ans, "Anytime between 10 AM - 2 PM")
+        ans, _ = self.matcher.fuzzy_match(
+            "kindly mention the time slot in between 9- 3 pm at what time you will be available?",
+            input_type="text",
+        )
+        self.assertEqual(ans, "Anytime between 10 AM - 2 PM")
+        ans, _ = self.matcher.fuzzy_match(
+            "Please mention the time slot in between 10 AM to 4 PM when you will be available for interview",
+            input_type="text",
+        )
+        self.assertEqual(ans, "Anytime between 10 AM - 4 PM")
+
+    def test_generic_visa_sponsorship_is_no(self):
+        ans, _ = self.matcher.fuzzy_match(
+            "require sponsorship for employment visa status", input_type="radio"
+        )
+        self.assertEqual(ans, "No")
+
+
+class TestOverlapStringOwnership(unittest.TestCase):
+    """Structural guarantee: the collision strings fixed above now have a single
+    owner, so tier-1 resolution never depends on JSON insertion order."""
+
+    @classmethod
+    def setUpClass(cls):
+        with open("config/qa_patterns.json", "r", encoding="utf-8") as fh:
+            cls.patterns = json.load(fh)["patterns"]
+        cls.text_map = {}
+        for pid, data in cls.patterns.items():
+            for pat in data.get("patterns") or []:
+                cls.text_map.setdefault(str(pat).strip().lower(), set()).add(pid)
+
+    def _owners(self, text):
+        return self.text_map.get(text, set())
+
+    def test_nda_strings_have_single_owner(self):
+        expected = {
+            "confidentiality agreement": "willing_to_sign_nda",
+            "non-disclosure agreement": "willing_to_sign_nda",
+            "non disclosure agreement": "willing_to_sign_nda",
+            "nda": "willing_to_sign_nda",
+            "non-disclosure": "willing_to_sign_nda",
+            "do you have nda": "confidentiality_agreement",
+            "bound by confidentiality": "confidentiality_agreement",
+        }
+        for text, owner in expected.items():
+            owners = self._owners(text)
+            self.assertEqual(
+                owners, {owner}, f"{text!r} owned by {sorted(owners)} (expected {owner})"
+            )
+
+    def test_time_slot_strings_single_owner(self):
+        for text in (
+            "time slot in between 9-3 pm",
+            "time slot in between 9- 3 pm",
+            "kindly mention the time slot in between 9- 3 pm",
+        ):
+            owners = self._owners(text)
+            self.assertEqual(len(owners), 1, f"{text!r} -> {sorted(owners)}")
+            self.assertEqual(owners, {"interview_time_slot_9_to_3"})
+
+    def test_emergency_contact_number_single_owner(self):
+        owners = self._owners("emergency contact number")
+        self.assertEqual(owners, {"emergency_contact_phone"})
+
+    def test_criminal_background_check_not_in_police_consent(self):
+        owners = self._owners("criminal background check")
+        self.assertNotIn("police_verification_consent", owners)
 
 
 if __name__ == "__main__":

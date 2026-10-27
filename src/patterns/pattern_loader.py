@@ -11,6 +11,8 @@ import os
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
+from .input_type_sanitizer import sanitize_answer
+
 
 class PatternLoadError(Exception):
     """Exception raised when pattern loading fails."""
@@ -22,7 +24,11 @@ class PatternValidationError(Exception):
     pass
 
 
-def load_patterns(json_path: str) -> Dict[str, Any]:
+# abspath -> (parsed data, (mtime_ns, size) the data was parsed at)
+_LOAD_CACHE: Dict[str, tuple] = {}
+
+
+def load_patterns(json_path: str, force_reload: bool = False) -> Dict[str, Any]:
     """
     Load Q&A patterns from a JSON file.
     
@@ -34,10 +40,25 @@ def load_patterns(json_path: str) -> Dict[str, Any]:
         
     Raises:
         PatternLoadError: If the file doesn't exist or JSON is invalid
+
+    Results are memoized per (path, mtime, size): the corpus is a 68 MB file and
+    tests construct many matchers per session, so re-parsing it per call made
+    even simple tests take seconds.  Treat the returned dict as read-only.
     """
     if not os.path.exists(json_path):
         raise PatternLoadError(f"Pattern file not found: {json_path}")
-    
+
+    key = os.path.abspath(json_path)
+    try:
+        stat = os.stat(key)
+        stamp = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        stamp = None
+    if stamp is not None and not force_reload:
+        cached = _LOAD_CACHE.get(key)
+        if cached is not None and cached[1] == stamp:
+            return cached[0]
+
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -45,7 +66,9 @@ def load_patterns(json_path: str) -> Dict[str, Any]:
         raise PatternLoadError(f"Invalid JSON in pattern file: {e}")
     except Exception as e:
         raise PatternLoadError(f"Error reading pattern file: {e}")
-    
+
+    if stamp is not None:
+        _LOAD_CACHE[key] = (data, stamp)
     return data
 
 
@@ -218,15 +241,22 @@ def get_pattern_answer_for_input_type(
     
     # Check for input_type_defaults
     input_type_defaults = pattern.get('input_type_defaults', {})
-    if input_type_defaults and input_type in input_type_defaults:
-        return input_type_defaults[input_type]
-    
-    # Fallback to numeric_default for number inputs
-    if input_type == 'number':
-        return pattern.get('numeric_default') or pattern.get('default')
-    
-    # Fallback to default
-    return pattern.get('default')
+    if not isinstance(input_type_defaults, dict):
+        input_type_defaults = {}
+    question = str((pattern.get('patterns') or [''])[0])
+    category = str(pattern.get('category', ''))
+    canonical = str(pattern.get('default', ''))
+    if input_type in input_type_defaults:
+        answer = input_type_defaults[input_type]
+    elif input_type == 'number':
+        # Fallback to numeric_default for number inputs
+        answer = pattern.get('numeric_default') or pattern.get('default')
+    else:
+        answer = pattern.get('default')
+
+    if answer is None:
+        return None
+    return sanitize_answer(answer, input_type, question=question, category=category, default=canonical)
 
 
 class PatternLoader:
@@ -270,7 +300,7 @@ class PatternLoader:
         if self._patterns is not None and not force_reload:
             return self._patterns
         
-        self._patterns = load_patterns(self.json_path)
+        self._patterns = load_patterns(self.json_path, force_reload=force_reload)
         self._validation_errors = validate_patterns(self._patterns)
         
         if self._validation_errors:

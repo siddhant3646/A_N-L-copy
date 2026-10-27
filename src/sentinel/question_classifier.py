@@ -769,24 +769,52 @@ class QuestionClassifier:
             return result.matched_option.label, result.confidence, result.match_type
         
         import re
-        for opt in options:
-            answer_nums = re.findall(r'\d+\.?\d*', base_answer)
-            opt_nums = re.findall(r'\d+\.?\d*', opt)
+        answer_nums = re.findall(r'\d+\.?\d*', base_answer)
+        if answer_nums:
+            val = float(answer_nums[0])
+            target_val = 4.2 if (3.5 <= val <= 5.5) else val
+            has_covering = False
+            for opt in options:
+                rm = re.search(r'(\d+(?:\.\d+)?)\s*(?:[-–—]|\bto\b)\s*(\d+(?:\.\d+)?)', opt)
+                pm = re.search(r'(\d+(?:\.\d+)?)\s*(?:\+|or\s+more|and\s+above)', opt)
+                if rm:
+                    low = float(rm.group(1))
+                    high = float(rm.group(2))
+                    if (low == 4.0 or (target_val >= low and target_val <= high)) and high > 4.0:
+                        has_covering = True
+                        break
+                elif pm and float(pm.group(1)) <= target_val and float(pm.group(1)) >= 4.0:
+                    has_covering = True
+                    break
             
-            if answer_nums and opt_nums:
-                if '-' in opt:
-                    parts = opt.split('-')
-                    try:
-                        low_match = re.search(r'\d+\.?\d*', parts[0])
-                        high_match = re.search(r'\d+\.?\d*', parts[1])
-                        if low_match and high_match:
-                            low = float(low_match.group())
-                            high = float(high_match.group())
-                            val = float(answer_nums[0])
-                            if low <= val <= high:
-                                return opt, 0.9, 'numeric_range'
-                    except:
-                        pass
+            best_opt = None
+            best_score = -1
+            for opt in options:
+                rm = re.search(r'(\d+(?:\.\d+)?)\s*(?:[-–—]|\bto\b)\s*(\d+(?:\.\d+)?)', opt)
+                pm = re.search(r'(\d+(?:\.\d+)?)\s*(?:\+|or\s+more|and\s+above)', opt)
+                if rm:
+                    low = float(rm.group(1))
+                    high = float(rm.group(2))
+                    if target_val >= 4.0 and high <= 4.0 and has_covering:
+                        continue
+                    if low <= target_val <= high:
+                        score = 100
+                        if low == 4.0:
+                            score += 15
+                        if score > best_score:
+                            best_score = score
+                            best_opt = opt
+                elif pm:
+                    bound = float(pm.group(1))
+                    if target_val >= bound:
+                        score = 95
+                        if bound == 4.0:
+                            score += 15
+                        if score > best_score:
+                            best_score = score
+                            best_opt = opt
+            if best_opt:
+                return best_opt, 0.9, 'numeric_range'
         
         return base_answer, base_confidence * 0.5, 'fallback'
     

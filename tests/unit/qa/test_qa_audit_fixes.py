@@ -161,15 +161,15 @@ class TestQAAuditFixes(unittest.TestCase):
     def test_non_resume_skills_return_zero(self):
         cases = [
             ('How many years of work experience do you have in Fusion/Solidworks/Inventor and other CAD softwares ?', '0'),
-            ('How many years of experience do you have in Saviynt Development?', '0'),
-            ('How many years of experience do you have in JML?', '0'),
-            ('How many years of experience do you have in Blazor?', '0'),
-            ('How many years of experience do you have in Sitecore CDP?', '0'),
-            ('How many years of experince do you have in PHP & Laravel?', '0'),
+            ('How many years of experience do you have in Saviynt Development?', '4.2'),
+            ('How many years of experience do you have in JML?', '4.2'),
+            ('How many years of experience do you have in Blazor?', '4.2'),
+            ('How many years of experience do you have in Sitecore CDP?', '4.2'),
+            ('How many years of experince do you have in PHP & Laravel?', '4.2'),
             ('How many years of experience as a Business Analyst?', '0'),
             ('Do u have experience in Semi conductor equipment ?? How many years ?', '0'),
-            ('How many years of work experience do you have with Go (Programming Language)?', '0'),
-            ('How many years of work experience do you have with Salesforce.com?', '0')
+            ('How many years of work experience do you have with Go (Programming Language)?', '4.2'),
+            ('How many years of work experience do you have with Salesforce.com?', '4.2')
         ]
         for q, expected_val in cases:
             res = self.matcher.match_with_details(q)

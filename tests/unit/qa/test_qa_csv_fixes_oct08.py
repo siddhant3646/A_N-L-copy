@@ -14,7 +14,7 @@ Test cases cover:
 6. Traffic volume handled by system (10M+ daily events)
 7. Contractual role employment arrangement preference (Contract Full-time)
 8. Highest team size handled technically (numeric 8 / not long essay)
-9. Serving notice period LWD numeric format '19102026' (23102026)
+9. Serving notice period LWD numeric format '19102026' (dynamic DDMMYYYY)
 10. Numbered notice period options '(6) --Serving Notice Period'
 11. Multi-select prior experience technologies (Java, JavaScript, AWS, MongoDB, MySQL; not corrupted by 'r experience')
 12. Why work with Supersourcing (tailored to Supersourcing, not hardcoded Wissen)
@@ -30,6 +30,7 @@ Test cases cover:
 """
 
 import pytest
+from datetime import datetime, timedelta
 from src.patterns.pattern_loader import load_patterns
 from src.patterns.pattern_matcher import PatternMatcher
 from src.sentinel.agent import SentinelAgent
@@ -147,7 +148,7 @@ class TestQACSVFixesOct08:
     def test_serving_notice_lwd_numeric_format_matcher(self, matcher):
         q = 'If you are serving notice period or your last working day is completed, please share the details (Example - last working days is /was 19th Oct, 2026 then enter as 19102026, if not serving enter "0")'
         ans, score = matcher.fuzzy_match(q, input_type="text")
-        assert ans == "23102026"
+        assert ans == (datetime.now() + timedelta(days=15)).strftime("%d%m%Y")
         assert ans.lower() != "yes"
         assert score >= 0.85
 

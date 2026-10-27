@@ -15,6 +15,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 
 # =============================================================================
+# Shared Pattern Data (session-scoped: the corpus is 60k+ groups)
+# =============================================================================
+
+@pytest.fixture(scope="session")
+def real_patterns_data():
+    """The full config/qa_patterns.json corpus, loaded once per session."""
+    from src.patterns.pattern_loader import load_patterns
+    path = os.path.join(os.path.dirname(__file__), "..", "config", "qa_patterns.json")
+    return load_patterns(path)
+
+
+@pytest.fixture(scope="session")
+def real_pattern_matcher(real_patterns_data):
+    """PatternMatcher over the real corpus, built once per session."""
+    from src.patterns.pattern_matcher import PatternMatcher
+    return PatternMatcher(real_patterns_data)
+
+
+# =============================================================================
 # Mock Browser Fixtures
 # =============================================================================
 

@@ -96,6 +96,26 @@ class TestHiristApplyCap(unittest.TestCase):
         self.assertEqual(calls[0], 'questionnaire')
         self.assertIn('confirm', calls)
 
+    def test_suitability_filter_skips_unsuitable_jobs(self):
+        """Jobs with executive titles or excessive min experience must be skipped."""
+        unsuitable_vp = {'title': 'Medi Assist - Vice President', 'exp': '9 - 16 yrs'}
+        unsuitable_architect = {'title': 'Unisys - Technical Architect', 'exp': '12 - 20 yrs'}
+        unsuitable_lead = {'title': 'Lead Software Engineer', 'exp': '8 - 12 yrs'}
+        suitable_sde = {'title': 'Node.js Developer - Backend Architecture', 'exp': '4 - 8 yrs'}
+        suitable_se = {'title': 'Symplr - Software Engineer - Java/AngularJS', 'exp': '4 - 6 yrs'}
+
+        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_vp)[0])
+        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_architect)[0])
+        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_lead)[0])
+        self.assertTrue(self.agent._is_hirist_job_suitable(suitable_sde)[0])
+        self.assertTrue(self.agent._is_hirist_job_suitable(suitable_se)[0])
+
+    def test_script_error_count_resets_between_tasks(self):
+        """_script_error_count must be reset in reset_per_task_state to prevent cascading task aborts."""
+        self.agent._script_error_count = 10
+        self.agent.reset_per_task_state()
+        self.assertEqual(self.agent._script_error_count, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -11,6 +11,7 @@ import re
 import hashlib
 import json
 import os
+from functools import lru_cache
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
@@ -414,6 +415,7 @@ def normalize_word(word: str) -> str:
     return SYNONYM_MAP.get(word_lower, word_lower)
 
 
+@lru_cache(maxsize=500_000)
 def create_fingerprint(question: str) -> str:
     """
     Create a normalized fingerprint for a question.
@@ -434,6 +436,10 @@ def create_fingerprint(question: str) -> str:
     
     # Convert to lowercase
     text = question.lower().strip()
+    
+    # Pre-normalize compound salary abbreviations to avoid 'ex' -> 'experience' collision
+    text = re.sub(r'\b(?:ex|exp|expected|ectc)[-\s]+ctc\b|\b(?:exctc|ectc)\b', 'expected salary', text)
+    text = re.sub(r'\b(?:cur|current|cctc)[-\s]+ctc\b|\b(?:cctc)\b', 'current salary', text)
     
     # Remove punctuation except apostrophes (for contractions)
     text = re.sub(r"[^\w\s']", ' ', text)

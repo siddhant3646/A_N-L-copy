@@ -44,9 +44,27 @@ No `.env.example` exists; `.env` is gitignored.
 
 **Tier 1 (PHASE 1):** ~35 hardcoded keyword interceptions in `SentinelAgent._fuzzy_match_question()` returning fixed answers with 0.90-0.99 confidence.
 
-**Tier 2:** `PatternMatcher` using `difflib.SequenceMatcher` against `qa_patterns.json` (v3.0, 11,576 pattern groups, threshold 0.65).
+**Tier 2:** `PatternMatcher` using `difflib.SequenceMatcher` against `qa_patterns.json` (v3.0, 66,916 pattern groups, threshold 0.65).
 
 **Tier 3:** `QuestionClassifier` for smart category fallback (PHASE 3).
+
+### QA CSV Logging Pipeline
+
+Every answered, skipped, prefilled or rejected question must reach `~/Desktop/sentinel_errors/qa_results.csv`. `SentinelAgent._log_qa_result()` (`agent.py:3441`) is the single writer — all platforms funnel through it.
+
+| Helper | Purpose |
+|---|---|
+| `_log_qa_entries()` (`agent.py:3503`) | Writes a list of `{question, answer, inputType/input_type/t, selectedOption/s, options, status, source}` dicts; dedupes repeats per application (keyed on `_current_job_url`) and labels blank answers `status='unknown'` |
+| `_log_qa_payload()` | Parses a `MARKER\|JSON` string returned by an injected script and feeds `_log_qa_entries()` |
+| `_drain_js_qa_log()` | Reads and clears the page-side mirror array `window.__SENTINEL_QA_LOG__` |
+| `_log_naukri_chatbot_result()` | Naukri chatbot answer, `CHATBOT_SKIPPED_QUESTION:` and `CHATBOT_SUBMISSION_ERROR:` rows |
+| `_log_question_detailed()` / `_log_all_questions()` / `_log_unknown_question()` | Legacy per-question writers (LLM-guided `run()` paths) |
+
+Injected page scripts push each answered control into their local `formResults` / `genericResults` array **and** into `window.__SENTINEL_QA_LOG__` (`attachQaLog()` in the LinkedIn JS literal). `_handle_scripted_fallback` drains that global after every `page.evaluate()` (`agent.py:24978-24979`), so early-exit returns (`LINKEDIN_FORM_STUCK`, `LINKEDIN_INVALID_CARD_REMOVED`) never lose rows.
+
+Per-platform call sites: LinkedIn/generic JS → the drain + payload pair in `_handle_scripted_fallback`; Naukri chatbot → `_handle_chatbot_loop` (`agent.py:13929`); Instahyre → `_answer_instahyre_questionnaire` (`agent.py:10872`, one row per control with the real `input_type`); Hirist → 7 sites in `_hirist_fill_questionnaire` (`agent.py:10298-10494`, incl. `validation_error` rows for rejected option clicks and failed text fills); Indeed → 3 sites in `_indeed_answer_questions` (`agent.py:9116-9164`).
+
+Coverage is locked by `tests/unit/sentinel/test_qa_csv_coverage.py` plus the platform tests in `tests/unit/platforms/test_hirist_qa_logging_and_console_filtering.py` and `tests/unit/platforms/test_instahyre_gemma_answers.py`.
 
 ### Embedded JavaScript
 
@@ -241,7 +259,7 @@ FINAL: Return (None, best_score) (line 1194)
 
 ## qa_patterns.json Schema
 
-**File:** `config/qa_patterns.json` (3.6 MB, 231,361 lines, 11,576 pattern groups)
+**File:** `config/qa_patterns.json` (77.7 MB, 66,916 pattern groups, 223,847 question variants)
 
 ### Top-Level Structure
 
@@ -286,33 +304,33 @@ FINAL: Return (None, best_score) (line 1194)
 
 | Category | Count | Smart Fallback |
 |---|---|---|
-| `skills` | 8,403 | Yes |
-| `experience` | 1,317 | Yes (context required) |
-| `preference` | 510 | Yes |
-| `soft_skills` | 306 | Yes |
-| `yes_no` | 217 | Yes (default: "Yes") |
-| `personal_info` | 143 | No (exact match) |
-| `education` | 138 | Yes |
-| `availability` | 130 | Yes |
-| `salary` | 89 | Yes |
-| `location` | 71 | Yes |
-| `compliance` | 66 | No |
-| `notice_period` | 44 | Yes |
-| `employment` | 38 | Yes |
-| `work_authorization` | 34 | No |
-| `self_identification` | 20 | No (exact match) |
-| `technical_screening` | 14 | Yes |
-| `work_mode` | 9 | Yes (default: "Yes") |
-| `screening` | 9 | Yes |
-| `behavioral` | 5 | Yes |
-| `technical` | 6 | Yes |
-| `compensation` | 1 | Yes |
-| `data_consent` | 1 | Yes |
-| `leadership` | 1 | Yes |
-| `personal` | 1 | No |
-| `role` | 1 | Yes |
-| `skip` | 1 | Yes |
+| `skills` | 52,296 | Yes |
+| `experience` | 12,333 | Yes (context required) |
+| `preference` | 526 | Yes |
+| `soft_skills` | 308 | Yes |
+| `yes_no` | 231 | Yes (default: "Yes") |
+| `availability` | 176 | Yes |
+| `location` | 168 | Yes |
+| `education` | 162 | Yes |
+| `personal_info` | 147 | No (exact match) |
+| `salary` | 127 | Yes |
+| `compliance` | 117 | No |
+| `notice_period` | 75 | Yes |
+| `employment` | 64 | Yes |
+| `work_authorization` | 42 | No |
+| `work_mode` | 31 | Yes (default: "Yes") |
+| `technical` | 29 | Yes |
+| `technical_screening` | 27 | Yes |
+| `self_identification` | 21 | No (exact match) |
+| `behavioral` | 14 | Yes |
+| `screening` | 10 | Yes |
+| `data_consent` | 3 | Yes |
+| `skip` | 2 | Yes |
+| `role` | 2 | Yes |
+| `leadership` | 2 | Yes |
 | `work` | 1 | Yes |
+| `compensation` | 1 | Yes |
+| `personal` | 1 | No |
 
 ### Dynamic Placeholders
 
@@ -444,7 +462,7 @@ Add a test in `tests/unit/qa/test_qa_*.py` if the pattern is critical.
 
 | File | Lines | Purpose |
 |---|---|---|
-| `src/sentinel/agent.py` | ~15,500 | Core `SentinelAgent` class. Contains Python-side Q&A logic (`_fuzzy_match_question`), embedded JS for LinkedIn/Naukri form filling, platform-specific handlers, form section processing, Shadow DOM traversal |
+| `src/sentinel/agent.py` | ~25,000 | Core `SentinelAgent` class. Contains Python-side Q&A logic (`_fuzzy_match_question`), embedded JS for LinkedIn/Naukri form filling, platform-specific handlers, form section processing, Shadow DOM traversal |
 | `src/sentinel/run.py` | ~1,080 | Main runner. `Browser` class manages Chrome lifecycle. Infinite loop cycles through 8 tasks: Naukri apply, LinkedIn Easy Apply, Instahyre tasks. Handles temp directory management, Chrome temp cleanup, profile copying |
 | `src/sentinel/prompts.py` | ~360 | Task prompts and system instructions for LLM-guided tasks. Contains `COMMON_CONTEXT`, `NAUKRI_JOB_APPLY_TASK`, `LINKEDIN_EASY_APPLY_TASK`, `INSTAHYRE_*` task definitions |
 
@@ -452,8 +470,8 @@ Add a test in `tests/unit/qa/test_qa_*.py` if the pattern is critical.
 
 | File | Lines | Purpose |
 |---|---|---|
-| `config/qa_patterns.json` | ~231,000 | Single source of truth for Q&A. 11,576 pattern groups across 27 categories. See schema section above |
-| `src/patterns/pattern_matcher.py` | ~583 | `PatternMatcher` class. Uses `difflib.SequenceMatcher` for fuzzy matching (threshold 0.65). Builds category index, handles normalization (C++ → cpp, C# → csharp), resolves dynamic values, validates answers |
+| `config/qa_patterns.json` | ~1,314,000 | Single source of truth for Q&A. 66,916 pattern groups across 27 categories. See schema section above |
+| `src/patterns/pattern_matcher.py` | ~1,140 | `PatternMatcher` class. Uses `difflib.SequenceMatcher` for fuzzy matching (threshold 0.65). Builds category index, handles normalization (C++ → cpp, C# → csharp), resolves dynamic values, validates answers |
 | `src/patterns/pattern_loader.py` | ~343 | `load_patterns()` and `validate_patterns()`. Loads JSON, validates structure, provides utilities for accessing patterns |
 | `src/patterns/input_aware_resolver.py` | ~400 | `InputAwareResolver` class. Matches answers to available form options considering input type. `NumericRangeMatcher` handles range options like "3-5 years". Fuzzy matching of answer text to option labels |
 | `src/patterns/answer_validator.py` | ~170 | `AnswerValidator` class. Category-specific validation (salary must have number, experience must have number, notice period ≤ 12 months, location can't be just a number). `fix()` method auto-corrects invalid answers |
@@ -596,3 +614,7 @@ Single-branch development on `master` (local) / `main` (remote). No feature bran
 7. **Shadow DOM** — LinkedIn uses Shadow DOM extensively. Always use `queryDeep`/`queryAllDeep` instead of regular `querySelector`/`querySelectorAll`.
 
 8. **React state desync** — After filling a field, the React state may not update. Use the "Backspace & Retype" recovery protocol from `human_behavior.py` with native value setter + manual event dispatch.
+
+9. **Bare tech-name triggers steal how-to questions** — `"spring boot"` as a trigger makes `springboot_experience` (default `4.2 Years`) win on "How do you test and verify Spring Boot dependency injection in CI/CD?". `PatternMatcher._resolve_question_intent()` keeps an open-ended carve-out (`is_procedural_q`) so such prompts get an essay on text/textarea and `"Yes"` on radio/checkbox; rating prompts ("how would you rate … 1-5") are excluded so they stay numeric.
+
+10. **Every fill path must emit a CSV row** — A new platform handler that returns without calling `_log_qa_result()` (or `_log_qa_entries()` for a JS payload) silently drops the audit trail. Failed clicks and rejected fills belong in the CSV too, with `status='validation_error'`.

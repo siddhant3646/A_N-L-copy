@@ -568,12 +568,33 @@ class GemmaLLMClient:
             num_m = re.search(r"(\d+(?:\.\d+)?)", cleaned_raw)
             if num_m:
                 val = float(num_m.group(1))
+                target_val = 4.2 if (3.5 <= val <= 5.5) else val
+                has_covering = False
                 for opt in options:
                     extracted = NumericRangeMatcher.extract_range(opt)
                     if extracted:
                         low, high, rtype = extracted
-                        if low <= val <= high:
-                            return opt
+                        if (low == 4.0 or (target_val >= low and target_val <= high)) and high > 4.0:
+                            has_covering = True
+                            break
+
+                best_opt = None
+                best_score = -1
+                for opt in options:
+                    extracted = NumericRangeMatcher.extract_range(opt)
+                    if extracted:
+                        low, high, rtype = extracted
+                        if target_val >= 4.0 and high <= 4.0 and has_covering:
+                            continue
+                        if low <= target_val <= high:
+                            score = 100
+                            if low == 4.0:
+                                score += 10
+                            if score > best_score:
+                                best_score = score
+                                best_opt = opt
+                if best_opt:
+                    return best_opt
         except Exception:
             pass
 

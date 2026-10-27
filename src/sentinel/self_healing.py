@@ -348,20 +348,48 @@ class RecoveryEngine:
         return None
     
     def _find_best_range_option(self, value: float, options: List[str]) -> Optional[str]:
+        target_val = 4.2 if (3.5 <= value <= 5.5) else value
+        has_covering = False
+        for opt in options:
+            rm = re.search(r'(\d+\.?\d*)\s*[-–to]+\s*(\d+\.?\d*)', opt, re.IGNORECASE)
+            if rm:
+                low, high = float(rm.group(1)), float(rm.group(2))
+                if (low == 4.0 or (target_val >= low and target_val <= high)) and high > 4.0:
+                    has_covering = True
+                    break
+            pm = re.search(r'(\d+\.?\d*)\s*\+', opt)
+            if pm and float(pm.group(1)) <= target_val and float(pm.group(1)) >= 4.0:
+                has_covering = True
+                break
+
+        best_opt = None
+        best_score = -1
         for opt in options:
             match = re.search(r'(\d+\.?\d*)\s*[-–to]+\s*(\d+\.?\d*)', opt, re.IGNORECASE)
             if match:
                 min_val, max_val = float(match.group(1)), float(match.group(2))
-                if min_val <= value <= max_val:
-                    return opt
+                if target_val >= 4.0 and max_val <= 4.0 and has_covering:
+                    continue
+                if min_val <= target_val <= max_val:
+                    score = 100
+                    if min_val == 4.0:
+                        score += 10
+                    if score > best_score:
+                        best_score = score
+                        best_opt = opt
             
             match = re.search(r'(\d+\.?\d*)\s*\+', opt)
             if match:
                 min_val = float(match.group(1))
-                if value >= min_val:
-                    return opt
+                if target_val >= min_val:
+                    score = 95
+                    if min_val == 4.0:
+                        score += 10
+                    if score > best_score:
+                        best_score = score
+                        best_opt = opt
         
-        return None
+        return best_opt
     
     def learn_from_correction(
         self,

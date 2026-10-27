@@ -142,6 +142,20 @@ class EnhancedAnswerValidator:
 
     @classmethod
     def _closest_option(cls, answer: str, options: List[str]) -> Optional[str]:
+        if not options:
+            return None
+
+        # 1. Use InputAwareResolver for type-aware & range-aware option resolution
+        try:
+            from src.patterns.input_aware_resolver import InputAwareResolver, Option
+            resolver = InputAwareResolver()
+            opt_objects = [Option(value=str(o), label=str(o), index=i) for i, o in enumerate(options)]
+            res = resolver.resolve(answer=str(answer), input_type="radio", options=opt_objects)
+            if res and res.matched_option:
+                return res.matched_option.label
+        except Exception:
+            pass
+
         ans_norm = str(answer).strip().lower()
         best = None
         best_score = 0.0

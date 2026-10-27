@@ -56,12 +56,13 @@ class NumericRangeMatcher:
     """Matches numeric values to range options like '3-5 years'."""
     
     RANGE_PATTERNS = [
-        (r'(\d+(?:\.\d+)?)\s*[-–to]+\s*(\d+(?:\.\d+)?)', 'range'),
-        (r'(\d+(?:\.\d+)?)\s*\+', 'min'),
+        (r'(\d+(?:\.\d+)?)\s*(?:[-–—]|\bto\b|\s+)\s*(\d+(?:\.\d+)?)', 'range'),
+        (r'(\d+(?:\.\d+)?)\s*(?:lpa|lakhs?|lac|cr|years?|yrs?|months?|days?)?\s*\+', 'min'),
         (r'(?:more\s+than|over|above|>|^>\s*)\s*(\d+(?:\.\d+)?)', 'min'),
-        (r'(?:less\s+than|under|below|<|^<\s*)\s*(\d+(?:\.\d+)?)', 'max'),
-        (r'(\d+(?:\.\d+)?)\s*(?:days?|months?|weeks?|years?|yrs?)?\s*(?:or\s+less|or\s+below|and\s+below|and\s+less)\b', 'max'),
-        (r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)', 'min'),
+        (r'(?:less\s+than|under|below|<|^<\s*|upto\s*|up\s+to\s*)\s*(\d+(?:\.\d+)?)', 'max'),
+        (r'(\d+(?:\.\d+)?)\s*(?:days?|months?|weeks?|years?|yrs?|lpa|lakhs?|lac|cr)?\s*(?:or\s+less|or\s+below|and\s+below|and\s+less)\b', 'max'),
+        (r'(\d+(?:\.\d+)?)\s*(?:days?|months?|weeks?|years?|yrs?|lpa|lakhs?|lac|cr)?\s*(?:or\s+more|or\s+above|and\s+above|and\s+more)\b', 'min'),
+        (r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?|lpa|lakhs?|lac|cr)?', 'min'),
     ]
     
     @classmethod
@@ -145,7 +146,7 @@ class InputAwareResolver:
         'senior': ['4', '4-5', '5', '5+', 'senior', 'lead'],
         
         'immediate': ['0', 'immediate', 'now', 'immediately', 'immediate joiner'],
-        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than 15 days', '15-30', '15-30 days', '15 - 30 days', '15 to 30 days', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'serving notice', 'serving notice period', 'currently serving'],
+        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than 15 days', '15-30', '15-30 days', '15 - 30 days', '15 to 30 days', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days', 'serving notice', 'serving notice period', 'currently serving'],
         'standard': ['30', '30 days', '1 month', 'one month', 'standard'],
         'long': ['60', '60 days', '2 months', '90', '90 days', '3 months'],
         
@@ -347,7 +348,7 @@ class InputAwareResolver:
                     )
             for opt in options:
                 lbl = opt.label.lower().strip()
-                if any(k in lbl for k in ['< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month']):
+                if any(k in lbl for k in ['< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days']):
                     return MatchResult(
                         matched_option=opt,
                         confidence=0.98,
@@ -386,19 +387,58 @@ class InputAwareResolver:
 
         answer_num = self._extract_number(answer)
         if answer_num:
+            raw_val = float(answer_num)
+            is_exp_context = (
+                bool(re.search(r'\b(experience|expr|years|yoe|hands-on|worked)\b', ql)) or
+                (3.5 <= raw_val <= 5.5) or
+                ('year' in answer_lower)
+            )
+            # Candidate profile has 4.2 years of experience
+            target_num = 4.2 if (is_exp_context and 3.5 <= raw_val <= 5.5) else raw_val
+
+            # Pre-scan options for candidate experience (~4.2 years):
+            # Check if any range option starts at 4 or covers target_num with max > 4
+            has_min_4_or_covering = False
+            if target_num >= 4.0:
+                for opt in options:
+                    r_info = self.range_matcher.extract_range(opt.label)
+                    if r_info:
+                        min_v, max_v, _ = r_info
+                        if (min_v == 4.0 or (target_num >= min_v and target_num <= max_v)) and max_v > 4.0:
+                            has_min_4_or_covering = True
+                            break
+
             matching_ranges = []
             all_ranges = []
             for opt in options:
                 range_info = self.range_matcher.extract_range(opt.label)
                 if range_info:
                     min_val, max_val, _ = range_info
-                    dist = 0 if (min_val <= float(answer_num) <= max_val) else min(abs(float(answer_num) - min_val), abs(float(answer_num) - max_val))
-                    all_ranges.append((opt, dist))
-                    if self.range_matcher.value_in_range(float(answer_num), range_info):
-                        distance_from_min = abs(float(answer_num) - min_val)
-                        matching_ranges.append((opt, distance_from_min))
+
+                    # If candidate experience is >= 4.0 (4.2 years) and a bracket starting at 4 or covering 4.2 exists,
+                    # strictly NEVER select any bracket where 4 is the upper bound (e.g. 2-4, 0-4, <= 4, < 4)!
+                    if is_exp_context and target_num >= 4.0 and max_val <= 4.0 and has_min_4_or_covering:
+                        continue
+
+                    # Exact bracket match
+                    if self.range_matcher.value_in_range(target_num, range_info):
+                        # Priority rank:
+                        # 0: Bracket starts exactly at 4 (e.g. 4-6, 4-7, 4+) - ideal for 4.2 years
+                        # 1: Other brackets covering target_num
+                        priority_rank = 0 if (is_exp_context and target_num >= 4.0 and min_val == 4.0) else 1
+                        distance_from_min = abs(target_num - min_val)
+                        matching_ranges.append((opt, priority_rank, distance_from_min))
+
+                    # Distance tracking for closest fallback
+                    dist = 0 if (min_val <= target_num <= max_val) else min(abs(target_num - min_val), abs(target_num - max_val))
+                    if is_exp_context and target_num >= 4.0 and max_val <= 4.0:
+                        # Heavily penalize brackets with upper bound <= 4.0 so forward brackets win
+                        dist += 100.0
+                    priority_rank = 0 if (is_exp_context and target_num >= 4.0 and min_val == 4.0) else 1
+                    all_ranges.append((opt, priority_rank, dist))
+
             if matching_ranges:
-                matching_ranges.sort(key=lambda x: x[1])
+                matching_ranges.sort(key=lambda x: (x[1], x[2]))
                 return MatchResult(
                     matched_option=matching_ranges[0][0],
                     confidence=0.95,
@@ -406,7 +446,7 @@ class InputAwareResolver:
                     original_answer=answer
                 )
             elif all_ranges:
-                all_ranges.sort(key=lambda x: x[1])
+                all_ranges.sort(key=lambda x: (x[1], x[2]))
                 return MatchResult(
                     matched_option=all_ranges[0][0],
                     confidence=0.90,
@@ -515,16 +555,41 @@ class InputAwareResolver:
         options: List[Option],
         value_type: str = "years"
     ) -> Optional[Option]:
+        target_val = 4.2 if (value_type == "years" and 3.5 <= value <= 5.5) else value
+        # Scan if any option starts at 4 or covers target_val with max > 4
+        has_min_4_or_covering = False
+        for opt in options:
+            range_info = self.range_matcher.extract_range(opt.label)
+            if range_info:
+                min_v, max_v, _ = range_info
+                if (min_v == 4.0 or (target_val >= min_v and target_val <= max_v)) and max_v > 4.0:
+                    has_min_4_or_covering = True
+                    break
+
+        best_opt = None
+        best_score = -1
         for opt in options:
             range_info = self.range_matcher.extract_range(opt.label)
             if range_info:
                 min_val, max_val, _ = range_info
+                if value_type == "years" and target_val >= 4.0 and max_val <= 4.0 and has_min_4_or_covering:
+                    continue
                 if max_val == float('inf'):
-                    if value >= min_val:
-                        return opt
-                elif min_val <= value <= max_val:
-                    return opt
-        return None
+                    if target_val >= min_val:
+                        score = 95
+                        if min_val == 4.0:
+                            score += 10
+                        if score > best_score:
+                            best_score = score
+                            best_opt = opt
+                elif min_val <= target_val <= max_val:
+                    score = 100
+                    if min_val == 4.0:
+                        score += 10
+                    if score > best_score:
+                        best_score = score
+                        best_opt = opt
+        return best_opt
 
     resolve_answer = resolve
 

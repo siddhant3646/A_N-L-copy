@@ -40,10 +40,15 @@ class TestQACSVAuditFixesSept18(unittest.TestCase):
         self.assertTrue(ans_rate in ("5", "8", "9", "10") or ans_rate.isdigit())
 
     def test_full_time_experience_yes_no(self):
+        # Candidate has 4.2 years: a 6-year minimum must be answered truthfully as No.
         q = "Do you have minimum 6 years of full time work experience in Full Stack Development ?"
         self.agent._current_platform = "naukri"
         ans, conf = self.agent._fuzzy_match_question(q)
-        self.assertEqual(ans, "Yes")
+        self.assertEqual(ans, "No")
+
+        q_ok = "Do you have minimum 4 years of full time work experience in Full Stack Development ?"
+        ans_ok, _ = self.agent._fuzzy_match_question(q_ok)
+        self.assertEqual(ans_ok, "Yes")
 
     def test_work_authorization_permitted(self):
         q = "Are you legally permitted to work in the country where the job is located?"

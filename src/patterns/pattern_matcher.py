@@ -6,6 +6,12 @@ from datetime import datetime, timedelta
 
 from .pattern_loader import PatternLoader
 from .answer_validator import AnswerValidator
+from .input_type_sanitizer import sanitize_answer
+
+
+def _lwd_numeric(days: int = 15) -> str:
+    """Return the last working day as DDMMYYYY (notice period + 15 days)."""
+    return (datetime.now() + timedelta(days=days)).strftime('%d%m%Y')
 
 
 CATEGORY_KEYWORDS = {
@@ -29,28 +35,71 @@ CATEGORY_KEYWORDS = {
 
 class PatternMatcher:
     DEFAULT_THRESHOLD = 0.65
+    # Longest corpus pattern string is 45 words; windows must cover every
+    # pattern or tier 1 goes blind to them and lower tiers pick looser matches.
+    MAX_SUBSTRING_WORDS = 48
+
+    # id(patterns dict) -> index bundle.  Building the normalized index for the
+    # 61k-group corpus takes ~2s; tests construct many matchers over the same
+    # loaded dict, so the bundle is shared instead of rebuilt.  The bundle keeps
+    # a strong reference to its dict, which makes the id() key safe.
+    _INDEX_CACHE: Dict[int, Dict[str, Any]] = {}
+    _INDEX_CACHE_LIMIT = 3
 
     def __init__(self, patterns: Dict[str, Any], threshold: float = DEFAULT_THRESHOLD):
         self.patterns = patterns
         self.threshold = threshold
+        cached = PatternMatcher._INDEX_CACHE.get(id(patterns))
+        if cached is not None and cached['patterns_ref'] is patterns:
+            self._pattern_cache = cached['pattern_cache']
+            self._norm_pattern_cache = cached['norm_pattern_cache']
+            self._negative_cache = cached['negative_cache']
+            self._category_index = cached['category_index']
+            self._exact_match_ids = cached['exact_match_ids']
+            self._norm_owner_index = cached['norm_owner_index']
+            self._priority_cache = cached['priority_cache']
+            return
+        self._reset_caches()
+        self._build_index()
+        PatternMatcher._INDEX_CACHE[id(patterns)] = {
+            'patterns_ref': patterns,
+            'pattern_cache': self._pattern_cache,
+            'norm_pattern_cache': self._norm_pattern_cache,
+            'negative_cache': self._negative_cache,
+            'category_index': self._category_index,
+            'exact_match_ids': self._exact_match_ids,
+            'norm_owner_index': self._norm_owner_index,
+            'priority_cache': self._priority_cache,
+        }
+        while len(PatternMatcher._INDEX_CACHE) > PatternMatcher._INDEX_CACHE_LIMIT:
+            PatternMatcher._INDEX_CACHE.pop(next(iter(PatternMatcher._INDEX_CACHE)))
+
+    def _reset_caches(self):
         self._pattern_cache: Dict[str, List[str]] = {}
         self._norm_pattern_cache: Dict[str, List[str]] = {}
         self._negative_cache: Dict[str, List[str]] = {}
         self._category_index: Dict[str, List[str]] = defaultdict(list)
-        self._build_index()
+        self._exact_match_ids: set = set()
+        self._norm_owner_index: Dict[str, List[str]] = {}
+        self._priority_cache: Dict[str, int] = {}
 
     def _build_index(self):
         if 'patterns' not in self.patterns:
             return
+        self._norm_owner_index.clear()
         for pattern_id, pattern_data in self.patterns['patterns'].items():
             strs = pattern_data.get('patterns', [])
             if strs:
                 self._pattern_cache[pattern_id] = strs
-                self._norm_pattern_cache[pattern_id] = [
-                    self._normalize(s) for s in strs if self._normalize(s)
-                ]
+                norms = [n for n in (self._normalize(s) for s in strs) if n]
+                self._norm_pattern_cache[pattern_id] = norms
+                for norm in norms:
+                    self._norm_owner_index.setdefault(norm, []).append(pattern_id)
                 cat = pattern_data.get('category', 'unknown')
                 self._category_index[cat].append(pattern_id)
+            self._priority_cache[pattern_id] = pattern_data.get('priority', 5)
+            if pattern_data.get('requires_exact_match'):
+                self._exact_match_ids.add(pattern_id)
             negs = pattern_data.get('negative_patterns', [])
             if negs:
                 self._negative_cache[pattern_id] = [n.lower() for n in negs]
@@ -58,9 +107,9 @@ class PatternMatcher:
     def _normalize(self, text: str) -> str:
         text = text.lower().strip()
         # Preserve programming language symbols before stripping punctuation
-        text = re.sub(r'\bc\+\+\b', 'cpp', text)
-        text = re.sub(r'\bc#\b', 'csharp', text)
-        text = re.sub(r'\.net\b', 'dotnet', text)
+        text = re.sub(r'\bc\+\+(?!\w)', 'cpp', text)
+        text = re.sub(r'\bc#(?!\w)', 'csharp', text)
+        text = re.sub(r'(?<!\w)\.net(?!\w)', 'dotnet', text)
         # Normalize common abbreviations and typos in experience questions
         text = re.sub(r'\b(expr|experince|experiance)\b', 'experience', text)
         # Strip common form label boilerplates
@@ -76,7 +125,13 @@ class PatternMatcher:
         q = question.lower()
         scores = []
         for cat, keywords in CATEGORY_KEYWORDS.items():
-            score = sum(1 for kw in keywords if kw in q)
+            score = 0
+            for kw in keywords:
+                if kw == 'city':
+                    if re.search(r'\bcity\b', q) and not any(w in q for w in ('elasticity', 'capacity', 'velocity', 'electricity', 'authenticity', 'simplicity')):
+                        score += 1
+                elif kw in q:
+                    score += 1
             if score > 0:
                 scores.append((cat, score))
         scores.sort(key=lambda x: -x[1])
@@ -107,7 +162,7 @@ class PatternMatcher:
                 return lwd_formatted, max(score, 0.98)
 
         # 0a. Privacy & Data Consent safety guard (prevent number hijacking e.g. "for up to 2 years")
-        is_privacy_consent = bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities)\b', ql))
+        is_privacy_consent = bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities|personal data|use of personal data)\b', ql))
         if is_privacy_consent:
             return ('Yes' if (input_type in ('radio', 'checkbox', 'select') or al in ('4', '4.2', '5', '50', '2')) else answer), max(score, 0.98)
 
@@ -170,11 +225,65 @@ class PatternMatcher:
                 "and 7) OpenAPI/Swagger documentation and OWASP top 10 security headers."
             ), max(score, 0.98)
 
-        # 0i. Equity / ESOP in Current Company
-        is_equity_q = bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|esop|stock\s+options?\s+in)\b', ql) or
-                           ('equity' in ql and ('current company' in ql or 'employer' in ql or 'hold' in ql)))
+        # 0i. Equity / ESOP in Current Company (prevent false positives on CTC breakdown questions)
+        is_equity_q = bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|stock\s+options?\s+in)\b', ql) or
+                           ('equity' in ql and ('current company' in ql or 'employer' in ql or 'hold' in ql)) or
+                           ('esop' in ql and any(w in ql for w in ('hold', 'grant', 'vested', 'have any', 'do you have')))) and not any(w in ql for w in ['ctc', 'salary', 'compensation', 'package', 'fixed', 'variable', 'details', 'breakup', 'break-up'])
         if is_equity_q:
             return 'No', max(score, 0.98)
+
+        # 0j. Rating on scale of (0-5)
+        if ('(0-5)' in ql or '0-5' in ql or '0 to 5' in ql) and any(w in ql for w in ('scale', 'rating', 'rate')):
+            ai_topics = any(w in ql for w in ('ai agent', 'ai agents', 'agentic', 'llm', 'genai', 'generative ai', 'machine learning', 'ai/ml', 'evals', 'eval tool', 'langchain'))
+            return ('3' if ai_topics else '4'), max(score, 0.98)
+
+        # 0k. CTC threshold gate ("Is your CTC up to X LPA?")
+        if any(w in ql for w in ('up to', 'upto', 'within', 'less than', 'below', 'maximum', 'max')) and any(w in ql for w in ('ctc', 'salary', 'compensation', 'lpa')):
+            m = re.search(r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|not\s+more\s+than|no\s+more\s+than)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?', ql)
+            if m:
+                t = float(m.group(1))
+                u = (m.group(2) or '').lower()
+                if u == 'inr' or (not u and t >= 100000):
+                    t = t / 100000.0
+                return ('Yes' if 30.0 <= t else 'No'), max(score, 0.98)
+
+        # 0m. Experience threshold gate ("Do you have 5+ years...", "candidates with 10-15 years...", etc.)
+        asks_quantity = bool(re.search(r'^(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)', ql.strip()))
+        gate_context = (
+            bool(re.search(r'(?:do\s+you|have\s+you|are\s+you|can\s+you|will\s+you|you\s+have|you\s+possess|we\s+are\s+looking|candidates?\s+with|looking\s+for|required|requirement|only|eligible|qualify|pl\s+confirm|confirm\s+if)', ql))
+            or input_type in ('radio', 'checkbox')
+            or ql.strip().endswith('?')
+        )
+        if gate_context and (not asks_quantity or re.search(r'(?:candidates?\s+with|we\s+are\s+looking|only|required|must\s+have)', ql)):
+            reqs = []
+            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)\b', ql):
+                reqs.append(('range', float(m.group(1)), float(m.group(2))))
+            for m in re.finditer(r'(?:at\s+least|minimum(?:\s+of)?|min\.?|more\s+than|over|above|greater\s+than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)', ql):
+                reqs.append(('min', float(m.group(1)), float('inf')))
+            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)', ql):
+                reqs.append(('min', float(m.group(1)), float('inf')))
+            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s*(?:\+|plus|or\s+more|or\s+above|and\s+above)', ql):
+                reqs.append(('min', float(m.group(1)), float('inf')))
+            for m in re.finditer(r'(?:less\s+than|fewer\s+than|under|below)\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)', ql):
+                reqs.append(('max', 0.0, float(m.group(1))))
+
+            if reqs:
+                candidate_years = 4.2
+                gate_passed = True
+                for kind, lower, upper in reqs:
+                    if kind == 'range':
+                        if not (lower <= candidate_years <= upper):
+                            gate_passed = False
+                            break
+                    elif kind == 'min':
+                        if candidate_years < lower:
+                            gate_passed = False
+                            break
+                    else:
+                        if candidate_years >= upper:
+                            gate_passed = False
+                            break
+                return ('Yes' if gate_passed else 'No'), max(score, 0.98)
 
         # 0j. Address
         is_address_q = bool(ql in ('address', 'current address', 'permanent address', 'residential address', 'street address', 'address line 1', 'address line 2') or
@@ -191,6 +300,12 @@ class PatternMatcher:
         # 0l. Resume Attachment Prompt in Text Input
         if bool(re.search(r'\b(attach (your )?updated resume|upload (your )?resume|resume link|share your resume)\b', ql)) and not any(kw in ql for kw in ['experience', 'years', 'how many']):
             return 'https://siddhant3646.github.io/Portfolio/', max(score, 0.98)
+
+        # 0l2. Resume attached + CTC details confirmation.  "Have you attached
+        # your resume and added your current & expected CTC details?" is a
+        # yes/no acknowledgement, not a request for the CTC values themselves.
+        if re.search(r'\b(attached|uploaded)\b', ql) and 'resume' in ql and re.search(r'\b(ctc|compensation|salary)\b', ql):
+            return 'Yes', max(score, 0.98)
 
         # 0m. Offer in hand / Holding offers / Competing offers
         if bool(re.search(r'\b(offer\s+in\s+hand|holding\s+(any\s+)?offers?|competing\s+offers?|existing\s+offers?)\b', ql)):
@@ -224,10 +339,13 @@ class PatternMatcher:
             if al in ('8/10', '9/10', '10/10', '7/10', '8', '9', '10', '4.2', '4.2 Years', '4 Years', 'Yes', 'No') or '/' in al or not al:
                 return '5', max(score, 0.98)
 
-        # 0b. Restrictive covenants / Non-compete compliance
-        if any(w in ql for w in ('restrictive covenant', 'restrictive covenants', 'noncompete', 'non-compete', 'non-solicitation')) or (
+        # 0b. Restrictive covenants / Non-compete compliance.
+        # Duration/length questions ("non-compete duration") are not yes/no
+        # acknowledgements: with no restrictive covenant in force the correct
+        # answer is "Not applicable", which the owning pattern already carries.
+        if (any(w in ql for w in ('restrictive covenant', 'restrictive covenants', 'noncompete', 'non-compete', 'non-solicitation')) or (
             'confidentiality agreement' in ql and any(r in ql for r in ('restrict', 'bound', 'covenant', 'employer', 'perform'))
-        ):
+        )) and not any(w in ql for w in ('duration', 'period', 'how long', 'length')):
             return 'No', max(score, 0.99)
 
         # 0g. Career gaps
@@ -238,6 +356,14 @@ class PatternMatcher:
         if ('agentic ai' in ql or 'ai agent' in ql) and any(w in ql for w in ('explain', 'use case', 'contribution', 'describe')):
             essay = 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.'
             return essay, max(score, 0.99)
+
+        # 0t. AI technologies, tools, or concepts worked with (select all that apply)
+        if ('ai technologies' in ql or 'ai tools' in ql or 'ai concepts' in ql) and 'worked with' in ql:
+            ai_ans = 'Open AI, OpenAI, Azure Open AI, Azure OpenAI, Claude, Anthropic Claude, Gemini, Google Gemini, Github Copilot, GitHub Copilot, Cursor, Retrieval-Augmented Generation (RAG), RAG, AI agents, Prompt Engineering, LangChain, ChatGPT, LLMs, Large Language Models, Generative AI, Vector Databases'
+            if input_type in ('radio', 'select'):
+                return 'Open AI', max(score, 0.98)
+            return ai_ans, max(score, 0.99)
+
 
         # 0u. Spring Boot modules worked with
         if 'spring boot modules' in ql or ('spring boot' in ql and 'modules' in ql and any(w in ql for w in ('which', 'worked with', 'what'))):
@@ -310,8 +436,8 @@ class PatternMatcher:
         # 0p. Yes/No experience questions (numeric threshold or specific tech stack)
         is_yn_num_exp = bool(re.search(r'^(do you have|have you|are you|can you|will you|would you)\b.*?\b\d+[-–+]?\s*(?:to\s*\d+)?\s*(?:\+)?\s*(?:years?|yoe)\b.*?\bexperience\b', ql))
         is_yn_tech_exp = (
-            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b.*?\b(experience|hands-on|knowledge)\b', ql)) or
-            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(experience|hands-on|knowledge)\b.*?\b(in|with|developing|working with)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b', ql))
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|angularjs|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b.*?\b(experience|hands-on|knowledge)\b', ql)) or
+            bool(re.search(r'^(do you have|have you|are you)\b.*?\b(experience|hands-on|knowledge)\b.*?\b(in|with|developing|working with)\b.*?\b(java(?:/j2ee)?|j2ee|react|angular|angularjs|rest apis?|microservices?|spring|node|sql|docker|kubernetes|git)\b', ql))
         )
         is_descriptive_exp = any(w in ql for w in ('which ones', 'explain', 'describe', 'details', 'cloud', 'bfsi', 'fintech', 'banking', 'production', 'on-call', 'oncall', 'support'))
         if (is_yn_num_exp or is_yn_tech_exp) and not is_descriptive_exp and not any(w in ql for w in ('how many', 'how much', 'what is your', 'total years', 'number of years', 'rate your', 'scale of')):
@@ -327,7 +453,11 @@ class PatternMatcher:
 
         # Relevant full-time experience excluding internship
         if 'excluding internship' in ql or ('full-time experience' in ql and 'internship' in ql):
-            return ('4.2' if input_type == 'number' else '3-5 Years'), max(score, 0.98)
+            return ('4' if input_type == 'number' else '4-8 Years'), max(score, 0.98)
+
+        # Leading large-scale technical initiatives
+        if 'technical initiatives' in ql or ('leading' in ql and 'initiatives' in ql):
+            return ('2' if input_type == 'number' else '2-4 Years of technical initiatives'), max(score, 0.98)
 
         # Employee referral name or relationship
         if ('employee' in ql or 'referral' in ql) and any(w in ql for w in ("name", "who referred", "how you know", "indicate how", "put n/a", "enter n/a", "type n/a", "write n/a", "put na", "enter na", "if not referred", "list their name")):
@@ -335,7 +465,34 @@ class PatternMatcher:
 
         # Deloitte auditor association
         if 'deloitte' in ql or 'independent auditor' in ql:
-            return 'No, I have never been associated with Deloitte', max(score, 0.98)
+            return 'No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies)', max(score, 0.98)
+
+        # Booking Holdings newsletters / future job openings
+        if 'recruitment-related newsletters' in ql or 'recruitment newsletters' in ql or ('other job openings' in ql and 'booking' in ql):
+            return 'Yes', max(score, 0.98)
+
+        # SMS / Text updates consent
+        if any(w in ql for w in ('text/sms updates', 'sms updates', 'text updates', 'provide you text/sms')):
+            return 'Yes', max(score, 0.98)
+
+
+        # Locations willing to relocate to
+        if ('relocate' in ql or 'relocating' in ql) and any(w in ql for w in ('which of these locations', 'which locations', 'locations are you willing', 'city you are currently residing or willing')):
+            if 'gurugram' in ql or 'gurgaon' in ql:
+                if input_type in ('select', 'radio'):
+                    return 'Gurugram', max(score, 0.98)
+                return 'Bengaluru (Willing to relocate to Gurugram)', max(score, 0.98)
+            if input_type in ('text', 'textarea'):
+                return 'Bengaluru, Bangalore, Hyderabad, Pune, Remote', max(score, 0.98)
+            return 'Bengaluru', max(score, 0.98)
+
+        # Gurgaon relocation & hybrid
+        if ('relocate' in ql or 'relocation' in ql or 'working from' in ql) and ('gurgaon' in ql or 'gurugram' in ql):
+            return 'Yes', max(score, 0.98)
+
+        # Country currently based
+        if any(w in ql for w in ('country/region are you currently based', 'country are you currently based', 'which country/region')):
+            return 'India', max(score, 0.98)
 
         # Company affiliations / former employee (Agoda, Booking Holdings, Strategy, Nextiva, Simplify360)
         if any(c in ql for c in ('agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360')) and any(w in ql for w in ('personal relationship', 'employed by', 'former employee', 'subsidiaries', 'affiliated', 'associated')):
@@ -359,15 +516,6 @@ class PatternMatcher:
             essay = 'Architected and built scalable cloud-native microservices on AWS (ECS, Lambda, S3, RDS PostgreSQL, DynamoDB, Kafka) and integrated LLM-based Agentic workflows using LangChain, LangGraph, and Amazon Bedrock with robust observability via CloudWatch and distributed tracing.'
             return essay, max(score, 0.98)
 
-        # Locations willing to relocate to
-        if ('relocate' in ql or 'relocating' in ql) and any(w in ql for w in ('which of these locations', 'which locations', 'locations are you willing', 'city you are currently residing or willing')):
-            if 'gurugram' in ql or 'gurgaon' in ql:
-                if input_type in ('select', 'radio'):
-                    return 'Gurugram', max(score, 0.98)
-                return 'Bengaluru (Willing to relocate to Gurugram)', max(score, 0.98)
-            if input_type in ('text', 'textarea'):
-                return 'Bengaluru, Bangalore, Hyderabad, Pune, Remote', max(score, 0.98)
-            return 'Bengaluru', max(score, 0.98)
 
         # Education discipline / field of study
         if ql in ('discipline', 'field of study', 'major') or ('discipline' in ql and 'education' in ql):
@@ -431,7 +579,7 @@ class PatternMatcher:
         # 0s2. Specific numeric LWD date format request (e.g. "enter as 19102026")
         if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
             if any(w in ql for w in ('serving', 'lwd', 'last working day', 'notice')):
-                return '23102026', max(score, 0.98)
+                return _lwd_numeric(), max(score, 0.98)
 
         # 0t. Notice period and LWD combined (both asked in one question, e.g. "Notice period and LWD", "NP & Last Working Day")
         is_composite_np_lwd = (
@@ -442,7 +590,7 @@ class PatternMatcher:
         )
         if is_composite_np_lwd:
             if any(w in ql for w in ('19102026', 'enter as', 'if not serving enter')):
-                return '23102026', max(score, 0.98)
+                return _lwd_numeric(), max(score, 0.98)
             if input_type == 'number':
                 return '15', max(score, 0.98)
             lwd_date = datetime.now() + timedelta(days=15)
@@ -451,6 +599,10 @@ class PatternMatcher:
         # 1. Disability safety guard: Candidate has NO disability
         if 'disability' in ql or 'differently abled' in ql or 'pwd' in ql:
             if any(w in ql for w in ('percent', '%', 'specify your disability percentage')):
+                # A checkbox cannot hold a percentage; its meaningful value is
+                # "No" (not disabled). Numeric/radio/select controls keep "0".
+                if input_type == 'checkbox':
+                    return 'No', max(score, 0.98)
                 return '0', max(score, 0.98)
             if any(w in ql for w in ('what kind', 'type of', 'disability type', 'nature of', 'kind of', 'type')):
                 return 'None', max(score, 0.98)
@@ -522,18 +674,29 @@ class PatternMatcher:
 
         # 5. Textarea Technical Essay & Conceptual Architecture Handling (avoid short digits in open-ended technical essays)
         is_yes_no_q = bool(
-            re.search(r'\b(are you|would you|do you|can you|could you|will you|should you|is there|is it|willing|comfortable|aligned with|okay with|agree|consent|opt[- ]in|authorized|sponsorship|visa|eligible|permit|clearance|conflict of interest|non[- ]compete|disciplinary|convicted|crime|ex-employee|previously employed)\b', ql) or
+            re.search(r'\b(are you|would you|do you|can you|could you|will you|should you|is there|is it|willing|comfortable|aligned with|okay with|agree|consent|opt[- ]in|authorized|sponsorship|visa|eligible|permit|clearance|conflict of interest|non[- ]compete|disciplinary|convicted|criminal|crime|ex-employee|previously employed)\b', ql) or
             re.search(r'^(have you|were you|did you|will you|should you|is it|can we|shall we)\b', ql)
         )
         is_notice_q = bool(re.search(r'\b(notice|how soon|how quickly|joining|join us|available to start|start date|earliest start|lwd|official last)\b', ql))
         is_salary_q = bool(re.search(r'\b(salary|ctc|compensation|pay\b|package|remuneration|gross|net pay|fixed pay|variable pay|take home)\b', ql))
         is_location_q = bool(re.search(r'\b(location|city|country|state|reside|relocate|relocation|based in|where do you live|bengaluru|bangalore)\b', ql))
         is_conditional_q = bool(re.search(r'\b(if\s+(yes|any|applicable|so)|details\s+if\s+any|please\s+(specify|describe|explain)\s+if)\b', ql))
-        is_simple_field_q = is_yes_no_q or is_notice_q or is_salary_q or is_location_q or is_conditional_q
+        # Procedural "how do you test/verify/architect ..." prompts are open-ended
+        # essays even though they contain "do you".  Without this carve-out a bare
+        # technology-name pattern ("spring boot") answers them with "4.2 Years".
+        # "rate" is excluded so rating scales keep their numeric answer.
+        is_procedural_q = bool(re.search(
+            r'\bhow (?:do|would|will|can|should) you\b.{0,60}\b'
+            r'(?:test|verif|architect|design|implement|debug|troubleshoot|optimi[sz]e|'
+            r'ensure|handle|manage|monitor|deploy|migrate|scale|secure|write|build|'
+            r'approach|measure|automate|review|document|integrat|containeri[sz]e|instrument)\w*\b',
+            ql,
+        )) and not re.search(r'\b(rate|rating|scale of|scale from|out of \d|self[- ]assess)\b', ql)
+        is_simple_field_q = (is_yes_no_q and not is_procedural_q) or is_notice_q or is_salary_q or is_location_q or is_conditional_q
 
         is_conceptual_q = bool(re.search(r'\b(explain|architecture|design an?|how does|what steps|stabilize and scale|internal working|trade-offs)\b', ql))
-        is_open_ended_q = (is_conceptual_q or bool(re.search(
-            r'\b(describe\s+(your|a\s+|how|the|yourself|what|situations?|projects?)|tell us about|walk through|hands-on experience working with|experience taking over|cover\s*letter|why\s*(should\s*we\s*hire|hire\s*you|work\s*here|join)|background|summary\s*of\s*(your\s*)?experience|elevator\s*pitch|overview|aspirations|motivation)\b',
+        is_open_ended_q = ((is_conceptual_q or is_procedural_q) or bool(re.search(
+            r'\b(describe\s+(your|a\s+|how|the|yourself|what|situations?|projects?)|tell us about|walk through|hands-on experience working with|experience taking over|cover\s*letter|why\s*(should\s*we\s*hire|hire\s*you|work\s*here|join)|background(?!\s*(?:check|verification|screening|clearance|bgv|test|record))|summary\s*of\s*(your\s*)?experience|elevator\s*pitch|overview|aspirations|motivation)\b',
             ql
         ))) and not is_conditional_q
 
@@ -542,6 +705,10 @@ class PatternMatcher:
 
         is_textarea_essay = is_open_ended_q and not is_simple_field_q and not is_na_answer
         if is_textarea_essay and (al in ('4', '4.2', '5', '9', '10', '4.2 Years', '5 Years', 'Yes', 'No') or len(al) < 15):
+            if input_type in ('radio', 'checkbox'):
+                # An essay cannot be selected from fixed options; these controls
+                # only ever offer an affirmative choice for a "how do you ..." prompt.
+                return 'Yes', max(score, 0.95)
             tech_summary = (
                 "4+ years of professional full-stack software engineering experience specializing in distributed systems, "
                 "RESTful microservices, and modern web architectures. Hands-on expertise in backend services (Java/Spring Boot, Python, Node.js), "
@@ -592,19 +759,54 @@ class PatternMatcher:
         # 11. Detect if the question is a Yes/No boolean question
         is_yes_no = bool(
             re.search(r'^(do you|have you|are you|can you|is it|did you|would you|will you|willing to|comfortable with|open to|do you have|have you worked|are you familiar|do you know)\b', ql) or
-            re.search(r'\b(are you on notice|are you currently on notice|are you based in|are you located in|are you in|do you stay in)\b', ql) or
+            re.search(r'\b(are you on notice|are you currently on notice|currently serving (your )?notice|serving (your )?notice|are you based in|are you located in|are you in|do you stay in)\b', ql) or
             (input_type in ('radio', 'checkbox') and not is_num_years)
         )
 
         is_purely_numeric = bool(re.fullmatch(r'\s*([<>]?\s*\d+(?:\.\d+)?(?:\s*-\s*\d+)?|\d+\+?)\s*(?:years?|yrs?|months?|days?)?\s*', al, re.IGNORECASE))
 
+        # Numeric value questions keep their number even on radio/checkbox
+        # controls. A radio listing salary bands, notice-period days,
+        # experience ranges, ratings, or disability percentages is a value
+        # choice, not a boolean confirmation. Genuine boolean radios (raw
+        # "Yes"/"No", or proficiency prompts such as "Strong proficiency in
+        # Java?") still fall through to the Yes/No conversion below.
+        is_boolean_start = bool(re.search(
+            r'^(do you|have you|are you|can you|could you|would you|will you|should you|did you)\b', ql
+        ))
+        is_experience_value_q = bool(re.search(r'\b(experience|exp)\b', ql)) and not is_boolean_start
+        is_quantity_q = bool(
+            is_salary_q
+            or is_num_years
+            or re.search(r'\b(notice|np)\b', ql)
+            or re.search(r'\b(rate|rating|scale)\b', ql)
+            or is_experience_value_q
+            # Percentage/score questions ("percentage expertise", "CGPA",
+            # "aggregate marks") are measured values, not confirmations.  The
+            # raw numeric answer must survive on radio/checkbox controls.
+            or re.search(r'\b(percentage|percent|cgpa|gpa|marks|aggregate|score|grade)\b', ql)
+            or ('disability' in ql and re.search(r'\b(percent|percentage)\b', ql))
+        )
+
         if is_num_years:
-            if al.lower() in ('yes', 'true', '1') or (not re.search(r'\d', al) and len(al) <= 20):
+            if input_type in ('radio', 'checkbox') and al.lower() in ('yes', 'no'):
+                return answer, score
+            # A bare "1" is a legitimate numeric answer (e.g. 1 year leading a
+            # team), so only treat it as boolean when the question is actually
+            # a yes/no question.
+            if al.lower() in ('yes', 'true') or (al == '1' and is_yes_no) or (
+                not re.search(r'\d', al) and len(al) <= 20
+            ):
                 return '4.2 Years', max(score, 0.95)
             return answer, score
 
         if input_type in ('radio', 'checkbox'):
             if is_purely_numeric:
+                if is_quantity_q:
+                    # Preserve the numeric quantity so salary/CTC, notice-day,
+                    # experience, rating, and percentage radios/checkboxes keep
+                    # a usable value instead of collapsing to "Yes".
+                    return answer, max(score, 0.95)
                 num_m = re.search(r'\d+(\.\d+)?', al)
                 val = float(num_m.group(0)) if num_m else 0.0
                 return ('Yes' if val > 0 else 'No'), max(score, 0.95)
@@ -613,11 +815,23 @@ class PatternMatcher:
             if 'select all' in ql:
                 return answer, max(score, 0.98)
             if al.lower() not in ('yes', 'no') and (al.startswith('http') or len(al) > 20):
-                return 'Yes', max(score, 0.95)
+                # Status/identity questions ("what is your visa status",
+                # "nationality", "work authorization") carry a valid long-form
+                # radio option as their answer; collapsing it to "Yes" would
+                # tick the wrong choice.  Only genuine boolean prompts get the
+                # long-answer-to-Yes conversion.
+                if not re.search(
+                    r'\b(visa|citizenship|nationality|status|permit|'
+                    r'work authorization|work authorisation|immigration)\b',
+                    ql,
+                ):
+                    return 'Yes', max(score, 0.95)
 
         if is_yes_no and not is_num_years:
             # If answer is purely numeric experience (e.g. "4.2", "4.2 Years", "<5 years", "4-5 years") or notice period days ("15")
             if is_purely_numeric:
+                if is_quantity_q:
+                    return answer, max(score, 0.95)
                 num_m = re.search(r'\d+(\.\d+)?', al)
                 val = float(num_m.group(0)) if num_m else 0.0
                 return ('Yes' if val > 0 else 'No'), max(score, 0.95)
@@ -633,6 +847,21 @@ class PatternMatcher:
 
         return answer, score
 
+    def _sanitize_result(
+        self,
+        question: str,
+        answer: Optional[str],
+        score: float,
+        input_type: Optional[str],
+    ) -> Tuple[Optional[str], float]:
+        """Make the final answer safe for the target HTML control."""
+        if answer is None or not input_type:
+            return answer, score
+        safe = sanitize_answer(answer, input_type, question=question, default=answer)
+        if isinstance(safe, str):
+            safe = self._resolve_dynamic(safe)
+        return safe, score
+
     def fuzzy_match(self, question: str, input_type: str = None) -> Tuple[Optional[str], float]:
         if not question:
             return None, 0.0
@@ -643,65 +872,82 @@ class PatternMatcher:
         # Tier 1: Exact/word-boundary match (fast, reliable)
         result = self._tier1_match(normalized_q, question_lower, question, input_type)
         if result[0]:
-            return self._resolve_question_intent(question, result[0], result[1], input_type)
+            answer, score = self._resolve_question_intent(question, result[0], result[1], input_type)
+            return self._sanitize_result(question, answer, score, input_type)
 
         # Tier 2: Category-scoped fuzzy match
         result = self._tier2_match(normalized_q, question_lower, question, input_type)
         if result[0]:
-            return self._resolve_question_intent(question, result[0], result[1], input_type)
+            answer, score = self._resolve_question_intent(question, result[0], result[1], input_type)
+            return self._sanitize_result(question, answer, score, input_type)
 
         # Tier 3: Global fuzzy fallback
         result = self._tier3_match(normalized_q, question_lower, question, input_type)
-        return self._resolve_question_intent(question, result[0], result[1], input_type)
+        answer, score = self._resolve_question_intent(question, result[0], result[1], input_type)
+        answer, score = self._sanitize_result(question, answer, score, input_type)
+        if input_type and answer is not None and not str(answer).strip():
+            # A deliberately blank control answer (e.g. a number field on an
+            # open-ended question) is a non-answer; fall through to the next tier.
+            return None, score
+        return answer, score
 
     def _tier1_match(self, normalized_q: str, question_lower: str, question: str, input_type: str) -> Tuple[Optional[str], float]:
-        # 1. Exact match check across all pattern strings
+        q_words = normalized_q.split()
+        n = len(q_words)
+
+        # 1. Exact match: whole normalized question against the owner index.
         exact_id = None
         exact_priority = -1
         exact_len = -1
-        for pattern_id, norm_patterns in self._norm_pattern_cache.items():
+        for pattern_id in self._norm_owner_index.get(normalized_q, ()):
             if not self._passes_negative(pattern_id, question_lower):
                 continue
-            pattern_data = self.patterns['patterns'].get(pattern_id, {})
-            for norm_p in norm_patterns:
-                if norm_p == normalized_q:
-                    priority = pattern_data.get('priority', 5)
-                    if priority > exact_priority or (priority == exact_priority and len(norm_p) > exact_len):
-                        exact_id = pattern_id
-                        exact_priority = priority
-                        exact_len = len(norm_p)
+            priority = self._priority_cache.get(pattern_id, 5)
+            if priority > exact_priority or (priority == exact_priority and len(normalized_q) > exact_len):
+                exact_id = pattern_id
+                exact_priority = priority
+                exact_len = len(normalized_q)
 
         if exact_id:
-            answer = self._get_answer(exact_id, input_type)
+            answer = self._get_answer(exact_id, input_type, question=question)
             cat = self.patterns['patterns'][exact_id].get('category', '')
             is_valid, _ = AnswerValidator.validate(answer or '', cat, question)
             confidence = 0.98 if is_valid else 0.85
             return answer, confidence
 
-        # 2. Word-boundary substring match (only if no exact match exists)
+        # 2. Word-boundary substring match (only if no exact match exists).
+        #    Normalized patterns never contain spaces, so every word-boundary
+        #    occurrence in the question is a whole word-substring: index
+        #    lookup beats scanning 200k pattern strings per question.
         best_id = None
         best_priority = -1
         best_len = -1
-
-        for pattern_id, norm_patterns in self._norm_pattern_cache.items():
-            if not self._passes_negative(pattern_id, question_lower):
-                continue
-            pattern_data = self.patterns['patterns'].get(pattern_id, {})
-            for norm_p in norm_patterns:
-                if len(norm_p) >= 2:
-                    if len(norm_p) <= 3:
-                        match = bool(re.search(rf"\b{re.escape(norm_p)}\b", normalized_q))
-                    else:
-                        match = (rf" {norm_p} " in f" {normalized_q} " or bool(re.search(rf"\b{re.escape(norm_p)}\b", normalized_q)))
-                    if match:
-                        priority = pattern_data.get('priority', 5)
-                        if priority > best_priority or (priority == best_priority and len(norm_p) > best_len):
-                            best_id = pattern_id
-                            best_priority = priority
-                            best_len = len(norm_p)
+        seen: set = set()
+        for i in range(n):
+            for j in range(i + 1, n + 1):
+                if j - i > self.MAX_SUBSTRING_WORDS:
+                    break
+                sub = ' '.join(q_words[i:j])
+                if len(sub) < 2 or sub in seen:
+                    continue
+                if len(sub) <= 3 and not re.search(rf"\b{re.escape(sub)}\b", normalized_q):
+                    continue
+                seen.add(sub)
+                for pattern_id in self._norm_owner_index.get(sub, ()):
+                    if pattern_id in self._exact_match_ids:
+                        # PII/sensitive answers must never be chosen by
+                        # substring/fuzzy matching; only an exact match is safe.
+                        continue
+                    if not self._passes_negative(pattern_id, question_lower):
+                        continue
+                    priority = self._priority_cache.get(pattern_id, 5)
+                    if priority > best_priority or (priority == best_priority and len(sub) > best_len):
+                        best_id = pattern_id
+                        best_priority = priority
+                        best_len = len(sub)
 
         if best_id:
-            answer = self._get_answer(best_id, input_type)
+            answer = self._get_answer(best_id, input_type, question=question)
             cat = self.patterns['patterns'][best_id].get('category', '')
             is_valid, _ = AnswerValidator.validate(answer or '', cat, question)
             confidence = 0.98 if is_valid else 0.85
@@ -722,6 +968,8 @@ class PatternMatcher:
         for cat, cat_score in detected_cats:
             pattern_ids = self._category_index.get(cat, [])
             for pid in pattern_ids:
+                if pid in self._exact_match_ids:
+                    continue
                 if not self._passes_negative(pid, question_lower):
                     continue
                 pdata = self.patterns['patterns'].get(pid, {})
@@ -744,7 +992,7 @@ class PatternMatcher:
                             best_priority = priority
 
         if best_id:
-            answer = self._get_answer(best_id, input_type)
+            answer = self._get_answer(best_id, input_type, question=question)
             return answer, best_score
 
         return None, 0.0
@@ -756,6 +1004,8 @@ class PatternMatcher:
         q_words = set(normalized_q.split())
 
         for pattern_id, norm_patterns in self._norm_pattern_cache.items():
+            if pattern_id in self._exact_match_ids:
+                continue
             if not self._passes_negative(pattern_id, question_lower):
                 continue
             pattern_data = self.patterns['patterns'].get(pattern_id, {})
@@ -778,7 +1028,7 @@ class PatternMatcher:
                         best_priority = priority
 
         if best_id:
-            answer = self._get_answer(best_id, input_type)
+            answer = self._get_answer(best_id, input_type, question=question)
             return answer, best_score
 
         return None, 0.0
@@ -789,8 +1039,14 @@ class PatternMatcher:
         if not answer or not isinstance(answer, str):
             return answer
         now = datetime.now()
+        lwd_date = now + timedelta(days=15)
+        if '__DYNAMIC_LWD_DDMMYYYY__' in answer:
+            answer = answer.replace('__DYNAMIC_LWD_DDMMYYYY__', lwd_date.strftime('%d%m%Y'))
+        if '__DYNAMIC_TODAY_DDMMYYYY__' in answer:
+            answer = answer.replace('__DYNAMIC_TODAY_DDMMYYYY__', now.strftime('%d%m%Y'))
+        if '__DYNAMIC_LWD_ISO__' in answer:
+            answer = answer.replace('__DYNAMIC_LWD_ISO__', lwd_date.strftime('%Y-%m-%d'))
         if '__DYNAMIC_LWD__' in answer:
-            lwd_date = now + timedelta(days=15)
             answer = answer.replace('__DYNAMIC_LWD__', lwd_date.strftime('%d %b %Y'))
         if '__DYNAMIC_LWD_SHORT__' in answer:
             lwd_date = now + timedelta(days=15)
@@ -811,21 +1067,49 @@ class PatternMatcher:
             answer = answer.replace('__DYNAMIC_TODAY_TEXT__', now.strftime('%d %b %Y'))
         return answer
 
-    def _get_answer(self, pattern_id: str, input_type: str = None) -> Optional[str]:
+    def _get_answer(
+        self,
+        pattern_id: str,
+        input_type: str = None,
+        question: str = "",
+        sanitize: bool = True,
+    ) -> Optional[str]:
+        """Return the answer for a pattern, optionally typed for a control.
+
+        When ``input_type`` is supplied the answer is taken from
+        ``input_type_defaults`` (or ``numeric_default`` for numbers) and, by
+        default, passed through :func:`sanitize_answer` so callers that bypass
+        ``fuzzy_match`` still receive a control-safe value.  Sanitization is
+        idempotent with ``_sanitize_result``; internal callers that resolve the
+        question intent first can pass ``sanitize=False``.
+        """
         pattern = self.patterns['patterns'].get(pattern_id)
         if not pattern:
             return None
+        category = pattern.get('category', '')
+
         if input_type:
             input_type = input_type.lower().strip()
             itd = pattern.get('input_type_defaults', {})
             if itd and input_type in itd:
-                return self._resolve_dynamic(itd[input_type])
-            if input_type == 'number':
-                return self._resolve_dynamic(
-                    pattern.get('numeric_default') or pattern.get('default')
-                )
+                answer = itd[input_type]
+            elif input_type == 'number':
+                answer = pattern.get('numeric_default') or pattern.get('default')
+            else:
+                answer = pattern.get('default')
+        else:
+            answer = pattern.get('default')
 
-        return self._resolve_dynamic(pattern.get('default'))
+        if input_type and sanitize and answer is not None:
+            answer = sanitize_answer(
+                answer,
+                input_type,
+                question=question,
+                category=category,
+                default=answer,
+            )
+
+        return self._resolve_dynamic(answer)
 
     def match_with_details(self, question: str) -> Dict[str, Any]:
         answer, confidence = self.fuzzy_match(question)
@@ -836,10 +1120,29 @@ class PatternMatcher:
             'matched': answer is not None
         }
 
-    def get_all_matches(self, question: str, min_confidence: float = 0.5) -> List[Tuple[str, str, float]]:
+    def get_all_matches(
+        self,
+        question: str,
+        min_confidence: float = 0.5,
+        input_type: str = None,
+    ) -> List[Tuple[str, str, float]]:
+        """Return every pattern above ``min_confidence`` for ``question``.
+
+        Patterns that require an exact question match (PII/sensitive data) are
+        excluded here because this is an exploratory/fuzzy listing API; only
+        ``fuzzy_match`` may return those values after an exact hit.  Patterns
+        whose ``negative_patterns`` appear in the question are excluded as
+        well.  When ``input_type`` is supplied, each answer is resolved and
+        sanitized for that control type.
+        """
         matches = []
         normalized_q = self._normalize(question)
+        question_lower = question.lower()
         for pattern_id, norm_strings in self._norm_pattern_cache.items():
+            if pattern_id in self._exact_match_ids:
+                continue
+            if not self._passes_negative(pattern_id, question_lower):
+                continue
             pattern = self.patterns['patterns'].get(pattern_id)
             if not pattern:
                 continue
@@ -848,14 +1151,23 @@ class PatternMatcher:
                 sim = self._similarity(normalized_q, normalized_p)
                 best_sim = max(best_sim, sim)
             if best_sim >= min_confidence:
-                matches.append((pattern_id, pattern.get('default', ''), best_sim))
+                if input_type:
+                    answer = self._get_answer(pattern_id, input_type, question=question)
+                    answer, _ = self._resolve_question_intent(
+                        question, answer, best_sim, input_type
+                    )
+                    answer, _ = self._sanitize_result(
+                        question, answer, best_sim, input_type
+                    )
+                else:
+                    answer = pattern.get('default', '')
+                matches.append((pattern_id, answer, best_sim))
         matches.sort(key=lambda x: x[2], reverse=True)
         return matches
 
     def update_patterns(self, patterns: Dict[str, Any]):
         self.patterns = patterns
-        self._pattern_cache.clear()
-        self._category_index.clear()
+        self._reset_caches()
         self._build_index()
 
     def detect_duplicate_patterns(self, new_pattern_id: str, similarity_threshold: float = 0.85) -> List[Tuple[str, float]]:

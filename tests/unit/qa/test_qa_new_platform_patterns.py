@@ -130,12 +130,12 @@ class TestQANewPlatformPatterns(unittest.TestCase):
         for q in questions:
             res = self.matcher.match_with_details(q)
             self.assertTrue(res['matched'], f"PatternMatcher failed on: {q}")
-            self.assertIn('21 LPA', res['answer'])
-            self.assertIn('2 LPA', res['answer'])
+            self.assertIn('23 LPA', res['answer'])
+            self.assertIn('0 LPA', res['answer'])
 
             ans, score = self.agent._fuzzy_match_question(q)
-            self.assertIn('21 LPA', ans)
-            self.assertIn('2 LPA', ans)
+            self.assertIn('23 LPA', ans)
+            self.assertIn('0 LPA', ans)
 
     def test_holding_offers_competing(self):
         questions = [

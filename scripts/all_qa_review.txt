@@ -1,0 +1,2401 @@
+[hirist] (number) Q: what is your CTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (number) Q: What is your EX-CTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: Notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: Are you currently based in Bangalore?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: fingerprint
+
+[hirist] (number) Q: Years of experince in Java?
+    Ans: 4.2 | Sel: 4.2 | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: Have you independently designed system architecture using HLD/LLD, microservices, and API design?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month, 2 months | Src: fingerprint
+
+[hirist] (radio) Q: Are you currently living in Gurgaon/Gurugram?
+    Ans: No | Sel: No | Opts: Yes, No | Src: fingerprint
+
+[naukri] (text) Q: How many years of experience do you have as Full Stack Developer?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What is the reason for change ?
+    Ans: Seeking new challenges and growth opportunities in a more innovative environment | Sel: Seeking new challenges and growth opportunities in a more innovative environment | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently residing in Noida, Uttar Pradesh or willing to relocate to Noida, Uttar Pradesh?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you comfortable with hybrid working 3 days in a week ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Backend Development?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: First name
+    Ans: Siddhant | Sel: Siddhant | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Last name
+    Ans: Singh | Sel: Singh | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Phone country code
+    Ans: India (+91) | Sel: India (+91) | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Email address*
+    Ans: siddhant3646@gmail.com | Sel: siddhant3646@gmail.com | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current location?
+    Ans: Bangalore | Sel: Bangalore | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Location (city)
+    Ans: Bangalore Urban, Karnataka, India | Sel: Bangalore Urban, Karnataka, India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Phone country code*
+    Ans: India (+91) | Sel: India (+91) | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: LinkedIn Profile Link
+    Ans: https://www.linkedin.com/in/siddhant3646 | Sel: https://www.linkedin.com/in/siddhant3646 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is the employee’s name?
+    Ans: N/A | Sel: N/A | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Agoda will be holding a fast-track 1-Day Interview program for this position, would you be open to participating on 21st October 2026 (8 am - 5 pm IST)?
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: How many years of relevant full-time experience do you have? (Excluding internship)
+    Ans: 5-7 Years | Sel: 5-7 Years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have leading backend systems—owning system design, making architecture decisions, and driving end-to-end delivery of scalable, distributed services?
+    Ans: 1-3 Years | Sel: 1-3 Years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-referral) Q: If yes, please indicate how you know the employee?
+    Ans: Colleague | Sel: Colleague | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: To avoid actual or perceived impairment of our parent company’s  independent auditor – Deloitte and to comply with applicable regulations of Securities and Exchange Commission of the United States, we need to seek approvals from our parent company before starting the interview process. With this, please confirm if you are currently or formerly have been associated with Deloitte or any of its subsidiary entities at any time including but not limited to any time as a direct employee, director, contractor, major shareholder, intern etc.?
+    Ans: No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies) | Sel: No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies) | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: In which country/region are you currently based?
+    Ans: India | Sel: India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: This role is based in Gurgaon and follows a hybrid model (3 days in office, 2 days WFH). Relocation support will be provided (as per policy) — would you be open to relocate and working from Gurgaon if selected?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Do you as a candidate have a personal relationship with a current Agoda employee?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Do you agree to Agoda’s use of personal data from your application to improve our recruitment experience? We may collaborate and share your data with third-party providers for recruitment purposes and you may ask to remove your data at any time.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you presently employed by any company within the Booking Holdings group, including but not limit
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Do you allow us to provide you TEXT/SMS updates of your interview process? We may engage with a service provider to do so.
+    Ans: 02/15/2026 | Sel: 02/15/2026 | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Email me about other job openings within the Booking Holding’s entities and recruitment-related newsletters
+    Ans: siddhant3646@gmail.com | Sel: siddhant3646@gmail.com | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (select) Q: How many years of relevant full-time experience do you have? (Excluding internship)*
+    Ans: 5-7 Years | Sel: 5-7 Years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: In which country/region are you currently based?*
+    Ans: India | Sel: India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Python (Programming Language)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Databases?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have with Go, Rust, or Java?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Years of experience in frontend End
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Your current CTC
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Expected CTC
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Notice period
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Only apply if you can go to the office for the interview, Bangalore
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: What is your expected CTC in Lacs per annum?
+    Ans: 30 | Sel: 30 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Python?
+    Ans: 3.0 Years | Sel: 3.0 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Generative Ai?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Langchain?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Retrieval Augmented Generation?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in LLM?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many yrs of exp in API and Microservice architecture?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many yrs in NoSQL?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How soon can you join?
+    Ans: 15 Days (Serving Notice Period) | Sel: 15 Days (Serving Notice Period) | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your current CTC in Lacs per annum?
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: What is your notice period?
+    Ans: Serving Notice Period | Sel: Serving Notice Period | Opts: 15 Days or less, 1 Month, 2 Months, 3 Months, More than 3 Months, Serving Notice Period | Src: fingerprint
+
+[hirist] (textarea) Q: Have you designed and implemented backend services using Spring Boot in a production environment?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you implemented request validation, exception handling, and standardized error responses in REST APIs?
+    Ans:  | Sel:  | Opts:  | Src: unknown
+
+[hirist] (textarea) Q: Have you implemented authentication or authorization for REST APIs using Spring Security, JWT, OAuth, or similar technologies?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you worked with transactions, database consistency, and rollback handling in Spring applications?
+    Ans: No | Sel: No | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of hands-on experience do you have with JavaScript or TypeScript?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you developed or maintained component-based front-end applications using Angular?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you worked with CI/CD pipelines or automated build and deployment processes?
+    Ans: No | Sel: No | Opts:  | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month, 2 months, 3 months | Src: fingerprint
+
+[hirist] (text) Q: What is your current annual salary? (in LPA, e.g., 45)
+    Ans: 23 | Sel: 23 | Opts:  | Src: profile_prefilled
+
+[hirist] (text) Q: How much annual salary are you expecting? (in LPA, e.g., 45)
+    Ans: 30 | Sel: 30 | Opts:  | Src: profile_prefilled
+
+[hirist] (number) Q: How many years of experience do you have in Python & Django (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Artificial Intelligence/ Machine Learning??
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience as a data scientist
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Do you have experience with GEN AI/RAG/LLM
+    Ans: yes | Sel: yes | Opts: yes, no | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Do you have experience with INSURANCE/BFSI DOMAIN
+    Ans: yes | Sel: yes | Opts: yes, no | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience with PYTHON
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Can you work from Gurugram ?
+    Ans: yes | Sel: yes | Opts: yes, no | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Natural Language Processing?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Langgraph?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What is your PAN number
+    Ans: MTKPS1941P | Sel: MTKPS1941P | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What is your Date of Birth?
+    Ans: 17/12/2000 | Sel: 17/12/2000 | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (select) Q: Email*
+    Ans: siddhant3646@gmail.com | Sel: siddhant3646@gmail.com | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with jQuery?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Bootstrap (Framework)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with React.js?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: If the country you currently live in is NOT listed in the question above, please confirm in which country you live?
+    Ans: India | Sel: India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What are your salary expectations for this role?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: If you were referred for this position, please provide the full name of the referrer
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Please provide a link to your LinkedIn profile.
+    Ans: https://www.linkedin.com/in/siddhant3646/ | Sel: https://www.linkedin.com/in/siddhant3646/ | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Can you please share the total number of years of experience you have in the industry?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Is your current location in Bangalore?
+    Ans: Bangalore | Sel: Bangalore | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Can you please provide the details of your current CTC, including the fixed, variable, and RSU/ESOP components?
+    Ans: 0 | Sel: 0 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: what are the major tech stacks you have majorly worked upon?
+    Ans: Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis | Sel: Java, Spring Boot, React, Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Kafka, Redis | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is the duration of your notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: What are the reasons for your job change?
+    Ans: Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals | Sel: Seeking new challenges and opportunities for professional growth in a dynamic environment that aligns with my career goals | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: Please confirm the Country in which you currently reside?
+    Ans: Belgium | Sel: Belgium | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: What state are you currently located in?
+    Ans: Karnataka | Sel: Karnataka | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Have you completed secondary education or its equivalent?
+    Ans: B.Tech in Computer Science Engineering | Sel: B.Tech in Computer Science Engineering | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you legally authorized to work in the country in which this role is located?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Will you now or in the future require sponsorship to work in the country where this role is based?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Were you referred for this position?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: As part of the employment process, all candidates are subject to employment and education verification, as well as a comprehensive background check, in accordance with applicable laws and company policies. I understand that I will be provided with additional information and asked to provide authorization before any such checks are conducted.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: I understand that all information provided in my application must be accurate and truthful, and that any misrepresentation may result in disqualification from the hiring process or termination of employment if discovered after hire.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: I acknowledge that DigiCert and its service providers may collect and process my image and related identity verification information to verify my identity, prevent fraud, maintain security, and administer the hiring process. I understand that this information will be used only for these purposes and retained in accordance with DigiCert's applicable policies and legal obligations. If I choose not to provide the information required to complete identity verification, DigiCert may be unable to continue processing my application. Do you acknowledge and agree?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Voluntary Self-Identification of Gender
+    Ans: Male | Sel: Male | Opts:  | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: LinkedIn Profile
+    Ans: https://www.linkedin.com/in/siddhant3646/ | Sel: https://www.linkedin.com/in/siddhant3646/ | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Website
+    Ans: https://siddhant3646.github.io/Portfolio/ | Sel: https://siddhant3646.github.io/Portfolio/ | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: If yes, please identify name of person / vendor and describe relationship / association:
+    Ans: N/A | Sel: N/A | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: If yes, please describe:
+    Ans: N/A | Sel: N/A | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you legally authorized to work in the country you reside?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Will you now or in the future require Visa Sponsorship?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: To the best of your knowledge, do you have any family members / relatives or personal relationships
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Do you have any outside business activity(ies) (advisory, consulting, or board roles, or side busine
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Have you been employed by Okta, Inc. or any of its subsidiaries in the past?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (checkbox) Q: I acknowledge
+    Ans: Checked | Sel: Checked | Opts: I acknowledge | Src: rule
+
+[LinkedIn_Form] (checkbox) Q: Yes
+    Ans: Checked | Sel: Checked | Opts: Yes | Src: rule
+
+[hirist] (textarea) Q: Have you implemented request validation, exception handling, and standardized error responses in REST APIs?
+    Ans: Yes, I implement robust request validation in Spring Boot using Jakarta Bean Validation annotations like `@Valid`, `@NotNull`, and custom validators. For exception handling, I use `@ControllerAdvice` along with `@ExceptionHandler` to catch runtime exceptions and map them to standardized, RFC 7807-compliant error response payloads. This ensures consistent error codes, timestamps, and descriptive messages across all microservices at Everbridge, keeping API contracts predictable for client | Sel: Yes, I implement robust request validation in Spring Boot using Jakarta Bean Validation annotations like `@Valid`, `@NotNull`, and custom validators. For exception handling, I use `@ControllerAdvice` along with `@ExceptionHandler` to catch runtime exceptions and map them to standardized, RFC 7807-compliant error response payloads. This ensures consistent error codes, timestamps, and descriptive messages across all microservices at Everbridge, keeping API contracts predictable for client | Opts:  | Src: llm_gemma
+
+[hirist] (textarea) Q: How many years of experience do you have in Troubleshooting?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Spark?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Support?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently residing in Hyderabad, Telangana or willing to relocate to Hyderabad, Telangana?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your current CTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your Expected CTC?
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is the official notice period as per your current employment contract
+    Ans: Less than 30 days | Sel: Less than 30 days | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Do you have an experience working in consumer tech?
+    Ans: Yes | Sel: Yes | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Where are you located currently?
+    Ans: Bangalore, India | Sel: Bangalore, India | Opts:  | Src: fingerprint
+
+[naukri] (text) Q: When is your last working day?
+    Ans: 05 Nov 2026 | Sel: 05 Nov 2026 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you available for a F2F Interview?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Do you have hands-on experience with FastAPI and AWS?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you willing to work 5 days a week in office?
+    Ans: YES | Sel: YES | Opts: YES, NO | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Angular?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with kafka-tools?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is Your Current CTC ?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is Your Expected CTC ?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is Your Notice Period 0 to 30 days ?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Java?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How soon can you join (in days) after accepting the offer?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What's your current / last drawn salary package in LPA?
+    Ans: 23 | Sel: 23 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What's your expected salary? Please note our salary package is all fixed, NO variable part.
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Middle name
+    Ans: Not applicable | Sel: Not applicable | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Postal code
+    Ans: 560001 | Sel: 560001 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Mobile phone number
+    Ans: 7905828880 | Sel: 7905828880 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Country
+    Ans: India | Sel: India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Company
+    Ans: DSC VIT Bhopal | Sel: DSC VIT Bhopal | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: City
+    Ans: Bangalore Urban, Karnataka, India | Sel: Bangalore Urban, Karnataka, India | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Description
+    Ans: Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure | Sel: Full-stack development using Java Spring Boot microservices with React frontend on AWS cloud infrastructure | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-experience-date) Q: From
+    Ans: June | Sel: June | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-experience-date) Q: From Year
+    Ans: 2020 | Sel: 2020 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-experience-date) Q: I currently work here
+    Ans: May | Sel: May | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-experience-date) Q: To Year
+    Ans: 2021 | Sel: 2021 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: School
+    Ans: Vellore Institute of Technology | Sel: Vellore Institute of Technology | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-experience-date) Q: I currently attend this institution
+    Ans: May | Sel: May | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-education) Q: Education Degree
+    Ans: Bachelors | Sel: Bachelors | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-discipline) Q: Education Field of Study
+    Ans: Computer Engineering | Sel: Computer Engineering | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: What is your current notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your desired Annual Salary?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: Are you legally permitted to work in the country where this job is located?
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: If hired, can you provide proof of eiligibility?
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Will you now or in the future require sponsorship.
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Do you have any relatives employed at Clearwater Analytics?
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Were you referred by a Clearwater Analytics employee?
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: GDPR Notice
+
+When you apply / are added to a job, the personal data contained in your application will be collected by Clearwater Analytics (“Controller”), which is located at 777 W Main St Ste 900, Boise, ID 83702 and can be contacted by emailing compliance@clearwateranalytics.com. Your personal data will be processed for the purposes of managing Controller’s recruitment related activities, which include setting up and conducting interviews and tests for applicants, evaluating and assessing the results thereto, and as is otherwise needed in the recruitment and hiring processes. Such processing is legally permissible under Art. 6(1)(f) of Regulation (EU) 2016/679 (General Data Protection Regulation) as necessary for the purposes of the legitimate interests pursued by the Controller, which are the solicitation, evaluation, and selection of applicants for employment.
+
+Your personal data will be shared with Workday, a cloud services provider located in the United States of America and engaged by Controller to help manage its recruitment and hiring process on Controller’s behalf. Accordingly, if you are located outside of the United States, your personal data will be transferred to the United States once you submit it through this site. Because the European Union Commission has determined that United States data privacy laws do not ensure an adequate level of protection for personal data collected from EU data subjects, the transfer will be subject to appropriate additional safeguards under [either the standard contractual clauses or the Privacy Shield]. You can obtain a copy of the standard contractual clauses by contacting us at compliance@clearwateranalytics.com. 
+
+Your personal data will be retained by Controller as long as Controller determines it is necessary to evaluate your application for employment. Under the GDPR, you have the right to request access to your personal data, to request that your personal data be rectified or erased, and to request that processing of your personal data be restricted. You also have to right to data portability. In addition, you may lodge a complaint with an EU supervisory authority.
+
+I have read and agree to the terms of the GDPR Notice.
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with PostgreSQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Java Development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with MySQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: May i know your current CTC ?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Please provide your LinkedIn or Microsoft full email address, if applicable. (user@linkedin.com or user@microsoft.com)
+    Ans: siddhant3646@gmail.com | Sel: siddhant3646@gmail.com | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: If you have previously worked at LinkedIn or Microsoft, please provide your approximate last date of employment.
+(MM/DD/YYYY)
+    Ans: https://www.linkedin.com/in/siddhant-singh | Sel: https://www.linkedin.com/in/siddhant-singh | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-self-id) Q: Gender
+    Ans: Male | Sel: Male | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you legally authorized to work in the country in which this role will be located?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Will you now or in the future require sponsorship for employment visa status, in order to begin or m
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: Have you ever worked for Deloitte & Touche, Curach, Ingeus, STR, Intelligent Energy, or any other De
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (checkbox) Q: Confirmed
+    Ans: Checked | Sel: Checked | Opts: Confirmed | Src: rule
+
+[LinkedIn_Form] (select) Q: Gender*
+    Ans: Male | Sel: Male | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Total IT Experience
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: 
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: safe_fallback
+
+[naukri] (text) Q: How many years of experience do you have in JD Edwards?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: C2H
+    Ans: no | Sel: no | Opts: Yes, no, Skip this question | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: Have you ever worked with Ping Identity or ForgeRock in the past?
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Do you have any relatives employed by Ping Identity? If yes, provide their name below.
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-single-option) Q: Non-Disclosure Agreement
+    Ans: I Agree | Sel: I Agree | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-single-option) Q: Privacy Statement
+    Ans: I Agree | Sel: I Agree | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Upon hire, can you provide verification of your identity and legal right to work in the country where this job is located?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Will you now or in the future require sponsorship to work in the country where this job is located?
+    Ans: No | Sel: No | Opts: Yes, No | Src: compliance_no
+
+[LinkedIn_Form] (radio) Q: This role requires 50% travel - Are you willing to travel to the region listed?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Have you ever worked in Identity and Access Management (IAM)?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (select) Q: Non-Disclosure Agreement*
+    Ans: I Agree | Sel: I Agree | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Privacy Statement *
+    Ans: I Agree | Sel: I Agree | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Spring Boot?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of experience you have in Django developing Rest api?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of exp you have in react?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How soon you can join?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How much is your Expected CTC?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you ready for 5 days work from office?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: What is your current CTC ?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your Notice Period ?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you available on 24th October for face-to-face interview in Indore location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month, 2 months, 3 months, 4 months, 5 months, 6 months | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in AI/ML, GenAI, or LLM-based application development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you led a team of AI/Software Engineers?
+    Ans: Yes, I have managed and mentored teams of 5-10 developers, conducting code reviews, sprint planning, and 1:1 mentorship sessions to ensure timely delivery and team growth. | Sel: Yes, I have managed and mentored teams of 5-10 developers, conducting code reviews, sprint planning, and 1:1 mentorship sessions to ensure timely delivery and team growth. | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many production-grade AI/GenAI applications have you deployed?
+    Ans: Yes, worked with GPT APIs and LangChain | Sel: Yes, worked with GPT APIs and LangChain | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you designed and implemented RAG-based solutions in production?
+    Ans: Yes, I am currently based in Bangalore and fully open to relocating to other major tech hubs (Bangalore, Hyderabad, Pune, Chennai, Gurgaon, Noida, Mumbai) if required. | Sel: Yes, I am currently based in Bangalore and fully open to relocating to other major tech hubs (Bangalore, Hyderabad, Pune, Chennai, Gurgaon, Noida, Mumbai) if required. | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Do you have experience with MLOps/LLMOps tools such as MLflow, model monitoring, or CI/CD pipelines?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: Exp in Capital Market ? (personal or professional level)
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Conversational Ai?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: What is your preferred location for work? (Country, City)
+    Ans: Bangalore | Sel: Bangalore | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What are your financial expectations (monthly gross)?
+    Ans: 0.5 | Sel: 0.5 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: What is your notice period / availability to join?
+    Ans: 0-15 days | Sel: 0-15 days | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Where did you learn about Miratech?
+    Ans: Direct search (e.g., Google, company website) | Sel: Direct search (e.g., Google, company website) | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (checkbox) Q: I consent
+    Ans: Checked | Sel: Checked | Opts: I consent | Src: rule
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have in Java development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have in production support?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: We are looking for immediate joiners. What is your notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you comfortable working onsite at Bengaluru location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Artificial Intelligence (AI)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Claude Agent SDK?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[naukri] (text) Q: How many years of experience do you have in Large Language Models (LLM)?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Retrieval-Augmented Generation (RAG)?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in AI Agents?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently residing in Bengaluru or willing to relocate to Bengaluru?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (radio) Q: Do you have mentioned skills (Python, react, fastAPI) as per JD ?
+    Ans: 4 | Sel: 4 | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you staying in Bengaluru ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Do you have 5+ years of experience in Java, Spring Boot, and Microservices?
+    Ans: 4 | Sel: 4 | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Do you have hands-on experience with Angular or React and AWS?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Can you join immediately or within 15 days after selection?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: How many years of Information Technology experience do you currently have?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of experience do you hold?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Microservices?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you comfortable commuting to this job's location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Do you have 5 - 12 years of relevant professional experience?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Do you have hands-on experience in both Machine Learning and Data Science?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Is your current/expected CTC up to ₹45 LPA?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (radio) Q: Are you currently living in or ready to relocate to Gurugram ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you willing to relocate to Bengaluru?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Have you build and deploy ML models end to end?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of strong experience do you have in classical ML tools
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Please mention your current location.
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently living in or ready to relocate to Noida ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have as Data Scientist ?
+    Ans: 4-5 years | Sel: 4-5 years | Opts: No experience, <2 years, 2-4 years, 4-5 years, 5-6 years, >6 years | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have in Recommender Systems ?
+    Ans: 4-5 years | Sel: 4-5 years | Opts: No experience, <2 years, 2-4 years, 4-5 years, 5-6 years, >6 years | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have in Xgboost ?
+    Ans: 4-5 years | Sel: 4-5 years | Opts: No experience, <2 years, 2-4 years, 4-5 years, 5-6 years, >6 years | Src: naukri_chatbot_pattern
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month, 2 months, Less than 30 days | Src: fingerprint
+
+[naukri] (text) Q: How many years of experience do you have in Mmm?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Market Mix Modelling?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (checkbox) Q: Which of these locations are you willing to relocate to?
+    Ans: Hyderabad | Sel: Hyderabad | Opts: Delhi / NCR, Mumbai (All Areas), Hyderabad | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have as Ai ML Engineer ?
+    Ans: 2-4 years | Sel: 2-4 years | Opts: No experience, <2 years, 2-4 years, 4-7 years, 7-10 years, 10-13 years, 13-15 years, >15 years | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: What's your current CTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What's your expected CTC?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What's your notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you currently located in Ahmedabad or Gandhinagar?
+    Ans: Bengaluru | Sel: Bengaluru | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with AWS Lambda?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Amazon Web Services (AWS)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: what is your Current CTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: what is your Expected CTC
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have in Java, Spring Boot, and microservices development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have with Apache Kafka (producers/consumers) and Docker/Kubernetes deployments?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current ctc ?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you comfortable with Contractual role?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[linkedin] (select) Q: Agoda will be holding a fast-track 1-Day Interview program for this position, would you be open to participating on 21st October 2026 (8 am - 5 pm IST)?*
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[linkedin] (select) Q: How many years of experience do you have leading backend systems—owning system design, making architecture decisions, and driving end-to-end delivery of scalable, distributed services?*
+    Ans: 1-3 Years | Sel: 1-3 Years | Opts:  | Src: pattern_match
+
+[linkedin] (select) Q: To avoid actual or perceived impairment of our parent company’s  independent auditor – Deloitte and to comply with applicable regulations of Securities and Exchange Commission of the United States, we need to seek approvals from our parent company before starting the interview process. With this, please confirm if you are currently or formerly have been associated with Deloitte or any of its subsidiary entities at any time including but not limited to any time as a direct employee, director, contractor, major shareholder, intern etc.?*
+    Ans: No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies) | Sel: No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies) | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Select relevant backend software engineering experience:
+    Ans: 3-5 Years | Sel: 3-5 Years | Opts: 0-2 Years, 3-5 Years, 5+ Years | Src: llm_gemma
+
+[hirist] (textarea) Q: How many years of experience do you have in Machine Learning?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Natural Language Processing?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Data Science?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently residing in Noida, Uttar Pradesh or willing to relocate to Noida, Uttar Pradesh?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: What is your notice period in days?
+    Ans: 15 | Sel: 15 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What's your current CTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What's your Expected CTC?
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Official Notice Period?
+    Ans: Less than 30 days | Sel: Less than 30 days | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently residing or willing to relocate to Gurugram?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: Relevant experience in System Designing?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Relevant experience in Reactjs?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Relevant experience in Javascript?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What's your current Location?
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: pattern_match
+
+[hirist] (checkbox) Q: When can you join the company, if get selected ?
+    Ans: 0-15 Days | Sel: 0-15 Days | Opts: Immediate, 0-15 Days | Src: pattern_match
+
+[hirist] (checkbox) Q: Are you comforable working from Noida Location Sector-51 or relocate ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: Have you implemented request validation, exception handling, and standardized error responses in REST APIs?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Have you worked with transactions, database consistency, and rollback handling in Spring applications?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of hands-on experience do you have with JavaScript or TypeScript?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Have you worked with CI/CD pipelines or automated build and deployment processes?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you have experience in working with Large scale enterprise? How many projects?
+    Ans: 5 | Sel: 5 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you have hands on experience in Reactjs & Nextjs ? How many years in each skill?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you have basic hands on experience in Java?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you have experience in working in Multi-tenency architecture?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Are you willing to work from office ? (Guindy, Chennai)
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Frontend skills ?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Public Cloud? which cloud?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Which of these locations are you willing to relocate to?
+    Ans: Bengaluru | Sel: Bengaluru | Opts: Bengaluru, Hyderabad | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have as Java Developer ?
+    Ans: 4-5 years | Sel: 4-5 years | Opts: No experience, <3 years, 3-4 years, 4-5 years, 5-6 years, 6-7 years, >7 years | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Current Location
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (date) Q: Date of Birth
+    Ans: 17/12/2000 | Sel: 17/12/2000 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Notice Period (In Days)
+    Ans: 15 | Sel: 15 | Opts: 15, 30, 60, 90, 120 | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (select) Q: How many years of C# experience do you have?
+    Ans: 3 - 5 Yrs | Sel: 3 - 5 Yrs | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have in Software Development?
+    Ans: 2 - 5 Yrs | Sel: 2 - 5 Yrs | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have working with Relational Databases?
+    Ans: 3 - 5 Yrs | Sel: 3 - 5 Yrs | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you based at / willing to relocate to Hyderabad?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Have you done intigretion or Migration with other products?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: safe_fallback
+
+[hirist] (radio) Q: Are you currently living in Bangalore?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: fingerprint
+
+[hirist] (number) Q: How many years of experience do you have in Machine Learning (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in AI/LLM applications?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently residing in Coimbatore or willing to relocate to Coimbatore?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (radio) Q: Are you fine to work 5 days in office premises?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in frontend technology?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[hirist] (textarea) Q: What is your notice period? (Mention your Last working day - if serving)
+    Ans: 05 Nov 2026 | Sel: 05 Nov 2026 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Node.Js?
+    Ans: 3.5 Years | Sel: 3.5 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Javascript?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in React.Js?
+    Ans: 3.8 Years | Sel: 3.8 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in AWS?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your Last working date?
+    Ans: 05 Nov 2026 | Sel: 05 Nov 2026 | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: Are you currently residing in Bengaluru?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in DFT?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in ML?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Years of experience in Agenctic AI
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[hirist] (textarea) Q: We are conducting walk-in interviews on alternate days. Would you be able to attend?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month | Src: fingerprint
+
+[hirist] (textarea) Q: Current CTC
+    Ans: 23 LPA | Sel: 23 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Expected CTC
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Notice Period
+    Ans: 15 | Sel: 15 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Percentage in 10%
+    Ans: 8.51 | Sel: 8.51 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Percentage in 12%
+    Ans: 8.51 | Sel: 8.51 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Willing to relocate Chandigarh
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Experience in Node JS
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Experience in React JS
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in React.js?
+    Ans: 3.8 Years | Sel: 3.8 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Node.js?
+    Ans: 3.5 Years | Sel: 3.5 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your expected CTC?
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your hometown? Where are you currently residing?
+    Ans: Everbridge | Sel: Everbridge | Opts:  | Src: pattern_match
+
+[hirist] (checkbox) Q: This is an in-office setting profile. Are you willing to relocate to Jaipur?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: Will you be able to join from the office?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How Much experience do you have in Generative AI?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Payments Systems (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your official notice period? If serving what is the last working day
+    Ans: 06 Nov 2026 | Sel: 06 Nov 2026 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in SQL?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Artificial Intelligence/ Machine Learning??
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Agentic Workflows?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Generative AI Fundamentals?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in LLM Application Frameworks?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Python g?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in RAG Workflow?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you open to work on a contractual role?
+    Ans: yes | Sel: yes | Opts: yes, no | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: What is your notice period?
+    Ans: 15 Days or less | Sel: 15 Days or less | Opts: 15 Days or less, 1 Month, 2 Months, 3 Months, More than 3 Months, Serving Notice Period | Src: naukri_chatbot_pattern
+
+[naukri] (checkbox) Q: What is your Age?
+    Ans: Less than 25 | Sel: Less than 25 | Opts: Less than 25, 25 to 32 Years, 32 to 42 Years, More than 42 Years | Src: naukri_chatbot_pattern
+
+[naukri] (checkbox) Q: Are you willing to relocate to one of the location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: LinkedIn
+    Ans: https://www.linkedin.com/in/siddhant3646 | Sel: https://www.linkedin.com/in/siddhant3646 | Opts:  | Src: keyword_match
+
+[hirist] (radio) Q: Are you currently residing in Gurugram, Haryana or willing to relocate to Gurugram, Haryana?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience in Java Coding?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What is your LWD ?
+    Ans: 06 Nov 2026 | Sel: 06 Nov 2026 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently residing in Bengaluru or willing to relocate to Bengaluru?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in L2/L3?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Springboot and Microservices?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Total Years of Exp?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Are you available on this Saturday (23rd Oct) for F2F drive?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in databricks?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in AI/ML?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you available for face to face interview on 24 october 2026
+    Ans: yes | Sel: yes | Opts: yes, No | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with AWS ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with ETL ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Python/Java ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with generative AI ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Coveo Search?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your notice period
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current compensation
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your expected compensation?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with JavaScript?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with HTML5?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of relevant  work experience do you have working as Java full stack
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of relevant work experience do you have working with Kafka
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of relevant work experience do you have working with Azure
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Pl confirm if you have overall 8 + yrs and above experience . Incase if you have  less than 8 yrs,  your resume will get rejected. kindly pl confirm .
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (select) Q: What is your total years of full-time professional experience (do not include internship roles)
+    Ans: 4–6 years | Sel: 4–6 years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have using Java
+    Ans: 3-5 Years | Sel: 3-5 Years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-ctc) Q: What is your expected annual CTC (INR)?
+    Ans: ₹25–30 LPA | Sel: ₹25–30 LPA | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: What is your notice period?
+    Ans: Immediate Joiner | Sel: Immediate Joiner | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Do you have experience working with iPaaS, SaaS, or other cloud-based platforms?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you currently servicing Notice Period?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you legally authorized to work in the country for which you are applying?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (select) Q: What is your total years of full-time professional experience (do not include internship roles)*
+    Ans: 4–6 years | Sel: 4–6 years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have using Java*
+    Ans: 3-5 Years | Sel: 3-5 Years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: What is your expected annual CTC (INR)?*
+    Ans: ₹25–30 LPA | Sel: ₹25–30 LPA | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: What is your notice period?*
+    Ans: Immediate Joiner | Sel: Immediate Joiner | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: What did you do during your last professionnal experience?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Specify previous experiences relevant for the position you are applying to
+    Ans: 4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases. | Sel: 4+ years as Full Stack Developer at Fiserv: Java/Spring Boot microservices, React frontends, AWS cloud infrastructure, CI/CD pipelines with Jenkins and GitHub Actions, PostgreSQL and MongoDB databases. | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Why would you like to join Sia?
+    Ans: Within 15 days | Sel: Within 15 days | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: What could you bring to Sia?
+    Ans: I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews. | Sel: I bring 4+ years of hands-on experience in full-stack development with Java, Spring Boot, React, and AWS. My strengths include building scalable microservices architectures, optimizing CI/CD pipelines, and delivering high-quality code through rigorous testing and code reviews. | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current CTC (INR)?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your expected CTC (INR)?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: What is your level of English?
+    Ans: Native | Sel: Native | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: How many years of experience do you have?
+    Ans: 3 to 6 years | Sel: 3 to 6 years | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: What is your official notice period?
+    Ans: Immediate Joiner | Sel: Immediate Joiner | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you currently in Mumbai or willing to relocate to Mumbai?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[naukri] (text) Q: What is the earliest DOJ you can join us?
+    Ans: 15 | Sel: 15 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you willing to WFO in Chennai 5 days/week?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Data Modeling?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Data Governance?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in data platform architecture?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Event Driven?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Python & SQL?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Have you developed and deployed ML models into production? Briefly describe one project?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you have practical experience designing and evaluating A/B tests or statistical experiments?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years experience in back end application developement ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Do you have experience with Helm Charts and YAML-based configurations?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Do you have hands-on backend coding experience and regularly write production code?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of hands-on experience do you have with Node.js and React? Which React concepts do you use regularly (Hooks, Redux/RTK, TypeScript)?
+    Ans: 3.5 | Sel: 3.5 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you independently built REST APIs in Node.js? What kind of authentication, middleware, logging, or exception handling have you implemented?
+    Ans: Yes, experience with Prometheus, Grafana, and ELK Stack | Sel: Yes, experience with Prometheus, Grafana, and ELK Stack | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Which databases have you worked with (PostgreSQL/MongoDB)? Have you handled query optimization, performance tuning, or database migrations?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your experience with Kafka, Docker, CI/CD pipelines, and AWS? Can you briefly describe how you've used them in your current project?
+    Ans: Java, Spring Boot, Microservices, React, and AWS cloud architectures. 4+ years building high-throughput event-driven distributed systems. | Sel: Java, Spring Boot, Microservices, React, and AWS cloud architectures. 4+ years building high-throughput event-driven distributed systems. | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you used any AI coding assistants or LLM tools such as GitHub Copilot, ChatGPT, Cursor, Claude, or Amazon Q? How do you use them in development?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Current Location?
+    Ans: Bangalore, Karnataka | Sel: Bangalore, Karnataka | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: CCTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: ECTC?
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Mention last working day if you are serving notice or have resigned already.
+    Ans: 06 Nov 2026 | Sel: 06 Nov 2026 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Physical design?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Senior AI/ML?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Vector Database?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Healthcare domain? Healthcare, HealthTech, Clinical Data, EHR, EMR, Medical Data
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Cloud AI, AWS Bedrock or equivalent cloud AI platforms
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Do you hold a postgraduate degree in Computer Science, Information Technology, Artificial Intelligence, Machine Learning, or a related field?
+    Ans: Yes, worked with GPT APIs and LangChain | Sel: Yes, worked with GPT APIs and LangChain | Opts:  | Src: naukri_chatbot_pattern
+
+[hirist] (number) Q: How many years of experience do you have in Product Management (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[instahyre] (text) Q: What is your Current CTC? (Fixed + Variable + ESOPs/RSUs)
+    Ans: Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs) | Sel: Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs) | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: What is your Expected CTC? (Fixed)
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: What is your official Notice Period?
+    Ans: 15 days | Sel: 15 days | Opts:  | Src: llm_gemma
+
+[instahyre] (text) Q: What is your current location?
+    Ans: Bangalore, Karnataka, India | Sel: Bangalore, Karnataka, India | Opts:  | Src: llm_gemma
+
+[instahyre] (numeric) Q: What would be your self-rating on backend with any web frameworks? RATE YOURSELF ON A SCALE OF (0-5)
+    Ans: 9 | Sel: 9 | Opts:  | Src: pattern_fallback
+
+[instahyre] (numeric) Q: What would be your self-rating on database design? RATE YOURSELF ON A SCALE OF (0-5)
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_fallback
+
+[instahyre] (numeric) Q: What would be your self-rating on understanding of frameworks to build AI agents? RATE YOURSELF ON A SCALE OF (0-5)
+    Ans: 9 | Sel: 9 | Opts:  | Src: pattern_fallback
+
+[instahyre] (numeric) Q: What would be your self-rating on LLM-based evals? RATE YOURSELF ON A SCALE OF (0-5)
+    Ans: 9 | Sel: 9 | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: Have you used any coding agents like Cursor/Claude code etc?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: Have you used any eval tools like Langsmith / LangChain, etc.?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: Have you setup and ran LLM based evals ?
+    Ans: Yes, worked with GPT APIs and LangChain | Sel: Yes, worked with GPT APIs and LangChain | Opts:  | Src: pattern_fallback
+
+[instahyre] (text) Q: Have you built or worked on an agentic Product?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_fallback
+
+[naukri] (text) Q: How many years of experience do you have in Pandas?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Numpy?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Time Series Analysis?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently residing in Hyderabad, Telangana or willing to relocate to Hyderabad, Telangana?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Previously Employed by Cognizant
+    Ans: No | Sel: No | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[hirist] (textarea) Q: How soon can you join ?
+    Ans: 15 Days (Serving Notice Period) | Sel: 15 Days (Serving Notice Period) | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your current CTC ?
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your expected CTC ?
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: Are your comfortable with Bangalore location ?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have as a B2B SaaS or AI Product Manager?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you partnered directly with backend/AI engineering teams to spec out API-driven or enterprise workflow products?
+    Ans: Yes, at Everbridge I frequently partner directly with backend and AI engineering teams to spec out API-driven microservices and enterprise workflows. I collaborate closely on defining OpenAPI specifications, designing event-driven schemas using Apache Kafka, and establishing robust gRPC and REST contracts for distributed backend systems. When integrating AI workflows, I focus on building low-latency, asynchronous task queues and robust circuit breakers to ensure high-scale reliability. | Sel: Yes, at Everbridge I frequently partner directly with backend and AI engineering teams to spec out API-driven microservices and enterprise workflows. I collaborate closely on defining OpenAPI specifications, designing event-driven schemas using Apache Kafka, and establishing robust gRPC and REST contracts for distributed backend systems. When integrating AI workflows, I focus on building low-latency, asynchronous task queues and robust circuit breakers to ensure high-scale reliability. | Opts:  | Src: llm_gemma
+
+[naukri] (checkbox) Q: Please select the city you are currently residing or willing to relocate to
+    Ans: Hyderabad; Bengaluru; Chennai; Pune; Noida; Mumbai | Sel: Hyderabad; Bengaluru; Chennai; Pune; Noida; Mumbai | Opts: Hyderabad, Bengaluru, Chennai, Pune, Noida, Mumbai | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in COPILOT / Python / AZURE ?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Are you currently working ?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in LangGraph?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Which ML Flows have you worked on?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Available for walk in drive Hyderabad_31 october
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in SSIS?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in MS SQL Server?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Are you available to join Immediately?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Willing to work in 3pm to 12am shift?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: What is your current CTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your expected CTC?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current notice period? (In days)
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Spring Security?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your CCTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your NP? Mention in days 0-15?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your experience in Architect?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your experience in Fintech Domain?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: We are looking for candidates with 10–15 years of total experience only. Candidates with more than 15 years of experience will not be considered?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: Are you comfortable in relocating to Chennai?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[hirist] (number) Q: How many years of experience do you have in LLM (in Years)?
+    Ans: 4.2 | Sel: 4.2 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your experience in AI /Classical ML?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently living in Pune?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Are you comfortable to relocate to Pune?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: What is your official Notice Period? And How sooner you can join?
+    Ans: Less than 30 days | Sel: Less than 30 days | Opts:  | Src: pattern_match
+
+[hirist] (checkbox) Q: How soon can you join?
+    Ans: 15days | Sel: 15days | Opts: Immediately Available, 60days, 90days, 15days, 30days | Src: pattern_match
+
+[naukri] (radio) Q: What is your Notice Period?
+    Ans: Available now | Sel: Available now | Opts: Available now, 1 week, 2 weeks, 3 weeks, 1 month, 1.5 month, 2 months, 3 months | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Azure?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Pyspark?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Databricks?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you currently residing in Gurugram, Haryana or willing to relocate to Gurugram, Haryana?
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (radio) Q: Are you comfortable with PAID Career Consulting Program? Are you interested in?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[hirist] (textarea) Q: Have you worked in a fast-paced startup or product engineering environment before? Yes / No. If yes, briefly explain your experience.
+    Ans: Java, Spring Boot, Microservices, React, and AWS cloud architectures. 4+ years building high-throughput event-driven distributed systems. | Sel: Java, Spring Boot, Microservices, React, and AWS cloud architectures. 4+ years building high-throughput event-driven distributed systems. | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your Notice Period / Earliest Joining Availability?
+    Ans: 15 | Sel: 15 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Which technologies do you work with regularly?
+    Ans: Open AI, OpenAI, Azure Open AI, Azure OpenAI, Claude, Anthropic Claude, Gemini, Google Gemini, Github Copilot, GitHub Copilot, Cursor, Retrieval-Augmented Generation (RAG), RAG, AI agents, Prompt Engineering, LangChain, ChatGPT, LLMs, Large Language Models, Generative AI, Vector Databases | Sel: Open AI, OpenAI, Azure Open AI, Azure OpenAI, Claude, Anthropic Claude, Gemini, Google Gemini, Github Copilot, GitHub Copilot, Cursor, Retrieval-Augmented Generation (RAG), RAG, AI agents, Prompt Engineering, LangChain, ChatGPT, LLMs, Large Language Models, Generative AI, Vector Databases | Opts:  | Src: pattern_match
+
+[hirist] (checkbox) Q: How many years of experience do you currently have in using AI tools in day-today work (in Years)?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently living in Bengaluru, Karnataka, India? OR willing to relocate ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you currently have in SDET (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you currently have in Playwright Framework(in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you designed or contributed to an automation framework from scratch?
+    Ans: Yes, I built a modular test automation framework from scratch using Java, RestAssured, and TestNG to validate our microservices APIs at Everbridge. I structured it with a Page/Service Object model, integrated it into our GitHub Actions CI/CD pipelines to run on every pull request, and added automated Slack alerts for regression failures. This cut manual sanity testing time by 60% and caught regressions early before staging deployments. | Sel: Yes, I built a modular test automation framework from scratch using Java, RestAssured, and TestNG to validate our microservices APIs at Everbridge. I structured it with a Page/Service Object model, integrated it into our GitHub Actions CI/CD pipelines to run on every pull request, and added automated Slack alerts for regression failures. This cut manual sanity testing time by 60% and caught regressions early before staging deployments. | Opts:  | Src: llm_gemma
+
+[naukri] (text) Q: How many years of hands-on experience do you have building price elasticity or promotion models for CPG/FMCG products?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Which method did you use to estimate price elasticity, and at what level (for example SKU, channel or retailer)?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How do you separate a promotion s true incremental sales from sales that would have happened anyway?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Name one pricing or promo simulator or decision tool you built. Who used it, and what decision did it inform?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in rgm?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Salesforce?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: Current Company
+    Ans: Everbridge | Sel: Everbridge | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current Fixed Compensation
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current Variable Compensation
+    Ans: 0 | Sel: 0 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current Unvested Options/RSU value
+    Ans: 0 | Sel: 0 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current Location
+    Ans: Bangalore | Sel: Bangalore | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: Current Notice Period
+    Ans: Less than 15 Days | Sel: Less than 15 Days | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select) Q: Were you previously employed at PhonePe? (as a Full-Time / contract / Intern)
+    Ans: No | Sel: No | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Rust?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current CTC
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of experience do you have in full stack development ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: We are looking for immediate joiners. What is your Notice Period (in days)?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of experience do you have in AI/LLM solutions?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you okay to work at Bangalore location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: What is your relevant experience in Python Backend development.
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What python development frameworks, you have worked.
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Rest Api?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Python Development?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Generative AI/ Agentic AI?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Deployment in AI?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (checkbox) Q: Are you available for an online interview on 24th October Saturday?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Aws Lambda?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Eventbridge?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Willing to work on contract
+    Ans: Yes | Sel: Yes | Opts: Yes, No, Skip this question | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Jenkins?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with (Azure)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Your current CTC.
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Your expected CTC.
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Notice Period to served.
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Whats your Notice Period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[naukri] (text) Q: Have you deployed LLM-based applications or large-scale deep learning models in production?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Have you worked on model serving infrastructure such as vLLM, Triton, TorchServe, BentoML, or similar frameworks?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Have you worked on MLOps platforms involving MLflow, Kubeflow, CI/CD, model versioning, or automated retraining pipelines?
+    Ans: 3-4 years | Sel: 3-4 years | Opts: No experience, <3 years, 3-4 years, >4 years | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: Q5. Are you comfortable working from our Noida office?
+    Ans: Yes | Sel: Yes | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have in "data science, classical ML and model building" ?
+    Ans: 2-5 years | Sel: 2-5 years | Opts: No experience, <2 years, 2-5 years, 5-6 years, 6-7 years, 7-8 years, >8 years | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience do you have in Business Development (BD), client management?
+    Ans: 2-5 years | Sel: 2-5 years | Opts: No experience, <2 years, 2-5 years, 5-6 years | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: How many years of experience you have in Pharma/Lifesciences domain?
+    Ans: 4-5 | Sel: 4-5 | Opts: 1-2, 2-3, 3-4, 4-5, 5-6, 6-7, 7-8, Skip this question | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: Whats Your Notice Period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of experience do you have with Node.js?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What are your salary expectations in LPA (Lakhs Per Annum)?
+    Ans: 30 | Sel: 30 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: How many years of experience do you have with Angular?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: Current ctc?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Expected Ctc?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with NoSQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: •	4-9 years of experience in Full Stack, Frontend, or Backend Software Development.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: •	Proficiency in React.js and/or Angular, with strong knowledge of HTML5, CSS3, JavaScript (ES6+), and responsive design principles.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: •	Experience with backend technologies such as Node.js, Java Spring Boot, Python, or Golang.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: •	Strong knowledge of SQL and relational databases, with basic exposure to NoSQL databases such as MongoDB.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: •	Hands-on experience with Git, including branching strategies, pull requests, and code reviews.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (radio) Q: •	Hands-on experience with AI-assisted development tools such as GitHub Copilot and Claude Code to accelerate development, code reviews, and test generation.
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Have you completed B Tech in Computer Science?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Artificial Intelligence?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in AI/ML?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Agentic AI?
+    Ans: 1 year | Sel: 1 year | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in Integration?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Are your comfortable with Gurgaon location ?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Whats your working experience in WMS ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your current CTC in Lacs per annum(mention Fixed, Variables and ESOPs/RSUs if any separately)?
+    Ans: 23 | Sel: 23 | Opts:  | Src: pattern_match
+
+[hirist] (radio) Q: What is your weightage between Backend-Frontend?
+    Ans: 30-70 | Sel: 30-70 | Opts: 70-30, 50-50, 30-70 | Src: llm_gemma
+
+[hirist] (radio) Q: Which Backend tech stack do you have more experience working on?
+    Ans: Node.js Stack | Sel: Node.js Stack | Opts: Java Stack, Node.js Stack, Python Stack | Src: pattern_match
+
+[hirist] (checkbox) Q: Which Frontend frameworks do you have experience working with?
+    Ans: React | Sel: React | Opts: React, Next.js, Vue.js, Angular, Nuxt, Svelte / SvelteKit | Src: llm_gemma
+
+[hirist] (textarea) Q: How many years of hands-on experience do you have in Blockchain / Web3 / DeFi development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you personally developed and deployed Smart Contracts using Solidity/EVM? Please explain one production project you worked on.
+    Ans: While my core expertise lies in building distributed enterprise backend systems using Java 21, Spring Boot, Apache Kafka, and AWS, I have not personally developed or deployed smart contracts using Solidity or the EVM in production. My professional focus has been entirely on scalable microservices, event-driven architectures, and high-throughput cloud infrastructure at Everbridge. | Sel: While my core expertise lies in building distributed enterprise backend systems using Java 21, Spring Boot, Apache Kafka, and AWS, I have not personally developed or deployed smart contracts using Solidity or the EVM in production. My professional focus has been entirely on scalable microservices, event-driven architectures, and high-throughput cloud infrastructure at Everbridge. | Opts:  | Src: llm_gemma
+
+[hirist] (textarea) Q: Which backend technology are you strongest in — Node.js/TypeScript, Go, Rust, Java/Kotlin or Python — and have you used it in a Blockchain/Web3 product?
+    Ans: Java & Spring Boot is my primary backend stack, supplemented with Python and Node.js. I have 4+ years designing high-throughput REST APIs, Kafka event streaming, and PostgreSQL/Redis data pipelines. | Sel: Java & Spring Boot is my primary backend stack, supplemented with Python and Node.js. I have 4+ years designing high-throughput REST APIs, Kafka event streaming, and PostgreSQL/Redis data pipelines. | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in MySQL?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Node.js?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Agentic AI Development?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How soon can you join?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Do you have 4-7yrs of experience working as Java Developer?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Do you have hands on experience on Spring Boot and Microservices?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Can you join Immediately?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Do you have Understanding of database design and table structures?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (text) Q: Location (city)
+    Ans: Bengaluru, Karnataka, IndiaBangalore | Sel: Bengaluru, Karnataka, IndiaBangalore | Opts:  | Src: keyword_match
+
+[hirist] (radio) Q: Are you currently living in Mohali?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Technical Support (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: How many years of experience do you have as Java development
+    Ans: 2-5 years | Sel: 2-5 years | Opts: No experience, <2 years, 2-5 years, 5-7 years, 7-9 years, 9-10 years, >10 years | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: State/Province
+    Ans: Karnataka | Sel: Karnataka | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Current Annual Salary
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Expected Annual Salary
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: LinkedIn
+    Ans: https://www.linkedin.com/in/siddhant-singh/ | Sel: https://www.linkedin.com/in/siddhant-singh/ | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: Notice Period
+    Ans: 1- 15 days | Sel: 1- 15 days | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-job-level) Q: Current Job Title
+    Ans: Project-Lead | Sel: Project-Lead | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-education) Q: Highest Qualification Held
+    Ans: B.Tech | Sel: B.Tech | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Core Java?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-universal-fallback) Q: School
+    Ans: Christian Brothers University | Sel: Christian Brothers University | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-education) Q: Degree
+    Ans: Bachelor's Degree | Sel: Bachelor's Degree | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-discipline) Q: Discipline
+    Ans: Computer Science | Sel: Computer Science | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: LinkedIn Profile
+    Ans: https://www.linkedin.com/in/siddhant-singh/ | Sel: https://www.linkedin.com/in/siddhant-singh/ | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Do you currently reside in this role's required location?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Are you legally eligible to work in India?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have with Java and Spring Boot microservices?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have with Apache Kafka, including producers and consumers?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Can you join us immediately with in 7 days ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Are you fine with shift timing ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[naukri] (radio) Q: Are you available to attend an in-person interview in Noida?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with .NET Framework?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of Software Development experience do you currently have?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[hirist] (textarea) Q: How many years of experience do you have in B2B SaaS product management?
+    Ans: 0 | Sel: 0 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in preferably across CRM?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in SalesTech?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (checkbox) Q: Please select the city you are currently residing or willing to relocate to
+    Ans: Gurugram, Haryana; Pune, Maharashtra; Noida, Uttar Pradesh | Sel: Gurugram, Haryana; Pune, Maharashtra; Noida, Uttar Pradesh | Opts: Gurugram, Haryana, Pune, Maharashtra, Noida, Uttar Pradesh | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: What is your Last Working Day?
+    Ans: 07 Nov 2026 | Sel: 07 Nov 2026 | Opts:  | Src: naukri_chatbot_pattern
+
+[LinkedIn_Form] (text) Q: How many years of total professional software engineering experience do you have?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have developing Generative AI or Agentic AI applications, including LLM integration, AI agents, tool calling, or orchestration?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of hands-on experience do you have implementing secure Agent-to-Agent (A2A) communication or authentication using OAuth 2.0, OIDC, or token-based security?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: Are you currently residing in Chennai?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Are you available to join within 15 days (Immediate joiner)
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (radio) Q: Do you hold a B.E., B.Tech., M.E., or M.Tech. degree?-
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Spring Boot ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Photo
+    Ans: Photo attachment not available | Sel: Photo attachment not available | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Headline
+    Ans: Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS | Sel: Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Summary
+    Ans: Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS. | Sel: Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS. | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (textarea) Q: Cover letter
+    Ans: With 4+ years of hands-on experience in Java, Spring Boot, React.js, and microservices, I am excited to apply for this role. I have successfully delivered scalable backend systems and AI-powered features at Fiserv. I am currently serving a notice period and can join within 15 days. | Sel: With 4+ years of hands-on experience in Java, Spring Boot, React.js, and microservices, I am excited to apply for this role. I have successfully delivered scalable backend systems and AI-powered features at Fiserv. I am currently serving a notice period and can join within 15 days. | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of total experience?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of relevant experience?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How much is your current CTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How much is your expected CTC?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many days are your notice period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: This is a Full time Hybrid role for Bangalore location, will you be interested?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with High Availability (HA)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with Data Structures?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What’s your current salary? (in lakhs per annum)
+    Ans: 23 | Sel: 23 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (select-notice-period) Q: What is your notice period (in days)? (mention 0 if immediately available)
+    Ans: 15 days (or less) | Sel: 15 days (or less) | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What are your financial expectations (monthly gross)?
+    Ans: 250000 | Sel: 250000 | Opts:  | Src: keyword_match
+
+[hirist] (radio) Q: Comfortable with WFO 5 DAYS.If not then pelase do not apply
+    Ans: YES | Sel: YES | Opts: YES, NO | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 15 days | Sel: 15 days | Opts: Immediately Available, 15 days | Src: fingerprint
+
+[hirist] (number) Q: How many years of experience do you have in React.js (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Selenium Webdriver?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Java?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Rest Assured?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: How many years of experience do you have in API Testing?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: Application link: https://forms.gle/yTbcJMbfMEj4wepV8
+    Ans: This is Mandatory to fill. So please fill it. | Sel: This is Mandatory to fill. So please fill it. | Opts: This is Mandatory to fill. So please fill it., Not Filled | Src: llm_gemma
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with MERN Stack?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years of work experience do you have with NestJS?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current or last drawn CTC?
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: This is a complete WFO opportunity with alternate Saturdays working. Are you comfortable with it?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[LinkedIn_Form] (text) Q: How much Exp do you have in OMS (Order Management System)
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How much exp do you have in GCP
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What's your total IT Exp
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (radio) Q: What's your CTC
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[LinkedIn_Form] (textarea) Q: Why are you interested in working at Bitwarden?
+    Ans: With 4+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team. | Sel: With 4+ years of hands-on experience in Java, Spring Boot, React.js, and AWS, I bring a strong full-stack foundation and a proven track record of delivering scalable, production-ready applications. I have worked extensively on microservices architecture, RESTful APIs, and cloud deployments, and I am quick to adapt to new technologies and team workflows. I am confident that my technical skills, problem-solving ability, and eagerness to contribute will make me a valuable addition to your team. | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is your current and expected CTC (fixed + variable, annual?)
+    Ans: 0 | Sel: 0 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: What is you current notice period (in days)? Please specify if this is negotiable?
+    Ans: 15 | Sel: 15 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Are you willing to work from Noida in-office basis?
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Which of these have you used at work: C# / .NET, TypeScript / Angular, or Rust?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: How many years have you worked as a software engineer or SSE?
+    Ans: 4 | Sel: 4 | Opts:  | Src: keyword_match
+
+[LinkedIn_Form] (text) Q: Do you have any experience with CI/CD pipelines or GitHub Actions?
+    Ans: Yes | Sel: Yes | Opts:  | Src: keyword_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 15 days | Sel: 15 days | Opts: Immediately Available, 15 days, 1 month | Src: fingerprint
+
+[hirist] (number) Q: How many years of Healthcare experience do you currently have (in Years)?
+    Ans: 0 | Sel: 0 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What is your current CTC
+    Ans: 23 | Sel: 23 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your expected CTC
+    Ans: 30 LPA | Sel: 30 LPA | Opts:  | Src: fingerprint
+
+[hirist] (checkbox) Q: If selected. how soon you can join with us ?
+    Ans: 7- 15 Days | Sel: 7- 15 Days | Opts: 0- 7 Days, 7- 15 Days, 15- 30 Days, 30- 45 Days, 45+ Days | Src: fingerprint
+
+[hirist] (radio) Q: Comfortable with Bangalore location ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (textarea) Q: Whats your working experience in Search & Recommendations ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Python?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: What is your Last Working Day?
+    Ans: 08 Nov 2026 | Sel: 08 Nov 2026 | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: To proceed further, please fill the form - https://forms.gle/o9MZvXaRd1uvMPyB7 (Mandatory)
+    Ans: Yes- I filled | Sel: Yes- I filled | Opts: Yes- I filled, No - I dont | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you okay to commute 5 days a week to office?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you okay for contractual role? (Min. duration is of 3 years, extendable)
+    Ans: No | Sel: No | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Please select the role you're applying for, Backend or Full-Stack?
+    Ans: Fullstack | Sel: Fullstack | Opts: Fullstack, Backend, None of the above | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: Are you 100% sure you can attend the face-to-face interview in Hyderabad on Saturday, 24 October 2026?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in React?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Angularjs?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (text) Q: How many years of experience do you have in Fullstack Development?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: What is your primary backend programming language? Is it Java or Python?
+    Ans: Java | Sel: Java | Opts: Java, Python | Src: naukri_chatbot_pattern
+
+[naukri] (radio) Q: The hiring process is on Wednesday, 28th Oct, at our Guidewire Bangalore office. Would you be available to attend in person?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_pattern
+
+[instahyre] (text) Q: What is your Current CTC?
+    Ans: 23 | Sel: 23 | Opts:  | Src: pattern_fallback
+
+[hirist] (number) Q: How many years of Health Care experience do you currently have (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Backend Developer (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: What is your weightage between Backend-Frontend?
+    Ans: 70-30 | Sel: 70-30 | Opts: 70-30, 50-50, 30-70 | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Which Backend tech stack do you have more experience working on?
+    Ans: Java Stack | Sel: Java Stack | Opts: Java Stack, Node.js Stack, Python Stack | Src: naukri_chatbot_fuzzy
+
+[linkedin] (text) Q: Location (city)
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: js_form_fill
+
+[linkedin] (date) Q: Earliest start date
+    Ans: 11/11/2026 | Sel: 11/11/2026 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Current Annual CTC
+    Ans: 2300000 | Sel: 2300000 | Opts:  | Src: js_form_fill
+
+[linkedin] (select-notice-period) Q: Notice Period
+    Ans: 15 Days or less | Sel: 15 Days or less | Opts:  | Src: js_form_fill
+
+[linkedin] (select) Q: I consent to foundit creating my profile for recruiter visibility, job matches and communications.
+    Ans: Yes | Sel: Yes | Opts:  | Src: js_form_fill
+
+[linkedin] (custom-dropdown) Q: Embedded calendar
+    Ans: Me | Sel: Me | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Salary expectation
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of work experience do you have? (Only Whole Numbers Allowed)
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[hirist] (number) Q: How many years of experience do you have in React (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of total experience do you have in software developemt?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Are you fine with 5 days working from office.?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: please confirm if you are available by Saturday for Virtual technical discussion along with availability?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[linkedin] (text) Q: How many years of work experience do you have with Distributed Systems?
+    Ans: 3 | Sel: 3 | Opts:  | Src: profile_prefilled
+
+[linkedin] (text) Q: what is your current ctc? base + variable?
+    Ans: 0 | Sel: 0 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Whats your expected ctc?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Whats your official notice period?
+    Ans: 30 | Sel: 30 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Do you have experience as a Backend Engineer?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[hirist] (radio) Q: Are you comfortable for contract role ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: fingerprint
+
+[hirist] (radio) Q: Which location would you prefer?
+    Ans: Bangalore | Sel: Bangalore | Opts: Hyderabad, Bangalore | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Python (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in FastAPI (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Django Rest Framework (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Have you worked in a product company and have designed scalable features. Please describe.
+    Ans: At Everbridge, I designed and built distributed, event-driven notification microservices handling over 10 million daily events with 99.99% uptime. Working in a product engineering environment, I focused heavily on resilience, scalability, and sub-second latency across our core notification pipelines.
+
+My primary stack for these services relies on Java 21 and Spring Boot, leveraging virtual threads for high-throughput concurrent I/O handling. For event streaming, I architected message pipelines using Apache Kafka, implementing consumer groups with precise partition balancing and the Transactional Outbox pattern to prevent dual-write anomalies and guarantee reliable at-least-once delivery. To protect our relational databases from traffic surges, I integrated a distributed Redis caching layer for sub-5ms read lookups, alongside PostgreSQL with read replicas optimized via connection pooling and B-Tree indexing. All services are containerized with Docker, orchestrated on Kubernetes (EKS) with Horizontal Pod Autoscalers driven by custom CPU and consumer lag metrics, and monitored comprehensively through Prometheus and Grafana dashboards. | Sel: At Everbridge, I designed and built distributed, event-driven notification microservices handling over 10 million daily events with 99.99% uptime. Working in a product engineering environment, I focused heavily on resilience, scalability, and sub-second latency across our core notification pipelines.
+
+My primary stack for these services relies on Java 21 and Spring Boot, leveraging virtual threads for high-throughput concurrent I/O handling. For event streaming, I architected message pipelines using Apache Kafka, implementing consumer groups with precise partition balancing and the Transactional Outbox pattern to prevent dual-write anomalies and guarantee reliable at-least-once delivery. To protect our relational databases from traffic surges, I integrated a distributed Redis caching layer for sub-5ms read lookups, alongside PostgreSQL with read replicas optimized via connection pooling and B-Tree indexing. All services are containerized with Docker, orchestrated on Kubernetes (EKS) with Horizontal Pod Autoscalers driven by custom CPU and consumer lag metrics, and monitored comprehensively through Prometheus and Grafana dashboards. | Opts:  | Src: llm_gemma
+
+[naukri] (text) Q: How many years of hands-on experience do you have with Python?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of hands-on experience do you have in AI/ML?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Highest Level of Education Obtained
+    Ans: Bachelors Degree | Sel: Bachelors Degree | Opts: Advanced Diploma, Diploma, Certificates, Bachelors Degree, Doctorate, MBA, Masters Degree, General Education, Associated Degree | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Do you identify as a military spouse?
+    Ans: I am not a military spouse or partner | Sel: I am not a military spouse or partner | Opts: I am a military spouse or partner, I am not a military spouse or partner, I choose not to disclose | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Have you been previously or are currently associated with NetApp?
+    Ans: No - Never associated with NetApp | Sel: No - Never associated with NetApp | Opts: No - Never associated with NetApp, Past Employee, Past Intern, Past AWF/Contractor, Past Military Fellow, Current Employee, Current Intern, Current AWF/Contractor, Current Military Fellow, N/A | Src: pattern_match
+
+[naukri] (radio) Q: Will you now or in the future require sponsorship for employment (e.g. H-1B visa status)?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[naukri] (radio) Q: Have you previously been employed by or received an offer from Flexera?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[naukri] (radio) Q: Do you have any restrictive covenants e.g.noncompete/confidentiality agreements with current/previous employer,which restrict you performing this job?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: please confirm your last working day if any
+    Ans: 11 Nov 2026 | Sel: 11 Nov 2026 | Opts:  | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Are you currently residing in Pune or willing to relocate to Pune?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (text) Q: What role / roles you are applying for ?
+    Ans: Software Engineer 2 (SDE-2) | Sel: Software Engineer 2 (SDE-2) | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: What is your current location ?
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Preferred employment type
+    Ans: Permanent ( Fulltime ) | Sel: Permanent ( Fulltime ) | Opts: Permanent ( Fulltime ), Contract ( Fulltime ), Permanent / Contract ( Fulltime ) | Src: naukri_chatbot_fuzzy
+
+[linkedin] (textarea) Q: How many years of experience do you have in E-Commerce B2B
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (textarea) Q: Do you have any experience in working in 3PL, if yes- how many years
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (textarea) Q: Are you comfortable in an Individual Contributor role?
+    Ans: Yes | Sel: Yes | Opts:  | Src: js_form_fill
+
+[linkedin] (textarea) Q: Do you reside in India and are comfortable working 8 am- 5 pm (with US time overlap on some days)
+    Ans: Yes | Sel: Yes | Opts:  | Src: js_form_fill
+
+[linkedin] (textarea) Q: What is your current notice period
+    Ans: 15 | Sel: 15 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: What is your current location?
+    Ans: Bengaluru | Sel: Bengaluru | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of hands-on experience do you have in Java and Object-Oriented Programming (OOP)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Do you have hands-on experience in designing and developing REST APIs and backend microservices usin
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Do you have experience developing and maintaining production-grade enterprise applications, includin
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Are you available to join immediately ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Are you comfortable working in a hybrid work model in Bangalore?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[naukri] (text) Q: How many years of experience do you have in Linux ?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience with AWS DevOps?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Do You have experience with AWS Services -(Ec2, EKS, ECS, Lambda, Api Gateway, S3, IAM, SCP, Route53, ACM),
+    Ans: yes | Sel: yes | Opts: yes, no | Src: pattern_match
+
+[naukri] (radio) Q: Do you have experience with writing production quality code in Python ?
+    Ans: yes | Sel: yes | Opts: yes, no | Src: pattern_match
+
+[naukri] (text) Q: How many years of exp with python?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Can you join in 15-20 days?
+    Ans: yes | Sel: yes | Opts: yes, no | Src: pattern_match
+
+[naukri] (text) Q: What is your notice period/Last working date?
+    Ans: 11 Nov 2026 | Sel: 11 Nov 2026 | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Can you work from Gurugram/Bangalore/Mumbai/Pune/Coimbatore/Chennai
+    Ans: yes | Sel: yes | Opts: yes, no | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in HighByte Intelligence Hub installation, configuration, or support?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Mqtt?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Iiot?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Opc Ua?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Docker, Kubernetes, and CI/CD pipelines?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Azure or AWS cloud experience?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Game Development?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Cloud gaming?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in AWS (specifically Lambda)
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[linkedin] (text) Q: How many years of Experience with Python or JAVA?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Expected ctc?
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Notice Period?
+    Ans: 15 | Sel: 15 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Do you have experience in Lending ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (text) Q: How many years of work experience do you have with Spring Framework?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[linkedin] (text) Q: How many years of work experience do you have with GraphQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[linkedin] (text) Q: How many years of work experience do you have with TypeScript?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[hirist] (radio) Q: Have you completed Bachelor's Degree in AIML/CSE/IT??
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently living in Hyderabad?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: Serving Notice Period | Sel: Serving Notice Period | Opts: Immediately Available, 1 month, 2 months, 3 months, Serving Notice Period | Src: fingerprint
+
+[hirist] (number) Q: How many years of Product Management experience do you currently have (in Years)?
+    Ans: 0 | Sel: 0 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: Are you comfortable working from our Noida office (Sector 144, 5 days WFO)?
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Are you currently living in or ready to relocate to Bengaluru ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[naukri] (radio) Q: How many years of experience do you have as Dot Net Developer ?
+    Ans: 3-5 years | Sel: 3-5 years | Opts: No experience, <3 years, 3-5 years, 5-7 years, 7-8 years, >8 years | Src: naukri_chatbot_fuzzy
+
+[linkedin] (text) Q: How many years of work experience do you have with JSON Web Token (JWT)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of hands-on experience do you have with Java, Spring Boot & Microservices?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of hands-on experience do you have with Kafka?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of hands-on experience do you have with MySQL/PostgreSQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of experience do you have in AWS?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: What is your official notice period - Mention in days?
+    Ans: 30 | Sel: 30 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: What is your earliest available joining date? Please mention the exact date in this format - DDMMYYYY.
+    Ans: 11112026 | Sel: 11112026 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: What is your current CTC (Fixed + Variable) in LPA (Lakhs Per Annum)?
+    Ans: 0 | Sel: 0 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: What is your expected CTC in LPA (Lakhs Per Annum)?
+    Ans: 30 | Sel: 30 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Have you built or supported high-volume systems processing millions of transactions?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Are you open to considering compensation based on market standards and your skills, experience, and interview performance? (Yes/No)
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[linkedin] (text) Q: How many years of work experience do you have with REST APIs?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[linkedin] (text) Q: How many years of Financial Services experience do you currently have?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[hirist] (textarea) Q: How many years of experience do you have in Node.Js?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Nestjs?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: fingerprint
+
+[hirist] (radio) Q: How many years of experience do you have?
+    Ans: 20 | Sel: 20 | Opts: 15, 20 | Src: llm_gemma
+
+[hirist] (radio) Q: What is your current salary?
+    Ans: 2 | Sel: 2 | Opts: 1, 2 | Src: llm_gemma
+
+[hirist] (radio) Q: Are you okay with Pune location?
+    Ans: 1 | Sel: 1 | Opts: 0, 1 | Src: llm_gemma
+
+[hirist] (radio) Q: How many years of experience do you have in Python?
+    Ans: 1 | Sel: 1 | Opts: 0, 1 | Src: llm_gemma
+
+[hirist] (pill) Q: What is your current notice period?
+    Ans: 1 month | Sel: 1 month | Opts: Immediately Available, 1 month, 2 months, 3 months, Serving (Last working day) | Src: fingerprint
+
+[naukri] (text) Q: How many years of experience do you have in Azure Cloud?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[linkedin] (text) Q: How many years of exp in Java Full Stack ?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Do you have Experience in Building Product from Scratch?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Do you Exp in React or angular ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[hirist] (textarea) Q: How many years of experience do you have with Streamlit?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of professional experience do you have as a Data Scientist?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have as a Data Scientist?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of experience do you have in Python,FastAPI,MongoDB,React.js,LangGraph,REST API Development,System Design,High-Level Design (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: How many years of IT experience do you currently have (in Years)?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: are you serving Notice Period or Immediate joiner ?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: naukri_chatbot_fuzzy
+
+[linkedin] (text) Q: How many years of experience do you have in Software Developer?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of experience do you have in Creo Customization?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Current Salary in INR Lacs per annum
+    Ans: 23 | Sel: 23 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Expected Salary in INR Lacs per annum
+    Ans: 30 | Sel: 30 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Have you completed the following level of education in BE / CSE or relevant?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (text) Q: How many years of work experience do you have with Java Springboot with AWS developer?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: Total Years of Experience?
+    Ans: 4 | Sel: 4 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many jobs you have switched?
+    Ans: 2 | Sel: 2 | Opts:  | Src: js_form_fill
+
+[linkedin] (text) Q: How many years of Engineering experience do you currently have?
+    Ans: 4 | Sel: 4 | Opts:  | Src: profile_prefilled
+
+[linkedin] (text) Q: What is your expected CTC (in LPA)
+    Ans: 30 | Sel: 30 | Opts:  | Src: js_form_fill
+
+[linkedin] (radio) Q: Have you designed a database schema that ran in production?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[linkedin] (radio) Q: Have you built role-based access control or row-level security in a production system?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: pattern_match
+
+[linkedin] (radio) Q: Are you comfortable doing written and live technical rounds without any AI tools?
+    Ans: Yes | Sel: Yes | Opts: Yes, No | Src: default_rule
+
+[instahyre] (text) Q: How many years of experience do you have using Node.js?
+    Ans: 2+ Years | Sel: 2+ Years | Opts:  | Src: llm_gemma
+
+[instahyre] (text) Q: Please mention your official notice period.
+    Ans: 15 days | Sel: 15 days | Opts:  | Src: llm_gemma
+
+[instahyre] (text) Q: What is your current CTC (fixed & variable)
+    Ans: 23 LPA (Fixed: 23 LPA, Variable: 0 LPA) | Sel: 23 LPA (Fixed: 23 LPA, Variable: 0 LPA) | Opts:  | Src: llm_gemma
+
+[naukri] (radio) Q: Once offer released
+    Ans: I can join in 10 Days | Sel: I can join in 10 Days | Opts: I can join in 10 Days, I can Join in 20 Days, I can Join in 30 Days, I can join in 45 Days, I can join 60 Days, I can join in 90 Days, I can Join Immediate, Skip this question | Src: naukri_chatbot_fuzzy
+
+[naukri] (radio) Q: Currently Holding Offers
+    Ans: No | Sel: No | Opts: Yes, No, Skip this question | Src: pattern_match
+
+[naukri] (text) Q: EXPECTED CTC
+    Ans: 3000000 | Sel: 3000000 | Opts:  | Src: naukri_chatbot_fuzzy
+
+[hirist] (textarea) Q: How many years of experience do you have in Workday Technical Consultant?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: How many years of experience do you have in Workday Integration Consultant?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (textarea) Q: What are the primary modules in workday functional
+    Ans: Yes | Sel: Yes | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: What is exact Last working day ?
+    Ans: 11 Nov 2026 | Sel: 11 Nov 2026 | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Preferred Location?
+    Ans: Remote | Sel: Remote | Opts: Remote, Gurugram | Src: naukri_chatbot_fuzzy
+
+[hirist] (number) Q: What is your expected annual CTC?
+    Ans: 30 | Sel: 30 | Opts:  | Src: fingerprint
+
+[hirist] (textarea) Q: What is your Current CTC, Expected CTC, Notice period?
+    Ans: Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable) | Sel: Current CTC: 23 LPA, Expected CTC: 30 LPA, Notice Period: 15 Days (Negotiable) | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: Years of experience in NODE.JS?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: Years of experience in React.js?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[hirist] (number) Q: Years of experience in Fullstack development including SQL?
+    Ans: 4 | Sel: 4 | Opts:  | Src: pattern_match
+
+[naukri] (text) Q: How many years of experience do you have in Flask?
+    Ans: 4.2 Years | Sel: 4.2 Years | Opts:  | Src: pattern_match
+
+[naukri] (radio) Q: Are you available for in-person (Face to Face) interview on 28th or 29th October, 2026?
+    Ans: Yes, available for in-person (Face to Face) interview on 28th October, 2026? | Sel: Yes, available for in-person (Face to Face) interview on 28th October, 2026? | Opts: Yes, available for in-person (Face to Face) interview on 28th October, 2026?, Yes, available for in-person (Face to Face) interview on 29th October, 2026?, No, not available for in-person (Face to Face) interview | Src: naukri_chatbot_fuzzy
+
+[hirist] (radio) Q: Are you currently living in Sonipat?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+
+[hirist] (radio) Q: Are you currently living in [Location]?
+    Ans: No | Sel: No | Opts: Yes, No | Src: pattern_match
+

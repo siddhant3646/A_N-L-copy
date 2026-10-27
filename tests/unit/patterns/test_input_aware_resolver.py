@@ -197,6 +197,59 @@ class TestInputAwareResolver:
         assert result.match_type == "numeric_range"
         assert result.matched_option.label == "4-6 years"
 
+    def test_resolve_numeric_range_string_4_years(self):
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="2-4", label="2-4 years"),
+            Option(value="4-6", label="4-6 years"),
+        ]
+        result = resolver.resolve("4 Years", InputType.RADIO, options)
+        assert result.matched_option is not None
+        assert result.matched_option.label == "4-6 years"
+
+    def test_resolve_numeric_range_string_4_int(self):
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="2-4", label="2-4 years"),
+            Option(value="4-6", label="4-6 years"),
+        ]
+        result = resolver.resolve("4", InputType.SELECT, options)
+        assert result.matched_option is not None
+        assert result.matched_option.label == "4-6 years"
+
+    def test_resolve_numeric_range_covering_4_7(self):
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="0-2", label="0-2 years"),
+            Option(value="2-4", label="2-4 years"),
+            Option(value="4-7", label="4-7 years"),
+            Option(value="7+", label="7+ years"),
+        ]
+        result = resolver.resolve("4.2", InputType.RADIO, options)
+        assert result.matched_option is not None
+        assert result.matched_option.label == "4-7 years"
+
+    def test_resolve_numeric_range_plus_over_less(self):
+        resolver = InputAwareResolver()
+        options = [
+            Option(value="lt4", label="< 4 years"),
+            Option(value="gte4", label="4+ years"),
+        ]
+        result = resolver.resolve("4.2 Years", InputType.RADIO, options)
+        assert result.matched_option is not None
+        assert result.matched_option.label == "4+ years"
+
+    def test_enhanced_answer_validator_closest_option_prefers_4_6(self):
+        from src.patterns.enhanced_answer_validator import EnhancedAnswerValidator
+        best = EnhancedAnswerValidator._closest_option("4 Years", ["2-4 years", "4-6 years"])
+        assert best == "4-6 years"
+
+        best_int = EnhancedAnswerValidator._closest_option("4", ["2-4 years", "4-6 years"])
+        assert best_int == "4-6 years"
+
+        best_float = EnhancedAnswerValidator._closest_option("4.2", ["2-4", "4-6"])
+        assert best_float == "4-6"
+
     def test_resolve_synonym_match(self):
         resolver = InputAwareResolver()
         options = [

@@ -14,14 +14,30 @@ from src.sentinel.agent import SentinelAgent
 class TestHiristFallbackSearch(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.agent = SentinelAgent()
+        # The fallback flow backs off 4/8/15/25 s between attempts; tests must
+        # exercise the same control flow without waiting in real time.
+        real_sleep = asyncio.sleep
+
+        async def _instant_sleep(delay, *args, **kwargs):
+            return await real_sleep(0)
+
+        patcher = patch("asyncio.sleep", new=_instant_sleep)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_default_fallback_urls_contains_required_urls(self):
-        """HIRIST_DEFAULT_FALLBACK_URLS contains the required 4 search URLs."""
+        """HIRIST_DEFAULT_FALLBACK_URLS contains the required search URLs."""
         expected_urls = [
             "https://www.hirist.tech/k/full-stack-jobs?ref=topnavigation",
             "https://www.hirist.tech/k/java-jobs?ref=popular_tag",
             "https://www.hirist.tech/k/spring-jobs?ref=topnavigation",
             "https://www.hirist.tech/k/reactjs-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/mern-stack-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/restful-api-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/aws-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/azure-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/artificial-intelligence-jobs?ref=topnavigation",
+            "https://www.hirist.tech/k/ai-interface-jobs?ref=topnavigation",
         ]
         self.assertTrue(hasattr(self.agent, "HIRIST_DEFAULT_FALLBACK_URLS"))
         for url in expected_urls:

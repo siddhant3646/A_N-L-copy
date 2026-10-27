@@ -129,7 +129,7 @@ class TestQACSVAuditFixesSept21(unittest.TestCase):
     def test_salary_breakup_and_monthly(self):
         """Verify fixed/variable salary breakup and monthly salary answers."""
         ans, conf = self.agent._fuzzy_match_question("Fixed vs variable salary breakup")
-        self.assertEqual(ans, "Fixed CTC: 21 LPA, Variable: 2 LPA")
+        self.assertEqual(ans, "Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)")
         self.assertGreaterEqual(conf, 0.95)
 
         ans_month, conf_month = self.agent._fuzzy_match_question("Current monthly salary")

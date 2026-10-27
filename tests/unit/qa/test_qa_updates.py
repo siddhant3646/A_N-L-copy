@@ -273,6 +273,35 @@ class TestQAUpdates(unittest.TestCase):
             self.assertTrue(re.search(regex_ai, q, re.I), f"Failed AI match for: {q}")
             self.assertTrue(re.search(regex_essay, q, re.I), f"Failed essay match for: {q}")
 
+    def test_ai_technologies_worked_with(self):
+        questions = [
+            "Which of the following AI technologies, tools, or concepts have you worked with? (Select all that apply)*",
+            "Which of the following AI technologies, tools, or concepts have you worked with?",
+            "Which of the following AI tools have you worked with",
+            "Which of the following AI concepts have you worked with",
+            "ai technologies, tools, or concepts have you worked with"
+        ]
+        for q in questions:
+            ans, score = self.agent._fuzzy_match_question(q)
+            print(f"Q: '{q}' -> A: '{ans}' (Score: {score})")
+            self.assertIsNotNone(ans)
+            self.assertIn("Open AI", ans)
+            self.assertIn("Claude", ans)
+            self.assertIn("Retrieval-Augmented Generation (RAG)", ans)
+            self.assertGreater(score, 0.8)
+
+    def test_linkedin_ai_tech_regex(self):
+        import re
+        regex = r'(which of the following )?ai (technologies|tools|concepts)'
+        sample_questions = [
+            "Which of the following AI technologies, tools, or concepts have you worked with? (Select all that apply)*",
+            "Which of the following AI tools have you worked with?",
+            "AI technologies, tools, or concepts have you worked with"
+        ]
+        for q in sample_questions:
+            self.assertTrue(re.search(regex, q, re.I), f"Failed AI tech match for: {q}")
+            self.assertTrue(re.search(r'worked with', q, re.I), f"Failed worked with match for: {q}")
+
 class TestNewPatternsReliability(unittest.TestCase):
     """Tests for the 2026-08-04 pattern additions.
 
@@ -490,6 +519,26 @@ class TestNewPatternsReliability(unittest.TestCase):
         self.assertIsNotNone(ans)
         self.assertTrue(any(term in ans.lower() for term in ["document intelligence", "gpt-4", "ai"]))
         self.assertGreaterEqual(score, 0.8)
+
+    def test_ai_technologies_tools_concepts_matcher(self):
+        q = "Which of the following AI technologies, tools, or concepts have you worked with? (Select all that apply)*"
+        ans, score = self.matcher.fuzzy_match(q)
+        self.assertIsNotNone(ans)
+        self.assertIn("open ai", ans.lower())
+        self.assertIn("claude", ans.lower())
+        self.assertIn("retrieval-augmented generation (rag)", ans.lower())
+        self.assertGreaterEqual(score, 0.8)
+
+        # Input type tests
+        ans_cb, _ = self.matcher.fuzzy_match(q, input_type="checkbox")
+        self.assertIn("open ai", ans_cb.lower())
+        self.assertIn("gemini", ans_cb.lower())
+
+        ans_rad, _ = self.matcher.fuzzy_match(q, input_type="radio")
+        self.assertEqual(ans_rad, "Open AI")
+
+        ans_sel, _ = self.matcher.fuzzy_match(q, input_type="select")
+        self.assertEqual(ans_sel, "Open AI")
 
 
 if __name__ == '__main__':

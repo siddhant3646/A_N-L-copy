@@ -52,6 +52,130 @@ ASYNC_JOB_KEYWORDS = [
     'redis queue', 'bull queue', 'agenda', 'node cron', 'scheduler', 'job processing',
 ]
 
+# Candidate's total professional experience, used for threshold/eligibility gates.
+CANDIDATE_TOTAL_YEARS = 4.2
+
+# Skill-specific years of experience. Policy (audit instruction): EVERY tech
+# experience question is answered with the candidate's total experience —
+# "4.2 Years" (default platforms) or "4" (LinkedIn/Indeed/Hirist) — so all
+# tech-stack values resolve to 4.2. Zero is reserved for non-tech roles,
+# business domains, and enterprise legacy systems outside the candidate's
+# software stack. Keys are lower-case; values are years.
+SKILL_EXPERIENCE_YEARS = {
+    # Core backend / Java
+    "java": 4.2, "java 8": 4.2, "java 11": 4.2, "java 17": 4.2,
+    "spring": 4.2, "spring boot": 4.2, "springboot": 4.2, "spring mvc": 4.2,
+    "spring security": 4.2, "hibernate": 4.2, "jpa": 4.2, "junit": 4.2,
+    "microservices": 4.2, "microservice": 4.2, "rest": 4.2,
+    "rest api": 4.2, "rest apis": 4.2, "restful": 4.2, "api": 4.2, "apis": 4.2,
+    "kafka": 4.2, "apache kafka": 4.2, "redis": 4.2, "rabbitmq": 4.2,
+    "postgresql": 4.2, "postgres": 4.2, "mysql": 4.2, "oracle sql": 4.2,
+    "sql server": 4.2, "ms sql server": 4.2, "sql": 4.2, "nosql": 4.2,
+    "mongodb": 4.2, "elasticsearch": 4.2, "database": 4.2, "databases": 4.2,
+    "relational database": 4.2, "relational databases": 4.2,
+    "data modeling": 4.2, "data model": 4.2,
+    "event driven": 4.2, "event-driven": 4.2,
+    # Frontend / full stack
+    "react": 4.2, "react.js": 4.2, "reactjs": 4.2, "react js": 4.2,
+    "angular": 4.2, "angularjs": 4.2, "vue": 4.2, "vue.js": 4.2, "rust": 4.2,
+    "javascript": 4.2, "typescript": 4.2, "html": 4.2, "html5": 4.2,
+    "css": 4.2, "css3": 4.2, "frontend": 4.2, "front end": 4.2,
+    "full stack": 4.2, "fullstack": 4.2, "full-stack": 4.2,
+    "node": 4.2, "node.js": 4.2, "nodejs": 4.2, "express": 4.2,
+    "jquery": 4.2, "bootstrap": 4.2, "redux": 4.2,
+    # Python / data engineering
+    "python": 4.2, "pandas": 4.2, "numpy": 4.2, "pyspark": 4.2,
+    "spark": 4.2, "apache spark": 4.2, "flink": 4.2, "apache flink": 4.2,
+    "airflow": 4.2, "apache airflow": 4.2, "dbt": 4.2, "etl": 4.2,
+    "data pipeline": 4.2, "data pipelines": 4.2, "data platform": 4.2,
+    "data platform architecture": 4.2, "data governance": 4.2,
+    # Cloud / DevOps
+    "aws": 4.2, "amazon web services": 4.2, "aws lambda": 4.2, "lambda": 4.2,
+    "azure": 4.2, "gcp": 4.2, "google cloud": 4.2, "public cloud": 4.2,
+    "cloud": 4.2, "docker": 4.2, "kubernetes": 4.2, "helm": 4.2,
+    "helm charts": 4.2, "terraform": 4.2, "jenkins": 4.2,
+    "ci/cd": 4.2, "cicd": 4.2, "git": 4.2, "github": 4.2,
+    # Testing
+    "playwright": 4.2, "selenium": 4.2, "testing": 4.2, "unit testing": 4.2,
+    "test automation": 4.2, "automation framework": 4.2,
+    # AI / ML
+    "machine learning": 4.2, "ml": 4.2, "artificial intelligence": 4.2,
+    "ai": 4.2, "ai/ml": 4.2, "genai": 4.2, "generative ai": 4.2,
+    "generative ai/ agentic ai": 4.2, "llm": 4.2, "llms": 4.2,
+    "large language model": 4.2, "large language models": 4.2,
+    "rag": 4.2, "retrieval augmented generation": 4.2,
+    "retrieval-augmented generation": 4.2, "langchain": 4.2,
+    "langgraph": 4.2, "llamaindex": 4.2, "ai agents": 4.2,
+    "agentic ai": 4.2, "agenctic ai": 4.2, "agentic workflows": 4.2,
+    "ai agent": 4.2, "prompt engineering": 4.2,
+    "vector database": 4.2, "vector databases": 4.2,
+    "ai tools": 4.2, "ai coding tools": 4.2, "copilot": 4.2,
+    "github copilot": 4.2, "claude": 4.2, "chatgpt": 4.2, "openai": 4.2,
+    "llm application": 4.2, "llm applications": 4.2,
+    "aws bedrock": 4.2, "bedrock": 4.2, "cloud ai": 4.2,
+    # Tech stack outside Everbridge work: still answered with the total
+    # experience (4.2 / 4 per platform) — no tech skill returns 0.
+    # C#/.NET stay out of the map on purpose: audited JSON patterns
+    # (R4 rule, test_excluded_questions_maintain_total_experience) already
+    # answer those with the total experience.
+    "go": 4.2, "golang": 4.2, "ruby": 4.2, "php": 4.2,
+    "django": 4.2, "flask": 4.2, "fastapi": 4.2, "next.js": 4.2,
+    "nextjs": 4.2, "graphql": 4.2, "salesforce": 4.2,
+    "jd edwards": 0.0, "jde": 0.0, "dft": 0.0, "physical design": 0.0,
+    "coveo": 4.2, "coveo search": 4.2, "claude agent sdk": 4.2,
+    "sdet": 0.0, "ssis": 4.2, "eventbridge": 4.2, "wms": 0.0,
+    "rgm": 0.0, "mmm": 0.0, "market mix modeling": 0.0,
+    "market mix modelling": 0.0, "cpg": 0.0, "fmcg": 0.0,
+    "price elasticity": 0.0, "promotion modeling": 0.0,
+    "promotion models": 0.0, "business development": 0.0,
+    "product management": 0.0, "product manager": 0.0,
+    "healthcare": 0.0, "health care": 0.0, "pharma": 0.0, "lifesciences": 0.0,
+    "life sciences": 0.0, "nlp": 4.2, "natural language processing": 4.2,
+    "data science": 4.2, "data scientist": 4.2, "deep learning": 4.2,
+    "pytorch": 4.2, "tensorflow": 4.2, "recommender systems": 4.2,
+    "xgboost": 4.2, "time series": 4.2, "time series analysis": 4.2,
+    "classical ml": 4.2, "model serving": 4.2, "mlops": 4.2,
+    "mlflow": 4.2, "kubeflow": 4.2, "databricks": 4.2, "sagemaker": 4.2,
+    "ipaas": 4.2, "fintech": 2.0, "payments systems": 2.0, "payments": 2.0,
+    "sap": 0.0, "oracle": 0.0, "mainframe": 0.0, "cobol": 0.0,
+    "workday": 0.0, "workday consultant": 0.0, "workday technical consultant": 0.0,
+    "workday integration consultant": 0.0,
+    # Generic experience labels
+    "software development": 4.2, "information technology": 4.2,
+    "industry": 4.2, "backend": 4.2, "back end": 4.2,
+    "production support": 2.0, "support": 2.0, "troubleshooting": 4.0,
+    "integration": 4.2, "system design": 4.2, "system designing": 4.2,
+    "architecture": 4.2, "architect": 4.2,
+    "distributed systems": 4.2, "saas": 4.2, "l2/l3": 2.0,
+}
+
+# These labels describe the context around a skill rather than the skill itself.
+# When a specific skill is present, ignore these so "Django + REST API" resolves
+# to Django (0 years), not REST API (4.2 years).
+GENERIC_SKILL_LABELS = {
+    "rest", "rest api", "rest apis", "api", "apis", "sql", "cloud",
+    "database", "databases", "backend", "back end", "frontend", "front end",
+    "full stack", "fullstack", "full-stack", "microservices", "microservice",
+    "software development", "information technology", "industry", "support",
+    "production support", "troubleshooting", "integration", "testing",
+    "unit testing", "system design", "architecture", "distributed systems",
+    "saas",
+}
+
+# Phrases that describe roles, business domains, or enterprise legacy systems
+# the candidate never worked with. They still resolve to zero years/No even
+# when a tech token appears inside them (e.g. "AI Product Manager"). Every
+# tech-stack skill answers with the total experience instead.
+ZERO_EXPERIENCE_OVERRIDES = (
+    "product manager", "product management", "business development",
+    "sdet",
+    "price elasticity", "promotion model", "cpg", "fmcg", "pharma",
+    "healthcare", "health care", "jd edwards", "jde", "dft", "physical design",
+    "sap", "oracle", "mainframe", "cobol", "wms", "rgm", "mmm",
+    "market mix", "medical coding", "workday", "workday consultant",
+    "workday technical consultant", "workday integration consultant",
+)
+
 
 class SentinelAgent:
     """
@@ -118,6 +242,7 @@ class SentinelAgent:
         self.naukri_rate_limit_until = None  # Timestamp when Naukri can resume
         self._instahyre_skills = None  # Instahyre skills selection for active task
         self._instahyre_skills_is_intersession = None
+        self._script_error_count: int = 0  # Track consecutive scripted fallback errors within a task
         self._current_job_url: str = ""  # Track active job URL / ID across platforms
         self._llm_client = None  # Lazy-loaded Gemma LLM client
         self.resume_file_path: str = os.getenv("RESUME_FILE_PATH", "/Users/siddhant/Desktop/Resume/SiddhantSinghResume2026.pdf")
@@ -217,41 +342,77 @@ class SentinelAgent:
         Get all patterns with input_type_defaults for JavaScript injection.
         
         Uses JSON config (config/qa_patterns.json) as single source of truth.
+        Excludes synthetic taxonomy combinatorics to prevent Chrome CDP payload limits,
+        while maintaining full coverage of core QA patterns.
         
         Returns:
-            Dictionary with 'answers' (flat key->default) and 
-            'with_defaults' (key->object with default and input_type_defaults)
+            Dictionary with 'answers' (flat key->default),
+            'with_defaults' (key->object with default and input_type_defaults),
+            and 'compact_groups' (optimized list of group dicts for fast unpack).
         """
         patterns_dict = {}
         patterns_with_defaults = {}
+        compact_groups = []
+        
+        # Load synthetic taxonomy pattern IDs to skip during JS injection
+        synth_pids = set()
+        try:
+            from scripts.taxonomy_data import TECHNOLOGIES, FEATURES
+            tech_slugs = set(t[0] for t in TECHNOLOGIES)
+            feat_slugs = set(f[0] for f in FEATURES)
+            for t in tech_slugs:
+                for feat in feat_slugs:
+                    synth_pids.add(f'exp_{t}_{feat}')
+                    synth_pids.add(f'skill_{t}_{feat}_hands_on')
+                    synth_pids.add(f'rate_{t}_{feat}_proficiency')
+                    synth_pids.add(f'arch_{t}_{feat}_enterprise')
+                    synth_pids.add(f'test_{t}_{feat}_validation')
+        except Exception:
+            pass
         
         # Load patterns from JSON config (single source of truth)
         try:
             json_patterns = self._pattern_matcher.patterns.get('patterns', {})
             for pattern_id, pattern_data in json_patterns.items():
+                if pattern_id in synth_pids:
+                    continue
                 answer = pattern_data.get('default', '')
                 if not answer:
                     continue
                 
                 input_type_defaults = pattern_data.get('input_type_defaults', {})
                 negative_patterns = pattern_data.get('negative_patterns', [])
+                category = pattern_data.get('category', '')
+                requires_exact = pattern_data.get('requires_exact_match', False)
+                pats = [p.lower() for p in pattern_data.get('patterns', [])]
                 
+                compact_groups.append({
+                    'd': answer,
+                    'c': category,
+                    'i': input_type_defaults,
+                    'n': negative_patterns,
+                    'e': requires_exact,
+                    'p': pats,
+                })
+                
+                def_obj = {
+                    'default': answer,
+                    'category': category,
+                    'input_type_defaults': input_type_defaults,
+                    'negative_patterns': negative_patterns,
+                    'requires_exact_match': requires_exact,
+                }
                 # Add each pattern string as a key
-                for pattern_str in pattern_data.get('patterns', []):
-                    patterns_dict[pattern_str.lower()] = answer
-                    patterns_with_defaults[pattern_str.lower()] = {
-                        'default': answer,
-                        'category': pattern_data.get('category', ''),
-                        'input_type_defaults': input_type_defaults,
-                        'negative_patterns': negative_patterns,
-                        'requires_exact_match': pattern_data.get('requires_exact_match', False)
-                    }
+                for pattern_str in pats:
+                    patterns_dict[pattern_str] = answer
+                    patterns_with_defaults[pattern_str] = def_obj
         except Exception as e:
             print(f"Warning: Could not load JSON patterns for JS: {e}")
         
         return {
             'answers': patterns_dict,
-            'with_defaults': patterns_with_defaults
+            'with_defaults': patterns_with_defaults,
+            'compact_groups': compact_groups,
         }
     
     async def _inject_patterns_once(self) -> None:
@@ -264,6 +425,13 @@ class SentinelAgent:
         if self._page is None:
             return
         
+        # Only inject patterns on platforms that use JS-based Q&A matching (LinkedIn, Naukri).
+        # Platforms like Instahyre, Hirist, and Indeed do not use window.__SENTINEL_PATTERNS__;
+        # injecting patterns on them wastes memory and risks crashing page/CDP contexts.
+        url = (self._page.url if hasattr(self._page, 'url') and self._page.url else '').lower()
+        if 'instahyre' in url or 'hirist' in url or 'indeed' in url or 'profile' in url or 'earjobs' in url:
+            return
+        
         try:
             is_defined = await self._page.evaluate("() => typeof window.__SENTINEL_PATTERNS__ !== 'undefined'")
             if is_defined:
@@ -272,23 +440,47 @@ class SentinelAgent:
             pass
         
         patterns_for_js = self._get_patterns_for_js()
-        patterns_json = json.dumps(patterns_for_js.get('answers', {}))
-        patterns_with_defaults_json = json.dumps(patterns_for_js.get('with_defaults', {}))
+        compact_groups = patterns_for_js.get('compact_groups', [])
+        payload_json = json.dumps(compact_groups)
         synonyms_json = json.dumps(SYNONYM_MAP)
         stopwords_json = json.dumps(list(STOP_WORDS))
-        exact_match_keys = [k for k, v in patterns_for_js.get('with_defaults', {}).items() if v.get('requires_exact_match')]
-        exact_match_keys_json = json.dumps(exact_match_keys)
         profile_json = json.dumps(self._profile_store.to_js_dict()) if self._profile_store else '{}'
+        skill_years_json = json.dumps(SKILL_EXPERIENCE_YEARS)
+        zero_skills_json = json.dumps(list(ZERO_EXPERIENCE_OVERRIDES))
+        generic_skills_json = json.dumps([self._normalize_skill_text(s) for s in GENERIC_SKILL_LABELS])
         is_intersession = self._is_intersession_task()
         
         init_script = (
             f"window.__SENTINEL_DEBUG__ = {'true' if os.getenv('SENTINEL_JS_DEBUG') else 'false'};\n"
-            f"window.__SENTINEL_PATTERNS__ = {patterns_json};\n"
-            f"window.__SENTINEL_PATTERNS_WITH_DEFAULTS__ = {patterns_with_defaults_json};\n"
+            f"(() => {{\n"
+            f"    const raw = {payload_json};\n"
+            f"    window.__SENTINEL_PATTERNS__ = {{}};\n"
+            f"    window.__SENTINEL_PATTERNS_WITH_DEFAULTS__ = {{}};\n"
+            f"    const exactKeys = [];\n"
+            f"    for (let i = 0; i < raw.length; i++) {{\n"
+            f"        const g = raw[i];\n"
+            f"        const defObj = {{\n"
+            f"            default: g.d,\n"
+            f"            category: g.c,\n"
+            f"            input_type_defaults: g.i,\n"
+            f"            negative_patterns: g.n,\n"
+            f"            requires_exact_match: g.e\n"
+            f"        }};\n"
+            f"        for (let j = 0; j < g.p.length; j++) {{\n"
+            f"            const pat = g.p[j];\n"
+            f"            window.__SENTINEL_PATTERNS__[pat] = g.d;\n"
+            f"            window.__SENTINEL_PATTERNS_WITH_DEFAULTS__[pat] = defObj;\n"
+            f"            if (g.e) exactKeys.push(pat);\n"
+            f"        }}\n"
+            f"    }}\n"
+            f"    window.__SENTINEL_EXACT_MATCH_KEYS__ = exactKeys;\n"
+            f"}})();\n"
             f"window.__SENTINEL_SYNONYMS__ = {synonyms_json};\n"
             f"window.__SENTINEL_STOPWORDS__ = {stopwords_json};\n"
-            f"window.__SENTINEL_EXACT_MATCH_KEYS__ = {exact_match_keys_json};\n"
             f"window.__SENTINEL_PROFILE__ = {profile_json};\n"
+            f"window.__SENTINEL_SKILL_YEARS__ = {skill_years_json};\n"
+            f"window.__SENTINEL_ZERO_SKILL_OVERRIDES__ = {zero_skills_json};\n"
+            f"window.__SENTINEL_GENERIC_SKILLS__ = {generic_skills_json};\n"
             f"window.__SENTINEL_IS_INTERSESSION__ = {'true' if is_intersession else 'false'};\n"
             "window.__SENTINEL_ISVISIBLE__ = function(el) {\n"
             "    if (!el) return false;\n"
@@ -304,8 +496,8 @@ class SentinelAgent:
         
         try:
             await self._page.evaluate(init_script)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"   ⚠️ Could not inject patterns into page: {e}")
     
     def reset_per_task_state(self):
         """Reset all per-task mutable state for agent reuse across tasks (P1a).
@@ -344,6 +536,7 @@ class SentinelAgent:
         self._last_instahyre_no_more_jobs = False
         self._instahyre_consecutive_scrolls = 0
         self._instahyre_wait_count = 0
+        self._script_error_count = 0
         self._error_detector = None
         if hasattr(self, '_session_manager') and self._session_manager:
             self._session_manager.reset()
@@ -536,12 +729,404 @@ class SentinelAgent:
                 return True
         return False
 
+    # ------------------------------------------------------------------
+    # Skill-aware experience resolution
+    # ------------------------------------------------------------------
+    # Normalize equivalent spellings before keyword matching so "C++",
+    # "C#", ".NET", "Node.js" and "AI/ML" all resolve consistently.
+    _SKILL_NORMALIZATIONS = (
+        (r'c\s*\+\+', 'cpp'),
+        (r'c\s*#', 'csharp'),
+        (r'\.\s*net\b', 'dotnet'),
+        (r'\bnode\s*\.?\s*js\b', 'nodejs'),
+        (r'\breact\s*\.?\s*js\b', 'reactjs'),
+        (r'\bnext\s*\.?\s*js\b', 'nextjs'),
+        (r'\bvue\s*\.?\s*js\b', 'vuejs'),
+        (r'\bai\s*/\s*ml\b', 'aiml'),
+        (r'\bml\s*/\s*ai\b', 'aiml'),
+        (r'\bci\s*/\s*cd\b', 'cicd'),
+    )
+
+    @classmethod
+    def _normalize_skill_text(cls, text: str) -> str:
+        """Lower-case and normalize punctuation in skill names."""
+        text = (text or '').lower()
+        for pattern, replacement in cls._SKILL_NORMALIZATIONS:
+            text = re.sub(pattern, replacement, text)
+        text = re.sub(r'[^a-z0-9]+', ' ', text)
+        return re.sub(r'\s+', ' ', text).strip()
+
+    @classmethod
+    def _find_skill_matches(
+        cls, question_lower: str, include_generic: bool = False
+    ) -> List[Tuple[str, float]]:
+        """Return (skill, years) pairs mentioned in a question.
+
+        Longer skill names win over shorter contained names ("Spring Boot"
+        beats "Spring"), and non-tech role/domain overrides ("SDET",
+        "product manager") are included as zero-year matches. Generic labels
+        ("REST API", "SQL") are dropped unless include_generic is set.
+        """
+        normalized = cls._normalize_skill_text(question_lower)
+        if not normalized:
+            return []
+
+        generic_normalized = {
+            cls._normalize_skill_text(label) for label in GENERIC_SKILL_LABELS
+        }
+        raw_matches = []
+        for override in ZERO_EXPERIENCE_OVERRIDES:
+            override_norm = cls._normalize_skill_text(override)
+            if not override_norm:
+                continue
+            override_match = re.search(
+                r'(?<![a-z0-9])' + re.escape(override_norm) + r'(?![a-z0-9])',
+                normalized,
+            )
+            if override_match:
+                raw_matches.append((
+                    override_match.start(), override_match.end(), override_norm, 0.0
+                ))
+        for skill, years in SKILL_EXPERIENCE_YEARS.items():
+            skill_norm = cls._normalize_skill_text(skill)
+            if not skill_norm:
+                continue
+            # "go" is also a common English verb ("can go to the office").
+            # Only treat it as the language when the context is technical.
+            if skill_norm == 'go' and not re.search(
+                r'\bgolang\b|\bgo\s+(?:language|programming|developer|engineer|backend|services?)\b'
+                r'|\b(?:in|with|using|know|write|wrote|worked)\s+go\b',
+                normalized,
+            ):
+                continue
+            match = re.search(
+                r'(?<![a-z0-9])' + re.escape(skill_norm) + r'(?![a-z0-9])',
+                normalized,
+            )
+            if match:
+                raw_matches.append((match.start(), match.end(), skill_norm, years))
+
+        if not raw_matches:
+            return []
+
+        # Drop matches fully contained inside a longer match.
+        raw_matches.sort(key=lambda item: (-(item[1] - item[0]), item[0]))
+        kept: List[Tuple[int, int, str, float]] = []
+        for item in raw_matches:
+            if any(item[0] >= longer[0] and item[1] <= longer[1] for longer in kept):
+                continue
+            kept.append(item)
+
+        kept.sort(key=lambda item: item[0])
+        specific = [item for item in kept if item[2] not in generic_normalized]
+        pool = kept if include_generic else (specific or kept)
+
+        results: List[Tuple[str, float]] = []
+        seen = set()
+        for _, _, skill, years in pool:
+            if skill in seen:
+                continue
+            seen.add(skill)
+            results.append((skill, years))
+        return results
+
+    @staticmethod
+    def _has_leadership_context(question_lower: str) -> bool:
+        """True for questions about leading/managing people or initiatives."""
+        return bool(re.search(
+            r'\b(?:lead|leads|leading|led|manage|manages|managing|managed|'
+            r'mentor|mentors|mentoring|mentored|ownership|owned)\b',
+            question_lower,
+        ))
+
+    @classmethod
+    def _specific_skill_matches(cls, question_lower: str) -> List[Tuple[str, float]]:
+        """Skill matches excluding generic context labels (REST API, SQL, cloud...)."""
+        generic = cls._normalize_skill_text
+        generic_labels = {generic(label) for label in GENERIC_SKILL_LABELS}
+        return [
+            match for match in cls._find_skill_matches(question_lower, include_generic=True)
+            if match[0] not in generic_labels
+        ]
+
+    @classmethod
+    def _resolve_skill_experience_years(cls, question_lower: str) -> Optional[Tuple[str, float]]:
+        """Pick the skill experience for a years question.
+
+        Policy (audit instruction): every tech-skill experience question is
+        answered with the candidate's total experience (4.2 years — the map
+        values already encode this), formatted per platform downstream. Only
+        role/domain overrides such as "product manager" or "medical coding"
+        force zero unless the question offers alternatives ("... or ...").
+        Generic-only matches ("frontend architecture") return None so the
+        generic total-experience patterns still apply.
+        """
+        matches = cls._find_skill_matches(question_lower, include_generic=True)
+        if not matches:
+            return None
+
+        generic = {cls._normalize_skill_text(label) for label in GENERIC_SKILL_LABELS}
+        specific = [m for m in matches if m[0] not in generic]
+        if not specific:
+            return None
+
+        has_alternative = bool(re.search(r'\bor\b', question_lower))
+        if not has_alternative and '/' in question_lower and not re.search(r'\band\b', question_lower):
+            # Slash-separated lists ("Java/ Go/ Rust") are alternatives.
+            has_alternative = True
+        if has_alternative:
+            return max(specific, key=lambda item: item[1])
+        return min(specific, key=lambda item: item[1])
+
+    @staticmethod
+    def _is_skill_years_question(question_lower: str) -> bool:
+        """True when the question asks how many years/months of a skill."""
+        q = question_lower
+
+        if any(word in q for word in (
+            'ctc', 'salary', 'compensation', 'lpa', 'notice period',
+            'last working day', 'last working date', 'date of birth',
+        )):
+            return False
+
+        if any(phrase in q for phrase in (
+            'services used', 'services you have used', 'technologies used',
+            'and services',
+        )):
+            return False
+
+        # List questions ("Which AWS services...", "What tools...") ask for
+        # names, not a number of years, even though they contain "experience".
+        if re.search(
+            r'\b(?:which|what)\b[^?]{0,80}\b(?:services|technologies|tools|skills|'
+            r'frameworks|databases|platforms|languages|products|systems)\b',
+            q,
+        ):
+            return False
+
+        quantity = bool(re.search(
+            r'\b(?:how\s+many|how\s+much|number\s+of|total|years?|yrs?|yoe|months?)\b',
+            q,
+        ))
+        experience_phrase = bool(re.search(
+            r'\b(?:exp|expr|experience)\b', q
+        ))
+        if not (quantity or experience_phrase):
+            return False
+
+        # Requirement statements such as "Experience developing and consuming
+        # RESTful APIs." are Yes/No gates, not years questions. Only prose
+        # questions that explicitly ask for an amount count here.
+        question_form = bool(re.search(
+            r'\b(?:what|which)\b[^?]{0,80}\bexperience\b'
+            r'|\b(?:indicate|mention|specify|share)\b[^?]{0,60}\bexperience\b',
+            q,
+        ))
+        if not (quantity or question_form):
+            return False
+
+        # Compound questions such as "What is your experience in CI/CD ...?
+        # Have you worked with ...?" expect a descriptive/Yes answer, not years.
+        if not quantity and '?' in q:
+            tail = q.split('?', 1)[1].strip()
+            if re.match(
+                r'^(?:and\s+)?(?:have|has|do|does|did|are|is|can|will|would)\b',
+                tail,
+            ):
+                return False
+
+        # Yes/No questions without an explicit quantity ask are not years questions.
+        is_yes_no_shape = bool(re.match(
+            r'^(do|does|have|has|are|is|can|will|would|did|should)\b', q.strip()
+        ))
+        if is_yes_no_shape and not re.search(
+            r'\b(?:how\s+many|how\s+much|number\s+of|years?|yrs?|yoe|months?)\b', q
+        ):
+            return False
+
+        # Descriptive/listing questions that merely mention experience.
+        if re.search(r'\b(?:describe|explain|briefly|elaborate|list)\b', q) and not re.search(
+            r'\b(?:how\s+many|years?|yrs?|yoe|months?)\b', q
+        ):
+            return False
+
+        return True
+
+    def _format_skill_years(self, years: float) -> str:
+        """Format a skill's years using the current platform's convention."""
+        years = round(float(years), 1)
+        platform = self._current_platform
+
+        if platform in ('linkedin', 'linkedin_form', 'indeed', 'hirist'):
+            return str(int(round(years)))
+        if years == 0:
+            return '0 Years'
+        if years == 1:
+            return '1 Year'
+        return f'{years:g} Years'
+
+    @staticmethod
+    def _skill_display_name(skill: str) -> str:
+        """Human-readable label for a normalized skill token."""
+        labels = {
+            'java': 'Java', 'spring': 'Spring', 'springboot': 'Spring Boot',
+            'reactjs': 'React.js', 'react': 'React', 'nodejs': 'Node.js',
+            'nextjs': 'Next.js', 'vuejs': 'Vue.js', 'javascript': 'JavaScript',
+            'typescript': 'TypeScript', 'python': 'Python', 'aws': 'AWS',
+            'azure': 'Azure', 'gcp': 'GCP', 'kafka': 'Kafka', 'sql': 'SQL',
+            'mongodb': 'MongoDB', 'postgresql': 'PostgreSQL', 'docker': 'Docker',
+            'kubernetes': 'Kubernetes', 'aiml': 'AI/ML', 'genai': 'GenAI',
+            'llm': 'LLM', 'rag': 'RAG', 'cicd': 'CI/CD', 'cpp': 'C++',
+            'csharp': 'C#', 'dotnet': '.NET', 'html': 'HTML', 'css': 'CSS',
+        }
+        return labels.get(skill, skill.title())
+
+    @staticmethod
+    def _extract_experience_requirements(question_lower: str) -> List[Tuple[str, float, float]]:
+        """Extract (kind, lower, upper) experience thresholds from a gate question."""
+        q = question_lower
+        requirements: List[Tuple[str, float, float]] = []
+
+        for match in re.finditer(
+            r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(\+)?\s*(?:years?|yrs?)\b',
+            q,
+        ):
+            # A trailing '+' ("3–4+ years") makes the upper bound open-ended.
+            upper = float('inf') if match.group(3) else float(match.group(2))
+            requirements.append(('range', float(match.group(1)), upper))
+
+        for pattern in (
+            r'(?:at\s+least|minimum(?:\s+of)?|min\.?|more\s+than|over|above|greater\s+than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)',
+            r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)',
+            r'(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s*(?:\+|plus|or\s+more|or\s+above|and\s+above)',
+        ):
+            for match in re.finditer(pattern, q):
+                requirements.append(('min', float(match.group(1)), float('inf')))
+
+        for match in re.finditer(
+            r'(?:less\s+than|fewer\s+than|under|below)\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)',
+            q,
+        ):
+            requirements.append(('max', 0.0, float(match.group(1))))
+
+        return requirements
+
+    def _answer_experience_threshold_gate(self, question_lower: str) -> Optional[str]:
+        """Answer Yes/No eligibility gates such as '5+ years?' or '4-9 years?'."""
+        q = question_lower
+        # Age-requirement questions ("Are you at least 18 years old?") are not
+        # experience gates; they are answered by the legal-age intercept.
+        if re.search(r'\b(?:years?|yrs?)\s+(?:old|of\s+age)\b|\blegal\s+age\b|\b18\+\s*(?:years?\s*)?(?:old|of\s+age)\b', q):
+            return None
+        requirements = self._extract_experience_requirements(q)
+        if not requirements:
+            return None
+
+        has_gate_context = bool(re.search(
+            r'\b(?:do\s+you|have\s+you|are\s+you|can\s+you|will\s+you|you\s+have|'
+            r'you\s+possess|we\s+are\s+looking|candidates?\s+with|looking\s+for|'
+            r'required|requirement|only|eligible|qualify)\b',
+            q,
+        )) or q.strip().endswith('?')
+
+        range_requirements = [item for item in requirements if item[0] == 'range']
+        if not has_gate_context and not (
+            range_requirements and 'experience' in q
+        ):
+            return None
+
+        candidate_years = CANDIDATE_TOTAL_YEARS
+        for kind, lower, upper in requirements:
+            if kind == 'range':
+                if not (lower <= candidate_years <= upper):
+                    return 'No'
+            elif kind == 'min':
+                if candidate_years < lower:
+                    return 'No'
+            else:
+                if candidate_years >= upper:
+                    return 'No'
+        return 'Yes'
+
+    @staticmethod
+    def _answer_ctc_threshold_gate(question_lower: str) -> Optional[str]:
+        """Answer 'Is your CTC up to X LPA?' style gates without dumping a CTC block."""
+        q = question_lower
+        if not re.search(r'\b(?:ctc|salary|compensation)\b', q):
+            return None
+
+        match = re.search(
+            r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|'
+            r'not\s+more\s+than|no\s+more\s+than)\s*'
+            r'(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?',
+            q,
+        )
+        if not match:
+            return None
+
+        threshold = float(match.group(1))
+        unit = (match.group(2) or '').lower()
+        if unit in ('inr',) or (not unit and threshold >= 100000):
+            threshold = threshold / 100000.0
+
+        expected_lpa = 30.0
+        return 'Yes' if expected_lpa <= threshold else 'No'
+
+    @classmethod
+    def _answer_zero_skill_yes_no(cls, question_lower: str) -> Optional[str]:
+        """Answer Yes/No skill questions from the skill map.
+
+        Audit policy: any concrete tech skill => "Yes". Only questions whose
+        specific matches carry zero experience (role/domain overrides such as
+        "product manager", "medical coding") receive "No".
+        """
+        q = question_lower
+        if re.search(r'\b(?:how\s+many|how\s+much|number\s+of|years?|yrs?|yoe|months?)\b', q):
+            return None
+        if not re.match(r'^(?:do|does|have|has|are|is|can|will|would|did)\b', q.strip()):
+            return None
+        if re.search(r'mentioned\s+skills|following\s+skills|skills\s+mentioned|as\s+per\s+(?:the\s+)?jd|below\s+skills|skills\s+below', q):
+            return None
+        if any(word in q for word in ('describe', 'explain', 'briefly', 'infrastructure')):
+            return None
+        # Certification/education questions mention technologies but ask about
+        # credentials, not hands-on skill experience.
+        if re.search(r'\b(?:certifications?|certified|degree|education|course|training)\b', q):
+            return None
+
+        matches = cls._find_skill_matches(q, include_generic=True)
+        if not matches:
+            return None
+
+        generic = {cls._normalize_skill_text(label) for label in GENERIC_SKILL_LABELS}
+        specific_matches = [item for item in matches if item[0] not in generic]
+        if not specific_matches:
+            return None
+
+        has_override = any(
+            cls._normalize_skill_text(item[0])
+            == cls._normalize_skill_text(override)
+            for item in specific_matches
+            for override in ZERO_EXPERIENCE_OVERRIDES
+        )
+        has_alternative = bool(re.search(r'\bor\b', q))
+        if not has_alternative and '/' in q and not re.search(r'\band\b', q):
+            has_alternative = True
+
+        if has_override and not has_alternative:
+            return 'No'
+        if has_alternative:
+            return 'Yes' if any(years > 0 for _, years in matches) else 'No'
+        return 'Yes' if all(years > 0 for _, years in specific_matches) else 'No'
+
     def _fuzzy_match_question(self, question: str) -> Tuple[Optional[str], float]:
         """Find closest known question pattern using improved keyword + fuzzy matching."""
         # Update platform detection before processing
         self._current_platform = self._detect_platform()
         
         question_lower = question.lower().strip()
+        if not question_lower:
+            return None, 0.0
         question_negated = self._detect_negation(question_lower)
         best_match = None
         best_score = 0.0
@@ -552,6 +1137,73 @@ class SentinelAgent:
         skip_patterns = ['skip this question', 'try again', 'restart conversation', 'no worries', 'change your input']
         if any(skip in question_lower for skip in skip_patterns):
             return '', 1.0  # Return empty string to trigger skip
+
+        # ==========================================
+        # PHASE 0.05: Skill-aware experience & eligibility gates
+        # Every tech-skill question answers the total experience (4.2 Years /
+        # 4); zero is reserved for role/domain overrides (product manager, ...).
+        # ==========================================
+        # 0-5 self-rating scales (Instahyre); the 1-10 fallback would answer 9.
+        if (
+            re.search(r'(?:scale|rating|rate\s+yourself|out\s+of)\s*(?:of\s*)?\(?\s*0\s*[-–—to]+\s*5', question_lower)
+            or '(0-5)' in question_lower
+            or '0 - 5' in question_lower
+            or '0 to 5' in question_lower
+        ):
+            ai_topics = any(w in question_lower for w in (
+                'ai agent', 'ai agents', 'agentic', 'llm', 'genai',
+                'generative ai', 'machine learning', 'ai/ml', 'evals',
+                'eval tool', 'langchain',
+            ))
+            return ('3' if ai_topics else '4'), 0.98
+
+        ctc_gate = self._answer_ctc_threshold_gate(question_lower)
+        if ctc_gate:
+            return ctc_gate, 0.98
+
+        experience_gate = self._answer_experience_threshold_gate(question_lower)
+        if experience_gate:
+            return experience_gate, 0.98
+
+        zero_skill_answer = self._answer_zero_skill_yes_no(question_lower)
+        # A bare "Yes" from the zero-skill gate destroys richer, audited JSON
+        # answers (e.g. "Yes, I have hands-on experience with Kafka event
+        # streaming..."). Defer to a strong descriptive pattern match when the
+        # pattern library already covers the question.
+        if zero_skill_answer == 'Yes':
+            try:
+                probe_ans, probe_score = self._pattern_matcher.fuzzy_match(question)
+            except Exception:
+                probe_ans, probe_score = None, 0.0
+            if (
+                probe_ans
+                and probe_score >= 0.90
+                and len(probe_ans) > 3
+                and probe_ans.strip().lower() not in ('yes', 'no')
+            ):
+                zero_skill_answer = None
+        # Leadership questions ("years leading backend systems") are answered by
+        # curated patterns unless a concrete (non-generic) skill is mentioned.
+        skill_context_ok = not (
+            self._has_leadership_context(question_lower)
+            and not self._specific_skill_matches(question_lower)
+        )
+        if zero_skill_answer and skill_context_ok:
+            return zero_skill_answer, 0.98
+
+        if skill_context_ok and self._is_skill_years_question(question_lower):
+            if 'each' in question_lower:
+                skill_matches = self._find_skill_matches(question_lower)
+                if skill_matches:
+                    parts = [
+                        f"{self._skill_display_name(label)}: {self._format_skill_years(years)}"
+                        for label, years in skill_matches
+                    ]
+                    return ', '.join(parts), 0.98
+            skill_match = self._resolve_skill_experience_years(question_lower)
+            if skill_match:
+                _, skill_years = skill_match
+                return self._format_skill_years(skill_years), 0.98
         
         # ==========================================
         # PHASE 0.1: Critical Compliance & Specific Intent Intercepts
@@ -565,6 +1217,43 @@ class SentinelAgent:
 
         # Bring Your Own Device (BYOD)
         if 'bring your own device' in question_lower or 'byod' in question_lower:
+            return 'Yes', 0.99
+
+        # Integration / migration with other products (including the "intigretion" typo)
+        if (
+            'intigretion' in question_lower
+            or 'integration or migration' in question_lower
+            or ('migration' in question_lower and 'other products' in question_lower)
+        ):
+            return 'Yes', 0.98
+
+        # Medical coding domain: no certifications or background in this field.
+        if 'medical coding' in question_lower and re.search(
+            r'certificat|certified|credential', question_lower
+        ):
+            return 'No', 0.98
+
+        # Virtual hiring/interview drive availability
+        if re.search(r'\b(virtual\s*drive|hiring\s*drive|recruitment\s*drive|attend.*drive)\b', question_lower):
+            return 'Yes', 0.99
+
+        # Work from office (Bengaluru / multi-city)
+        if re.search(r'\b(available\s*to\s*work\s*from\s*office|work\s*from\s*office\s*in.*(?:bengaluru|bangalore)|work\s*from\s*office)\b', question_lower):
+            return 'Yes', 0.99
+
+        # "Only apply if you can go to the office/interview in Bangalore"
+        if re.search(
+            r'(?:only\s+apply\s+if|apply\s+only\s+if).{0,60}(?:go|come|travel|commute|visit).{0,40}(?:office|workplace|interview)'
+            r'|(?:can|able\s+to)\s+(?:go|come|travel|commute).{0,40}(?:office|interview)',
+            question_lower,
+        ) and any(
+            city in question_lower
+            for city in ('bangalore', 'bengaluru', 'hybrid', 'office')
+        ):
+            return 'Yes', 0.98
+
+        # Developing and consuming RESTful APIs Yes/No
+        if re.search(r'(?:experience.*(?:developing|consuming)|developing.*consuming).*rest(?:ful)?\s*apis?', question_lower):
             return 'Yes', 0.99
 
         # 100% remote / Fully remote position comfort
@@ -590,13 +1279,203 @@ class SentinelAgent:
         if ('background check' in question_lower or 'background verification' in question_lower or 'background investigation' in question_lower or 'bgv' in question_lower) and any(w in question_lower for w in ['willing', 'consent', 'agree', 'undergo', 'subject to', 'comfortable', 'clear', 'accordance']):
             return 'Yes', 0.99
 
+        # Secondary education / acknowledgement / consent statements
+        if 'secondary education' in question_lower and any(w in question_lower for w in ['completed', 'equivalent', 'have you']):
+            return 'Yes', 0.99
+        if question_lower.strip() in ('i acknowledge', 'confirmed', 'i confirm', 'acknowledge') or (
+            question_lower.startswith(('i acknowledge', 'i understand', 'i confirm', 'i agree'))
+            and not any(w in question_lower for w in ['do not', 'not agree'])
+        ):
+            return 'Yes', 0.99
+        if ('gdpr' in question_lower or 'personal data' in question_lower) and any(
+            w in question_lower for w in ['notice', 'consent', 'process', 'application', 'acknowledge', 'agree']
+        ):
+            return 'Yes', 0.98
+        if any(kw in question_lower for kw in (
+            'outside business activity', 'outside business activities',
+            'advisory, consulting, or board roles', 'side business',
+        )):
+            return 'No', 0.99
+
+        # Legal authorization / right to work (domestic roles) and sponsorship
+        is_foreign_role = any(c in question_lower for c in (
+            'united states', 'u.s.', 'us based', 'in the us', 'roles posted in the us',
+            'for us based', 'usa', 'canada', 'united kingdom', 'australia', 'europe',
+            'h-1b', 'h1b',
+        ))
+        if any(kw in question_lower for kw in (
+            'authorized to work', 'legally permitted to work', 'legally authorized',
+            'eligible to work in', 'valid work permit', 'permit to work in',
+            'proof of eligibility', 'proof of eiligibility', 'legal right to work',
+            'right to work', 'verification of your identity',
+        )):
+            return ('Not Applicable' if is_foreign_role else 'Yes'), 0.99
+        if ('sponsorship' in question_lower or 'employment visa' in question_lower) and any(
+            w in question_lower for w in ('require', 'need', 'now or in the future', 'will you')
+        ) and not is_foreign_role:
+            return 'No', 0.99
+
+        # Country / state / city of residence
+        if any(kw in question_lower for kw in (
+            'country in which you currently reside', 'country do you currently reside',
+            'country you currently live', 'country are you currently based',
+            'country/region are you currently based',
+        )):
+            return 'India', 0.99
+        if re.search(r'\b(?:what|which)\s+state\b', question_lower) or 'state are you currently located' in question_lower:
+            return 'Karnataka', 0.99
+        if re.search(r'\b(?:what|which)\s+city\b', question_lower) and 'relocat' not in question_lower:
+            return 'Bengaluru, Karnataka', 0.98
+        if re.search(r'\b(?:your|is your)?\s*current location is\b', question_lower) or question_lower.startswith('is your current location'):
+            if 'bangalore' in question_lower or 'bengaluru' in question_lower:
+                return 'Yes', 0.98
+            return 'No', 0.98
+        if re.search(r'\b(?:are you|do you)\s+(?:currently\s+)?(?:located|living|residing|based|stay(?:ing)?)\s+in\b', question_lower):
+            if any(city in question_lower for city in ('bangalore', 'bengaluru')):
+                return 'Yes', 0.98
+            # Profile says 100% open to relocate: any living-in question that
+            # offers relocation answers Yes (e.g. "Are you currently living in
+            # or ready to relocate to Gurugram?")
+            if 'relocat' in question_lower:
+                return 'Yes', 0.98
+            # Dual-city "Mumbai or Pune" choice falls through to the location
+            # handler, which answers "No, I am currently based in Bangalore. However..."
+            if not ('mumbai' in question_lower and 'pune' in question_lower):
+                return 'No', 0.98
+        if 'hometown' in question_lower:
+            return 'Bengaluru, Karnataka', 0.98
+
+        # Percentage / CGPA fields for 10th and 12th
+        if re.search(r'\bpercentage\s*(?:in|of)?\s*(?:10|12|10th|12th|x|xii)\b', question_lower) or (
+            'percentage' in question_lower and any(w in question_lower for w in ('10%', '12%', '10th', '12th'))
+        ):
+            return '85', 0.98
+
+        # Postgraduate degree gate
+        if 'postgraduate' in question_lower or 'post graduate' in question_lower or 'master' in question_lower and 'degree' in question_lower:
+            return 'No', 0.98
+
+        # Monthly gross salary expectation (INR only; USD questions are handled
+        # by the USD-aware salary branch later, which knows the 5,000 USD rule).
+        if 'monthly' in question_lower and any(w in question_lower for w in ('gross', 'salary', 'ctc', 'compensation')) and not re.search(r'\b(?:usd|dollars?)\b', question_lower):
+            if any(w in question_lower for w in ('expected', 'expect', 'desired')):
+                return '250000', 0.98
+            return '191667', 0.98
+
+        # Current employment / shift / AI-tool adoption
+        if re.fullmatch(r'are\s+you\s+currently\s+(?:working|employed)\s*\??', question_lower.strip()):
+            return 'Yes', 0.98
+        if '3pm to 12am' in question_lower or '3 pm to 12 am' in question_lower or '3pm-12am' in question_lower:
+            return 'Yes', 0.98
+        if 'ai tools' in question_lower and 'day' in question_lower and ('years' in question_lower or 'how many' in question_lower):
+            return '2', 0.98
+
+        # ML flows / MLOps tooling
+        if 'ml flows' in question_lower or 'mlflow' in question_lower and 'which' in question_lower:
+            return 'Supervised learning (classification, regression), unsupervised learning (clustering, anomaly detection), deep learning (CNN/RNN/Transformers), NLP, recommendation systems, and LLM/RAG evaluation pipelines', 0.98
+        if ('mlops' in question_lower or 'llmops' in question_lower) and any(w in question_lower for w in ('do you have', 'have you', 'experience with')):
+            return 'No', 0.98
+
+        # Sia / last role / partnership / automation essay questions
+        if 'why would you like to join sia' in question_lower:
+            return (
+                'Sia is a global strategy consulting firm known for combining deep industry expertise with advanced analytics and AI. '
+                'With 4+ years building high-throughput Java/Spring Boot microservices and recent hands-on GenAI/LLM delivery, I am excited '
+                'to apply my engineering and AI background to solve complex client problems at scale and grow within a collaborative, '
+                'impact-driven team.'
+            ), 0.98
+        if 'last professionnal experience' in question_lower or 'last professional experience' in question_lower:
+            return (
+                'At Everbridge, I worked as a Software Engineer 2 on the critical event management platform. I designed and shipped '
+                'Java/Spring Boot microservices and Kafka-based event pipelines, improved throughput by ~40%, owned production '
+                'reliability (99.99% uptime), and mentored junior engineers through design reviews and code reviews.'
+            ), 0.98
+        if 'partnered directly with backend' in question_lower or ('partnered' in question_lower and 'engineering teams' in question_lower):
+            return (
+                'Yes. At Everbridge I partner directly with backend and AI engineering teams to define API contracts, schema '
+                'validation, retry/idempotency semantics, and enterprise workflow integrations. I have co-designed REST and '
+                'event-driven interfaces for high-volume services and translated product requirements into testable technical specs.'
+            ), 0.98
+        if 'automation framework from scratch' in question_lower or (
+            'automation framework' in question_lower and 'designed' in question_lower
+        ):
+            return (
+                'Yes. I built a modular Playwright + Python automation framework from scratch with page-object patterns, '
+                'fixture-based test data, retry/backoff handling, parallel execution, and CI reporting. It reduced flaky runs '
+                'and cut regression cycle time by over 60%.'
+            ), 0.98
+        if 'independently built rest apis in node' in question_lower or (
+            'rest apis' in question_lower and 'node.js' in question_lower and 'authentication' in question_lower
+        ):
+            return (
+                'Yes. I have built Node.js/Express REST services with JWT authentication, role-based authorization, '
+                'request validation middleware, structured logging, centralized error handling, rate limiting, and '
+                'OpenAPI documentation, backed by PostgreSQL/MongoDB and deployed on AWS.'
+            ), 0.98
+        if 'which databases have you worked with' in question_lower and ('postgresql' in question_lower or 'mongodb' in question_lower):
+            return (
+                'PostgreSQL, MongoDB, MySQL, Redis, and Elasticsearch. I have handled indexing and query optimization, '
+                'explain-plan tuning, connection pooling, read replicas, and caching for high-throughput services.'
+            ), 0.98
+        if 'experience with kafka, docker, ci/cd' in question_lower or (
+            'kafka' in question_lower and 'docker' in question_lower and 'ci/cd' in question_lower and 'describe' in question_lower
+        ):
+            return (
+                'I have 4+ years using Kafka for event-driven microservices (producers, consumers, partitions, consumer groups, '
+                'idempotency, and dead-letter topics), Docker for packaging and local/production parity, and Jenkins/GitHub Actions '
+                'CI/CD pipelines with automated tests, image scanning, and blue-green deployments on AWS.'
+            ), 0.98
+        if 'fast-paced startup' in question_lower or 'product engineering environment' in question_lower:
+            return (
+                'Yes. I have worked in fast-paced product engineering environments with short release cycles, direct ownership '
+                'of production services, on-call rotations, and close collaboration with product and design. I am comfortable '
+                'with ambiguity and rapid iteration while maintaining code quality and reliability.'
+            ), 0.98
+        if 'python development frameworks' in question_lower or (
+            'python' in question_lower and 'frameworks' in question_lower and 'worked' in question_lower
+        ):
+            return 'FastAPI, Flask, Django (basic), SQLAlchemy, Celery, Pytest, LangChain, and LlamaIndex', 0.98
+        if 'which technologies do you work with regularly' in question_lower:
+            return 'Java, Spring Boot, React, Node.js, Python, AWS, Kafka, PostgreSQL, MongoDB, Docker, Kubernetes', 0.98
+        if 'rag-based solutions' in question_lower or ('rag' in question_lower and 'production' in question_lower and any(
+            w in question_lower for w in ('designed', 'implemented', 'built')
+        )):
+            return (
+                'Yes. I built a production RAG pipeline with document ingestion, chunking, embeddings in a vector database, '
+                'hybrid retrieval and re-ranking, grounded prompt templates, citation enforcement, and automated evaluation '
+                'for answer relevance and hallucination reduction.'
+            ), 0.98
+
+        # Production AI/GenAI application count (must precede generic AI/ML handlers)
+        if any(w in question_lower for w in (
+            'production-grade ai', 'production grade ai', 'ai/genai applications',
+            'ai / genai applications', 'genai applications', 'ai applications',
+        )) and any(w in question_lower for w in ('how many', 'number of', 'deployed', 'developed')):
+            return '3', 0.98
+
+        # Referrer / relationship free-text fields
+        if ('if yes' in question_lower and any(w in question_lower for w in (
+            'identify name', 'describe relationship', 'please describe', 'name of person',
+        ))) or ('referrer' in question_lower and 'name' in question_lower):
+            return 'N/A', 0.98
+
         # Referral candidate check ("Are you a referral?")
         if any(kw in question_lower for kw in ['are you a referral', 'are you an internal referral', 'is this a referral', 'candidate referral']) and not any(w in question_lower for w in ['name', 'who referred', 'how you know', 'indicate how', 'list their name']):
             return 'No', 0.99
 
+        # Notice days remaining if serving
+        if any(kw in question_lower for kw in ['days remaining', 'number of days remaining', 'days left in notice', 'days left']):
+            return '15', 0.99
+
         # Official notice period (handling typo "peroid")
-        if 'official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower)):
+        if ('official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower))) and not any(kw in question_lower for kw in ['days remaining', 'number of days', 'immediate joiner please mention']):
             return 'Less than 30 days', 0.99
+
+        # Fixed vs Variable salary breakup & ESOPs
+        if any(kw in question_lower for kw in ['breakups of fixed', 'breakup of fixed', 'fixed, variable & esops', 'fixed variable esops']) or (
+            ('fixed' in question_lower and 'variable' in question_lower) and any(w in question_lower for w in ['breakup', 'breakdown', 'component', 'structure', 'esop', 'esops'])
+        ):
+            return 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)', 0.99
 
         # Desired / Expected salary range
         if ('desired' in question_lower or 'expected' in question_lower) and ('salary' in question_lower or 'compensation' in question_lower or 'ctc' in question_lower) and 'range' in question_lower:
@@ -636,9 +1515,9 @@ class SentinelAgent:
                 return 'I don’t have a disability', 0.98
             return 'No', 0.98
 
-        # Numeric LWD format e.g. 19102026 -> 23102026 and Option (6)
+        # Numeric LWD format e.g. 19102026 -> DDMMYYYY (notice + 15 days) and Option (6)
         if any(w in question_lower for w in ['19102026', 'enter as 19102026', 'ddmmyyyy']) and any(w in question_lower for w in ['lwd', 'last working', 'notice']):
-            return '23102026', 0.99
+            return (datetime.now() + timedelta(days=15)).strftime('%d%m%Y'), 0.99
         if any(w in question_lower for w in ['option (6)', 'option 6', 'select option (6)']):
             return '(6) --Serving Notice Period', 0.99
 
@@ -665,6 +1544,11 @@ class SentinelAgent:
         # Agentic AI and AI Agent solution implementation essay
         if ('agentic ai' in question_lower or 'ai agent' in question_lower) and any(kw in question_lower for kw in ['explain', 'use case', 'contribution', 'describe']):
             return 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.', 0.99
+
+        # AI technologies, tools, or concepts worked with (select all that apply)
+        if ('ai technologies' in question_lower or 'ai tools' in question_lower or 'ai concepts' in question_lower) and 'worked with' in question_lower:
+            return 'Open AI, OpenAI, Azure Open AI, Azure OpenAI, Claude, Anthropic Claude, Gemini, Google Gemini, Github Copilot, GitHub Copilot, Cursor, Retrieval-Augmented Generation (RAG), RAG, AI agents, Prompt Engineering, LangChain, ChatGPT, LLMs, Large Language Models, Generative AI, Vector Databases', 0.99
+
 
         # Most recent AI feature/system shipped to production
         if any(w in question_lower for w in ['ai feature', 'ai system', 'recent ai']) and any(w in question_lower for w in ['shipped to production', 'production', 'shipped', 'deployed']):
@@ -718,15 +1602,43 @@ class SentinelAgent:
 
         # Relevant full-time experience excluding internship
         if 'excluding internship' in question_lower or ('full-time experience' in question_lower and 'internship' in question_lower):
-            return '3-5 Years', 0.98
+            return '4.2 Years', 0.98
+
+        # Leading large-scale technical initiatives
+        if 'technical initiatives' in question_lower or ('leading' in question_lower and 'initiatives' in question_lower):
+            return '2-4 Years of technical initiatives', 0.98
 
         # Employee referral name or relationship
-        if ('employee' in question_lower or 'referral' in question_lower) and any(w in question_lower for w in ("name", "who referred", "how you know", "indicate how", "put n/a", "enter n/a", "type n/a", "write n/a", "put na", "enter na", "if not referred", "list their name")):
+        if ('employee' in question_lower or 'referral' in question_lower or 'referrer' in question_lower) and any(w in question_lower for w in ("name", "who referred", "how you know", "indicate how", "put n/a", "enter n/a", "type n/a", "write n/a", "put na", "enter na", "if not referred", "list their name")):
             return 'N/A', 0.98
 
         # Deloitte auditor association
         if 'deloitte' in question_lower or 'independent auditor' in question_lower:
-            return 'No, I have never been associated with Deloitte', 0.98
+            return 'No, I am not a current/an ex-employee of Deloitte (or its Subsidiary companies)', 0.98
+
+        # Booking Holdings newsletters / future job openings
+        if 'recruitment-related newsletters' in question_lower or 'recruitment newsletters' in question_lower or ('other job openings' in question_lower and 'booking' in question_lower):
+            return 'Yes', 0.98
+
+        # SMS / Text updates consent
+        if any(w in question_lower for w in ('text/sms updates', 'sms updates', 'text updates', 'provide you text/sms')):
+            return 'Yes', 0.98
+
+        # Gurgaon relocation & hybrid model (Agoda)
+        if ('relocate' in question_lower or 'relocation' in question_lower or 'working from' in question_lower or 'based in gurgaon' in question_lower) and ('gurgaon' in question_lower or 'gurugram' in question_lower):
+            return 'Yes', 0.98
+
+        # Agoda recruitment personal data consent
+        if ('personal data' in question_lower or 'use of personal data' in question_lower) and ('agoda' in question_lower or 'recruitment' in question_lower):
+            return 'Yes', 0.98
+
+        # Country currently based
+        if any(w in question_lower for w in ('country/region are you currently based', 'country are you currently based', 'which country/region')):
+            return 'India', 0.98
+
+        # LinkedIn profile link
+        if any(w in question_lower for w in ('linkedin link', 'linkedin profile', 'linkedin url', 'linkedin profile link', 'linkedin profile url')) or question_lower.strip() in ['linkedin', 'linkedin profile']:
+            return 'https://www.linkedin.com/in/siddhant-singh/', 0.98
 
         # Company affiliations / former employee (Agoda, Booking Holdings, Strategy, Nextiva, Simplify360)
         if any(c in question_lower for c in ('agoda', 'booking holdings', 'strategy', 'nextiva', 'simplify360')) and any(w in question_lower for w in ('personal relationship', 'employed by', 'former employee', 'subsidiaries', 'affiliated', 'associated')):
@@ -784,8 +1696,9 @@ class SentinelAgent:
             and not any(cond in question_lower for cond in ['if serving', 'if on notice', 'if you are', 'if currently', 'in case of', 'if applicable', 'if any'])
         )
         if is_composite_np_lwd:
-            from datetime import datetime, timedelta
             lwd_date = datetime.now() + timedelta(days=15)
+            if any(w in question_lower for w in ['negotiable', 'buyout', 'serving', 'reducible']):
+                return f"Yes, currently serving notice period. 15 Days, LWD: {lwd_date.strftime('%d %b %Y')} (negotiable)", 0.98
             return f"15 Days, LWD: {lwd_date.strftime('%d %b %Y')}", 0.98
 
         # Relocation with preferred cities and zones
@@ -805,12 +1718,42 @@ class SentinelAgent:
         if ('currently serving notice period' in question_lower or 'serving notice period? or already left' in question_lower or 'serving notice period or already left' in question_lower or 'serving notice period or immediate' in question_lower) and not any(w in question_lower for w in ['19102026', 'enter as', 'ddmmyyyy', 'option (6)', 'option 6']):
             return 'Yes- Currently serving notice', 0.98
 
+        # Yes/No question about currently serving notice (status, not duration).
+        # Numeric notice questions are handled later by the notice-period logic.
+        serving_notice_phrase = any(
+            kw in question_lower
+            for kw in (
+                'serving notice', 'servicing notice', 'serve notice',
+                'serving your notice', 'on notice', 'serving notice period',
+            )
+        )
+        serving_yes_no_shape = bool(re.match(
+            r'^(?:are|is|do|does|have|has|will|would|can|did|should)\b',
+            question_lower.strip(),
+        ))
+        if (
+            (serving_notice_phrase or (serving_yes_no_shape and 'serving np' in question_lower))
+            and not any(kw in question_lower for kw in (
+                'how many', 'how long', 'how soon', 'how quickly', 'days', 'day', 'weeks', 'week',
+                'months', 'month', 'lwd', 'last working', 'date', 'duration', 'remaining',
+                'notice period and', 'notice period &', 'official notice', 'notice period status',
+                'if serving', 'if on notice', 'buyout', 'negotiable', 'immediate', 'join',
+                'option (6)', 'option 6', 'ddmmyyyy', '19102026', 'enter as',
+            ))
+        ):
+            return 'Yes', 0.98
+
+        # Which LLMs and frameworks used in projects
+        if any(kw in question_lower for kw in ['which llms and frameworks', 'llms and frameworks have you used', 'which llms have you used', 'llms and frameworks']):
+            return 'GPT-4, Claude 3.5, Gemini 1.5, LangChain, LlamaIndex, Azure OpenAI', 0.98
+
         # AI Coding Assistants / Claude / Agentic Workflows
         is_ai_tools_qty = (
             any(w in question_lower for w in (
                 'how many', 'how much', 'what is your', 'total years', 'number of years',
                 'years of', 'years in', 'yoe', 'in years', 'in months', 'rate your',
-                'scale of', 'on a scale', 'out of 10', 'out of 5', 'rating'
+                'scale of', 'on a scale', 'out of 10', 'out of 5', 'rating',
+                'which llm', 'which llms', 'what llms', 'list the llms', 'llms and frameworks'
             )) or
             bool(re.search(r'\b\d+\s*[-–+to]?\s*\d*\s*years?\b', question_lower)) or
             bool(re.search(r'\b(yoe|exp|experience)\s*[:\-\(]?\s*(?:in\s+)?years?\b', question_lower)) or
@@ -843,6 +1786,10 @@ class SentinelAgent:
             return 'N/A', 0.98
         if any(kw in question_lower for kw in ['referred by an internal', 'referred by an employee', 'referred by a current employee', 'internal employee referral', 'were you referred by an internal', 'were you referred by', 'do you have a referral']):
             return 'No', 0.98
+
+        # Ex-employee / previous employment last date
+        if ('ex-employee' in question_lower or 'ex employee' in question_lower or 'previously worked' in question_lower or 'previously employed' in question_lower or 'former employee' in question_lower) and any(w in question_lower for w in ['last date', 'date of employment', 'end date']):
+            return 'N/A', 0.98
 
         # Ex-employee / Previously employed with check (Deterministic 'No' unless current employer)
         if any(kw in question_lower for kw in [
@@ -926,7 +1873,7 @@ class SentinelAgent:
             return 'No', 0.98
 
         # Compound CTC (Current & Expected in one field) - returns raw INR per requirement
-        if ('ctc: current & expected' in question_lower or 'current & expected ctc' in question_lower or 'current and expected ctc' in question_lower or 'current & expected compensation' in question_lower or 'current and expected compensation' in question_lower):
+        if ('ctc: current & expected' in question_lower or 'current & expected ctc' in question_lower or 'current and expected ctc' in question_lower or 'current & expected compensation' in question_lower or 'current and expected compensation' in question_lower or 'expecting ctc and ctc' in question_lower or 'expected ctc and ctc' in question_lower or 'expected and current ctc' in question_lower or 'expecting and current ctc' in question_lower):
             if 'lpa' in question_lower:
                 return '23 LPA / 30 LPA', 0.98
             return '2300000 / 3000000', 0.98
@@ -940,15 +1887,47 @@ class SentinelAgent:
             return 'Yes, all documents available', 0.98
 
         # Notice period negotiable / buyout
-        if ('notice period' in question_lower or 'notice' in question_lower) and any(kw in question_lower for kw in ['negotiable', 'negotiate', 'buyout', 'buy out', 'reduce', 'can you reduce', 'early joining']):
+        if ('notice period' in question_lower or 'notice' in question_lower) and any(kw in question_lower for kw in ['negotiable', 'negotiate', 'buyout', 'buy out', 'reduce', 'can you reduce', 'early joining']) and not any(kw in question_lower for kw in ['how many days', 'how many day', 'in how many', 'number of days']):
             return 'Yes', 0.98
+
+        # In how many days can you join / earliest joining with buyout/negotiation
+        if any(kw in question_lower for kw in ['in how many days can you join', 'how many days can you join']) and any(kw in question_lower for kw in ['buyout', 'negotiation', 'serving notice', 'leave adjustment']):
+            return '15 days (currently serving notice, earliest joining is possible via notice buyout or leave adjustment)', 0.99
+
+        # Notice period status
+        if ('status' in question_lower and 'notice' in question_lower) or 'notice period status' in question_lower:
+            return 'Serving notice period', 0.98
+
+        # Join from office
+        if any(kw in question_lower for kw in ['join from the office', 'join from office', 'join in office']):
+            return 'Yes', 0.98
+
+        # City and PIN code
+        if ('city' in question_lower) and any(kw in question_lower for kw in ['pin code', 'pincode', 'postal code', 'zip code']):
+            return 'Bangalore 560001', 0.98
+
+        # Backend programming language
+        if 'backend' in question_lower and any(kw in question_lower for kw in ['programming language', 'language do you use', 'which language']):
+            return 'Java', 0.98
+
+        # LLMs and frameworks used
+        if any(kw in question_lower for kw in ['which llms and frameworks', 'llms and frameworks have you used', 'which llms have you used']):
+            return 'GPT-4, Claude 3.5, Gemini 1.5, LangChain, LlamaIndex, Azure OpenAI', 0.98
+
+        # RAG pipeline experience
+        if any(kw in question_lower for kw in ['document ingestion', 'chunking, embeddings', 'vector databases, retrieval']):
+            return 'Designed and built end-to-end RAG pipelines using LangChain and LlamaIndex with document ingestion, chunking, embeddings, vector databases, retrieval, and response generation.', 0.98
+
+        # Skill expert brief
+        if 'which skill are you an expert in' in question_lower or ('brief' in question_lower and 'experience' in question_lower and not any(kw in question_lower for kw in ['how many', 'how much', 'years of experience'])):
+            return 'Java, Spring Boot, Microservices, React, and AWS cloud architectures. 4+ years building high-throughput event-driven distributed systems.', 0.98
 
         # Counter offers / Holding offer
         if any(kw in question_lower for kw in ['counter offer', 'holding any counter offer', 'any offer? (if yes', 'any offer ? (if yes', 'holding counter offer', 'competing offer', 'offer in hand', 'holding offer', 'existing offer', 'holding any offer']):
             return 'No', 0.98
 
         # Contract type preference
-        if any(kw in question_lower for kw in ['type of contract', 'contract type', 'employment type are you looking', 'type of employment are you seeking']):
+        if any(kw in question_lower for kw in ['type of contract', 'contract type', 'kind of job', 'job type', 'employment type are you looking', 'type of employment are you seeking']):
             return 'Full-time', 0.98
 
         # Country of residence text
@@ -1140,9 +2119,13 @@ class SentinelAgent:
         if 'leadership' in question_lower:
             return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
 
-        # Highest qualification
-        if 'highest qualification' in question_lower or 'highest education' in question_lower:
-            return 'B.Tech in Computer Science', 0.95
+        # Highest level of education (radio/select degree level)
+        if any(kw in question_lower for kw in ['highest level of education', 'level of education you have completed', 'level of education']):
+            return "Bachelor's Degree", 0.98
+
+        # Highest qualification / degree
+        if any(kw in question_lower for kw in ['highest qualification', 'highest education', 'highest academic degree', 'top degree', 'highest full-time qualification']):
+            return "B.Tech in Computer Science and Engineering", 0.98
 
         # Compound location and relocation
         if ('current location' in question_lower or 'currently based' in question_lower or 'mention your location' in question_lower or 'where do you stay' in question_lower) and ('relocat' in question_lower or 'open to relocat' in question_lower or 'willing to relocat' in question_lower or 'other cities' in question_lower):
@@ -1201,6 +2184,8 @@ class SentinelAgent:
                 if self._pattern_matcher:
                     answer = self._pattern_matcher._resolve_dynamic(answer)
                     answer, confidence = self._pattern_matcher._resolve_question_intent(question, answer, confidence)
+                if self._current_platform in ('linkedin', 'linkedin_form') and (answer in ('4.2 Years', '4.2', '4.2 years', '4 Years', '4 years') or bool(re.fullmatch(r'4(?:\.2)?\s*years?', str(answer).strip(), re.I))):
+                    answer = '4'
                 # Validate answer format
                 format_type = detect_expected_format(question)
                 if format_type:
@@ -1286,7 +2271,11 @@ class SentinelAgent:
         # Tech stacks / Python libraries questions - MUST CHECK BEFORE EXPERIENCE
         tech_stack_keywords = ['tech stack', 'tech-stack', 'technologies worked', 'worked upon', 'major tech']
         python_lib_keywords = ['python libraries', 'python library', 'python libs', 'python packages', 'which python']
-        is_tech_question = any(kw in question_lower for kw in tech_stack_keywords) and not is_conceptual_tech
+        is_tech_question = (
+            any(kw in question_lower for kw in tech_stack_keywords) and
+            not is_conceptual_tech and
+            not any(w in question_lower for w in ['describe', 'fixed a complex', 'bug', 'debugging', 'complex issue', 'time you fixed'])
+        )
         is_python_lib_question = any(kw in question_lower for kw in python_lib_keywords)
         
         # Database NAME questions (not experience) - CHECK BEFORE EXPERIENCE
@@ -1327,13 +2316,14 @@ class SentinelAgent:
             'strong proficiency', 'good grasp', 'do you have proficiency', 'etl concepts', 'good understanding of',
             'do you have experience', 'do u have experience', 'do you have hands-on experience', 'do u have hands-on experience',
             'do you have hands on experience', 'do u have hands on experience', 'any exp in', 'any experience in',
+            'have you worked with', 'have you worked on', 'have you worked in',
             'trading or capital market', 'capital markets', 'capital market'
         ]
-        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years', 'give brief', 'brief on', 'give a brief', 'describe', 'elaborate', 'explain', 'briefly'])
+        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years', 'give brief', 'brief on', 'give a brief', 'describe', 'elaborate', 'explain', 'briefly', 'which of the following', 'select all that apply', 'choose all that apply', 'which areas', 'which technologies', 'which tools', 'which platforms'])
         
         # E-commerce domain experience
         ecommerce_keywords = ['e-commerce', 'ecommerce', 'e commerce']
-        is_ecommerce_question = any(kw in question_lower for kw in ecommerce_keywords) and ('experience' in question_lower or 'worked' in question_lower)
+        is_ecommerce_question = any(kw in question_lower for kw in ecommerce_keywords) and ('experience' in question_lower or 'worked' in question_lower or 'built' in question_lower or 'scaled' in question_lower or 'managed' in question_lower or 'architect' in question_lower)
         
         # Composite HR question (CTC + ECTC + NP in one)
         is_composite_hr = ('ctc' in question_lower and ('np' in question_lower or 'notice' in question_lower or 'ectc' in question_lower))
@@ -1396,14 +2386,23 @@ class SentinelAgent:
             'claude', 'chatgpt', 'copilot', 'cursor', 'gemini', 'openai', 'anthropic', 'langchain',
             'llamaindex', 'ollama', 'huggingface', 'pytorch', 'tensorflow', 'springboot', 'spring',
             'hibernate', 'fastapi', 'django', 'flask', 'express', 'nextjs', 'vuejs', 'graphql',
-            'rest', 'microservices', 'postgresql', 'mysql', 'mongodb', 'elasticsearch'
+            'rest', 'microservices', 'postgresql', 'mysql', 'mongodb', 'elasticsearch',
+            'ci', 'cicd', 'ci/cd', 'pipeline', 'pipelines', 'transaction', 'transactions',
+            'rollback', 'database', 'databases', 'relational', 'distributed', 'api', 'apis',
+            'rag', 'llm', 'genai', 'ai', 'cloud', 'architecture', 'backend', 'frontend',
+            'fullstack', 'security', 'auth', 'oauth', 'jwt', 'monitoring', 'observability',
+            'metrics', 'tracing', 'orm', 'unit', 'integration', 'testing', 'mock', 'serverless', 'microservice'
         }
         
         is_dev_tool_question = any(kw in question_lower for kw in [
             'workflow', 'workflows', 'tool', 'tools', 'agent', 'agents', 'scaffolding',
             'code', 'framework', 'frameworks', 'library', 'libraries', 'stack', 'dev',
             'development', 'debugging', 'automation', 'test generation', 'compress',
-            'testing', 'review', 'architecture', 'design', 'prompt'
+            'testing', 'review', 'architecture', 'design', 'prompt',
+            'pipeline', 'pipelines', 'transaction', 'transactions', 'rollback', 'api', 'apis',
+            'database', 'databases', 'ci/cd', 'cicd', 'rag', 'llm', 'genai', 'ai',
+            'validation', 'error response', 'exception', 'microservice', 'microservices',
+            'cloud', 'backend', 'frontend', 'docker', 'kubernetes', 'kafka', 'redis', 'sql'
         ])
         
         # Pattern: Async/Celery/Background job questions - MUST be before company patterns
@@ -1434,7 +2433,7 @@ class SentinelAgent:
                     return 'No', 0.98
             
             # Pattern 3: "Have you worked with Visa" or similar specific company questions
-            specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+in\s+the\s+)?"
+            specific_company_pattern = r"have\s+you\s+(?:worked|been\s+employed)\s+(?:with|for|at)\s+(\w+)(?:\s+(?:before|previously|in\s+the\s+past))?\s*[?.]?$"
             specific_company_match = re.search(specific_company_pattern, question_lower)
             if specific_company_match:
                 company = specific_company_match.group(1).lower()
@@ -1515,7 +2514,6 @@ class SentinelAgent:
         
         # LWD (Last Working Day/Date) questions - calculate actual date 15 days from now
         if is_lwd_question:
-            from datetime import datetime, timedelta
             lwd_date = datetime.now() + timedelta(days=15)
             if 'already left' in question_lower or ('serving' in question_lower and 'left' in question_lower):
                 return f"Serving 15 days notice (LWD: {lwd_date.strftime('%d %b %Y')})", 0.98
@@ -1541,6 +2539,10 @@ class SentinelAgent:
             start_date = datetime.now() + timedelta(days=15)
             return start_date.strftime('%d/%m/%Y'), 0.99
         
+        # AI / GenAI deployed applications count
+        if any(w in question_lower for w in ['ai / genai applications', 'ai/genai applications', 'ai applications', 'genai applications']) and any(w in question_lower for w in ['how many', 'number of', 'deployed', 'developed']):
+            return '3', 0.98
+
         # Project count questions
         if is_project_count:
             return '5', 0.98
@@ -1566,7 +2568,7 @@ class SentinelAgent:
             return 'Yes, extensive experience in L3 production support, on-call rotations, and diagnosing heap/thread dumps.', 0.98
 
         # System Design / Large-Scale Backend Architecture Walkthrough
-        if ('architecture' in question_lower or 'walk us through' in question_lower or 'backend system you designed' in question_lower or 'system you designed' in question_lower) and ('scalability' in question_lower or 'trade-offs' in question_lower or 'tradeoffs' in question_lower or 'reliability' in question_lower or 'performance' in question_lower or 'large-scale' in question_lower):
+        if ('architecture' in question_lower or 'walk us through' in question_lower or 'backend system you designed' in question_lower or 'system you designed' in question_lower) and ('scalability' in question_lower or 'trade-offs' in question_lower or 'tradeoffs' in question_lower or 'reliability' in question_lower or 'performance' in question_lower or 'large-scale' in question_lower) and not is_asking_quantity:
             return 'Architected an event-driven microservices platform handling 10,000+ requests/sec using Spring Boot, Apache Kafka, and PostgreSQL with Redis caching. Key trade-offs included choosing eventual consistency via Saga/Outbox patterns over distributed 2PC to maximize write throughput and availability, using Redis cache-aside with TTL jitter to eliminate stampedes, and deploying across Kubernetes with HPA and multi-region read replicas for 99.99% uptime.', 0.98
 
         # Synchronous vs Asynchronous Communication (REST vs Event-Driven)
@@ -1716,9 +2718,13 @@ class SentinelAgent:
         if 'leadership' in question_lower:
             return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
 
-        # Highest qualification
-        if 'highest qualification' in question_lower or 'highest education' in question_lower:
-            return 'B.Tech in Computer Science', 0.95
+        # Highest level of education (radio/select degree level)
+        if any(kw in question_lower for kw in ['highest level of education', 'level of education you have completed', 'level of education']):
+            return "Bachelor's Degree", 0.98
+
+        # Highest qualification / degree
+        if any(kw in question_lower for kw in ['highest qualification', 'highest education', 'highest academic degree', 'top degree', 'highest full-time qualification']):
+            return "B.Tech in Computer Science and Engineering", 0.98
 
         # Relieving letter / NOC / Experience letter
         if 'noc' in question_lower or 'relieving letter' in question_lower or 'experience letter' in question_lower:
@@ -1755,16 +2761,20 @@ class SentinelAgent:
         
         # Check which category the question falls into
         is_salary_question = (
-            bool(re.search(r'\b(ctc|salary|compensation|package|lpa|inr|pay|cctc|ectc|remuneration)\b', question_lower)) and
+            bool(re.search(r'\b(ctc|salary|compensation|package|lpa|inr|pay|cctc|ectc|remuneration|financial|gross)\b', question_lower)) and
             not is_conceptual_tech and
             not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
         )
         is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question and not any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used'])
-        is_notice_question = any(kw in question_lower for kw in notice_keywords) and not any(kw in question_lower for kw in ['why', 'what excites', 'interested in joining', 'interested to join', 'tell us about yourself', 'motivation', 'supersourcing', 'wissen'])
-        is_location_question = any(kw in question_lower for kw in location_keywords)
+        is_notice_question = any(kw in question_lower for kw in notice_keywords) and not any(kw in question_lower for kw in ['why', 'what excites', 'interested in joining', 'interested to join', 'tell us about yourself', 'motivation', 'supersourcing', 'wissen', 'join from the office', 'join from office', 'join in office'])
+        is_location_question = any(re.search(r'\b' + re.escape(kw) + r'\b', question_lower) for kw in location_keywords) and not any(w in question_lower for w in ('elasticity', 'capacity', 'velocity', 'electricity', 'authenticity', 'simplicity'))
         
         # Priority patterns based on detected category
         if is_salary_question:
+            # Compound CTC + ECTC + Offers in hand
+            if ('ctc' in question_lower or 'cctc' in question_lower) and ('ectc' in question_lower or 'expected' in question_lower) and any(w in question_lower for w in ['offer', 'offers', 'holding']):
+                return 'Current CTC: 23 LPA (100% Fixed), Expected CTC: 30 LPA (100% Fixed), Offers in hand: None', 0.99
+
             # Combined Current and Expected CTC - MUST check before individual current or expected
             is_both_curr_and_exp = (
                 ('current' in question_lower or 'present' in question_lower or 'cctc' in question_lower) and
@@ -1780,8 +2790,8 @@ class SentinelAgent:
                 return ('2300000' if any(w in question_lower for w in ['inr', 'rupee', 'annual']) else '23 LPA'), 0.98
 
             # Fixed vs Variable salary breakup
-            if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower or 'fixed salary' in question_lower or 'current variable component' in question_lower:
-                return 'Fixed CTC: 21 LPA, Variable: 2 LPA', 0.98
+            if ('fixed' in question_lower and 'variable' in question_lower) or 'breakup of current compensation' in question_lower or 'fixed salary' in question_lower or 'current variable component' in question_lower or 'breakups of fixed' in question_lower or 'details of current ctc' in question_lower or ('breakup' in question_lower and 'ctc' in question_lower) or ('including fixed' in question_lower and 'variable' in question_lower):
+                return 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)', 0.98
             if any(w in question_lower for w in ['variable compensation', 'variable pay', 'unvested options', 'rsu value', 'stock rsu', 'bonus component', 'annual variable bonus', 'unvested stock']):
                 if any(w in question_lower for w in ['details', 'explain', 'describe', 'frequency', 'recieving', 'receiving', 'please provide']):
                     return 'No variable pay, 100% fixed salary (23 LPA Fixed)', 0.98
@@ -1789,7 +2799,7 @@ class SentinelAgent:
 
             # Check for USD / Dollar salary questions
             is_usd = bool(re.search(r'\b(usd|dollars?|\$)\b', question_lower))
-            is_expected = ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or 'ectc' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)))
+            is_expected = ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or 'ectc' in question_lower or 'ex-ctc' in question_lower or 'ex ctc' in question_lower or 'exctc' in question_lower or bool(re.search(r'\b(?:ex|exp|expected|ectc)(?:\.|\s+|-)?ctc\b', question_lower)))
             if is_usd:
                 if 'monthly' in question_lower or 'per month' in question_lower:
                     return ('5000' if is_expected else '3500'), 0.98
@@ -1806,8 +2816,8 @@ class SentinelAgent:
             # "CTC in LPA", "salary in LPA", "CTC in lakhs per annum", "CTC in Lacs" -> "23" or "30"
             if any(u in question_lower for u in ['lpa', 'lakh', 'lakhs', 'lac', 'lacs', 'per annum']):
                 if bool(re.search(r'\b(700000|mention as \d{6,}|example.*\d{6,})\b', question_lower)):
-                    return ('3000000' if ('expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower))) else '2300000'), 0.98
-                if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'ectc' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+                    return ('3000000' if is_expected else '2300000'), 0.98
+                if is_expected:
                     return '30', 0.98
                 return '23', 0.98
 
@@ -1816,13 +2826,13 @@ class SentinelAgent:
                 if any(w in question_lower for w in ['inr', 'rupee', 'annual']):
                     return '2300000', 0.98
                 return '23', 0.98
-            if 'ectc' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+            if is_expected:
                 if any(w in question_lower for w in ['inr', 'rupee', 'annual', 'fixed expected annual']):
                     return '3000000', 0.98
                 return '30', 0.98
             
             # Check for expected vs current - use plain numbers
-            if 'expected' in question_lower or 'expect' in question_lower or 'expectation' in question_lower or 'expectations' in question_lower or 'desired' in question_lower or bool(re.search(r'\bexp(?:\.|\s+)?ctc\b', question_lower)):
+            if is_expected:
                 if any(w in question_lower for w in ['inr', 'rupee', 'annual']):
                     return '3000000', 0.95
                 return '30', 0.95
@@ -1841,6 +2851,10 @@ class SentinelAgent:
             
         if 'chosen engineering field' in question_lower:
             return '4', 0.98
+
+        # Node.js specific experience
+        if any(w in question_lower for w in ['node.js', 'nodejs', 'node js', 'with node']) and ('experience' in question_lower or 'yoe' in question_lower or 'years' in question_lower):
+            return ('3.5' if self._current_platform in ('linkedin', 'indeed', 'hirist') else '3.5 Years'), 0.98
 
         if is_experience_question:
             if 'month' in question_lower:
@@ -1874,7 +2888,7 @@ class SentinelAgent:
 
         if is_notice_question or is_immediate_joiners_only:
             if any(w in question_lower for w in ['19102026', 'enter as 19102026', 'ddmmyyyy']):
-                return '23102026', 0.99
+                return (datetime.now() + timedelta(days=15)).strftime('%d%m%Y'), 0.99
             if any(w in question_lower for w in ['option (6)', 'option 6', 'select option (6)']):
                 return '(6) --Serving Notice Period', 0.99
 
@@ -1904,8 +2918,13 @@ class SentinelAgent:
                     return '15 days', 0.95
         
         if is_location_question:
+            # Interview/drive attendance first: e.g. "Are you available on
+            # 24th October for face-to-face interview in Indore location?"
+            # — must not fall through to the "current location" lookup.
+            if any(w in question_lower for w in ('available on', 'available for', 'can attend', 'face-to-face interview', 'f2f drive', 'f2f interview')):
+                return 'Yes', 0.98
             # Check willingness / interest first: e.g. "The Job Location is Hyderabad and work from Office. Are you interested?"
-            if any(w in question_lower for w in ('are you interested', 'interested in', 'interested?', 'willing to', 'open to', 'ready to', 'comfortable with', 'comfortable working', 'comfortable to')):
+            if any(w in question_lower for w in ('are you interested', 'interested in', 'interested?', 'willing to', 'open to', 'open for', 'ready to', 'comfortable with', 'comfortable working', 'comfortable to')):
                 return 'Yes', 0.98
 
             # Location verification/confirmation questions (e.g. "Your Current Location is Chennai?", "Is your current location Bangalore?", "Are you currently living in Gurgaon/Gurugram?")
@@ -1918,12 +2937,13 @@ class SentinelAgent:
                 question_lower.startswith('are you currently residing in') or
                 question_lower.startswith('do you currently live in') or
                 question_lower.startswith('are you currently based in') or
+                question_lower.startswith('are you in ') or
                 'currently living in' in question_lower or
                 'currently residing in' in question_lower or
                 'currently live in' in question_lower or
                 'currently based in' in question_lower or
                 (question_lower.endswith('?') and 'current location' in question_lower and any(c in question_lower for c in ['chennai', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'kolkata', 'bangalore', 'bengaluru']))
-            ) and not any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'ready to', 'comfortable with', 'preferred', 'and', ' or ', ' / '))
+            ) and not any(w in question_lower for w in ('fine with', 'relocat', 'open to', 'open for', 'ready to', 'comfortable with', 'preferred'))
             
             if is_loc_confirm:
                 if 'bangalore' in question_lower or 'bengaluru' in question_lower:
@@ -2479,6 +3499,163 @@ class SentinelAgent:
 
     # Public alias for logging QA results
     log_qa_result = _log_qa_result
+
+    # Page scripts append their answers here; Python drains it after each step.
+    QA_JS_LOG_GLOBAL = "__SENTINEL_QA_LOG__"
+
+    def _log_qa_entries(self, entries: Any, platform: str = "", url: str = "",
+                        default_source: str = "js_form_fill") -> int:
+        """
+        Write browser-side answer records to the QA results CSV.
+
+        LinkedIn's embedded script fills fields inside page.evaluate() and can
+        only report them as data, so every fill is mirrored into
+        ``window.__SENTINEL_QA_LOG__`` and drained here. The same helper accepts
+        the ``MARKER|[{...}]`` payloads the scripts return directly.
+
+        Repeats are dropped: the modal re-runs its fill passes on every step, so
+        the same control can be written several times per application.
+
+        Returns the number of rows written.
+        """
+        if not entries:
+            return 0
+        if isinstance(entries, dict):
+            entries = [entries]
+        elif not isinstance(entries, (list, tuple)):
+            return 0
+
+        job_key = getattr(self, '_current_job_url', '') or url or ""
+        if getattr(self, '_qa_log_job_key', None) != job_key:
+            self._qa_log_job_key = job_key
+            self._qa_logged_keys = set()
+
+        written = 0
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            question = str(entry.get('question') or entry.get('q') or '').strip()
+            if not question:
+                continue
+            answer = str(entry.get('answer') if entry.get('answer') is not None
+                         else (entry.get('a') or ''))
+            input_type = str(entry.get('inputType') or entry.get('input_type')
+                             or entry.get('t') or '')
+            selected = str(entry.get('selectedOption') or entry.get('selected_option')
+                           or entry.get('s') or answer)
+            options = entry.get('options') or []
+            status = str(entry.get('status') or
+                         ('submitted' if answer.strip() else 'unknown'))
+            source = str(entry.get('source') or default_source)
+            if entry.get('prefilled'):
+                source = "profile_prefilled"
+            elif entry.get('retriggered'):
+                source = "resync_retype"
+            dedupe_key = (question[:160].lower(), answer.strip()[:160].lower(),
+                          input_type, status)
+            if dedupe_key in self._qa_logged_keys:
+                continue
+            self._qa_logged_keys.add(dedupe_key)
+            self._log_qa_result(
+                question=question,
+                answer=answer,
+                input_type=input_type,
+                options=[str(o) for o in options] if isinstance(options, (list, tuple)) else [],
+                selected_option=selected,
+                confidence=entry.get('confidence', ''),
+                status=status,
+                error_message=str(entry.get('error') or ''),
+                url=url or (self._page.url if self._page else ""),
+                platform=platform,
+                source=source,
+                job_id_or_url=job_key,
+            )
+            written += 1
+        return written
+
+    def _log_qa_payload(self, result: str, platform: str = "", url: str = "") -> int:
+        """Parse a ``MARKER|JSON`` script result and log its answer records."""
+        if not isinstance(result, str) or '|' not in result:
+            return 0
+        _, _, body = result.partition('|')
+        body = body.strip()
+        if not body.startswith('[') and not body.startswith('{'):
+            return 0
+        try:
+            payload = json.loads(body)
+        except Exception:
+            return 0
+        return self._log_qa_entries(payload, platform=platform, url=url)
+
+    def _naukri_answer_source(self, question: str, answer: str) -> str:
+        """Label whether the corpus or the chatbot script produced an answer."""
+        matcher = getattr(self, '_pattern_matcher', None)
+        if matcher and question and answer:
+            try:
+                expected, _ = matcher.fuzzy_match(question)
+                if expected and str(expected).strip().lower() == str(answer).strip().lower():
+                    return "pattern_match"
+            except Exception:
+                pass
+        return "naukri_chatbot_fuzzy"
+
+    def _log_naukri_chatbot_result(self, result: str, qa_data: Any) -> None:
+        """Record one Naukri chatbot step: answered, skipped, or rejected.
+
+        The chatbot script reports every control it touched as a
+        ``MARKER|{"q":..,"a":..,"t":..,"s":..}`` payload; the colon markers
+        carry no answer, so they still need a row to keep the CSV complete.
+        """
+        url = self._page.url if self._page else ""
+        job_ref = getattr(self, '_current_job_url', '') or url
+        if isinstance(qa_data, dict) and qa_data.get('q'):
+            wrote = self._log_qa_entries(
+                [qa_data],
+                platform='naukri',
+                url=url,
+                default_source=self._naukri_answer_source(qa_data.get('q', ''), qa_data.get('a', '')),
+            )
+            if wrote and str(qa_data.get('a') or '').strip():
+                self.metrics['questions_answered'] += 1
+        elif isinstance(result, str) and result.startswith('CHATBOT_SKIPPED_QUESTION:'):
+            self._log_qa_result(
+                question=result.split(':', 1)[1].strip(),
+                answer="",
+                status="skipped",
+                error_message="Skipped by chatbot script",
+                url=url,
+                platform="naukri",
+                source="chatbot_skip",
+                job_id_or_url=job_ref,
+            )
+        elif isinstance(result, str) and result.startswith('CHATBOT_SUBMISSION_ERROR:'):
+            self._log_qa_result(
+                question="",
+                answer="",
+                status="validation_error",
+                error_message=result.split(':', 1)[1].strip(),
+                url=url,
+                platform="naukri",
+                source="chatbot_validation",
+                job_id_or_url=job_ref,
+            )
+
+    async def _drain_js_qa_log(self, platform: str = "", url: str = "") -> int:
+        """Fetch and clear the answer records the page scripts queued for CSV."""
+        if not self._page:
+            return 0
+        try:
+            entries = await self._page.evaluate(
+                """(globalName) => {
+                    const log = window[globalName] || [];
+                    window[globalName] = [];
+                    return log;
+                }""",
+                self.QA_JS_LOG_GLOBAL,
+            )
+        except Exception:
+            return 0
+        return self._log_qa_entries(entries, platform=platform, url=url)
 
     def _log_question_detailed(self, question_data: Dict[str, Any]):
         """
@@ -3242,6 +4419,9 @@ class SentinelAgent:
         print(f"\n🚀 Sentinel Starting Task (Script Mode): {task_description}")
         print(f"   📊 Max Steps: {max_steps}")
         
+        # Reset script error counter for each task run
+        self._script_error_count = 0
+        
         # Initialize metrics for this task
         self.metrics = {
             'task_name': task_description[:50] if task_description else 'Unknown',
@@ -3360,6 +4540,29 @@ class SentinelAgent:
                     await self._handle_hirist_apply_task()
                     self.state.task_complete = True
                     break
+
+                # Naukri Profile Update - Resume Headline Toggle
+                if ('profile' in current_url and 'naukri.com' in current_url and 
+                    'employment' not in task_desc_lower and 
+                    ('headline' in task_desc_lower or 'profile update' in task_desc_lower or 'resume headline' in task_desc_lower)):
+                    print("📝 Dedicated Naukri Profile Update Task Detected...")
+                    await self._handle_naukri_profile_update_task()
+                    self.state.task_complete = True
+                    break
+
+                # Naukri Employment LWD Update - Set Expected Last Working Day
+                if 'profile' in current_url and 'naukri.com' in current_url and 'employment' in task_desc_lower:
+                    print("📅 Dedicated Naukri Employment LWD Task Detected...")
+                    await self._handle_naukri_employment_lwd_task()
+                    self.state.task_complete = True
+                    break
+
+                # Naukri Early Access Jobs - Share Interest
+                if ('recommended-earjobs' in current_url or 'earjobs' in current_url or 'early access' in task_desc_lower) and 'naukri.com' in current_url:
+                    print("🚀 Dedicated Naukri Early Access Task Detected...")
+                    await self._handle_naukri_early_access_task()
+                    self.state.task_complete = True
+                    break
                 
                 # Snapshot form state before filling
                 try:
@@ -3387,7 +4590,7 @@ class SentinelAgent:
                 if result and '|' in result:
                     parts = result.split('|', 1)
                     action = parts[0]
-                    if len(parts) > 1:
+                    if len(parts) > 1 and parts[1].strip().startswith(('[', '{')):
                         try:
                             question_data_json = parts[1]
                             question_data = json.loads(question_data_json)
@@ -3853,14 +5056,34 @@ class SentinelAgent:
                         await asyncio.sleep(random.uniform(4, 6))  # Wait for job details to load
                     continue
                 
+                # LinkedIn: Catch skipped job indicators across ALL results before any continue
+                if 'Skipping stuck job — ' in result:
+                    skipped_t = result.split('Skipping stuck job — ')[-1].strip()
+                    if skipped_t:
+                        self._linkedin_skipped_job_titles.add(skipped_t)
+                        self._linkedin_skipped_job_titles.add(skipped_t.lower())
+                        print(f"   🚫 Added stuck job to persistent skip list: {skipped_t}")
+                
+                if 'LINKEDIN_JOB_SKIPPED' in result and 'No Easy Apply — ' in result:
+                    skipped_t = result.split('No Easy Apply — ')[-1].strip()
+                    if skipped_t and not any(k in skipped_t for k in ['button not found', 'job closed', 'closed job', 'unknown job', 'URL signal']):
+                        self._linkedin_skipped_job_titles.add(skipped_t)
+                        self._linkedin_skipped_job_titles.add(skipped_t.lower())
+                        print(f"   🚫 Added non-Easy Apply job to persistent skip list: {skipped_t}")
+
+                # Reset JOB_SELECTED streak counter on any non-selection result
+                if 'LINKEDIN_JOB_SELECTED' not in result:
+                    if hasattr(self, '_job_selected_streak'):
+                        self._job_selected_streak = 0
+
                 # LinkedIn: Scrolled for more jobs
                 if 'LINKEDIN_SCROLLED' in result:
                     print(f"📜 {result}")
                     
-                    # Track consecutive 'No jobs found' scrolls for pagination
-                    if 'No jobs found' in result:
+                    # Track consecutive 'No jobs found' / 'All candidates skipped' scrolls for pagination
+                    if 'No jobs found' in result or 'All candidates skipped' in result:
                         self._linkedin_no_jobs_scroll_count += 1
-                        print(f"   📊 No jobs scroll count: {self._linkedin_no_jobs_scroll_count}/3")
+                        print(f"   📊 No jobs / skipped scroll count: {self._linkedin_no_jobs_scroll_count}/3")
                         
                         # If JS already clicked next page, reset counter
                         if 'NEXT_PAGE_CLICKED' in result:
@@ -3869,43 +5092,75 @@ class SentinelAgent:
                             await asyncio.sleep(random.uniform(5, 8))  # Wait for new page to load
                             continue
                         
-                        # Safety net: After 3 consecutive no-jobs scrolls, try clicking next page via Playwright
+                        # Safety net: After 3 consecutive no-jobs / skipped scrolls, try clicking next page via Playwright
                         if self._linkedin_no_jobs_scroll_count >= 3:
-                            print("📄 3 consecutive no-jobs scrolls — attempting pagination via Playwright...")
+                            print("📄 3 consecutive no-jobs / skipped scrolls — attempting pagination via Playwright...")
                             try:
-                                # Try clicking the "Next" button or next page number
                                 next_page_clicked = False
                                 
-                                # Strategy 1: Click the visible "Next" pagination button
-                                next_btn = self._page.locator('button[data-testid="pagination-controls-next-button-visible"]')
-                                if await next_btn.count() > 0:
-                                    await next_btn.first.click()
-                                    next_page_clicked = True
-                                    print("   ✅ Clicked 'Next' pagination button (data-testid)")
+                                # Strategy 1: Visible "Next" button by data-testid or aria-label
+                                for sel in [
+                                    'button[data-testid="pagination-controls-next-button-visible"]',
+                                    'button[data-testid*="pagination-next"]',
+                                    'button[aria-label="Next"]',
+                                    'button[aria-label*="next page" i]',
+                                    'button[aria-label*="View next" i]'
+                                ]:
+                                    btn = self._page.locator(sel).first
+                                    if await btn.count() > 0 and await btn.is_visible() and not (await btn.is_disabled()):
+                                        await btn.scroll_into_view_if_needed(timeout=2000)
+                                        await btn.click(timeout=3000, force=True)
+                                        next_page_clicked = True
+                                        print(f"   ✅ Clicked Next pagination button via selector: {sel}")
+                                        break
                                 
-                                # Strategy 2: Find the next page number button (aria-current="false" after aria-current="true")
+                                # Strategy 2: Next page number button (e.g. Page 2, Page 3...)
                                 if not next_page_clicked:
-                                    current_page = self._page.locator('button[aria-current="true"][aria-label^="Page"]')
+                                    current_page = self._page.locator('button[aria-current="true"], [data-testid^="pagination-indicator-"][aria-current="true"], [aria-current="page"]').first
+                                    current_num = 1
                                     if await current_page.count() > 0:
-                                        current_label = await current_page.first.get_attribute('aria-label')
-                                        if current_label:
-                                            page_match = re.search(r'Page (\d+)', current_label)
-                                            if page_match:
-                                                current_num = int(page_match.group(1))
-                                                next_num = current_num + 1
-                                                next_page_btn = self._page.locator(f'button[aria-label="Page {next_num}"]')
-                                                if await next_page_btn.count() > 0:
-                                                    await next_page_btn.first.click()
-                                                    next_page_clicked = True
-                                                    print(f"   ✅ Clicked page {next_num} pagination button")
+                                        current_label = await current_page.get_attribute('aria-label') or ''
+                                        page_match = re.search(r'Page\s*(\d+)', current_label, re.IGNORECASE)
+                                        if page_match:
+                                            current_num = int(page_match.group(1))
+                                        else:
+                                            test_id = await current_page.get_attribute('data-testid') or ''
+                                            test_match = re.search(r'pagination-indicator-(\d+)', test_id)
+                                            if test_match:
+                                                current_num = int(test_match.group(1)) + 1
+                                            else:
+                                                txt = (await current_page.inner_text()).strip()
+                                                if txt.isdigit():
+                                                    current_num = int(txt)
+                                    
+                                    next_num = current_num + 1
+                                    for sel in [
+                                        f'button[data-testid="pagination-indicator-{next_num - 1}"]',
+                                        f'button[aria-label="Page {next_num}"]',
+                                        f'button[aria-label*="Page {next_num}" i]',
+                                        f'li[data-test-pagination-page-btn="{next_num}"] button',
+                                        f'button:has(span:text-is("{next_num}"))',
+                                        f'button:text-is("{next_num}")',
+                                        f'button:has-text("{next_num}")',
+                                        f'[data-testid*="pagination"] button:has-text("{next_num}")',
+                                        f'span:text-is("{next_num}")',
+                                    ]:
+                                        next_page_btn = self._page.locator(sel).first
+                                        if await next_page_btn.count() > 0 and await next_page_btn.is_visible():
+                                            await next_page_btn.scroll_into_view_if_needed(timeout=2000)
+                                            await next_page_btn.click(timeout=3000, force=True)
+                                            next_page_clicked = True
+                                            print(f"   ✅ Clicked page {next_num} pagination button ({sel})")
+                                            break
                                 
                                 # Strategy 3: Generic "Next" button text match
                                 if not next_page_clicked:
-                                    next_text_btn = self._page.locator('button:has-text("Next")').filter(has=self._page.locator('svg[id*="chevron-right"]'))
-                                    if await next_text_btn.count() > 0:
-                                        await next_text_btn.first.click()
+                                    next_text_btn = self._page.locator('button:has-text("Next")').first
+                                    if await next_text_btn.count() > 0 and await next_text_btn.is_visible():
+                                        await next_text_btn.scroll_into_view_if_needed(timeout=2000)
+                                        await next_text_btn.click(timeout=3000, force=True)
                                         next_page_clicked = True
-                                        print("   ✅ Clicked 'Next' button (text + chevron match)")
+                                        print("   ✅ Clicked 'Next' button (text match)")
                                 
                                 if next_page_clicked:
                                     self._linkedin_no_jobs_scroll_count = 0
@@ -3955,6 +5210,7 @@ class SentinelAgent:
                         print(f"⚠️ JOB_SELECTED loop detected ({self._job_selected_streak}x consecutive). Force-navigating to escape...")
                         self._job_selected_streak = 0
                         try:
+                            await self._select_next_job_card()
                             current_url = self._page.url
                             # Navigate to the search page (strip currentJobId to reset selection)
                             from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
@@ -3971,11 +5227,6 @@ class SentinelAgent:
                         continue
                     await asyncio.sleep(random.uniform(3, 5))  # Wait for job detail pane to render
                     continue
-                
-                if 'Skipping stuck job — ' in result:
-                    skipped_t = result.split('Skipping stuck job — ')[-1].strip()
-                    if skipped_t:
-                        self._linkedin_skipped_job_titles.add(skipped_t)
                 
                 # LinkedIn: Form stuck loop detection in outer step loop
                 # When autopilot breaks after being stuck, the outer loop keeps getting
@@ -4002,11 +5253,6 @@ class SentinelAgent:
                 # Reset stuck counter on any non-stuck LinkedIn result
                 if 'LINKEDIN' in result and 'LINKEDIN_FORM_STUCK' not in result:
                     self._linkedin_stuck_count = 0
-                
-                # Reset JOB_SELECTED streak counter on any non-selection result
-                if 'LINKEDIN' in result and 'LINKEDIN_JOB_SELECTED' not in result:
-                    if hasattr(self, '_job_selected_streak'):
-                        self._job_selected_streak = 0
                 
                 # LinkedIn: Step continued in outer loop (when modal is handled outside autopilot)
                 if 'LINKEDIN_FORM_STEP_CONTINUED' in result:
@@ -4804,542 +6050,25 @@ class SentinelAgent:
                     except Exception:
                         pass
                 
-                # Naukri Profile Update - Resume Headline Toggle
-                # NOTE: Only run if NOT an Employment LWD task (same URL, different task)
-                # NOTE: Skip if coming from a failed application attempt (error page)
+                # Naukri Profile Update - Resume Headline Toggle (Fallback Delegation)
                 if ('profile' in current_url and 'naukri.com' in current_url and 
-                    'Employment' not in self._task_description and 
-                    'myapply' not in current_url and 'saveApply' not in current_url):
-                    print("📝 Naukri Profile Page - Running headline update...")
-                    try:
-                        update_result = await self._page.evaluate("""() => {
-                            // Find the Resume Headline section
-                            const headlineSection = document.querySelector('#lazyResumeHead, .resumeHeadline');
-                            if (!headlineSection) return 'NO_HEADLINE_SECTION';
-                            
-                            // Find the edit icon
-                            const editIcon = headlineSection.querySelector('span.edit.icon, span.icon.edit, [class*="edit"][class*="icon"]');
-                            if (!editIcon) return 'NO_EDIT_ICON';
-                            
-                            editIcon.click();
-                            return 'EDIT_CLICKED';
-                        }""")
-                        print(f"   📜 Step 1 - Edit click: {update_result}")
-                        
-                        if update_result == 'EDIT_CLICKED':
-                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for modal to fully open
-                            
-                            # Step 2: Remove fullstop (using exact selector from screenshot)
-                            # Step 2: Remove fullstop using Keyboard (Backpsace)
-                            remove_result = await self._page.evaluate("""() => {
-                                const textarea = document.querySelector('#resumeHeadline, textarea[id="resumeHeadline"]');
-                                if (!textarea) return 'NO_TEXTAREA';
-                                if (textarea.value.endsWith('.')) return 'HAS_FULLSTOP';
-                                return 'NO_FULLSTOP';
-                            }""")
-                            
-                            if remove_result == 'HAS_FULLSTOP':
-                                # Robust Method: Select All -> Rewrite without dot
-                                text_val = await self._page.evaluate("document.querySelector('#resumeHeadline').value")
-                                new_text = text_val.rstrip('.')
-                                
-                                textarea = self._page.locator('#resumeHeadline')
-                                await textarea.focus()
-                                await textarea.select_text()
-                                await textarea.press('Backspace')
-                                await asyncio.sleep(0.3)
-                                await textarea.type(new_text)
-                                remove_result = 'FULLSTOP_REMOVED'
-                            
-                            print(f"   📜 Step 2 - Remove fullstop: {remove_result}")
-                            
-                            await asyncio.sleep(random.uniform(1.0, 2.0))
+                    'employment' not in task_desc_lower and 
+                    ('headline' in task_desc_lower or 'profile update' in task_desc_lower or 'resume headline' in task_desc_lower)):
+                    await self._handle_naukri_profile_update_task()
+                    self.state.task_complete = True
+                    break
 
-                            # Step 3: Click Save button and verify
-                            try:
-                                save_result = await self._page.evaluate("""() => {
-                                    const selectors = [
-                                        '.form-actions button.btn-dark-ot',
-                                        '.action.s12 button.btn-dark-ot',
-                                        'button.btn-dark-ot[type="submit"]',
-                                        'button[type="submit"]'
-                                    ];
-                                    for (let sel of selectors) {
-                                        const btn = document.querySelector(sel);
-                                        if (btn && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED';
-                                        }
-                                    }
-                                    const allBtns = document.querySelectorAll('button');
-                                    for (let btn of allBtns) {
-                                        if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED: text-match';
-                                        }
-                                    }
-                                    return 'NO_SAVE_BUTTON';
-                                }""")
-                            except Exception as e:
-                                print(f"      ⚠️ Save error: {e}")
-                                save_result = 'NO_SAVE_BUTTON'
-                            print(f"   📜 Step 3 - First save: {save_result}")
-                            
-                            await asyncio.sleep(1)
-                            if save_result == 'NO_SAVE_BUTTON':
-                                print("      ⚠️ No Save button found, retrying edit...")
-                                self.state.task_complete = True
-                                break
-                            
-                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for save to complete
-                            
-                            # Navigate back to profile page explicitly to ensure clean state
-                            print("   🔄 Navigating back to profile page...")
-                            try:
-                                await self._page.goto('https://www.naukri.com/mnjuser/profile?id=&altresid', timeout=60000)
-                                await self._page.wait_for_selector('#lazyResumeHead, .resumeHeadline', timeout=30000)
-                            except Exception as e:
-                                print(f"      ⚠️ Navigation error: {e}")
-                            await asyncio.sleep(random.uniform(1.0, 2.0))
-                            
-                            # Step 4: Click edit again
-                            edit2_result = await self._page.evaluate("""() => {
-                                const headlineSection = document.querySelector('#lazyResumeHead, .resumeHeadline');
-                                if (!headlineSection) return 'NO_HEADLINE_SECTION';
-                                const editIcon = headlineSection.querySelector('span.edit.icon, span.icon.edit, [class*="edit"][class*="icon"]');
-                                if (!editIcon) return 'NO_EDIT_ICON';
-                                editIcon.click();
-                                return 'EDIT_CLICKED_2';
-                            }""")
-                            print(f"   📜 Step 4 - Edit again: {edit2_result}")
-                            
-                            await asyncio.sleep(random.uniform(1.5, 2.5))  # Wait for second modal to open
-                            
-                            # Step 5: Add fullstop back using keyboard
-                            add_result = await self._page.evaluate("""() => {
-                                const textarea = document.querySelector('#resumeHeadline, textarea[id="resumeHeadline"]');
-                                if (!textarea) return 'NO_TEXTAREA';
-                                if (!textarea.value.endsWith('.')) return 'NEEDS_FULLSTOP';
-                                return 'ALREADY_HAS_FULLSTOP';
-                            }""")
-                            
-                            if add_result == 'NEEDS_FULLSTOP':
-                                # Robust Method: Select All -> Rewrite with dot
-                                text_val = await self._page.evaluate("document.querySelector('#resumeHeadline').value")
-                                if not text_val.endswith('.'):
-                                    new_text = text_val + '.'
-                                    
-                                    textarea = self._page.locator('#resumeHeadline')
-                                    await textarea.focus()
-                                    await textarea.select_text()
-                                    await textarea.press('Backspace')
-                                    await asyncio.sleep(0.3)
-                                    await textarea.type(new_text)
-                                    add_result = 'FULLSTOP_ADDED'
-                            
-                            print(f"   📜 Step 5 - Add fullstop: {add_result}")
-                            
-                            await asyncio.sleep(random.uniform(1.0, 2.0))  # Wait before second Save
-                            
-                            # Step 6: Click Save button and verify
-                            try:
-                                save2_result = await self._page.evaluate("""() => {
-                                    const selectors = [
-                                        '.form-actions button.btn-dark-ot',
-                                        '.action.s12 button.btn-dark-ot',
-                                        'button.btn-dark-ot[type="submit"]',
-                                        'button[type="submit"]'
-                                    ];
-                                    for (let sel of selectors) {
-                                        const btn = document.querySelector(sel);
-                                        if (btn && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED_2';
-                                        }
-                                    }
-                                    const allBtns = document.querySelectorAll('button');
-                                    for (let btn of allBtns) {
-                                        if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
-                                            btn.scrollIntoView({block: 'center'});
-                                            btn.click();
-                                            return 'SAVE_CLICKED_2: text-match';
-                                        }
-                                    }
-                                    return 'NO_SAVE_BUTTON';
-                                }""")
-                            except Exception as e:
-                                print(f"      ⚠️ Save error: {e}")
-                                save2_result = 'NO_SAVE_BUTTON'
-                            print(f"   📜 Step 6 - Second save: {save2_result}")
-                            
-                            await asyncio.sleep(1)
-                            print("🎉 Profile headline updated successfully!")
-                            self.state.task_complete = True
-                            break
-                            
-                    except Exception as e:
-                        print(f"⚠️ Profile update error: {e}")
-                
-                # Naukri Employment LWD Update - Set Expected Last Working Day
-                if 'profile' in current_url and 'naukri.com' in current_url and 'Employment' in self._task_description:
-                    print("📅 Naukri Employment - Running LWD update...")
-                    try:
-                        # Step 1: Click the Employment section's edit icon
-                        edit_result = await self._page.evaluate("""() => {
-                            // More robust selectors for Employment section
-                            // Try multiple ways to find the Employment section's edit icon
-                            
-                            // Method 1: Find by lazy load ID
-                            let empSection = document.querySelector('#lazyEmployment');
-                            
-                            // Method 2: Find by data-plugin attribute
-                            if (!empSection) {
-                                empSection = document.querySelector('[data-plugin="lazyload"][id*="Employment"]');
-                            }
-                            
-                            // Method 3: Find parent containing "Employment" heading
-                            if (!empSection) {
-                                const headings = document.querySelectorAll('h2, h3, .widgetHead');
-                                for (let h of headings) {
-                                    if (h.innerText && h.innerText.trim() === 'Employment') {
-                                        empSection = h.closest('.widgetContainer, [class*="widget"], .card, section');
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            if (empSection) {
-                                // Find edit icon - try multiple selectors
-                                const editSelectors = [
-                                    'span.edit.icon',
-                                    '.edit.icon',
-                                    '[class*="edit"][class*="icon"]',
-                                    'span[class*="edit"]',
-                                    '.editIcon'
-                                ];
-                                
-                                for (let sel of editSelectors) {
-                                    const editIcons = empSection.querySelectorAll(sel);
-                                    if (editIcons.length > 0) {
-                                        editIcons[0].click();
-                                        return 'EDIT_CLICKED';
-                                    }
-                                }
-                            }
-                            
-                            // Last resort: Find any edit icon near text "Software Engineer" or "Everbridge"
-                            const allEditIcons = document.querySelectorAll('span.edit.icon, .edit.icon');
-                            for (let icon of allEditIcons) {
-                                const parent = icon.closest('.row, div[class*="item"], .card');
-                                if (parent) {
-                                    const text = parent.innerText || '';
-                                    if (text.includes('Software Engineer') || text.includes('Everbridge')) {
-                                        icon.click();
-                                        return 'EDIT_CLICKED';
-                                    }
-                                }
-                            }
-                            
-                            return 'NO_EMPLOYMENT_SECTION';
-                        }""")
-                        print(f"   📜 Step 1 - Employment edit: {edit_result}")
-                        
-                        if edit_result == 'EDIT_CLICKED':
-                            await asyncio.sleep(random.uniform(3, 5))  # Wait for modal to open
-                            
-                            # Step 2: LWD date — parse explicit date from task prompt GOAL line
-                            # Format: "GOAL: Update 'Expected Last Working Day' in the Employment section to July 3, 2026."
-                            import re as _re
-                            month_map = {
-                                'january': '1', 'february': '2', 'march': '3', 'april': '4',
-                                'may': '5', 'june': '6', 'july': '7', 'august': '8',
-                                'september': '9', 'october': '10', 'november': '11', 'december': '12'
-                            }
-                            month_names_rev = {v: k.capitalize() for k, v in month_map.items()}
-                            date_match = _re.search(
-                                r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+),\s+(\d{4})',
-                                self._task_description, _re.IGNORECASE
-                            )
-                            if date_match:
-                                month_name = date_match.group(1)
-                                month_num = month_map[month_name.lower()]
-                                day_val = date_match.group(2)
-                                year_val = date_match.group(3)
-                                month_display = month_name[:3]
-                            else:
-                                # Fallback: use offset-based calculation
-                                offset_match = _re.search(r'LWD\s*\+(\d+)', self._task_description)
-                                days_offset = int(offset_match.group(1)) if offset_match else 15
-                                lwd_date = datetime.now() + timedelta(days=days_offset)
-                                year_val = str(lwd_date.year)
-                                month_num_val = lwd_date.month
-                                month_display = month_names_rev[month_num_val][:3]
-                                day_val = str(lwd_date.day)
-                                month_num = str(month_num_val)
-                            
-                            print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
-                            
-                            # Step 3: Set dropdowns using robust data-id and text selectors
-                            async def set_single_dropdown(name, dropdown_id, data_prefix, option_values, max_retries=3):
-                                if isinstance(option_values, str):
-                                    option_values = [option_values]
-                                print(f"   📅 Setting {name} to {option_values[0]}...")
-                                for attempt in range(max_retries):
-                                    try:
-                                        # 1. Click dropdown to open (with short timeout)
-                                        await self._page.click(dropdown_id, timeout=5000)
-                                        await asyncio.sleep(0.8)
-                                        
-                                        # 2. Try data-id and text selection
-                                        result = await self._page.evaluate("""({dataPrefix, optionVals}) => {
-                                            // Try data-id selector first
-                                            for (const val of optionVals) {
-                                                const dataId = dataPrefix + val;
-                                                const anchor = document.querySelector('a[data-id="' + dataId + '"]');
-                                                if (anchor && anchor.offsetParent !== null) {
-                                                    anchor.scrollIntoView({block: 'center'});
-                                                    anchor.click();
-                                                    return 'SELECTED_DATA_ID: ' + dataId;
-                                                }
-                                            }
-                                            // Fallback: Find by text within open dropdown
-                                            const openDropdown = document.querySelector('.dropdownList[style*="display: block"], .dropdownList:not([style*="display: none"]), ul[class*="dropdown"]:not([style*="display: none"])');
-                                            if (openDropdown) {
-                                                const items = openDropdown.querySelectorAll('li a, li, a');
-                                                for (let item of items) {
-                                                    const itemText = (item.innerText || item.textContent || '').trim().toLowerCase();
-                                                    for (const val of optionVals) {
-                                                        const targetVal = val.toLowerCase();
-                                                        if (itemText === targetVal || (itemText.length > 0 && targetVal.startsWith(itemText))) {
-                                                            item.scrollIntoView({block: 'center'});
-                                                            item.click();
-                                                            return 'SELECTED_BY_TEXT: ' + itemText;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            return 'NOT_FOUND';
-                                        }""", {"dataPrefix": data_prefix, "optionVals": [str(v) for v in option_values]})
-                                        
-                                        if 'SELECTED' in result:
-                                            await asyncio.sleep(0.4)
-                                            return f"{result}"
-                                        
-                                        # If not found, safely close dropdown by clicking modal container heading
-                                        await self._page.evaluate("""() => {
-                                            const header = document.querySelector('.modal-content h2, .modal-content h3, .widgetHead, .drawerWrapper header, .edit-container header');
-                                            if (header) header.click();
-                                        }""")
-                                        await asyncio.sleep(0.5)
-                                        
-                                    except Exception as e:
-                                        if attempt < max_retries - 1:
-                                            print(f"      ⚠️ Retry {attempt + 1}/{max_retries} for {name}: {str(e)[:50]}")
-                                            await asyncio.sleep(1)
-                                        else:
-                                            return f"ERROR: {e}"
-                                
-                                return f"FAILED_AFTER_{max_retries}_ATTEMPTS: {option_values[0]}"
+                # Naukri Employment LWD Update - Set Expected Last Working Day (Fallback Delegation)
+                if 'profile' in current_url and 'naukri.com' in current_url and 'employment' in task_desc_lower:
+                    await self._handle_naukri_employment_lwd_task()
+                    self.state.task_complete = True
+                    break
 
-                            # Year candidate values
-                            year_vals = [year_val]
-                            # Month candidate values (number, short name, full name, 0-indexed number)
-                            month_vals = [month_num, month_display, month_name]
-                            try:
-                                month_vals.append(str(int(month_num) - 1))
-                            except Exception:
-                                pass
-                            # Day candidate values (e.g. '5' and '05')
-                            day_vals = [day_val]
-                            if len(day_val) == 1:
-                                day_vals.append(f"0{day_val}")
-                            elif day_val.startswith('0'):
-                                day_vals.append(day_val.lstrip('0'))
-
-                            year_result = await set_single_dropdown('Year', '#lwdYearFor', 'lwdYear_', year_vals)
-                            month_result = await set_single_dropdown('Month', '#lwdMonthFor', 'lwdMonth_', month_vals)
-                            day_result = await set_single_dropdown('Day', '#lwdDayFor', 'lwdDay_', day_vals)
-                            
-                            print(f"   📜 Step 2 - Dropdowns: Year={year_result}, Month={month_result}, Day={day_result}")
-                            
-                            print("   ⏳ Waiting 2s for state to settle before saving...")
-                            await asyncio.sleep(2)
-                            
-                            # Step 4: Click Save button with STRICT Save validation (NEVER click 'Improve with AI')
-                            save_js = """() => {
-                                const isSaveButton = (btn) => {
-                                    if (!btn || btn.offsetParent === null) return false;
-                                    const text = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
-                                    const aria = (btn.getAttribute('aria-label') || '').toLowerCase();
-                                    const className = (btn.className || '').toLowerCase();
-                                    const id = (btn.id || '').toLowerCase();
-                                    
-                                    // STRICT EXCLUSION: Never click AI, Improve, Cancel, Discard, Delete, Close buttons!
-                                    if (text.includes('ai') || text.includes('improve') || aria.includes('ai') || aria.includes('improve') ||
-                                        className.includes('ai') || text.includes('cancel') || text.includes('discard') || 
-                                        text.includes('delete') || text.includes('close') || aria.includes('close')) {
-                                        return false;
-                                    }
-                                    
-                                    // Match specific Save IDs
-                                    if (id === 'submitemployment' || id === 'saveprofile' || id === 'submitprofile') return true;
-                                    
-                                    // Match explicit Save text
-                                    if (text === 'save' || text === 'save changes' || text === 'save & next' || text === 'save & continue') return true;
-                                    if (aria === 'save' || aria === 'save changes') return true;
-                                    
-                                    // If button is inside form-actions / action footer and text contains save
-                                    if (btn.closest('.form-actions, .action, .drawer-footer, footer, .btn-container') && text.includes('save')) return true;
-                                    
-                                    return false;
-                                };
-                                
-                                const modal = document.querySelector('.modal-content, .drawerWrapper, .edit-container, [class*="modal"][style*="display: block"], [class*="modal"]:not([style*="display: none"]), form[name*="employment"], #employmentForm') || document;
-                                
-                                const specificSelectors = [
-                                    '#submitEmployment',
-                                    '#saveProfile',
-                                    '#submitProfile',
-                                    '.form-actions button.btn-dark-ot',
-                                    '.action.s12 button.btn-dark-ot',
-                                    '.action button.btn-dark-ot',
-                                    '.form-actions button[type="submit"]',
-                                    '.form-actions button',
-                                    'button.btn-dark-ot[type="submit"]',
-                                    'button#submitEmployment'
-                                ];
-                                
-                                for (const sel of specificSelectors) {
-                                    const btn = modal.querySelector(sel) || document.querySelector(sel);
-                                    if (btn && isSaveButton(btn)) {
-                                        btn.scrollIntoView({block: 'center'});
-                                        btn.click();
-                                        return 'SAVE_CLICKED: ' + sel;
-                                    }
-                                }
-                                
-                                const allBtns = Array.from(modal.querySelectorAll('button, input[type="submit"], [role="button"], a.btn'))
-                                    .concat(Array.from(document.querySelectorAll('button, input[type="submit"], [role="button"], a.btn')));
-                                    
-                                for (const btn of allBtns) {
-                                    if (isSaveButton(btn)) {
-                                        btn.scrollIntoView({block: 'center'});
-                                        btn.click();
-                                        return 'SAVE_CLICKED: text-match (' + (btn.innerText || btn.id || 'Save').trim() + ')';
-                                    }
-                                }
-                                
-                                return 'NO_SAVE_BUTTON';
-                            }"""
-
-                            save_result = 'NOT_ATTEMPTED'
-                            for save_attempt in range(3):
-                                save_result = await self._page.evaluate(save_js)
-                                if 'SAVE_CLICKED' in save_result:
-                                    break
-                                await asyncio.sleep(1)
-                            
-                            print(f"   📜 Step 3 - Save: {save_result}")
-                            
-                            if 'SAVE_CLICKED' in save_result:
-                                await asyncio.sleep(3)
-                                
-                                for verify_attempt in range(3):
-                                    modal_is_open = await self._page.evaluate("""() => {
-                                        const modals = document.querySelectorAll('.modal-content, .drawerWrapper, .edit-container, [class*="modal"]:not([style*="display: none"])');
-                                        for (const m of modals) {
-                                            if (m.offsetParent !== null) {
-                                                const text = (m.innerText || '').toLowerCase();
-                                                if (text.includes('expected last working day') || text.includes('notice period') || text.includes('job profile')) {
-                                                    return true; // Modal is STILL OPEN
-                                                }
-                                            }
-                                        }
-                                        return false; // Modal is closed
-                                    }""")
-                                    
-                                    if not modal_is_open:
-                                        print(f"🎉 Employment LWD updated to {day_val} {month_display} {year_val}!")
-                                        await asyncio.sleep(1)
-                                        self.state.task_complete = True
-                                        break
-                                    
-                                    print(f"      ⚠️ Save verify {verify_attempt + 1}/3: modal still open, re-clicking Save...")
-                                    await asyncio.sleep(1)
-                                    save_retry = await self._page.evaluate(save_js)
-                                    print(f"      📜 Save retry: {save_retry}")
-                                    await asyncio.sleep(3)
-                                else:
-                                    print("      ⚠️ Save verification finished (modal closed or settled)")
-                                    self.state.task_complete = True
-                                    break
-                            else:
-                                print(f"      ⚠️ Could not find Save button: {save_result}")
-                            
-                            break
-                            
-                    except Exception as e:
-                        print(f"⚠️ Employment LWD update error: {e}")
-                
-                # Naukri Early Access Jobs - Share Interest
-                if 'recommended-earjobs' in current_url and 'naukri.com' in current_url:
-                    print("🚀 Naukri Early Access - Clicking Share Interest...")
-                    try:
-                        # Click the first "Share interest" button
-                        share_result = await self._page.evaluate("""() => {
-                            // Try specific selector first
-                            const specificBtn = document.querySelector("body > main > div > div > div > section.lp__left-section-container > div > div:nth-child(1) > div > div.row7 > div > div.tf__content > button");
-                            if (specificBtn && specificBtn.offsetParent !== null) {
-                                specificBtn.click();
-                                return 'SHARE_CLICKED_SPECIFIC';
-                            }
-                            
-                            // Fallback: Find any "Share interest" button
-                            const allBtns = document.querySelectorAll('button');
-                            for (let btn of allBtns) {
-                                if (btn.innerText && btn.innerText.toLowerCase().includes('share interest')) {
-                                    if (btn.offsetParent !== null) {
-                                        btn.click();
-                                        return 'SHARE_CLICKED';
-                                    }
-                                }
-                            }
-                            return 'NO_SHARE_BUTTON';
-                        }""")
-                        print(f"   📜 Share Interest: {share_result}")
-                        
-                        if 'SHARE_CLICKED' in share_result:
-                            await asyncio.sleep(random.uniform(2, 4))
-                            
-                            # Verify success
-                            success = await self._page.evaluate("""() => {
-                                // Check for success message
-                                const successMsg = document.querySelector('.apply-status-header.green .apply-message, .apply-status-header .apply-message');
-                                if (successMsg && successMsg.innerText.toLowerCase().includes('interest shared')) {
-                                    return true;
-                                }
-                                // Also check for general success text on page
-                                return document.body.innerText.includes('Interest shared successfully');
-                            }""")
-                            
-                            if success:
-                                print("🎉 Interest shared successfully!")
-                            else:
-                                print("✅ Share Interest clicked (success not verified)")
-                            
-                            self.state.task_complete = True
-                            break
-                        else:
-                            print("⚠️ No Share Interest button found")
-                            self.state.task_complete = True
-                            break
-                            
-                    except Exception as e:
-                        print(f"⚠️ Early Access error: {e}")
-                
+                # Naukri Early Access Jobs - Share Interest (Fallback Delegation)
+                if ('recommended-earjobs' in current_url or 'earjobs' in current_url or 'early access' in task_desc_lower) and 'naukri.com' in current_url:
+                    await self._handle_naukri_early_access_task()
+                    self.state.task_complete = True
+                    break
                 
                 # Naukri: Handle CHECKBOX_CLICKED_NEED_MORE - continue selecting more checkboxes
                 if 'CHECKBOX_CLICKED_NEED_MORE' in result and 'naukri.com' in current_url:
@@ -8358,6 +9087,8 @@ class SentinelAgent:
             if not qtext or not qid:
                 continue
             answer, _conf = self._fuzzy_match_question(qtext)
+            source = "pattern_match" if answer else "unknown"
+            confidence = _conf
             # Multi-select (checkbox) groups such as "Please share your shift
             # preference" have no single pattern answer and can still resolve to
             # None; a sensible option must be checked anyway or the required
@@ -8380,26 +9111,70 @@ class SentinelAgent:
                         )
                         if llm_ans:
                             answer = llm_ans
+                            source = "llm_gemma"
+                            confidence = 0.95
                 except Exception:
                     pass
             if not answer and not _is_checkbox_group:
+                self._log_qa_result(
+                    question=qtext,
+                    answer="",
+                    input_type=q.get('inputType') or ('select' if q.get('hasSelect') else ('radio' if q.get('hasRadios') else 'text')),
+                    options=[o.get('text', '') for o in (q.get('options') or []) if o.get('text')],
+                    status="unknown",
+                    url=self._page.url if self._page else "",
+                    platform="indeed",
+                    source="unmatched",
+                )
                 continue
+            submitted = ""
+            itype = ""
+            opt_texts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
             try:
                 if q.get('hasSelect'):
+                    itype = 'select'
                     await self._indeed_set_select(frame, qid, answer)
+                    submitted = answer
                 elif _is_checkbox_group:
-                    opt_texts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
+                    itype = 'checkbox'
                     await self._indeed_set_checkboxes(frame, qid, qtext, opt_texts, answer or '')
+                    submitted = answer or 'Yes'
                 elif q.get('hasRadios'):
-                    opt_texts = [o.get('text', '') for o in (q.get('options') or []) if o.get('text')]
+                    itype = 'radio'
                     radio_answer = self._indeed_align_radio_answer(qtext, opt_texts, answer)
                     await self._indeed_set_radio(frame, qid, radio_answer)
+                    submitted = radio_answer or answer
                 elif q.get('hasInput'):
+                    itype = q.get('inputType') or 'text'
                     text_answer = self._indeed_format_input_answer(
                         answer, q.get('placeholder') or '', q.get('inputType') or '')
                     await self._indeed_set_text(frame, qid, text_answer)
+                    submitted = text_answer
+                self._log_qa_result(
+                    question=qtext,
+                    answer=submitted or answer,
+                    input_type=itype or (q.get('inputType') or 'text'),
+                    options=opt_texts,
+                    selected_option=submitted or answer,
+                    confidence=confidence,
+                    status="submitted",
+                    url=self._page.url if self._page else "",
+                    platform="indeed",
+                    source=source,
+                )
                 self.metrics['questions_answered'] = self.metrics.get('questions_answered', 0) + 1
             except Exception as e:
+                self._log_qa_result(
+                    question=qtext,
+                    answer=answer,
+                    input_type=itype,
+                    options=opt_texts,
+                    status="validation_error",
+                    error_message=str(e),
+                    url=self._page.url if self._page else "",
+                    platform="indeed",
+                    source=source,
+                )
                 print(f"      ⚠️ Indeed answer error for '{qtext[:40]}': {e}")
 
     async def _indeed_set_text(self, frame, qid: str, answer: str) -> None:
@@ -8611,6 +9386,12 @@ class SentinelAgent:
         "https://www.hirist.tech/k/java-jobs?ref=popular_tag",
         "https://www.hirist.tech/k/spring-jobs?ref=topnavigation",
         "https://www.hirist.tech/k/reactjs-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/mern-stack-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/restful-api-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/aws-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/azure-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/artificial-intelligence-jobs?ref=topnavigation",
+        "https://www.hirist.tech/k/ai-interface-jobs?ref=topnavigation",
     ]
 
     async def _handle_hirist_apply_task(self) -> bool:
@@ -8710,6 +9491,18 @@ class SentinelAgent:
                 if not url or url in seen:
                     continue
                 seen.add(url)
+
+                # Pre-filter before navigating
+                suitable, reason = self._is_hirist_job_suitable(
+                    job.get('title', ''),
+                    job.get('exp', ''),
+                    job.get('cardText', '')
+                )
+                if not suitable:
+                    skipped += 1
+                    print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {job.get('title', '')}")
+                    continue
+
                 scanned += 1
                 self._current_job_url = url
 
@@ -8721,6 +9514,13 @@ class SentinelAgent:
                     info = await self._hirist_read_meta(page)
                     title = info.get('jobTitle') or job.get('title') or '<untitled>'
                     company = info.get('companyName') or ''
+                    exp_req = info.get('exp') or job.get('exp') or ''
+
+                    suitable, reason = self._is_hirist_job_suitable(title, exp_req)
+                    if not suitable:
+                        skipped += 1
+                        print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {title} @ {company}")
+                        continue
 
                     status = await self._hirist_click_apply(page)
                     if status == 'external':
@@ -8778,6 +9578,47 @@ class SentinelAgent:
             except Exception:
                 continue
 
+    def _is_hirist_job_suitable(self, title: Any, exp_text: str = "", card_text: str = "") -> Tuple[bool, str]:
+        """Check if a Hirist job is suitable for candidate (SDE-2 with 4.2 years experience).
+        Filters out senior executive roles (VP, Director, etc.) and jobs requiring min exp > 6 years.
+        Supports passing either a job dict or separate title, exp_text, card_text strings.
+        """
+        if isinstance(title, dict):
+            job_dict = title
+            title = job_dict.get('title', '')
+            exp_text = exp_text or job_dict.get('exp', '')
+            card_text = card_text or job_dict.get('cardText', '') or job_dict.get('card_text', '')
+
+        title_lower = (str(title) if title else '').lower()
+        combined = f"{title_lower} {(exp_text or '').lower()} {(card_text or '').lower()}"
+
+        # 1. Executive / Senior Management Blacklist
+        senior_roles = [
+            'vice president', 'vp ', ' director', 'director ', 'general manager', 'head of',
+            'chief ', 'principal architect', 'enterprise architect', 'managing director',
+            'country head', 'partner', 'c-level'
+        ]
+        for role in senior_roles:
+            if role in title_lower or f" {role} " in f" {title_lower} ":
+                return False, f"senior/executive role ({role.strip()})"
+
+        # 2. Experience Filter: candidate has 4.2 years experience.
+        # Skip if minimum required experience is greater than 6 years.
+        import re
+        range_match = re.search(r'(\d+)\s*[-–]\s*(\d+)\s*(?:yrs|years)', combined, re.IGNORECASE)
+        if range_match:
+            min_exp = int(range_match.group(1))
+            if min_exp > 6:
+                return False, f"min exp {min_exp} yrs exceeds candidate's 4.2 yrs"
+        else:
+            single_match = re.search(r'(\d+)\+?\s*(?:yrs|years)', combined, re.IGNORECASE)
+            if single_match:
+                min_exp = int(single_match.group(1))
+                if min_exp > 6:
+                    return False, f"min exp {min_exp}+ yrs exceeds candidate's 4.2 yrs"
+
+        return True, "suitable"
+
     async def _hirist_read_meta(self, page) -> Dict[str, Any]:
         try:
             return await page.evaluate("""() => {
@@ -8786,13 +9627,22 @@ class SentinelAgent:
                 const pp = (nd.props && nd.props.pageProps) || {};
                 const job = pp.jobMandateInfo || pp.jobDetail || {};
                 const state = pp.initialState || {};
+
+                const hasAuthInStorage = !!(localStorage.getItem('token') || localStorage.getItem('user') || localStorage.getItem('authToken') || localStorage.getItem('candidate_id') || localStorage.getItem('persist:root'));
+                const hasProfileHeader = !!document.querySelector('[data-testid*="profile"], [class*="avatar"], [class*="profile"], a[href*="/profile"], a[href*="/candidate"]');
+                const hasLoginBtn = !!Array.from(document.querySelectorAll('button, a')).find(el => {
+                    const txt = (el.innerText || '').trim().toLowerCase();
+                    return txt === 'login' || txt === 'sign in';
+                });
+                const isAuthed = !!(state.auth && state.auth.isLoggedIn) || (hasProfileHeader && !hasLoginBtn) || hasAuthInStorage;
+
                 return {
                     jobTitle: job.jobTitle || job.title || '',
                     companyName: job.companyName || job.company || '',
                     location: job.location || '',
                     exp: job.exp || job.experience || '',
-                    isLoggedIn: !!(state.auth && state.auth.isLoggedIn),
-                    hasProfile: !!(state.user && state.user.profile),
+                    isLoggedIn: isAuthed,
+                    hasProfile: !!(state.user && state.user.profile) || isAuthed,
                     apply: pp.apply || (state.app && state.app.jobdetail && state.app.jobdetail.apply) || null
                 };
             }""") or {}
@@ -8816,18 +9666,34 @@ class SentinelAgent:
                     seen.add(id);
                     let abs = a.href || href;
                     if (abs.startsWith('/')) abs = location.origin + abs;
-                    let title = (a.innerText || '').trim();
+                    const fullText = (a.innerText || '').trim();
+                    let title = '';
+                    const titleEl = a.querySelector('h2, h3, [class*="title"], [class*="designation"], [class*="heading"]');
+                    if (titleEl) {
+                        title = (titleEl.innerText || '').trim();
+                    }
                     if (!title) {
                         const parentCard = a.closest('[class*="job"], [class*="card"], li, div');
                         if (parentCard) {
-                            const titleEl = parentCard.querySelector('h2, h3, [class*="title"], [class*="designation"]');
-                            if (titleEl) title = (titleEl.innerText || '').trim();
+                            const pTitleEl = parentCard.querySelector('h2, h3, [class*="title"], [class*="designation"]');
+                            if (pTitleEl) title = (pTitleEl.innerText || '').trim();
                         }
                     }
+                    if (!title) {
+                        const lines = fullText.split('\\n').map(s => s.trim()).filter(Boolean);
+                        title = lines[0] || '';
+                    }
+
+                    let exp = '';
+                    const expMatch = fullText.match(/(\\d+\\s*[-–]\\s*\\d+\\s*(?:yrs|years)|\\d+\\+?\\s*(?:yrs|years))/i);
+                    if (expMatch) exp = expMatch[1];
+
                     out.push({
                         id: id,
                         url: abs.split('?')[0],
-                        title: title
+                        title: title,
+                        exp: exp,
+                        cardText: fullText
                     });
                 });
                 return out;
@@ -9137,9 +10003,9 @@ class SentinelAgent:
             for o in opts:
                 if any(k in o.lower() for k in ('15 days or less', '<= 15 days', 'less than 15', '< 15 days', 'within 15', '15 days', '15-30')):
                     return o
-            # Priority 3: Less than 1 month / 1 month or less
+            # Priority 3: Less than 1 month / 1 month or less / Less than 30 days
             for o in opts:
-                if any(k in o.lower() for k in ('< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month')):
+                if any(k in o.lower() for k in ('< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days')):
                     return o
             # Priority 4: 1 month / 30 days (covers 15 days notice when no 15-day option exists)
             for o in opts:
@@ -9461,6 +10327,23 @@ class SentinelAgent:
                         platform='hirist',
                         url=current_job_url,
                         source="unknown",
+                        job_id_or_url=current_job_url,
+                    )
+                else:
+                    # An option was chosen but Hirist never accepted the click, so
+                    # the row has to show the attempt rather than disappear.
+                    self.log_qa_result(
+                        question=qtext,
+                        answer=option,
+                        input_type=choice_itype,
+                        options=raw_opts,
+                        selected_option=option,
+                        confidence=conf if conf is not None else "",
+                        status='validation_error',
+                        error_message='Option click rejected by form',
+                        platform='hirist',
+                        url=current_job_url,
+                        source=source,
                         job_id_or_url=current_job_url,
                     )
                 continue
@@ -9992,7 +10875,10 @@ class SentinelAgent:
             self.log_qa_result(
                 question=q_text,
                 answer=display_ans,
-                input_type='numeric' if is_numeric_question else 'text',
+                input_type=('number' if is_numeric_question else
+                            'radio' if (q.get('isRadioInput') or q_type == 2) else
+                            'checkbox' if (q.get('isCheckboxInput') or q_type == 3) else
+                            'textarea' if q.get('isTextarea') else 'text'),
                 options=[co.get('label', '') for co in choice_options],
                 selected_option=display_ans,
                 confidence=conf,
@@ -10966,7 +11852,120 @@ class SentinelAgent:
                     // PRE-CHECK 1: Rating scale questions (e.g. "Rate your understanding ... out of 10")
                     const isRatingScaleQ = /out of 10|scale of 10|1 to 10|1-10|out of 5|scale of 5|1 to 5|1-5|rate your (understanding|ability|knowledge|skill|proficiency)|rate yourself/i.test(qNormalized);
                     if (isRatingScaleQ && !/years|how many years/i.test(qNormalized)) {{
+                        const isAiTopicQ = /ai agent|agentic|llm|genai|generative ai|machine learning|ai\/ml|evals|eval tool|langchain/i.test(qNormalized);
+                        // Explicit 0-5 scales must not fall through to the 1-10 default of 9.
+                        if (/(?:^|[^\d])0\s*[-–to]+\s*5(?!\d)/.test(qLower) || /\(0-5\)/.test(qLower)) {{
+                            return isAiTopicQ ? '3' : '4';
+                        }}
                         return /out of 5|scale of 5|1 to 5|1-5/.test(qNormalized) ? '5' : '9';
+                    }}
+
+                    // PRE-CHECK 1.5: Skill-specific years (mirrors Python skill map).
+                    // Every tech-skill years question answers the total experience
+                    // (4.2 Years / 4); zero is reserved for role/domain overrides.
+                    const SKILL_YEARS = window.__SENTINEL_SKILL_YEARS__ || {{}};
+                    if (Object.keys(SKILL_YEARS).length) {{
+                        const ZERO_SKILLS = window.__SENTINEL_ZERO_SKILL_OVERRIDES__ || [];
+                        const GENERIC_SKILLS = new Set(window.__SENTINEL_GENERIC_SKILLS__ || []);
+                        const normSkillText = (s) => (s || '').toLowerCase()
+                            .replace(/c\s*\+\+/g, 'cpp')
+                            .replace(/c\s*#/g, 'csharp')
+                            .replace(/\.\s*net/g, 'dotnet')
+                            .replace(/\bnode\s*\.?\s*js\b/g, 'nodejs')
+                            .replace(/\breact\s*\.?\s*js\b/g, 'reactjs')
+                            .replace(/\bnext\s*\.?\s*js\b/g, 'nextjs')
+                            .replace(/\bvue\s*\.?\s*js\b/g, 'vuejs')
+                            .replace(/\bai\s*\/\s*ml\b/g, 'aiml')
+                            .replace(/\bml\s*\/\s*ai\b/g, 'aiml')
+                            .replace(/\bci\s*\/\s*cd\b/g, 'cicd')
+                            .replace(/[^a-z0-9]+/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        const skillTokIndex = (hay, needle) => {{
+                            for (let i = 0; i + needle.length <= hay.length; i++) {{
+                                let ok = true;
+                                for (let j = 0; j < needle.length; j++) {{
+                                    if (hay[i + j] !== needle[j]) {{ ok = false; break; }}
+                                }}
+                                if (ok) return i;
+                            }}
+                            return -1;
+                        }};
+                        const skillToks = normSkillText(qNormalized).split(' ').filter(Boolean);
+                        const skillHits = [];
+                        ZERO_SKILLS.forEach(zero => {{
+                            const nz = normSkillText(zero);
+                            const zt = nz.split(' ').filter(Boolean);
+                            if (!zt.length) return;
+                            const zi = skillTokIndex(skillToks, zt);
+                            if (zi >= 0) skillHits.push({{ idx: zi, len: zt.length, skill: nz, years: 0 }});
+                        }});
+                        Object.keys(SKILL_YEARS).forEach(k => {{
+                            const nk = normSkillText(k);
+                            const kt = nk.split(' ').filter(Boolean);
+                            if (!kt.length) return;
+                            if (nk === 'go' && !/golang|\bgo\s+(?:language|programming|developer|engineer|backend|services?)\b|\b(?:in|with|using|know|write|wrote|worked)\s+go\b/.test(qNormalized)) return;
+                            const ki = skillTokIndex(skillToks, kt);
+                            if (ki >= 0) skillHits.push({{ idx: ki, len: kt.length, skill: nk, years: Number(SKILL_YEARS[k]) || 0 }});
+                        }});
+                        if (skillHits.length) {{
+                            skillHits.sort((a, b) => (b.len - a.len) || (a.idx - b.idx));
+                            const keptHits = [];
+                            skillHits.forEach(item => {{
+                                if (keptHits.some(k => item.idx >= k.idx && item.idx + item.len <= k.idx + k.len)) return;
+                                keptHits.push(item);
+                            }});
+                            const seenSkills = new Set();
+                            const allHits = [];
+                            keptHits.forEach(item => {{
+                                if (seenSkills.has(item.skill)) return;
+                                seenSkills.add(item.skill);
+                                allHits.push([item.skill, item.years]);
+                            }});
+                            const specificHits = allHits.filter(m => !GENERIC_SKILLS.has(m[0]));
+                            const yearPool = specificHits;
+                            const leadershipQ = /\b(lead|leads|leading|led|manage|manages|managing|managed|mentor|mentors|mentoring|mentored|ownership|owned)\b/.test(qNormalized);
+                            const skillContextOk = !(leadershipQ && specificHits.length === 0);
+                            const skillHasAlt = /\bor\b/.test(qNormalized) || (qNormalized.includes('/') && !/\band\b/.test(qNormalized));
+                            const fmtSkillYears = (y) => {{
+                                const yy = Math.round(Number(y) * 10) / 10;
+                                if (yy === 0) return detectedType === 'radio' ? '0-1 Years' : '0 Years';
+                                if (yy === 1) return '1 Year';
+                                return yy + ' Years';
+                            }};
+                            const skillQuantity = /(?:how\s+many|how\s+much|number\s+of|total|years?|yrs?|yoe|months?)/.test(qNormalized);
+                            const skillTail = qNormalized.includes('?') ? qNormalized.split('?')[1].trim() : '';
+                            const isCompoundSkillQ = !skillQuantity
+                                && /^(?:and\s+)?(?:have|has|do|does|did|are|is|can|will|would)\b/.test(skillTail);
+                            const isSkillYearsQ = !/ctc|salary|compensation|lpa|notice\s*period|last\s*working/.test(qNormalized)
+                                && !/services\s+used|technologies\s+used/.test(qNormalized)
+                                && !/(?:which|what)\b[^?]{{0,80}}(?:services|technologies|tools|skills|frameworks|databases|platforms|languages|products|systems)\b/.test(qNormalized)
+                                && (skillQuantity || /(?:exp|expr|experience)/.test(qNormalized))
+                                && !isCompoundSkillQ
+                                && !/describe|explain|briefly|elaborate|list/.test(qNormalized)
+                                && !/^(?:do|does|have|has|are|is|can|will|would|did|should)\b/.test(qNormalized.trim());
+                            if (skillContextOk && isSkillYearsQ && yearPool.length) {{
+                                if (/\beach\b/.test(qNormalized)) {{
+                                    return yearPool.map(m => m[0].replace(/\b\w/g, ch => ch.toUpperCase()) + ': ' + fmtSkillYears(m[1])).join(', ');
+                                }}
+                                const hasAlt = skillHasAlt;
+                                const chosen = yearPool.reduce((a, b) => hasAlt ? (b[1] > a[1] ? b : a) : (b[1] < a[1] ? b : a));
+                                return fmtSkillYears(chosen[1]);
+                            }}
+                            const isSkillYesNoQ = /^(?:do|does|have|has|are|is|can|will|would|did)\b/.test(qNormalized.trim())
+                                && !/(?:how\s+many|how\s+much|number\s+of|years?|yrs?|yoe|months?)/.test(qNormalized)
+                                && !/mentioned\s+skills|following\s+skills|skills\s+mentioned|as\s+per\s+(?:the\s+)?jd|below\s+skills/.test(qNormalized)
+                                && !/certifications?|certified|degree|education|course|training/.test(qNormalized)
+                                && !/describe|explain|briefly/.test(qNormalized);
+                            if (isSkillYesNoQ && specificHits.length) {{
+                                const zeroSet = new Set(ZERO_SKILLS.map(z => normSkillText(z)));
+                                const hasOverride = specificHits.some(m => zeroSet.has(m[0]));
+                                const hasAlt = skillHasAlt;
+                                if (hasOverride && !hasAlt) return 'No';
+                                if (hasAlt) return allHits.some(m => m[1] > 0) ? 'Yes' : 'No';
+                                return specificHits.every(m => m[1] > 0) ? 'Yes' : 'No';
+                            }}
+                        }}
                     }}
 
                     // PRE-CHECK 2: Team management / leading a team experience
@@ -11045,6 +12044,15 @@ class SentinelAgent:
                     const yyyy = d15.getFullYear();
                     const yy = String(yyyy).slice(-2);
                     
+                    if (val.includes('__DYNAMIC_LWD_DDMMYYYY__')) {{
+                        val = val.replace(/__DYNAMIC_LWD_DDMMYYYY__/g, dd + mm + yyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_TODAY_DDMMYYYY__')) {{
+                        val = val.replace(/__DYNAMIC_TODAY_DDMMYYYY__/g, todayDd + todayMm + todayYyyy);
+                    }}
+                    if (val.includes('__DYNAMIC_LWD_ISO__')) {{
+                        val = val.replace(/__DYNAMIC_LWD_ISO__/g, yyyy + '-' + mm + '-' + dd);
+                    }}
                     if (val.includes('__DYNAMIC_LWD__')) {{
                         val = val.replace(/__DYNAMIC_LWD__/g, dd + ' ' + mon + ' ' + yyyy);
                     }}
@@ -11773,6 +12781,28 @@ class SentinelAgent:
                     const expVal = isTeamLeadQ ? 3.0 : ((answerNumeric !== null && answerNumeric >= 3.5 && answerNumeric <= 5.5) ? 4.2 : (answerNumeric !== null ? answerNumeric : (isExpQ ? 4.2 : null)));
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Answer:', answer, '| Numeric:', answerNumeric, '| ExpVal:', expVal);
                     
+                    // Pre-scan: if candidate experience is ~4.2, check if any radio has min >= 4 or covers 4.2 with max > 4
+                    let hasBracketCovering4_2 = false;
+                    if (expVal !== null && expVal >= 3.5 && expVal <= 5.5) {{
+                        for (const r of radios) {{
+                            const lbl = (getRadioLabel(r) || '').toLowerCase().trim();
+                            const rm = lbl.match(/(\d+(?:\.\d+)?)\s*(?:lpa|lakhs?|lac|cr|years?|yrs?|months?|days?)?\s*(?:[-–—]|\bto\b|\s+)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i);
+                            const mm = lbl.match(/(?:more\s+than|over|above|>|^\s*>\s*)\s*(\d+(?:\.\d+)?)/i) || lbl.match(/(\d+(?:\.\d+)?)\s*(?:\+|or\s+more|and\s+above|or\s+above)/i);
+                            if (rm) {{
+                                const rMin = parseFloat(rm[1]);
+                                const rMax = parseFloat(rm[2]);
+                                if ((rMin === 4 || (expVal >= rMin && expVal <= rMax)) && rMax > 4) {{
+                                    hasBracketCovering4_2 = true;
+                                    break;
+                                }}
+                            }}
+                            if (mm && parseFloat(mm[1]) <= expVal && parseFloat(mm[1]) >= 4) {{
+                                hasBracketCovering4_2 = true;
+                                break;
+                            }}
+                        }}
+                    }}
+
                     const scoreRadio = (label, radioEl) => {{
                         const cleanLabel = (label || '').toLowerCase().trim();
                         const val = (radioEl.value || radioEl.id || '').toLowerCase().trim();
@@ -11800,19 +12830,61 @@ class SentinelAgent:
                         
                         // Numeric range / comparison matching for experience, notice days, salary
                         if (expVal !== null) {{
+                            // Notice period: answer is in days but options are weeks/months.
+                            const ansIsDaysOnly = /\bdays?\b/i.test(answerLower) && !/\byears?|yrs?|months?|lpa|lakh/i.test(answerLower);
+                            if (ansIsDaysOnly && /weeks?/i.test(cleanLabel) && !/years?|yrs?|lpa|lakh/i.test(cleanLabel)) {{
+                                const weeks = expVal / 7.0;
+                                const rangeW = cleanLabel.match(/(\d+(?:\.\d+)?)\s*(?:[-–]|\bto\b)\s*(\d+(?:\.\d+)?)\s*weeks?/i);
+                                if (rangeW) {{
+                                    const wMin = parseFloat(rangeW[1]);
+                                    const wMax = parseFloat(rangeW[2]);
+                                    if (weeks >= wMin && weeks <= wMax) return Math.max(88, 100 - (wMax - wMin));
+                                    return 0;
+                                }}
+                                const lessW = cleanLabel.match(/(?:less\s+than|under|fewer\s+than|below|<)\s*(\d+(?:\.\d+)?)\s*weeks?/i);
+                                if (lessW) return weeks < parseFloat(lessW[1]) ? 90 : 0;
+                                const singleW = cleanLabel.match(/^(\d+(?:\.\d+)?)\s*weeks?$/i);
+                                if (singleW) return Math.max(0, 92 - Math.abs(weeks - parseFloat(singleW[1])) * 15);
+                                return 0;
+                            }}
+                            if (ansIsDaysOnly && /months?/i.test(cleanLabel) && !/years?|yrs?|weeks?|lpa|lakh/i.test(cleanLabel)) {{
+                                const months = expVal / 30.0;
+                                const rangeM = cleanLabel.match(/(\d+(?:\.\d+)?)\s*(?:[-–]|\bto\b)\s*(\d+(?:\.\d+)?)\s*months?/i);
+                                if (rangeM) {{
+                                    const mMin = parseFloat(rangeM[1]);
+                                    const mMax = parseFloat(rangeM[2]);
+                                    if (months >= mMin && months <= mMax) return Math.max(88, 100 - (mMax - mMin) * 5);
+                                    return 0;
+                                }}
+                                const lessM = cleanLabel.match(/(?:less\s+than|under|below|<)\s*(\d+(?:\.\d+)?)\s*months?/i);
+                                if (lessM) return months < parseFloat(lessM[1]) ? 90 : 0;
+                                const singleM = cleanLabel.match(/^(\d+(?:\.\d+)?)\s*months?$/i);
+                                if (singleM) return Math.max(0, 92 - Math.abs(months - parseFloat(singleM[1])) * 12);
+                                return 0;
+                            }}
                             // 1. Direct range format: "X-Y", "X to Y", "X – Y", "X Y" (e.g. "3-5", "3 5", "4-5", "5-7", "7-9", "2-4 yrs")
                             const rangeMatch = cleanLabel.match(/(\d+(?:\.\d+)?)\s*(?:lpa|lakhs?|lac|cr|years?|yrs?|months?|days?)?\s*(?:[-–]|\bto\b|\s+)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i);
                             if (rangeMatch) {{
                                 const rMin = parseFloat(rangeMatch[1]);
                                 const rMax = parseFloat(rangeMatch[2]);
                                 const testVal = (expVal >= 100000 && rMax <= 150) ? (expVal / 100000) : expVal;
-                                if (testVal >= rMin && testVal <= (rMax + 0.5)) {{
-                                    return Math.max(85, 99 - (rMax - rMin) - Math.abs(testVal - Math.min(testVal, rMax)));
+
+                                // Candidate has 4.2 years (> 4). If an option has max <= 4 (e.g. 2-4, 0-4),
+                                // candidate has exceeded it. If a bracket starting at 4 or containing 4.2 exists,
+                                // never select the bracket where 4 is the max!
+                                if (testVal >= 4.0 && rMax <= 4.0 && hasBracketCovering4_2) {{
+                                    return 0;
                                 }}
-                                if (testVal > rMax) {{
+
+                                if (testVal >= rMin && testVal <= rMax) {{
+                                    const minBonus = (rMin === 4 || Math.floor(testVal) === rMin) ? 10 : 0;
+                                    return Math.max(88, 100 + minBonus - (rMax - rMin) - Math.abs(testVal - rMin));
+                                }}
+
+                                if (testVal > rMax && !hasBracketCovering4_2) {{
                                     const diff = testVal - rMax;
                                     if (diff <= 2.0) {{
-                                        return Math.max(70, 85 - diff * 8);
+                                        return Math.max(70, 92 - diff * 8);
                                     }}
                                 }}
                                 return 0;
@@ -11823,6 +12895,9 @@ class SentinelAgent:
                             if (lessMatch) {{
                                 const bound = parseFloat(lessMatch[1]);
                                 const testVal = (expVal >= 100000 && bound <= 150) ? (expVal / 100000) : expVal;
+                                if (bound <= 4.0 && testVal >= 4.0) {{
+                                    return 0; // Candidate with 4.2 years strictly exceeds "< 4" or "<= 4"
+                                }}
                                 if (testVal < bound) {{
                                     return Math.max(75, 88 - (bound - testVal));
                                 }}
@@ -11830,12 +12905,13 @@ class SentinelAgent:
                             }}
                             
                             // 3. Lower bound: "> X", "More than X", "Above X", "Over X", "X+" (e.g. "> 5", "5+", "4+", "> 3")
-                            const moreMatch = cleanLabel.match(/(?:more\s+than|over|above|>|^\s*>\s*)\s*(\d+(?:\.\d+)?)/i) || cleanLabel.match(/(\d+(?:\.\d+)?)\s*\+/i);
+                            const moreMatch = cleanLabel.match(/(?:more\s+than|over|above|>|^\s*>\s*)\s*(\d+(?:\.\d+)?)/i) || cleanLabel.match(/(\d+(?:\.\d+)?)\s*(?:\+|or\s+more|and\s+above|or\s+above)/i);
                             if (moreMatch) {{
                                 const bound = parseFloat(moreMatch[1]);
                                 const testVal = (expVal >= 100000 && bound <= 150) ? (expVal / 100000) : expVal;
                                 if (testVal >= bound) {{
-                                    return Math.max(75, 91 - (testVal - bound) * 2);
+                                    const minBonus = (bound === 4) ? 10 : 0;
+                                    return Math.max(75, 95 + minBonus - (testVal - bound) * 2);
                                 }}
                                 return 0;
                             }}
@@ -12252,8 +13328,28 @@ class SentinelAgent:
                         if (hasRangeOptions) {{
                             // Find single best range matching the answer (e.g. 4.2 years)
                             const numM = answerStr.match(/(\d+(?:\.\d+)?)/);
-                            const answerNum = numM ? parseFloat(numM[1]) : 4.2;
+                            const rawNum = numM ? parseFloat(numM[1]) : 4.2;
+                            const answerNum = (rawNum >= 3.5 && rawNum <= 5.5) ? 4.2 : rawNum;
                             let bestInfo = null;
+
+                            let hasHigherCb = false;
+                            if (answerNum >= 3.5 && answerNum <= 5.5) {{
+                                for (const info of cbInfos) {{
+                                    const lbl = info.lblLower;
+                                    const rm = lbl.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/i);
+                                    const mm = lbl.match(/(?:>|more\s+than|over|above|\+)\s*(\d+(?:\.\d+)?)/i) || lbl.match(/(\d+(?:\.\d+)?)\s*\+/i);
+                                    if (rm) {{
+                                        const rMin = parseFloat(rm[1]);
+                                        const rMax = parseFloat(rm[2]);
+                                        if ((rMin === 4 || (answerNum >= rMin && answerNum <= rMax)) && rMax > 4) {{
+                                            hasHigherCb = true; break;
+                                        }}
+                                    }}
+                                    if (mm && parseFloat(mm[1]) <= answerNum && parseFloat(mm[1]) >= 4) {{
+                                        hasHigherCb = true; break;
+                                    }}
+                                }}
+                            }}
                             
                             for (const info of cbInfos) {{
                                 if (info.lblLower.includes('skip') || isNegativeOption(info.lblLower)) continue;
@@ -12265,12 +13361,18 @@ class SentinelAgent:
                                 if (rangeM) {{
                                     const min = parseFloat(rangeM[1]);
                                     const max = parseFloat(rangeM[2]);
+                                    if (answerNum >= 4.0 && max <= 4.0 && hasHigherCb) {{
+                                        continue;
+                                    }}
                                     if (answerNum >= min && answerNum <= max) {{
                                         bestInfo = info;
                                         break;
                                     }}
                                 }} else if (lessM) {{
                                     const max = parseFloat(lessM[1]);
+                                    if (max <= 4.0 && answerNum >= 4.0 && hasHigherCb) {{
+                                        continue;
+                                    }}
                                     if (answerNum < max) {{
                                         bestInfo = info;
                                         break;
@@ -12394,7 +13496,26 @@ class SentinelAgent:
                     
                     if (mccHasRange) {{
                         const numM = answerStr.match(/(\d+(?:\.\d+)?)/);
-                        const answerNum = numM ? parseFloat(numM[1]) : 4.2;
+                        const rawNum = numM ? parseFloat(numM[1]) : 4.2;
+                        const answerNum = (rawNum >= 3.5 && rawNum <= 5.5) ? 4.2 : rawNum;
+                        let hasHigherMcc = false;
+                        if (answerNum >= 3.5 && answerNum <= 5.5) {{
+                            for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
+                                const name = (namedInputs[i].name || '').toLowerCase().trim();
+                                const rm = name.match(/(\d+(?:\.\d+)?)\s*[-–to]\s*(\d+(?:\.\d+)?)/i);
+                                const mm = name.match(/(?:>|more\s+than|over|above|\+)\s*(\d+(?:\.\d+)?)/i) || name.match(/(\d+(?:\.\d+)?)\s*\+/i);
+                                if (rm) {{
+                                    const rMin = parseFloat(rm[1]);
+                                    const rMax = parseFloat(rm[2]);
+                                    if ((rMin === 4 || (answerNum >= rMin && answerNum <= rMax)) && rMax > 4) {{
+                                        hasHigherMcc = true; break;
+                                    }}
+                                }}
+                                if (mm && parseFloat(mm[1]) <= answerNum && parseFloat(mm[1]) >= 4) {{
+                                    hasHigherMcc = true; break;
+                                }}
+                            }}
+                        }}
                         let bestIdx = -1;
                         for (let i = 0; i < namedInputs.length && i < mccCheckboxes.length; i++) {{
                             const name = (namedInputs[i].name || '').toLowerCase().trim();
@@ -12403,10 +13524,19 @@ class SentinelAgent:
                             const lessM = name.match(/(?:<|less\s+than|under|fewer\s+than|below|up\s+to)\s*(\d+(?:\.\d+)?)/i);
                             const moreM = name.match(/(?:>|more\s+than|over|above|\+)\s*(\d+(?:\.\d+)?)/i) || name.match(/(\d+(?:\.\d+)?)\s*\+/i);
                             
-                            if (rangeM && answerNum >= parseFloat(rangeM[1]) && answerNum <= parseFloat(rangeM[2])) {{
-                                bestIdx = i; break;
-                            }} else if (lessM && answerNum < parseFloat(lessM[1])) {{
-                                bestIdx = i; break;
+                            if (rangeM) {{
+                                const min = parseFloat(rangeM[1]);
+                                const max = parseFloat(rangeM[2]);
+                                if (answerNum >= 4.0 && max <= 4.0 && hasHigherMcc) continue;
+                                if (answerNum >= min && answerNum <= max) {{
+                                    bestIdx = i; break;
+                                }}
+                            }} else if (lessM) {{
+                                const bound = parseFloat(lessM[1]);
+                                if (bound <= 4.0 && answerNum >= 4.0 && hasHigherMcc) continue;
+                                if (answerNum < bound) {{
+                                    bestIdx = i; break;
+                                }}
                             }} else if (moreM && answerNum >= parseFloat(moreM[1])) {{
                                 bestIdx = i; break;
                             }}
@@ -12797,22 +13927,9 @@ class SentinelAgent:
                         current_question = result.split(fmt)[1] if fmt in result else None
                         break
             
-            # NEW: Log Q&A to CSV if we got structured data
-            if qa_data and qa_data.get('q') and qa_data.get('a'):
-                self._log_qa_result(
-                    question=qa_data['q'],
-                    answer=qa_data['a'],
-                    input_type=qa_data.get('t', '') or '',
-                    options=qa_data.get('options', []),
-                    selected_option=qa_data.get('s', '') or qa_data['a'],
-                    confidence="pattern_match",
-                    status="submitted",
-                    url=self._page.url if self._page else "",
-                    platform="naukri",
-                    source=qa_data.get('source', 'naukri_chatbot_pattern'),
-                    job_id_or_url=getattr(self, '_current_job_url', '') or (self._page.url if self._page else ""),
-                )
-                self.metrics['questions_answered'] += 1
+            # Log every chatbot interaction to the QA CSV: the answer given, the
+            # questions the script deliberately skipped, and rejected answers.
+            self._log_naukri_chatbot_result(result, qa_data)
             
             # Check if stuck on same question
             if current_question:
@@ -13264,12 +14381,429 @@ class SentinelAgent:
             print(f"   ⚠️ Error during _select_next_job_card: {e}")
             return "ERROR"
 
+    async def _handle_naukri_profile_update_task(self) -> bool:
+        """Handle dedicated Naukri Resume Headline update workflow."""
+        if not self._page:
+            return False
+        print("📝 Naukri Profile Page - Running headline update...")
+        try:
+            update_result = await self._page.evaluate("""() => {
+                const headlineSection = document.querySelector('#lazyResumeHead, .resumeHeadline');
+                if (!headlineSection) return 'NO_HEADLINE_SECTION';
+                const editIcon = headlineSection.querySelector('span.edit.icon, span.icon.edit, [class*="edit"][class*="icon"]');
+                if (!editIcon) return 'NO_EDIT_ICON';
+                editIcon.click();
+                return 'EDIT_CLICKED';
+            }""")
+            print(f"   📜 Step 1 - Edit click: {update_result}")
+            
+            if update_result == 'EDIT_CLICKED':
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                remove_result = await self._page.evaluate("""() => {
+                    const textarea = document.querySelector('#resumeHeadline, textarea[id="resumeHeadline"]');
+                    if (!textarea) return 'NO_TEXTAREA';
+                    if (textarea.value.endsWith('.')) return 'HAS_FULLSTOP';
+                    return 'NO_FULLSTOP';
+                }""")
+                
+                if remove_result == 'HAS_FULLSTOP':
+                    text_val = await self._page.evaluate("document.querySelector('#resumeHeadline').value")
+                    new_text = text_val.rstrip('.')
+                    textarea = self._page.locator('#resumeHeadline')
+                    await textarea.focus()
+                    await textarea.select_text()
+                    await textarea.press('Backspace')
+                    await asyncio.sleep(0.3)
+                    await textarea.type(new_text)
+                    remove_result = 'FULLSTOP_REMOVED'
+                
+                print(f"   📜 Step 2 - Remove fullstop: {remove_result}")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                
+                try:
+                    save_result = await self._page.evaluate("""() => {
+                        const selectors = [
+                            '.form-actions button.btn-dark-ot',
+                            '.action.s12 button.btn-dark-ot',
+                            'button.btn-dark-ot[type="submit"]',
+                            'button[type="submit"]'
+                        ];
+                        for (let sel of selectors) {
+                            const btn = document.querySelector(sel);
+                            if (btn && btn.offsetParent !== null) {
+                                btn.scrollIntoView({block: 'center'});
+                                btn.click();
+                                return 'SAVE_CLICKED';
+                            }
+                        }
+                        const allBtns = document.querySelectorAll('button');
+                        for (let btn of allBtns) {
+                            if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
+                                btn.scrollIntoView({block: 'center'});
+                                btn.click();
+                                return 'SAVE_CLICKED: text-match';
+                            }
+                        }
+                        return 'NO_SAVE_BUTTON';
+                    }""")
+                except Exception as e:
+                    print(f"      ⚠️ Save error: {e}")
+                    save_result = 'NO_SAVE_BUTTON'
+                print(f"   📜 Step 3 - First save: {save_result}")
+                
+                await asyncio.sleep(1)
+                if save_result == 'NO_SAVE_BUTTON':
+                    print("      ⚠️ No Save button found, retrying edit...")
+                    return False
+                
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                
+                print("   🔄 Navigating back to profile page...")
+                try:
+                    await self._page.goto('https://www.naukri.com/mnjuser/profile?id=&altresid', timeout=60000)
+                    await self._page.wait_for_selector('#lazyResumeHead, .resumeHeadline', timeout=30000)
+                except Exception as e:
+                    print(f"      ⚠️ Navigation error: {e}")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                
+                edit2_result = await self._page.evaluate("""() => {
+                    const headlineSection = document.querySelector('#lazyResumeHead, .resumeHeadline');
+                    if (!headlineSection) return 'NO_HEADLINE_SECTION';
+                    const editIcon = headlineSection.querySelector('span.edit.icon, span.icon.edit, [class*="edit"][class*="icon"]');
+                    if (!editIcon) return 'NO_EDIT_ICON';
+                    editIcon.click();
+                    return 'EDIT_CLICKED_2';
+                }""")
+                print(f"   📜 Step 4 - Edit again: {edit2_result}")
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                
+                add_result = await self._page.evaluate("""() => {
+                    const textarea = document.querySelector('#resumeHeadline, textarea[id="resumeHeadline"]');
+                    if (!textarea) return 'NO_TEXTAREA';
+                    if (!textarea.value.endsWith('.')) return 'NEEDS_FULLSTOP';
+                    return 'ALREADY_HAS_FULLSTOP';
+                }""")
+                
+                if add_result == 'NEEDS_FULLSTOP':
+                    text_val = await self._page.evaluate("document.querySelector('#resumeHeadline').value")
+                    if not text_val.endswith('.'):
+                        new_text = text_val + '.'
+                        textarea = self._page.locator('#resumeHeadline')
+                        await textarea.focus()
+                        await textarea.select_text()
+                        await textarea.press('Backspace')
+                        await asyncio.sleep(0.3)
+                        await textarea.type(new_text)
+                        add_result = 'FULLSTOP_ADDED'
+                
+                print(f"   📜 Step 5 - Add fullstop: {add_result}")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                
+                try:
+                    save2_result = await self._page.evaluate("""() => {
+                        const selectors = [
+                            '.form-actions button.btn-dark-ot',
+                            '.action.s12 button.btn-dark-ot',
+                            'button.btn-dark-ot[type="submit"]',
+                            'button[type="submit"]'
+                        ];
+                        for (let sel of selectors) {
+                            const btn = document.querySelector(sel);
+                            if (btn && btn.offsetParent !== null) {
+                                btn.scrollIntoView({block: 'center'});
+                                btn.click();
+                                return 'SAVE_CLICKED_2';
+                            }
+                        }
+                        const allBtns = document.querySelectorAll('button');
+                        for (let btn of allBtns) {
+                            if ((btn.innerText || '').trim().toLowerCase() === 'save' && btn.offsetParent !== null) {
+                                btn.scrollIntoView({block: 'center'});
+                                btn.click();
+                                return 'SAVE_CLICKED_2: text-match';
+                            }
+                        }
+                        return 'NO_SAVE_BUTTON';
+                    }""")
+                except Exception as e:
+                    print(f"      ⚠️ Save error: {e}")
+                    save2_result = 'NO_SAVE_BUTTON'
+                print(f"   📜 Step 6 - Second save: {save2_result}")
+                
+                await asyncio.sleep(1)
+                print("🎉 Profile headline updated successfully!")
+                return True
+        except Exception as e:
+            print(f"⚠️ Profile update error: {e}")
+            return False
+        return False
+
+    async def _handle_naukri_employment_lwd_task(self) -> bool:
+        """Handle dedicated Naukri Employment Expected Last Working Day update workflow."""
+        if not self._page:
+            return False
+        print("📅 Naukri Employment - Running LWD update...")
+        try:
+            edit_result = await self._page.evaluate("""() => {
+                let empSection = document.querySelector('#lazyEmployment');
+                if (!empSection) {
+                    empSection = document.querySelector('[data-plugin="lazyload"][id*="Employment"]');
+                }
+                if (!empSection) {
+                    const headings = document.querySelectorAll('h2, h3, .widgetHead');
+                    for (let h of headings) {
+                        if (h.innerText && h.innerText.trim() === 'Employment') {
+                            empSection = h.closest('.widgetContainer, [class*="widget"], .card, section');
+                            break;
+                        }
+                    }
+                }
+                if (empSection) {
+                    const editSelectors = [
+                        'span.edit.icon',
+                        '.edit.icon',
+                        '[class*="edit"][class*="icon"]',
+                        'span[class*="edit"]',
+                        '.editIcon'
+                    ];
+                    for (let sel of editSelectors) {
+                        const editIcons = empSection.querySelectorAll(sel);
+                        if (editIcons.length > 0) {
+                            editIcons[0].click();
+                            return 'EDIT_CLICKED';
+                        }
+                    }
+                }
+                const allEditIcons = document.querySelectorAll('span.edit.icon, .edit.icon');
+                for (let icon of allEditIcons) {
+                    const parent = icon.closest('.row, div[class*="item"], .card');
+                    if (parent) {
+                        const text = parent.innerText || '';
+                        if (text.includes('Software Engineer') || text.includes('Everbridge')) {
+                            icon.click();
+                            return 'EDIT_CLICKED';
+                        }
+                    }
+                }
+                return 'NO_EMPLOYMENT_SECTION';
+            }""")
+            print(f"   📜 Step 1 - Employment edit: {edit_result}")
+            
+            if edit_result == 'EDIT_CLICKED':
+                await asyncio.sleep(random.uniform(3, 5))
+                import re as _re
+                month_map = {
+                    'january': '1', 'february': '2', 'march': '3', 'april': '4',
+                    'may': '5', 'june': '6', 'july': '7', 'august': '8',
+                    'september': '9', 'october': '10', 'november': '11', 'december': '12'
+                }
+                month_names_rev = {v: k.capitalize() for k, v in month_map.items()}
+                date_match = _re.search(
+                    r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+),\s+(\d{4})',
+                    self._task_description, _re.IGNORECASE
+                )
+                if date_match:
+                    month_name = date_match.group(1)
+                    month_num = month_map[month_name.lower()]
+                    day_val = date_match.group(2)
+                    year_val = date_match.group(3)
+                    month_display = month_name[:3]
+                else:
+                    offset_match = _re.search(r'LWD\s*\+(\d+)', self._task_description)
+                    days_offset = int(offset_match.group(1)) if offset_match else 15
+                    lwd_date = datetime.now() + timedelta(days=days_offset)
+                    year_val = str(lwd_date.year)
+                    month_num_val = lwd_date.month
+                    month_display = month_names_rev[month_num_val][:3]
+                    day_val = str(lwd_date.day)
+                    month_num = str(month_num_val)
+                
+                print(f"   📅 Setting LWD to: {day_val} {month_display} {year_val}")
+                
+                async def set_single_dropdown(name, dropdown_id, data_prefix, option_values, max_retries=3):
+                    if isinstance(option_values, str):
+                        option_values = [option_values]
+                    print(f"   📅 Setting {name} to {option_values[0]}...")
+                    for attempt in range(max_retries):
+                        try:
+                            await self._page.click(dropdown_id, timeout=5000)
+                            await asyncio.sleep(0.8)
+                            result = await self._page.evaluate("""({dataPrefix, optionVals}) => {
+                                for (const val of optionVals) {
+                                    const dataId = dataPrefix + val;
+                                    const anchor = document.querySelector('a[data-id="' + dataId + '"]');
+                                    if (anchor && anchor.offsetParent !== null) {
+                                        anchor.scrollIntoView({block: 'center'});
+                                        anchor.click();
+                                        return 'SELECTED_DATA_ID: ' + dataId;
+                                    }
+                                }
+                                const openDropdown = document.querySelector('.dropdownList[style*="display: block"], .dropdownList:not([style*="display: none"]), ul[class*="dropdown"]:not([style*="display: none"])');
+                                if (openDropdown) {
+                                    const items = openDropdown.querySelectorAll('li a, li, a');
+                                    for (let item of items) {
+                                        const itemText = (item.innerText || item.textContent || '').trim().toLowerCase();
+                                        for (const val of optionVals) {
+                                            const targetVal = val.toLowerCase();
+                                            if (itemText === targetVal || (itemText.length > 0 && targetVal.startsWith(itemText))) {
+                                                item.scrollIntoView({block: 'center'});
+                                                item.click();
+                                                return 'SELECTED_BY_TEXT: ' + itemText;
+                                            }
+                                        }
+                                    }
+                                }
+                                return 'NOT_FOUND';
+                            }""", {"dataPrefix": data_prefix, "optionVals": [str(v) for v in option_values]})
+                            
+                            if 'SELECTED' in result:
+                                await asyncio.sleep(0.4)
+                                return f"{result}"
+                            
+                            await self._page.evaluate("""() => {
+                                const header = document.querySelector('.modal-content h2, .modal-content h3, .widgetHead, .drawerWrapper header, .edit-container header');
+                                if (header) header.click();
+                            }""")
+                            await asyncio.sleep(0.5)
+                        except Exception as e:
+                            if attempt < max_retries - 1:
+                                print(f"      ⚠️ Retry {attempt + 1}/{max_retries} for {name}: {str(e)[:50]}")
+                                await asyncio.sleep(1)
+                            else:
+                                return f"ERROR: {e}"
+                    return f"FAILED_AFTER_{max_retries}_ATTEMPTS: {option_values[0]}"
+
+                year_vals = [year_val]
+                month_vals = [month_num, month_display, month_name]
+                try:
+                    month_vals.append(str(int(month_num) - 1))
+                except Exception:
+                    pass
+                day_vals = [day_val]
+                if len(day_val) == 1:
+                    day_vals.append(f"0{day_val}")
+                elif day_val.startswith('0'):
+                    day_vals.append(day_val.lstrip('0'))
+
+                year_result = await set_single_dropdown('Year', '#lwdYearFor', 'lwdYear_', year_vals)
+                month_result = await set_single_dropdown('Month', '#lwdMonthFor', 'lwdMonth_', month_vals)
+                day_result = await set_single_dropdown('Day', '#lwdDayFor', 'lwdDay_', day_vals)
+                print(f"   📜 Step 2 - Dropdowns: Year={year_result}, Month={month_result}, Day={day_result}")
+                
+                print("   ⏳ Waiting 2s for state to settle before saving...")
+                await asyncio.sleep(2)
+                
+                save_js = """() => {
+                    const isSaveButton = (btn) => {
+                        if (!btn || btn.offsetParent === null) return false;
+                        const text = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
+                        const aria = (btn.getAttribute('aria-label') || '').toLowerCase();
+                        const className = (btn.className || '').toLowerCase();
+                        const id = (btn.id || '').toLowerCase();
+                        if (text.includes('ai') || text.includes('improve') || aria.includes('ai') || aria.includes('improve') ||
+                            className.includes('ai') || text.includes('cancel') || text.includes('discard') || 
+                            text.includes('delete') || text.includes('close') || aria.includes('close')) {
+                            return false;
+                        }
+                        if (id === 'submitemployment' || id === 'saveprofile' || id === 'submitprofile') return true;
+                        if (text === 'save' || text === 'save changes' || text === 'save details' || text === 'update') return true;
+                        if (text.startsWith('save') && !text.includes('later')) return true;
+                        if (btn.type === 'submit' && (text.includes('save') || text.includes('submit') || text.length === 0)) return true;
+                        return false;
+                    };
+                    const submitEmpBtn = document.querySelector('button#submitEmployment, input#submitEmployment');
+                    if (submitEmpBtn && isSaveButton(submitEmpBtn)) {
+                        submitEmpBtn.scrollIntoView({block: 'center'});
+                        submitEmpBtn.click();
+                        return 'SAVE_SUBMIT_EMPLOYMENT_CLICKED';
+                    }
+                    const editContainer = document.querySelector('.drawerWrapper, .edit-container, .modal-content, [class*="drawer"]');
+                    if (editContainer) {
+                        const containerBtns = editContainer.querySelectorAll('button, input[type="submit"], input[type="button"], a.btn');
+                        for (let btn of containerBtns) {
+                            if (isSaveButton(btn)) {
+                                btn.scrollIntoView({block: 'center'});
+                                btn.click();
+                                return 'SAVE_CLICKED: ' + (btn.id || btn.className || btn.innerText || '').slice(0, 30);
+                            }
+                        }
+                    }
+                    const allBtns = document.querySelectorAll('button, input[type="submit"], input[type="button"], a.btn');
+                    for (let btn of allBtns) {
+                        if (isSaveButton(btn)) {
+                            btn.scrollIntoView({block: 'center'});
+                            btn.click();
+                            return 'SAVE_CLICKED_GLOBAL: ' + (btn.id || btn.className || btn.innerText || '').slice(0, 30);
+                        }
+                    }
+                    return 'NO_SAVE_BUTTON_FOUND';
+                }"""
+                save_result = await self._page.evaluate(save_js)
+                print(f"   📜 Step 3 - Save: {save_result}")
+                
+                if 'SAVE' in save_result and 'NO_SAVE' not in save_result:
+                    await asyncio.sleep(2)
+                    print("🎉 Expected Last Working Day updated successfully!")
+                    return True
+                else:
+                    print(f"      ⚠️ Could not find Save button: {save_result}")
+                    return False
+        except Exception as e:
+            print(f"⚠️ Employment LWD update error: {e}")
+            return False
+        return False
+
+    async def _handle_naukri_early_access_task(self) -> bool:
+        """Handle dedicated Naukri Early Access jobs workflow."""
+        if not self._page:
+            return False
+        print("🚀 Naukri Early Access - Clicking Share Interest...")
+        try:
+            share_result = await self._page.evaluate("""() => {
+                const specificBtn = document.querySelector("body > main > div > div > div > section.lp__left-section-container > div > div:nth-child(1) > div > div.row7 > div > div.tf__content > button");
+                if (specificBtn && specificBtn.offsetParent !== null) {
+                    specificBtn.click();
+                    return 'SHARE_CLICKED_SPECIFIC';
+                }
+                const allBtns = document.querySelectorAll('button');
+                for (let btn of allBtns) {
+                    if (btn.innerText && btn.innerText.toLowerCase().includes('share interest')) {
+                        if (btn.offsetParent !== null) {
+                            btn.click();
+                            return 'SHARE_CLICKED';
+                        }
+                    }
+                }
+                return 'NO_SHARE_BUTTON';
+            }""")
+            print(f"   📜 Share Interest: {share_result}")
+            
+            if 'SHARE_CLICKED' in share_result:
+                await asyncio.sleep(random.uniform(2, 4))
+                success = await self._page.evaluate("""() => {
+                    const successMsg = document.querySelector('.apply-status-header.green .apply-message, .apply-status-header .apply-message');
+                    if (successMsg && successMsg.innerText.toLowerCase().includes('interest shared')) {
+                        return true;
+                    }
+                    return document.body.innerText.includes('Interest shared successfully');
+                }""")
+                if success:
+                    print("🎉 Interest shared successfully!")
+                else:
+                    print("✅ Share Interest clicked (success not verified)")
+                return True
+            else:
+                print("⚠️ No Share Interest button found")
+                return False
+        except Exception as e:
+            print(f"⚠️ Early Access error: {e}")
+            return False
+
     async def _handle_scripted_fallback(self) -> str:
         """Execute the scripted JavaScript fallback logic and return the result string."""
-        # Inject patterns ONCE per context via add_init_script (window globals).
-        # Previously this re-serialized ~12.3 MB of JSON on every step, causing
-        # >500 MB/site memory usage. Now patterns are window globals.
-        await self._inject_patterns_once()
+        url = (self._page.url if hasattr(self._page, 'url') and self._page.url else '').lower()
+        if ('linkedin' in url or 'recommendedjobs' in url) and 'profile' not in url and 'earjobs' not in url:
+            await self._inject_patterns_once()
         
         if self._page:
             is_intersession = self._is_intersession_task()
@@ -13298,8 +14832,18 @@ class SentinelAgent:
                 await self._page.evaluate("""({skippedIds, skippedTitles}) => {
                     if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
                     if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
-                    if (skippedIds) skippedIds.forEach(id => window.__skippedJobIds.add(id));
-                    if (skippedTitles) skippedTitles.forEach(t => window.__skippedJobTitles.add(t));
+                    if (skippedIds) skippedIds.forEach(id => {
+                        if (id) {
+                            window.__skippedJobIds.add(id);
+                            window.__skippedJobIds.add(String(id).replace(/^.*:/, '').trim());
+                        }
+                    });
+                    if (skippedTitles) skippedTitles.forEach(t => {
+                        if (t) {
+                            window.__skippedJobTitles.add(t);
+                            window.__skippedJobTitles.add(t.toLowerCase().trim());
+                        }
+                    });
                 }""", {
                     "skippedIds": list(self._linkedin_skipped_job_ids),
                     "skippedTitles": list(self._linkedin_skipped_job_titles)
@@ -13313,11 +14857,25 @@ class SentinelAgent:
             # Using a function expression (wrapped in parens) - function statements require a name in JS
             js_code = """(function() {
                 // 1. INJECTED KNOWLEDGE (from window globals set by add_init_script)
-                const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__;
-                const KNOWN_PATTERNS_WITH_DEFAULTS = window.__SENTINEL_PATTERNS_WITH_DEFAULTS__;
-                const SYNONYMS = window.__SENTINEL_SYNONYMS__;
-                const STOP_WORDS_SET = new Set(window.__SENTINEL_STOPWORDS__);
-                const EXACT_MATCH_KEYS = new Set(window.__SENTINEL_EXACT_MATCH_KEYS__);
+                const KNOWN_PATTERNS = window.__SENTINEL_PATTERNS__ || {};
+                const KNOWN_PATTERNS_WITH_DEFAULTS = window.__SENTINEL_PATTERNS_WITH_DEFAULTS__ || {};
+                const SYNONYMS = window.__SENTINEL_SYNONYMS__ || {};
+                const STOP_WORDS_SET = new Set(window.__SENTINEL_STOPWORDS__ || []);
+                const EXACT_MATCH_KEYS = new Set(window.__SENTINEL_EXACT_MATCH_KEYS__ || []);
+
+                // Mirror every recorded fill into a page-side queue that Python drains
+                // into qa_results.csv. Results also travel on the MARKER|JSON returns,
+                // but those only fire when a step reaches Next/Submit.
+                const attachQaLog = (arr) => {
+                    const queue = (window.__SENTINEL_QA_LOG__ = window.__SENTINEL_QA_LOG__ || []);
+                    const nativePush = Array.prototype.push.bind(arr);
+                    arr.push = function(entry) {
+                        const size = nativePush(entry);
+                        try { queue.push(entry); } catch (e) {}
+                        return size;
+                    };
+                    return arr;
+                };
                 
                 // Platform-specific overrides
                 if (window.location.hostname.includes('linkedin')) {
@@ -13344,7 +14902,10 @@ class SentinelAgent:
                         
                         if (isSalaryCat || isSalaryKey) {
                             const isVariableOrEquity = /variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(kLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(kLower);
-                            if (isVariableOrEquity) {
+                            // Compound "fixed + variable breakdown" questions must keep the
+                            // breakdown answer; only pure variable/equity questions are zero.
+                            const isBreakdownQ = /details|breakup|break-up|split|component|including\\s+fixed|fixed.*(?:and|\\+).*variable/i.test(kLower);
+                            if (isVariableOrEquity && !isBreakdownQ) {
                                 KNOWN_PATTERNS[k] = '0';
                             }
                             // Compound CTC questions (current AND expected) - MUST be first
@@ -13372,7 +14933,7 @@ class SentinelAgent:
                             // Also override input_type_defaults if present
                             if (defaultObj && defaultObj.input_type_defaults) {
                                 defaultObj.input_type_defaults.text = KNOWN_PATTERNS[k];
-                                defaultObj.input_type_defaults.number = isVariableOrEquity ? '0' : ((kLower.includes('lpa') || kLower.includes('lakh')) ? ((/expected|desired/i.test(kLower)) ? '30' : '23') : ((/expected|desired/i.test(kLower)) ? '3000000' : '2300000'));
+                                defaultObj.input_type_defaults.number = (isVariableOrEquity && !isBreakdownQ) ? '0' : ((kLower.includes('lpa') || kLower.includes('lakh')) ? ((/expected|desired/i.test(kLower)) ? '30' : '23') : ((/expected|desired/i.test(kLower)) ? '3000000' : '2300000'));
                                 defaultObj.input_type_defaults.textarea = KNOWN_PATTERNS[k];
                             }
                         }
@@ -13388,7 +14949,7 @@ class SentinelAgent:
                                 return;
                             }
                             if (kLower.includes('19102026') || kLower.includes('numeric_format')) {
-                                KNOWN_PATTERNS[k] = '23102026';
+                                KNOWN_PATTERNS[k] = (() => { const d = new Date(); d.setDate(d.getDate() + 15); return String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear(); })();
                                 return;
                             }
                             const v = KNOWN_PATTERNS[k];
@@ -13528,6 +15089,15 @@ class SentinelAgent:
                     const yyyy = d15.getFullYear();
                     const yy = String(yyyy).slice(-2);
                     
+                    if (val.includes('__DYNAMIC_LWD_DDMMYYYY__')) {
+                        val = val.replace(/__DYNAMIC_LWD_DDMMYYYY__/g, dd + mm + yyyy);
+                    }
+                    if (val.includes('__DYNAMIC_TODAY_DDMMYYYY__')) {
+                        val = val.replace(/__DYNAMIC_TODAY_DDMMYYYY__/g, todayDd + todayMm + todayYyyy);
+                    }
+                    if (val.includes('__DYNAMIC_LWD_ISO__')) {
+                        val = val.replace(/__DYNAMIC_LWD_ISO__/g, yyyy + '-' + mm + '-' + dd);
+                    }
                     if (val.includes('__DYNAMIC_LWD__')) {
                         val = val.replace(/__DYNAMIC_LWD__/g, dd + ' ' + mon + ' ' + yyyy);
                     }
@@ -13560,6 +15130,187 @@ class SentinelAgent:
                     if (!question) return null;
                     const qLower = question.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2013\u2014]/g, '-').trim();
                     const cleanQ = qLower.replace(/[*?:!_\\-\\(\\)\\/]/g, ' ').replace(/\\s+/g, ' ').trim();
+
+                    // ==================================================
+                    // SKILL-AWARE EXPERIENCE & ELIGIBILITY GATES
+                    // Mirrors the Python-side helpers; every tech-skill years
+                    // question answers the total experience (4.2/4), role and
+                    // domain overrides keep answering zero.
+                    // ==================================================
+                    const SKILL_YEARS = window.__SENTINEL_SKILL_YEARS__ || {};
+                    const ZERO_SKILLS = window.__SENTINEL_ZERO_SKILL_OVERRIDES__ || [];
+                    const GENERIC_SKILLS = new Set(window.__SENTINEL_GENERIC_SKILLS__ || []);
+                    const normalizeSkillText = (s) => (s || '').toLowerCase()
+                        .replace(/c\\s*\\+\\+/g, 'cpp')
+                        .replace(/c\\s*#/g, 'csharp')
+                        .replace(/\\.\\s*net/g, 'dotnet')
+                        .replace(/\\bnode\\s*\\.?\\s*js\\b/g, 'nodejs')
+                        .replace(/\\breact\\s*\\.?\\s*js\\b/g, 'reactjs')
+                        .replace(/\\bnext\\s*\\.?\\s*js\\b/g, 'nextjs')
+                        .replace(/\\bvue\\s*\\.?\\s*js\\b/g, 'vuejs')
+                        .replace(/\\bai\\s*\\/\\s*ml\\b/g, 'aiml')
+                        .replace(/\\bml\\s*\\/\\s*ai\\b/g, 'aiml')
+                        .replace(/\\bci\\s*\\/\\s*cd\\b/g, 'cicd')
+                        .replace(/[^a-z0-9]+/g, ' ')
+                        .replace(/\\s+/g, ' ')
+                        .trim();
+                    const skillTokenIndex = (hay, needle) => {
+                        for (let i = 0; i + needle.length <= hay.length; i++) {
+                            let ok = true;
+                            for (let j = 0; j < needle.length; j++) {
+                                if (hay[i + j] !== needle[j]) { ok = false; break; }
+                            }
+                            if (ok) return i;
+                        }
+                        return -1;
+                    };
+                    const skillTokens = normalizeSkillText(qLower).split(' ').filter(Boolean);
+                    const findSkillMatches = () => {
+                        const raw = [];
+                        ZERO_SKILLS.forEach(zero => {                            const nz = normalizeSkillText(zero);
+                            const zt = nz.split(' ').filter(Boolean);
+                            if (!zt.length) return;
+                            const idx = skillTokenIndex(skillTokens, zt);
+                            if (idx >= 0) raw.push({idx: idx, len: zt.length, skill: nz, years: 0});
+                        });
+                        Object.keys(SKILL_YEARS).forEach(k => {
+                            const nk = normalizeSkillText(k);
+                            const kt = nk.split(' ').filter(Boolean);
+                            if (!kt.length) return;
+                            // "go" is also a common English verb ("can go to the office").
+                            if (nk === 'go' && !/golang|\\bgo\\s+(?:language|programming|developer|engineer|backend|services?)\\b|\\b(?:in|with|using|know|write|wrote|worked)\\s+go\\b/.test(qLower)) return;
+                            const idx = skillTokenIndex(skillTokens, kt);
+                            if (idx >= 0) raw.push({idx: idx, len: kt.length, skill: nk, years: Number(SKILL_YEARS[k]) || 0});
+                        });
+                        if (!raw.length) return [];
+                        raw.sort((a, b) => (b.len - a.len) || (a.idx - b.idx));
+                        const kept = [];
+                        raw.forEach(item => {
+                            if (kept.some(k => item.idx >= k.idx && item.idx + item.len <= k.idx + k.len)) return;
+                            kept.push(item);
+                        });
+                        kept.sort((a, b) => a.idx - b.idx);
+                        const pool = kept;
+                        const out = [];
+                        const seen = new Set();
+                        pool.forEach(item => {
+                            if (seen.has(item.skill)) return;
+                            seen.add(item.skill);
+                            out.push([item.skill, item.years]);
+                        });
+                        return out;
+                    };
+                    const skillMatches = findSkillMatches();
+                    const isSkillYearsQ = () => {
+                        if (/(?:ctc|salary|compensation|lpa|notice\\s*period|last\\s*working)/.test(qLower)) return false;
+                        if (/services\\s+used|services\\s+you\\s+have\\s+used|technologies\\s+used/.test(qLower)) return false;
+                        if (/(?:which|what)\\b[^?]{0,80}(?:services|technologies|tools|skills|frameworks|databases|platforms|languages|products|systems)\\b/.test(qLower)) return false;
+                        const quantity = /(?:how\\s+many|how\\s+much|number\\s+of|total|years?|yrs?|yoe|months?)/.test(qLower);
+                        const experiencePhrase = /(?:exp|expr|experience)/.test(qLower);
+                        if (!quantity && !experiencePhrase) return false;
+                        const yesNoShape = /^(do|does|have|has|are|is|can|will|would|did|should)\\b/.test(qLower.trim());
+                        if (yesNoShape && !/(?:how\\s+many|how\\s+much|number\\s+of|years?|yrs?|yoe|months?)/.test(qLower)) return false;
+                        // Compound questions ("... experience in CI/CD? Have you worked with ...?") are descriptive, not years.
+                        const tailAfterQuestion = qLower.includes('?') ? qLower.split('?')[1].trim() : '';
+                        if (!quantity && /^(?:and\\s+)?(?:have|has|do|does|did|are|is|can|will|would)\\b/.test(tailAfterQuestion)) return false;
+                        if (/(?:describe|explain|briefly|elaborate|list)/.test(qLower) && !/(?:how\\s+many|years?|yrs?|yoe|months?)/.test(qLower)) return false;
+                        return true;
+                    };
+                    const formatSkillYears = (years) => {
+                        const y = Math.round(Number(years) * 10) / 10;
+                        if (window.location.hostname.includes('linkedin')) return String(Math.round(y));
+                        if (y === 0) return '0 Years';
+                        if (y === 1) return '1 Year';
+                        return y + ' Years';
+                    };
+                    const zeroSkillAnswer = () => {
+                        if (/(?:how\\s+many|how\\s+much|number\\s+of|years?|yrs?|yoe|months?)/.test(qLower)) return null;
+                        if (!/^(?:do|does|have|has|are|is|can|will|would|did)\\b/.test(qLower.trim())) return null;
+                        if (/mentioned\\s+skills|following\\s+skills|skills\\s+mentioned|as\\s+per\\s+(?:the\\s+)?jd|below\\s+skills|skills\\s+below/.test(qLower)) return null;
+                        if (/describe|explain|briefly|infrastructure/.test(qLower)) return null;
+                        if (/certifications?|certified|degree|education|course|training/.test(qLower)) return null;
+                        const specific = skillMatches.filter(m => !GENERIC_SKILLS.has(m[0]));
+                        if (!specific.length) return null;
+                        const zeroSet = new Set(ZERO_SKILLS.map(z => normalizeSkillText(z)));
+                        const hasOverride = specific.some(m => zeroSet.has(m[0]));
+                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower));
+                        if (hasOverride && !hasAlternative) return 'No';
+                        if (hasAlternative) return skillMatches.some(m => m[1] > 0) ? 'Yes' : 'No';
+                        return specific.every(m => m[1] > 0) ? 'Yes' : 'No';
+                    };
+                    const skillAnswer = () => {
+                        if (!skillMatches.length || !isSkillYearsQ()) return null;
+                        // Only concrete (non-generic) skills may answer with their own
+                        // years; generic-only matches fall through to total experience.
+                        const pool = skillMatches.filter(m => !GENERIC_SKILLS.has(m[0]));
+                        if (!pool.length) return null;
+                        if (/\\beach\\b/.test(qLower)) {
+                            return pool.map(m => m[0].replace(/\\b\\w/g, ch => ch.toUpperCase()) + ': ' + formatSkillYears(m[1])).join(', ');
+                        }
+                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower));
+                        const chosen = pool.reduce((a, b) => {
+                            if (hasAlternative) return (b[1] > a[1] ? b : a);
+                            return (b[1] < a[1] ? b : a);
+                        });
+                        return formatSkillYears(chosen[1]);
+                    };
+                    const evalExpGate = () => {
+                        const reqs = [];
+                        let m;
+                        const rangeRe = /(\\d+(?:\\.\\d+)?)\\s*(?:-|–|—|to)\\s*(\\d+(?:\\.\\d+)?)\\s*\\+?\\s*(?:years?|yrs?)\\b/g;
+                        while ((m = rangeRe.exec(qLower)) !== null) {
+                            reqs.push({kind: 'range', lo: parseFloat(m[1]), hi: parseFloat(m[2])});
+                        }
+                        const minPatterns = [
+                            /(?:at\\s+least|minimum(?:\\s+of)?|min\\.?|more\\s+than|over|above|greater\\s+than)\\s*(\\d+(?:\\.\\d+)?)\\s*\\+?\\s*(?:years?|yrs?)/g,
+                            /(\\d+(?:\\.\\d+)?)\\s*\\+\\s*(?:years?|yrs?)/g,
+                            /(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?)\\s*(?:\\+|plus|or\\s+more|or\\s+above|and\\s+above)/g
+                        ];
+                        minPatterns.forEach(re => {
+                            while ((m = re.exec(qLower)) !== null) {
+                                reqs.push({kind: 'min', lo: parseFloat(m[1]), hi: Infinity});
+                            }
+                        });
+                        const maxRe = /(?:less\\s+than|fewer\\s+than|under|below)\\s*(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?)/g;
+                        while ((m = maxRe.exec(qLower)) !== null) {
+                            reqs.push({kind: 'max', lo: 0, hi: parseFloat(m[1])});
+                        }
+                        if (!reqs.length) return null;
+                        const asksQuantity = /^(?:how\\s+many|how\\s+much|what\\s+is\\s+your|number\\s+of\\s+years|total\\s+years)/.test(qLower.trim());
+                        if (asksQuantity && !/(?:candidates?\\s+with|we\\s+are\\s+looking|only|required|must\\s+have)/.test(qLower)) return null;
+                        const gateContext = /(?:do\\s+you|have\\s+you|are\\s+you|can\\s+you|will\\s+you|you\\s+have|you\\s+possess|we\\s+are\\s+looking|candidates?\\s+with|looking\\s+for|required|requirement|only|eligible|qualify)/.test(qLower) || qLower.trim().endsWith('?');
+                        const hasRange = reqs.some(r => r.kind === 'range');
+                        if (!gateContext && !(hasRange && /experience/.test(qLower))) return null;
+                        for (const r of reqs) {
+                            if (r.kind === 'range' && !(4.2 >= r.lo && 4.2 <= r.hi)) return 'No';
+                            if (r.kind === 'min' && 4.2 < r.lo) return 'No';
+                            if (r.kind === 'max' && 4.2 >= r.hi) return 'No';
+                        }
+                        return 'Yes';
+                    };
+                    const evalCtcGate = () => {
+                        if (!/(?:ctc|salary|compensation)/.test(qLower)) return null;
+                        const m = qLower.match(/(?:up\\s*to|upto|within|less\\s+than|below|maximum|max\\.?|not\\s+more\\s+than|no\\s+more\\s+than)\\s*(?:₹|rs\\.?|inr)?\\s*(\\d+(?:\\.\\d+)?)\\s*(lpa|lakhs?|lacs?|inr)?/);
+                        if (!m) return null;
+                        let t = parseFloat(m[1]);
+                        const u = (m[2] || '').toLowerCase();
+                        if (u === 'inr' || (!u && t >= 100000)) t = t / 100000;
+                        return 30 <= t ? 'Yes' : 'No';
+                    };
+
+                    if (/(?:scale|rating|rate\\s+yourself|out\\s+of)\\s*(?:of\\s*)?\\(?\\s*0\\s*[-–—to]+\\s*5/.test(qLower) || qLower.includes('(0-5)') || qLower.includes('0 to 5')) {
+                        const aiTopics = /ai\\s*agent|agentic|\\bllm|genai|generative\\s+ai|machine\\s+learning|ai\\/ml|evals|langchain/.test(qLower);
+                        return aiTopics ? '3' : '4';
+                    }
+                    const expGateAnswer = evalExpGate();
+                    if (expGateAnswer) return expGateAnswer;
+                    const ctcGateAnswer = evalCtcGate();
+                    if (ctcGateAnswer) return ctcGateAnswer;
+                    const zeroSkill = zeroSkillAnswer();
+                    if (zeroSkill) return zeroSkill;
+                    const skillAnswerValue = skillAnswer();
+                    if (skillAnswerValue) return skillAnswerValue;
+
                     let bestMatch = null;
                     let bestKeyLen = 0;
                     let bestScore = 0;
@@ -13570,6 +15321,10 @@ class SentinelAgent:
                     if (isConflictQ || isRestrictiveQ) return 'No';
 
                     if (/bring\\s*your\\s*own\\s*device|byod/i.test(qLower)) return 'Yes';
+                    if (/virtual\\s*drive|hiring\\s*drive|recruitment\\s*drive|attend.*drive/i.test(qLower)) return 'Yes';
+                    if (/available\\s*to\\s*work\\s*from\\s*office|work\\s*from\\s*office\\s*in.*(?:bengaluru|bangalore)|available\\s*to\\s*work\\s*from/i.test(qLower)) return 'Yes';
+                    if (/^(?:are|is|do|does|have|has|will|would|can)\\b/i.test(qLower.trim()) && /servi(?:c)?ing\\s+(?:the\\s+)?notice|on\\s+notice\\s+period|currently\\s+in\\s+notice/i.test(qLower)) return 'Yes';
+                    if (/(?:experience.*(?:developing|consuming)|developing.*consuming).*rest(?:ful)?\\s*apis?/i.test(qLower)) return 'Yes';
                     if (/100%\\s*remote|fully\\s*remote|comfortable\\s*(working\\s*)?(in\\s*a\\s*)?(100%\\s*)?remote/i.test(qLower)) return 'Yes';
                     if (/us\\s*time\\s*zones?|us\\s*timezones?|candidates\\s*outside\\s*the\\s*us/i.test(qLower)) return 'Yes';
                     if (/(authorized\\s*to\\s*work|work\\s*authorization|legally\\s*authorized).*(united\\s*states|u\\.?s\\.?|us\\s*based)/i.test(qLower)) return 'Not Applicable';
@@ -13580,7 +15335,28 @@ class SentinelAgent:
                     if (/^headline$/i.test(cleanQ) || /^profile\\s*headline$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS';
                     if (/^summary$/i.test(cleanQ) || /^profile\\s*summary$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS.';
                     if (/desired.*range|expected.*range|salary.*range|compensation.*range/i.test(qLower)) return '28-32 LPA';
+                    // Salary breakdown/component questions must not collapse to a single CTC number.
+                    // Runs before substring matching, which would otherwise return "2300000" for "current ctc".
+                    if (/(?:ctc|salary|compensation|remuneration)/.test(qLower) &&
+                        /breakup|break-up|break\\s*up|split|component|including\\s+(?:the\\s+)?fixed|fixed.*(?:and|,|\\+).*variable|variable.*(?:and|,|\\+).*fixed|rsu|esop/i.test(qLower)) {
+                        if (/expected|desired|asking|exp(?:\\.|\\s+)?ctc/i.test(qLower)) {
+                            return 'Expected CTC: 30 LPA (100% Fixed), Variable: 0';
+                        }
+                        return 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)';
+                    }
                     if (/background\\s*(check|verification)|drug\\s*(screen|screening|test)|reference\\s*check/i.test(qLower) && /willing|undergo|consent|agree|clear/i.test(qLower)) return 'Yes';
+                    if (/out of 5|scale of 5|1 to 5|1-5|5 being the highest/i.test(qLower) && !/years|how many years/i.test(qLower)) return '5';
+                    if (/out of 10|scale of 10|1 to 10|1-10|10 being the highest/i.test(qLower) && !/years|how many years/i.test(qLower)) return '9';
+
+                    // Privacy / consent agreements
+                    if (/privacy\\s*(?:statement|policy|notice)/i.test(qLower)) return 'Yes';
+                    // SMS / text updates and newsletters opt-in
+                    if (/(?:text|sms)\\s*updates?|receive.*updates?.*(?:text|sms)|(?:text|sms).*interview/i.test(qLower)) return 'Yes';
+                    if (/email\\s*me\\s*about\\s*other\\s*job\\s*openings|recruitment-related\\s*newsletters?|receive.*newsletters?/i.test(qLower)) return 'Yes';
+
+                    // Direct city location check (Bangalore vs other cities)
+                    if (/(?:are\\s*you|is\\s*your)\\s*(?:currently\\s*)?(?:located|based|living|residing|current\\s*location)\\s*(?:in|at)?\\s*(bangalore|bengaluru)/i.test(qLower)) return 'Yes';
+                    if (/(?:are\\s*you|is\\s*your)\\s*(?:currently\\s*)?(?:located|based|living|residing|current\\s*location)\\s*(?:in|at)?\\s*(ahmedabad|gandhinagar|hyderabad|pune|delhi|mumbai|gurgaon|noida|chennai|kolkata|jaipur|kochi|coimbatore|chandigarh|indore)/i.test(qLower) && !/relocat|willing|open\\s*to|ready\\s*to|fine\\s*with|open\\s*for/i.test(qLower)) return 'No';
 
                     // Sort patterns by key length (descending) to prioritize longer, more specific matches
                     const sortedPatterns = Object.entries(KNOWN_PATTERNS).sort((a, b) => b[0].length - a[0].length);
@@ -13599,6 +15375,7 @@ class SentinelAgent:
                             if (keyLower === 'years' && (qLower.includes('salary') || qLower.includes('ctc') || qLower.includes('pay') || qLower.includes('inr'))) continue;
                             if (keyLower === 'no' && qLower.length > 20 && !qLower.includes('non-') && !qLower.includes('notice')) continue;
                             if (keyLower === 'ember' && (qLower.includes('september') || qLower.includes('november') || qLower.includes('december'))) continue;
+                            if (keyLower === 'email' && (qLower.includes('email me') || qLower.includes('send') || qLower.includes('receive') || qLower.includes('newsletter') || qLower.includes('updates') || qLower.length > 25)) continue;
                             if (EXACT_MATCH_KEYS.has(keyLower)) continue;
                             const patternData = (typeof KNOWN_PATTERNS_WITH_DEFAULTS !== 'undefined') ? KNOWN_PATTERNS_WITH_DEFAULTS[keyLower] : null;
                             if (patternData && patternData.requires_exact_match) continue;
@@ -13626,15 +15403,20 @@ class SentinelAgent:
                         for (const [key, val] of sortedPatterns) {
                             const keyLower = key.toLowerCase();
                             if (EXACT_MATCH_KEYS.has(keyLower)) continue;
-                            const keyWords = keyLower.split(/\\s+/).filter(w => w.length > 2);
-                            if (keyWords.length < 2) continue; // Only for multi-word patterns
+                            const patternData = (typeof KNOWN_PATTERNS_WITH_DEFAULTS !== 'undefined') ? KNOWN_PATTERNS_WITH_DEFAULTS[keyLower] : null;
+                            if (patternData && patternData.requires_exact_match) continue;
+                            if (patternData && patternData.negative_patterns && patternData.negative_patterns.length > 0) {
+                                if (patternData.negative_patterns.some(np => qLower.includes(np.toLowerCase()))) continue;
+                            }
+                            const keyWords = keyLower.split(/\\s+/).filter(w => w.length > 2 && !STOP_WORDS_SET.has(w));
+                            if (keyWords.length < 2) continue; // Only for multi-word patterns with >= 2 significant words
                             
-                            // Check if ALL significant words from pattern exist in question
-                            const allWordsFound = keyWords.every(word => qWords.has(word) || qLower.includes(word));
+                            // Check if ALL significant words from pattern exist in question as whole words (not substrings of words)
+                            const allWordsFound = keyWords.every(word => qWords.has(word) || new RegExp('\\\\b' + word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\\\b', 'i').test(qLower));
                             if (allWordsFound) {
                                 // Score based on coverage ratio
                                 const score = keyWords.length / Math.max(qLower.split(/\\s+/).length, keyWords.length);
-                                if (score > bestScore || (score === bestScore && key.length > bestKeyLen)) {
+                                if (score >= 0.25 && (score > bestScore || (score === bestScore && key.length > bestKeyLen))) {
                                     bestMatch = val;
                                     bestKeyLen = key.length;
                                     bestScore = score;
@@ -13694,8 +15476,8 @@ class SentinelAgent:
                         const isYearsQ = /(?:years\\b|\\byoe\\b)/i.test(qLower) && !isSalaryQ && !isAgeQ && !is12thBoardQ;
                         const isShiftQ = /shift|night\\s*shift|rotational|us\\s*shift|est\\s*(hours|shift)|flexible\\s*shift|working\\s*hours|time\\s*zone|offshore/i.test(qLower);
                         const isRelocateQ = /relocat|willing\\s*to\\s*(relocate|work\\s*in|work\\s*from)|open\\s*to\\s*(relocate|relocation)|comfortable\\s*(working|relocating)/i.test(qLower);
-                        const isLivingNonBangaloreQ = /(based|living|residing)\\s*in\\s*(hyderabad|pune|delhi|mumbai|gurgaon|noida|chennai)/i.test(qLower) && !/relocat|willing|open\\s*to/i.test(qLower);
-                        const isLivingBangaloreQ = /(based|living|residing)\\s*in\\s*(bangalore|bengaluru)/i.test(qLower);
+                        const isLivingNonBangaloreQ = /(?:located|based|living|residing)\\s*in\\s*(?:hyderabad|pune|delhi|mumbai|gurgaon|noida|chennai|ahmedabad|gandhinagar|kolkata|jaipur|kochi|coimbatore|chandigarh|indore)/i.test(qLower) && !/relocat|willing|open\\s*to/i.test(qLower);
+                        const isLivingBangaloreQ = /(?:located|based|living|residing)\\s*in\\s*(?:bangalore|bengaluru)/i.test(qLower);
                         const isBgCheckQ = /background\\s*(check|verification)|drug\\s*(screen|screening|test)|reference\\s*check|criminal\\s*record/i.test(qLower);
                         const isAuthIndiaQ = (/authorized\\s*to\\s*work\\s*in\\s*india|legally\\s*authorized.*india|work\\s*authorization/i.test(qLower)) && !isSponsorshipQ;
                         const isTechExpQ = /(?:c#|c\\+\\+|\\.net|dotnet|azure|sql|csharp|cloud)\\s*(?:experience|years)?|years.*(?:c#|c\\+\\+|\\.net|dotnet|azure|sql)/i.test(qLower);
@@ -13704,11 +15486,12 @@ class SentinelAgent:
                         const yearsDefault = isLinkedInHost ? '4' : '4 Years';
                         
                         const isTimeSlotQ = /time\\s*slot|what\\s*time\\s*you\\s*will\\s*be\\s*available|available\\s*time\\s*slot|preferred\\s*time\\s*slot/i.test(qLower);
-                        const isReferralNaQ = /put\\s*n\\/?a|if\\s*not\\s*referred.*put|list\\s*their\\s*name/i.test(qLower);
+                        const isReferralNaQ = /put\\s*n\\/a|put\\s*na|if\\s*not\\s*referred.*put|list\\s*their\\s*name/i.test(qLower);
                         const isCityStateQ = /city\\s*and\\s*state|city\\s*&\\s*state/i.test(qLower);
                         const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|confidentiality\\s*agreements?.*restrict/i.test(qLower);
                         const isGapQ = /gap\\s*from\\s*education|between\\s*jobs.*gap|what\\s*are\\s*your\\s*gap/i.test(qLower);
                         const isAgenticEssayQ = /(agentic\\s*ai|ai\\s*agent)/i.test(qLower) && /(explain|use\\s*case|contribution|describe)/i.test(qLower);
+                        const isAiTechWorkedWithQ = /(which of the following )?ai (technologies|tools|concepts)/i.test(qLower) && /worked with/i.test(qLower);
                         const isCareerBreakQ = /\\b(career\\s*break|break\\s*in\\s*career|employment\\s*gaps?|career\\s*gaps?|gap\\s*in\\s*(?:employment|career|work))\\b/i.test(qLower) &&
                                                !/reason|why|explain|describe/i.test(qLower);
                         const isBreakReasonQ = /reason\\s*for\\s*(the\\s*)?(career\\s*|employment\\s*)?(break|gap)|why\\s*.*(break|gap)/i.test(qLower);
@@ -13741,6 +15524,8 @@ class SentinelAgent:
                             bestMatch = 'None of the above and not much gap';
                         } else if (isAgenticEssayQ) {
                             bestMatch = 'Yes, I have architected and deployed autonomous Agentic AI systems using LangChain, LangGraph, and LLM APIs. In my implementations, I designed a multi-agent workflow featuring specialized planning, tool execution, self-healing reflection, and deterministic validation stages. My primary contribution was building the resilient tool orchestration layer, integrating schema-aware browser automation and fuzzy entity resolution with dynamic retry logic, and optimizing latency and token usage through structured JSON outputs and prompt caching.';
+                        } else if (isAiTechWorkedWithQ) {
+                            bestMatch = 'Open AI, OpenAI, Azure Open AI, Azure OpenAI, Claude, Anthropic Claude, Gemini, Google Gemini, Github Copilot, GitHub Copilot, Cursor, Retrieval-Augmented Generation (RAG), RAG, AI agents, Prompt Engineering, LangChain, ChatGPT, LLMs, Large Language Models, Generative AI, Vector Databases';
                         } else if (isEquityQ) {
                             bestMatch = 'No';
                         } else if (isSponsorshipQ) {
@@ -13793,7 +15578,7 @@ class SentinelAgent:
                             if (/official/i.test(qLower)) {
                                 bestMatch = 'Less than 30 days';
                             } else if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
-                                bestMatch = '23102026';
+                                bestMatch = resolveDynamic('__DYNAMIC_LWD_DDMMYYYY__');
                             } else if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
                                 bestMatch = '(6) --Serving Notice Period';
                             } else {
@@ -13803,10 +15588,16 @@ class SentinelAgent:
                             // Smart salary handling: check for range, variable, monthly, LPA, expected keywords
                             if (/range/i.test(qLower)) {
                                 bestMatch = '28-32 LPA';
-                            } else if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
+                            } else if (/(?:total|current|expected|\\bannual\\b|\\bmention\\b).*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable)|(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable)|total.*(?:ctc|salary)/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
                             } else if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(qLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(qLower)) {
-                                bestMatch = '0';
+                                if (/breakup|details|break-up|split|component|including fixed/i.test(qLower)) {
+                                    bestMatch = 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)';
+                                } else if (/(?:base|fixed)\\s*(?:\\+|\\band\\b)\\s*variable|current.*(?:ctc|salary)|(?:ctc|salary).*in\\s*lpa/i.test(qLower)) {
+                                    bestMatch = /in\\s*lpa|lacs?|lakhs?/i.test(qLower) ? '23' : '2300000';
+                                } else {
+                                    bestMatch = '0';
+                                }
                             } else if (/usd|dollar|\\$/i.test(qLower)) {
                                 if (/monthly|per month/i.test(qLower)) {
                                     bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '5000' : '3500';
@@ -13865,8 +15656,8 @@ class SentinelAgent:
                         }
                         
                         // Disambiguate Yes/No vs numeric experience:
-                        const isYesNoExp = /^(do you have|have you|are you|can you|will you|would you)\b/i.test(qLower.trim()) && !/how many|how much|what is your|total years|career break|break in career|career gap|employment gap/i.test(qLower);
-                        if (isYesNoExp && (bestMatch === '4' || bestMatch === '4.2 Years' || bestMatch === '4 Years')) {
+                        const isYesNoExp = /^(do you have|have you|are you|can you|will you|would you)\b/i.test(qLower.trim()) && !/how many|how much|what is your|total years|number of years|years of experience|career break|break in career|career gap|employment gap/i.test(qLower);
+                        if (isYesNoExp && /^\\d+(?:\\.\\d+)?\\s*(?:years?)?$/i.test(String(bestMatch).trim())) {
                             bestMatch = 'Yes';
                         }
                         // Experience prompt in text field (e.g. "Experience in PostgreSQL / MySQL / SQL Server") without "Do you have"
@@ -13893,7 +15684,7 @@ class SentinelAgent:
                             bestMatch = 'Everbridge';
                         } else if (isLwdQ) {
                             if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
-                                bestMatch = '23102026';
+                                bestMatch = resolveDynamic('__DYNAMIC_LWD_DDMMYYYY__');
                             } else if (/10 to 20 days|10-20 days|immediate joiner/i.test(qLower)) {
                                 bestMatch = '15';
                             } else if (bestMatch === '15' || !/\\d{4}|[A-Za-z]{3}/.test(bestMatch)) {
@@ -13904,7 +15695,13 @@ class SentinelAgent:
                             if (/total.*(?:fixed\\s*\\+\\s*variable|fixed\\s*and\\s*variable|ctc|salary)/i.test(qLower)) {
                                 bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '3000000' : '2300000';
                             } else if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(qLower) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(qLower)) {
-                                bestMatch = '0';
+                                if (/breakup|details|break-up|split|component|including fixed/i.test(qLower)) {
+                                    bestMatch = 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)';
+                                } else if (/(?:base|fixed)\\s*(?:\\+|\\band\\b)\\s*variable|current.*(?:ctc|salary)|(?:ctc|salary).*in\\s*lpa/i.test(qLower)) {
+                                    bestMatch = /in\\s*lpa|lacs?|lakhs?/i.test(qLower) ? '23' : '2300000';
+                                } else {
+                                    bestMatch = '0';
+                                }
                             } else if (/usd|dollar|\\$/i.test(qLower)) {
                                 if (/monthly|per month/i.test(qLower)) {
                                     bestMatch = /expected|expectations?|expect|desired|asking|\\bexp(?:\\.|\\s+)?ctc\\b/i.test(qLower) ? '5000' : '3500';
@@ -13922,7 +15719,7 @@ class SentinelAgent:
                             } else {
                                 bestMatch = '2300000';
                             }
-                        } else if (isExpQ && !/\\d/.test(bestMatch)) {
+                        } else if (isExpQ && !isYesNoExp && !/\\d/.test(bestMatch)) {
                             if (/how many|years|months|\\bexp\\b|\\byoe\\b/i.test(qLower)) {
                                 // LinkedIn numeric-only fields get bare "4"; Naukri gets "4 Years".
                                 bestMatch = isLinkedInHost6 ? '4' : '4 Years';
@@ -13989,12 +15786,35 @@ class SentinelAgent:
                     
                     // Extract numeric value from answer for range matching
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
-                    const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
-                    // Extract the integer part for exact matching (e.g., "4" -> 4)
+                    const rawAnswerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    const isExpAnswer = rawAnswerNum === 4.2 || rawAnswerNum === 4;
+                    const answerNum = isExpAnswer ? 4.2 : rawAnswerNum;
                     const answerInt = Math.floor(answerNum);
                     const MIN_MATCH_SCORE = 10; // Don't select if no meaningful match found
                     let bestOpt = null;
                     let bestScore = -1;
+
+                    let hasBracketCovering4_2 = false;
+                    if (isExpAnswer) {
+                        for (const opt of options) {
+                            const t = (opt.text || opt.label || '').toLowerCase().trim();
+                            const tNoC = t.replace(/,/g, '');
+                            const rm = tNoC.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
+                            const pm = t.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || t.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
+                            if (rm) {
+                                const rMin = parseFloat(rm[1]);
+                                const rMax = parseFloat(rm[2]);
+                                if ((rMin === 4 || (answerNum >= rMin && answerNum <= rMax)) && rMax > 4) {
+                                    hasBracketCovering4_2 = true;
+                                    break;
+                                }
+                            }
+                            if (pm && parseFloat(pm[1]) <= answerNum && parseFloat(pm[1]) >= 4) {
+                                hasBracketCovering4_2 = true;
+                                break;
+                            }
+                        }
+                    }
                     
                     for (const opt of options) {
                         const text = (opt.text || opt.label || '').toLowerCase().trim();
@@ -14005,17 +15825,81 @@ class SentinelAgent:
                         const optNumMatch = text.match(/^(\\d+(?:\\.\\d+)?)/);
                         const optNum = optNumMatch ? parseFloat(optNumMatch[1]) : -1;
                         const hasAnswerNum = numMatch !== null; // true if answer contains any number (including 0)
-                        
+
+                        // Zero-experience, consent, and notice-unit options need
+                        // explicit handling because their labels contain no exact
+                        // match for "0", "Yes", or "15".
+                        if (hasAnswerNum && answerNum === 0 && /no\\s*(?:experience|exp)|none|never\\s+worked/.test(text)) {
+                            score = 130;
+                        } else if ((ans === 'yes' || ans === 'true' || ans === 'checked') && /agree|accept|consent|acknowledge|confirm|authorize|understand|certify/.test(text)) {
+                            score = 125;
+                        } else if ((ans === 'no' || ans === 'false') && /disagree|do\\s+not\\s+agree|decline|not\\s+agree/.test(text)) {
+                            score = 125;
+                        } else if (/notice|join|available|serving|immediate|day|week|month/.test(text) && /\\d|available|immediate|serving/.test(text)) {
+                            const lessM = text.match(/less\\s+than\\s+(\\d+)\\s*days?/);
+                            const dayM = text.match(/(\\d+)\\s*(?:-|–|to)?\\s*(\\d+)?\\s*days?/);
+                            const weekM = text.match(/(\\d+)\\s*weeks?/);
+                            const monthM = text.match(/(\\d+)\\s*months?/);
+                            if (hasAnswerNum && answerNum > 0 && lessM && answerNum < parseFloat(lessM[1])) {
+                                score = 118;
+                            } else if (hasAnswerNum && answerNum > 0 && dayM) {
+                                const lo = parseFloat(dayM[1]);
+                                const hi = dayM[2] ? parseFloat(dayM[2]) : lo;
+                                if (answerNum >= lo && answerNum <= hi) score = 124;
+                                else if (Math.abs(answerNum - lo) <= 2) score = 100;
+                            } else if (hasAnswerNum && answerNum > 0 && weekM) {
+                                const days = parseFloat(weekM[1]) * 7;
+                                if (Math.abs(answerNum - days) <= 2) score = 110;
+                            } else if (hasAnswerNum && answerNum > 0 && monthM) {
+                                const days = parseFloat(monthM[1]) * 30;
+                                if (Math.abs(answerNum - days) <= 3) score = 110;
+                            } else if (hasAnswerNum && answerNum > 0 && answerNum <= 3 && /available\\s+now|immediate/i.test(text)) {
+                                score = 120;
+                            } else if (hasAnswerNum && answerNum > 3 && /available\\s+now|immediate/i.test(text)) {
+                                score = 0;
+                            } else if (hasAnswerNum && answerNum > 0 && /serving\\s+notice/i.test(text)) {
+                                score = 85;
+                            }
+                        }
+
+                        // Check for numeric range (e.g. "3-5 years", "2 to 4")
+                        const textNoCommas = text.replace(/,/g, '');
+                        const rangeMatch = (answerNum > 0) ? textNoCommas.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/) : null;
+                        const plusMatch = (answerNum > 0) ? (text.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || text.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i)) : null;
+
+                        if (score > 0) {
+                            // Keep the specialized score computed above.
+                        } else if (rangeMatch) {
+                            const min = parseFloat(rangeMatch[1]);
+                            const max = parseFloat(rangeMatch[2]);
+                            if (isExpAnswer && max <= 4.0 && hasBracketCovering4_2) {
+                                score = 0;
+                            } else if (answerNum >= min && answerNum <= max) {
+                                const rangeSize = max - min;
+                                const offsetFromMin = Math.abs(answerNum - min);
+                                const minBonus = (min === 4 || Math.floor(answerNum) === min) ? 15 : 0;
+                                score = Math.max(80, 115 + minBonus - (offsetFromMin / Math.max(rangeSize, 1) * 10));
+                            } else if (isExpAnswer && answerNum > max && !hasBracketCovering4_2 && (answerNum - max) <= 2.0) {
+                                score = Math.max(70, 85 - (answerNum - max) * 8);
+                            }
+                        }
+                        else if (plusMatch) {
+                            const bound = parseFloat(plusMatch[1]);
+                            if (answerNum >= bound) {
+                                const minBonus = (bound === 4) ? 15 : 0;
+                                score = Math.max(80, 118 + minBonus - (answerNum - bound) * 2);
+                            }
+                        }
                         // PRIORITY 1: Exact number match (e.g., answer="4" matches option="4 years" exactly)
-                        if (optNum >= 0 && hasAnswerNum && optNum === answerNum) {
+                        else if (!rangeMatch && optNum >= 0 && hasAnswerNum && optNum === answerNum) {
                             score = 120; // Highest priority for exact number match
                         }
                         // PRIORITY 2a: Rounded match (e.g., answer="4.2" matches "4" by rounding)
-                        else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === Math.round(answerNum)) {
+                        else if (!rangeMatch && optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === Math.round(answerNum)) {
                             score = 112;
                         }
                         // PRIORITY 2b: Floor match (e.g., answer="4.2" matches "4" by flooring)
-                        else if (optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === answerInt) {
+                        else if (!rangeMatch && optNum >= 0 && hasAnswerNum && answerNum > 0 && optNum === answerInt) {
                             score = 110;
                         }
                         // PRIORITY 3: Exact full text match
@@ -14026,9 +15910,13 @@ class SentinelAgent:
                         else if ((ans === 'not applicable' || ans === 'n/a' || ans === 'na') && (text === 'no' || text === 'false')) {
                             score = 95;
                         }
-                        // PRIORITY 4: Text contains answer OR answer contains text
+                        // PRIORITY 4b: Plus pattern matching (e.g., answer='4' matches option='3+ years')
+                        else if (plusMatch && answerNum >= parseFloat(plusMatch[1])) {
+                            score = 98;
+                        }
+                        // PRIORITY 5: Text contains answer OR answer contains text
                         // BUT protect against "4 years".includes("4 years") false positive
-                        else if (text.includes(ans) || ans.includes(text)) {
+                        else if (!rangeMatch && (text.includes(ans) || ans.includes(text))) {
                             // Guard: if both are numeric-like, verify the numbers actually match
                             if (optNum >= 0 && hasAnswerNum) {
                                 // Only count as match if the numbers are close
@@ -14048,31 +15936,6 @@ class SentinelAgent:
                                 }
                             } else {
                                 score = 100;
-                            }
-                        }
-                        // PRIORITY 5: Numeric range matching (e.g., answer='4' matches option='3 to 6 years')
-                        // Also handles Indian number formats like "2,00,000 to 5,00,000 INR"
-                        // Prefer ranges where answer is closer to the lower bound (e.g., 4 prefers "4-6" over "3-4")
-                        else if (answerNum > 0) {
-                            // Strip commas from option text to handle Indian/intl number formats
-                            const textNoCommas = text.replace(/,/g, '');
-                            const rangeMatch = textNoCommas.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–]|\\bto\\b)\\s*(\\d+(?:\\.\\d+)?)/);
-                            if (rangeMatch) {
-                                const min = parseFloat(rangeMatch[1]);
-                                const max = parseFloat(rangeMatch[2]);
-                                if (answerNum >= min && answerNum <= max) {
-                                    const rangeSize = max - min;
-                                    const offsetFromMin = Math.abs(answerNum - min);
-                                    // Higher score when closer to min (lower bound)
-                                    score = Math.max(0, 85 - (offsetFromMin / Math.max(rangeSize, 1) * 30));
-                                }
-                            }
-                            // Match "X+" patterns (e.g., answer='4' matches option='3+ years')
-                            else {
-                                const plusMatch = text.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
-                                if (plusMatch && answerNum >= parseFloat(plusMatch[1])) {
-                                    score = 75;
-                                }
                             }
                         }
                         
@@ -14095,14 +15958,90 @@ class SentinelAgent:
                     }
                     return bestOpt;
                 };
-                
+
+                // Helper: Check if a string looks like a question/heading rather than an option label
+                const isQuestionText = (t) => {
+                    if (!t) return false;
+                    const s = t.trim().toLowerCase();
+                    if (s.endsWith('?') || s.includes('?') || s.length > 40) return true;
+                    if (/^(are|do|have|will|can|did|how|what|please|kindly|must|should|if|where|why|which|would|is|select|confirm)\b/i.test(s)) return true;
+                    return false;
+                };
+
+                // Helper: Get label text associated with input (radio/checkbox)
+                const getInputLabelText = (input) => {
+                    if (!input) return '';
+                    const mRoot = (typeof modal !== 'undefined' && modal) ? modal : document;
+
+                    // 1. Explicit <label for="input.id"> with CSS escaping
+                    if (input.id) {
+                        try {
+                            const escapedId = (window.CSS && CSS.escape) ? CSS.escape(input.id) : input.id.replace(/([ #;?%&,.+*~':"!^$[\\]()=>|/@])/g, '\\$1');
+                            const labelEl = (typeof queryDeep === 'function' ? queryDeep(`label[for="${escapedId}"]`, mRoot) : null) || document.querySelector(`label[for="${escapedId}"]`);
+                            if (labelEl) {
+                                const txt = (labelEl.innerText || labelEl.textContent || '').trim();
+                                if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                            }
+                        } catch(e) {}
+                    }
+
+                    // 2. Specific radio/checkbox option container (LinkedIn: [data-test-form-builder-radio-button], .fb-radio, .artdeco-radio, [role="radio"])
+                    const optionContainer = input.closest('[data-test-form-builder-radio-button], .fb-radio, .artdeco-radio, [role="radio"]');
+                    if (optionContainer) {
+                        const optLabel = optionContainer.querySelector('label, [data-test-radio-button-label], span, p');
+                        if (optLabel) {
+                            const txt = (optLabel.innerText || optLabel.textContent || '').trim();
+                            if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                        }
+                    }
+
+                    // 3. Direct wrapping label (excluding question labels)
+                    const directLabel = input.closest('label');
+                    if (directLabel && !directLabel.classList.contains('fb-dash-form-element__label') && !directLabel.classList.contains('jobs-easy-apply-form-section__question-label')) {
+                        const txt = (directLabel.innerText || directLabel.textContent || '').trim();
+                        if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                    }
+
+                    // 4. Sibling elements
+                    let sib = input.nextElementSibling;
+                    while (sib) {
+                        if (sib.tagName === 'LABEL' || sib.tagName === 'SPAN' || sib.tagName === 'P') {
+                            const txt = (sib.innerText || sib.textContent || '').trim();
+                            if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                        }
+                        sib = sib.nextElementSibling;
+                    }
+
+                    // 5. aria-label (ONLY if it does not look like a question)
+                    if (input.getAttribute('aria-label')) {
+                        const al = input.getAttribute('aria-label').trim();
+                        if (al && !isQuestionText(al)) return al.toLowerCase();
+                    }
+
+                    // 6. Non-standard input.value
+                    if (input.value && input.value !== 'on' && input.value !== 'true' && !isQuestionText(input.value)) {
+                        return input.value.trim().toLowerCase();
+                    }
+
+                    // 7. Sibling label in parent (only if NOT question label)
+                    if (input.parentElement) {
+                        const siblingLabel = input.parentElement.querySelector('label');
+                        if (siblingLabel && !siblingLabel.classList.contains('fb-dash-form-element__label')) {
+                            const txt = (siblingLabel.innerText || siblingLabel.textContent || '').trim();
+                            if (txt && !isQuestionText(txt)) return txt.toLowerCase();
+                        }
+                    }
+
+                    return '';
+                };
+
 // Helper: Find best matching radio button for experience ranges
                 const findBestRadioMatch = (answer, radios) => {
                     if (!answer || !radios || radios.length === 0) return null;
                     
                     const ans = answer.toLowerCase();
                     let bestRadio = null;
-                    let bestScore = -1;
+                    let bestScore = 0;
                     
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
@@ -14113,6 +16052,36 @@ class SentinelAgent:
                     // For experience matching: candidate has 4.2 years experience
                     const effectiveExpVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : (answerNum > 0 ? answerNum : (hasRangeRadios ? 4.2 : 0));
                     const expVal = effectiveExpVal;
+                    
+                    let hasBracketCovering4_2 = false;
+                    if (expVal >= 3.5 && expVal <= 5.5) {
+                        for (const r of radios) {
+                            let lbl = (typeof getInputLabelText === 'function') ? getInputLabelText(r) : '';
+                            if (!lbl && r.id) {
+                                try {
+                                    const escapedId = (window.CSS && CSS.escape) ? CSS.escape(r.id) : r.id.replace(/([ #;?%&,.+*~':"!^$[\\]()=>|/@])/g, '\\$1');
+                                    const lblEl = document.querySelector('label[for="' + escapedId + '"]');
+                                    if (lblEl) lbl = lblEl.innerText.trim();
+                                } catch(e) {}
+                            }
+                            if (!lbl) lbl = r.closest('label')?.innerText || r.value || r.id || '';
+                            const lblL = lbl.toLowerCase().trim();
+                            const rm = lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
+                            const mm = lblL.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
+                            if (rm) {
+                                const rMin = parseFloat(rm[1]);
+                                const rMax = parseFloat(rm[2]);
+                                if ((rMin === 4 || (expVal >= rMin && expVal <= rMax)) && rMax > 4) {
+                                    hasBracketCovering4_2 = true;
+                                    break;
+                                }
+                            }
+                            if (mm && parseFloat(mm[1]) <= expVal && parseFloat(mm[1]) >= 4) {
+                                hasBracketCovering4_2 = true;
+                                break;
+                            }
+                        }
+                    }
                     
                     for (const radio of radios) {
                         let label = (typeof getInputLabelText === 'function') ? getInputLabelText(radio) : '';
@@ -14144,7 +16113,7 @@ class SentinelAgent:
                         let score = 0;
                         
                         // Check if label represents a range or comparative bounds
-                        const isComparativeOrRange = /\\d+\\s*(?:[-–]|\\bto\\b)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
+                        const isComparativeOrRange = /\\d+\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
                         const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || radio.id === 'No' || radio.id === 'false' || radio.value === 'No' || radio.value === 'false' || lowerLabel.includes('never served') || lowerLabel.includes('not a veteran') || lowerLabel.includes('not a protected veteran') || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
                         const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving notice') || radio.id === 'Yes' || radio.id === 'true' || radio.value === 'Yes' || radio.value === 'true' || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
@@ -14277,16 +16246,19 @@ class SentinelAgent:
                             
                             // Year-based range matching for experience (e.g. "3-5", "3 5", "4-5", "2-4 yrs")
                             if (score === 0 && !isDayUnit) {
-                                const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–to]|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
+                                const rangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (rangeMatch) {
                                     const min = parseFloat(rangeMatch[1]);
                                     const max = parseFloat(rangeMatch[2]);
-                                    if (expVal >= min && expVal <= (max + 0.5)) {
+                                    if (expVal >= 4.0 && max <= 4.0 && hasBracketCovering4_2) {
+                                        score = 0; // Candidate with 4.2 years exceeds max 4; never select when min=4 exists
+                                    } else if (expVal >= min && expVal <= max) {
                                         const rangeSize = max - min;
-                                        const offsetFromMin = Math.abs(expVal - Math.min(expVal, max));
-                                        score = Math.max(80, 98 - rangeSize * 2 - offsetFromMin);
-                                    } else if (expVal > max && (expVal - max) <= 2.0) {
-                                        // Candidate slightly exceeds highest available bracket (e.g. 4.2 vs 2-4)
+                                        const offsetFromMin = Math.abs(expVal - min);
+                                        const minBonus = (min === 4 || Math.floor(expVal) === min) ? 15 : 0;
+                                        score = Math.max(80, 100 + minBonus - rangeSize * 2 - offsetFromMin);
+                                    } else if (expVal > max && (expVal - max) <= 2.0 && !hasBracketCovering4_2) {
+                                        // Candidate slightly exceeds highest available bracket (e.g. 4.2 vs 2-4) when no higher option exists
                                         const diff = expVal - max;
                                         score = Math.max(70, 85 - diff * 8);
                                     } else {
@@ -14299,7 +16271,7 @@ class SentinelAgent:
                             if (score === 0 && !isDayUnit) {
                                 const lessMatch = lowerLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
                                 const moreMatch = lowerLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
-                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
+                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
                                 
                                 if (lessMatch) {
                                     const bound = parseFloat(lessMatch[1]);
@@ -14314,7 +16286,8 @@ class SentinelAgent:
                                     const bound = parseFloat(moreMatch ? moreMatch[1] : plusMatch[1]);
                                     if (expVal >= bound) {
                                         // e.g. "4+ years", "3+ years", "4 years and above"
-                                        score = Math.max(75, 91 - (expVal - bound) * 2);
+                                        const minBonus = (bound === 4) ? 15 : 0;
+                                        score = Math.max(75, 95 + minBonus - (expVal - bound) * 2);
                                     } else {
                                         // e.g. "5+ years", "6+ years", "> 5"
                                         score = 0;
@@ -14333,13 +16306,13 @@ class SentinelAgent:
                             }
                         }
                         
-                        if (score > bestScore) {
+                        if (score > 0 && score > bestScore) {
                             bestScore = score;
                             bestRadio = radio;
                         }
                     }
                     
-                    return bestRadio;
+                    return (bestScore > 0) ? bestRadio : null;
                 };
                 
                 const findBestCustomRadioMatch = (answer, radios) => {
@@ -14347,12 +16320,47 @@ class SentinelAgent:
                     
                     const ans = answer.toLowerCase();
                     let bestRadio = null;
-                    let bestScore = -1;
+                    let bestScore = 0;
                     
                     const numMatch = answer.match(/(\\d+(?:\\.\\d+)?)/);
                     const answerNum = numMatch ? parseFloat(numMatch[1]) : 0;
+                    const hasRangeRadios = Array.from(radios).some(r => {
+                        let lbl = (typeof getInputLabelText === 'function') ? getInputLabelText(r) : '';
+                        if (!lbl) {
+                            const textEl = r.querySelector('p, span');
+                            lbl = textEl?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '';
+                        }
+                        return /\\d+\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lbl);
+                    });
                     // For experience matching: candidate has 4.2 years experience
-                    const expVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : answerNum;
+                    const effectiveExpVal = (answerNum >= 3.5 && answerNum <= 5.5) ? 4.2 : (answerNum > 0 ? answerNum : (hasRangeRadios ? 4.2 : 0));
+                    const expVal = effectiveExpVal;
+                    
+                    let hasBracketCovering4_2 = false;
+                    if (expVal >= 3.5 && expVal <= 5.5) {
+                        for (const r of radios) {
+                            let lbl = (typeof getInputLabelText === 'function') ? getInputLabelText(r) : '';
+                            if (!lbl) {
+                                const textEl = r.querySelector('p, span');
+                                lbl = textEl?.innerText || r.getAttribute('aria-label') || r.innerText || r.textContent || '';
+                            }
+                            const lblL = lbl.toLowerCase().trim();
+                            const rm = lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
+                            const mm = lblL.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
+                            if (rm) {
+                                const rMin = parseFloat(rm[1]);
+                                const rMax = parseFloat(rm[2]);
+                                if ((rMin === 4 || (expVal >= rMin && expVal <= rMax)) && rMax > 4) {
+                                    hasBracketCovering4_2 = true;
+                                    break;
+                                }
+                            }
+                            if (mm && parseFloat(mm[1]) <= expVal && parseFloat(mm[1]) >= 4) {
+                                hasBracketCovering4_2 = true;
+                                break;
+                            }
+                        }
+                    }
                     
                     for (const radio of radios) {
                         let label = (typeof getInputLabelText === 'function') ? getInputLabelText(radio) : '';
@@ -14363,7 +16371,7 @@ class SentinelAgent:
                         const lowerLabel = label.toLowerCase().trim();
                         let score = 0;
                         
-                        const isComparativeOrRange = /\\d+\\s*[-–to]\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
+                        const isComparativeOrRange = /\\d+\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*\\d+|less\\s+than|under|fewer\\s+than|below|<|more\\s+than|over|above|>|\\+/i.test(lowerLabel);
                         
                         const isLabelNo = (/^(no|false)\\b/i.test(lowerLabel) || (radio.value && (radio.value.toLowerCase() === 'no' || radio.value.toLowerCase() === 'false')) || lowerLabel.includes('never served') || lowerLabel.includes('not a veteran') || lowerLabel.includes('not a protected veteran') || (/\\b(no|false)\\b/i.test(lowerLabel) && !/\\b(yes|true)\\b/i.test(lowerLabel)));
                         const isLabelYes = (/^(yes|true)\\b/i.test(lowerLabel) || lowerLabel.includes('serving notice') || (radio.value && (radio.value.toLowerCase() === 'yes' || radio.value.toLowerCase() === 'true')) || (/\\b(yes|true)\\b/i.test(lowerLabel) && !isLabelNo));
@@ -14500,14 +16508,20 @@ class SentinelAgent:
                             
                             // Year-based range matching (experience questions)
                             if (score === 0 && !isDayUnit) {
-                                const yearRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
+                                const yearRangeMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                 if (yearRangeMatch) {
                                     const rMin = parseFloat(yearRangeMatch[1]);
                                     const rMax = parseFloat(yearRangeMatch[2]);
-                                    if (expVal >= rMin && expVal <= rMax) {
+                                    if (expVal >= 4.0 && rMax <= 4.0 && hasBracketCovering4_2) {
+                                        score = 0; // Candidate with 4.2 years exceeds max 4; never select when min=4 exists
+                                    } else if (expVal >= rMin && expVal <= rMax) {
                                         const rangeSize = rMax - rMin;
                                         const offsetFromMin = Math.abs(expVal - rMin);
-                                        score = Math.max(80, 98 - rangeSize * 2 - offsetFromMin);
+                                        const minBonus = (rMin === 4 || Math.floor(expVal) === rMin) ? 15 : 0;
+                                        score = Math.max(80, 100 + minBonus - rangeSize * 2 - offsetFromMin);
+                                    } else if (expVal > rMax && (expVal - rMax) <= 2.0 && !hasBracketCovering4_2) {
+                                        const diff = expVal - rMax;
+                                        score = Math.max(70, 85 - diff * 8);
                                     } else {
                                         score = 0;
                                     }
@@ -14518,7 +16532,7 @@ class SentinelAgent:
                             if (score === 0 && !isDayUnit) {
                                 const lessYearMatch = lowerLabel.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
                                 const moreYearMatch = lowerLabel.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
-                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
+                                const plusMatch = lowerLabel.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
                                 
                                 if (lessYearMatch) {
                                     const bound = parseFloat(lessYearMatch[1]);
@@ -14531,7 +16545,8 @@ class SentinelAgent:
                                 } else if (moreYearMatch || plusMatch) {
                                     const bound = parseFloat(moreYearMatch ? moreYearMatch[1] : plusMatch[1]);
                                     if (expVal >= bound) {
-                                        score = Math.max(75, 91 - (expVal - bound) * 2);
+                                        const minBonus = (bound === 4) ? 15 : 0;
+                                        score = Math.max(75, 95 + minBonus - (expVal - bound) * 2);
                                     } else {
                                         score = 0;
                                     }
@@ -14549,13 +16564,13 @@ class SentinelAgent:
                             }
                         }
                         
-                        if (score > bestScore) {
+                        if (score > 0 && score > bestScore) {
                             bestScore = score;
                             bestRadio = radio;
                         }
                     }
                     
-                    return bestRadio;
+                    return (bestScore > 0) ? bestRadio : null;
                 };
                 
                 const clickCustomRadio = (element) => {
@@ -14580,7 +16595,13 @@ class SentinelAgent:
                     element.dispatchEvent(new Event('click', { bubbles: true }));
                     const roleInput = element.querySelector('input[type="radio"]');
                     if (roleInput) {
-                        roleInput.checked = true;
+                        const nativeCheckedSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                        if (nativeCheckedSetter) {
+                            nativeCheckedSetter.call(roleInput, true);
+                        } else {
+                            roleInput.checked = true;
+                        }
+                        roleInput.dispatchEvent(new Event('input', { bubbles: true }));
                         roleInput.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 };
@@ -14685,6 +16706,11 @@ return resolveDynamic(bestMatch);
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
                     return /^(have you|do you|are you|will you|can you|did you|is your|are your|does your|would you|could you|should you|don't you|doesn't|isn't|aren't|wasn't|weren't|haven't|hasn't|had you|own you|owned you)\b/.test(t) ||
                            t.startsWith('apply only ') ||
+                           t.startsWith('available to ') ||
+                           t.includes('available to') ||
+                           t.includes('virtual drive') ||
+                           t.includes('hiring drive') ||
+                           t.includes('work from office') ||
                            t.includes('willing') ||
                            t.includes('comfortable') ||
                            t.includes('localite') ||
@@ -14699,7 +16725,8 @@ return resolveDynamic(bestMatch);
                            t.includes('background check') ||
                            t.includes('drug test') ||
                            t.includes('drug screen') ||
-                           t.includes('drug screening');
+                           t.includes('drug screening') ||
+                           /(?:experience.*(?:developing|consuming)|developing.*consuming).*rest/i.test(t);
                 };
 
                 const isLinkedIn = document.title.includes('LinkedIn') || window.location.href.includes('linkedin.com');
@@ -14864,7 +16891,7 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
-                        const formResults = [];
+                        const formResults = attachQaLog([]);
 
                         // Helper: Check if a string looks like a question/heading rather than an option label
                         const isQuestionText = (t) => {
@@ -14962,9 +16989,15 @@ return resolveDynamic(bestMatch);
                                 roleRadioParent.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
                                 roleRadioParent.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
                                 roleRadioParent.click();
-                                input.checked = true;
+                                const nativeCheckedSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                                if (nativeCheckedSetter) {
+                                    nativeCheckedSetter.call(input, true);
+                                } else {
+                                    input.checked = true;
+                                }
                                 input.dispatchEvent(new Event('input', { bubbles: true }));
                                 input.dispatchEvent(new Event('change', { bubbles: true }));
+                                input.dispatchEvent(new Event('blur', { bubbles: true }));
                                 return;
                             }
                             
@@ -15011,16 +17044,14 @@ return resolveDynamic(bestMatch);
 
                             // Ensure checked state for checkbox and radio inputs using native descriptor
                             if (input.type === 'checkbox' || input.type === 'radio') {
-                                if (!input.checked) {
-                                    const nativeCheckedSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
-                                    if (nativeCheckedSetter) {
-                                        nativeCheckedSetter.call(input, true);
-                                    } else {
-                                        input.checked = true;
-                                    }
-                                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                                const nativeCheckedSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked')?.set;
+                                if (nativeCheckedSetter) {
+                                    nativeCheckedSetter.call(input, true);
+                                } else {
+                                    input.checked = true;
                                 }
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
                             }
                             input.dispatchEvent(new Event('blur', { bubbles: true }));
                         };
@@ -15699,6 +17730,14 @@ return resolveDynamic(bestMatch);
                                                 placeholderUpper.includes('YYYY-MM-DD') ||
                                                 /start\\s*date|earliest\\s*start|joining\\s*date|expected\\s*start|available\\s*start|date\\s*of\\s*birth|dob\\b|birth\\s*date/i.test(lowerLabel);
 
+                            // Skip optional conditional follow-up fields when candidate has no referral/relationship
+                            const isConditionalIfYes = /^(?:if\\s+yes|if\\s+you\\s+answered\\s+yes|if\\s+referred)\\b/i.test(lowerLabel);
+                            const isRequiredField = input.required || input.getAttribute('aria-required') === 'true' || /required/i.test(labelText);
+                            if (isConditionalIfYes && !isRequiredField && /employee|relative|friend|relationship|referral|referred/i.test(lowerLabel)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping optional conditional employee referral/relationship text input:', labelText);
+                                continue;
+                            }
+
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
 
@@ -15753,9 +17792,12 @@ return resolveDynamic(bestMatch);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
-                            const isSalaryCompField = /salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration|stipend|earn/i.test(lowerLabel);
-                            if (answer && !isSalaryCompField && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || /notice|np|days|months?/i.test(labelText))) {
-                                if (/month/i.test(labelText)) {
+                            const isSalaryCompField = /salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration|stipend|earn|financial|gross|expectations?/i.test(lowerLabel) ||
+                                                      /salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration|stipend|earn|financial|gross|expectations?/i.test(labelText);
+                            const isActualNoticeQ = /notice|np|serving\\s*notice|availability\\s*to\\s*join|joining\\s*time|how\\s*soon.*join/i.test(lowerLabel) ||
+                                                    /notice|np|serving\\s*notice|availability\\s*to\\s*join|joining\\s*time|how\\s*soon.*join/i.test(labelText);
+                            if (answer && !isSalaryCompField && !isLwdDateQuestion && !isDateField && !isWorkModeQ && input.tagName !== 'TEXTAREA' && (answer === 'Serving Notice Period' || isActualNoticeQ)) {
+                                if (/month/i.test(labelText) || /month/i.test(lowerLabel)) {
                                     answer = '0.5';
                                 } else {
                                     const defaultObj = KNOWN_PATTERNS_WITH_DEFAULTS[labelText.toLowerCase()];
@@ -15770,13 +17812,19 @@ return resolveDynamic(bestMatch);
                             }
                             
                             if (/19102026|enter as \\d+|ddmmyyyy/i.test(lowerLabel)) {
-                                answer = '23102026';
+                                answer = (() => { const d = new Date(); d.setDate(d.getDate() + 15); return String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear(); })();
                             }
                             
                             // Special handling for currency / salary text fields (preserve compound / textarea answers)
-                            if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
+                            if (input.tagName !== 'TEXTAREA' && (/salary|ctc|compensation|\bpay\b|\bpackage\b|remuneration|financial|gross/i.test(lowerLabel)) && !/experience|years|how many/i.test(lowerLabel)) {
                                 if (/variable|bonus|rsu|option|stock|equity|esop|unvested/i.test(lowerLabel) && !/no\\s+variable|without\\s+variable|excluding\\s+variable|zero\\s+variable|not\\s+variable|fixed.*no\\s+variable/i.test(lowerLabel)) {
-                                    answer = '0';
+                                    if (/breakup|details|break-up|split|component|including fixed/i.test(lowerLabel)) {
+                                        answer = 'Fixed CTC: 23 LPA, Variable: 0 LPA (100% Fixed, 0 ESOPs)';
+                                    } else if (/(?:base|fixed)\\s*(?:\\+|\\band\\b)\\s*variable|current.*(?:ctc|salary)|(?:ctc|salary).*in\\s*lpa/i.test(lowerLabel)) {
+                                        answer = /in\\s*lpa|lacs?|lakhs?/i.test(lowerLabel) ? '23' : '2300000';
+                                    } else {
+                                        answer = '0';
+                                    }
                                 } else if (/700000|mention as \\d{6,}|example.*\\d{6,}/i.test(lowerLabel)) {
                                     answer = /current|present|cctc/i.test(lowerLabel) ? '2300000' : '3000000';
                                 } else if (/usd|dollar|\\$/i.test(lowerLabel)) {
@@ -15792,8 +17840,10 @@ return resolveDynamic(bestMatch);
                                 }
                             }
 
-                            // Special handling for portfolio / github link text fields (ensure it's not asking for proficiency/technologies/tools/experience)
-                            if (/(portfolio|work link)|(?:(?:github|portfolio|website|profile)\\s*(?:url|link|profile|handle|account|page))/i.test(lowerLabel) && !/proficient|technolog|tools|experience|years|skill/i.test(lowerLabel) && (!answer || !answer.startsWith('http'))) {
+                            // Special handling for portfolio / github / linkedin link text fields (ensure it's not asking for proficiency/technologies/tools/experience)
+                            if (lowerLabel.includes('linkedin')) {
+                                answer = 'https://www.linkedin.com/in/siddhant-singh/';
+                            } else if (/(portfolio|work link)|(?:(?:github|portfolio|website|profile)\\s*(?:url|link|profile|handle|account|page))/i.test(lowerLabel) && !/proficient|technolog|tools|experience|years|skill/i.test(lowerLabel) && (!answer || !answer.startsWith('http'))) {
                                 answer = 'https://siddhant3646.github.io/Portfolio/';
                             }
 
@@ -15962,6 +18012,9 @@ return resolveDynamic(bestMatch);
                                 } else if ((combinedText.includes('desired') || combinedText.includes('expected')) && (combinedText.includes('salary') || combinedText.includes('compensation') || combinedText.includes('ctc')) && combinedText.includes('range')) {
                                     answer = '28-32 LPA';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling desired salary range');
+                                } else if (/referrer\\s*name|name\\s*of\\s*(?:the\\s*)?referrer|who\\s*referred|referral\\s*name|(?:employee|referrer|referral)['’]?s?\\s*name/i.test(combinedText) || (combinedText.includes('referr') && /name|who|id|n\\/a/i.test(combinedText))) {
+                                    answer = 'N/A';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling referrer name with N/A');
                                 } else if (combinedText.includes('referral') || /are you a referral/i.test(combinedText)) {
                                     answer = 'No';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling referral');
@@ -15969,7 +18022,7 @@ return resolveDynamic(bestMatch);
                                     answer = '7';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling notice/join period');
                                 } else if (combinedText.includes('linkedin') || combinedText.includes('profile url')) {
-                                    answer = 'https://www.linkedin.com/in/siddhant-singh';
+                                    answer = 'https://www.linkedin.com/in/siddhant-singh/';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling LinkedIn URL');
                                 } else if (combinedText.includes('github') || combinedText.includes('portfolio')) {
                                     answer = 'https://github.com/siddhant3646';
@@ -17227,7 +19280,7 @@ return resolveDynamic(bestMatch);
                                 // DELOITTE / AUDITOR COMPLIANCE SELECT HANDLER
                                 if (/deloitte|auditor|subsidiary.*affiliation/i.test(lowerLabel)) {
                                     const affOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    let affMatch = affOptions.find(o => /never\\s*been|not\\s*been/i.test(o.text)) || affOptions.find(o => /^no\b/i.test(o.text.trim()));
+                                    let affMatch = affOptions.find(o => /never\\s*been|not\\s*been|not\\s*a\\s*current|not\\s*an?\\s*ex-employee/i.test(o.text)) || affOptions.find(o => /^no\b/i.test(o.text.trim()));
                                     if (affMatch) {
                                         select.value = affMatch.value;
                                         if (select.value !== affMatch.value) select.selectedIndex = affMatch.index;
@@ -17258,6 +19311,12 @@ return resolveDynamic(bestMatch);
                                 }
 
                                 // EMPLOYEE REFERRAL RELATIONSHIP SELECT HANDLER
+                                const isConditionalIfYesSelect = /^(?:if\\s+yes|if\\s+you\\s+answered\\s+yes|if\\s+referred)\\b/i.test(lowerLabel);
+                                const isRequiredSelect = select.required || select.getAttribute('aria-required') === 'true' || /required/i.test(labelText);
+                                if (isConditionalIfYesSelect && !isRequiredSelect && /employee|relative|friend|relationship|referral|referred/i.test(lowerLabel)) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Skipping optional conditional employee referral/relationship select:', labelText);
+                                    continue;
+                                }
                                 if ((lowerLabel.includes('how') && lowerLabel.includes('know') && lowerLabel.includes('employee')) || (lowerLabel.includes('relationship') && lowerLabel.includes('employee'))) {
                                     const relOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                     let relMatch = relOptions.find(o => /^(n\\/?a|not applicable|none|no relationship|other)\b/i.test(o.text.trim())) ||
@@ -17293,7 +19352,9 @@ return resolveDynamic(bestMatch);
                                 // RELEVANT EXPERIENCE EXCLUDING INTERNSHIP SELECT HANDLER
                                 if (lowerLabel.includes('relevant') && lowerLabel.includes('experience') && lowerLabel.includes('internship')) {
                                     const expOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    let expMatch = expOptions.find(o => /3\\s*[-–to]\\s*5/i.test(o.text) || /3\\s*a\\s*5/i.test(o.text)) ||
+                                    let expMatch = expOptions.find(o => /4\\s*[-–to]\\s*8/i.test(o.text)) ||
+                                                   expOptions.find(o => /3\\s*[-–to]\\s*5/i.test(o.text) || /3\\s*a\\s*5/i.test(o.text)) ||
+                                                   findBestMatch('4-8 Years', expOptions) ||
                                                    findBestMatch('3-5 Years', expOptions) ||
                                                    findBestMatch('4', expOptions);
                                     if (expMatch) {
@@ -17304,6 +19365,24 @@ return resolveDynamic(bestMatch);
                                         select.dispatchEvent(new Event('blur', { bubbles: true }));
                                         window.__SENTINEL_DEBUG__&&console.log('Excluding internship exp match: Selected', expMatch.text, 'for', labelText);
                                         formResults.push({ question: labelText, answer: expMatch.text, inputType: 'select-experience' });
+                                        continue;
+                                    }
+                                }
+
+                                // LEADING TECHNICAL INITIATIVES SELECT HANDLER
+                                if (lowerLabel.includes('technical initiatives') || (lowerLabel.includes('leading') && lowerLabel.includes('initiatives'))) {
+                                    const initOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
+                                    let initMatch = initOptions.find(o => /2\\s*[-–to]\\s*4/i.test(o.text)) ||
+                                                    findBestMatch('2-4 Years of technical initiatives', initOptions) ||
+                                                    findBestMatch('2-4 Years', initOptions);
+                                    if (initMatch) {
+                                        select.value = initMatch.value;
+                                        if (select.value !== initMatch.value) select.selectedIndex = initMatch.index;
+                                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                                        select.dispatchEvent(new Event('blur', { bubbles: true }));
+                                        window.__SENTINEL_DEBUG__&&console.log('Technical initiatives exp match: Selected', initMatch.text, 'for', labelText);
+                                        formResults.push({ question: labelText, answer: initMatch.text, inputType: 'select-experience' });
                                         continue;
                                     }
                                 }
@@ -17385,7 +19464,7 @@ return resolveDynamic(bestMatch);
                                 ];
                                 const isConsentOrAgreement = /agree|consent|privacy|personal\\s*data|data\\s*process|terms|condition|policy|authorization/i.test(lowerLabel);
                                 const isDangerousYes = !isConsentOrAgreement && dangerousYesPatterns.some(p => lowerLabel.includes(p));
-                                const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live/i.test(lowerLabel);
+                                const isCountryResidenceQ = /country.*reside|reside.*country|country\\s+of\\s+residence|current\\s+country|country\\s+you\\s+live|country.*based|based.*country|country\\s*(?:\\/|\\s+or\\s+)?\\s*region/i.test(lowerLabel);
                                 const isContractTypeQ = /type\\s+of\\s+contract|contract\\s+type|employment\\s+type/i.test(lowerLabel);
                                 const isStateProvinceQ = /state|province|region\\s*\\/\\s*state/i.test(lowerLabel);
                                 const isRegionContinentQ = /region|geography|territory/i.test(lowerLabel) && !isStateProvinceQ;
@@ -17409,12 +19488,14 @@ return resolveDynamic(bestMatch);
                                             fallbackOpt = findBestMatch('4', realOptions);
                                         } else if (lowerLabel.includes('gender')) {
                                             fallbackOpt = realOptions.find(o => /man|male|hombre|masculino/i.test(o.text)) || realOptions.find(o => /prefer not|decline/i.test(o.text));
+                                        } else if (/school|university|college|institution|alma mater/i.test(lowerLabel)) {
+                                            fallbackOpt = realOptions.find(o => /vellore|\\bvit\\b|bhopal/i.test(o.text)) || realOptions.find(o => /other|not listed|not specified|none of the above/i.test(o.text)) || realOptions.find(o => !/select|choose/i.test(o.text));
                                         }
                                         if (!fallbackOpt && !isDangerousYes) {
-                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'yes' || o.text.toLowerCase().includes('yes'));
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'yes' || /\\byes\\b/i.test(o.text));
                                         }
                                         if (!fallbackOpt && isDangerousYes) {
-                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'no' || o.text.toLowerCase().includes('no') || o.text.toLowerCase().includes('decline') || o.text.toLowerCase().includes('prefer not'));
+                                            fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'no' || /\\bno\\b/i.test(o.text) || o.text.toLowerCase().includes('decline') || o.text.toLowerCase().includes('prefer not'));
                                         }
                                         if (!fallbackOpt && isLanguageProficiencyQ) {
                                             fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'none' || o.text.toLowerCase().includes('elementary') || o.text.toLowerCase().includes('limited') || o.text.toLowerCase().includes('basic'));
@@ -17763,7 +19844,10 @@ return resolveDynamic(bestMatch);
                                         clickInput(bestRadio);
                                         let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
                                         if (isQuestionText(selectedVal) || selectedVal === 'on') {
-                                            selectedVal = (answer === 'No' || shouldDefaultToNo(legend)) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                            selectedVal = (answer === 'No' || shouldDefaultToNo(legend)) ? 'No' : (answer && answer !== 'on' && !isQuestionText(answer) ? answer : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected'));
+                                        }
+                                        if (radios.length === 2 && !/^(yes|no)$/i.test(selectedVal)) {
+                                            selectedVal = shouldDefaultToNo(legend) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'No');
                                         }
                                         if (shouldDefaultToNo(legend)) selectedVal = 'No';
                                         formResults.push({ question: legend, answer: selectedVal, inputType: 'radio', options: radioOptions, selectedOption: selectedVal, source: 'pattern_match' });
@@ -17773,12 +19857,12 @@ return resolveDynamic(bestMatch);
                                         const hasYes = radios.some(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
-                                            return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                            return val === 'yes' || val === 'true' || val === '1' || labelText === 'yes' || labelText.includes('yes');
                                         });
                                         const hasNo = radios.some(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
-                                            return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                            return val === 'no' || val === 'false' || val === '0' || labelText === 'no' || labelText.includes('no');
                                         });
                                         const isYesNoFromRadios = radios.length <= 4 && hasYes && hasNo;
                                         const isYesNoFromText = isLikelyYesNoQuestion(legend);
@@ -17788,7 +19872,7 @@ return resolveDynamic(bestMatch);
                                             let targetRadio = radios.find(r => {
                                                 const val = (r.value || '').toLowerCase();
                                                 const labelText = getInputLabelText(r);
-                                                return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
+                                                return val === targetValue || val === (defaultNo ? 'false' : 'true') || val === (defaultNo ? '0' : '1') || labelText === targetValue || labelText.includes(targetValue);
                                             });
                                             if (!targetRadio && radios.length === 2) {
                                                 targetRadio = defaultNo ? radios[1] : radios[0];
@@ -17805,12 +19889,12 @@ return resolveDynamic(bestMatch);
                                     const hasYes = radios.some(r => {
                                         const val = (r.value || '').toLowerCase();
                                         const labelText = getInputLabelText(r);
-                                        return val === 'yes' || labelText === 'yes' || labelText.includes('yes');
+                                        return val === 'yes' || val === 'true' || val === '1' || labelText === 'yes' || labelText.includes('yes');
                                     });
                                     const hasNo = radios.some(r => {
                                         const val = (r.value || '').toLowerCase();
                                         const labelText = getInputLabelText(r);
-                                        return val === 'no' || labelText === 'no' || labelText.includes('no');
+                                        return val === 'no' || val === 'false' || val === '0' || labelText === 'no' || labelText.includes('no');
                                     });
                                     const isYesNo = radios.length <= 4 && hasYes && hasNo;
                                     const isYesNoQ = isLikelyYesNoQuestion(legend);
@@ -17821,7 +19905,7 @@ return resolveDynamic(bestMatch);
                                         let targetRadio = radios.find(r => {
                                             const val = (r.value || '').toLowerCase();
                                             const labelText = getInputLabelText(r);
-                                            return val === targetValue || labelText === targetValue || labelText.includes(targetValue);
+                                            return val === targetValue || val === (defaultNo ? 'false' : 'true') || val === (defaultNo ? '0' : '1') || labelText === targetValue || labelText.includes(targetValue);
                                         });
                                         if (!targetRadio && radios.length === 2) {
                                             targetRadio = defaultNo ? radios[1] : radios[0];
@@ -17977,9 +20061,14 @@ return resolveDynamic(bestMatch);
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
-                                        let selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || answer).trim();
-                                        if (isQuestionText(selectedVal) || selectedVal === 'on') {
-                                            selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (customRadios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                        let selectedVal = (bestRadio.innerText || bestRadio.getAttribute('aria-label') || '').trim();
+                                        if (!selectedVal || isQuestionText(selectedVal) || selectedVal === 'on') {
+                                            const isYesNoGroup = customRadios.length === 2 || customRadioOptions.some(o => /yes|no/i.test(o));
+                                            if (isYesNoGroup) {
+                                                selectedVal = (answer === 'No' || shouldDefaultToNo(questionText) || customRadios.indexOf(bestRadio) === 1) ? 'No' : 'Yes';
+                                            } else {
+                                                selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (answer || (customRadios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected'));
+                                            }
                                         }
                                         if (shouldDefaultToNo(questionText)) selectedVal = 'No';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: customRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
@@ -18077,20 +20166,20 @@ return resolveDynamic(bestMatch);
                         // 3.1b Handle standalone Radio buttons (not inside fieldsets)
                         // Many forms have radio buttons directly in divs or other containers
                         const allRadios = queryAllDeep('input[type="radio"]', modal);
-                        const radioGroups = {};
+                        const radioGroupsByName = {};
                         
                         // Group radios by name attribute
                         for (const radio of allRadios) {
                             const name = radio.name;
                             if (!name) continue;  // Skip radios without names
-                            if (!radioGroups[name]) {
-                                radioGroups[name] = [];
+                            if (!radioGroupsByName[name]) {
+                                radioGroupsByName[name] = [];
                             }
-                            radioGroups[name].push(radio);
+                            radioGroupsByName[name].push(radio);
                         }
                         
                         // Process each radio group
-                        for (const [name, radios] of Object.entries(radioGroups)) {
+                        for (const [name, radios] of Object.entries(radioGroupsByName)) {
                             // Skip if any radio in group is already checked
                             if (radios.some(r => r.checked)) continue;
                             
@@ -18187,7 +20276,10 @@ return resolveDynamic(bestMatch);
                                         clickInput(bestRadio);
                                         let selectedVal = (getInputLabelText(bestRadio) || bestRadio.value || bestRadio.id || answer).trim();
                                         if (isQuestionText(selectedVal) || selectedVal === 'on') {
-                                            selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected');
+                                            selectedVal = (answer === 'No' || shouldDefaultToNo(questionText)) ? 'No' : (answer && answer !== 'on' && !isQuestionText(answer) ? answer : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'Selected'));
+                                        }
+                                        if (radios.length === 2 && !/^(yes|no)$/i.test(selectedVal)) {
+                                            selectedVal = shouldDefaultToNo(questionText) ? 'No' : (radios.indexOf(bestRadio) === 0 ? 'Yes' : 'No');
                                         }
                                         if (shouldDefaultToNo(questionText)) selectedVal = 'No';
                                         formResults.push({ question: questionText.substring(0, 100), answer: selectedVal, inputType: 'radio', options: standaloneRadioOptions, selectedOption: selectedVal, source: 'pattern_match' });
@@ -18327,6 +20419,16 @@ return resolveDynamic(bestMatch);
                         const checkboxes = queryAllDeep('input[type="checkbox"], .fb-form-element__checkbox', modal);
                         window.__SENTINEL_DEBUG__&&console.log('Found', checkboxes.length, 'checkboxes in modal');
 
+                        const CANDIDATE_SKILLS = new Set([
+                            'java', 'spring', 'spring boot', 'react', 'reactjs', 'node', 'nodejs', 'node.js',
+                            'python', 'aws', 'amazon web services', 'kafka', 'apache kafka', 'postgresql',
+                            'postgres', 'mongodb', 'mongo', 'sql', 'docker', 'kubernetes', 'k8s', 'microservices',
+                            'rest', 'rest api', 'restful', 'git', 'github', 'redis', 'hibernate', 'jpa',
+                            'distributed systems', 'system design', 'backend', 'full stack', 'fullstack',
+                            'ci/cd', 'linux', 'junit', 'maven', 'gradle', 'typescript', 'javascript',
+                            'kotlin', 'golang', 'go (golang)', 'go', 'scala'
+                        ]);
+
                         // Helper: get the question text for a group/fieldset (legend or heading)
                         function getGroupQuestionText(fieldset) {
                             const cleanText = (str) => (str || '').replace(/\\*$/, '').replace(/\\*\\s*This field is required/gi, '').trim();
@@ -18440,8 +20542,14 @@ return resolveDynamic(bestMatch);
 
                         // Phase 1: Handle multi-checkbox fieldsets group-by-group
                         const handledCheckboxes = new Set();
-                        const rawCheckboxGroups = queryAllDeep('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field', modal)
-                            .filter(el => el.querySelectorAll('input[type="checkbox"]').length > 1);
+                        const rawCheckboxGroups = queryAllDeep('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field, [data-test-form-builder-checkbox-form-component], div', modal)
+                            .filter(el => {
+                                const cbs = el.querySelectorAll('input[type="checkbox"], .fb-form-element__checkbox');
+                                if (cbs.length < 2) return false;
+                                const children = Array.from(el.children);
+                                if (children.some(ch => ch.querySelectorAll('input[type="checkbox"], .fb-form-element__checkbox').length === cbs.length)) return false;
+                                return true;
+                            });
 
                         const seenCbKeySets = new Set();
                         const multiCheckboxFieldsets = [];
@@ -18587,6 +20695,33 @@ return resolveDynamic(bestMatch);
                                 }
                             }
 
+                            const isSkillsGroup = /programming language|backend language|language|skills?|technolog|tools?|frameworks?|stack/i.test(groupQuestion);
+                            const isTop2Group = /top\\s*2|select\\s*(?:top\\s*)?2|choose\\s*2/i.test(groupQuestion);
+                            let groupCheckedCount = 0;
+
+                            const ansNumMatch = groupAnswer ? groupAnswer.match(/(\\d+(?:\\.\\d+)?)/) : null;
+                            const groupExpVal = ansNumMatch ? ((parseFloat(ansNumMatch[1]) >= 3.5 && parseFloat(ansNumMatch[1]) <= 5.5) ? 4.2 : parseFloat(ansNumMatch[1])) : 0;
+                            let hasCoveringGroupCb = false;
+                            if (groupExpVal >= 3.5 && groupExpVal <= 5.5) {
+                                for (const cb of groupCbs) {
+                                    const optLbl = (getOptionLabel(cb) || '').toLowerCase().trim();
+                                    const rm = optLbl.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
+                                    const mm = optLbl.match(/(?:more\\s+than|over|above|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || optLbl.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
+                                    if (rm) {
+                                        const rMin = parseFloat(rm[1]);
+                                        const rMax = parseFloat(rm[2]);
+                                        if ((rMin === 4 || (groupExpVal >= rMin && groupExpVal <= rMax)) && rMax > 4) {
+                                            hasCoveringGroupCb = true;
+                                            break;
+                                        }
+                                    }
+                                    if (mm && parseFloat(mm[1]) <= groupExpVal && parseFloat(mm[1]) >= 4) {
+                                        hasCoveringGroupCb = true;
+                                        break;
+                                    }
+                                }
+                            }
+
                             for (const cb of groupCbs) {
                                 handledCheckboxes.add(cb);
                                 if (!isVisible(cb) || cb.checked) continue;
@@ -18596,15 +20731,21 @@ return resolveDynamic(bestMatch);
                                 if (optLabel) groupAllLabelsEmpty = false;
 
                                 let shouldCheck = false;
+                                const optLower = optLabel.toLowerCase().trim();
 
-                                if (groupAnswer) {
+                                if (isSkillsGroup) {
+                                    if (CANDIDATE_SKILLS.has(optLower) || optLower === 'java' || optLower.includes('java') || optLower.includes('spring')) {
+                                        shouldCheck = true;
+                                    }
+                                }
+
+                                if (!shouldCheck && groupAnswer) {
                                     const answerLower = groupAnswer.toLowerCase();
-                                    const optLower = optLabel.toLowerCase().trim();
                                     
-                                    const isYesOpt = /\\byes\\b/i.test(optLower);
-                                    const isNoOpt = /\\bno\\b/i.test(optLower) && !isYesOpt;
-                                    const isAnsYes = /\\byes\\b/i.test(answerLower);
-                                    const isAnsNo = /\\bno\\b/i.test(answerLower) && !isAnsYes;
+                                    const isYesOpt = /\byes\b/i.test(optLower);
+                                    const isNoOpt = /\bno\b/i.test(optLower) && !isYesOpt;
+                                    const isAnsYes = /\byes\b/i.test(answerLower);
+                                    const isAnsNo = /\bno\b/i.test(answerLower) && !isAnsYes;
                                     
                                     if (isYesOpt && isAnsYes) {
                                         shouldCheck = true;
@@ -18621,23 +20762,28 @@ return resolveDynamic(bestMatch);
                                     
                                     // Numeric range matching for options like "0-1", "1-2", "2-3", "3+", "4-5"
                                     if (!shouldCheck && !isYesOpt && !isNoOpt) {
-                                        const ansNumMatch = groupAnswer.match(/(\\d+(?:\\.\\d+)?)/);
                                         if (ansNumMatch) {
-                                            const ansNum = parseFloat(ansNumMatch[1]);
-                                            const expVal = (ansNum >= 3.5 && ansNum <= 5.5) ? 4.2 : ansNum;
+                                            const expVal = groupExpVal;
                                             
                                             // "X+" pattern (e.g., "3+" or "4+" matches answer 4.2)
-                                            const plusMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*\\+/);
+                                            const plusMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
                                             if (plusMatch && expVal >= parseFloat(plusMatch[1])) {
-                                                shouldCheck = true;
+                                                const plusBound = parseFloat(plusMatch[1]);
+                                                if (expVal >= 4.0 && plusBound < 4.0 && hasCoveringGroupCb) {
+                                                    shouldCheck = false;
+                                                } else {
+                                                    shouldCheck = true;
+                                                }
                                             }
                                             // "X-Y" range pattern (e.g., "4-5", "3-5" matches answer 4.2)
                                             if (!shouldCheck) {
-                                                const rangeMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
+                                                const rangeMatch = optLower.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                                 if (rangeMatch) {
                                                     const rMin = parseFloat(rangeMatch[1]);
                                                     const rMax = parseFloat(rangeMatch[2]);
-                                                    if (expVal >= rMin && expVal <= rMax) {
+                                                    if (expVal >= 4.0 && rMax <= 4.0 && hasCoveringGroupCb) {
+                                                        shouldCheck = false;
+                                                    } else if (expVal >= rMin && expVal <= rMax) {
                                                         shouldCheck = true;
                                                     }
                                                 }
@@ -18650,9 +20796,27 @@ return resolveDynamic(bestMatch);
                                     window.__SENTINEL_DEBUG__&&console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
                                     clickInput(cb);
                                     anyCheckedInGroup = true;
+                                    groupCheckedCount++;
                                     formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox', options: groupOptions, selectedOption: optLabel, source: 'pattern_match' });
                                 } else {
                                     window.__SENTINEL_DEBUG__&&console.log('Skipping group checkbox option:', optLabel, '(answer:', groupAnswer, ')');
+                                }
+                            }
+
+                            // If "Top 2" required and only 1 checked, check second relevant backend language (e.g. Kotlin / Go)
+                            if (isTop2Group && groupCheckedCount === 1) {
+                                for (const cb of groupCbs) {
+                                    if (!cb.checked && isVisible(cb)) {
+                                        const opt = getOptionLabel(cb).toLowerCase().trim();
+                                        if (opt.includes('kotlin') || opt.includes('go') || opt.includes('golang') || opt.includes('scala') || opt.includes('python')) {
+                                            window.__SENTINEL_DEBUG__&&console.log('Top 2 requirement: Selecting second option:', getOptionLabel(cb));
+                                            clickInput(cb);
+                                            groupCheckedCount++;
+                                            anyCheckedInGroup = true;
+                                            formResults.push({ question: groupQuestion || opt, answer: getOptionLabel(cb), inputType: 'checkbox', options: groupOptions, selectedOption: getOptionLabel(cb), source: 'top2_skill' });
+                                            break;
+                                        }
+                                    }
                                 }
                             }
 
@@ -18940,12 +21104,19 @@ return resolveDynamic(bestMatch);
                             
                             if (!shouldCheck && labelText) {
                                 const skillMatch = fuzzyMatch(labelText);
+                                const isNumericExp = skillMatch && /^\\d+(\\.\\d+)?$/.test(String(skillMatch).trim()) && parseFloat(skillMatch) > 0;
                                 if (skillMatch && (
                                     skillMatch.toLowerCase() === 'yes' ||
-                                    skillMatch.toLowerCase().includes(labelText.toLowerCase())
+                                    skillMatch.toLowerCase().includes(labelText.toLowerCase()) ||
+                                    isNumericExp
                                 )) {
                                     shouldCheck = true;
                                     window.__SENTINEL_DEBUG__&&console.log('Skill found for checkbox:', labelText, 'matched as:', skillMatch);
+                                }
+                                const normLabel = labelText.toLowerCase().trim();
+                                if (CANDIDATE_SKILLS.has(normLabel) || normLabel.startsWith('java ') || normLabel === 'java') {
+                                    shouldCheck = true;
+                                    window.__SENTINEL_DEBUG__&&console.log('Candidate skill matched directly for checkbox:', labelText);
                                 }
                             }
                             
@@ -18990,13 +21161,15 @@ return resolveDynamic(bestMatch);
                         
                         // 3.6 Checkbox group error recovery:
                         // If any container has an active error (.artdeco-inline-feedback--error)
-                        // and contains unchecked checkboxes, attempt to resolve it by selecting the matching or "Yes" option
-                        const errorFeedbackEls = queryAllDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
+                        // and contains unchecked checkboxes, attempt to resolve it by selecting matching skill, "Yes", or first option
+                        const errorFeedbackEls = queryAllDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field, [data-testid*="error"], [class*="error"], .artdeco-inline-feedback__message', modal);
                         for (const errEl of errorFeedbackEls) {
                             if (!isVisible(errEl)) continue;
-                            const container = errEl.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question');
+                            const errText = (errEl.innerText || '').toLowerCase();
+                            if (!errText.includes('required') && !errText.includes('select') && !errText.includes('enter') && !errText.includes('invalid') && !errText.includes('please')) continue;
+                            const container = errEl.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], div');
                             if (!container || isInsideExperienceOrEducationEditor(container)) continue;
-                            const groupCbs = Array.from(container.querySelectorAll('input[type="checkbox"]')).filter(c => isVisible(c));
+                            const groupCbs = Array.from(container.querySelectorAll('input[type="checkbox"], [role="checkbox"]')).filter(c => isVisible(c));
                             if (groupCbs.length > 0 && !groupCbs.some(c => c.checked)) {
                                 const qText = getGroupQuestionText(container);
                                 const qAns = qText ? (shouldDefaultToNo(qText) ? 'No' : fuzzyMatch(qText)) : null;
@@ -19011,17 +21184,28 @@ return resolveDynamic(bestMatch);
                                     return (s === 'no' || s.startsWith('no ') || s.startsWith('no,') || s.startsWith('no -') || s.startsWith('no(') || s.startsWith('no/') || s.endsWith(' no') || s.includes(' no ')) && !isOptionYes(s);
                                 };
                                 let chosenCb = null;
+                                // 1. Check if any option matches candidate skills (e.g. Java)
                                 for (const cb of groupCbs) {
                                     const opt = getOptionLabel(cb).toLowerCase().trim();
-                                    if (qAns) {
-                                        const qAnsLower = qAns.toLowerCase().trim();
-                                        if (opt === qAnsLower || opt.startsWith(qAnsLower + ' ') || opt.endsWith(' ' + qAnsLower) || opt.includes(' ' + qAnsLower + ' ')) {
-                                            chosenCb = cb;
-                                            break;
-                                        }
-                                    }
-                                    if (isOptionYes(opt) && (!qAns || !isOptionNo(qAns))) {
+                                    if (CANDIDATE_SKILLS.has(opt) || opt.includes('java')) {
                                         chosenCb = cb;
+                                        break;
+                                    }
+                                }
+                                // 2. Check if option matches question answer
+                                if (!chosenCb) {
+                                    for (const cb of groupCbs) {
+                                        const opt = getOptionLabel(cb).toLowerCase().trim();
+                                        if (qAns) {
+                                            const qAnsLower = qAns.toLowerCase().trim();
+                                            if (opt === qAnsLower || opt.startsWith(qAnsLower + ' ') || opt.endsWith(' ' + qAnsLower) || opt.includes(' ' + qAnsLower + ' ')) {
+                                                chosenCb = cb;
+                                                break;
+                                            }
+                                        }
+                                        if (isOptionYes(opt) && (!qAns || !isOptionNo(qAns))) {
+                                            chosenCb = cb;
+                                        }
                                     }
                                 }
                                 if (!chosenCb && groupCbs.length > 0) chosenCb = groupCbs[0];
@@ -19031,18 +21215,49 @@ return resolveDynamic(bestMatch);
                                     formResults.push({ question: qText || 'Error recovery checkbox', answer: getOptionLabel(chosenCb), inputType: 'checkbox', options: groupCbs.map(c => getOptionLabel(c)), selectedOption: getOptionLabel(chosenCb), source: 'error_recovery' });
                                 }
                             }
+
+                            // Radio group error recovery:
+                            // If container contains radio buttons and none are checked, select matching option or default to Yes
+                            const groupRadios = Array.from(container.querySelectorAll('input[type="radio"], [role="radio"]')).filter(r => isVisible(r));
+                            const hasCheckedRadioInErr = groupRadios.some(r => r.checked || r.getAttribute('aria-checked') === 'true' || r.classList.contains('selected') || r.classList.contains('checked'));
+                            if (groupRadios.length > 0 && !hasCheckedRadioInErr) {
+                                const qText = getGroupQuestionText(container);
+                                const defNo = shouldDefaultToNo(qText);
+                                const qAns = qText ? (defNo ? 'No' : fuzzyMatch(qText)) : null;
+                                let chosenRadio = null;
+                                if (qAns) {
+                                    chosenRadio = findBestRadioMatch(qAns, groupRadios) || findBestCustomRadioMatch(qAns, groupRadios);
+                                }
+                                if (!chosenRadio) {
+                                    const targetVal = defNo ? 'no' : 'yes';
+                                    chosenRadio = groupRadios.find(r => {
+                                        const v = (r.value || '').toLowerCase();
+                                        const lbl = (getInputLabelText(r) || r.innerText || r.getAttribute('aria-label') || '').toLowerCase();
+                                        return v === targetVal || v === (defNo ? 'false' : 'true') || v === (defNo ? '0' : '1') || lbl === targetVal || lbl.includes(targetVal);
+                                    }) || (defNo ? (groupRadios.length === 2 ? groupRadios[1] : null) : groupRadios[0]);
+                                }
+                                if (chosenRadio) {
+                                    window.__SENTINEL_DEBUG__&&console.log('Error recovery: activating radio in error container:', qText ? qText.substring(0, 50) : '', '->', chosenRadio.value || chosenRadio.innerText);
+                                    if (chosenRadio.tagName === 'INPUT') {
+                                        clickInput(chosenRadio);
+                                    } else {
+                                        clickCustomRadio(chosenRadio);
+                                    }
+                                    const selVal = defNo ? 'No' : (qAns || 'Yes');
+                                    formResults.push({ question: qText || 'Error recovery radio', answer: selVal, inputType: 'radio', options: groupRadios.map(r => getInputLabelText(r) || r.innerText || r.value || ''), selectedOption: selVal, source: 'error_recovery' });
+                                }
+                            }
                         }
 
                         // 4. Form Validation Check: Are we missing anything required?
+                        const RADIO_GROUP_SELECTOR =
+                            'fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element, ' +
+                            '[data-test-form-builder-radio-button-group], [role="radiogroup"], ' +
+                            '.fb-dash-form-element';
                         const checkForErrors = () => {
                             const requiredInputs = queryAllDeep('input[required], input[aria-required="true"], textarea[required], textarea[aria-required="true"]', modal);
                             const requiredSelects = queryAllDeep('select[required], select[aria-required="true"]', modal);
-                            const radioGroups = queryAllDeep(
-                                'fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element, ' +
-                                '[data-test-form-builder-radio-button-group], [role="radiogroup"], ' +
-                                '.fb-dash-form-element',
-                                modal
-                            );
+                            const radioGroups = queryAllDeep(RADIO_GROUP_SELECTOR, modal);
                             
                             const hasEmptyInput = requiredInputs.some(i => isVisible(i) && !readFieldValue(i));
                             
@@ -19282,8 +21497,18 @@ return resolveDynamic(bestMatch);
                                     .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
                                 const allCheckboxesFilled = !queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal)
                                     .some(cb => isVisible(cb) && !cb.checked);
+                                // NOTE: do NOT reference the outer `radioGroups` (a name→radios object
+                                // declared in section 3.1b) — it has no .some(). The radioGroups
+                                // array inside checkForErrors is out of scope here, so query fresh.
+                                const radioGroupEls = queryAllDeep(RADIO_GROUP_SELECTOR, modal);
+                                const allRadiosFilled = !radioGroupEls.some(g => {
+                                    const rs = Array.from(g.querySelectorAll('input[type="radio"]'));
+                                    const roleRadios = Array.from(g.querySelectorAll('[role="radio"], label[data-test-radio-button], div[data-test-radio-button]'));
+                                    const hasChecked = rs.some(r => r.checked) || roleRadios.some(r => r.getAttribute('aria-checked') === 'true' || r.classList.contains('selected') || r.classList.contains('checked'));
+                                    return (rs.length > 0 || roleRadios.length > 0) && isVisible(g) && !hasChecked;
+                                });
                                 
-                                if (allInputsFilled && allSelectsFilled && allCheckboxesFilled) {
+                                if (allInputsFilled && allSelectsFilled && allCheckboxesFilled && allRadiosFilled) {
                                     // Guard against empty file input / missing resume upload: block force-click
                                     const fileInputs = queryAllDeep('input[type="file"]', modal);
                                     const hasEmptyRequiredFile = fileInputs.some(inp => {
@@ -20044,24 +22269,65 @@ return resolveDynamic(bestMatch);
 
                     // Persistent skip-list across invocations (survives between evaluate calls)
                     if (!window.__skippedJobIds) window.__skippedJobIds = new Set();
+                    if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
 
-                    // Detect active job ID from URL parameter OR from active card in DOM
-                    const currentUrlParams = new URLSearchParams(window.location.search);
-                    let activeJobId = currentUrlParams.get('currentJobId');
-                    if (!activeJobId) {
-                        const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
-                                          document.querySelector('[aria-current="true"] [data-job-id]') ||
-                                          document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
-                                          document.querySelector('.active [data-job-id]');
-                        if (activeCard) {
-                            activeJobId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                    const normalizeJobTitle = t => (t || '')
+                        .split('\\n')[0]
+                        .replace(/^selected,?\\s*/i, '')
+                        .replace(/\\s+/g, ' ')
+                        .trim()
+                        .toLowerCase()
+                        .substring(0, 80);
+
+                    const isTitleSkipped = (title) => {
+                        if (!window.__skippedJobTitles || window.__skippedJobTitles.size === 0) return false;
+                        const norm = normalizeJobTitle(title);
+                        if (!norm) return false;
+                        if (window.__skippedJobTitles.has(norm)) return true;
+                        for (const st of window.__skippedJobTitles) {
+                            const normSt = normalizeJobTitle(st);
+                            if (normSt && (norm === normSt || (normSt.length > 10 && norm.includes(normSt)) || (norm.length > 10 && normSt.includes(norm)))) {
+                                return true;
+                            }
                         }
+                        return false;
+                    };
+
+                    // Identify the active/current job from detail pane, sidebar active card, or URL
+                    const detailPane = document.querySelector('.jobs-details, .scaffold-layout__detail, .job-view-layout, [data-view-name="job-details"], .jobs-unified-top-card');
+                    const detailTitleEl = detailPane?.querySelector('.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, h1, h2');
+                    const detailTitle = detailTitleEl ? detailTitleEl.innerText.trim() : '';
+
+                    let detailJobId = detailPane?.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
+                                      detailPane?.querySelector('a[href*="/jobs/view/"]')?.getAttribute('href')?.match(/\\/jobs\\/view\\/(\\d+)/)?.[1] ||
+                                      document.querySelector('button.jobs-apply-button[data-job-id]')?.getAttribute('data-job-id');
+                    if (detailJobId) detailJobId = String(detailJobId).replace(/^.*:/, '').trim();
+
+                    const currentUrlParams = new URLSearchParams(window.location.search);
+                    let urlJobId = currentUrlParams.get('currentJobId');
+                    if (urlJobId) urlJobId = String(urlJobId).replace(/^.*:/, '').trim();
+
+                    let activeCardJobId = null;
+                    let activeCardTitle = '';
+                    const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
+                                      document.querySelector('[aria-current="true"] [data-job-id]') ||
+                                      document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
+                                      document.querySelector('.active [data-job-id]') ||
+                                      document.querySelector('[data-occludable-job-id].jobs-search-results-list__list-item--active');
+                    if (activeCard) {
+                        const rawId = activeCard.getAttribute('data-job-id') || activeCard.getAttribute('data-occludable-job-id');
+                        if (rawId) activeCardJobId = String(rawId).replace(/^.*:/, '').trim();
+                        activeCardTitle = (activeCard.innerText || '').split('\\n')[0].trim().replace(/^selected,?\\s*/i, '');
                     }
 
-                    const isCurrentJobSkipped = activeJobId && window.__skippedJobIds.has(activeJobId);
+                    const activeJobId = detailJobId || activeCardJobId || urlJobId;
+                    const currentTitle = detailTitle || activeCardTitle || window.__lastClickedJobTitle || '';
+
+                    const isCurrentJobSkipped = (activeJobId && window.__skippedJobIds.has(activeJobId)) ||
+                                                (currentTitle && isTitleSkipped(currentTitle));
 
                     if (!isCurrentJobSkipped) {
-                        // No modal open - handle job selection and clicking Easy Apply
+                        // Check for Easy Apply button
                         window.__SENTINEL_DEBUG__&&console.log('No modal detected. Checking for Easy Apply button...');
                         const easyApplyBtn = findEasyApplyButton();
                         if (easyApplyBtn) {
@@ -20075,94 +22341,50 @@ return resolveDynamic(bestMatch);
                                 easyApplyBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
                             } catch(e) {}
                             easyApplyBtn.click();
+                            window.__lastClickedJobTitle = null;
+                            window.__lastClickedJobSameCount = 0;
                             return 'LINKEDIN_EASY_APPLY_CLICKED';
                         }
                     } else {
-                        window.__SENTINEL_DEBUG__&&console.log('Current job ' + activeJobId + ' is already in skip list. Selecting next job from list...');
+                        window.__SENTINEL_DEBUG__&&console.log('Current job is already in skip list. Selecting next job from list...');
                     }
 
                     // ── NO EASY APPLY BUTTON FOUND ──
-                    // If a job is currently selected/active but has no Easy Apply button
-                    // (e.g. "No longer accepting applications"), mark it as skipped so we
-                    // don't keep re-selecting it in an infinite loop.
-                    {
-                        // Detect active job ID from URL parameter OR from active card in DOM
-                        const urlParams = new URLSearchParams(window.location.search);
-                        let currentJobId = urlParams.get('currentJobId');
-                        
-                        // Fallback: extract job ID from the active card in the sidebar
-                        if (!currentJobId) {
-                            const activeCard = document.querySelector('.jobs-search-results-list__list-item--active [data-job-id]') ||
-                                              document.querySelector('[aria-current="true"] [data-job-id]') ||
-                                              document.querySelector('.job-card-list__list-item--active [data-job-id]') ||
-                                              document.querySelector('.active [data-job-id]') ||
-                                              document.querySelector('[data-occludable-job-id].jobs-search-results-list__list-item--active');
-                            if (activeCard) {
-                                currentJobId = activeCard.getAttribute('data-job-id') || 
-                                              activeCard.getAttribute('data-occludable-job-id');
-                            }
-                        }
-                        
-                        // NOT_ELIGIBLE_FOR_CHARGING in URL = LinkedIn internally marks the job as closed/ineligible
+                    // If a job was loaded / active but has no Easy Apply button, skip it immediately!
+                    if (!isCurrentJobSkipped) {
+                        const noApplySignals = [
+                            'no longer accepting',
+                            'application closed',
+                            'applications closed',
+                            'no longer available',
+                            'this job is no longer',
+                            'expired',
+                            'position has been filled',
+                            'no longer accepting applications'
+                        ];
+                        const detailText = detailPane ? (detailPane.innerText || '').toLowerCase() : document.body.innerText.toLowerCase();
+                        const hasNoApplySignal = noApplySignals.some(sig => detailText.includes(sig));
                         const isNotEligible = window.location.href.includes('NOT_ELIGIBLE_FOR_CHARGING') ||
                                               window.location.href.includes('eBP=NOT_ELIGIBLE') ||
                                               window.location.search.includes('eBP=NOT');
-                        if (isNotEligible && currentJobId && !window.__skippedJobIds.has(currentJobId)) {
-                            window.__SENTINEL_DEBUG__&&console.log('Job ' + currentJobId + ' is NOT_ELIGIBLE_FOR_CHARGING (URL signal). Marking as skipped.');
-                            window.__skippedJobIds.add(currentJobId);
-                            return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — job closed (URL signal)';
+
+                        // Mark this job as skipped so we never re-select it
+                        if (activeJobId) {
+                            window.__skippedJobIds.add(activeJobId);
                         }
-                        
-                        if (currentJobId && !window.__skippedJobIds.has(currentJobId)) {
-                            // Check for signs this job cannot be applied to
-                            const detailPane = document.querySelector('.job-view-layout, .jobs-unified-top-card, .jobs-details, .scaffold-layout__detail');
-                            const detailText = detailPane ? (detailPane.innerText || '').toLowerCase() : document.body.innerText.toLowerCase();
-                            const noApplySignals = [
-                                'no longer accepting',
-                                'application closed',
-                                'applications closed',
-                                'no longer available',
-                                'this job is no longer',
-                                'expired',
-                                'position has been filled',
-                                'no longer accepting applications'
-                            ];
-                            const hasNoApplySignal = noApplySignals.some(sig => detailText.includes(sig));
-                            // Also skip if we simply can't find an Easy Apply button after selecting this job
-                            if (hasNoApplySignal || !findEasyApplyButton()) {
-                                window.__SENTINEL_DEBUG__&&console.log('Job ' + currentJobId + ' has no Easy Apply button (closed/expired). Marking as skipped.');
-                                window.__skippedJobIds.add(currentJobId);
-                                return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — ' + (hasNoApplySignal ? 'job closed' : 'button not found');
-                            }
+                        if (currentTitle) {
+                            window.__skippedJobTitles.add(normalizeJobTitle(currentTitle));
                         }
-                        
-                        // Fallback: even without a job ID, detect closed jobs by URL or detail pane
-                        if (!currentJobId) {
-                            const detailPane = document.querySelector('.job-view-layout, .jobs-unified-top-card, .jobs-details, .scaffold-layout__detail');
-                            const detailText = detailPane ? (detailPane.innerText || '').toLowerCase() : '';
-                            const isClosed = isNotEligible || 
-                                            detailText.includes('no longer accepting') ||
-                                            detailText.includes('no longer available') ||
-                                            detailText.includes('application closed');
-                            if (isClosed && !findEasyApplyButton()) {
-                                window.__SENTINEL_DEBUG__&&console.log('Job with no ID appears closed (URL/detail signal). Skipping...');
-                                // Track by title to avoid re-selecting
-                                const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, h1');
-                                const title = titleEl ? titleEl.innerText.trim().substring(0, 80) : '';
-                                if (title) {
-                                    if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
-                                    window.__skippedJobTitles.add(title);
-                                    window.__SENTINEL_DEBUG__&&console.log('Added to skipped titles:', title);
-                                }
-                                return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — closed job (no ID)';
-                            }
+                        if (window.__lastClickedJobTitle) {
+                            window.__skippedJobTitles.add(normalizeJobTitle(window.__lastClickedJobTitle));
                         }
-                        
-                        // Even without a job ID, if we still can't find Easy Apply, return skip
-                        if (!currentJobId && !findEasyApplyButton()) {
-                            window.__SENTINEL_DEBUG__&&console.log('No Easy Apply button and could not identify job ID. Skipping...');
-                            return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — unknown job';
-                        }
+
+                        const skipLabel = currentTitle || window.__lastClickedJobTitle || (activeJobId ? 'job ' + activeJobId : 'button not found');
+                        window.__lastClickedJobTitle = null;
+                        window.__lastClickedJobSameCount = 0;
+                        const reason = isNotEligible ? 'job closed (URL signal)' : (hasNoApplySignal ? 'job closed' : skipLabel);
+                        window.__SENTINEL_DEBUG__&&console.log('Job has no Easy Apply button: ' + reason + '. Marking as skipped.');
+                        return 'LINKEDIN_JOB_SKIPPED: No Easy Apply — ' + reason;
                     }
 
                     // Navigation logic if needed
@@ -20286,13 +22508,9 @@ return resolveDynamic(bestMatch);
                         return true;
                     });
 
-                    const normalizeJobTitle = t => (t || '').split('\\n')[0].replace(/^selected,?\\s*/i, '').trim().toLowerCase().substring(0, 80);
-
                     // Filter out jobs whose title was skipped by the title-based skip list
                     const titleFilteredCandidates = candidates.filter(card => {
-                        if (!window.__skippedJobTitles || window.__skippedJobTitles.size === 0) return true;
-                        const cardTitle = normalizeJobTitle(card.innerText);
-                        return !window.__skippedJobTitles.has(cardTitle);
+                        return !isTitleSkipped(card.innerText);
                     });
 
                     if (titleFilteredCandidates.length > 0) {
@@ -20301,14 +22519,15 @@ return resolveDynamic(bestMatch);
                         const normNextTitle = normalizeJobTitle(nextJobTitle);
                         
                         // Detect infinite loop: if we already clicked this exact job title last time,
-                        // it means clicking it did not advance state. Skip it.
+                        // it means clicking it did not advance state. Skip it immediately.
                         if (window.__lastClickedJobTitle === normNextTitle) {
                             window.__lastClickedJobSameCount = (window.__lastClickedJobSameCount || 0) + 1;
                             window.__SENTINEL_DEBUG__&&console.log('Same job selected again (' + window.__lastClickedJobSameCount + 'x): ' + nextJobTitle);
-                            if (window.__lastClickedJobSameCount >= 2) {
+                            if (window.__lastClickedJobSameCount >= 1) {
                                 window.__SENTINEL_DEBUG__&&console.log('Infinite loop detected on: ' + nextJobTitle + ' — adding to skip lists');
                                 if (!window.__skippedJobTitles) window.__skippedJobTitles = new Set();
                                 window.__skippedJobTitles.add(normNextTitle);
+                                window.__skippedJobTitles.add(normalizeJobTitle(nextJobTitle));
                                 
                                 const stuckRawId = nextJob.getAttribute('data-job-id') ||
                                                    nextJob.querySelector('[data-job-id]')?.getAttribute('data-job-id') ||
@@ -20333,74 +22552,172 @@ return resolveDynamic(bestMatch);
                         window.__lastClickedJobTitle = normNextTitle;
                         
                         window.__SENTINEL_DEBUG__&&console.log('Clicking next job:', nextJobTitle);
-                        nextJob.click();
-                        nextJob.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const clickable = nextJob.querySelector('a.job-card-list__title, a.job-card-container__link, a[href*="/jobs/view/"], [role="button"]') || nextJob;
+                        try { clickable.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+                        try {
+                            clickable.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true }));
+                            clickable.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                            clickable.focus();
+                            clickable.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true }));
+                            clickable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                        } catch(e) {}
+                        clickable.click();
                         return 'LINKEDIN_JOB_SELECTED';
-                    } else if (candidates.length > 0) {
-                        // All candidates were filtered by title skip list — scroll to load more
-                        window.__SENTINEL_DEBUG__&&console.log('All visible candidates are in skip list, scrolling sidebar...');
-                        if (sidebar) sidebar.scrollBy(0, 400);
-                        return 'LINKEDIN_SCROLLED: All candidates skipped';
+                    }
+                    // No clickable candidates in current viewport (either none found, or all skipped)
+                    const isAtBottom = (sidebar.scrollTop + sidebar.clientHeight) >= (sidebar.scrollHeight - 60);
+                    let isStuckOrAtBottom = isAtBottom;
+                    if (typeof window.__lastSidebarScrollTop === 'number') {
+                        if (Math.abs(sidebar.scrollTop - window.__lastSidebarScrollTop) < 5) {
+                            window.__lastSidebarScrollAttempts = (window.__lastSidebarScrollAttempts || 0) + 1;
+                            if (window.__lastSidebarScrollAttempts >= 2) {
+                                isStuckOrAtBottom = true;
+                            }
+                        } else {
+                            window.__lastSidebarScrollAttempts = 0;
+                        }
+                    } else {
+                        window.__lastSidebarScrollAttempts = 0;
+                    }
+                    window.__lastSidebarScrollTop = sidebar.scrollTop;
+
+                    if (!isStuckOrAtBottom) {
+                        // Still have room to scroll in sidebar
+                        const scrollDist = candidates.length > 0 ? 500 : 800;
+                        window.__SENTINEL_DEBUG__&&console.log('Scrolling sidebar by ' + scrollDist + 'px (candidates: ' + candidates.length + ')...');
+                        sidebar.scrollBy(0, scrollDist);
+                        return candidates.length > 0 ? 'LINKEDIN_SCROLLED: All candidates skipped' : 'LINKEDIN_SCROLLED: No jobs found';
                     }
 
-                    // No eligible jobs found — check if we should paginate or scroll
-                    const isAtBottom = (sidebar.scrollTop + sidebar.clientHeight) >= (sidebar.scrollHeight - 50);
-                    
-                    if (!isAtBottom) {
-                        // Still have room to scroll in sidebar
-                        window.__SENTINEL_DEBUG__&&console.log('No eligible jobs visible in sidebar, scrolling sidebar...');
-                        sidebar.scrollBy(0, 800);
-                        return 'LINKEDIN_SCROLLED: No jobs found';
-                    }
-                    
-                    // At bottom of sidebar — try to click next page pagination button
-                    window.__SENTINEL_DEBUG__&&console.log('Sidebar fully scrolled. Looking for next page pagination button...');
-                    
-                    // Strategy 1: data-testid based (most reliable)
-                    const nextBtnByTestId = document.querySelector('button[data-testid="pagination-controls-next-button-visible"]');
-                    if (nextBtnByTestId) {
+                    // At bottom of sidebar or cannot scroll further — try to click next page pagination button
+                    window.__SENTINEL_DEBUG__&&console.log('Sidebar fully scrolled or stuck at bottom. Looking for next page pagination button...');
+                    const candidateMsg = candidates.length > 0 ? 'LINKEDIN_SCROLLED: All candidates skipped — NEXT_PAGE_CLICKED' : 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+
+                    const clickPaginationBtn = (el) => {
+                        if (!el) return false;
+                        try {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            if (typeof el.focus === 'function') el.focus();
+                            const opts = { bubbles: true, cancelable: true, view: window };
+                            el.dispatchEvent(new MouseEvent('mousedown', opts));
+                            el.dispatchEvent(new MouseEvent('mouseup', opts));
+                            el.click();
+                            window.__lastSidebarScrollTop = -1;
+                            window.__lastSidebarScrollAttempts = 0;
+                            window.__lastClickedJobTitle = null;
+                            window.__lastClickedJobSameCount = 0;
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    };
+
+                    // Strategy 1: data-testid based (most reliable on modern LinkedIn)
+                    const nextBtnByTestId = document.querySelector('button[data-testid="pagination-controls-next-button-visible"], button[data-testid*="pagination-controls-next"], button[data-testid*="pagination-next"]');
+                    if (nextBtnByTestId && isVisible(nextBtnByTestId) && !nextBtnByTestId.disabled) {
                         window.__SENTINEL_DEBUG__&&console.log('Found Next button via data-testid, clicking...');
-                        nextBtnByTestId.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        nextBtnByTestId.click();
-                        return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                        if (clickPaginationBtn(nextBtnByTestId)) return candidateMsg;
                     }
-                    
-                    // Strategy 2: Find current page and click next page number
-                    const currentPageBtn = document.querySelector('button[aria-current="true"][aria-label^="Page"]');
+
+                    // Strategy 2: Determine current page number and click next page number
+                    let currentPageNum = 1;
+                    const currentPageBtn = document.querySelector('button[aria-current="true"], [aria-current="page"], [data-testid^="pagination-indicator-"][aria-current="true"], li.active[data-test-pagination-page-btn], .artdeco-pagination__indicator--number.active button');
                     if (currentPageBtn) {
-                        const label = currentPageBtn.getAttribute('aria-label');
-                        const match = label && label.match(/Page (\\d+)/);
+                        const label = currentPageBtn.getAttribute('aria-label') || '';
+                        const match = label.match(/Page\\s*(\\d+)/i);
                         if (match) {
-                            const nextPageNum = parseInt(match[1]) + 1;
-                            const nextPageBtn = document.querySelector('button[aria-label="Page ' + nextPageNum + '"]');
-                            if (nextPageBtn) {
-                                window.__SENTINEL_DEBUG__&&console.log('Found Page ' + nextPageNum + ' button, clicking...');
-                                nextPageBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                nextPageBtn.click();
-                                return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                            currentPageNum = parseInt(match[1], 10);
+                        } else {
+                            const testId = currentPageBtn.getAttribute('data-testid') || '';
+                            const mTest = testId.match(/pagination-indicator-(\\d+)/);
+                            if (mTest) {
+                                currentPageNum = parseInt(mTest[1], 10) + 1;
+                            } else {
+                                const txt = (currentPageBtn.innerText || '').trim();
+                                const mTxt = txt.match(/^\\d+$/);
+                                if (mTxt) currentPageNum = parseInt(mTxt[0], 10);
                             }
                         }
                     }
-                    
-                    // Strategy 3: Find any pagination "Next" button with chevron
-                    const allBtns = Array.from(document.querySelectorAll('button'));
-                    const nextChevronBtn = allBtns.find(btn => {
-                        const hasNext = (btn.innerText || '').toLowerCase().includes('next');
-                        const hasChevron = btn.querySelector('svg[id*="chevron-right"]');
-                        const isVisible = btn.offsetParent !== null && !btn.disabled;
-                        return hasNext && hasChevron && isVisible;
+                    const nextPageNum = currentPageNum + 1;
+                    window.__SENTINEL_DEBUG__&&console.log('Current page: ' + currentPageNum + ', searching for page ' + nextPageNum + ' button...');
+
+                    // 2a: Test ID by indicator index (0-indexed or 1-indexed)
+                    const nextByTestIdInd = document.querySelector('button[data-testid="pagination-indicator-' + (nextPageNum - 1) + '"], button[data-testid="pagination-indicator-' + nextPageNum + '"]');
+                    if (nextByTestIdInd && isVisible(nextByTestIdInd) && !nextByTestIdInd.disabled) {
+                        window.__SENTINEL_DEBUG__&&console.log('Found Page ' + nextPageNum + ' button via test-id indicator, clicking...');
+                        if (clickPaginationBtn(nextByTestIdInd)) return candidateMsg;
+                    }
+
+                    // 2b: Aria-label Page {nextPageNum}
+                    const nextPageBtn = document.querySelector('button[aria-label="Page ' + nextPageNum + '"], button[aria-label*="Page ' + nextPageNum + '" i], [aria-label="page ' + nextPageNum + '" i]');
+                    if (nextPageBtn && isVisible(nextPageBtn) && !nextPageBtn.disabled) {
+                        window.__SENTINEL_DEBUG__&&console.log('Found Page ' + nextPageNum + ' button via aria-label, clicking...');
+                        if (clickPaginationBtn(nextPageBtn)) return candidateMsg;
+                    }
+
+                    // 2c: li[data-test-pagination-page-btn]
+                    const nextByLi = document.querySelector('li[data-test-pagination-page-btn="' + nextPageNum + '"] button, li[data-test-pagination-page-btn="' + nextPageNum + '"]');
+                    if (nextByLi && isVisible(nextByLi)) {
+                        const target = nextByLi.tagName === 'BUTTON' ? nextByLi : (nextByLi.querySelector('button') || nextByLi);
+                        if (clickPaginationBtn(target)) return candidateMsg;
+                    }
+
+                    // 2d: Any button or child span with text matching nextPageNum inside pagination containers
+                    const allPagBtns = Array.from(document.querySelectorAll('.artdeco-pagination button, [data-testid*="pagination"] button, [class*="pagination"] button, button[data-testid*="pagination"]'));
+                    for (const b of allPagBtns) {
+                        if (!isVisible(b) || b.disabled) continue;
+                        const bText = (b.innerText || '').trim();
+                        if (bText === String(nextPageNum)) {
+                            window.__SENTINEL_DEBUG__&&console.log('Found page button with exact text ' + nextPageNum + ', clicking...');
+                            if (clickPaginationBtn(b)) return candidateMsg;
+                        }
+                        const spans = b.querySelectorAll('span');
+                        for (const s of spans) {
+                            if ((s.innerText || '').trim() === String(nextPageNum)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Found page span with exact text ' + nextPageNum + ', clicking button...');
+                                if (clickPaginationBtn(b)) return candidateMsg;
+                            }
+                        }
+                    }
+
+                    // 2e: Span with exact text matching nextPageNum anywhere in DOM inside/near pagination
+                    const pageSpans = Array.from(document.querySelectorAll('span, p, a, div[role="button"]'));
+                    for (const s of pageSpans) {
+                        if (!isVisible(s)) continue;
+                        if ((s.innerText || '').trim() === String(nextPageNum)) {
+                            const clickableParent = s.closest('button, [role="button"], a, li');
+                            if (clickableParent && isVisible(clickableParent)) {
+                                window.__SENTINEL_DEBUG__&&console.log('Found span with text ' + nextPageNum + ' inside clickable, clicking...');
+                                if (clickPaginationBtn(clickableParent)) return candidateMsg;
+                            }
+                        }
+                    }
+
+                    // Strategy 3: Standard Next button with aria-label or chevron
+                    const nextAriaBtn = document.querySelector('button[aria-label="Next"], button[aria-label*="next page" i], button[aria-label*="View next" i], button.artdeco-pagination__button--next');
+                    if (nextAriaBtn && isVisible(nextAriaBtn) && !nextAriaBtn.disabled) {
+                        window.__SENTINEL_DEBUG__&&console.log('Found Next button via aria-label, clicking...');
+                        if (clickPaginationBtn(nextAriaBtn)) return candidateMsg;
+                    }
+
+                    const allDocBtns = Array.from(document.querySelectorAll('button, [role="button"]'));
+                    const nextChevronBtn = allDocBtns.find(btn => {
+                        if (!isVisible(btn) || btn.disabled) return false;
+                        const bText = (btn.innerText || '').trim().toLowerCase();
+                        const bAria = (btn.getAttribute('aria-label') || '').toLowerCase();
+                        const hasChevron = !!btn.querySelector('svg[id*="chevron-right"], svg[class*="chevron-right"], [data-test-icon*="chevron-right"]');
+                        return (bText === 'next' || bText.startsWith('next\\n') || bAria.includes('next')) || (hasChevron && (bText.includes('next') || bAria.includes('next') || bText === ''));
                     });
                     if (nextChevronBtn) {
-                        window.__SENTINEL_DEBUG__&&console.log('Found Next button via chevron match, clicking...');
-                        nextChevronBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        nextChevronBtn.click();
-                        return 'LINKEDIN_SCROLLED: No jobs found — NEXT_PAGE_CLICKED';
+                        window.__SENTINEL_DEBUG__&&console.log('Found Next button via chevron/text match, clicking...');
+                        if (clickPaginationBtn(nextChevronBtn)) return candidateMsg;
                     }
-                    
-                    // No pagination found — might be last page
-                    window.__SENTINEL_DEBUG__&&console.log('No pagination button found — possibly last page. Scrolling sidebar as fallback...');
-                    sidebar.scrollBy(0, 800);
-                    return 'LINKEDIN_SCROLLED: No jobs found';
+
+                    // Strategy 4: Fallback scroll
+                    window.__SENTINEL_DEBUG__&&console.log('No pagination button found — possibly last page or need more scrolls.');
+                    sidebar.scrollBy(0, 400);
+                    return candidates.length > 0 ? 'LINKEDIN_SCROLLED: All candidates skipped' : 'LINKEDIN_SCROLLED: No jobs found';
                 }
             // NAUKRI LOGIC (Enhanced with proper selectors and tab navigation)
             // ============================================================
@@ -21242,46 +23559,79 @@ return resolveDynamic(bestMatch);
                                 }
                             } else if (isExperienceQuestion) {
                                 // For experience questions with checkboxes, select only the best matching range
-                                // Target: 4 years experience -> select "3 - 5 years"
+                                // Target: 4.2 years experience -> select "4-6 years", "4+ years", or "3-5 years"
                                 let bestCheckbox = null;
                                 let bestScore = -1;
                                 let allLabels = []; // Debug: store all found labels
                                 const targetExperience = 4.2; // Candidate experience
+                                
+                                let hasCoveringCb = false;
+                                for (const item of checkboxLabels) {
+                                    const lblL = item.lowerLabel;
+                                    const rm = lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
+                                    const mm = lblL.match(/(?:more\\s+than|above|over|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || lblL.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
+                                    if (rm) {
+                                        const rMin = parseFloat(rm[1]);
+                                        const rMax = parseFloat(rm[2]);
+                                        if ((rMin === 4 || (targetExperience >= rMin && targetExperience <= rMax)) && rMax > 4) {
+                                            hasCoveringCb = true;
+                                            break;
+                                        }
+                                    }
+                                    if (mm && parseFloat(mm[1]) <= targetExperience && parseFloat(mm[1]) >= 4) {
+                                        hasCoveringCb = true;
+                                        break;
+                                    }
+                                }
                                 
                                 for (const item of checkboxLabels) {
                                     allLabels.push(item.labelText);
                                     let score = 0;
                                     const labelLower = item.lowerLabel;
                                     
-                                    // Look for year ranges like "3 - 5 years", "1-2 years", "5-6 years", etc.
-                                    const rangeMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)\\s*[-–to]\\s*(\\d+(?:\\.\\d+)?)/);
+                                    // Look for year ranges like "3 - 5 years", "1-2 years", "4-6 years", etc.
+                                    const rangeMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)\\s*(?:[-–—]|\\bto\\b|\\s+)\\s*(\\d+(?:\\.\\d+)?)/);
                                     if (rangeMatch) {
                                         const min = parseFloat(rangeMatch[1]);
                                         const max = parseFloat(rangeMatch[2]);
                                         
-                                        // If target falls within range, highest score
-                                        if (targetExperience >= min && targetExperience <= max) {
-                                            score = 100;
+                                        if (targetExperience >= 4.0 && max <= 4.0 && hasCoveringCb) {
+                                            score = 0; // Candidate with 4.2 years exceeds max 4; never select when min=4 exists
+                                        } else if (targetExperience >= min && targetExperience <= max) {
+                                            const rangeSize = max - min;
+                                            const offsetFromMin = Math.abs(targetExperience - min);
+                                            const minBonus = (min === 4 || Math.floor(targetExperience) === min) ? 15 : 0;
+                                            score = Math.max(80, 100 + minBonus - rangeSize * 2 - offsetFromMin);
+                                        } else if (targetExperience > max && (targetExperience - max) <= 2.0 && !hasCoveringCb) {
+                                            const diff = targetExperience - max;
+                                            score = Math.max(70, 85 - diff * 8);
                                         } else {
                                             score = 0;
                                         }
                                     }
                                     // Handle upper bound: "< 5", "less than 5"
-                                    else if (labelLower.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/)) {
-                                        const numMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
+                                    else if (labelLower.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i)) {
+                                        const numMatch = labelLower.match(/(?:less\\s+than|under|fewer\\s+than|below|<|^<\\s*)\\s*(\\d+(?:\\.\\d+)?)/i);
                                         if (numMatch) {
                                             const threshold = parseFloat(numMatch[1]);
-                                            if (targetExperience < threshold) score = 88;
-                                            else score = 0;
+                                            if (threshold <= 4 || targetExperience >= threshold) {
+                                                score = 0; // Candidate has 4.2 years (> 4), so "< 4" is strictly rejected
+                                            } else {
+                                                score = 88;
+                                            }
                                         }
                                     }
                                     // Handle lower bound: "> 4", "4+", "more than 4"
-                                    else if (labelLower.match(/(?:more\\s+than|above|over|>|^\\s*>\\s*|\\+)\\s*(\\d+(?:\\.\\d+)?)/)) {
-                                        const numMatch = labelLower.match(/(\\d+(?:\\.\\d+)?)/);
+                                    else if (labelLower.match(/(?:more\\s+than|above|over|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || labelLower.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i)) {
+                                        const numMatch = labelLower.match(/(?:more\\s+than|above|over|>|^\\s*>\\s*)\\s*(\\d+(?:\\.\\d+)?)/i) || labelLower.match(/(\\d+(?:\\.\\d+)?)\\s*(?:\\+|or\\s+more|and\\s+above|or\\s+above)/i);
                                         if (numMatch) {
                                             const threshold = parseFloat(numMatch[1]);
-                                            if (targetExperience >= threshold) score = 88;
-                                            else score = 0;
+                                            if (targetExperience >= threshold) {
+                                                const minBonus = (threshold === 4) ? 15 : 0;
+                                                score = 90 + minBonus - (targetExperience - threshold) * 2;
+                                            } else {
+                                                score = 0;
+                                            }
                                         }
                                     }
                                     // Look for single year values like "4 years"
@@ -22395,7 +24745,7 @@ return resolveDynamic(bestMatch);
                 // ============================================================
                 if (!isLinkedIn && !isNaukri && !isInstahyre) {
                     window.__SENTINEL_DEBUG__&&console.log('=== GENERIC PLATFORM FORM FILLING ===');
-                    const genericResults = [];
+                    const genericResults = attachQaLog([]);
                     
                     // 1. Handle text/number/textarea inputs
                     const allTextInputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"], input[type="email"], textarea')).filter(isVisible);
@@ -22620,8 +24970,22 @@ return resolveDynamic(bestMatch);
             })"""
 
             
+            # The JS source is a non-raw Python triple-quoted string, so regex
+            # word-boundary escapes written as \b become literal backspace
+            # characters at runtime. Restore them before evaluation.
+            js_code = js_code.replace('\x08', '\\b')
+
             # Playwright automatically invokes the function expression
             result = await self._page.evaluate(js_code)
+
+            # Record every field the script filled. Each push is mirrored into a
+            # page-side log and the answer set is also returned on the
+            # MARKER|JSON paths, so draining both captures the steps that exit
+            # before reaching a Next/Submit return.
+            page_url = (self._page.url if getattr(self._page, 'url', None) else "") or ""
+            script_platform = self._detect_platform() or ""
+            await self._drain_js_qa_log(platform=script_platform, url=page_url)
+            self._log_qa_payload(result, platform=script_platform, url=page_url)
             return result
             
 

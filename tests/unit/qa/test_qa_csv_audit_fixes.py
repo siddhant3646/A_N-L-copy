@@ -315,7 +315,10 @@ class TestQACSVAuditFixes(unittest.TestCase):
         self.assertEqual(p.get('default'), "30 LPA")
         self.assertEqual(p.get('platform_overrides', {}).get('instahyre'), "30 LPA")
         self.assertEqual(p.get('input_type_defaults', {}).get('text'), "30 LPA")
-        self.assertEqual(p.get('input_type_defaults', {}).get('text_lpa'), "30 LPA")
+        # text_lpa is the LPA-typed control: the unit lives in the field label,
+        # so the canonical value is the bare number. The suffixed "30 LPA"
+        # answer is preserved in `default`, `text`, and `platform_overrides`.
+        self.assertEqual(p.get('input_type_defaults', {}).get('text_lpa'), "30")
 
 
 class TestInputTypeAwareResolving(unittest.TestCase):
@@ -544,6 +547,28 @@ class TestTextareaInputAwareGuards(unittest.TestCase):
             "microservices" in ans.lower()
         )
         self.assertTrue(len(ans) > 100)
+
+    def test_procedural_how_to_question_is_not_answered_with_years(self):
+        # A bare technology-name trigger ("spring boot") must not turn a
+        # procedural prompt into an experience value.
+        questions = [
+            "how do you test and verify spring boot dependency injection in ci cd",
+            "How do you architect PostgreSQL replication at scale?",
+            "How would you handle schema migrations for a live Kafka-backed service?",
+        ]
+        for q in questions:
+            ans, score = self.matcher.fuzzy_match(q, input_type="textarea")
+            self.assertTrue(ans and len(ans) > 40, f"{q} -> {ans!r}")
+            self.assertNotIn(str(ans).strip(), ("4.2 Years", "4.2", "4", "Yes", "No"))
+            radio_ans, _ = self.matcher.fuzzy_match(q, input_type="radio")
+            self.assertEqual(radio_ans, "Yes", f"{q} radio -> {radio_ans!r}")
+
+    def test_procedural_guard_keeps_rating_scales_numeric(self):
+        q = ("This interview process will involve a lot of questions on SQL databases. "
+             "How would you rate your SQL skills on a scale of 1-5?")
+        ans, score = self.matcher.fuzzy_match(q, input_type="textarea")
+        self.assertEqual(ans, "4")
+        self.assertGreaterEqual(score, 0.90)
 
 
 

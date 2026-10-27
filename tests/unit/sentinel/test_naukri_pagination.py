@@ -17,11 +17,24 @@ The core of the fix is two helper methods on SentinelAgent:
     after self._naukri_no_progress_max consecutive stale rounds.
 """
 
+import asyncio
+
 import pytest
 from unittest.mock import AsyncMock
 
 from src.sentinel.agent import SentinelAgent
 from src.sentinel.schemas import SentinelState
+
+
+@pytest.fixture(autouse=True)
+def _instant_asyncio_sleep(monkeypatch):
+    """Post-apply navigation backs off with real asyncio.sleep calls."""
+    real_sleep = asyncio.sleep
+
+    async def _instant(delay, *args, **kwargs):
+        return await real_sleep(0)
+
+    monkeypatch.setattr(asyncio, "sleep", _instant)
 
 
 @pytest.fixture

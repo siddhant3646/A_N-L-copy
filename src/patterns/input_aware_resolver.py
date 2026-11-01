@@ -146,7 +146,7 @@ class InputAwareResolver:
         'senior': ['4', '4-5', '5', '5+', 'senior', 'lead'],
         
         'immediate': ['0', 'immediate', 'now', 'immediately', 'immediate joiner'],
-        'short': ['15', '15 days', '2 weeks', 'short notice', 'less than 15 days', '15-30', '15-30 days', '15 - 30 days', '15 to 30 days', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days', 'serving notice', 'serving notice period', 'currently serving'],
+        'short': ['15', '15 days', '2 weeks', 'two weeks', 'within two weeks', 'within 2 weeks', 'short notice', 'less than 15 days', '15-30', '15-30 days', '15 - 30 days', '15 to 30 days', 'less than a month', 'less than 1 month', '< 1 month', '<= 1 month', 'under a month', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days', 'serving notice', 'serving notice period', 'currently serving'],
         'standard': ['30', '30 days', '1 month', 'one month', 'standard'],
         'long': ['60', '60 days', '2 months', '90', '90 days', '3 months'],
         
@@ -157,7 +157,7 @@ class InputAwareResolver:
         'gender_male': ['male', 'man', 'he/him', 'he/him/his', 'cisgender male', 'hombre', 'masculino', 'homme', 'homem', 'männlich'],
         'gender_female': ['female', 'woman', 'she/her', 'she/her/hers', 'cisgender female', 'mujer', 'femenino', 'femme', 'mulher', 'weiblich'],
         'race_asian': ['asian', 'asian (indian)', 'south asian', 'asian indian', 'indian'],
-        'work_auth': ['citizen', 'citizen (india)', 'authorized', 'indian citizen', 'yes, authorized', 'yes, citizen', 'lawfully authorized'],
+        'work_auth': ['citizen', 'citizen (india)', 'authorized', 'indian citizen', 'yes, authorized', 'yes, citizen', 'lawfully authorized', 'i can work here without any restrictions', 'without any restrictions', 'without restrictions', 'no restrictions', 'can work without restrictions'],
         'employment_permanent': ['permanent', 'direct payroll', 'full-time regular', 'full-time', 'full time', 'regular'],
         "bachelor's": ["bachelor's", 'bachelors', 'b.tech', 'b.e', 'undergraduate', 'bachelor of technology', 'bachelor of engineering', 'ug', 'graduate'],
         "master's": ["master's", 'masters', 'm.tech', 'm.e', 'postgraduate', 'pg', 'post graduate'],
@@ -395,6 +395,22 @@ class InputAwareResolver:
             )
             # Candidate profile has 4.2 years of experience
             target_num = 4.2 if (is_exp_context and 3.5 <= raw_val <= 5.5) else raw_val
+
+            is_sal_context = (
+                bool(re.search(r'\b(salary|ctc|compensation|pay|package|remuneration|lpa|lakh|inr)\b', ql)) or
+                any(re.search(r'\b(lpa|lakhs?|lac|lacs|inr)\b', opt.label.lower()) for opt in options)
+            )
+            if is_sal_context:
+                options_has_lpa = any(re.search(r'\b(lpa|lakhs?|lac|lacs)\b', opt.label.lower()) for opt in options)
+                ranges = [self.range_matcher.extract_range(opt.label) for opt in options]
+                valid_ranges = [r for r in ranges if r]
+                options_max_val = max([r[0] for r in valid_ranges] or [0])
+                if (options_has_lpa or options_max_val < 1000) and target_num >= 100000:
+                    # Convert raw INR to LPA (e.g. 3000000 -> 30.0, 2300000 -> 23.0)
+                    target_num = target_num / 100000.0
+                elif not options_has_lpa and options_max_val >= 100000 and target_num < 1000:
+                    # Convert LPA to raw INR (e.g. 30.0 -> 3000000)
+                    target_num = target_num * 100000.0
 
             # Pre-scan options for candidate experience (~4.2 years):
             # Check if any range option starts at 4 or covers target_num with max > 4

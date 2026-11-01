@@ -234,7 +234,7 @@ class TestQAAuditFixes(unittest.TestCase):
     def test_12th_board_aggregate_percentage(self):
         q = 'What was your aggregate % in the 12th Board (CBSE or Equivalent)'
         ans, score = self.matcher.fuzzy_match(q)
-        self.assertEqual(ans, '85')
+        self.assertEqual(ans, '70')
         self.assertNotEqual(ans, '4')
 
     def test_github_portfolio_link_sharing(self):

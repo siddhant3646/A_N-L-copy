@@ -1002,6 +1002,7 @@ async def main():
             print(f"{'#'*60}")
             
             intersession_iter = 0
+            consecutive_zero_passes = 0
             while time.time() < deadline and not shutdown_requested:
                 intersession_iter += 1
                 remaining_sec = deadline - time.time()
@@ -1032,6 +1033,7 @@ async def main():
                 current_browser = intersession_browser
 
                 exhausted_instahyre = False
+                apps_in_pass = 0
                 try:
                     print(f"🌐 [INTERSESSION Pass #{intersession_iter}] Launching Browser...")
                     await intersession_browser.start()
@@ -1051,6 +1053,7 @@ async def main():
                     print(f"▶️  [INTERSESSION Pass #{intersession_iter}] Running Instahyre task...")
                     await agent.run(task_description=prompts.INSTAHYRE_INTERSESSION_TASK)
                     print(f"🎉 [INTERSESSION Pass #{intersession_iter}] Instahyre task pass completed!")
+                    apps_in_pass = agent.metrics.get('applications_submitted', 0)
                     if getattr(agent, '_last_instahyre_no_more_jobs', False):
                         print(f"📭 [INTERSESSION Pass #{intersession_iter}] Opportunities for this skill set exhausted.")
                         exhausted_instahyre = True
@@ -1068,12 +1071,25 @@ async def main():
                         print("   🔄 Playwright pipe refreshed after intersession pass")
                     current_browser = None
 
-                # Continuous mode: Instahyre jobs never sleep away the intersession window.
-                # If there is remaining time, immediately start next pass with a fresh random skill batch.
+                if apps_in_pass == 0 or exhausted_instahyre:
+                    consecutive_zero_passes += 1
+                else:
+                    consecutive_zero_passes = 0
+
+                # Continuous mode: Instahyre jobs never sleep away the intersession window while active.
+                # If exhausted across consecutive batches, rest cleanly instead of thrashing browser launches.
                 if not shutdown_requested:
                     remaining_after_pass = deadline - time.time()
                     if remaining_after_pass <= 30.0:
                         print(f"⏳ [INTERSESSION] Intersession window complete ({remaining_after_pass:.0f}s left). Transitioning to Cycle {cycle_count + 1}...")
+                        break
+                    if consecutive_zero_passes >= 3:
+                        print(f"📭 [INTERSESSION] Instahyre opportunities exhausted across {consecutive_zero_passes} consecutive passes.")
+                        print(f"⏳ [INTERSESSION] Resting remaining window ({remaining_after_pass/60:.1f} min) until Cycle {cycle_count + 1}...")
+                        try:
+                            await asyncio.sleep(remaining_after_pass)
+                        except (KeyboardInterrupt, asyncio.CancelledError):
+                            shutdown_requested = True
                         break
                     print(f"⚡ [INTERSESSION] Continuous mode active — starting next pass with fresh skills ({remaining_after_pass/60:.1f} min remaining)...")
 

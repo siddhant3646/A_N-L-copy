@@ -15,7 +15,7 @@ def _lwd_numeric(days: int = 15) -> str:
 
 
 CATEGORY_KEYWORDS = {
-    'salary': ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc', 'per annum', 'annual', 'fixed', 'variable', 'take home', 'monthly'],
+    'salary': ['ctc', 'salary', 'compensation', 'package', 'lpa', 'inr', 'pay', 'cctc', 'ectc', 'per annum', 'annual', 'fixed', 'variable', 'take home', 'monthly', 'expectation', 'expectations'],
     'experience': ['experience', 'years', 'months', 'worked', 'tenure', 'yrs', 'exp', 'total exp'],
     'notice_period': ['notice', 'serving', 'join', 'availability', 'np', 'lwd', 'last working day', 'buyout', 'negotiable'],
     'location': ['location', 'city', 'relocate', 'preferred location', 'based in', 'located in', 'commute', 'relocation', 'locality', 'zone', 'residential', 'neighborhood'],
@@ -130,6 +130,9 @@ class PatternMatcher:
                 if kw == 'city':
                     if re.search(r'\bcity\b', q) and not any(w in q for w in ('elasticity', 'capacity', 'velocity', 'electricity', 'authenticity', 'simplicity')):
                         score += 1
+                elif kw == 'exp':
+                    if re.search(r'\bexp\b', q) and not any(w in q for w in ('expect', 'expectation', 'expectations', 'expertise', 'explain', 'expense', 'explorer')):
+                        score += 1
                 elif kw in q:
                     score += 1
             if score > 0:
@@ -160,6 +163,22 @@ class PatternMatcher:
             lwd_formatted = lwd_date.strftime('%d %b %Y')
             if al in ('15', '15 days', 'yes', 'no') or not re.search(r'\d{4}|[A-Za-z]{3}', al):
                 return lwd_formatted, max(score, 0.98)
+
+        # 0.1 Work authorization status (e.g. for India)
+        is_work_auth_status = bool(re.search(r'\b(work authorization status|authorization status for india|authorization status in india)\b', ql))
+        if is_work_auth_status:
+            return 'I can work here without any restrictions', max(score, 0.99)
+
+        # 0.2 When can you start / earliest availability
+        is_when_can_start = bool(re.search(r'\b(when can you start|when could you start|how soon can you start|how quickly can you start|when are you available to start)\b', ql))
+        if is_when_can_start:
+            if al.lower() in ('yes', 'no', 'true', 'false') or not al:
+                if input_type in ('radio', 'select'):
+                    return 'Within two weeks', max(score, 0.99)
+                else:
+                    return '15 days (serving notice period)', max(score, 0.99)
+            if input_type in ('radio', 'select') and al in ('15', '15 days', 'Serving Notice Period', 'Immediate'):
+                return 'Within two weeks', max(score, 0.98)
 
         # 0a. Privacy & Data Consent safety guard (prevent number hijacking e.g. "for up to 2 years")
         is_privacy_consent = bool(re.search(r'\b(privacy policy|data consent|allowing .* contact|contact me about future|future job opportunities|personal data|use of personal data)\b', ql))
@@ -237,8 +256,52 @@ class PatternMatcher:
             ai_topics = any(w in ql for w in ('ai agent', 'ai agents', 'agentic', 'llm', 'genai', 'generative ai', 'machine learning', 'ai/ml', 'evals', 'eval tool', 'langchain'))
             return ('3' if ai_topics else '4'), max(score, 0.98)
 
+        # 0j2. Primary base in non-Bangalore city (Candidate is based in Bengaluru)
+        if ('primary base' in ql or 'base is' in ql) and any(c in ql for c in ('chennai', 'mumbai', 'pune', 'hyderabad', 'delhi', 'noida', 'gurgaon', 'ahmedabad', 'kolkata')) and not any(w in ql for w in ('relocate', 'willing', 'open to')):
+            return 'No', max(score, 0.98)
+
+        # 0j3. Notice period question containing "years" ("How many years of notice period do you have?")
+        if 'notice period' in ql and any(w in ql for w in ('years of notice', 'years notice', 'how many years')):
+            return ('15' if input_type == 'number' else '15 Days'), max(score, 0.98)
+
+        # 0j4. Official notice period
+        if 'official notice' in ql or ('official' in ql and 'notice' in ql):
+            if any(w in ql for w in ('in days', 'mention in days', 'how many days', 'whats your official')):
+                return ('15' if input_type in ('number', 'text') else '15 Days'), max(score, 0.98)
+
+        # 0j5. Eligible and authorized to work on indefinite basis (Navan)
+        if ('eligible to work' in ql or 'authorized to work' in ql) and any(w in ql for w in ('indefinite', 'ongoing indefinite', 'country outlined', 'navan')):
+            return 'Yes', max(score, 0.99)
+
+        # 0j6. Shift preference
+        if 'shift preference' in ql or 'share your shift' in ql:
+            return 'Day Job', max(score, 0.98)
+
+        # 0j7. Mobile phone number
+        if re.search(r'\b(?:mobile\s*phone(?:\s*number)?|phone\s*number|mobile\s*number|contact\s*number|cell\s*phone)\b', ql) and not any(w in ql for w in ('country code', 'code', 'dial', 'prefix', 'years', 'experience', 'emergency', 'email')):
+            return '7905828880', max(score, 0.99)
+
+        # 0j8. Which institution / college / university
+        if re.search(r'\b(?:which\s*institution|name\s*of\s*(?:the\s*)?institution|institution\s*did\s*you|which\s*college|which\s*university|institution\s*name)\b', ql):
+            return 'VIT Bhopal University', max(score, 0.99)
+
+        # 0j9. System Design years of experience
+        if re.search(r'(?:no\.?\s*of\s*years?|years?|yoe|exp|experience)\b.*(?:system\s*design|hld|lld)|(?:system\s*design|hld|lld).*(?:no\.?\s*of\s*years?|years?|yoe|exp|experience)', ql) and not any(w in ql for w in ('do you have', 'have you', 'are you')):
+            return ('4' if input_type == 'number' or self.patterns.get('platform') == 'linkedin' else '4.2 Years'), max(score, 0.98)
+
+        # 0j10. Software development practices / lifecycle
+        if re.search(r'(?:software\s*development|sdlc)\s*(?:practices|lifecycle|methodolog)', ql) or ('practices' in ql and 'lifecycle' in ql):
+            return 'Agile, Scrum, CI/CD, Test-Driven Development (TDD), Microservices Architecture, Code Reviews, GitOps', max(score, 0.98)
+
+        # 0j11. Shift job starting 4pm
+        if 'shift job' in ql and any(w in ql for w in ('4.00pm', '4pm', '4:00 pm', '4:00pm')):
+            return 'Yes', max(score, 0.98)
+
         # 0k. CTC threshold gate ("Is your CTC up to X LPA?")
         if any(w in ql for w in ('up to', 'upto', 'within', 'less than', 'below', 'maximum', 'max')) and any(w in ql for w in ('ctc', 'salary', 'compensation', 'lpa')):
+            is_value_inquiry = bool(re.search(r'\b(?:what|what\'s|whats|enter|mention|specify|provide|share|how\s+much)\b', ql)) and not bool(re.search(r'\b(?:comfortable|agree|okay|open|acceptable)\b', ql))
+            if is_value_inquiry:
+                return ('3000000' if input_type in ('number', 'text_inr') else ('30' if input_type == 'text_lpa' else '30 LPA')), max(score, 0.98)
             m = re.search(r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|not\s+more\s+than|no\s+more\s+than)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?', ql)
             if m:
                 t = float(m.group(1))
@@ -735,7 +798,7 @@ class PatternMatcher:
         # 7. Detect 12th/10th Board percentage / aggregate
         is_board_pct = bool(re.search(r'\b(12th|10th|hsc|ssc|intermediate)\b', ql) and re.search(r'\b(%|percent|percentage|marks|aggregate)\b', ql))
         if is_board_pct:
-            return ('88' if re.search(r'\b(10th|ssc)\b', ql) else '85'), max(score, 0.98)
+            return ('88' if re.search(r'\b(10th|ssc)\b', ql) else '70'), max(score, 0.98)
 
         # 8. Detect company / payroll company questions vs numeric / salary false positives
         is_company_q = bool(re.search(r'\b(current company|payroll company|which company|working at|current payroll|current employer)\b', ql) and

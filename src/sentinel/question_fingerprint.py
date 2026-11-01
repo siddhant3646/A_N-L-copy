@@ -792,7 +792,7 @@ def detect_expected_format(question: str) -> Optional[str]:
     
     # Salary - detect inr vs lpa
     if any(x in q_lower for x in ['ctc', 'salary']):
-        if any(x in q_lower for x in ['in inr', 'in rupees', 'inr', 'rupees', 'annual salary in inr', 'annual ctc in inr']):
+        if any(x in q_lower for x in ['in inr', 'in rupees', 'inr', 'rupees', 'annual salary in inr', 'annual ctc in inr', '700000', 'as 700000', 'mention as 7']):
             return 'salary_inr'
         return 'salary_lpa'
     
@@ -802,7 +802,7 @@ def detect_expected_format(question: str) -> Optional[str]:
     
     # Experience (numeric)
     if any(x in q_lower for x in ['years', 'experience', 'how many']):
-        if ('year' in q_lower or 'month' in q_lower) and not any(w in q_lower for w in ['summarize', 'profile', 'domain', 'relevant', 'stack']):
+        if ('year' in q_lower or 'month' in q_lower) and not any(w in q_lower for w in ['summarize', 'profile', 'domain', 'relevant', 'stack', 'notice', 'lwd', 'join', 'start']):
             return 'numeric'
     
     # Yes/No
@@ -850,6 +850,8 @@ def validate_answer(answer: str, format_type: str) -> Tuple[bool, str]:
                         num_m = re.match(r'^(\d+(?:\.\d+)?)', answer_clean)
                         value = float(num_m.group(1)) if num_m else float(answer_clean)
                         min_val, max_val = rules['range']
+                        if format_type == 'salary_lpa' and value >= 100000:
+                            value = value / 100000.0
                         if not (min_val <= value <= max_val):
                             return False, f"Value should be between {min_val} and {max_val}"
                     except ValueError:

@@ -1028,7 +1028,7 @@ def _derive_number(intent: QuestionIntent) -> str:
             number = _first_number(intent.default)
             return f"{number:g}" if number is not None and 0 <= number <= 10 else f"{CGPA:g}"
         if "10th" in lower or "ssc" in lower:
-            return "85"
+            return "88"
         if "12th" in lower or "hsc" in lower:
             return "70"
         number = _first_number(intent.default)

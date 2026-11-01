@@ -103,7 +103,7 @@ class TestQACSVFixesOct08:
     def test_twelfth_percentage_matcher(self, matcher):
         q = "12th %"
         ans, score = matcher.fuzzy_match(q, input_type="text")
-        assert "85" in ans
+        assert "70" in ans
         assert ans.lower() != "yes"
         assert score >= 0.85
 

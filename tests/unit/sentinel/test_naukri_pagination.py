@@ -107,6 +107,44 @@ class TestResolveNaukriCompletion:
         assert 'pyPrevTotal = 2' in call_arg
         assert 'fallbackBatchSize = 3' in call_arg
 
+    @pytest.mark.asyncio
+    async def test_regex_distinguishes_job_applications_from_skill_match_badges(self, agent):
+        """The JS regex must match 'applied to X out of Y jobs' but NOT '3 out of 5 key skills match'."""
+        import re
+        agent._naukri_last_batch_size = 5
+        agent._page.evaluate = AsyncMock(return_value='CHATBOT_COMPLETE: 5/5')
+        await agent._resolve_naukri_completion()
+        call_arg = agent._page.evaluate.call_args.args[0]
+        # Verify the regexes explicitly require 'jobs'
+        assert r'jobs?' in call_arg
+
+        # Python-side equivalent testing of the exact patterns used in check_js
+        pattern1 = re.compile(r'(?:applied\s*(?:to)?|successfully\s*applied\s*(?:to)?)\s*(\d+)\s*out\s*of\s*(\d+)\s*jobs?', re.IGNORECASE)
+        pattern2 = re.compile(r'(\d+)\s*out\s*of\s*(\d+)\s*jobs?\s*(?:applied|submitted)', re.IGNORECASE)
+
+        skill_text = "3 out of 5 key skills match your profile"
+        pagination_text = "Showing 1 - 2 out of 25 jobs"
+        jobs_count_text = "2 out of 25 jobs found"
+        assert pattern1.search(skill_text) is None
+        assert pattern2.search(skill_text) is None
+        assert pattern1.search(pagination_text) is None
+        assert pattern2.search(pagination_text) is None
+        assert pattern1.search(jobs_count_text) is None
+        assert pattern2.search(jobs_count_text) is None
+
+        applied_text = "You have applied to 3 out of 5 jobs"
+        m = pattern1.search(applied_text)
+        assert m is not None and m.group(1) == '3'
+
+        applied_text2 = "3 out of 5 jobs applied successfully"
+        m2 = pattern2.search(applied_text2)
+        assert m2 is not None and m2.group(1) == '3'
+
+        applied_text3 = "Applied to 5 jobs"
+        pattern_applied = re.compile(r'(?:applied\s*(?:to)?|applied\s*successfully\s*to?)\s*(\d+)\s*jobs?', re.IGNORECASE)
+        m3 = pattern_applied.search(applied_text3)
+        assert m3 is not None and m3.group(1) == '5'
+
 
 # =============================================================================
 # _handle_naukri_post_apply — under target (continue)
@@ -404,3 +442,54 @@ class TestInfiniteLoopBreak:
             else:
                 assert result is False, f"round {i + 1} should stop the task"
                 assert agent.state.task_complete is True
+
+
+# =============================================================================
+# Rejection & incomplete information detection on /myapply/saveApply
+# =============================================================================
+
+class TestResolveNaukriRejection:
+    @pytest.mark.asyncio
+    async def test_rejection_banner_returns_no_progress(self, agent):
+        """When Naukri returns the rejection error banner on /myapply/saveApply,
+        check_js embeds the rejection check and returns CHATBOT_NO_PROGRESS."""
+        agent._naukri_last_batch_size = 5
+        agent.metrics['applications_submitted'] = 0
+
+        # Verify check_js contains the rejection phrases
+        agent._page.evaluate = AsyncMock(return_value='CHATBOT_NO_PROGRESS: 0/5')
+        result = await agent._resolve_naukri_completion()
+        assert result == 'CHATBOT_NO_PROGRESS: 0/5'
+
+        call_arg = agent._page.evaluate.call_args.args[0]
+        assert 'was not accepted' in call_arg
+        assert 'incomplete information' in call_arg
+        assert 'mandatory questions' in call_arg
+        assert 'CHATBOT_NO_PROGRESS' in call_arg
+
+
+class TestAcademicAndComplianceQA:
+    def test_10th_and_12th_percentage_and_cgpa(self, agent):
+        """Verify candidate facts: 10th percentage = 88, 10th CGPA = 8.8, 12th percentage = 70."""
+        ans_10th, score_10th = agent._fuzzy_match_question("What was your percentage in 10th board?")
+        assert ans_10th == '88'
+        assert score_10th >= 0.95
+
+        ans_cgpa_10th, score_cgpa_10th = agent._fuzzy_match_question("What is your CGPA in 10th?")
+        assert ans_cgpa_10th == '8.8'
+        assert score_cgpa_10th >= 0.95
+
+        ans_12th, score_12th = agent._fuzzy_match_question("What was your percentage in 12th board?")
+        assert ans_12th == '70'
+        assert score_12th >= 0.95
+
+    def test_relocation_and_sponsorship_answers(self, agent):
+        """Verify candidate facts: willing to relocate = Yes, visa sponsorship required = No."""
+        ans_reloc, _ = agent._fuzzy_match_question("Are you willing to relocate to Bangalore?")
+        assert 'yes' in ans_reloc.lower()
+
+        ans_reloc_gen, _ = agent._fuzzy_match_question("Are you willing to relocate?")
+        assert 'yes' in ans_reloc_gen.lower()
+
+        ans_spons, _ = agent._fuzzy_match_question("Will you require visa sponsorship now or in the future?")
+        assert ans_spons.lower() == 'no'

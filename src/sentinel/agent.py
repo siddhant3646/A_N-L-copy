@@ -1055,6 +1055,11 @@ class SentinelAgent:
         if not re.search(r'\b(?:ctc|salary|compensation)\b', q):
             return None
 
+        # Value inquiries (e.g. "What is your Expected CTC? Max budget is upto 25LPA") are
+        # asking for the amount, NOT a Yes/No gate. Defer to the CTC pattern matcher.
+        if re.search(r'\b(?:what|what\'s|whats|enter|mention|specify|provide|share|how\s+much)\b', q) and not re.search(r'\b(?:comfortable|agree|okay|open|acceptable)\b', q):
+            return None
+
         match = re.search(
             r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|'
             r'not\s+more\s+than|no\s+more\s+than)\s*'
@@ -1346,10 +1351,16 @@ class SentinelAgent:
             return 'Bengaluru, Karnataka', 0.98
 
         # Percentage / CGPA fields for 10th and 12th
-        if re.search(r'\bpercentage\s*(?:in|of)?\s*(?:10|12|10th|12th|x|xii)\b', question_lower) or (
-            'percentage' in question_lower and any(w in question_lower for w in ('10%', '12%', '10th', '12th'))
+        if re.search(r'\bpercentage\s*(?:in|of)?\s*(?:10|12|10th|12th|x|xii|ssc|hsc)\b', question_lower) or (
+            'percentage' in question_lower and any(w in question_lower for w in ('10%', '12%', '10th', '12th', 'ssc', 'hsc'))
         ):
-            return '85', 0.98
+            if re.search(r'\b(10th|10|x|ssc)\b', question_lower):
+                return '88', 0.98
+            return '70', 0.98
+        if re.search(r'\bcgpa\s*(?:in|of)?\s*(?:10|12|10th|12th|x|xii|ssc|hsc)\b', question_lower) or (
+            'cgpa' in question_lower and any(w in question_lower for w in ('10th', '10', 'x', 'ssc'))
+        ):
+            return '8.8', 0.98
 
         # Postgraduate degree gate
         if 'postgraduate' in question_lower or 'post graduate' in question_lower or 'master' in question_lower and 'degree' in question_lower:
@@ -1463,12 +1474,22 @@ class SentinelAgent:
         if any(kw in question_lower for kw in ['are you a referral', 'are you an internal referral', 'is this a referral', 'candidate referral']) and not any(w in question_lower for w in ['name', 'who referred', 'how you know', 'indicate how', 'list their name']):
             return 'No', 0.99
 
+        # Email and contact number combined
+        if 'email' in question_lower and any(w in question_lower for w in ('phone', 'contact number', 'contact no', 'mobile')):
+            return 'siddhant3646@gmail.com, 7905828880', 0.99
+
+        # Mobile / Phone number (prevents false matches to "Mobile experience" etc.)
+        if any(p in question_lower for p in ['mobile phone number', 'mobile number', 'phone number', 'contact number', 'cell phone number', 'cell phone', 'telephone number', 'phone no', 'mobile no']) and not any(neg in question_lower for neg in ['screening', 'call', 'interview', 'experience', 'device', 'app', 'android', 'ios', 'years', 'proficiency', 'emergency', 'email']):
+            return '7905828880', 0.99
+
         # Notice days remaining if serving
         if any(kw in question_lower for kw in ['days remaining', 'number of days remaining', 'days left in notice', 'days left']):
             return '15', 0.99
 
         # Official notice period (handling typo "peroid")
-        if ('official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower))) and not any(kw in question_lower for kw in ['days remaining', 'number of days', 'immediate joiner please mention']):
+        if ('official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower))) and not any(kw in question_lower for kw in ['days remaining', 'number of days remaining', 'immediate joiner please mention']):
+            if any(w in question_lower for w in ['in days', 'mention in days', 'how many days', 'number of days']):
+                return '15', 0.99
             return 'Less than 30 days', 0.99
 
         # Fixed vs Variable salary breakup & ESOPs
@@ -2765,8 +2786,8 @@ class SentinelAgent:
             not is_conceptual_tech and
             not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
         )
-        is_experience_question = is_asking_quantity and not is_salary_question and not is_rating_question and not is_tech_question and not is_python_lib_question and not any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used'])
         is_notice_question = any(kw in question_lower for kw in notice_keywords) and not any(kw in question_lower for kw in ['why', 'what excites', 'interested in joining', 'interested to join', 'tell us about yourself', 'motivation', 'supersourcing', 'wissen', 'join from the office', 'join from office', 'join in office'])
+        is_experience_question = is_asking_quantity and not is_salary_question and not is_notice_question and not is_rating_question and not is_tech_question and not is_python_lib_question and not any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used'])
         is_location_question = any(re.search(r'\b' + re.escape(kw) + r'\b', question_lower) for kw in location_keywords) and not any(w in question_lower for w in ('elasticity', 'capacity', 'velocity', 'electricity', 'authenticity', 'simplicity'))
         
         # Priority patterns based on detected category
@@ -4666,6 +4687,12 @@ class SentinelAgent:
                     self.state.task_complete = True
                     break
                 
+                # Naukri: Application rejected due to incomplete questions
+                if 'NAUKRI_APPLICATION_REJECTED' in str(result):
+                    print("⚠️ Naukri application rejected: Incomplete information. Navigating back to recommended jobs...")
+                    await asyncio.sleep(random.uniform(2, 4))
+                    continue
+                
                 # Naukri: Rate limit detected (error popup)
                 if 'NAUKRI_RATE_LIMITED' in result:
                     self.naukri_rate_limit_until = datetime.now() + timedelta(hours=9)
@@ -4914,12 +4941,30 @@ class SentinelAgent:
                             except Exception:
                                 pass
 
+                            import platform
+                            mod_key = 'Meta' if platform.system() == 'Darwin' else 'Control'
                             await loc.click()
-                            await asyncio.sleep(0.3)
-                            # Clear via real keyboard (React responds to this)
-                            await self._page.keyboard.press('ControlOrMeta+a')
+                            await asyncio.sleep(0.2)
+                            try:
+                                await loc.fill('')
+                            except Exception:
+                                pass
+                            await asyncio.sleep(0.1)
+                            try:
+                                await loc.select_text(timeout=1000)
+                                await self._page.keyboard.press('Backspace')
+                            except Exception:
+                                pass
+                            await self._page.keyboard.press(f'{mod_key}+a')
                             await self._page.keyboard.press('Backspace')
-                            await asyncio.sleep(0.3)
+                            try:
+                                cur_val = await loc.input_value(timeout=500)
+                                if cur_val:
+                                    for _ in range(len(cur_val) + 5):
+                                        await self._page.keyboard.press('Backspace')
+                            except Exception:
+                                pass
+                            await asyncio.sleep(0.2)
                             # Type Bangalore with real keystrokes to trigger typeahead
                             await self._page.keyboard.type('Bangalore', delay=60)
                             await asyncio.sleep(0.8)
@@ -5511,12 +5556,30 @@ class SentinelAgent:
                                     except Exception:
                                         pass
 
+                                    import platform
+                                    mod_key = 'Meta' if platform.system() == 'Darwin' else 'Control'
                                     await loc.click()
-                                    await asyncio.sleep(0.3)
-                                    # Clear via real keyboard (React responds to this)
-                                    await self._page.keyboard.press('ControlOrMeta+a')
+                                    await asyncio.sleep(0.2)
+                                    try:
+                                        await loc.fill('')
+                                    except Exception:
+                                        pass
+                                    await asyncio.sleep(0.1)
+                                    try:
+                                        await loc.select_text(timeout=1000)
+                                        await self._page.keyboard.press('Backspace')
+                                    except Exception:
+                                        pass
+                                    await self._page.keyboard.press(f'{mod_key}+a')
                                     await self._page.keyboard.press('Backspace')
-                                    await asyncio.sleep(0.3)
+                                    try:
+                                        cur_val = await loc.input_value(timeout=500)
+                                        if cur_val:
+                                            for _ in range(len(cur_val) + 5):
+                                                await self._page.keyboard.press('Backspace')
+                                    except Exception:
+                                        pass
+                                    await asyncio.sleep(0.2)
                                     # Type Bangalore with real keystrokes to trigger typeahead
                                     await self._page.keyboard.type('Bangalore', delay=60)
                                     await asyncio.sleep(0.8)
@@ -5917,12 +5980,18 @@ class SentinelAgent:
                                     await self._close_linkedin_modal()
                                     await self._select_next_job_card()
                                     break
+                            elif not current_step_q_signature:
+                                self._empty_step_continued_count = getattr(self, '_empty_step_continued_count', 0) + 1
+                                if self._empty_step_continued_count >= 5:
+                                    print("⚠️ Form step did not advance (empty payload 5 times consecutively). Closing modal and skipping job...")
+                                    self._empty_step_continued_count = 0
+                                    await self._close_linkedin_modal()
+                                    await self._select_next_job_card()
+                                    break
                             else:
                                 self._same_step_continued_count = 0
-                                if current_step_q_signature:
-                                    self._last_step_q_signature = current_step_q_signature
-                                else:
-                                    self._last_step_q_signature = None
+                                self._empty_step_continued_count = 0
+                                self._last_step_q_signature = current_step_q_signature
 
                             print("➡️ Form step continued")
                             if not submit_clicked:
@@ -6636,7 +6705,26 @@ class SentinelAgent:
             const bodyText = document.body.innerText || '';
             
             let appliedThisRound = 0;
-            const matchOut = bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)/i);
+            // Rejection / Incomplete checks:
+            const isRejected = [
+                bodyText.includes('was not accepted'),
+                bodyText.includes('incomplete information'),
+                bodyText.includes('mandatory questions'),
+                bodyText.includes('could not be submitted'),
+                bodyText.includes('failed to apply'),
+                bodyText.includes('unable to submit'),
+                document.querySelector('.error-banner, [class*="error-banner"], [class*="alert-danger"], [class*="error-message"]') !== null
+            ].some(Boolean);
+
+            if (isRejected) {{
+                const storagePrev = parseInt(sessionStorage.getItem('naukri_total_applied') || '0');
+                const prevTotal = Math.max(storagePrev, pyPrevTotal);
+                return 'CHATBOT_NO_PROGRESS: ' + prevTotal + '/' + TARGET_JOBS;
+            }}
+
+            // Match job-application-specific counts, NOT key skill matching badges or pagination text like "Showing 1 - 2 out of 25 jobs"
+            const matchOut = bodyText.match(/(?:applied\\s*(?:to)?|successfully\\s*applied\\s*(?:to)?)\\s*(\\d+)\\s*out\\s*of\\s*(\\d+)\\s*jobs?/i) ||
+                             bodyText.match(/(\\d+)\\s*out\\s*of\\s*(\\d+)\\s*jobs?\\s*(?:applied|submitted)/i);
             const matchApplied = bodyText.match(/(?:applied\\s*(?:to)?|applied\\s*successfully\\s*to?)\\s*(\\d+)\\s*jobs?/i);
             const matchJobsApplied = bodyText.match(/(\\d+)\\s*jobs?\\s*applied/i);
             
@@ -6646,8 +6734,6 @@ class SentinelAgent:
                 appliedThisRound = parseInt(matchApplied[1]);
             }} else if (matchJobsApplied) {{
                 appliedThisRound = parseInt(matchJobsApplied[1]);
-            }} else if (fallbackBatchSize > 0) {{
-                appliedThisRound = fallbackBatchSize;
             }} else {{
                 const hasSuccessIndicator = [
                     document.querySelector('.chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"], [class*="apply-message"]'),
@@ -6662,7 +6748,7 @@ class SentinelAgent:
                     bodyText.includes('application has been received')
                 ].some(Boolean);
                 if (hasSuccessIndicator) {{
-                    appliedThisRound = 1;
+                    appliedThisRound = fallbackBatchSize > 0 ? fallbackBatchSize : 1;
                 }}
             }}
 
@@ -12265,6 +12351,76 @@ class SentinelAgent:
                     return 'NO_CHATBOT';
                 }}
                 
+                const isCloseOrDismiss = (el) => {{
+                    if (!el) return true;
+                    const cls = (el.className || '').toString().toLowerCase();
+                    const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+                    const title = (el.getAttribute('title') || '').toLowerCase();
+                    const id = (el.id || '').toLowerCase();
+                    if (cls.includes('close') || cls.includes('cross') || cls.includes('dismiss') || cls.includes('cancel')) return true;
+                    if (aria.includes('close') || aria.includes('cross') || aria.includes('dismiss') || aria.includes('cancel')) return true;
+                    if (title.includes('close') || title.includes('cross') || title.includes('dismiss') || title.includes('cancel')) return true;
+                    if (id.includes('close') || id.includes('cross') || id.includes('dismiss')) return true;
+                    if (el.closest('.chatbot_Header, .drawer-header, header, [class*="header"], .crossIcon, .chatbot_Close')) return true;
+                    return false;
+                }};
+
+                const findSaveOrSendBtn = (chatLayer) => {{
+                    // 1. Dedicated Naukri sendMsg selectors
+                    const sendSelectors = [
+                        'div.sendMsg:not(.disabled)',
+                        '.sendMsgbtn_container .sendMsg:not(.disabled)',
+                        '.sendMsg[tabindex]:not(.disabled)',
+                        'div.sendMsg',
+                        '.sendMsgbtn_container .sendMsg',
+                        '#sendMsg__vjhkrpzhhInputBox .sendMsg',
+                        '[class*="sendMsg"]:not([class*="Container"]):not([class*="wrapper"])',
+                        'button.chatbot_sendBtn',
+                        '.chatbot_sendBtn',
+                        'button.send',
+                        'button[class*="send"]:not([class*="Container"])',
+                        'button[type="submit"]'
+                    ];
+                    for (const sel of sendSelectors) {{
+                        const el = (chatLayer ? chatLayer.querySelector(sel) : null) || document.querySelector(sel);
+                        if (el && !isCloseOrDismiss(el) && (el.offsetParent !== null || (el.getClientRects && el.getClientRects().length > 0))) {{
+                            return el;
+                        }}
+                    }}
+
+                    // 2. Exact text matches for Save / Send / Submit / Next
+                    const candidates = Array.from(document.querySelectorAll('button, div[role="button"], a[role="button"], div.sendMsg, .sendMsg'));
+                    for (const el of candidates) {{
+                        if (isCloseOrDismiss(el)) continue;
+                        const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
+                        if (txt === 'save' || txt === 'send' || txt === 'submit' || txt === 'next') {{
+                            return el;
+                        }}
+                    }}
+
+                    // 3. Substring text matches
+                    for (const el of candidates) {{
+                        if (isCloseOrDismiss(el)) continue;
+                        const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
+                        if (txt.includes('save') || txt.includes('send') || txt.includes('submit')) {{
+                            return el;
+                        }}
+                    }}
+
+                    // 4. Any button or clickable element in footer/action container (never header!)
+                    if (chatLayer) {{
+                        const actionArea = chatLayer.querySelector('.chatbot_Footer, .drawer-footer, [class*="footer"], .sendMsgbtn_container, [class*="inputContainer"], [class*="action"]');
+                        if (actionArea) {{
+                            const btn = actionArea.querySelector('button, div[role="button"], div.sendMsg, .sendMsg');
+                            if (btn && !isCloseOrDismiss(btn)) {{
+                                return btn;
+                            }}
+                        }}
+                    }}
+
+                    return null;
+                }};
+                
                 const qEls = chatLayer.querySelectorAll('.chatbot_QuestionContainer, .botMsg, [class*="question"]');
                 let questionEl = null;
                 for (let i = qEls.length - 1; i >= 0; i--) {{
@@ -13619,10 +13775,11 @@ class SentinelAgent:
                     
                     window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Date filled: ' + dd + '/' + mm + '/' + yyyy);
                     
-                    const saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg') ||
-                                   chatLayer.querySelector('button');
-                    if (saveBtn && !saveBtn.disabled) {{
+                    const saveBtn = findSaveOrSendBtn(chatLayer);
+                    if (saveBtn && !saveBtn.disabled && !saveBtn.classList.contains('disabled')) {{
+                        saveBtn.dispatchEvent(new PointerEvent('pointerdown', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new PointerEvent('pointerup',   {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mouseup',   {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save clicked after date fill');
@@ -13704,37 +13861,25 @@ class SentinelAgent:
                     // Wait for UI to update
                     await new Promise(r => setTimeout(r, 500));
                     
-                    let saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
-                        el.innerText.toLowerCase().trim() === 'save');
-                    if (!saveBtn) {{
-                        saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
-                    }}
-                    if (!saveBtn) {{
-                        saveBtn = document.querySelector('[id^="sendMsgbtn_container"]');
-                    }}
-                    if (!saveBtn && chatLayer) {{
-                        saveBtn = chatLayer.querySelector('button');
-                    }}
-                    if (!saveBtn) {{
-                        saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
-                            el.innerText.toLowerCase().includes('save'));
-                    }}
-                    
-                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    // Always dispatch Enter event on contentEditable as standard chat submission!
+                    contentEditable.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }}));
+                    contentEditable.dispatchEvent(new KeyboardEvent('keypress', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }}));
+                    contentEditable.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }}));
+
+                    const saveBtn = findSaveOrSendBtn(chatLayer);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? (saveBtn.innerText || saveBtn.className) : 'none');
                     
                     if (saveBtn) {{
                         const isSaveDisabled = saveBtn.disabled || saveBtn.classList.contains('disabled') || saveBtn.getAttribute('aria-disabled') === 'true';
                         if (isSaveDisabled) {{
                             window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button is disabled');
-                            // Fallback: trigger Enter on contentEditable
-                            contentEditable.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
-                            contentEditable.dispatchEvent(new KeyboardEvent('keypress', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
-                            contentEditable.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
                             return 'CHATBOT_SAVE_DISABLED: ' + qText.slice(0, 50);
                         }}
                         
                         // ROBUST CLICK: Dispatch multiple events
+                        saveBtn.dispatchEvent(new PointerEvent('pointerdown', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new PointerEvent('pointerup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         
@@ -13811,23 +13956,8 @@ class SentinelAgent:
                     // Wait a moment for UI to respond
                     await new Promise(r => setTimeout(r, 500));
                     
-                    let saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
-                        el.innerText.toLowerCase().trim() === 'save');
-                    if (!saveBtn) {{
-                        saveBtn = document.querySelector('.sendMsg[tabindex], div.sendMsg');
-                    }}
-                    if (!saveBtn) {{
-                        saveBtn = document.querySelector('[id^="sendMsgbtn_container"]');
-                    }}
-                    if (!saveBtn && chatLayer) {{
-                        saveBtn = chatLayer.querySelector('button');
-                    }}
-                    if (!saveBtn) {{
-                        saveBtn = Array.from(document.querySelectorAll('button')).find(el => 
-                            el.innerText.toLowerCase().includes('save'));
-                    }}
-                    
-                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? saveBtn.innerText : 'none');
+                    const saveBtn = findSaveOrSendBtn(chatLayer);
+                    window.__SENTINEL_DEBUG__&&console.log('Chatbot Debug - Save button found:', !!saveBtn, saveBtn ? (saveBtn.innerText || saveBtn.className) : 'none');
                     
                     if (saveBtn) {{
                         const isSaveDisabled = saveBtn.disabled || saveBtn.classList.contains('disabled') || saveBtn.getAttribute('aria-disabled') === 'true';
@@ -13837,7 +13967,9 @@ class SentinelAgent:
                         }}
                         
                         // ROBUST CLICK: Dispatch multiple events
+                        saveBtn.dispatchEvent(new PointerEvent('pointerdown', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}));
+                        saveBtn.dispatchEvent(new PointerEvent('pointerup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}));
                         saveBtn.click();
                         
@@ -13885,8 +14017,8 @@ class SentinelAgent:
                     }}
                 }}
                 
-                // Check for any clickable button
-                const anyBtn = chatLayer.querySelector('button:not([disabled])');
+                // Check for any clickable submit/action button (never close/cross icons)
+                const anyBtn = Array.from(chatLayer.querySelectorAll('button:not([disabled]), div[role="button"]:not([disabled])')).find(b => !isCloseOrDismiss(b));
                 if (anyBtn && anyBtn.offsetParent !== null) {{
                     anyBtn.click();
                     return 'CHATBOT_BTN_CLICKED';
@@ -13930,6 +14062,19 @@ class SentinelAgent:
             # Log every chatbot interaction to the QA CSV: the answer given, the
             # questions the script deliberately skipped, and rejected answers.
             self._log_naukri_chatbot_result(result, qa_data)
+
+            # If an answer was given in contenteditable or text input, reinforce submission via Playwright
+            if isinstance(result, str) and result.startswith('CHATBOT_ANSWERED') and self._page:
+                try:
+                    send_el = await self._page.query_selector(
+                        'div.sendMsg:not(.disabled), .sendMsgbtn_container .sendMsg:not(.disabled), div.sendMsg, .sendMsgbtn_container .sendMsg'
+                    )
+                    if send_el and await send_el.is_visible():
+                        await send_el.click(force=True, timeout=1000)
+                    else:
+                        await self._page.keyboard.press('Enter')
+                except Exception:
+                    pass
             
             # Check if stuck on same question
             if current_question:
@@ -15290,6 +15435,7 @@ class SentinelAgent:
                     };
                     const evalCtcGate = () => {
                         if (!/(?:ctc|salary|compensation)/.test(qLower)) return null;
+                        if (/(?:what|what's|whats|enter|mention|specify|provide|share|how\\s+much)\\b/.test(qLower) && !/(?:comfortable|agree|okay|open|acceptable)/.test(qLower)) return null;
                         const m = qLower.match(/(?:up\\s*to|upto|within|less\\s+than|below|maximum|max\\.?|not\\s+more\\s+than|no\\s+more\\s+than)\\s*(?:₹|rs\\.?|inr)?\\s*(\\d+(?:\\.\\d+)?)\\s*(lpa|lakhs?|lacs?|inr)?/);
                         if (!m) return null;
                         let t = parseFloat(m[1]);
@@ -15319,6 +15465,12 @@ class SentinelAgent:
                     const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)|relatives?\\s*in\\s*the\\s*company/i.test(qLower);
                     const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|non\\s*compete|confidentiality\\s*agreements?.*restrict|bound\\s*by.*(?:non-compete|noncompete|agreements?)/i.test(qLower);
                     if (isConflictQ || isRestrictiveQ) return 'No';
+
+                    // Mobile / Phone number intercept
+                    if (/(?:mobile\\s*phone|phone\\s*number|mobile\\s*number|contact\\s*number|cell\\s*phone|\\bphone\\b|\\bmobile\\b)/i.test(qLower) &&
+                        !/(?:experience|interview|call|screening|skills?|proficien|app\\b|firebase|unity|android|ios|device|emergency|email)/i.test(qLower)) {
+                        return '7905828880';
+                    }
 
                     if (/bring\\s*your\\s*own\\s*device|byod/i.test(qLower)) return 'Yes';
                     if (/virtual\\s*drive|hiring\\s*drive|recruitment\\s*drive|attend.*drive/i.test(qLower)) return 'Yes';
@@ -17525,7 +17677,16 @@ return resolveDynamic(bestMatch);
                             window.__SENTINEL_DEBUG__&&console.log('LABEL DETECTION for input:', input.tagName, input.type || 'textarea', '| Detected label:', JSON.stringify(labelText));
                             
                             const lowerLabel = labelText.toLowerCase();
-                            const isLocationField = lowerLabel.includes('location') || lowerLabel.includes('city');
+                            const isTypeaheadInput = input.getAttribute('role') === 'combobox' ||
+                                                     input.getAttribute('aria-autocomplete') === 'list' ||
+                                                     input.getAttribute('aria-autocomplete') === 'both' ||
+                                                     input.closest('.artdeco-typeahead, [class*="typeahead"]') !== null ||
+                                                     input.classList.contains('artdeco-typeahead__input');
+
+                            const isLocationQuestion = (lowerLabel.includes('location') || lowerLabel.includes('city') || (input.id && input.id.toLowerCase().includes('location')) || (input.name && input.name.toLowerCase().includes('location'))) &&
+                                                       !/(?:preferred|preference|relocat|willing|open to|choose|select your|relocate)/i.test(lowerLabel);
+
+                            const isLocationField = isLocationQuestion && isTypeaheadInput;
                             
                             // Special handling: Location fields that have text but show validation errors or invalid non-candidate locations
                             // LinkedIn requires selecting from autocomplete dropdown, not just text
@@ -17543,16 +17704,14 @@ return resolveDynamic(bestMatch);
                                 
                                 if (hasLocationError) {
                                     window.__SENTINEL_DEBUG__&&console.log('Location field invalid/error (current: ' + input.value + ') — clearing and re-triggering autocomplete for:', labelText);
-                                    if (!isCandidateLocation) {
-                                        try {
-                                            const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
-                                            const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-                                            if (nativeSetter) nativeSetter.call(input, '');
-                                            else input.value = '';
-                                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                                        } catch(e) {}
-                                    }
+                                    try {
+                                        const proto = input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                                        const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                                        if (nativeSetter) nativeSetter.call(input, '');
+                                        else input.value = '';
+                                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                                    } catch(e) {}
                                     
                                     // Mark this input so the Python handler can find it via Playwright
                                     input.setAttribute('data-sentinel-location', 'true');
@@ -17676,7 +17835,7 @@ return resolveDynamic(bestMatch);
                                 // FIX: If the field id contains "numeric", input is number type, or has20CharLimit,
                                 // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
                                 const fieldId = input.id || '';
-                                const isNumericField = /numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || has20CharLimit || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText));
+                                const isNumericField = (/numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || has20CharLimit || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText))) && !/phone|mobile|tel\\b|contact\\s*number/i.test(lowerLabel);
                                 if (isNumericField) {
                                     if (/notice|np|lwd|days|serving|join/i.test(labelText) && (has20CharLimit || /10 to 20|10-20|immediate/i.test(labelText))) {
                                         finalValue = '15';
@@ -17712,13 +17871,13 @@ return resolveDynamic(bestMatch);
                             
                             // Check if input expects numeric values only
                             const has20CharLimit = input.getAttribute('maxlength') === '20' || input.maxLength === 20;
-                            const isExplicitNumberField = input.type === 'number' || 
+                            const isExplicitNumberField = (input.type === 'number' || 
                                                           input.getAttribute('inputmode') === 'numeric' ||
                                                           /numeric/i.test(input.id || '') ||
                                                           /numeric/i.test(input.name || '') ||
                                                           input.className?.toLowerCase().includes('number') ||
                                                           input.className?.toLowerCase().includes('decimal') ||
-                                                          (has20CharLimit && !/name|email|phone|city|postal|zip|address|title|company/i.test(lowerLabel));
+                                                          (has20CharLimit && !/name|email|phone|city|postal|zip|address|title|company/i.test(lowerLabel))) && !/phone|mobile|tel\\b|contact\\\\s*number/i.test(lowerLabel);
                             const isNumericLabel = (labelText && !/^(do|does|did|have|has|had|are|is|which|what|list|describe|share|give|explain)\\b/i.test(labelText.trim()) &&
                                                     /how many years|total years|decimal number|enter a decimal|\\b(in|of)\\s*years\\b|years of experience|experience in years/i.test(labelText));
                             const isNumericInput = isExplicitNumberField || isNumericLabel;
@@ -17740,6 +17899,12 @@ return resolveDynamic(bestMatch);
 
                             // Try to get answer from fuzzyMatch first
                             let answer = labelText ? fuzzyMatch(labelText) : null;
+                            if (!answer || (/phone|mobile/i.test(lowerLabel) && !/emergency|email/i.test(lowerLabel))) {
+                                if (/(?:mobile\\s*phone|phone\\s*number|mobile\\s*number|contact\\s*number|cell\\s*phone|\\bphone\\b|\\bmobile\\b)/i.test(lowerLabel) &&
+                                    !/(?:experience|interview|call|screening|skills?|proficien|app\\b|firebase|unity|android|ios|device|emergency|email)/i.test(lowerLabel)) {
+                                    answer = '7905828880';
+                                }
+                            }
 
                             // Work mode / workplace questions: resolve before notice period checks and guard against notice period overrides
                             const isWorkModeQ = /work\\s*mode|workplace|mode\\s*of\\s*work|working\\s*model|work\\s*type|work\\s*preference/i.test(labelText) ||
@@ -17849,7 +18014,7 @@ return resolveDynamic(bestMatch);
 
                             // If it's a numeric input, extract just the number from the answer (not for date fields, textareas, or Yes/No questions)
                             const isYesNoLabel = isLikelyYesNoQuestion(labelText) || /^(do|does|did|have|has|had|are|is|can|will|would)\b/i.test((labelText || '').trim());
-                            if (answer && isNumericInput && !isYesNoLabel && !isDateField && input.tagName !== 'TEXTAREA') {
+                            if (answer && isNumericInput && !isYesNoLabel && !isDateField && input.tagName !== 'TEXTAREA' && !/phone|mobile/i.test(lowerLabel)) {
                                 if (isLwdDateQuestion) {
                                     answer = '15';
                                     window.__SENTINEL_DEBUG__&&console.log('Numeric field for LWD question — using numeric notice days: 15');
@@ -18062,6 +18227,11 @@ return resolveDynamic(bestMatch);
                                         window.__SENTINEL_DEBUG__&&console.log('Fallback: Universal required text fallback:', answer, '| text:', combinedText.substring(0, 50));
                                     }
                                 }
+                            }
+                            
+                            if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
                             }
                             
                             if (answer) {
@@ -18558,7 +18728,9 @@ return resolveDynamic(bestMatch);
                                                             lowerLabel.includes('receive notifications') ||
                                                             lowerLabel.includes('receive email') ||
                                                             lowerLabel.includes('receive text') ||
-                                                            lowerLabel.includes('refer.io');
+                                                            lowerLabel.includes('refer.io') ||
+                                                            lowerLabel.includes('gdpr') ||
+                                                            lowerLabel.includes('privacy');
 
                             if (isCommunicationConsentQ) {
                                 const consentOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
@@ -18616,8 +18788,9 @@ return resolveDynamic(bestMatch);
                             // ===== NOTICE PERIOD SELECT HANDLER =====
                             // "What will be your notice period?" - options like "Serving Notice Period", "30 Days", etc.
                             // When "15 days" isn't an option, select "Serving Notice Period" as fallback
-                            const isNoticePeriodSelect = (lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day') || lowerLabel.includes('join') || lowerLabel.includes('serving'))) ||
-                                                         (lowerLabel.includes('join') && (lowerLabel.includes('soon') || lowerLabel.includes('when') || lowerLabel.includes('before') || lowerLabel.includes('earlier') || lowerLabel.includes('how quickly')));
+                            const isNoticePeriodSelect = ((lowerLabel.includes('notice') && (lowerLabel.includes('period') || lowerLabel.includes('day') || lowerLabel.includes('join') || lowerLabel.includes('serving'))) ||
+                                                         (lowerLabel.includes('join') && (lowerLabel.includes('soon') || lowerLabel.includes('when') || lowerLabel.includes('before') || lowerLabel.includes('earlier') || lowerLabel.includes('how quickly')))) &&
+                                                         !/gdpr|privacy|consent|cookie|legal\\s*notice|data\\s*protection/i.test(lowerLabel);
                             if (isNoticePeriodSelect) {
                                 const npOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
                                 let npMatch = null;
@@ -19224,12 +19397,19 @@ return resolveDynamic(bestMatch);
                                         eduMatch = eduOptions.find(o => {
                                             const t = o.text.toLowerCase().trim();
                                             return t.includes('b.tech') ||
+                                                t.includes('btech') ||
+                                                t.includes('b.e') ||
+                                                t.includes('be/') ||
+                                                t.includes('b.sc') ||
                                                 t.includes('undergraduate') ||
                                                 t.includes('college degree') ||
                                                 t.includes("bachelor's") ||
                                                 t === 'ug' ||
                                                 t.startsWith('ug ') ||
-                                                t.includes('ug/');
+                                                t.includes('ug/') ||
+                                                t.includes('engineering') ||
+                                                (t.includes('graduate') && !t.includes('post') && !t.includes('pg')) ||
+                                                (t.includes('graduation') && !t.includes('post'));
                                         });
                                     }
                                     if (eduMatch) {
@@ -19490,6 +19670,12 @@ return resolveDynamic(bestMatch);
                                             fallbackOpt = realOptions.find(o => /man|male|hombre|masculino/i.test(o.text)) || realOptions.find(o => /prefer not|decline/i.test(o.text));
                                         } else if (/school|university|college|institution|alma mater/i.test(lowerLabel)) {
                                             fallbackOpt = realOptions.find(o => /vellore|\\bvit\\b|bhopal/i.test(o.text)) || realOptions.find(o => /other|not listed|not specified|none of the above/i.test(o.text)) || realOptions.find(o => !/select|choose/i.test(o.text));
+                                        } else if (/education|highest level|qualification|degree/i.test(lowerLabel)) {
+                                            fallbackOpt = realOptions.find(o => /bachelor|b\\.tech|btech|b\\.e|undergraduate|engineering/i.test(o.text)) ||
+                                                          realOptions.find(o => /graduat/i.test(o.text) && !/post|master/i.test(o.text)) ||
+                                                          realOptions.find(o => !/10th|12th|high\\s*school|diploma/i.test(o.text));
+                                        } else if (/phone.*code|country.*code|dialing.*code|código.*país|codigo.*pais/i.test(lowerLabel)) {
+                                            fallbackOpt = realOptions.find(o => /india|\\+91\\b/i.test(o.text));
                                         }
                                         if (!fallbackOpt && !isDangerousYes) {
                                             fallbackOpt = realOptions.find(o => o.text.toLowerCase().trim() === 'yes' || /\\byes\\b/i.test(o.text));
@@ -19648,35 +19834,48 @@ return resolveDynamic(bestMatch);
                                 let matchedAns = '';
                                 
                                 if (allOptions.length > 0) {
-                                    for (const opt of allOptions) {
-                                        const optText = (opt.innerText || opt.textContent || '').trim();
-                                        const lowerOpt = optText.toLowerCase();
-                                        if (!lowerOpt || isSelectPlaceholderText(lowerOpt) || lowerOpt === '--') continue;
-                                        
-                                        if (answer && (lowerOpt === answer.toLowerCase() || lowerOpt.includes(answer.toLowerCase()) || answer.toLowerCase().includes(lowerOpt))) {
-                                            matchedOpt = opt;
-                                            matchedAns = optText;
-                                            break;
+                                    if (/education|highest level|qualification|degree/i.test(lowerLabel)) {
+                                        matchedOpt = allOptions.find(o => {
+                                            const t = (o.innerText || o.textContent || '').toLowerCase();
+                                            return (/bachelor|b\\.tech|btech|b\\.e|undergraduate|engineering/i.test(t)) ||
+                                                   (/graduat/i.test(t) && !/post|master/i.test(t));
+                                        });
+                                        if (matchedOpt) {
+                                            matchedAns = (matchedOpt.innerText || matchedOpt.textContent || '').trim();
                                         }
-                                        if (shouldSelectYes && (lowerOpt === 'yes' || lowerOpt.startsWith('yes'))) {
-                                            matchedOpt = opt;
-                                            matchedAns = 'Yes';
-                                            break;
-                                        }
-                                        if (!shouldSelectYes && (lowerOpt === 'no' || lowerOpt.startsWith('no'))) {
-                                            matchedOpt = opt;
-                                            matchedAns = 'No';
-                                            break;
-                                        }
-                                        if (/i understand|i agree|acknowledge|accept|confirm/i.test(lowerOpt)) {
-                                            matchedOpt = opt;
-                                            matchedAns = optText;
-                                            break;
-                                        }
-                                        if (/no.*disability|without disability|don't have a disability|not wish to answer|prefer not|decline/i.test(lowerOpt)) {
-                                            matchedOpt = opt;
-                                            matchedAns = optText;
-                                            break;
+                                    }
+                                    
+                                    if (!matchedOpt) {
+                                        for (const opt of allOptions) {
+                                            const optText = (opt.innerText || opt.textContent || '').trim();
+                                            const lowerOpt = optText.toLowerCase();
+                                            if (!lowerOpt || isSelectPlaceholderText(lowerOpt) || lowerOpt === '--') continue;
+                                            
+                                            if (answer && (lowerOpt === answer.toLowerCase() || lowerOpt.includes(answer.toLowerCase()) || answer.toLowerCase().includes(lowerOpt))) {
+                                                matchedOpt = opt;
+                                                matchedAns = optText;
+                                                break;
+                                            }
+                                            if (shouldSelectYes && (lowerOpt === 'yes' || lowerOpt.startsWith('yes'))) {
+                                                matchedOpt = opt;
+                                                matchedAns = 'Yes';
+                                                break;
+                                            }
+                                            if (!shouldSelectYes && (lowerOpt === 'no' || lowerOpt.startsWith('no'))) {
+                                                matchedOpt = opt;
+                                                matchedAns = 'No';
+                                                break;
+                                            }
+                                            if (/i understand|i agree|acknowledge|accept|confirm/i.test(lowerOpt)) {
+                                                matchedOpt = opt;
+                                                matchedAns = optText;
+                                                break;
+                                            }
+                                            if (/no.*disability|without disability|don't have a disability|not wish to answer|prefer not|decline/i.test(lowerOpt)) {
+                                                matchedOpt = opt;
+                                                matchedAns = optText;
+                                                break;
+                                            }
                                         }
                                     }
                                     
@@ -19833,7 +20032,12 @@ return resolveDynamic(bestMatch);
                                 }
 
                                 let answer = legend ? fuzzyMatch(legend) : null;
-                                if (answer) {
+                                if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
+                            }
+                            
+                            if (answer) {
                                     if (shouldDefaultToNo(legend)) answer = 'No';
                                     let bestRadio = findBestRadioMatch(answer, radios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
@@ -20052,7 +20256,12 @@ return resolveDynamic(bestMatch);
                                 let answer = questionText ? fuzzyMatch(questionText) : null;
                                 window.__SENTINEL_DEBUG__&&console.log('Custom radio group:', questionText.substring(0, 60), '| answer:', answer, '| options:', customRadios.length);
                                 
-                                if (answer) {
+                                if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
+                            }
+                            
+                            if (answer) {
                                     if (shouldDefaultToNo(questionText)) answer = 'No';
                                     let bestRadio = findBestCustomRadioMatch(answer, customRadios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
@@ -20265,7 +20474,12 @@ return resolveDynamic(bestMatch);
 
                             if (questionText) {
                                 let answer = fuzzyMatch(questionText);
-                                if (answer) {
+                                if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
+                            }
+                            
+                            if (answer) {
                                     if (shouldDefaultToNo(questionText)) answer = 'No';
                                     let bestRadio = findBestRadioMatch(answer, radios);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
@@ -20542,10 +20756,13 @@ return resolveDynamic(bestMatch);
 
                         // Phase 1: Handle multi-checkbox fieldsets group-by-group
                         const handledCheckboxes = new Set();
-                        const rawCheckboxGroups = queryAllDeep('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], .artdeco-form-field, [data-test-form-builder-checkbox-form-component], div', modal)
+                        const rawCheckboxGroups = queryAllDeep('fieldset, [data-test-form-builder-checkbox-form-component], [role="group"], .jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element], .artdeco-form-field', modal)
                             .filter(el => {
                                 const cbs = el.querySelectorAll('input[type="checkbox"], .fb-form-element__checkbox');
                                 if (cbs.length < 2) return false;
+                                // If this element contains multiple distinct question containers, it is a multi-question wrapper, NOT a single question group
+                                const subQuestionBlocks = el.querySelectorAll('.jobs-easy-apply-form-section__question, .fb-dash-form-element, [data-test-form-element], [data-test-form-builder-checkbox-form-component], fieldset');
+                                if (subQuestionBlocks.length > 1) return false;
                                 const children = Array.from(el.children);
                                 if (children.some(ch => ch.querySelectorAll('input[type="checkbox"], .fb-form-element__checkbox').length === cbs.length)) return false;
                                 return true;
@@ -20723,8 +20940,10 @@ return resolveDynamic(bestMatch);
                             }
 
                             for (const cb of groupCbs) {
-                                handledCheckboxes.add(cb);
-                                if (!isVisible(cb) || cb.checked) continue;
+                                if (!isVisible(cb) || cb.checked) {
+                                    handledCheckboxes.add(cb);
+                                    continue;
+                                }
 
                                 const optLabel = getOptionLabel(cb);
                                 window.__SENTINEL_DEBUG__&&console.log('Checkbox option label:', optLabel || '(none)');
@@ -20739,10 +20958,19 @@ return resolveDynamic(bestMatch);
                                     }
                                 }
 
+                                // Affirmative / Consent option check
+                                const isAffirmativeOpt = /^(yes|agree|i agree|accept|i accept|consent|i consent|confirm|i confirm|understood|i understand|acknowledged|i acknowledge|true|ok)\b/i.test(optLower);
+                                const isConsentOpt = isAffirmativeOpt || optLower.includes('consent') || optLower.includes('privacy') || optLower.includes('agree');
+                                const isConsentGroup = /consent|privacy|declare|agree|terms|condition|policy|authorization/i.test(groupQLower) || optLower.includes('consent') || optLower.includes('privacy');
+
+                                if (!shouldCheck && isConsentGroup && isConsentOpt) {
+                                    shouldCheck = true;
+                                }
+
                                 if (!shouldCheck && groupAnswer) {
                                     const answerLower = groupAnswer.toLowerCase();
                                     
-                                    const isYesOpt = /\byes\b/i.test(optLower);
+                                    const isYesOpt = /\byes\b/i.test(optLower) || isAffirmativeOpt;
                                     const isNoOpt = /\bno\b/i.test(optLower) && !isYesOpt;
                                     const isAnsYes = /\byes\b/i.test(answerLower);
                                     const isAnsNo = /\bno\b/i.test(answerLower) && !isAnsYes;
@@ -20795,6 +21023,7 @@ return resolveDynamic(bestMatch);
                                 if (shouldCheck) {
                                     window.__SENTINEL_DEBUG__&&console.log('Checking group checkbox option:', optLabel, 'for group:', groupQuestion.substring(0, 50));
                                     clickInput(cb);
+                                    handledCheckboxes.add(cb);
                                     anyCheckedInGroup = true;
                                     groupCheckedCount++;
                                     formResults.push({ question: groupQuestion || optLabel, answer: optLabel, inputType: 'checkbox', options: groupOptions, selectedOption: optLabel, source: 'pattern_match' });
@@ -21048,6 +21277,9 @@ return resolveDynamic(bestMatch);
                                                       combinedContextText.includes('read and acknowledge') ||
                                                       combinedContextText.includes('data privacy notice') ||
                                                       combinedContextText.includes('privacy notice') ||
+                                                      combinedContextText.includes('job applications privacy notice') ||
+                                                      combinedContextText.includes('text/sms') ||
+                                                      combinedContextText.includes('sms messages') ||
                                                       combinedContextText.includes('applicant data privacy') ||
                                                       combinedContextText.includes('job applicant data') ||
                                                       combinedContextText.includes('background check') ||
@@ -21167,7 +21399,17 @@ return resolveDynamic(bestMatch);
                             if (!isVisible(errEl)) continue;
                             const errText = (errEl.innerText || '').toLowerCase();
                             if (!errText.includes('required') && !errText.includes('select') && !errText.includes('enter') && !errText.includes('invalid') && !errText.includes('please')) continue;
-                            const container = errEl.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], div');
+                            let container = errEl.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], [data-test-form-builder-checkbox-form-component], .jobs-easy-apply-form-section__grouping, .artdeco-form-field');
+                            if (!container || !container.querySelector('input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="radio"]')) {
+                                let cur = errEl.parentElement;
+                                for (let l = 0; l < 5 && cur && cur !== modal; l++) {
+                                    if (cur.querySelector('input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="radio"]')) {
+                                        container = cur;
+                                        break;
+                                    }
+                                    cur = cur.parentElement;
+                                }
+                            }
                             if (!container || isInsideExperienceOrEducationEditor(container)) continue;
                             const groupCbs = Array.from(container.querySelectorAll('input[type="checkbox"], [role="checkbox"]')).filter(c => isVisible(c));
                             if (groupCbs.length > 0 && !groupCbs.some(c => c.checked)) {
@@ -21176,7 +21418,7 @@ return resolveDynamic(bestMatch);
                                 const isOptionYes = (k) => {
                                     if (!k) return false;
                                     const s = k.toLowerCase().trim();
-                                    return s === 'yes' || s.startsWith('yes ') || s.startsWith('yes,') || s.startsWith('yes -') || s.startsWith('yes(') || s.startsWith('yes/') || s.endsWith(' yes') || s.includes(' yes ');
+                                    return s === 'yes' || s.startsWith('yes ') || s.startsWith('yes,') || s.startsWith('yes -') || s.startsWith('yes(') || s.startsWith('yes/') || s.endsWith(' yes') || s.includes(' yes ') || /^(agree|i agree|accept|i accept|consent|i consent|confirm|i confirm|true)\b/i.test(s);
                                 };
                                 const isOptionNo = (k) => {
                                     if (!k) return false;
@@ -21208,11 +21450,22 @@ return resolveDynamic(bestMatch);
                                         }
                                     }
                                 }
+                                // 3. Check for affirmative/consent options
+                                if (!chosenCb) {
+                                    for (const cb of groupCbs) {
+                                        const opt = getOptionLabel(cb).toLowerCase().trim();
+                                        if (/^(yes|agree|i agree|accept|i accept|consent|i consent|confirm|true)\b/i.test(opt) || opt.includes('consent') || opt.includes('agree')) {
+                                            chosenCb = cb;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!chosenCb && groupCbs.length === 1) chosenCb = groupCbs[0];
                                 if (!chosenCb && groupCbs.length > 0) chosenCb = groupCbs[0];
                                 if (chosenCb && !chosenCb.checked) {
                                     window.__SENTINEL_DEBUG__&&console.log('Error recovery: activating checkbox in error container:', getOptionLabel(chosenCb));
                                     clickInput(chosenCb);
-                                    formResults.push({ question: qText || 'Error recovery checkbox', answer: getOptionLabel(chosenCb), inputType: 'checkbox', options: groupCbs.map(c => getOptionLabel(c)), selectedOption: getOptionLabel(chosenCb), source: 'error_recovery' });
+                                    formResults.push({ question: qText || getOptionLabel(chosenCb) || 'Error recovery checkbox', answer: getOptionLabel(chosenCb) || 'Checked', inputType: 'checkbox', options: groupCbs.map(c => getOptionLabel(c)), selectedOption: getOptionLabel(chosenCb) || 'Checked', source: 'error_recovery' });
                                 }
                             }
 
@@ -21249,6 +21502,26 @@ return resolveDynamic(bestMatch);
                             }
                         }
 
+                        // Helper to detect if a checkbox is required
+                        const isCheckboxRequired = (cb) => {
+                            if (!cb) return false;
+                            if (cb.required || cb.getAttribute('aria-required') === 'true') return true;
+                            const parentContainer = cb.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-section__question, [data-test-form-element], [data-test-form-builder-checkbox-form-component], .artdeco-form-field, li');
+                            if (parentContainer) {
+                                if (parentContainer.getAttribute('aria-required') === 'true' || parentContainer.classList.contains('artdeco-form-field--required')) return true;
+                                if (parentContainer.querySelector('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field, [data-testid*="error"]')) return true;
+                                const qText = (typeof getGroupQuestionText === 'function' ? getGroupQuestionText(parentContainer) : '') || parentContainer.innerText || '';
+                                if (qText.includes('*') || /required/i.test(qText)) return true;
+                            }
+                            let sib = cb.parentElement ? cb.parentElement.previousElementSibling : null;
+                            while (sib) {
+                                const t = (sib.innerText || '').trim();
+                                if (t.includes('*') && !sib.querySelector('input')) return true;
+                                sib = sib.previousElementSibling;
+                            }
+                            return false;
+                        };
+
                         // 4. Form Validation Check: Are we missing anything required?
                         const RADIO_GROUP_SELECTOR =
                             'fieldset[data-test-form-builder-radio-button-group], fieldset.fb-dash-form-element, ' +
@@ -21284,8 +21557,8 @@ return resolveDynamic(bestMatch);
                             });
                             
                             // Check for unchecked required checkboxes (privacy/consent)
-                            const requiredCheckboxes = queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal);
-                            const uncheckedCheckboxes = requiredCheckboxes.filter(cb => isVisible(cb) && !cb.checked);
+                            const allVisibleCheckboxes = queryAllDeep('input[type="checkbox"]', modal);
+                            const uncheckedCheckboxes = allVisibleCheckboxes.filter(cb => isVisible(cb) && !cb.checked && isCheckboxRequired(cb));
                             const hasUncheckedCheckbox = uncheckedCheckboxes.length > 0;
                             
                             let hasVisibleError = !!queryDeep('.artdeco-inline-feedback--error, .fb-dash-form-element__error-field', modal);
@@ -21495,8 +21768,8 @@ return resolveDynamic(bestMatch);
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
-                                const allCheckboxesFilled = !queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal)
-                                    .some(cb => isVisible(cb) && !cb.checked);
+                                const allCheckboxesFilled = !queryAllDeep('input[type="checkbox"]', modal)
+                                    .some(cb => isVisible(cb) && !cb.checked && isCheckboxRequired(cb));
                                 // NOTE: do NOT reference the outer `radioGroups` (a name→radios object
                                 // declared in section 3.1b) — it has no .some(). The radioGroups
                                 // array inside checkForErrors is out of scope here, so query fresh.
@@ -21584,8 +21857,8 @@ return resolveDynamic(bestMatch);
                                     .some(inp => isVisible(inp) && !readFieldValue(inp) && !inp.disabled);
                                 const allSelectsFilled2 = !queryAllDeep('select', modal)
                                     .some(sel => isVisible(sel) && (!sel.value || isSelectPlaceholderText(sel.options[sel.selectedIndex]?.text, sel.value, sel.selectedIndex)));
-                                const allCheckboxesFilled2 = !queryAllDeep('input[type="checkbox"][required], input[type="checkbox"][aria-required="true"]', modal)
-                                    .some(cb => isVisible(cb) && !cb.checked);
+                                const allCheckboxesFilled2 = !queryAllDeep('input[type="checkbox"]', modal)
+                                    .some(cb => isVisible(cb) && !cb.checked && isCheckboxRequired(cb));
                                 if (!(allInputsFilled2 && allSelectsFilled2 && allCheckboxesFilled2)) {
                                     window.__SENTINEL_DEBUG__&&console.log('Form has errors. Waiting...');
                                     return 'LINKEDIN_FORM_STUCK: Validation errors';
@@ -21927,7 +22200,18 @@ return resolveDynamic(bestMatch);
                                 return { type: 'easy_apply_limit', element: dialog };
                             }
 
-                            // Success modal — check FIRST so submitted applications aren't treated as stuck forms
+                            const hasActiveFormControls = (
+                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], [data-live-test-easy-apply-next-button], [data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], button[aria-label*="Continue" i], svg[role="progressbar"], div[role="progressbar"], [aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-modal__content, .jobs-easy-apply-form-section, form, fieldset, [class*="fb-dash-form-element"], [class*="jobs-document-upload"]') !== null ||
+                                Array.from(dialog.querySelectorAll('button')).some(b => {
+                                    const bText = normText(b.innerText || b.getAttribute('aria-label') || '');
+                                    return ['next', 'review', 'submit', 'submit application', 'review your application', 'continue to next step', 'continue', 'save', 'opslaan'].includes(bText) || bText.includes('next') || bText.includes('submit') || bText.includes('review');
+                                })
+                            );
+                            if (hasActiveFormControls) {
+                                return { type: 'form', element: dialog };
+                            }
+                            // Active form controls check — a modal with inputs/form buttons is an active form
+                            // Success modal — check ONLY if dialog does not have active form controls
                             const isSuccessModal = (
                                 dialog.querySelector('[data-test-icon="signal-success"]') !== null ||
                                 dialog.querySelector('li-icon[type="success-pebble-icon"]') !== null ||
@@ -21943,17 +22227,6 @@ return resolveDynamic(bestMatch);
                                 return { type: 'success', element: dialog };
                             }
 
-                            // Active form controls check — a modal with inputs/form buttons is an active form
-                            const hasActiveFormControls = (
-                                dialog.querySelector('input:not([type="hidden"]), select, textarea, [data-easy-apply-next-button], [data-live-test-easy-apply-next-button], [data-live-test-easy-apply-review-button], button[aria-label*="next step" i], button[aria-label*="Review" i], button[aria-label*="Submit application" i], button[aria-label*="Continue" i], svg[role="progressbar"], div[role="progressbar"], [aria-valuenow], .jobs-easy-apply-content, .jobs-easy-apply-modal__content, .jobs-easy-apply-form-section, form, fieldset, [class*="fb-dash-form-element"], [class*="jobs-document-upload"]') !== null ||
-                                Array.from(dialog.querySelectorAll('button')).some(b => {
-                                    const bText = normText(b.innerText || b.getAttribute('aria-label') || '');
-                                    return ['next', 'review', 'submit', 'submit application', 'review your application', 'continue to next step', 'continue', 'save', 'opslaan'].includes(bText) || bText.includes('next') || bText.includes('submit') || bText.includes('review');
-                                })
-                            );
-                            if (hasActiveFormControls) {
-                                return { type: 'form', element: dialog };
-                            }
 
                             // Diagnostic logging for visible unclassified dialogs
                             const btns = Array.from(dialog.querySelectorAll('button')).map(b => normText(b.innerText || b.getAttribute('aria-label'))).filter(Boolean);
@@ -22107,9 +22380,9 @@ return resolveDynamic(bestMatch);
                             // Clean up modal element and overlays
                             try {
                                 if (modal.element && modal.element.parentNode) {
-                                    modal.element.style.display = 'none';
+                                    modal.element.remove();
                                 }
-                                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => { o.style.display = 'none'; });
+                                document.querySelectorAll('.artdeco-modal-overlay').forEach(o => { o.remove(); });
                             } catch(e) {}
 
                             return 'LINKEDIN_SUCCESS_MODAL_CLOSED';
@@ -22777,9 +23050,21 @@ return resolveDynamic(bestMatch);
                     }
                     
                     // 0. Check for success page (URL pattern or message)
-                    const isSuccessPage = window.location.href.includes('/myapply/saveApply');
-                    const successMsg = document.querySelector('span.apply-message, .chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"]');
                     const bodyText = document.body.innerText || '';
+                    const isRejected = bodyText.includes('was not accepted') ||
+                                       bodyText.includes('incomplete information') ||
+                                       bodyText.includes('mandatory questions') ||
+                                       bodyText.includes('could not be submitted') ||
+                                       bodyText.includes('failed to apply') ||
+                                       document.querySelector('.error-banner, [class*="error-banner"], [class*="alert-danger"]') !== null;
+                    
+                    if (isRejected && window.location.href.includes('/myapply/saveApply')) {
+                        window.location.href = 'https://www.naukri.com/mnjuser/recommendedjobs';
+                        return 'NAUKRI_APPLICATION_REJECTED: Incomplete information';
+                    }
+
+                    const isSuccessPage = !isRejected && window.location.href.includes('/myapply/saveApply');
+                    const successMsg = document.querySelector('span.apply-message, .chatbot_SuccessMsg, [class*="success-msg"], [class*="successMsg"]');
                     const hasSuccessText = isSuccessPage || (successMsg && successMsg.innerText.toLowerCase().includes('success')) ||
                                            /application submitted|successfully applied|applied successfully|interest shared successfully/i.test(bodyText) ||
                                            (/thank you for your response|thank you for applying|responses have been recorded/i.test(bodyText) && !document.querySelector('.chatbot_OptionContainer button, input[type="radio"], input[type="checkbox"], select'));
@@ -24799,6 +25084,11 @@ return resolveDynamic(bestMatch);
                         
                         if (legend && radios.length > 0 && !radios.some(r => r.checked)) {
                             const answer = fuzzyMatch(legend);
+                            if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
+                            }
+                            
                             if (answer) {
                                 let bestRadio = findBestRadioMatch(answer, radios);
                                 if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
@@ -24903,6 +25193,11 @@ return resolveDynamic(bestMatch);
                         
                         if (questionText) {
                             const answer = fuzzyMatch(questionText);
+                            if (answer === '__LEAVE_BLANK__') {
+                                window.__SENTINEL_DEBUG__&&console.log('Skipping field per __LEAVE_BLANK__ directive:', labelText);
+                                continue;
+                            }
+                            
                             if (answer) {
                                 let bestRadio = findBestRadioMatch(answer, radios);
                                 if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {

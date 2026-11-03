@@ -156,9 +156,13 @@ class PatternMatcher:
         ql = question.lower().strip()
         al = answer.strip()
 
-        # 0. Detect LWD (Official Last Working Day / Date) questions
+        # 0. Detect LWD (Official Last Working Day / Date) questions.
+        # "How many days are left/until your last working day?" asks for a day
+        # COUNT, not the date itself — the answer must stay '15' instead of
+        # collapsing into the LWD date (2026-11-03 qa_results.csv fix).
         is_lwd = bool(re.search(r'\b(last working day|last working date|official last working|official last working day|lwd)\b', ql))
-        if is_lwd:
+        asks_day_count = bool(re.search(r"\bhow\s+many\s+days\b|\bdays\s+(?:are\s+|were\s+|is\s+)?(?:left|remaining|until)s?\b", ql))
+        if is_lwd and not asks_day_count:
             lwd_date = datetime.now() + timedelta(days=15)
             lwd_formatted = lwd_date.strftime('%d %b %Y')
             if al in ('15', '15 days', 'yes', 'no') or not re.search(r'\d{4}|[A-Za-z]{3}', al):
@@ -302,12 +306,19 @@ class PatternMatcher:
             is_value_inquiry = bool(re.search(r'\b(?:what|what\'s|whats|enter|mention|specify|provide|share|how\s+much)\b', ql)) and not bool(re.search(r'\b(?:comfortable|agree|okay|open|acceptable)\b', ql))
             if is_value_inquiry:
                 return ('3000000' if input_type in ('number', 'text_inr') else ('30' if input_type == 'text_lpa' else '30 LPA')), max(score, 0.98)
-            m = re.search(r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|not\s+more\s+than|no\s+more\s+than)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?', ql)
+            # The bridge between the threshold keyword and the number may hold
+            # words ("maximum ctc of Rs 15 LPA").  It must stay digit-free so it
+            # can never skip past a first number to a second one.
+            m = re.search(r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|not\s+more\s+than|no\s+more\s+than)[^0-9]{0,40}?(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?', ql)
             if m:
                 t = float(m.group(1))
                 u = (m.group(2) or '').lower()
                 if u == 'inr' or (not u and t >= 100000):
                     t = t / 100000.0
+                if input_type in ('text', 'textarea') and re.match(r'\s*(yes|no|true|false)\b', al, re.IGNORECASE):
+                    # A textual gate already carries the verdict (and usually
+                    # the reason); keep it instead of collapsing to bare Yes/No.
+                    return answer, max(score, 0.98)
                 return ('Yes' if 30.0 <= t else 'No'), max(score, 0.98)
 
         # 0l. Legal age requirement (18+)
@@ -853,6 +864,10 @@ class PatternMatcher:
             or re.search(r'\b(notice|np)\b', ql)
             or re.search(r'\b(rate|rating|scale)\b', ql)
             or is_experience_value_q
+            # Day/month counts ("how many days are left", "days remaining")
+            # are measured quantities too; without this a radio/checkbox
+            # flips the honest '15' into 'Yes' (2026-11-03 qa_results fix).
+            or re.search(r"\b(?:days?|weeks?|months?)\s+(?:are\s+|is\s+|were\s+)?(?:left|remaining|until)s?\b", ql)
             # Percentage/score questions ("percentage expertise", "CGPA",
             # "aggregate marks") are measured values, not confirmations.  The
             # raw numeric answer must survive on radio/checkbox controls.

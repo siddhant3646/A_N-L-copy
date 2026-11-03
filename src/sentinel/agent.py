@@ -168,6 +168,7 @@ GENERIC_SKILL_LABELS = {
 # tech-stack skill answers with the total experience instead.
 ZERO_EXPERIENCE_OVERRIDES = (
     "product manager", "product management", "business development",
+    "engineering manager",
     "sdet",
     "price elasticity", "promotion model", "cpg", "fmcg", "pharma",
     "healthcare", "health care", "jd edwards", "jde", "dft", "physical design",
@@ -1060,9 +1061,13 @@ class SentinelAgent:
         if re.search(r'\b(?:what|what\'s|whats|enter|mention|specify|provide|share|how\s+much)\b', q) and not re.search(r'\b(?:comfortable|agree|okay|open|acceptable)\b', q):
             return None
 
+        # The bridge between the threshold keyword and the number may hold
+        # words ("maximum ctc of Rs 15 LPA"); it must stay digit-free so it
+        # can never skip past a first number to a second one (2026-11-03).
         match = re.search(
             r'(?:up\s*to|upto|within|less\s+than|below|maximum|max\.?|'
-            r'not\s+more\s+than|no\s+more\s+than)\s*'
+            r'not\s+more\s+than|no\s+more\s+than)'
+            r'[^0-9]{0,40}?'
             r'(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(lpa|lakhs?|lacs?|inr)?',
             q,
         )
@@ -1486,11 +1491,13 @@ class SentinelAgent:
         if any(kw in question_lower for kw in ['days remaining', 'number of days remaining', 'days left in notice', 'days left']):
             return '15', 0.99
 
-        # Official notice period (handling typo "peroid")
+        # Official notice period (handling typo "peroid").  'Less than 30 days'
+        # collapsed into LinkedIn's '30' bucket and produced the qa_results.csv
+        # 2026-10-28 wrong row; the candidate serves a 15-day notice.
         if ('official notice' in question_lower or ('official' in question_lower and ('notice period' in question_lower or 'notice peroid' in question_lower))) and not any(kw in question_lower for kw in ['days remaining', 'number of days remaining', 'immediate joiner please mention']):
-            if any(w in question_lower for w in ['in days', 'mention in days', 'how many days', 'number of days']):
+            if any(w in question_lower for w in ['in days', 'mention in days', 'how many days', 'number of days', 'mention the days']):
                 return '15', 0.99
-            return 'Less than 30 days', 0.99
+            return '15 days', 0.99
 
         # Fixed vs Variable salary breakup & ESOPs
         if any(kw in question_lower for kw in ['breakups of fixed', 'breakup of fixed', 'fixed, variable & esops', 'fixed variable esops']) or (
@@ -2136,8 +2143,18 @@ class SentinelAgent:
         if 'commuting' in question_lower or 'commute' in question_lower or 'commutable' in question_lower:
             return 'Yes', 0.95
 
-        # Leadership questions
+        # Leadership questions.  Year-count phrasings ("How many years of formal
+        # leadership...") must resolve through the audited patterns (the
+        # candidate has 0 years of formal people-management experience), not the
+        # mentoring text below (2026-11-03 qa_results.csv fix).
         if 'leadership' in question_lower:
+            if re.search(r'\bhow\s+many\b|\bhow much\b|\byears?\b|\byrs?\b', question_lower):
+                try:
+                    pattern_ans, pattern_conf = self._pattern_matcher.fuzzy_match(question)
+                except Exception:
+                    pattern_ans, pattern_conf = None, 0.0
+                if pattern_ans:
+                    return pattern_ans, max(pattern_conf, 0.95)
             return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
 
         # Highest level of education (radio/select degree level)
@@ -2735,8 +2752,18 @@ class SentinelAgent:
         if ('relocat' in question_lower or 'relocation' in question_lower) and not is_location_specific:
             return 'Yes', 0.95
 
-        # Leadership questions
+        # Leadership questions.  Year-count phrasings ("How many years of formal
+        # leadership...") must resolve through the audited patterns (the
+        # candidate has 0 years of formal people-management experience), not the
+        # mentoring text below (2026-11-03 qa_results.csv fix).
         if 'leadership' in question_lower:
+            if re.search(r'\bhow\s+many\b|\bhow much\b|\byears?\b|\byrs?\b', question_lower):
+                try:
+                    pattern_ans, pattern_conf = self._pattern_matcher.fuzzy_match(question)
+                except Exception:
+                    pattern_ans, pattern_conf = None, 0.0
+                if pattern_ans:
+                    return pattern_ans, max(pattern_conf, 0.95)
             return 'Yes, I have leadership experience leading agile sprints, mentoring junior engineers, conducting code reviews, and driving technical design discussions.', 0.95
 
         # Highest level of education (radio/select degree level)
@@ -4962,6 +4989,21 @@ class SentinelAgent:
                                 if cur_val:
                                     for _ in range(len(cur_val) + 5):
                                         await self._page.keyboard.press('Backspace')
+                            except Exception:
+                                pass
+                            # qa_results.csv: fields typed 'Bombay'-style leftovers appended to old
+                            # text ("...IndiaBangalore") when React re-injected state between keyboard
+                            # clears. Verify emptiness and hard-reset via the native setter if needed.
+                            try:
+                                leftover = await loc.input_value(timeout=500)
+                                if leftover:
+                                    await loc.evaluate(
+                                        """(el) => {
+                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                            setter.call(el, '');
+                                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                                        }"""
+                                    )
                             except Exception:
                                 pass
                             await asyncio.sleep(0.2)
@@ -15482,7 +15524,7 @@ class SentinelAgent:
                     if (/(authorized\\s*to\\s*work|work\\s*authorization|legally\\s*authorized).*(united\\s*states|u\\.?s\\.?|us\\s*based)/i.test(qLower)) return 'Not Applicable';
                     if (/(sponsorship|visa\\s*status|h-?1b).*(roles\\s*posted\\s*in\\s*the\\s*us|united\\s*states|u\\.?s\\.?|us\\s*only)/i.test(qLower)) return 'Not applicable';
                     if (/are\\s*you\\s*(a|an\\s*internal)?\\s*referral/i.test(qLower)) return 'No';
-                    if (/official\\s*notice\\s*(?:period|peroid)|what\\s*is\\s*your\\s*official\\s*notice/i.test(qLower)) return 'Less than 30 days';
+                    if (/official\\s*notice\\s*(?:period|peroid)|what\\s*is\\s*your\\s*official\\s*notice/i.test(qLower)) return '15 days';
                     if (/how\\s*did\\s*you\\s*hear\\s*about\\s*(us|this)|where\\s*did\\s*you\\s*hear/i.test(qLower)) return 'LinkedIn';
                     if (/^headline$/i.test(cleanQ) || /^profile\\s*headline$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) | Java, Spring Boot, React, Node.js, AWS';
                     if (/^summary$/i.test(cleanQ) || /^profile\\s*summary$/i.test(cleanQ)) return 'Software Engineer 2 (SDE-2) at Everbridge with 4.2 years of experience specializing in high-throughput distributed backend systems, Spring Boot, Java, React, Kafka, Redis, and AWS.';
@@ -15728,7 +15770,10 @@ class SentinelAgent:
                             bestMatch = yearsDefault;
                         } else if (isNoticeQ) {
                             if (/official/i.test(qLower)) {
-                                bestMatch = 'Less than 30 days';
+                                // 'Less than 30 days' collapsed into the '30'
+                                // option bucket; the candidate serves a 15-day
+                                // notice (qa_results.csv 2026-10-28 fix).
+                                bestMatch = '15 days';
                             } else if (/19102026|enter as \\d+|ddmmyyyy/i.test(qLower)) {
                                 bestMatch = resolveDynamic('__DYNAMIC_LWD_DDMMYYYY__');
                             } else if (/option\\s*\\(?6\\)?/i.test(qLower) || /\\(6\\)/.test(qLower)) {
@@ -18103,8 +18148,17 @@ return resolveDynamic(bestMatch);
                                     } else if (isLocationPrompt) {
                                         answer = 'Bengaluru, Karnataka, India';
                                     } else if (isYesNoPrompt) {
-                                        const isNegative = /sponsorship|visa|convicted|crime|disciplinary|conflict of interest|non[- ]compete|ex-employee|previously employed/i.test(lowerLabel);
-                                        answer = isNegative ? 'No' : 'Yes';
+                                        // "Is your current location X?" is only true for Bangalore/Bengaluru.
+                                        // qa_results.csv 2026-11-03: "Is your current location Hyderabad?" wrongly defaulted to Yes.
+                                        const locIsQ = /(current\\s+location|located\\s+in|living\\s+in|residing\\s+in|based\\s+in|currently\\s+in)\\b/i.test(lowerLabel) && !/relocat|willing|open\\s+to|ready\\s+to/i.test(lowerLabel);
+                                        if (locIsQ) {
+                                            const isBangaloreLoc = /bangalore|bengaluru/i.test(lowerLabel);
+                                            const otherLocCity = /(gurgaon|gurugram|hyderabad|mumbai|pune|chennai|delhi|noida|kolkata|ahmedabad)/i.test(lowerLabel);
+                                            answer = (!otherLocCity || isBangaloreLoc) ? 'Yes' : 'No';
+                                        } else {
+                                            const isNegative = /sponsorship|visa|convicted|crime|disciplinary|conflict of interest|non[- ]compete|ex-employee|previously employed/i.test(lowerLabel);
+                                            answer = isNegative ? 'No' : 'Yes';
+                                        }
                                     }
                                 }
                             }
@@ -19387,30 +19441,56 @@ return resolveDynamic(bestMatch);
                                 // EDUCATION LEVEL MATCHING — bypass generic findBestMatch which
                                 // fails on free-text education descriptions (e.g. "B.Tech in Computer
                                 // Science Engineering"). User has B.Tech = Bachelor's Degree.
+                                // qa_results.csv 2026-10-30: option-order made "Bachelor of Arts (B.A.)"
+                                // win over B.Tech-style options, so engineering/tech degrees are now
+                                // preferred and arts degrees are only a last resort.
                                 if (lowerLabel.includes('education') || lowerLabel.includes('highest level') || lowerLabel.includes('qualification') || lowerLabel.includes('degree')) {
                                     const eduOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    let eduMatch = eduOptions.find(o =>
-                                        o.text.toLowerCase().includes('bachelor') &&
-                                        !o.text.toLowerCase().includes('master')
-                                    );
+                                    const eduIsArts = (t) => /bachelor of arts|ba\\b|\\barts\\b/i.test(t);
+                                    // 1st preference: bachelor-level tech/engineering degree (B.Tech/B.E.)
+                                    let eduMatch = eduOptions.find(o => {
+                                        const t = o.text.toLowerCase().trim();
+                                        return !eduIsArts(t) && !t.includes('master') && !t.includes('m.tech') && !t.includes('m.e.') && !t.includes('post') && (
+                                            t.includes('b.tech') || t.includes('btech') ||
+                                            /bachelor of (engineering|technology)/.test(t) ||
+                                            t.includes('b.e') || t.includes('be/') || t === 'be' ||
+                                            t.includes('engineering')
+                                        );
+                                    });
+                                    // 2nd preference: any non-arts non-master bachelor option
                                     if (!eduMatch) {
                                         eduMatch = eduOptions.find(o => {
                                             const t = o.text.toLowerCase().trim();
+                                            return t.includes('bachelor') && !t.includes('master') && !eduIsArts(t);
+                                        });
+                                    }
+                                    // 3rd preference: original broad degree variants (B.Sc/UG/graduate), still excluding arts & masters
+                                    if (!eduMatch) {
+                                        eduMatch = eduOptions.find(o => {
+                                            const t = o.text.toLowerCase().trim();
+                                            if (eduIsArts(t) || t.includes('master') || t.includes('post')) return false;
                                             return t.includes('b.tech') ||
                                                 t.includes('btech') ||
                                                 t.includes('b.e') ||
                                                 t.includes('be/') ||
                                                 t.includes('b.sc') ||
                                                 t.includes('undergraduate') ||
+                                                t.includes('under graduate') ||
                                                 t.includes('college degree') ||
                                                 t.includes("bachelor's") ||
                                                 t === 'ug' ||
                                                 t.startsWith('ug ') ||
                                                 t.includes('ug/') ||
-                                                t.includes('engineering') ||
                                                 (t.includes('graduate') && !t.includes('post') && !t.includes('pg')) ||
-                                                (t.includes('graduation') && !t.includes('post'));
+                                                t.includes('graduation');
                                         });
+                                    }
+                                    // Last resort: plain bachelor option (incl. arts) so the form can still submit
+                                    if (!eduMatch) {
+                                        eduMatch = eduOptions.find(o =>
+                                            o.text.toLowerCase().trim().includes('bachelor') &&
+                                            !o.text.toLowerCase().includes('master')
+                                        );
                                     }
                                     if (eduMatch) {
                                         select.value = eduMatch.value;
@@ -19425,10 +19505,19 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 // DISCIPLINE / FIELD OF STUDY SELECT HANDLER
+                                // Option order previously decided the pick (find matches the FIRST
+                                // option passing the combined regex). qa_results.csv 2026-10-30:
+                                // "Information Technology" beat Computer Science; match by
+                                // discipline priority instead of option order.
                                 if (lowerLabel === 'discipline' || lowerLabel.includes('discipline') || lowerLabel.includes('field of study') || lowerLabel.includes('major')) {
                                     const discOptions = Array.from(select.options).map(o => ({ text: o.text, value: o.value, index: o.index }));
-                                    let discMatch = discOptions.find(o => /computer\\s*science|computer\\s*engineering|information\\s*technology|software\\s*engineering/i.test(o.text)) ||
-                                                    discOptions.find(o => /\bcomputer\b|\bit\b/i.test(o.text));
+                                    let discMatch =
+                                        discOptions.find(o => /computer\\s*science(\\s*and\\s*engineering)?/i.test(o.text)) ||
+                                        discOptions.find(o => /computer\\s*engineering/i.test(o.text)) ||
+                                        discOptions.find(o => /software\\s*engineering/i.test(o.text)) ||
+                                        discOptions.find(o => /information\\s*(technology|systems)/i.test(o.text)) ||
+                                        discOptions.find(o => /\bcomputer\b/i.test(o.text)) ||
+                                        discOptions.find(o => /\bit\b/i.test(o.text));
                                     if (discMatch) {
                                         select.value = discMatch.value;
                                         if (select.value !== discMatch.value) select.selectedIndex = discMatch.index;

@@ -996,6 +996,11 @@ def _derive_number(intent: QuestionIntent) -> str:
                 or "number of days" in ql
                 or "days remaining" in ql
                 or "days left" in ql
+                # "How many days are left in your last working day?" is a day
+                # count, not a date (2026-11-03 qa_results.csv fix).  The
+                # bridge stays digit-free so it cannot jump to a second number.
+                or re.search(r"\bdays\s+(?:are\s+|were\s+|is\s+)?(?:left|remaining|until)s?\b", ql)
+                or re.search(r"\bhow\s+many\s+days\b", ql)
             ):
                 return f"{_notice_number(intent.question, intent.default):g}"
             return LWD_NUMERIC_MARKER

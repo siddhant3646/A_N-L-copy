@@ -22,7 +22,7 @@ class TestCheckmateLinkedInQAPatterns(unittest.TestCase):
     9. Bring your own device (BYOD) -> "Yes"
     10. Referral check ("Are you a referral?") -> "No"
     11. Source channel ("How did you hear about us?") -> "LinkedIn"
-    12. Official notice period / peroid -> "Less than 30 days"
+    12. Official notice period / peroid -> "15 days"
     """
 
     def setUp(self):
@@ -174,7 +174,7 @@ class TestCheckmateLinkedInQAPatterns(unittest.TestCase):
             "official notice peroid",
             "official notice period"
         ]
-        expected = "Less than 30 days"
+        expected = "15 days"
         for q in questions:
             ans, score = self.agent._fuzzy_match_question(q)
             self.assertEqual(ans, expected, f"Failed for question: {q}")

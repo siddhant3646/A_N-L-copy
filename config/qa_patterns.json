@@ -110,7 +110,7 @@
       ],
       "category": "location",
       "default": "Yes",
-      "priority": 18,
+      "priority": 20,
       "input_type_defaults": {
         "text": "Yes",
         "radio": "Yes",
@@ -140,11 +140,23 @@
         "is your current location chennai",
         "is your current location hyderabad",
         "is your current location pune",
-        "is your current location mumbai"
+        "is your current location mumbai",
+        "is your current location noida",
+        "is your current location noida?",
+        "is your current location delhi ncr",
+        "is your current location delhi ncr?",
+        "is your current location delhi",
+        "is your current location delhi?",
+        "is your current location gurgaon",
+        "is your current location gurgaon?",
+        "is your current location gurugram",
+        "is your current location gurugram?",
+        "is your current location kolkata",
+        "is your current location kolkata?"
       ],
       "category": "location",
       "default": "No",
-      "priority": 18,
+      "priority": 20,
       "input_type_defaults": {
         "text": "No",
         "radio": "No",
@@ -152,7 +164,8 @@
         "checkbox": "No",
         "textarea": "No, current location is Bengaluru.",
         "number": "0"
-      }
+      },
+      "note": "Location verification radios: any non-Bangalore city must answer No. Fix from qa_results.csv 2026-11-03: \"Is your current location Hyderabad?\" wrongly answered Yes."
     },
     "notice_period_in_months_exact": {
       "patterns": [
@@ -1052,11 +1065,13 @@
         "text": "Bengaluru",
         "select": "Bengaluru",
         "textarea": "Bengaluru",
-        "radio": "Bengaluru",
+        "radio": "I am NOT in Pune but can 100% relocate",
         "checkbox": "Bengaluru",
         "number": "0",
-        "select-location": "Bengaluru"
-      }
+        "select-location": "Bengaluru",
+        "select-aggressive": "I am NOT in Pune but can 100% relocate"
+      },
+      "note": "Fix from qa_results.csv 2026-11-02: Naukri chatbot radio picked \"I am already in Pune\"; candidate is in Bangalore and relocatable. Exact option-label text wins the radio matcher (99 score vs 85 heuristic for city labels)."
     },
     "location_preferred": {
       "patterns": [
@@ -1640,7 +1655,10 @@
         "textarea": "Yes",
         "number": "1"
       },
-      "priority": 6
+      "priority": 6,
+      "negative_patterns": [
+        "how many years"
+      ]
     },
     "team_management": {
       "patterns": [
@@ -1667,7 +1685,10 @@
         "textarea": "Yes, I have managed and mentored teams of 5-10 developers. My responsibilities included sprint planning, code reviews, 1:1 mentorship, hiring interviews, and ensuring timely delivery of features while maintaining code quality standards.",
         "number": "1"
       },
-      "priority": 7
+      "priority": 7,
+      "negative_patterns": [
+        "how many years"
+      ]
     },
     "project_examples_ai": {
       "patterns": [
@@ -8644,15 +8665,16 @@
       "category": "notice_period",
       "default": "__DYNAMIC_LWD__",
       "input_type_defaults": {
-        "radio": "01",
-        "checkbox": "15",
+        "radio": "__DYNAMIC_LWD__",
+        "checkbox": "Yes",
         "select": "__DYNAMIC_LWD__",
         "text": "__DYNAMIC_LWD__",
         "number": "__DYNAMIC_LWD_DDMMYYYY__",
         "textarea": "__DYNAMIC_LWD__",
         "date": "__DYNAMIC_LWD_ISO__"
       },
-      "priority": 4
+      "priority": 14,
+      "note": "Fix from qa_results.csv 2026-11-03: naukri chatbot checkbox (yes/no) answered \"no\" to LWD; must confirm Yes. Date text goes to text/select mappings."
     },
     "preference_281": {
       "patterns": [
@@ -17177,20 +17199,33 @@
         "product manager",
         "pm",
         "experience with product",
-        "years of experience with product"
+        "years of experience with product",
+        "how many years of product management experience",
+        "how many years of product management experience do you have",
+        "how many years of experience do you have in product management",
+        "how many years of experience in product management",
+        "how many years of pm experience",
+        "how many years of pm experience do you have"
       ],
       "category": "experience",
-      "default": "4.2 Years",
+      "default": "0",
       "priority": 8,
       "input_type_defaults": {
-        "text": "4.2 Years",
-        "number": "4.2",
-        "radio": "4.2 Years",
-        "select": "4.2 Years",
-        "checkbox": "Yes",
-        "textarea": "4.2 Years"
+        "text": "0",
+        "number": "0",
+        "radio": "0",
+        "select": "0",
+        "checkbox": "0",
+        "textarea": "0 - I have no product management experience; my 4.2 years are in backend/full-stack software engineering."
       },
-      "requires_exact_match": true
+      "requires_exact_match": true,
+      "negative_patterns": [
+        "years of experience without product",
+        "software engineer",
+        "sde",
+        "backend developer"
+      ],
+      "note": "Fix from qa_results.csv 2026-10-29: \"How many years of Product Management experience?\" wrongly selected 5-6 yrs bucket. Candidate is SDE-2, 0 years PM. requires_exact_match keeps short phrases safe; full-question variants added 2026-11-03 so the exact tier can fire."
     },
     "agile_experience": {
       "patterns": [
@@ -17231,7 +17266,10 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "how many years"
+      ]
     },
     "salary_flexible": {
       "patterns": [
@@ -239850,7 +239888,10 @@
         "textarea": "Yes, I have mentored junior developers, led project modules, and conducted code reviews. I have experience guiding team members on best practices and technical decisions.",
         "checkbox": "Yes",
         "number": "1"
-      }
+      },
+      "negative_patterns": [
+        "how many years"
+      ]
     },
     "passport_comprehensive": {
       "patterns": [
@@ -1314832,6 +1314873,122 @@
         "textarea": "Yes",
         "number": "1"
       }
+    },
+    "engineering_manager_experience_years": {
+      "patterns": [
+        "total years of experience as engineering manager",
+        "total years of experience as an engineering manager",
+        "years of experience as engineering manager",
+        "total years of experience as em",
+        "experience as engineering manager",
+        "engineering manager experience",
+        "years of experience as an engineering manager"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 20,
+      "negative_patterns": [
+        "software",
+        "backend",
+        "sde",
+        "developer",
+        "engineer at"
+      ],
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "radio": "0",
+        "select": "0",
+        "checkbox": "0",
+        "textarea": "0 - I am a hands-on Software Engineer 2, not an engineering manager."
+      },
+      "note": "Fix from qa_results.csv 2026-10-29: 'Total Years of Experience as Engineering Manager?' wrongly selected 6-8 yrs bucket. Candidate has no EM experience."
+    },
+    "formal_leadership_people_mgmt_years": {
+      "patterns": [
+        "how many years of formal engineering leadership or people management experience do you have",
+        "years of formal engineering leadership or people management experience",
+        "formal engineering leadership or people management experience",
+        "how many years of formal engineering leadership experience do you have",
+        "years of formal engineering leadership experience",
+        "how many years of formal leadership or people management experience",
+        "how many years of formal leadership experience",
+        "how many years of people management experience",
+        "how many years of leadership experience",
+        "formal leadership experience",
+        "years of experience with leadership"
+      ],
+      "category": "experience",
+      "default": "0",
+      "priority": 19,
+      "negative_patterns": [
+        "do you have formal",
+        "are you willing",
+        "outside of engineering"
+      ],
+      "input_type_defaults": {
+        "text": "0",
+        "number": "0",
+        "radio": "0",
+        "select": "0",
+        "checkbox": "0",
+        "textarea": "0 years of formal people-management experience. I have mentored junior developers and led project modules, but my role has been hands-on engineering (Software Engineer 2)."
+      },
+      "note": "Fix from qa_results.csv 2026-10-29: 'How many years of formal engineering leadership or people management experience?' wrongly selected 1-2 yrs bucket. 2026-11-03: added non-engineering/'how many years' phrasings so legacy leadership yes/no patterns cannot answer year-count questions."
+    },
+    "comfortable_with_max_ctc_below_ask": {
+      "patterns": [
+        "are you comfortable with a maximum ctc of",
+        "comfortable with a maximum ctc of",
+        "are you comfortable with the maximum ctc",
+        "comfortable with maximum ctc of",
+        "are you comfortable with a maximum salary of",
+        "comfortable with a maximum budget of",
+        "are you comfortable with the ctc mentioned",
+        "are you comfortable with the salary mentioned"
+      ],
+      "category": "salary",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "text": "No, my expected CTC is 30 LPA and I am not comfortable with a maximum below that.",
+        "textarea": "No, my expected CTC is 30 LPA. I am open to discussing the overall compensation structure, but not a maximum below my expectation.",
+        "number": "0"
+      },
+      "note": "Fix from qa_results.csv 2026-10-30: 'Are you comfortable with a maximum CTC of Rs 15 LPA?' wrongly answered Yes (candidate expects 30 LPA). Only safe while the stated max is below 30 LPA."
+    },
+    "days_left_in_last_working_day": {
+      "patterns": [
+        "how many days are left in your last working day",
+        "how many days left in your last working day",
+        "days are left in your last working day",
+        "how many days remaining in your last working day",
+        "days remaining in your last working day",
+        "how many days until your last working day",
+        "days left until your last working day",
+        "days left until your lwd"
+      ],
+      "category": "notice_period",
+      "default": "15",
+      "numeric_default": "15",
+      "priority": 21,
+      "negative_patterns": [
+        "what is your last working day",
+        "when is your last working day",
+        "date of your last working day"
+      ],
+      "input_type_defaults": {
+        "text": "15",
+        "number": "15",
+        "radio": "15",
+        "select": "15",
+        "checkbox": "Yes",
+        "textarea": "15 days"
+      },
+      "note": "Fix from qa_results.csv 2026-10-29/11-03: 'How many days are left in your last working day?' answered with a DATE (13/18 Nov 2026); field wants a day count. Radio keeps the numeric '15' — the quantity guard preserves it on choice controls; a date radio form (LWD buckets) is notice_period_4843's job. CSV compound variant: day-count phrasing must beat LWD-date class patterns (last_working_day prio 10; notice_period_days negatives out)."
     }
   },
   "categories": {

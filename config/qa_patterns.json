@@ -1082,12 +1082,16 @@
         "location preference",
         "work location",
         "preferred city",
-        "preferred location for work"
+        "preferred location for work",
+        "select your preferred work location",
+        "choose the location where you would prefer to work",
+        "select preferred work location",
+        "preferred work location"
       ],
       "category": "location",
       "default": "Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida",
       "input_type_defaults": {
-        "radio": "Bangalore",
+        "radio": "Bengaluru",
         "checkbox": "Yes",
         "select": "Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida",
         "text": "Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida",

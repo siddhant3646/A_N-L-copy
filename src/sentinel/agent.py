@@ -2326,7 +2326,10 @@ class SentinelAgent:
         
         # Referral questions - "referred by", "encouraged to apply"
         referral_keywords = ['referred', 'referral', 'encouraged to apply', 'employee referral', 'referred by']
-        is_referral_question = any(kw in question_lower for kw in referral_keywords)
+        is_referral_question = (
+            any(re.search(r'\b' + re.escape(kw) + r'\b', question_lower) for kw in referral_keywords)
+            and not any(w in question_lower for w in ('preferred', 'preference'))
+        )
         
         # Job change reason questions
         job_change_keywords = ['reason for job change', 'reasons for job change', 'reasons for your job change', 'why are you changing', 'why job change', 'reason for leaving', 'reason for change']
@@ -16351,8 +16354,25 @@ class SentinelAgent:
                             if (isLabelYes) score = 95;
                             else if (isLabelNo) score = 0;
                         }
-                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (lowerLabel.includes(ans) || ans.includes(lowerLabel) || (radio.id && radio.id.toLowerCase() === ans) || (radio.value && radio.value.toLowerCase() === ans))) {
-                            score = 100;
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (
+                            lowerLabel.includes(ans) || ans.includes(lowerLabel) ||
+                            (radio.id && radio.id.toLowerCase() === ans) ||
+                            (radio.value && radio.value.toLowerCase() === ans) ||
+                            ((lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (ans.includes('bengaluru') || ans.includes('bangalore')))
+                        )) {
+                            const isBlr = (lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (ans.includes('bengaluru') || ans.includes('bangalore'));
+                            score = isBlr ? 120 : 100;
+                        }
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && ans.includes(',')) {
+                            const parts = ans.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                            for (let pi = 0; pi < parts.length; pi++) {
+                                const p = parts[pi];
+                                const isBlrPart = (lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (p.includes('bengaluru') || p.includes('bangalore'));
+                                if (isBlrPart || lowerLabel.includes(p) || p.includes(lowerLabel)) {
+                                    score = isBlrPart ? 120 : Math.max(70, 100 - pi * 3);
+                                    break;
+                                }
+                            }
                         }
                         else if (effectiveExpVal > 0) {
                             const isNoticeContext = /notice|np|join|soon|start|how quickly|when can you|availability/i.test(ans) || (answerNum === 15);
@@ -16609,8 +16629,23 @@ class SentinelAgent:
                             if (isLabelYes) score = 95;
                             else if (isLabelNo) score = 0;
                         }
-                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (lowerLabel.includes(ans) || ans.includes(lowerLabel))) {
-                            score = 100;
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && (
+                            lowerLabel.includes(ans) || ans.includes(lowerLabel) ||
+                            ((lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (ans.includes('bengaluru') || ans.includes('bangalore')))
+                        )) {
+                            const isBlr = (lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (ans.includes('bengaluru') || ans.includes('bangalore'));
+                            score = isBlr ? 120 : 100;
+                        }
+                        else if (!isComparativeOrRange && !isAnsYes && !isAnsNo && ans.includes(',')) {
+                            const parts = ans.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                            for (let pi = 0; pi < parts.length; pi++) {
+                                const p = parts[pi];
+                                const isBlrPart = (lowerLabel.includes('bengaluru') || lowerLabel.includes('bangalore')) && (p.includes('bengaluru') || p.includes('bangalore'));
+                                if (isBlrPart || lowerLabel.includes(p) || p.includes(lowerLabel)) {
+                                    score = isBlrPart ? 120 : Math.max(70, 100 - pi * 3);
+                                    break;
+                                }
+                            }
                         }
                         else if (answerNum > 0) {
                             const isNoticeContext = /notice|np|join|soon|start|how quickly|when can you|availability/i.test(ans) || (answerNum === 15);
@@ -16839,6 +16874,41 @@ class SentinelAgent:
                     }
                     
 return resolveDynamic(bestMatch);
+                };
+
+                // Helper: Find matching radio button for location preference questions
+                const findLocationRadioMatch = (radios) => {
+                    if (!radios || radios.length === 0) return null;
+                    const getLabel = (r) => {
+                        let lbl = (typeof getInputLabelText === 'function') ? getInputLabelText(r) : '';
+                        if (!lbl) {
+                            const textEl = r.querySelector ? r.querySelector('p, span, label') : null;
+                            lbl = textEl?.innerText || (r.getAttribute ? r.getAttribute('aria-label') : '') || r.value || r.innerText || r.textContent || '';
+                        }
+                        return (lbl || '').toLowerCase().trim();
+                    };
+
+                    // Priority 1: Bengaluru / Bangalore (candidate primary base, exclude negative choices)
+                    let match = radios.find(r => {
+                        const lbl = getLabel(r);
+                        return /(?:bengaluru|bangalore)/i.test(lbl) && !/(?:outside|not\\s+in|except)/i.test(lbl);
+                    });
+                    if (match) return match;
+
+                    // Priority 2: Other preferred cities (candidate is 100% open to relocation)
+                    const cityPriorities = [
+                        /(?:delhi|ncr|gurgaon|gurugram|noida)/i,
+                        /hyderabad/i,
+                        /pune/i,
+                        /mumbai/i,
+                        /chennai/i
+                    ];
+                    for (const cityRegex of cityPriorities) {
+                        match = radios.find(r => cityRegex.test(getLabel(r)));
+                        if (match) return match;
+                    }
+
+                    return null;
                 };
                 
                 // Helper: Check if answer is affirmative
@@ -20132,6 +20202,9 @@ return resolveDynamic(bestMatch);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
+                                    if (!bestRadio && (/(?:preferred\\s*(?:work\\s*)?location|work\\s*location|base\\s*location|office\\s*location|job\\s*location|workplace|preferred\\s*city|choose\\s+the\\s+location|select.*location)/i.test(legend || '') || /(?:bangalore|bengaluru|hyderabad|pune|delhi|mumbai)/i.test(answer || ''))) {
+                                        bestRadio = findLocationRadioMatch(radios);
+                                    }
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking radio:', legend, 'with:', bestRadio.id);
                                         clickInput(bestRadio);
@@ -20221,7 +20294,7 @@ return resolveDynamic(bestMatch);
                                                 continue;
                                             }
                                         }
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['bengaluru', 'bangalore', 'full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
                                             safeRadio = radios.find(r => {
@@ -20356,6 +20429,9 @@ return resolveDynamic(bestMatch);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, customRadios);
                                     }
+                                    if (!bestRadio && (/(?:preferred\\s*(?:work\\s*)?location|work\\s*location|base\\s*location|office\\s*location|job\\s*location|workplace|preferred\\s*city|choose\\s+the\\s+location|select.*location)/i.test(questionText || '') || /(?:bangalore|bengaluru|hyderabad|pune|delhi|mumbai)/i.test(answer || ''))) {
+                                        bestRadio = findLocationRadioMatch(customRadios);
+                                    }
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking custom radio:', questionText.substring(0, 50), '| match:', bestRadio.innerText?.substring(0, 30));
                                         clickCustomRadio(bestRadio);
@@ -20437,7 +20513,7 @@ return resolveDynamic(bestMatch);
                                                 continue;
                                             }
                                         }
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['bengaluru', 'bangalore', 'full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeCustom = null;
                                         for (const kw of safeKeywords) {
                                             safeCustom = customRadios.find(r => {
@@ -20574,6 +20650,9 @@ return resolveDynamic(bestMatch);
                                     if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                         bestRadio = findSalaryRangeMatch(answer, radios);
                                     }
+                                    if (!bestRadio && (/(?:preferred\\s*(?:work\\s*)?location|work\\s*location|base\\s*location|office\\s*location|job\\s*location|workplace|preferred\\s*city|choose\\s+the\\s+location|select.*location)/i.test(questionText || '') || /(?:bangalore|bengaluru|hyderabad|pune|delhi|mumbai)/i.test(answer || ''))) {
+                                        bestRadio = findLocationRadioMatch(radios);
+                                    }
                                     if (bestRadio) {
                                         window.__SENTINEL_DEBUG__&&console.log('Clicking standalone radio:', questionText.substring(0, 50), 'with:', bestRadio.value || bestRadio.id);
                                         clickInput(bestRadio);
@@ -20662,7 +20741,7 @@ return resolveDynamic(bestMatch);
                                                 continue;
                                             }
                                         }
-                                        const safeKeywords = ['full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
+                                        const safeKeywords = ['bengaluru', 'bangalore', 'full-time', 'full time', 'permanent', 'immediate', '15 days', 'less than a month', 'less than 1 month', '< 1 month', 'serving notice', 'serving', 'flexible', 'day', 'yes', 'willing', 'authorized', 'hybrid', 'remote', 'bachelor', 'b.tech', 'regular'];
                                         let safeRadio = null;
                                         for (const kw of safeKeywords) {
                                             safeRadio = radios.find(r => {
@@ -25183,6 +25262,9 @@ return resolveDynamic(bestMatch);
                                 if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(legend) && !/payroll/i.test(legend)) {
                                     bestRadio = findSalaryRangeMatch(answer, radios);
                                 }
+                                if (!bestRadio && (/(?:preferred\\s*(?:work\\s*)?location|work\\s*location|base\\s*location|office\\s*location|job\\s*location|workplace|preferred\\s*city|choose\\s+the\\s+location|select.*location)/i.test(legend || '') || /(?:bangalore|bengaluru|hyderabad|pune|delhi|mumbai)/i.test(answer || ''))) {
+                                    bestRadio = findLocationRadioMatch(radios);
+                                }
                                 if (bestRadio) {
                                     clickInput(bestRadio);
                                     window.__SENTINEL_DEBUG__&&console.log('GENERIC: Clicked fieldset radio', legend.substring(0, 40), ':', answer);
@@ -25291,6 +25373,9 @@ return resolveDynamic(bestMatch);
                                 let bestRadio = findBestRadioMatch(answer, radios);
                                 if (!bestRadio && /(?:salary|ctc|\bpay\b|\blpa\b|\blacs\b|compensation|annual)/i.test(questionText) && !/payroll/i.test(questionText)) {
                                     bestRadio = findSalaryRangeMatch(answer, radios);
+                                }
+                                if (!bestRadio && (/(?:preferred\\s*(?:work\\s*)?location|work\\s*location|base\\s*location|office\\s*location|job\\s*location|workplace|preferred\\s*city|choose\\s+the\\s+location|select.*location)/i.test(questionText || '') || /(?:bangalore|bengaluru|hyderabad|pune|delhi|mumbai)/i.test(answer || ''))) {
+                                    bestRadio = findLocationRadioMatch(radios);
                                 }
                                 if (bestRadio) {
                                     clickInput(bestRadio);

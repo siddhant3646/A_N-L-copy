@@ -892,15 +892,18 @@ class SentinelAgent:
 
         if any(phrase in q for phrase in (
             'services used', 'services you have used', 'technologies used',
-            'and services',
+            'technologies have you used', 'technologies you have used',
+            'and services', 'mention strong experience skills',
+            'which database experience', 'what database experience',
+            'mention if it\'s sql', 'database experience do you have',
         )):
             return False
 
-        # List questions ("Which AWS services...", "What tools...") ask for
+        # List questions ("Which AWS services...", "What tools...", "Which database...") ask for
         # names, not a number of years, even though they contain "experience".
         if re.search(
-            r'\b(?:which|what)\b[^?]{0,80}\b(?:services|technologies|tools|skills|'
-            r'frameworks|databases|platforms|languages|products|systems)\b',
+            r'\b(?:which|what)\b[^?]{0,80}\b(?:services?|technolog(?:y|ies)|tools?|skills?|'
+            r'frameworks?|databases?|platforms?|languages?|products?|systems?)\b',
             q,
         ):
             return False
@@ -938,7 +941,7 @@ class SentinelAgent:
 
         # Yes/No questions without an explicit quantity ask are not years questions.
         is_yes_no_shape = bool(re.match(
-            r'^(do|does|have|has|are|is|can|will|would|did|should)\b', q.strip()
+            r'^(do|dou|does|have|has|are|is|can|will|would|did|should)\b', q.strip()
         ))
         if is_yes_no_shape and not re.search(
             r'\b(?:how\s+many|how\s+much|number\s+of|years?|yrs?|yoe|months?)\b', q
@@ -946,7 +949,7 @@ class SentinelAgent:
             return False
 
         # Descriptive/listing questions that merely mention experience.
-        if re.search(r'\b(?:describe|explain|briefly|elaborate|list)\b', q) and not re.search(
+        if re.search(r'\b(?:describe|explain|briefly|elaborate|list|mention\s+strong|mention\s+skills?)\b', q) and not re.search(
             r'\b(?:how\s+many|years?|yrs?|yoe|months?)\b', q
         ):
             return False
@@ -1019,6 +1022,12 @@ class SentinelAgent:
         # experience gates; they are answered by the legal-age intercept.
         if re.search(r'\b(?:years?|yrs?)\s+(?:old|of\s+age)\b|\blegal\s+age\b|\b18\+\s*(?:years?\s*)?(?:old|of\s+age)\b', q):
             return None
+
+        # Value inquiries (e.g. "How many years of experience do you have? (Minimum 6 years required)")
+        # are asking for the numeric/text years value, NOT a Yes/No gate. Defer to experience patterns.
+        if re.search(r'\b(?:how\s+many|how\s+much|what\s+is\s+your|whats\s+your|what\'s\s+your|number\s+of\s+years|enter\s+your|mention\s+your|specify\s+your)\b', q) and not re.search(r'\b(?:eligible|qualify|agree|acceptable|confirm)\b', q):
+            return None
+
         requirements = self._extract_experience_requirements(q)
         if not requirements:
             return None
@@ -1224,6 +1233,24 @@ class SentinelAgent:
             'confidentiality agreement' in question_lower and any(r in question_lower for r in ['restrict', 'bound', 'covenant', 'employer', 'perform'])
         ):
             return 'No', 0.99
+
+        # Full name inquiries (prevent overlap with referral/other name fields)
+        if re.match(r'^(?:please\s+)?(?:enter\s+)?(?:your\s+)?(?:full\s+)?name(?:\.|\?)?$', question_lower) or question_lower in ('please enter your full name.', 'please enter your full name', 'full name', 'candidate name'):
+            return 'Siddhant Singh', 0.99
+
+        # Expected Total Compensation (ETC)
+        if re.match(r'^(?:what\s+is\s+your\s+)?etc\s*\??$', question_lower) or question_lower.strip() in ('etc ?', 'etc?', 'etc'):
+            if self._current_platform in ('linkedin', 'linkedin_form', 'naukri'):
+                return '3000000', 0.99
+            return '30 LPA', 0.99
+
+        # Offline Women Networking Session (Candidate is male)
+        if re.search(r'\b(?:offline\s*women|women\s*(?:in\s*tech\s*)?networking|women\s*only)\b', question_lower):
+            return 'No', 0.99
+
+        # Onsite working in Hyderabad vs relocation (Candidate is Bangalore based, willing to relocate)
+        if 'working onsite in hyderabad' in question_lower or 'work onsite in hyderabad' in question_lower:
+            return 'No, I can relocate to Hyderabad', 0.99
 
         # Bring Your Own Device (BYOD)
         if 'bring your own device' in question_lower or 'byod' in question_lower:
@@ -2109,6 +2136,12 @@ class SentinelAgent:
             if not any(sw in question_lower for sw in ['support', 'o-1', 'tn']) and ('sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower):
                 return 'Not applicable', 0.98
 
+        # Proof of identity and eligibility without sponsorship (Indian citizen in India)
+        if ('without sponsorship' in question_lower or 'without any sponsorship' in question_lower) and any(
+            w in question_lower for w in ('proof', 'eligibility', 'eligible', 'identity', 'authorized', 'work in india', 'legally')
+        ):
+            return 'Yes', 0.99
+
         if (any(kw in question_lower for kw in [
             'authorized to work', 'legally permitted to work', 'legally authorized',
             'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
@@ -2927,9 +2960,13 @@ class SentinelAgent:
         # since "join" is in notice_keywords and would otherwise return NP days
         if is_joining_availability:
             return 'Can join within 15 days', 0.95
-        
+
+        # Days left in last working day inquiry (count of days, NOT date)
+        if re.search(r'\b(?:how\s+many\s+)?days\s+(?:left|remaining).*(?:last\s*working\s*day|notice\s*period)\b', question_lower):
+            return '15', 0.99
+
         # LWD (Last Working Day) date question - MUST be checked BEFORE notice question!
-        if is_lwd_question or any(kw in question_lower for kw in ['last working day', 'last working date', 'official last working', 'lwd']):
+        if (is_lwd_question or any(kw in question_lower for kw in ['last working day', 'last working date', 'official last working', 'lwd'])) and not any(kw in question_lower for kw in ['how many days', 'days left', 'days remaining', 'number of days']):
             lwd_date = datetime.now() + timedelta(days=15)
             lwd_formatted = lwd_date.strftime('%d %B %Y')
             lwd_short = lwd_date.strftime('%d %b %Y')
@@ -2942,6 +2979,11 @@ class SentinelAgent:
                 return (datetime.now() + timedelta(days=15)).strftime('%d%m%Y'), 0.99
             if any(w in question_lower for w in ['option (6)', 'option 6', 'select option (6)']):
                 return '(6) --Serving Notice Period', 0.99
+
+            # Can you join in X days Yes/No question
+            is_can_join_yes_no = bool(re.search(r'\b(?:can\s+you|are\s+you\s+(?:able\s+to|available\s+to|open\s+to)|will\s+you\s+be\s+able\s+to)\s+join\b', question_lower))
+            if is_can_join_yes_no:
+                return 'Yes', 0.98
 
             # Notice period in months check
             if any(m in question_lower for m in ['in months', 'in month', '(in months)', '(in month)', 'months', 'month']) and not any(d in question_lower for d in ['days', 'day']):
@@ -6565,7 +6607,7 @@ class SentinelAgent:
                         self._instahyre_apply_count = 0
                     self._instahyre_apply_count += 1
                     self.metrics['applications_submitted'] = self._instahyre_apply_count
-                    target = 20 if self._is_intersession_task() else 5
+                    target = int(os.environ.get("INSTAHYRE_MAX_APPLICATIONS", 20 if self._is_intersession_task() else 5))
                     print(f"✅ Instahyre Application {self._instahyre_apply_count}/{target} submitted!")
                     
                     if self._instahyre_apply_count >= target:
@@ -6573,9 +6615,11 @@ class SentinelAgent:
                         self._instahyre_apply_count = 0  # Reset for next cycle
                         self._instahyre_consecutive_scrolls = 0
                         self._instahyre_wait_count = 0
+                        self._instahyre_consecutive_skips = 0
                         self.state.task_complete = True
                         break
                     
+                    self._instahyre_consecutive_skips = 0
                     await asyncio.sleep(random.uniform(2, 4))  # Wait for modal to close
                     continue  # Continue to next application
                 
@@ -6583,6 +6627,7 @@ class SentinelAgent:
                 if 'INSTAHYRE_VIEW_CLICKED' in result:
                     self._instahyre_wait_count = 0
                     self._instahyre_consecutive_scrolls = 0
+                    self._instahyre_consecutive_skips = 0
                     self._instahyre_consecutive_views = getattr(self, '_instahyre_consecutive_views', 0) + 1
                     print(f"👁️ Viewing job details, looking for Apply button... (attempt {self._instahyre_consecutive_views})")
                     if self._instahyre_consecutive_views >= 3:
@@ -6600,6 +6645,7 @@ class SentinelAgent:
                 if 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED' in result:
                     self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
+                    self._instahyre_consecutive_skips = 0
                     print("   ⏭️ Instahyre: Job has 'View active jobs' instead of Apply — skipping and closing modal...")
                     try:
                         await self._page.keyboard.press('Escape')
@@ -6608,10 +6654,47 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(1.5, 2.5))
                     continue
 
+                # Instahyre: External redirect / ATS detected (arrow icon / "via company site" / "not available for external jobs")
+                if 'INSTAHYRE_EXTERNAL_APPLY_SKIPPED' in result:
+                    self._instahyre_wait_count = 0
+                    self._instahyre_consecutive_views = 0
+                    self._instahyre_consecutive_skips = getattr(self, '_instahyre_consecutive_skips', 0) + 1
+                    print("   ⏭️ Instahyre: External redirect / ATS detected (via company site / external arrow) — skipping and closing modal...")
+                    try:
+                        await self._page.keyboard.press('Escape')
+                    except Exception:
+                        pass
+                    if self._instahyre_consecutive_skips >= 2:
+                        print("   ⚠️ Instahyre: Modal still open after skip — closing modal via JS...")
+                        try:
+                            await self._page.evaluate("""() => {
+                                const closeBtn = document.querySelector('.application-modal-close, [ng-click*="closeApplyModal"], [ng-click*="closeApplyExternalModal"], .modal.in .close, .modal.show .close, .modal .close, i.fa-close');
+                                if (closeBtn) closeBtn.click();
+                                if (window.angular) {
+                                    const m = document.querySelector('.modal.in, .modal.show, .application-modal, [class*="application-modal"]');
+                                    if (m) {
+                                        const s = angular.element(m).scope();
+                                        if (s) {
+                                            if (typeof s.closeApplyModal === 'function') s.closeApplyModal();
+                                            else if (typeof s.closeApplyExternalModal === 'function') s.closeApplyExternalModal();
+                                            else if (typeof s.$dismiss === 'function') s.$dismiss();
+                                        }
+                                    }
+                                }
+                                if (window.$) $('.modal').modal('hide');
+                                window.scrollBy(0, 400);
+                            }""")
+                        except Exception:
+                            pass
+                        self._instahyre_consecutive_skips = 0
+                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                    continue
+
                 # Instahyre: Modal closed (post-apply or blocked modal)
                 if 'INSTAHYRE_MODAL_CLOSED' in result:
                     self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
+                    self._instahyre_consecutive_skips = 0
                     print("   📜 Instahyre: Modal closed, continuing...")
                     try:
                         await self._page.keyboard.press('Escape')
@@ -6625,6 +6708,7 @@ class SentinelAgent:
                     self._instahyre_wait_count = 0
                     self._instahyre_consecutive_views = 0
                     self._instahyre_consecutive_scrolls = 0
+                    self._instahyre_consecutive_skips = 0
                     print("✅ Application confirmed, looking for next job...")
                     await asyncio.sleep(random.uniform(1, 2))
                     continue
@@ -9593,6 +9677,9 @@ class SentinelAgent:
                     print(f"   ⚠️ Hirist search URL navigation failed ({search_url}): {e}")
                     continue
 
+            # Apply experience filter (4 - 6 yrs) before scanning for jobs
+            await self._hirist_apply_experience_filter(page)
+
             no_jobs_shown = await self._hirist_has_no_jobs(page)
             jobs = await self._hirist_collect_jobs(page)
 
@@ -9708,6 +9795,182 @@ class SentinelAgent:
                     await asyncio.sleep(random.uniform(0.3, 0.8))
             except Exception:
                 continue
+
+    async def _hirist_apply_experience_filter(
+        self,
+        page,
+        target_val: str = "4",
+        target_label: str = "4 - 6 yrs"
+    ) -> bool:
+        """Apply experience level filter on Hirist search/category/feed pages.
+
+        Finds the MUI combobox '#lotus-select-experience', clicks it to open the
+        dropdown menu, selects the option matching target_val (default '4' for
+        '4 - 6 yrs'), and clicks the filter row's 'Apply' button to refresh the
+        job listings.
+        """
+        if not page or not hasattr(page, 'evaluate'):
+            return False
+
+        try:
+            filter_status = await page.evaluate("""() => {
+                const el = document.querySelector('#lotus-select-experience') ||
+                           document.querySelector('[data-name="experience"] [role="combobox"]');
+                if (!el) return { found: false };
+                const text = (el.innerText || el.textContent || '').trim();
+                const isAlreadySet = text.includes('4 - 6') || text.includes('4-6');
+                return {
+                    found: true,
+                    text: text,
+                    isAlreadySet: isAlreadySet
+                };
+            }""")
+            if not isinstance(filter_status, dict) or not filter_status.get('found'):
+                return False
+
+            if filter_status.get('isAlreadySet'):
+                print(f"   ℹ️ Hirist experience filter already set to {target_label}.")
+                return True
+
+            print(f"🎯 Applying Hirist experience filter: selecting {target_label}...")
+
+            # 1. Click experience combobox to open the MUI menu
+            clicked_combobox = False
+            if hasattr(page, 'locator'):
+                try:
+                    exp_select = page.locator('#lotus-select-experience, [data-name="experience"] [role="combobox"]').first
+                    if await exp_select.count() > 0:
+                        await exp_select.scroll_into_view_if_needed()
+                        await exp_select.click(timeout=4000)
+                        clicked_combobox = True
+                except Exception:
+                    pass
+
+            if not clicked_combobox:
+                clicked_combobox = await page.evaluate("""() => {
+                    const el = document.querySelector('#lotus-select-experience') ||
+                               document.querySelector('[data-name="experience"] [role="combobox"]');
+                    if (el) {
+                        el.scrollIntoView({ block: 'center' });
+                        el.click();
+                        return true;
+                    }
+                    return false;
+                }""")
+
+            if not clicked_combobox:
+                print("   ⚠️ Could not click Hirist experience filter dropdown.")
+                return False
+
+            await asyncio.sleep(random.uniform(0.6, 1.2))
+
+            # 2. Select option: data-value="4" or text "4 - 6 yrs"
+            selected_option = False
+            if hasattr(page, 'locator'):
+                try:
+                    opt = page.locator(
+                        f'li[role="option"][data-value="{target_val}"], '
+                        'li[role="option"]:has-text("4 - 6"), '
+                        'li[role="option"]:has-text("4-6")'
+                    ).first
+                    if await opt.count() > 0 and await opt.is_visible():
+                        await opt.click(timeout=4000)
+                        selected_option = True
+                except Exception:
+                    pass
+
+            if not selected_option:
+                selected_option = await page.evaluate("""(val) => {
+                    const opt = document.querySelector(`li[role="option"][data-value="${val}"]`) ||
+                                Array.from(document.querySelectorAll('li[role="option"]')).find(el => {
+                                    const t = (el.innerText || el.textContent || '').trim();
+                                    return t.includes('4 - 6') || t.includes('4-6');
+                                });
+                    if (opt) {
+                        opt.click();
+                        return true;
+                    }
+                    return false;
+                }""", target_val)
+
+            if not selected_option:
+                print(f"   ⚠️ Could not select '{target_label}' option in Hirist dropdown.")
+                try:
+                    if hasattr(page, 'keyboard'):
+                        await page.keyboard.press("Escape")
+                except Exception:
+                    pass
+                return False
+
+            await asyncio.sleep(random.uniform(0.6, 1.2))
+
+            # 3. Click the filter "Apply" button in the filter container
+            clicked_apply = False
+            if hasattr(page, 'locator'):
+                try:
+                    apply_btn = page.locator(
+                        '#lotus-select-experience >> xpath=ancestor::*[contains(@class, "MuiGrid-container")]//button[.//text()[contains(translate(., "APPLY", "apply"), "apply")]]'
+                    ).first
+                    if await apply_btn.count() > 0 and await apply_btn.is_visible():
+                        await apply_btn.click(timeout=3000)
+                        clicked_apply = True
+                except Exception:
+                    pass
+
+            if not clicked_apply:
+                clicked_apply = await page.evaluate("""() => {
+                    const exp = document.querySelector('#lotus-select-experience') ||
+                                document.querySelector('[data-name="experience"]');
+                    if (exp) {
+                        let parent = exp;
+                        for (let i = 0; i < 6; i++) {
+                            if (!parent) break;
+                            const btn = Array.from(parent.querySelectorAll('button, [role="button"]')).find(b =>
+                                (b.innerText || b.textContent || '').trim().toLowerCase() === 'apply'
+                            );
+                            if (btn) {
+                                btn.click();
+                                return true;
+                            }
+                            parent = parent.parentElement;
+                        }
+                    }
+                    const btns = Array.from(document.querySelectorAll('button, [role="button"]')).filter(b => {
+                        const txt = (b.innerText || b.textContent || '').trim().toLowerCase();
+                        if (txt !== 'apply') return false;
+                        if (b.closest('a[href*="/j/"]') || b.closest('[class*="card"]')) return false;
+                        const rect = b.getBoundingClientRect();
+                        return rect.top >= 0 && rect.top < 500;
+                    });
+                    if (btns[0]) {
+                        btns[0].click();
+                        return true;
+                    }
+                    return false;
+                }""")
+
+            if clicked_apply:
+                print("   🎯 Clicked Hirist filter Apply button. Waiting for listings to refresh...")
+                await asyncio.sleep(random.uniform(2.5, 3.5))
+                await self._hirist_dismiss_dialogs(page)
+            else:
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+
+            # Verify the filter is now active
+            verify_text = str(await page.evaluate("""() => {
+                const el = document.querySelector('#lotus-select-experience') ||
+                           document.querySelector('[data-name="experience"] [role="combobox"]');
+                return el ? (el.innerText || el.textContent || '').trim() : '';
+            }""") or '')
+            if '4 - 6' in verify_text or '4-6' in verify_text or 'minexp=4' in str(getattr(page, 'url', '') or ''):
+                print(f"   ✅ Hirist experience filter successfully set to '{verify_text or target_label}'.")
+                return True
+            else:
+                print(f"   ⚠️ Experience filter verification status: '{verify_text}'.")
+                return True
+        except Exception as e:
+            print(f"   ⚠️ Error setting Hirist experience filter: {e}")
+            return False
 
     def _is_hirist_job_suitable(self, title: Any, exp_text: str = "", card_text: str = "") -> Tuple[bool, str]:
         """Check if a Hirist job is suitable for candidate (SDE-2 with 4.2 years experience).
@@ -15466,8 +15729,8 @@ class SentinelAgent:
                             reqs.push({kind: 'max', lo: 0, hi: parseFloat(m[1])});
                         }
                         if (!reqs.length) return null;
-                        const asksQuantity = /^(?:how\\s+many|how\\s+much|what\\s+is\\s+your|number\\s+of\\s+years|total\\s+years)/.test(qLower.trim());
-                        if (asksQuantity && !/(?:candidates?\\s+with|we\\s+are\\s+looking|only|required|must\\s+have)/.test(qLower)) return null;
+                        const asksQuantity = /^(?:how\\s+many|how\\s+much|what\\s+is\\s+your|whats\\s+your|what's\\s+your|number\\s+of\\s+years|total\\s+years|enter\\s+your|mention\\s+your|specify\\s+your)/.test(qLower.trim());
+                        if (asksQuantity && !/(?:eligible|qualify|agree|acceptable|confirm)/.test(qLower)) return null;
                         const gateContext = /(?:do\\s+you|have\\s+you|are\\s+you|can\\s+you|will\\s+you|you\\s+have|you\\s+possess|we\\s+are\\s+looking|candidates?\\s+with|looking\\s+for|required|requirement|only|eligible|qualify)/.test(qLower) || qLower.trim().endsWith('?');
                         const hasRange = reqs.some(r => r.kind === 'range');
                         if (!gateContext && !(hasRange && /experience/.test(qLower))) return null;
@@ -15510,6 +15773,16 @@ class SentinelAgent:
                     const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)|relatives?\\s*in\\s*the\\s*company/i.test(qLower);
                     const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|non\\s*compete|confidentiality\\s*agreements?.*restrict|bound\\s*by.*(?:non-compete|noncompete|agreements?)/i.test(qLower);
                     if (isConflictQ || isRestrictiveQ) return 'No';
+
+                    // Fast-path intercepts for audited questions
+                    if (/^(?:please\\s+)?(?:enter\\s+)?(?:your\\s+)?(?:full\\s+)?name(?:\\.|\\?)?$/i.test(cleanQ) || /^full\\s+name$/i.test(cleanQ) || /^(?:candidate\\s+)?(?:full\\s+)?name$/i.test(cleanQ)) return 'Siddhant Singh';
+                    if (/^etc\\s*\\??$/i.test(cleanQ) || /^expected\\s+total\\s+compensation(?:\\s*\\(etc\\))?\\??$/i.test(cleanQ)) {
+                        return (window.location.hostname.includes('linkedin') || window.location.hostname.includes('naukri')) ? '3000000' : '30 LPA';
+                    }
+                    if (/offline\\s*women|women\\s*(?:in\\s*tech\\s*)?networking|women\\s*only/i.test(qLower)) return 'NO';
+                    if (/working\\s*onsite\\s*in\\s*hyderabad/i.test(qLower)) return 'No, I can relocate to Hyderabad';
+                    if (/^(?:can\\s+you|are\\s+you\\s+(?:able\\s+to|available\\s+to|open\\s+to)|will\\s+you\\s+be\\s+able\\s+to)\\s+join/i.test(qLower)) return 'Yes';
+                    if (/(?:how\\s+many\\s+)?days\\s+(?:left|remaining).*(?:last\\s*working\\s*day|notice\\s*period)/i.test(qLower)) return '15';
 
                     // Mobile / Phone number intercept
                     if (/(?:mobile\\s*phone|phone\\s*number|mobile\\s*number|contact\\s*number|cell\\s*phone|\\bphone\\b|\\bmobile\\b)/i.test(qLower) &&
@@ -16809,7 +17082,7 @@ class SentinelAgent:
                     if (!element) return;
                     const parentContainer = element.closest('[role="radiogroup"], [data-test-form-builder-radio-button-group], fieldset, .fb-dash-form-element') || element.parentElement;
                     if (parentContainer) {
-                        const siblingRadios = parentContainer.querySelectorAll('[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]');
+                        const siblingRadios = parentContainer.querySelectorAll('[role="radio"], label[data-test-radio-button], div[data-test-radio-button], [data-test-form-builder-radio-button], button[role="radio"]');
                         siblingRadios.forEach(sib => {
                             if (sib !== element) {
                                 sib.setAttribute('aria-checked', 'false');
@@ -16921,9 +17194,13 @@ return resolveDynamic(bestMatch);
                     if (!text) return false;
                     const t = text.replace(/[*?]/g, '').trim().toLowerCase();
                     
-                    // Technical skill, tool, framework, AI workflow, PF account, time zone, consent/privacy agreement, or joining date questions must NOT default to No
-                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad|time\\s*zone|timezone|us\\s*time|est\\s*hours|pst\\s*hours|cst\\s*hours|able\\s*to\\s*work|willing\\s*to\\s*work|overlap|agree|consent|privacy|personal\\s*data|data\\s*process|terms|condition|policy|authorization|sms|updates|notice|text\\s*message/i.test(t);
+                    // Technical skill, tool, framework, AI workflow, PF account, time zone, consent/privacy agreement, joining date, or candidate preference/location questions must NOT default to No
+                    const isPositiveIntent = /claude|copilot|chatgpt|cursor|ai agent|workflow|scaffolding|docker|kubernetes|aws|python|java|react|kafka|redis|sql|spring|devops|git|microservices|pf account|active pf|provident|join on or before|join before|join by|c#|csharp|c\\+\\+|\\.net|dotnet|azure|cloud|shift|relocat|offshore|hyderabad|time\\s*zone|timezone|us\\s*time|est\\s*hours|pst\\s*hours|cst\\s*hours|able\\s*to\\s*work|willing\\s*to\\s*work|overlap|agree|consent|privacy|personal\\s*data|data\\s*process|terms|condition|policy|authorization|sms|updates|notice|text\\s*message|preferred|preference|location|work\\s*location|base\\s*location|office\\s*location|city/i.test(t);
                     if (isPositiveIntent) return false;
+                    
+                    // Referral questions - whole-word check guarded against preference collision ("preferred" contains "referred")
+                    const isReferral = /\\b(referred|referral)\\b/i.test(t) && !/preferred|preference/i.test(t);
+                    if (isReferral) return true;
                     
                     const negativePatterns = [
                         'worked with us', 'work with us', 'work for us', 'worked for us',
@@ -16944,7 +17221,7 @@ return resolveDynamic(bestMatch);
                         'personal relationship', 'personal relationships',
                         'suppliers', 'supplier', 'vendors', 'vendor', 'partners', 'partner',
                         'subsidiary', 'subsidiaries', 'affiliated companies', 'affiliate', 'affiliates',
-                        'relative working', 'relatives working', 'relatives employed', 'relatives in', 'referred', 'referral', 'referred by', 'internal employee', 'current employee',
+                        'relative working', 'relatives working', 'relatives employed', 'relatives in', 'referred by', 'employee referral', 'internal employee', 'current employee',
                         'employed by agoda', 'worked at agoda', 'worked with agoda', 'work for agoda', 'employed with agoda', 'previous agoda', 'prior agoda',
                         'employed by booking', 'worked at booking', 'work for booking',
                         'employed by strategy', 'worked at strategy', 'work for strategy',
@@ -18068,7 +18345,8 @@ return resolveDynamic(bestMatch);
                             // Distinguish between numeric notice days ("15") and dynamic date LWD ("16 Sep 2026")
                             const isLwdDateQuestion = (/last working day|lwd|official last|last date of working|end date/i.test(labelText) ||
                                                       /last working day|lwd|official last|last date/i.test(lowerLabel)) &&
-                                                      !/10 to 20 days|10-20 days|immediate joiner/i.test(labelText);
+                                                      !/10 to 20 days|10-20 days|immediate joiner|notice period/i.test(labelText) &&
+                                                      !/how many days|days left|days remaining/i.test(lowerLabel);
 
                             // If the answer is notice period-related and we are filling a text input,
                             // we must use a numeric value (e.g. '15') UNLESS it's a date field (LWD) or textarea or work mode question
@@ -19476,7 +19754,7 @@ return resolveDynamic(bestMatch);
                                 }
                                 
                                 if (targetOpt) {
-                                    const cleanQ = (labelText && labelText.length < 50 && !labelText.includes('\\n')) ? labelText : (isYearSelect ? (isStart ? 'From Year' : 'To Year') : (isStart ? 'From Month' : 'To Month'));
+                                    const cleanQ = (labelText && labelText.length < 50 && !labelText.includes('\\n') && !/currently work here/i.test(labelText)) ? labelText : (isYearSelect ? (isStart ? 'From Year' : 'To Year') : (isStart ? 'From Month' : 'To Month'));
                                     window.__SENTINEL_DEBUG__&&console.log('Work Experience Date Select: Selecting', targetOpt.text, 'for', cleanQ);
                                     select.value = targetOpt.value;
                                     if (select.value !== targetOpt.value) select.selectedIndex = targetOpt.index;
@@ -20370,7 +20648,7 @@ return resolveDynamic(bestMatch);
                             }
                             
                             const customRadios = Array.from(container.querySelectorAll(
-                                '[role="radio"], label[data-test-radio-button], div[data-test-radio-button], button[role="radio"]'
+                                '[role="radio"], label[data-test-radio-button], div[data-test-radio-button], [data-test-form-builder-radio-button], button[role="radio"]'
                             ));
                             
                             if (!questionText) {
@@ -24913,6 +25191,31 @@ return resolveDynamic(bestMatch);
 
                         // 4. View & Apply (The Main Loop)
 
+                        // Helper to detect if an element (button or link) is an external redirect / ATS link
+                        const isExternalApplyElement = (el) => {
+                            if (!el) return false;
+                            // Check for external link icon (FontAwesome, SVG, icon classes)
+                            if (el.querySelector('i.fa-external-link, i.fa-external-link-alt, i.fa-external-link-square, i.fa-arrow-up-right-from-square, [class*="external-link"], [class*="arrow-up-right"], svg[class*="external"]')) {
+                                return true;
+                            }
+                            const html = el.innerHTML || '';
+                            if (/external[-_]link|arrow[-_]up[-_]right/i.test(html)) {
+                                return true;
+                            }
+                            const text = (el.innerText || el.textContent || '').trim().toLowerCase();
+                            if (text.includes('via company site') || text.includes('company site')) {
+                                return true;
+                            }
+                            const parentText = (el.parentElement ? (el.parentElement.innerText || el.parentElement.textContent || '') : '').toLowerCase();
+                            if (parentText.includes('via company site')) {
+                                return true;
+                            }
+                            if (el.tagName === 'A' && el.getAttribute('target') === '_blank') {
+                                return true;
+                            }
+                            return false;
+                        };
+
                         // A0. Handle Modal with "View active jobs" button (inactive / redirected jobs)
                         const modalCandidateBtns = Array.from(document.querySelectorAll(
                             '.modal button, .application-modal button, button.new-btn, button.btn-primary'
@@ -24956,6 +25259,72 @@ return resolveDynamic(bestMatch);
                             return 'INSTAHYRE_VIEW_ACTIVE_JOBS_SKIPPED';
                         }
 
+                        // A0.1 Handle Modal for External Job / ATS Redirect (Apply with arrow icon, "via company site", or "not available for external jobs")
+                        const openModalsList = Array.from(document.querySelectorAll(
+                            '.modal.in, .modal.show, .modal[style*="display: block"], [role="dialog"].in, [role="dialog"].show, .application-modal'
+                        )).filter(m => (m.offsetParent !== null || m.offsetWidth > 0 || m.offsetHeight > 0) && !m.classList.contains('modal-backdrop'));
+
+                        let externalModal = null;
+                        for (const modal of openModalsList) {
+                            const modalText = (modal.innerText || modal.textContent || '').toLowerCase();
+                            if (modalText.includes('not available for external jobs') || modalText.includes('via company site')) {
+                                externalModal = modal;
+                                break;
+                            }
+                            const candidateApply = modal.querySelectorAll('button.new-btn, button.btn-primary, button, a.btn');
+                            for (const b of candidateApply) {
+                                const bText = (b.innerText || b.textContent || '').trim().toLowerCase();
+                                if ((bText.startsWith('apply') || bText.includes('apply')) && isExternalApplyElement(b)) {
+                                    externalModal = modal;
+                                    break;
+                                }
+                            }
+                            if (externalModal) break;
+                        }
+
+                        if (externalModal) {
+                            window.__SENTINEL_DEBUG__&&console.log('Instahyre: External ATS / redirect job detected — skipping and closing modal');
+
+                            const viewedCards = document.querySelectorAll('[data-sentinel-viewed="true"]');
+                            for (const vc of viewedCards) {
+                                vc.setAttribute('data-sentinel-skipped', 'true');
+                                vc.classList.add('sentinel-skipped');
+                            }
+
+                            const closeBtn = externalModal.querySelector(
+                                '.application-modal-close, [ng-click*="closeApplyModal"], [ng-click*="closeApplyExternalModal"], button.close, .close, i.fa-close, [data-dismiss="modal"], button[aria-label="Close"], .modal-header .close, .close-btn, [ng-click*="close"], [ng-click*="cancel"], [ng-click*="dismiss"]'
+                            );
+                            if (closeBtn && closeBtn.offsetParent !== null) {
+                                closeBtn.click();
+                            }
+
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                backdrop.click();
+                            }
+                            if (window.angular) {
+                                try {
+                                    const modalEl = externalModal.closest('.modal, [class*="modal"]') || externalModal;
+                                    const scope = angular.element(modalEl).scope();
+                                    if (scope) {
+                                        if (typeof scope.closeApplyModal === 'function') scope.closeApplyModal();
+                                        else if (typeof scope.closeApplyExternalModal === 'function') scope.closeApplyExternalModal();
+                                        else if (typeof scope.$dismiss === 'function') scope.$dismiss();
+                                        else if (typeof scope.close === 'function') scope.close();
+                                        else if (typeof scope.cancel === 'function') scope.cancel();
+                                        else if (typeof scope.dismiss === 'function') scope.dismiss();
+                                    }
+                                } catch (e) {}
+                            }
+                            if (window.$ && typeof window.$.fn?.modal === 'function') {
+                                try {
+                                    $(externalModal).modal('hide');
+                                } catch (e) {}
+                            }
+
+                            return 'INSTAHYRE_EXTERNAL_APPLY_SKIPPED';
+                        }
+
                         // A. Handle Modal - Look for Apply button in any modal
                         const modalApplyBtns = document.querySelectorAll(
                             'button.new-btn.btn-primary, button.new-btn, button.btn-primary.new-btn, button.btn.btn-lg.btn-primary.new-btn'
@@ -24964,6 +25333,7 @@ return resolveDynamic(bestMatch);
                             if (btn && btn.offsetParent !== null && !btn.disabled) {
                                 const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
                                 if (text.includes('view active jobs') || text.includes('active jobs')) continue;
+                                if (isExternalApplyElement(btn)) continue;
                                 if (/^(apply|interested|send application|submit application|apply now|yes)/i.test(text) || (text.includes('apply') && !text.includes('applied') && !text.includes('already'))) {
                                     btn.scrollIntoView({ block: 'center' });
                                     btn.click();
@@ -25037,8 +25407,13 @@ return resolveDynamic(bestMatch);
                                 if (btn && btn.offsetParent !== null && !isAlreadyViewed(btn)) {
                                     const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
                                     if (!btnText.includes('applied') && !btnText.includes('saved')) {
-                                        btn.setAttribute('data-sentinel-viewed', 'true');
                                         const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
+                                        if (isExternalApplyElement(btn) || (card && ((card.innerText || '').toLowerCase().includes('via company site')))) {
+                                            btn.setAttribute('data-sentinel-skipped', 'true');
+                                            if (card) card.setAttribute('data-sentinel-skipped', 'true');
+                                            continue;
+                                        }
+                                        btn.setAttribute('data-sentinel-viewed', 'true');
                                         if (card) card.setAttribute('data-sentinel-viewed', 'true');
                                         sessionStorage.removeItem('instahyre_all_applied_scrolls');
                                         btn.scrollIntoView({ block: 'center' });
@@ -25054,8 +25429,13 @@ return resolveDynamic(bestMatch);
                             if (btn && btn.offsetParent !== null && !btn.disabled && !isAlreadyViewed(btn)) {
                                 const btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
                                 if ((btnText.includes('view job') || btnText.startsWith('view') || btnText === 'interested') && !btnText.includes('applied') && !btnText.includes('saved') && !btnText.includes('active jobs')) {
-                                    btn.setAttribute('data-sentinel-viewed', 'true');
                                     const card = btn.closest('.opportunity-card, .employer-row, [class*="opportunity"], [class*="job-card"], [class*="job-listing"]') || btn.parentElement;
+                                    if (isExternalApplyElement(btn) || (card && ((card.innerText || '').toLowerCase().includes('via company site')))) {
+                                        btn.setAttribute('data-sentinel-skipped', 'true');
+                                        if (card) card.setAttribute('data-sentinel-skipped', 'true');
+                                        continue;
+                                    }
+                                    btn.setAttribute('data-sentinel-viewed', 'true');
                                     if (card) card.setAttribute('data-sentinel-viewed', 'true');
                                     sessionStorage.removeItem('instahyre_all_applied_scrolls');
                                     btn.scrollIntoView({ block: 'center' });

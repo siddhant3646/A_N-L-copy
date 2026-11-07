@@ -49,6 +49,8 @@ Thumbs.db
 htmlcov/
 coverage.xml
 live_test_output/
+live_test_output_instahyre/
+live_test_output_naukri/
 
 # Temporary files
 *.tmp

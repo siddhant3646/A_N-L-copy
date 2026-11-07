@@ -1101,41 +1101,59 @@
       },
       "priority": 7,
       "negative_patterns": [
-        "current location",
-        "where do you live",
-        "where do you stay",
+        "are you comfortable",
+        "comfortable with",
+        "comfortable with that",
         "current & preferred",
         "current and preferred",
-        "current preferred"
+        "current location",
+        "current preferred",
+        "open to",
+        "preferred location noida",
+        "preferred location- noida",
+        "preferred location: noida",
+        "ready for",
+        "where do you live",
+        "where do you stay",
+        "which location do you prefer",
+        "willing to"
       ]
     },
     "contact_phone": {
       "patterns": [
-        "contact number",
-        "mobile number",
+        "registered mobile",
         "phone number",
-        "please enter your phone number",
-        "mobile phone number",
-        "mobile phone number?",
-        "mobile phone",
-        "cell phone number",
-        "cell phone",
-        "contact phone number",
-        "mobile phone number *",
-        "cell phone number?",
-        "telephone number",
-        "primary phone",
-        "primary phone number",
-        "your phone number",
-        "your phone number?",
-        "enter phone number",
-        "enter phone number?",
-        "phone",
-        "mobile",
+        "naukri registered mobile number",
+        "what is your registered mobile number",
+        "what is your naukri registered mobile number",
         "your mobile no",
+        "naukri registered mobile number?",
+        "enter phone number",
+        "mobile phone",
+        "contact phone number",
+        "what is your naukri registered mobile number?",
+        "enter phone number?",
+        "telephone number",
+        "please enter your phone number",
+        "mobile",
         "mobile no",
+        "cell phone number",
+        "mobile phone number *",
+        "contact phone",
+        "mobile number",
+        "contact number",
+        "primary phone number",
+        "registered mobile number",
+        "mobile phone number",
+        "phone",
+        "your phone number",
+        "cell phone number?",
+        "your phone number?",
+        "primary phone",
         "your phone",
-        "contact phone"
+        "cell phone",
+        "mobile phone number?",
+        "registered mobile no"
       ],
       "category": "personal_info",
       "default": "7905828880",
@@ -2564,7 +2582,6 @@
         "available from",
         "how soon can you join if gets selected",
         "how many days will you be able to join",
-        "notice",
         "within how many days will you be able to join",
         "in how many days can you join",
         "if selected, in how many days can you join",
@@ -2589,17 +2606,22 @@
       },
       "priority": 9,
       "negative_patterns": [
-        "salary",
+        "available for interview",
+        "can you join us in 2 weeks",
+        "consent",
+        "cookie",
         "ctc",
         "experience",
-        "interview",
-        "virtual interview",
         "f2f",
         "face to face",
-        "available for interview",
-        "when are you available for",
-        "can you join us in 2 weeks",
-        "join in 2 weeks from the date of offer"
+        "gdpr",
+        "interview",
+        "join in 2 weeks from the date of offer",
+        "legal notice",
+        "privacy",
+        "salary",
+        "virtual interview",
+        "when are you available for"
       ]
     },
     "desired_start_date": {
@@ -15070,7 +15092,17 @@
         "checkbox": "No",
         "textarea": "No",
         "number": "0"
-      }
+      },
+      "negative_patterns": [
+        "can you provide proof",
+        "eligibility to work in india without sponsorship",
+        "eligibility to work without sponsorship",
+        "proof of eligibility",
+        "proof of identity",
+        "without any restrictions",
+        "without restrictions",
+        "without sponsorship"
+      ]
     },
     "no_visa_required": {
       "patterns": [
@@ -15525,7 +15557,11 @@
         "textarea": "__DYNAMIC_LWD__",
         "checkbox": "15",
         "number": "__DYNAMIC_LWD_DDMMYYYY__"
-      }
+      },
+      "negative_patterns": [
+        "how many days",
+        "days left"
+      ]
     },
     "joining_date_flexible": {
       "patterns": [
@@ -18442,7 +18478,14 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "drupal db",
+        "mention if it's sql",
+        "mssql",
+        "others",
+        "which database"
+      ]
     },
     "mongodb_experience": {
       "patterns": [
@@ -85761,14 +85804,22 @@
     "full_name": {
       "category": "personal_info",
       "default": "Siddhant Singh",
-      "priority": 10,
+      "priority": 25,
       "patterns": [
-        "full name",
-        "full name as per aadhar",
         "name as per aadhar",
+        "candidate name",
+        "candidate full name",
+        "please enter your full name",
+        "enter full name",
+        "full name as per aadhar",
+        "enter your full name",
+        "full name",
         "full legal name",
-        "your full name",
-        "complete name"
+        "complete name",
+        "please enter your full name.",
+        "enter your full name.",
+        "enter your name",
+        "your full name"
       ],
       "input_type_defaults": {
         "text": "Siddhant Singh",
@@ -88628,9 +88679,9 @@
         "text": "3000000",
         "text_lpa": "30",
         "number": "30",
-        "textarea": "3000000",
-        "radio": "3000000",
-        "select": "3000000",
+        "textarea": "30 LPA",
+        "radio": "30",
+        "select": "30 LPA",
         "checkbox": "3000000",
         "text_inr": "3000000"
       }
@@ -1314559,22 +1314610,20 @@
     "shift_preference_options": {
       "patterns": [
         "please share your shift preference",
-        "please share your shift preference?",
         "share your shift preference",
-        "share your shift preference?",
         "what is your shift preference",
-        "what is your shift preference?"
+        "shift preference"
       ],
-      "category": "preference",
+      "category": "work_mode",
       "default": "Day Job",
-      "priority": 20,
+      "priority": 18,
       "input_type_defaults": {
+        "checkbox": "Yes",
         "radio": "Day Job",
         "select": "Day Job",
         "text": "Day Job",
         "textarea": "Day Job",
-        "checkbox": "Day Job",
-        "number": "0"
+        "number": "1"
       }
     },
     "expected_compensation_agreement": {
@@ -1314744,15 +1314793,16 @@
       "category": "salary",
       "default": "25 LPA",
       "numeric_default": "25",
-      "priority": 16,
+      "priority": 18,
       "input_type_defaults": {
         "text": "25 LPA",
         "number": "25",
         "radio": "25 LPA",
         "select": "25 LPA",
         "textarea": "25 LPA",
-        "checkbox": "Yes",
-        "text_inr": "2500000"
+        "checkbox": "30",
+        "text_inr": "2500000",
+        "text_lpa": "25"
       }
     },
     "system_design_years_experience": {
@@ -1314962,37 +1315012,628 @@
         "textarea": "No, my expected CTC is 30 LPA. I am open to discussing the overall compensation structure, but not a maximum below my expectation.",
         "number": "0"
       },
-      "note": "Fix from qa_results.csv 2026-10-30: 'Are you comfortable with a maximum CTC of Rs 15 LPA?' wrongly answered Yes (candidate expects 30 LPA). Only safe while the stated max is below 30 LPA."
+      "note": "Fix from qa_results.csv 2026-10-30: 'Are you comfortable with a maximum CTC of Rs 15 LPA?' wrongly answered Yes (candidate expects 30 LPA). Only safe while the stated max is below 30 LPA.",
+      "negative_patterns": [
+        "current ctc",
+        "expected ctc",
+        "what is your ctc",
+        "what is your current ctc",
+        "what is your expected ctc"
+      ]
     },
     "days_left_in_last_working_day": {
       "patterns": [
+        "how many days are left in your last working day?",
         "how many days are left in your last working day",
+        "how many days left in your last working day?",
         "how many days left in your last working day",
-        "days are left in your last working day",
-        "how many days remaining in your last working day",
-        "days remaining in your last working day",
-        "how many days until your last working day",
+        "how many days are left for your last working day",
+        "how many days left for your last working day",
+        "how many days are left until your last working day",
+        "how many days left until your last working day",
+        "days left in your last working day",
+        "days left for your last working day",
         "days left until your last working day",
-        "days left until your lwd"
+        "how many days are left in your notice period?",
+        "how many days are left in your notice period",
+        "how many days left in your notice period?",
+        "how many days left in your notice period",
+        "days left in notice period"
       ],
       "category": "notice_period",
       "default": "15",
-      "numeric_default": "15",
-      "priority": 21,
-      "negative_patterns": [
-        "what is your last working day",
-        "when is your last working day",
-        "date of your last working day"
-      ],
+      "priority": 25,
       "input_type_defaults": {
         "text": "15",
         "number": "15",
         "radio": "15",
         "select": "15",
-        "checkbox": "Yes",
-        "textarea": "15 days"
+        "textarea": "15",
+        "checkbox": "15"
+      }
+    },
+    "naukri_registered_mobile_number": {
+      "patterns": [
+        "what is your naukri registered mobile number?",
+        "what is your naukri registered mobile number",
+        "naukri registered mobile number?",
+        "naukri registered mobile number",
+        "registered mobile number?",
+        "registered mobile number",
+        "registered mobile no?",
+        "registered mobile no",
+        "registered mobile",
+        "registered phone number",
+        "what is your registered mobile number",
+        "what is your registered mobile number?"
+      ],
+      "category": "personal_info",
+      "default": "7905828880",
+      "priority": 25,
+      "sensitive": true,
+      "requires_exact_match": true,
+      "input_type_defaults": {
+        "text": "7905828880",
+        "number": "7905828880",
+        "tel": "7905828880",
+        "radio": "7905828880",
+        "select": "7905828880",
+        "textarea": "7905828880",
+        "checkbox": "7905828880"
+      }
+    },
+    "expected_total_compensation_etc": {
+      "patterns": [
+        "etc ?",
+        "etc?",
+        "etc",
+        "what is your etc?",
+        "what is your etc",
+        "expected total compensation",
+        "expected total compensation (etc)",
+        "expected total compensation?",
+        "expected total compensation (etc)?"
+      ],
+      "category": "salary",
+      "default": "30 LPA",
+      "priority": 25,
+      "requires_exact_match": true,
+      "negative_patterns": [
+        "current",
+        "cctc",
+        "experience",
+        "years"
+      ],
+      "input_type_defaults": {
+        "text": "30 LPA",
+        "number": "30",
+        "text_inr": "3000000",
+        "textarea": "30 LPA",
+        "radio": "30",
+        "select": "30 LPA",
+        "checkbox": "30",
+        "text_lpa": "30"
       },
-      "note": "Fix from qa_results.csv 2026-10-29/11-03: 'How many days are left in your last working day?' answered with a DATE (13/18 Nov 2026); field wants a day count. Radio keeps the numeric '15' — the quantity guard preserves it on choice controls; a date radio form (LWD buckets) is notice_period_4843's job. CSV compound variant: day-count phrasing must beat LWD-date class patterns (last_working_day prio 10; notice_period_days negatives out)."
+      "platform_overrides": {
+        "linkedin": "3000000",
+        "naukri": "3000000",
+        "instahyre": "30 LPA",
+        "hirist": "30"
+      }
+    },
+    "notice_period_serving_lwd_compound": {
+      "patterns": [
+        "what is your notice period? if you are currently serving it, please share your last working day.",
+        "what is your notice period? if you are currently serving it, please share your last working day",
+        "what is your notice period if you are currently serving it please share your last working day",
+        "what is your notice period? if currently serving, please share your last working day.",
+        "what is your notice period? if currently serving, please share your last working day",
+        "notice period if serving please share your last working day",
+        "notice period if currently serving please share your last working day",
+        "notice period if you are currently serving it",
+        "notice period if you are serving it",
+        "notice period and last working day",
+        "notice period & last working day"
+      ],
+      "category": "notice_period",
+      "default": "15 days (serving notice, LWD: __DYNAMIC_LWD__)",
+      "priority": 25,
+      "negative_patterns": [
+        "last working day if",
+        "last working date if",
+        "lwd if",
+        "official last working day"
+      ],
+      "dynamic_answer": true,
+      "input_type_defaults": {
+        "text": "15 days (serving notice, LWD: __DYNAMIC_LWD__)",
+        "textarea": "I am currently serving a 15-day notice period with Last Working Day on __DYNAMIC_LWD__.",
+        "radio": "15 Days",
+        "select": "15 Days",
+        "number": "15",
+        "checkbox": "15"
+      },
+      "platform_overrides": {
+        "linkedin": "15",
+        "naukri": "15 Days or less",
+        "instahyre": "15 days (serving notice, LWD: __DYNAMIC_LWD__)",
+        "hirist": "15 Days or less"
+      }
+    },
+    "can_join_in_15_to_20_days": {
+      "patterns": [
+        "can you join in 15-20 days ?",
+        "can you join in 15-20 days?",
+        "can you join in 15-20 days",
+        "can you join in 15 to 20 days",
+        "can you join in 15 - 20 days",
+        "can you join us in 15-20 days",
+        "can you join us in 15 to 20 days",
+        "able to join in 15-20 days",
+        "able to join in 15 to 20 days",
+        "available to join in 15-20 days",
+        "available to join in 15 to 20 days"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 25,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am currently serving notice and can join within 15-20 days.",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "immediate_or_notice_period_clarification": {
+      "patterns": [
+        "are you an immediate joiner ? or any notice period? please mentioned clearly.",
+        "are you an immediate joiner ? or any notice period? please mentioned clearly",
+        "are you an immediate joiner or any notice period? please mentioned clearly",
+        "are you an immediate joiner or any notice period please mentioned clearly",
+        "are you an immediate joiner or any notice period",
+        "are you an immediate joiner or serving notice period",
+        "immediate joiner or any notice period",
+        "immediate joiner or notice period"
+      ],
+      "category": "notice_period",
+      "default": "Serving notice period, 15 days",
+      "priority": 25,
+      "dynamic_answer": true,
+      "input_type_defaults": {
+        "text": "Serving notice period, 15 days (LWD: __DYNAMIC_LWD__)",
+        "textarea": "I am currently serving notice period with 15 days remaining (Last Working Day: __DYNAMIC_LWD__).",
+        "radio": "15 Days",
+        "select": "15 Days",
+        "checkbox": "15",
+        "number": "15"
+      }
+    },
+    "java_spring_boot_min_6_years": {
+      "patterns": [
+        "how many years of hands-on experience do you have with java and spring boot? (minimum 6 years required)",
+        "how many years of hands-on experience do you have with java and spring boot (minimum 6 years required)",
+        "how many years of hands-on experience do you have with java and spring boot? (minimum 6 years required)*",
+        "how many years of hands-on experience do you have with java and spring boot (minimum 6 years required)*",
+        "how many years of hands-on experience do you have with java and spring boot",
+        "how many years of experience in java and spring boot? (minimum 6 years required)",
+        "how many years of experience in java and spring boot (minimum 6 years required)"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "textarea": "4.2 Years of hands-on experience in Java and Spring Boot developing scalable microservices and REST APIs.",
+        "number": "4.2",
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "checkbox": "Yes"
+      },
+      "platform_overrides": {
+        "linkedin": "4",
+        "naukri": "4.2 Years",
+        "instahyre": "4.2 Years",
+        "hirist": "4"
+      }
+    },
+    "java_experience_7_plus_only": {
+      "patterns": [
+        "how many years do you have experience in java? (7yrs + only apply)",
+        "how many years do you have experience in java (7yrs + only apply)",
+        "how many years do you have experience in java? (7yrs + only apply)*",
+        "how many years do you have experience in java (7yrs + only apply)*",
+        "how many years of experience in java? (7yrs + only apply)",
+        "how many years of experience in java (7yrs + only apply)"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "textarea": "4.2 Years of enterprise Java development experience.",
+        "number": "4.2",
+        "radio": "4.2",
+        "select": "4.2 Years",
+        "checkbox": "Yes"
+      },
+      "platform_overrides": {
+        "linkedin": "4",
+        "naukri": "4.2 Years",
+        "instahyre": "4.2 Years",
+        "hirist": "4"
+      }
+    },
+    "women_networking_session": {
+      "patterns": [
+        "are you available for the offline women networking session on 20th nov from 2:30pm?",
+        "are you available for the offline women networking session on 20th nov from 2:30pm",
+        "are you available for the offline women networking session",
+        "offline women networking session on 20th nov",
+        "offline women networking session",
+        "women networking session",
+        "women networking",
+        "offline women networking",
+        "women only hiring event",
+        "women in tech networking session",
+        "women in tech networking"
+      ],
+      "category": "availability",
+      "default": "No",
+      "priority": 25,
+      "input_type_defaults": {
+        "radio": "NO",
+        "select": "NO",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
+      }
+    },
+    "onsite_working_in_hyderabad": {
+      "patterns": [
+        "are you working onsite in hyderabad? you may also have to travel to client locations whenever required",
+        "are you working onsite in hyderabad you may also have to travel to client locations whenever required",
+        "are you working onsite in hyderabad?",
+        "are you working onsite in hyderabad",
+        "working onsite in hyderabad",
+        "are you currently working onsite in hyderabad",
+        "working onsite in hyderabad? you may also have to travel to client locations"
+      ],
+      "category": "location",
+      "default": "No, I can relocate to Hyderabad",
+      "priority": 25,
+      "input_type_defaults": {
+        "radio": "No, I can relocate to Hyderabad",
+        "select": "No, I can relocate to Hyderabad",
+        "text": "No, currently based in Bangalore but willing to relocate to Hyderabad",
+        "textarea": "No, I am currently based in Bangalore, Karnataka, but 100% open to relocating to Hyderabad.",
+        "checkbox": "No",
+        "number": "0"
+      }
+    },
+    "diagnose_app_load_time_slow": {
+      "patterns": [
+        "app's initial load time is slow. how will you diagnose and improve it ?",
+        "app's initial load time is slow. how will you diagnose and improve it",
+        "app initial load time is slow how will you diagnose and improve it",
+        "app's initial load time is slow",
+        "how will you diagnose and improve initial load time"
+      ],
+      "category": "technical",
+      "default": "Profile using Chrome DevTools Performance panel and Lighthouse to find bottlenecks. Analyze JS bundle size using Webpack Bundle Analyzer and implement route-based code splitting and lazy loading. Optimize static assets with image compression and CDN caching. Implement server-side rendering or static generation where appropriate, and minimize render-blocking CSS/JS.",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "Profile with DevTools/Lighthouse, code split bundles, optimize assets via CDN caching, and lazy load components.",
+        "textarea": "Profile using Chrome DevTools Performance panel and Lighthouse to find bottlenecks. Analyze JS bundle size using Webpack Bundle Analyzer and implement route-based code splitting and lazy loading. Optimize static assets with image compression and CDN caching. Implement server-side rendering or static generation where appropriate, and minimize render-blocking CSS/JS.",
+        "radio": "Profile with DevTools, code split bundles, and lazy load components.",
+        "select": "Profile with DevTools/Lighthouse, code split bundles, optimize assets via CDN caching, and lazy load components.",
+        "checkbox": "Yes",
+        "number": ""
+      }
+    },
+    "built_from_zero_decisions": {
+      "patterns": [
+        "tell me about something you built from zero. what decisions did you make and what would you change?",
+        "tell me about something you built from zero. what decisions did you make and what would you change",
+        "tell me about something you built from zero",
+        "something you built from zero"
+      ],
+      "category": "technical",
+      "default": "At Everbridge, I designed and built an event-driven notification dispatch pipeline from scratch using Java, Spring Boot, Apache Kafka, and Redis. Key decisions included asynchronous decoupled processing for high throughput and idempotency keys to prevent duplicate delivery. In hindsight, I would adopt OpenTelemetry distributed tracing earlier for faster cross-service latency debugging.",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "At Everbridge, I designed and built an event-driven notification dispatch pipeline from scratch using Java, Spring Boot, Kafka, and Redis.",
+        "textarea": "At Everbridge, I designed and built an event-driven notification dispatch pipeline from scratch using Java, Spring Boot, Apache Kafka, and Redis. Key decisions included asynchronous decoupled processing for high throughput and idempotency keys to prevent duplicate delivery. In hindsight, I would adopt OpenTelemetry distributed tracing earlier for faster cross-service latency debugging.",
+        "radio": "Designed and built an event-driven notification dispatch pipeline from scratch.",
+        "select": "Designed and built an event-driven notification pipeline using Java, Spring Boot, Kafka, and Redis.",
+        "checkbox": "Yes",
+        "number": ""
+      }
+    },
+    "recent_ai_development": {
+      "patterns": [
+        "what s one ai development you recently learned about, and what did you do with it?",
+        "what is one ai development you recently learned about, and what did you do with it?",
+        "what is one ai development you recently learned about",
+        "one ai development you recently learned about",
+        "what's one ai development you recently learned about"
+      ],
+      "category": "technical",
+      "default": "I explored Agentic AI workflows with LLM tool-calling and structured outputs using LangChain and Python. I built automated form filling and contextual Q&A agents using retrieval-augmented generation (RAG) over vector databases to streamline candidate application screening.",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "I explored Agentic AI workflows with LLM tool-calling and structured outputs using LangChain, building automated form filling and contextual Q&A agents.",
+        "textarea": "I explored Agentic AI workflows with LLM tool-calling and structured outputs using LangChain and Python. I built automated form filling and contextual Q&A agents using retrieval-augmented generation (RAG) over vector databases to streamline candidate application screening.",
+        "radio": "Agentic AI workflows with LLM tool-calling and structured outputs.",
+        "select": "Agentic AI workflows with LLM tool-calling and structured outputs using LangChain and Python.",
+        "checkbox": "Yes",
+        "number": ""
+      }
+    },
+    "drupal_upgrades_done": {
+      "patterns": [
+        "what kind of drupal upgrades have you done?",
+        "what kind of drupal upgrades have you done",
+        "drupal upgrades have you done",
+        "drupal upgrades"
+      ],
+      "category": "technical",
+      "default": "None. My core expertise is in Java, Spring Boot, React, Node.js, and distributed microservices.",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "None / No Drupal experience. My primary expertise is in Java, Spring Boot, React, Node.js, and distributed microservices.",
+        "textarea": "None / No Drupal experience. My primary expertise is in Java, Spring Boot, React, Node.js, and distributed microservices.",
+        "radio": "None",
+        "select": "None / No Drupal experience",
+        "checkbox": "No",
+        "number": ""
+      }
+    },
+    "software_development_practices_sdlc": {
+      "patterns": [
+        "software development practices/lifecycle that you are familiar with?",
+        "software development practices/lifecycle that you are familiar with",
+        "software development practices that you are familiar with",
+        "software development lifecycle that you are familiar with"
+      ],
+      "category": "technical",
+      "default": "Agile/Scrum methodologies, Test-Driven Development (TDD) with JUnit and Mockito, CI/CD automated deployment pipelines, Git trunk-based development, microservices architecture, and comprehensive code reviews.",
+      "priority": 25,
+      "input_type_defaults": {
+        "text": "Agile/Scrum, TDD with JUnit/Mockito, CI/CD automated deployment pipelines, Git trunk-based development, and microservices architecture.",
+        "textarea": "Agile/Scrum methodologies, Test-Driven Development (TDD) with JUnit and Mockito, CI/CD automated deployment pipelines, Git trunk-based development, microservices architecture, and comprehensive code reviews.",
+        "radio": "Agile/Scrum, TDD with JUnit/Mockito, CI/CD pipelines, Git trunk development.",
+        "select": "Agile/Scrum, TDD with JUnit/Mockito, CI/CD automated deployment pipelines, Git trunk-based development.",
+        "checkbox": "Yes",
+        "number": ""
+      }
+    },
+    "proof_of_identity_and_eligibility_without_sponsorship": {
+      "patterns": [
+        "if hired, can you provide proof of identity and eligibility to work in india without sponsorship?",
+        "if hired, can you provide proof of identity and eligibility to work in india without sponsorship",
+        "can you provide proof of identity and eligibility to work in india without sponsorship?",
+        "can you provide proof of identity and eligibility to work in india without sponsorship",
+        "can you provide proof of identity and eligibility to work without sponsorship",
+        "proof of identity and eligibility to work in india without sponsorship",
+        "can you provide proof of identity and eligibility",
+        "can you provide proof of eligibility to work in india without sponsorship"
+      ],
+      "category": "work_authorization",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "gdpr_notice_consent": {
+      "patterns": [
+        "gdpr notice",
+        "i have read and agree to the terms of the gdpr notice",
+        "terms of the gdpr notice",
+        "agree to the terms of the gdpr notice."
+      ],
+      "category": "data_consent",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "number": "15"
+      }
+    },
+    "which_database_experience": {
+      "patterns": [
+        "which database experience do you have, mention if it's sql/ mysql/ drupal db/ mssql/ others?",
+        "which database experience do you have, mention if it's sql/ mysql/ drupal db/ mssql/ others",
+        "which database experience do you have",
+        "database experience do you have, mention if it's sql",
+        "which database experience do you have, mention if it's sql/ mysql"
+      ],
+      "category": "technical",
+      "default": "PostgreSQL, MySQL, MongoDB, SQL",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "PostgreSQL, MySQL, MongoDB, SQL",
+        "textarea": "PostgreSQL, MySQL, MongoDB, SQL",
+        "select": "PostgreSQL",
+        "radio": "PostgreSQL",
+        "checkbox": "PostgreSQL, MySQL, MongoDB, SQL",
+        "number": ""
+      }
+    },
+    "backend_engineering_experience_and_technologies_production": {
+      "patterns": [
+        "what is your hands-on backend engineering experience and which technologies have you used in production?",
+        "what is your hands-on backend engineering experience and which technologies have you used in production",
+        "hands-on backend engineering experience and which technologies have you used in production?",
+        "hands-on backend engineering experience and which technologies have you used in production",
+        "hands-on backend engineering experience and which technologies"
+      ],
+      "category": "technical",
+      "default": "4+ years of hands-on experience designing and developing distributed microservices and RESTful APIs using Java, Spring Boot, Python, and Node.js. In production at Everbridge, I designed event-driven architectures with Apache Kafka, optimized database performance using PostgreSQL, MongoDB, and Redis, and deployed scalable containerized services with Docker, Kubernetes, and AWS.",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "4+ years of hands-on experience designing and developing distributed microservices and RESTful APIs using Java, Spring Boot, Python, and Node.js. In production at Everbridge, I designed event-driven architectures with Apache Kafka, optimized database performance using PostgreSQL, MongoDB, and Redis, and deployed scalable containerized services with Docker, Kubernetes, and AWS.",
+        "text": "4+ years in Java, Spring Boot, Python, Node.js, Kafka, PostgreSQL, Redis, AWS, Docker",
+        "radio": "4+ years of hands-on experience designing and developing distributed",
+        "select": "4+ years of hands-on experience designing and developing distributed microservices and RESTful APIs using Java",
+        "checkbox": "4+ years of hands-on experience designing and developing distributed microservices and RESTful APIs using Java",
+        "number": ""
+      }
+    },
+    "mention_strong_experience_skills": {
+      "patterns": [
+        "please mention strong experience skills(like react, angular typescript, java script, es6, express..js, node.js ect...,)",
+        "please mention strong experience skills",
+        "mention strong experience skills",
+        "mention strong experience skills(like react"
+      ],
+      "category": "skills",
+      "default": "Java, Spring Boot, React, Node.js, TypeScript, JavaScript, PostgreSQL, MongoDB, AWS, Kafka",
+      "priority": 18,
+      "input_type_defaults": {
+        "textarea": "Java, Spring Boot, React, Node.js, TypeScript, JavaScript, PostgreSQL, MongoDB, AWS, Kafka",
+        "text": "Java, Spring Boot, React, Node.js, TypeScript, JavaScript",
+        "radio": "Java",
+        "select": "Java, Spring Boot, React, Node.js, TypeScript, JavaScript, PostgreSQL, MongoDB, AWS, Kafka",
+        "checkbox": "Java, Spring Boot, React, Node.js, TypeScript, JavaScript, PostgreSQL, MongoDB, AWS, Kafka",
+        "number": ""
+      }
+    },
+    "which_location_do_you_prefer": {
+      "patterns": [
+        "which location do you prefer ? noida, pune, chennai, bangalore, hyderabad, mumbai ?",
+        "which location do you prefer ? noida, pune, chennai, bangalore, hyderabad, mumbai",
+        "which location do you prefer ?",
+        "which location do you prefer",
+        "which location do you prefer in india"
+      ],
+      "category": "location",
+      "default": "Bangalore",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Bangalore",
+        "textarea": "Bangalore (open to relocation to Noida, Pune, Hyderabad, Mumbai, Chennai)",
+        "select": "Bangalore",
+        "radio": "Bangalore",
+        "checkbox": "Bangalore",
+        "number": "",
+        "select-location": "Bengaluru"
+      }
+    },
+    "preferred_location_noida_kolkata": {
+      "patterns": [
+        "preferred location- noida/kolkata",
+        "preferred location - noida/kolkata",
+        "preferred location: noida/kolkata",
+        "preferred location noida/kolkata",
+        "preferred location noida or kolkata"
+      ],
+      "category": "location",
+      "default": "Noida",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Noida",
+        "textarea": "Noida (open to Noida, Bengaluru, and Kolkata)",
+        "select": "Noida",
+        "radio": "Noida",
+        "checkbox": "Yes",
+        "number": "",
+        "select-location": "Bengaluru"
+      }
+    },
+    "working_mode_hybrid_comfortable": {
+      "patterns": [
+        "work location : pune, working mode: hybrid, are you comfortable with that?",
+        "work location : pune, working mode: hybrid, are you comfortable with that",
+        "working mode: hybrid, are you comfortable with that?",
+        "working mode: hybrid, are you comfortable with that",
+        "are you comfortable with that?",
+        "are you comfortable with that"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "years_of_notice_period": {
+      "patterns": [
+        "how many years of notice period do you have?",
+        "how many years of notice period do you have",
+        "how many years of notice period",
+        "years of notice period do you have"
+      ],
+      "category": "notice_period",
+      "default": "15 Days",
+      "priority": 18,
+      "input_type_defaults": {
+        "select": "15 Days",
+        "radio": "15 Days",
+        "text": "15 Days",
+        "textarea": "15 Days",
+        "number": "15",
+        "checkbox": "15"
+      }
+    },
+    "which_institution_did_you_complete_btech": {
+      "patterns": [
+        "which institution did you complete your b.tech from?",
+        "which institution did you complete your b.tech from",
+        "which institution did you complete your btech from",
+        "institution did you complete your b.tech from",
+        "which college did you complete your b.tech from",
+        "which university did you complete your b.tech from",
+        "which institute did you complete your b.tech from"
+      ],
+      "category": "education",
+      "default": "Vellore Institute of Technology",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Vellore Institute of Technology",
+        "textarea": "Vellore Institute of Technology (VIT Bhopal)",
+        "select": "Vellore Institute of Technology",
+        "radio": "Vellore Institute of Technology",
+        "checkbox": "Vellore Institute of Technology",
+        "number": "",
+        "select-education": "Vellore Institute of Technology"
+      }
+    },
+    "dou_you_have_agentic_ai_python": {
+      "patterns": [
+        "dou you have agentic ai and python full stack experience?",
+        "dou you have agentic ai and python full stack experience",
+        "do you have agentic ai and python full stack experience?",
+        "do you have agentic ai and python full stack experience"
+      ],
+      "category": "skills",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes",
+        "textarea": "Yes, extensive hands-on experience building Agentic AI systems with Python, LangChain, and modern full-stack architectures.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
     }
   },
   "categories": {

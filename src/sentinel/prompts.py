@@ -244,7 +244,7 @@ PHASE 2 - CONFIGURE FILTERS:
 PHASE 3 - APPLY TO JOBS (Loop 5 times):
 1. On results page, click "View job »" button (button.btn-interested.btn-success) on a job card
 2. Wait for job modal to open
-3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
+3. If modal shows "View active jobs" button (or job is inactive/closed), or indicates an external redirect / ATS job (external link arrow, "via company site", or "not available for external jobs"), close modal and proceed to next job in search results
 4. Click "Apply" button (button.btn-primary.new-btn) in the modal
 5. Wait for confirmation, close modal if needed
 6. Repeat for next job until 5 applications completed
@@ -279,7 +279,7 @@ PHASE 2 - CONFIGURE FILTERS:
 PHASE 3 - APPLY TO 20 JOBS (High Volume Session):
 1. On results page, click "View job »" button (button.btn-interested.btn-success) on a job card
 2. Wait for job modal to open
-3. If modal shows "View active jobs" button (or job is inactive/closed), close modal and proceed to next job in search results
+3. If modal shows "View active jobs" button (or job is inactive/closed), or indicates an external redirect / ATS job (external link arrow, "via company site", or "not available for external jobs"), close modal and proceed to next job in search results
 4. Click "Apply" button (button.btn-primary.new-btn) in the modal
 5. Wait for confirmation, close modal if needed
 6. Repeat until 20 applications completed
@@ -415,11 +415,14 @@ PHASE 1 - JOB FEED:
 1. Hirist is a Next.js + MUI single-page app. CSS classes are hashed
    (`mui-style-*`) and MUST NOT be used as selectors. Match by visible text,
    ARIA roles, and `href` instead.
-2. Job cards link to job detail pages with `href` matching `/j/<slug>-<id>` or
+2. Experience filter: ensure the experience level filter is set to 4 - 6 yrs
+   by clicking `#lotus-select-experience`, selecting the option with `data-value="4"`
+   ('4 - 6 yrs'), and clicking the filter row's 'Apply' button before collecting jobs.
+3. Job cards link to job detail pages with `href` matching `/j/<slug>-<id>` or
    `/j/<id>`. Collect those links (deduplicate).
-3. Job metadata is available in `window.__NEXT_DATA__`
+4. Job metadata is available in `window.__NEXT_DATA__`
    (`props.pageProps.jobMandateInfo` -> `jobTitle`, `companyName`, `location`).
-4. Login state is in `window.__NEXT_DATA__.props.pageProps.initialState.auth.isLoggedIn`.
+5. Login state is in `window.__NEXT_DATA__.props.pageProps.initialState.auth.isLoggedIn`.
 
 PHASE 2 - JOB DETAIL + APPLY:
 1. Navigate to the job detail page.
@@ -443,6 +446,9 @@ no new jobs remain in the feed.
 DOM Selectors (hirist.tech):
 - Job feed URL: https://www.hirist.tech/jobfeed
 - Category feed: https://www.hirist.tech/k/java-jobs
+- Experience filter combobox: #lotus-select-experience
+- Experience filter 4-6 yrs option: li[role="option"][data-value="4"], li[role="option"]:has-text("4 - 6")
+- Filter Apply button: .MuiGrid-container button:has-text("Apply")
 - Fallback search URLs:
   - https://www.hirist.tech/k/full-stack-jobs?ref=topnavigation
   - https://www.hirist.tech/k/java-jobs?ref=popular_tag

@@ -173,6 +173,12 @@ class PatternMatcher:
         if is_work_auth_status:
             return 'I can work here without any restrictions', max(score, 0.99)
 
+        # 0.1b Proof of identity / eligibility to work without sponsorship (Indian citizen in India)
+        if ('without sponsorship' in ql or 'without any sponsorship' in ql) and any(
+            w in ql for w in ('proof', 'eligibility', 'eligible', 'identity', 'authorized', 'work in india', 'legally')
+        ):
+            return 'Yes', max(score, 0.99)
+
         # 0.2 When can you start / earliest availability
         is_when_can_start = bool(re.search(r'\b(when can you start|when could you start|how soon can you start|how quickly can you start|when are you available to start)\b', ql))
         if is_when_can_start:
@@ -336,7 +342,7 @@ class PatternMatcher:
             or (has_range and 'experience' in ql)
             or ql.startswith(('•', '-', '*'))
         )
-        if not is_age_q and gate_context and (not asks_quantity or re.search(r'(?:candidates?\s+with|we\s+are\s+looking|only|required|must\s+have)', ql)):
+        if not is_age_q and gate_context and (not asks_quantity or (input_type in ('radio', 'checkbox') and re.search(r'(?:candidates?\s+with|we\s+are\s+looking|only|required|must\s+have)', ql))):
             reqs = []
             for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(\+)?\s*(?:years?|yrs?)\b', ql):
                 upper = float('inf') if m.group(3) else float(m.group(2))
@@ -929,7 +935,8 @@ class PatternMatcher:
                     return 'Yes', max(score, 0.95)
 
         if not is_yes_no and ('notice period' in ql or 'notice' in ql) and al.lower() in ('yes', 'true', '1') \
-                and not is_lwd and not re.search(r'\b(negotia|buy ?out|early release|resign)\w*', ql):
+                and not is_lwd and not re.search(r'\b(negotia|buy ?out|early release|resign)\w*', ql) \
+                and not any(p in ql for p in ('gdpr', 'privacy', 'legal', 'consent', 'cookie', 'terms')):
             return '15', max(score, 0.95)
 
         return answer, score

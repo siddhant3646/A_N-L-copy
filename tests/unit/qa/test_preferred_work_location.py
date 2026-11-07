@@ -132,3 +132,44 @@ class TestPreferredWorkLocation(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         res = json.loads(proc.stdout)
         self.assertEqual(res["matchedLabel"], "Delhi, India")
+
+    def test_js_should_default_to_no_for_preferred_locations(self):
+        """JS shouldDefaultToNo must not falsely flag preferred location questions as 'No'."""
+        script = """
+        const fs = require('fs');
+        const code = fs.readFileSync(0, 'utf-8');
+        const m = code.match(/const shouldDefaultToNo = \\([\\s\\S]*?\\n                \\};/);
+        if (!m) {
+            console.error('shouldDefaultToNo not found');
+            process.exit(1);
+        }
+        eval(m[0].replace(/^const /, 'global.'));
+
+        const results = {
+            preferredWorkLocation: shouldDefaultToNo("Select Your Preferred Work Location*"),
+            preferToWork: shouldDefaultToNo("Choose the location where you would prefer to work."),
+            preferredLocation: shouldDefaultToNo("preferred location"),
+            preferredBaseLocation: shouldDefaultToNo("What is your preferred base location?"),
+            referredByEmployee: shouldDefaultToNo("Were you referred by an employee?"),
+            employeeReferral: shouldDefaultToNo("Are you an employee referral?"),
+            conflictOfInterest: shouldDefaultToNo("Do you have any conflict of interest?"),
+            visaSponsorship: shouldDefaultToNo("Do you require visa sponsorship?")
+        };
+        console.log(JSON.stringify(results));
+        """
+        proc = subprocess.run(["node", "-e", script], input=self.js_code, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        res = json.loads(proc.stdout)
+        self.assertFalse(res["preferredWorkLocation"])
+        self.assertFalse(res["preferToWork"])
+        self.assertFalse(res["preferredLocation"])
+        self.assertFalse(res["preferredBaseLocation"])
+        self.assertTrue(res["referredByEmployee"])
+        self.assertTrue(res["employeeReferral"])
+        self.assertTrue(res["conflictOfInterest"])
+        self.assertTrue(res["visaSponsorship"])
+
+    def test_js_work_experience_date_select_label_cleans_currently_work_here(self):
+        """Work experience End Month dropdown must not be labeled 'I currently work here'."""
+        self.assertIn("!/currently work here/i.test(labelText)", self.js_code)
+

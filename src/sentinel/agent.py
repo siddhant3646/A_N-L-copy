@@ -9623,9 +9623,10 @@ class SentinelAgent:
 
         self._current_platform = "hirist"
         self.metrics['task_name'] = 'Hirist Application'
-        max_applications = self._env_int('HIRIST_MAX_APPLICATIONS', 5)
+        max_applications = self._env_int('HIRIST_MAX_APPLICATIONS', 10)
+        batch_size = self._env_int('HIRIST_BATCH_SIZE', 10)
         feed_url = os.getenv('HIRIST_FEED_URL', "https://www.hirist.tech/jobfeed")
-        print(f"🟧 Starting Hirist Apply automation (max {max_applications} applications)...")
+        print(f"🟧 Starting Hirist Apply automation (max {max_applications} applications, batch size {batch_size})...")
 
         # Fallback search URLs (randomized order when feed has no jobs or is exhausted)
         raw_fallbacks = [u.strip() for u in os.getenv('HIRIST_FALLBACK_URLS', '').split(',') if u.strip()]
@@ -9663,7 +9664,7 @@ class SentinelAgent:
         seen = set()
 
         for search_idx, search_url in enumerate(search_urls_to_try):
-            if applied >= max_applications or attempts >= max_applications:
+            if max_applications > 0 and (applied >= max_applications or attempts >= max_applications):
                 break
 
             current_norm = (page.url or '').split('#')[0]
@@ -9676,9 +9677,6 @@ class SentinelAgent:
                 except Exception as e:
                     print(f"   ⚠️ Hirist search URL navigation failed ({search_url}): {e}")
                     continue
-
-            # Apply experience filter (4 - 6 yrs) before scanning for jobs
-            await self._hirist_apply_experience_filter(page)
 
             no_jobs_shown = await self._hirist_has_no_jobs(page)
             jobs = await self._hirist_collect_jobs(page)
@@ -9693,88 +9691,132 @@ class SentinelAgent:
                 except Exception:
                     pass
 
+            # Gather all lazy-loaded jobs present in the link
+            if jobs and not no_jobs_shown and hasattr(page, 'evaluate'):
+                try:
+                    prev_count = len(jobs)
+                    for _ in range(2):
+                        await page.evaluate("window.scrollBy(0, 800);")
+                        await asyncio.sleep(0.8)
+                        new_jobs = await self._hirist_collect_jobs(page)
+                        if len(new_jobs) > prev_count:
+                            jobs = new_jobs
+                            prev_count = len(jobs)
+                    await page.evaluate("window.scrollTo(0, 0);")
+                    await asyncio.sleep(0.5)
+                except Exception:
+                    pass
+
             if not jobs or no_jobs_shown:
                 print(f"ℹ️ No jobs found on {search_url} (empty feed or 'No result found'). Checking next fallback URL...")
                 continue
 
             print(f"🔎 Found {len(jobs)} Hirist job link(s) on {search_url}")
 
-            for job in jobs:
-                # Hard cap on BOTH confirmed applications and apply attempts so we can
-                # never submit more than max_applications.
-                if applied >= max_applications or attempts >= max_applications:
-                    print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
+            job_batches = [jobs[i:i + batch_size] for i in range(0, len(jobs), batch_size)]
+            print(f"📦 Processing {len(jobs)} Hirist job(s) in {len(job_batches)} batch(es) of {batch_size}...")
+
+            for batch_idx, batch in enumerate(job_batches, start=1):
+                if max_applications > 0 and (applied >= max_applications or attempts >= max_applications):
                     break
-                url = job.get('url')
-                if not url or url in seen:
-                    continue
-                seen.add(url)
 
-                # Pre-filter before navigating
-                suitable, reason = self._is_hirist_job_suitable(
-                    job.get('title', ''),
-                    job.get('exp', ''),
-                    job.get('cardText', '')
-                )
-                if not suitable:
-                    skipped += 1
-                    print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {job.get('title', '')}")
-                    continue
+                print(f"\n📦 === Hirist Batch {batch_idx}/{len(job_batches)} ({len(batch)} jobs) ===")
+                batch_applied = 0
+                batch_skipped = 0
 
-                scanned += 1
-                self._current_job_url = url
+                for job in batch:
+                    # Hard cap on BOTH confirmed applications and apply attempts so we can
+                    # never submit more than max_applications if configured.
+                    if max_applications > 0 and (applied >= max_applications or attempts >= max_applications):
+                        print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
+                        break
+                    url = job.get('url')
+                    if not url or url in seen:
+                        continue
+                    seen.add(url)
 
-                try:
-                    await page.goto(url, wait_until='domcontentloaded', timeout=45000)
-                    await asyncio.sleep(random.uniform(2.0, 3.5))
-                    await self._hirist_dismiss_dialogs(page)
-
-                    info = await self._hirist_read_meta(page)
-                    title = info.get('jobTitle') or job.get('title') or '<untitled>'
-                    company = info.get('companyName') or ''
-                    exp_req = info.get('exp') or job.get('exp') or ''
-
-                    suitable, reason = self._is_hirist_job_suitable(title, exp_req)
+                    # Pre-filter before navigating
+                    suitable, reason = self._is_hirist_job_suitable(
+                        job.get('title', ''),
+                        job.get('exp', ''),
+                        job.get('cardText', '')
+                    )
                     if not suitable:
                         skipped += 1
-                        print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {title} @ {company}")
+                        batch_skipped += 1
+                        print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {job.get('title', '')}")
                         continue
 
-                    status = await self._hirist_click_apply(page)
-                    if status == 'external':
-                        skipped += 1
-                        print(f"   ⏭️ Skipping external apply: {title} @ {company}")
-                    elif status == 'already':
-                        skipped += 1
-                        print(f"   ↩️ Already applied: {title} @ {company}")
-                    elif status == 'applied':
-                        attempts += 1
-                        # 1) Handle a screening questionnaire FIRST. Running the
-                        #    generic confirm-modal helper before this could click the
-                        #    questionnaire's own Submit button and skip the questions.
-                        q_handled = await self._hirist_handle_questionnaire(page)
-                        await asyncio.sleep(random.uniform(1.0, 2.0))
-                        # 2) Only handle a plain confirmation dialog when nothing was
-                        #    submitted yet.
-                        if not q_handled and not await self._hirist_verify_applied(page):
-                            await self._hirist_confirm_modal(page)
+                    scanned += 1
+                    self._current_job_url = url
+
+                    try:
+                        await page.goto(url, wait_until='domcontentloaded', timeout=45000)
+                        await asyncio.sleep(random.uniform(2.0, 3.5))
+                        await self._hirist_dismiss_dialogs(page)
+
+                        info = await self._hirist_read_meta(page)
+                        title = info.get('jobTitle') or job.get('title') or '<untitled>'
+                        company = info.get('companyName') or ''
+                        exp_req = info.get('exp') or job.get('exp') or ''
+
+                        suitable, reason = self._is_hirist_job_suitable(title, exp_req)
+                        if not suitable:
+                            skipped += 1
+                            batch_skipped += 1
+                            print(f"   ⏭️ Skipping unsuitable Hirist job ({reason}): {title} @ {company}")
+                            continue
+
+                        status = await self._hirist_click_apply(page)
+                        if status == 'external':
+                            skipped += 1
+                            batch_skipped += 1
+                            print(f"   ⏭️ Skipping external apply: {title} @ {company}")
+                        elif status == 'already':
+                            skipped += 1
+                            batch_skipped += 1
+                            print(f"   ↩️ Already applied: {title} @ {company}")
+                        elif status == 'applied':
+                            attempts += 1
+                            # 1) Handle a screening questionnaire FIRST. Running the
+                            #    generic confirm-modal helper before this could click the
+                            #    questionnaire's own Submit button and skip the questions.
+                            q_handled = await self._hirist_handle_questionnaire(page)
                             await asyncio.sleep(random.uniform(1.0, 2.0))
-                            # A questionnaire may only appear after confirming.
-                            q_handled = await self._hirist_handle_questionnaire(page) or q_handled
-                        await asyncio.sleep(random.uniform(0.5, 1.5))
-                        if q_handled or await self._hirist_verify_applied(page) or await self._hirist_recheck_applied(page, url):
-                            applied += 1
-                            self.metrics['applications_submitted'] = applied
-                            print(f"   ✅ Applied ({applied}/{max_applications}): {title} @ {company}")
-                            if applied >= max_applications:
-                                print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
-                                break
+                            # 2) Only handle a plain confirmation dialog when nothing was
+                            #    submitted yet.
+                            if not q_handled and not await self._hirist_verify_applied(page):
+                                await self._hirist_confirm_modal(page)
+                                await asyncio.sleep(random.uniform(1.0, 2.0))
+                                # A questionnaire may only appear after confirming.
+                                q_handled = await self._hirist_handle_questionnaire(page) or q_handled
+                            await asyncio.sleep(random.uniform(0.5, 1.5))
+                            if q_handled or await self._hirist_verify_applied(page) or await self._hirist_recheck_applied(page, url):
+                                applied += 1
+                                batch_applied += 1
+                                self.metrics['applications_submitted'] = applied
+                                print(f"   ✅ Applied ({applied}{f'/{max_applications}' if max_applications > 0 else ''}): {title} @ {company}")
+                                if max_applications > 0 and applied >= max_applications:
+                                    print(f"🛑 Reached Hirist application cap ({max_applications}). Stopping task.")
+                                    break
+                            else:
+                                print(f"   ⚠️ Apply not confirmed: {title} @ {company} (attempt {attempts}{f'/{max_applications}' if max_applications > 0 else ''})")
                         else:
-                            print(f"   ⚠️ Apply not confirmed: {title} @ {company} (attempt {attempts}/{max_applications})")
-                    else:
-                        print(f"   ⚠️ No apply control found: {title} @ {company}")
-                except Exception as e:
-                    print(f"   ⚠️ Hirist job error ({url}): {e}")
+                            print(f"   ⚠️ No apply control found: {title} @ {company}")
+                    except Exception as e:
+                        print(f"   ⚠️ Hirist job error ({url}): {e}")
+
+                print(f"📦 Hirist Batch {batch_idx}/{len(job_batches)} finished: {batch_applied} applied, {batch_skipped} skipped.")
+
+                if batch_idx < len(job_batches):
+                    if max_applications > 0 and (applied >= max_applications or attempts >= max_applications):
+                        break
+                    batch_pause = self._env_int('HIRIST_BATCH_PAUSE_SECONDS', 10)
+                    print(f"⏸️ Resting {batch_pause}s before next batch...")
+                    await asyncio.sleep(batch_pause)
+
+            if max_applications > 0 and (applied >= max_applications or attempts >= max_applications):
+                break
 
         self._current_job_url = ""
         print(f"\n🟧 Hirist task finished: {applied} applied, {skipped} skipped, {scanned} scanned.")
@@ -9973,8 +10015,8 @@ class SentinelAgent:
             return False
 
     def _is_hirist_job_suitable(self, title: Any, exp_text: str = "", card_text: str = "") -> Tuple[bool, str]:
-        """Check if a Hirist job is suitable for candidate (SDE-2 with 4.2 years experience).
-        Filters out senior executive roles (VP, Director, etc.) and jobs requiring min exp > 6 years.
+        """Check if a Hirist job is suitable for candidate.
+        Filters out senior executive roles (VP, Director, etc.).
         Supports passing either a job dict or separate title, exp_text, card_text strings.
         """
         if isinstance(title, dict):
@@ -9984,7 +10026,6 @@ class SentinelAgent:
             card_text = card_text or job_dict.get('cardText', '') or job_dict.get('card_text', '')
 
         title_lower = (str(title) if title else '').lower()
-        combined = f"{title_lower} {(exp_text or '').lower()} {(card_text or '').lower()}"
 
         # 1. Executive / Senior Management Blacklist
         senior_roles = [
@@ -9995,21 +10036,6 @@ class SentinelAgent:
         for role in senior_roles:
             if role in title_lower or f" {role} " in f" {title_lower} ":
                 return False, f"senior/executive role ({role.strip()})"
-
-        # 2. Experience Filter: candidate has 4.2 years experience.
-        # Skip if minimum required experience is greater than 6 years.
-        import re
-        range_match = re.search(r'(\d+)\s*[-–]\s*(\d+)\s*(?:yrs|years)', combined, re.IGNORECASE)
-        if range_match:
-            min_exp = int(range_match.group(1))
-            if min_exp > 6:
-                return False, f"min exp {min_exp} yrs exceeds candidate's 4.2 yrs"
-        else:
-            single_match = re.search(r'(\d+)\+?\s*(?:yrs|years)', combined, re.IGNORECASE)
-            if single_match:
-                min_exp = int(single_match.group(1))
-                if min_exp > 6:
-                    return False, f"min exp {min_exp}+ yrs exceeds candidate's 4.2 yrs"
 
         return True, "suitable"
 

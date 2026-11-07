@@ -97,18 +97,43 @@ class TestHiristApplyCap(unittest.TestCase):
         self.assertIn('confirm', calls)
 
     def test_suitability_filter_skips_unsuitable_jobs(self):
-        """Jobs with executive titles or excessive min experience must be skipped."""
+        """Jobs with executive titles must be skipped; experience filter for 4.2 yrs is removed."""
         unsuitable_vp = {'title': 'Medi Assist - Vice President', 'exp': '9 - 16 yrs'}
-        unsuitable_architect = {'title': 'Unisys - Technical Architect', 'exp': '12 - 20 yrs'}
-        unsuitable_lead = {'title': 'Lead Software Engineer', 'exp': '8 - 12 yrs'}
+        unsuitable_director = {'title': 'Unisys - Engineering Director', 'exp': '12 - 20 yrs'}
+        suitable_lead = {'title': 'Lead Software Engineer', 'exp': '8 - 12 yrs'}
         suitable_sde = {'title': 'Node.js Developer - Backend Architecture', 'exp': '4 - 8 yrs'}
         suitable_se = {'title': 'Symplr - Software Engineer - Java/AngularJS', 'exp': '4 - 6 yrs'}
 
         self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_vp)[0])
-        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_architect)[0])
-        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_lead)[0])
+        self.assertFalse(self.agent._is_hirist_job_suitable(unsuitable_director)[0])
+        self.assertTrue(self.agent._is_hirist_job_suitable(suitable_lead)[0])
         self.assertTrue(self.agent._is_hirist_job_suitable(suitable_sde)[0])
         self.assertTrue(self.agent._is_hirist_job_suitable(suitable_se)[0])
+
+    def test_applies_to_batch_of_10_jobs(self):
+        """When HIRIST_MAX_APPLICATIONS is not set, task runs for 10 jobs by default."""
+        os.environ.pop('HIRIST_MAX_APPLICATIONS', None)
+        total_jobs = 25
+        self.agent._hirist_collect_jobs = AsyncMock(return_value=[
+            {'id': str(i), 'url': f'https://www.hirist.tech/j/test-{i}', 'title': f'Job {i}'}
+            for i in range(total_jobs)
+        ])
+        self.agent._hirist_dismiss_dialogs = AsyncMock()
+        self.agent._hirist_read_meta = AsyncMock(
+            return_value={'jobTitle': 'Backend Engineer', 'companyName': 'Acme'}
+        )
+        self.agent._hirist_click_apply = AsyncMock(return_value='applied')
+        self.agent._hirist_handle_questionnaire = AsyncMock(return_value=False)
+        self.agent._hirist_verify_applied = AsyncMock(return_value=True)
+        self.agent._hirist_recheck_applied = AsyncMock(return_value=True)
+        self.agent._hirist_confirm_modal = AsyncMock(return_value=False)
+
+        with patch('src.sentinel.agent.asyncio.sleep', AsyncMock()):
+            success = asyncio.run(self.agent._handle_hirist_apply_task())
+
+        self.assertTrue(success)
+        self.assertEqual(self.agent._hirist_click_apply.await_count, 10)
+        self.assertEqual(self.agent.metrics['applications_submitted'], 10)
 
     def test_script_error_count_resets_between_tasks(self):
         """_script_error_count must be reset in reset_per_task_state to prevent cascading task aborts."""

@@ -3239,7 +3239,16 @@
         "checkbox": "Yes",
         "number": "0"
       },
-      "priority": 8
+      "priority": 8,
+      "negative_patterns": [
+        "az 104",
+        "az 400",
+        "az-104",
+        "az-400",
+        "dp - 700",
+        "dp 700",
+        "dp-700"
+      ]
     },
     "joining_bonus": {
       "patterns": [
@@ -5081,7 +5090,6 @@
         "consent to the privacy policy",
         "confirmed",
         "i confirm",
-        "confirm",
         "i consent",
         "i consent to",
         "you declare that you have read and agree to the job applications privacy notice",
@@ -10688,8 +10696,8 @@
     },
     "current_np_status": {
       "category": "notice_period",
-      "default": "Not Serving (1 Month NP on Paper)",
-      "priority": 9,
+      "default": "Serving Notice Period (15 days remaining)",
+      "priority": 18,
       "patterns": [
         "current status",
         "what is your current status",
@@ -10700,12 +10708,12 @@
         "are you currently serving"
       ],
       "input_type_defaults": {
-        "radio": "Not Serving (1 Month NP on Paper)",
-        "select": "Not Serving (1 Month NP on Paper)",
+        "radio": "Currently In Notice or Serving Notice",
+        "select": "Currently In Notice or Serving Notice",
         "text": "Serving Notice Period (15 days remaining)",
-        "textarea": "Not Serving (1 Month NP on Paper)",
-        "checkbox": "No",
-        "number": "1"
+        "textarea": "Serving Notice Period (15 days remaining)",
+        "checkbox": "Serving Notice Period",
+        "number": "15"
       },
       "negative_patterns": [
         "location",
@@ -13557,7 +13565,15 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "c++ java or golang",
+        "c++, java or golang",
+        "hands-on with -",
+        "programming tool",
+        "which of these",
+        "which of these development"
+      ]
     },
     "rust_experience": {
       "patterns": [
@@ -13689,7 +13705,15 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "c++ java or golang",
+        "c++, java or golang",
+        "hands-on with -",
+        "programming tool",
+        "which of these",
+        "which of these development"
+      ]
     },
     "csharp_experience": {
       "patterns": [
@@ -14162,7 +14186,12 @@
         "select": "4.2 Years",
         "checkbox": "Yes",
         "textarea": "4.2 Years"
-      }
+      },
+      "negative_patterns": [
+        "rate",
+        "rating",
+        "self rating"
+      ]
     },
     "elk_stack_experience": {
       "patterns": [
@@ -16025,7 +16054,14 @@
         "checkbox": "Full-time",
         "textarea": "Full-time",
         "number": "0"
-      }
+      },
+      "negative_patterns": [
+        "overlap",
+        "time zone",
+        "timezone",
+        "u.s.",
+        "us hours"
+      ]
     },
     "relocation_us": {
       "patterns": [
@@ -65654,11 +65690,17 @@
         "available to start immediately",
         "can you join within a week",
         "are you serving notice",
-        "serving notice period"
+        "serving notice period",
+        "can you join on immediate basis ? max 7 days ? noida location ?",
+        "can you join on immediate basis ? max 7 days",
+        "can you join on immediate basis",
+        "join on immediate basis",
+        "max 7 days",
+        "max 7 days ? noida location"
       ],
       "category": "notice_period",
       "default": "Yes",
-      "priority": 9,
+      "priority": 18,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
@@ -87451,11 +87493,26 @@
         "comfortable with us time overlaps",
         "us time overlaps",
         "us time overlap",
-        "overlap with us hours"
+        "overlap with us hours",
+        "are you able to overlap at least 2-4 hours with u.s. working hours",
+        "are you able to overlap at least 2-4 hours with us working hours",
+        "are you able to overlap at least 2 to 4 hours with u.s. working hours",
+        "are you able to overlap at least 2 to 4 hours with us working hours",
+        "able to overlap at least 2-4 hours with u.s. working hours",
+        "able to overlap at least 2-4 hours with us working hours",
+        "overlap at least 2-4 hours with u.s. working hours",
+        "overlap at least 2-4 hours with us working hours",
+        "overlap at least 2-4 hours",
+        "overlap 2-4 hours with u.s. working hours",
+        "overlap 2-4 hours with us working hours",
+        "overlap 2 to 4 hours with u.s. working hours",
+        "overlap 2 to 4 hours with us working hours",
+        "overlap 2-4 hours",
+        "overlap 2 to 4 hours"
       ],
       "category": "yes_no",
       "default": "Yes",
-      "priority": 15,
+      "priority": 20,
       "input_type_defaults": {
         "radio": "Yes",
         "select": "Yes",
@@ -88335,11 +88392,19 @@
         "what state are you currently located in?",
         "state you are currently located in",
         "which state are you currently located in",
-        "state in which you currently reside"
+        "state in which you currently reside",
+        "if the state you currently live in is not listed above, please confirm which state you reside in",
+        "if the state you currently live in is not listed above please confirm which state you reside in",
+        "if the state you currently live in is not listed above",
+        "please confirm which state you reside in",
+        "confirm which state you reside in",
+        "which state you reside in",
+        "state you reside in",
+        "confirm state you reside in"
       ],
       "category": "location",
       "default": "Karnataka",
-      "priority": 15,
+      "priority": 18,
       "input_type_defaults": {
         "text": "Karnataka",
         "select": "Karnataka",
@@ -1216468,7 +1216533,16 @@
         "textarea": "Yes",
         "checkbox": "Yes",
         "number": "1"
-      }
+      },
+      "negative_patterns": [
+        "family",
+        "relative",
+        "relatives",
+        "stack",
+        "tech stack",
+        "technologies",
+        "tools"
+      ]
     },
     "night_shift_3pm_to_12am": {
       "patterns": [
@@ -1314170,7 +1314244,11 @@
       "patterns": [
         "as part of the employment process, all candidates are subject to employment and education verification, as well as a comprehensive background check, in accordance with applicable laws and company policies. i understand that i will be provided with additional information and asked to provide authorization before any such checks are conducted.",
         "subject to employment and education verification",
-        "subject to employment and education verification, as well as a comprehensive background check"
+        "subject to employment and education verification, as well as a comprehensive background check",
+        "as part of the employment process, all candidates are subject to employment and education verificati",
+        "as part of the employment process, all candidates are subject to employment and education verification",
+        "all candidates are subject to employment and education verificati",
+        "all candidates are subject to employment and education verification"
       ],
       "category": "compliance",
       "default": "Yes",
@@ -1314281,11 +1314359,27 @@
         "do you have any relatives employed by ping identity? if yes, provide their name below.",
         "do you have any relatives employed by ping identity",
         "do you have any relatives employed by the company",
-        "relatives employed by ping identity"
+        "relatives employed by ping identity",
+        "are any relatives currently employed here? if yes, give the full name of employee working in inchcape",
+        "are any relatives currently employed here? if yes, give the full name of employee working in",
+        "are any relatives currently employed here? if yes, give the full name",
+        "are any relatives currently employed here? if yes",
+        "are any relatives currently employed here",
+        "are any relatives currently employed",
+        "any relatives currently employed here",
+        "any relatives currently employed",
+        "relatives currently employed here",
+        "relatives currently employed",
+        "relatives employed here",
+        "relatives employed",
+        "relatives currently working here",
+        "any relatives working here",
+        "do you have any relatives currently employed",
+        "do you have any relatives currently working"
       ],
       "category": "compliance",
       "default": "No",
-      "priority": 18,
+      "priority": 20,
       "input_type_defaults": {
         "text": "No",
         "textarea": "No",
@@ -1315631,6 +1315725,236 @@
         "textarea": "Yes, extensive hands-on experience building Agentic AI systems with Python, LangChain, and modern full-stack architectures.",
         "radio": "Yes",
         "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "development_programming_tool_hands_on_c_java_golang": {
+      "patterns": [
+        "which of these development/programming tool are you hands-on with - c++, java or golang",
+        "which of these development programming tool are you hands on with - c++, java or golang",
+        "which of these development/programming tool are you hands-on with",
+        "which of these development programming tool are you hands-on with",
+        "which of these development programming tools are you hands-on with",
+        "which of these development programming tools are you hands on with",
+        "development/programming tool are you hands-on with - c++, java or golang",
+        "development programming tool are you hands-on with - c++, java or golang",
+        "development programming tool are you hands-on with",
+        "development/programming tool are you hands-on with",
+        "c++, java or golang",
+        "c++ java or golang",
+        "c++, java, or golang",
+        "which development/programming tool are you hands-on with",
+        "which development programming tool are you hands-on with",
+        "which programming tool are you hands-on with"
+      ],
+      "category": "skills",
+      "default": "Java",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Java",
+        "textarea": "Java",
+        "radio": "Java",
+        "select": "Java",
+        "checkbox": "Java",
+        "number": ""
+      }
+    },
+    "full_stack_technologies_currently_working_with": {
+      "patterns": [
+        "which full-stack technologies are you currently working with",
+        "which full stack technologies are you currently working with",
+        "which full-stack technologies are you working with",
+        "which full stack technologies are you working with",
+        "full-stack technologies are you currently working with",
+        "full stack technologies are you currently working with",
+        "what full-stack technologies are you currently working with",
+        "what full stack technologies are you currently working with",
+        "which technologies are you currently working with",
+        "technologies are you currently working with",
+        "technologies you are currently working with",
+        "which full stack technologies do you work with",
+        "which full-stack technologies do you work with"
+      ],
+      "category": "technical",
+      "default": "Java, Spring Boot, React, Node.js, Python, PostgreSQL, MongoDB, AWS, Kafka",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "Java, Spring Boot, React, Node.js, Python, AWS, Kafka",
+        "textarea": "Java, Spring Boot, React, Node.js, Python, PostgreSQL, MongoDB, AWS, Kafka",
+        "select": "Java, Spring Boot, React",
+        "radio": "Java, Spring Boot, React",
+        "checkbox": "Java, Spring Boot, React, Node.js, Python, PostgreSQL, MongoDB, AWS, Kafka",
+        "number": ""
+      }
+    },
+    "certifications_dp700_az104_az400": {
+      "patterns": [
+        "have you done any of the certification below ( dp - 700 or az-104 or az-400)",
+        "have you done any of the certification below ( dp-700 or az-104 or az-400)",
+        "have you done any of the certification below (dp - 700 or az-104 or az-400)",
+        "have you done any of the certification below dp - 700 or az-104 or az-400",
+        "have you done any of the certification below",
+        "certification below ( dp - 700 or az-104 or az-400)",
+        "certification below (dp - 700 or az-104 or az-400)",
+        "dp - 700 or az-104 or az-400",
+        "dp-700 or az-104 or az-400",
+        "dp 700 or az 104 or az 400"
+      ],
+      "category": "compliance",
+      "default": "None",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "None",
+        "textarea": "None",
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "number": "N/A"
+      }
+    },
+    "independently_designed_architecture_web_applications": {
+      "patterns": [
+        "have you independently designed the architecture of web applications",
+        "independently designed the architecture of web applications",
+        "have you independently designed the architecture",
+        "independently designed the architecture",
+        "designed the architecture of web applications",
+        "designed architecture of web applications",
+        "architecture of web applications"
+      ],
+      "category": "skills",
+      "default": "Yes, I have independently designed and implemented scalable web application architectures using Java Spring Boot microservices, React, and AWS cloud infrastructure.",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I have independently designed and implemented scalable web application architectures using Java Spring Boot microservices, React, and AWS cloud infrastructure.",
+        "number": "1"
+      }
+    },
+    "available_in_30_days_notice_period": {
+      "patterns": [
+        "are you available in 30 days notice period",
+        "available in 30 days notice period",
+        "are you available in 30 days notice",
+        "available in 30 days notice",
+        "are you available in 30 days",
+        "available in 30 days",
+        "are you available within 30 days notice period",
+        "available within 30 days notice period",
+        "are you available within 30 days notice",
+        "available within 30 days notice"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes, I am available within 15 days.",
+        "checkbox": "Yes",
+        "number": "15"
+      }
+    },
+    "expected_salary_not_more_than_threshold": {
+      "patterns": [
+        "expected salary should not be more than 18 or 19 lpa",
+        "expected salary should not be more than",
+        "salary should not be more than",
+        "expected ctc should not be more than",
+        "ctc should not be more than"
+      ],
+      "category": "salary",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "notice_period_immediate_to_30_days": {
+      "patterns": [
+        "notice period should be immediate to 30 days",
+        "notice period should be immediate",
+        "notice period should be 0 to 30 days",
+        "notice period should be 0-30 days",
+        "notice period should be within 30 days"
+      ],
+      "category": "notice_period",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "checkbox": "Yes",
+        "number": "15"
+      }
+    },
+    "self_rating_splunk_dynatrace": {
+      "patterns": [
+        "self rating in splunk",
+        "self rating in dynatrace",
+        "self rating in"
+      ],
+      "category": "skills",
+      "default": "4",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "4/5_Advanced",
+        "select": "4/5_Advanced",
+        "text": "4",
+        "textarea": "4",
+        "checkbox": "4",
+        "number": "4"
+      }
+    },
+    "position_applied_for": {
+      "patterns": [
+        "position applied for",
+        "role applied for",
+        "which position are you applying for",
+        "position you are applying for",
+        "role you are applying for"
+      ],
+      "category": "role",
+      "default": "Software Engineer",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Software Engineer",
+        "select": "Software Engineer",
+        "text": "Software Engineer 2 (SDE-2)",
+        "textarea": "Software Engineer 2 (SDE-2)",
+        "checkbox": "Software Engineer",
+        "number": ""
+      }
+    },
+    "english_communication_and_us_overlap": {
+      "patterns": [
+        "clear written and spoken english and availability for agreed overlap with us eastern am business ho",
+        "clear written and spoken english and availability for agreed overlap with us eastern am business hours",
+        "clear written and spoken english and availability for agreed overlap",
+        "clear written and spoken english",
+        "availability for agreed overlap with us eastern am business hours",
+        "overlap with us eastern am business hours"
+      ],
+      "category": "availability",
+      "default": "Yes",
+      "priority": 18,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
         "checkbox": "Yes",
         "number": "1"
       }

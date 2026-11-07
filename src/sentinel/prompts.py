@@ -415,9 +415,8 @@ PHASE 1 - JOB FEED:
 1. Hirist is a Next.js + MUI single-page app. CSS classes are hashed
    (`mui-style-*`) and MUST NOT be used as selectors. Match by visible text,
    ARIA roles, and `href` instead.
-2. Experience filter: ensure the experience level filter is set to 4 - 6 yrs
-   by clicking `#lotus-select-experience`, selecting the option with `data-value="4"`
-   ('4 - 6 yrs'), and clicking the filter row's 'Apply' button before collecting jobs.
+2. Experience filter: do not apply experience filters; collect all tech jobs
+   present in the feed/link.
 3. Job cards link to job detail pages with `href` matching `/j/<slug>-<id>` or
    `/j/<id>`. Collect those links (deduplicate).
 4. Job metadata is available in `window.__NEXT_DATA__`
@@ -438,17 +437,14 @@ PHASE 2 - JOB DETAIL + APPLY:
 6. Verify the application was recorded ("Applied", "Application sent", or the job
    disappearing from the feed). Some jobs allow an optional expected-CTC /
    notice-period field - answer with the Sentinel Q&A engine.
-7. Return to the job feed and process the next job.
+7. Return to the job feed and process the next job in batches of 10.
 
-TASK COMPLETE: After the configured number of applications are submitted, or when
-no new jobs remain in the feed.
+TASK COMPLETE: After all jobs present in the link are applied to (processed in batches
+of 10), or after the configured number of applications are submitted.
 
 DOM Selectors (hirist.tech):
 - Job feed URL: https://www.hirist.tech/jobfeed
 - Category feed: https://www.hirist.tech/k/java-jobs
-- Experience filter combobox: #lotus-select-experience
-- Experience filter 4-6 yrs option: li[role="option"][data-value="4"], li[role="option"]:has-text("4 - 6")
-- Filter Apply button: .MuiGrid-container button:has-text("Apply")
 - Fallback search URLs:
   - https://www.hirist.tech/k/full-stack-jobs?ref=topnavigation
   - https://www.hirist.tech/k/java-jobs?ref=popular_tag

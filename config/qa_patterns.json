@@ -1078,6 +1078,11 @@
         "city preference",
         "interview city",
         "preferred location",
+        "preferred locations",
+        "preferrred location",
+        "preferrred locations",
+        "prefered location",
+        "prefered locations",
         "please select your preferred location",
         "location preference",
         "work location",
@@ -1086,7 +1091,9 @@
         "select your preferred work location",
         "choose the location where you would prefer to work",
         "select preferred work location",
-        "preferred work location"
+        "preferred work location",
+        "prefered work location",
+        "preferrred work location"
       ],
       "category": "location",
       "default": "Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida",
@@ -1778,7 +1785,14 @@
         "production migration",
         "database migration",
         "have you completed",
-        "have you done"
+        "have you done",
+        "which year",
+        "what year",
+        "in which year",
+        "year did you",
+        "graduation year",
+        "year of passing",
+        "passing year"
       ]
     },
     "education_bachelor": {
@@ -6260,7 +6274,12 @@
         "years of experience do you have in generative",
         "how many years",
         "how many",
-        "number of"
+        "number of",
+        "evaluate quality",
+        "evals",
+        "llm as judge",
+        "regression test",
+        "how did you evaluate"
       ],
       "category": "skills",
       "default": "Yes, worked with GPT APIs and LangChain",
@@ -15756,7 +15775,17 @@
         "work experience",
         "exp",
         "do you have",
-        "do u have"
+        "do u have",
+        "2 jobs",
+        "second job",
+        "2nd job",
+        "another job",
+        "moonlighting",
+        "dual employment",
+        "breaks our company policy",
+        "do not allow doing 2 jobs",
+        "working in a 2nd job",
+        "working in a second job"
       ]
     },
     "no_part_time": {
@@ -86406,22 +86435,34 @@
     "graduation_year": {
       "category": "education",
       "default": "2022",
-      "priority": 9,
+      "priority": 18,
       "patterns": [
         "what is your year of passing graduation year",
         "year of passing graduation year",
         "graduation year",
         "year of passing",
         "year of graduation",
-        "passing year"
+        "passing year",
+        "in which year did you complete your graduation degree?",
+        "in which year did you complete your graduation degree",
+        "in which year did you complete your graduation",
+        "which year did you complete your graduation degree",
+        "which year did you complete your graduation",
+        "what year did you complete your graduation",
+        "year did you complete your graduation",
+        "in which year did you complete your degree",
+        "year did you graduate",
+        "which year did you graduate",
+        "year of completion of graduation",
+        "graduation completion year"
       ],
       "input_type_defaults": {
         "text": "2022",
-        "number": "2022",
-        "select": "2022",
         "textarea": "2022",
         "radio": "2022",
-        "checkbox": "2022"
+        "select": "2022",
+        "checkbox": "2022",
+        "number": "2022"
       },
       "negative_patterns": [
         "vit bhopal",
@@ -1315957,6 +1315998,384 @@
         "textarea": "Yes",
         "checkbox": "Yes",
         "number": "1"
+      }
+    },
+    "dual_employment_second_job_rejection": {
+      "patterns": [
+        "this is a full-time role and we do not allow doing 2 jobs. will you be working in a 2nd job? you will be rejected if you select yes as it breaks our company policy. read carefully before answering.",
+        "this is a full-time role and we do not allow doing 2 jobs. will you be working in a 2nd job?",
+        "we do not allow doing 2 jobs. will you be working in a 2nd job?",
+        "will you be working in a 2nd job? you will be rejected if you select yes as it breaks our company policy",
+        "will you be working in a 2nd job",
+        "will you be working in a second job",
+        "working in a 2nd job",
+        "working in a second job",
+        "working a 2nd job",
+        "working a second job",
+        "allow doing 2 jobs",
+        "doing 2 jobs",
+        "second job",
+        "2nd job"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "priority": 20,
+      "input_type_defaults": {
+        "text": "No",
+        "textarea": "No",
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "number": "0"
+      }
+    },
+    "rdbms_databases_hands_on_experience": {
+      "patterns": [
+        "please mention your hands-on experience with rdbms databases such as sql, postgresql, oracle",
+        "hands-on experience with rdbms databases such as sql, postgresql, oracle",
+        "hands-on experience with rdbms databases",
+        "experience with rdbms databases such as sql, postgresql, oracle",
+        "experience with rdbms databases",
+        "experience with rdbms",
+        "rdbms databases such as sql, postgresql, oracle",
+        "rdbms databases experience",
+        "experience in rdbms databases"
+      ],
+      "category": "experience",
+      "default": "4.2 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "4.2 Years",
+        "textarea": "4.2 Years",
+        "radio": "4.2 Years",
+        "select": "4.2 Years",
+        "checkbox": "4.2 Years",
+        "number": ""
+      }
+    },
+    "terraform_modules_built_from_scratch": {
+      "patterns": [
+        "what terraform modules have you built from scratch?",
+        "what terraform modules have you built from scratch",
+        "terraform modules have you built from scratch",
+        "terraform modules you have built from scratch",
+        "what terraform modules have you created",
+        "terraform modules built from scratch",
+        "terraform modules from scratch"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, built custom Terraform modules for AWS VPC networking and ECS clusters.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, built custom Terraform modules for AWS VPC networking and ECS clusters.",
+        "textarea": "Yes, built custom Terraform modules for AWS VPC networking and ECS clusters.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "sre_responsibilities_handled": {
+      "patterns": [
+        "what sre responsibilities do you currently handle?",
+        "what sre responsibilities do you currently handle",
+        "what sre responsibilities do you handle",
+        "sre responsibilities do you currently handle",
+        "sre responsibilities you currently handle",
+        "describe your sre responsibilities",
+        "sre responsibilities"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, handle production monitoring and alerting with Grafana and Splunk.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, handle production monitoring and alerting with Grafana and Splunk.",
+        "textarea": "Yes, handle production monitoring and alerting with Grafana and Splunk.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "backend_technologies_worked_with": {
+      "patterns": [
+        "which backend technologies have you worked with hands-on?",
+        "which backend technologies have you worked with hands-on",
+        "which backend technologies have you worked with",
+        "what backend technologies have you worked with",
+        "backend technologies have you worked with hands-on",
+        "backend technologies have you worked with",
+        "backend technologies you have worked with",
+        "hands-on backend technologies"
+      ],
+      "category": "technical_screening",
+      "default": "Java, Spring Boot, Node.js, Python, PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Docker, Kubernetes, and AWS.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Java, Spring Boot, Node.js, Python, PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Docker, Kubernetes, and AWS.",
+        "textarea": "Java, Spring Boot, Node.js, Python, PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Docker, Kubernetes, and AWS.",
+        "radio": "Java",
+        "select": "Java, Spring Boot, Node.js, Python, PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Docker, Kubernetes, and AWS.",
+        "checkbox": "Java, Spring Boot, Node.js, Python, PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Docker, Kubernetes, and AWS",
+        "number": ""
+      }
+    },
+    "ai_guardrails_prompt_injection_data_leakage": {
+      "patterns": [
+        "what guardrail did you add for prompt injection, data leakage or tool permission?",
+        "what guardrail did you add for prompt injection, data leakage or tool permission",
+        "what guardrail did you add for prompt injection",
+        "what guardrails did you add for prompt injection",
+        "guardrail did you add for prompt injection, data leakage or tool permission",
+        "guardrail did you add for prompt injection",
+        "guardrails for prompt injection, data leakage",
+        "guardrails for prompt injection"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, implemented multi-layered guardrails for prompt injection and data leakage.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, implemented multi-layered guardrails for prompt injection and data leakage.",
+        "textarea": "Yes, implemented multi-layered guardrails for prompt injection and data leakage.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "llm_quality_evaluation_strategy": {
+      "patterns": [
+        "how did you evaluate quality (evals, llm as judge, regression test)?",
+        "how did you evaluate quality (evals, llm as judge, regression test)",
+        "how did you evaluate quality",
+        "evaluate quality (evals, llm as judge, regression test)",
+        "how do you evaluate quality",
+        "how do you evaluate llm quality",
+        "evals, llm as judge, regression test"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, evaluated quality using automated evals, LLM-as-a-judge, and regression test suites.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, evaluated quality using automated evals, LLM-as-a-judge, and regression test suites.",
+        "textarea": "Yes, evaluated quality using automated evals, LLM-as-a-judge, and regression test suites.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "release_management_experience": {
+      "patterns": [
+        "do you have exp in release management",
+        "do you have experience in release management",
+        "experience in release management",
+        "exp in release management",
+        "release management experience",
+        "hands-on experience in release management",
+        "hands-on experience with release management"
+      ],
+      "category": "experience",
+      "default": "Yes, 4.2 Years of experience with release management, automated CI/CD pipelines, and zero-downtime production deployments.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, 4.2 Years of experience with release management, automated CI/CD pipelines, and zero-downtime production deployments.",
+        "textarea": "Yes, 4.2 Years of experience with release management, automated CI/CD pipelines, and zero-downtime production deployments.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "frontend_backend_experience_breakdown": {
+      "patterns": [
+        "frontend & backend technical expertise do you have strong hands-on experience with react.js, angular, java, spring boot and hibernate? please specify your experience across these technologies.",
+        "frontend & backend technical expertise do you have strong hands-on experience with react.js, angular, java, spring boot and hibernate? please specify your experience across these technologies",
+        "frontend & backend technical expertise",
+        "please specify your experience across these technologies",
+        "specify your experience across these technologies"
+      ],
+      "category": "skills",
+      "default": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years, Angular: 1 Year.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years, Angular: 1 Year.",
+        "textarea": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years, Angular: 1 Year.",
+        "radio": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years",
+        "select": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years, Angular: 1 Year.",
+        "checkbox": "Java & Spring Boot: 4.2 Years, Hibernate/JPA: 4 Years, React.js: 3 Years, Angular: 1 Year.",
+        "number": ""
+      }
+    },
+    "metadata_schema_driven_architecture": {
+      "patterns": [
+        "metadata-driven / schema-driven architecture do you have practical experience designing metadata/schema-driven execution engines, json-based configuration contracts or dynamic configuration interpretation?",
+        "metadata-driven / schema-driven architecture do you have practical experience designing metadata/schema-driven execution engines, json-based configuration contracts or dynamic configuration interpretation",
+        "metadata-driven / schema-driven architecture",
+        "metadata-driven architecture",
+        "schema-driven architecture",
+        "metadata driven execution engines",
+        "json-based configuration contracts",
+        "dynamic configuration interpretation"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience designing metadata-driven execution engines using JSON Schema contracts.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, extensive experience designing metadata-driven execution engines using JSON Schema contracts.",
+        "textarea": "Yes, extensive experience designing metadata-driven execution engines using JSON Schema contracts.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "low_code_no_code_platform_experience": {
+      "patterns": [
+        "do you have hands-on experience designing, developing or leading the development of low-code/no-code platforms, rad tools, workflow builders or visual editors? please describe the platform and your contribution.",
+        "do you have hands-on experience designing, developing or leading the development of low-code/no-code platforms, rad tools, workflow builders or visual editors? please describe the platform and your contribution",
+        "low-code/no-code platforms, rad tools, workflow builders or visual editors",
+        "low-code/no-code platforms",
+        "workflow builders or visual editors",
+        "rad tools, workflow builders"
+      ],
+      "category": "skills",
+      "default": "Yes, designed and developed modular workflow automation tools and drag-and-drop configuration builders.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, designed and developed modular workflow automation tools and drag-and-drop configuration builders.",
+        "textarea": "Yes, designed and developed modular workflow automation tools and drag-and-drop configuration builders.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "workflow_orchestration_camunda_temporal": {
+      "patterns": [
+        "have you implemented workflow orchestration using camunda (bpmn) or temporal? please specify the tool and your hands-on experience.",
+        "have you implemented workflow orchestration using camunda (bpmn) or temporal? please specify the tool and your hands-on experience",
+        "have you implemented workflow orchestration using camunda or temporal",
+        "workflow orchestration using camunda (bpmn) or temporal",
+        "workflow orchestration using camunda",
+        "workflow orchestration using temporal",
+        "camunda (bpmn) or temporal"
+      ],
+      "category": "skills",
+      "default": "Yes, implemented distributed workflow orchestration using Temporal and Camunda BPMN.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, implemented distributed workflow orchestration using Temporal and Camunda BPMN.",
+        "textarea": "Yes, implemented distributed workflow orchestration using Temporal and Camunda BPMN.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "cloudformation_experience_explain": {
+      "patterns": [
+        "have you worked with cloudformation? please explain your experience.",
+        "have you worked with cloudformation? please explain your experience",
+        "have you worked with cloudformation? please explain",
+        "have you worked with cloudformation",
+        "cloudformation experience explain",
+        "explain your experience with cloudformation"
+      ],
+      "category": "skills",
+      "default": "Yes, extensive experience authoring and maintaining AWS CloudFormation and SAM templates.",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "Yes, extensive experience authoring and maintaining AWS CloudFormation and SAM templates.",
+        "textarea": "Yes, extensive experience authoring and maintaining AWS CloudFormation and SAM templates.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "cloud_sales_experience": {
+      "patterns": [
+        "how many years of experience do you have in cloud sales?",
+        "how many years of experience do you have in cloud sales",
+        "years of experience in cloud sales",
+        "experience in cloud sales",
+        "cloud sales experience"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "textarea": "0 Years",
+        "radio": "0",
+        "select": "0 Years",
+        "checkbox": "0",
+        "number": "0"
+      }
+    },
+    "solution_selling_experience": {
+      "patterns": [
+        "how many years of experience do you have in solution selling?",
+        "how many years of experience do you have in solution selling",
+        "years of experience in solution selling",
+        "experience in solution selling",
+        "solution selling experience"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "textarea": "0 Years",
+        "radio": "0",
+        "select": "0 Years",
+        "checkbox": "0",
+        "number": "0"
+      }
+    },
+    "gotomarket_strategy_experience": {
+      "patterns": [
+        "how many years of experience do you have in go-to-market strategy?",
+        "how many years of experience do you have in go-to-market strategy",
+        "years of experience in go-to-market strategy",
+        "experience in go-to-market strategy",
+        "go-to-market strategy experience",
+        "gtm strategy experience",
+        "years of experience in gtm"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "priority": 18,
+      "input_type_defaults": {
+        "text": "0 Years",
+        "textarea": "0 Years",
+        "radio": "0",
+        "select": "0 Years",
+        "checkbox": "0",
+        "number": "0"
+      }
+    },
+    "notice_period_and_lwd_mention": {
+      "patterns": [
+        "what is your current notice period / if serving notice period, mention your last working day.",
+        "what is your current notice period / if serving notice period, mention your last working day",
+        "if serving notice period, mention your last working day",
+        "notice period / if serving notice period, mention your last working day",
+        "notice period if serving mention your lwd",
+        "notice period and last working day"
+      ],
+      "category": "notice_period",
+      "default": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+      "priority": 19,
+      "input_type_defaults": {
+        "text": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+        "textarea": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+        "radio": "Serving Notice Period",
+        "select": "Serving Notice Period",
+        "checkbox": "Serving Notice Period",
+        "number": "__DYNAMIC_LWD_DDMMYYYY__",
+        "date": "__DYNAMIC_LWD_ISO__"
       }
     }
   },

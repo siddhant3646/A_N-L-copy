@@ -1211,7 +1211,7 @@ class SentinelAgent:
             return zero_skill_answer, 0.98
 
         if skill_context_ok and self._is_skill_years_question(question_lower):
-            if 'each' in question_lower:
+            if any(w in question_lower for w in ('each', 'across these', 'across all', 'breakdown', 'specify your experience across', 'in each', 'respective experience')):
                 skill_matches = self._find_skill_matches(question_lower)
                 if skill_matches:
                     parts = [
@@ -2393,7 +2393,12 @@ class SentinelAgent:
             'have you worked with', 'have you worked on', 'have you worked in',
             'trading or capital market', 'capital markets', 'capital market'
         ]
-        is_yes_no_proficiency = any(kw in question_lower for kw in yes_no_proficiency_keywords) and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years', 'give brief', 'brief on', 'give a brief', 'describe', 'elaborate', 'explain', 'briefly', 'which of the following', 'select all that apply', 'choose all that apply', 'which areas', 'which technologies', 'which tools', 'which platforms'])
+        is_yes_no_proficiency = (
+            any(kw in question_lower for kw in yes_no_proficiency_keywords)
+            and not any(w in question_lower for w in ['how many', 'how much', 'how many years', 'years of experience', 'years in', 'number of years', 'give brief', 'brief on', 'give a brief', 'describe', 'elaborate', 'explain', 'briefly', 'which of the following', 'select all that apply', 'choose all that apply', 'which areas', 'which technologies', 'which tools', 'which platforms'])
+            and not bool(re.search(r'\b(which|what|list|name)\b.*?\b(technologies|tools|frameworks|languages|databases|libraries|modules|platforms|services|stack|backend|frontend)\b', question_lower))
+            and not question_lower.strip().startswith(('which ', 'what ', 'list ', 'name '))
+        )
         
         # E-commerce domain experience
         ecommerce_keywords = ['e-commerce', 'ecommerce', 'e commerce']
@@ -2620,6 +2625,15 @@ class SentinelAgent:
         # Project count questions
         if is_project_count:
             return '5', 0.98
+
+        # Backend technologies worked with hands-on
+        if (
+            ('backend' in question_lower or 'back-end' in question_lower or 'back end' in question_lower)
+            and any(w in question_lower for w in ('technologies', 'technology', 'tools', 'languages', 'stack', 'frameworks'))
+            and any(w in question_lower for w in ('worked', 'hands-on', 'hands on', 'experience', 'used', 'proficient', 'list'))
+            and not is_asking_quantity
+        ):
+            return 'Java, Spring Boot, Node.js, Python, PostgreSQL, MongoDB, Kafka, Redis, AWS, Microservices, REST APIs', 0.98
         
         # Yes/No Proficiency (must be BEFORE rating questions)
         if is_yes_no_proficiency:
@@ -5013,10 +5027,33 @@ class SentinelAgent:
                             except Exception:
                                 pass
 
+                            # Check if the location input ALREADY contains a valid candidate location
+                            try:
+                                existing_val = (await loc.input_value(timeout=500) or '').strip()
+                                existing_lower = existing_val.lower()
+                                if any(c in existing_lower for c in ['bangalore', 'bengaluru', 'karnataka', 'india']) and 'cape verde' not in existing_lower and not existing_lower.endswith('indiabangalore') and 'indiabangalore' not in existing_lower:
+                                    print(f"   ℹ️ Location input already has valid candidate location: {existing_val}")
+                                    await asyncio.sleep(0.5)
+                                    continue
+                            except Exception:
+                                pass
+
                             import platform
                             mod_key = 'Meta' if platform.system() == 'Darwin' else 'Control'
                             await loc.click()
                             await asyncio.sleep(0.2)
+                            # Hard reset via native setter to clear any React controlled state
+                            try:
+                                await loc.evaluate(
+                                    """(el) => {
+                                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                        setter.call(el, '');
+                                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                                    }"""
+                                )
+                            except Exception:
+                                pass
                             try:
                                 await loc.fill('')
                             except Exception:
@@ -5047,6 +5084,7 @@ class SentinelAgent:
                                             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
                                             setter.call(el, '');
                                             el.dispatchEvent(new Event('input', { bubbles: true }));
+                                            el.dispatchEvent(new Event('change', { bubbles: true }));
                                         }"""
                                     )
                             except Exception:
@@ -5136,6 +5174,20 @@ class SentinelAgent:
                                     await self._page.keyboard.press('ArrowDown')
                                     await asyncio.sleep(0.2)
                                     await self._page.keyboard.press('Enter')
+                                    # Ensure value is not left corrupted with IndiaBangalore
+                                    try:
+                                        check_val = (await loc.input_value(timeout=500) or '').strip()
+                                        if 'indiabangalore' in check_val.lower():
+                                            await loc.evaluate(
+                                                """(el) => {
+                                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                                    setter.call(el, 'Bengaluru, Karnataka, India');
+                                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }"""
+                                            )
+                                    except Exception:
+                                        pass
 
                             await asyncio.sleep(0.5)
                             continue
@@ -5643,10 +5695,33 @@ class SentinelAgent:
                                     except Exception:
                                         pass
 
+                                    # Check if the location input ALREADY contains a valid candidate location
+                                    try:
+                                        existing_val = (await loc.input_value(timeout=500) or '').strip()
+                                        existing_lower = existing_val.lower()
+                                        if any(c in existing_lower for c in ['bangalore', 'bengaluru', 'karnataka', 'india']) and 'cape verde' not in existing_lower and not existing_lower.endswith('indiabangalore') and 'indiabangalore' not in existing_lower:
+                                            print(f"   ℹ️ Location input already has valid candidate location: {existing_val}")
+                                            await asyncio.sleep(0.5)
+                                            continue
+                                    except Exception:
+                                        pass
+
                                     import platform
                                     mod_key = 'Meta' if platform.system() == 'Darwin' else 'Control'
                                     await loc.click()
                                     await asyncio.sleep(0.2)
+                                    # Hard reset via native setter to clear any React controlled state
+                                    try:
+                                        await loc.evaluate(
+                                            """(el) => {
+                                                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                                setter.call(el, '');
+                                                el.dispatchEvent(new Event('input', { bubbles: true }));
+                                                el.dispatchEvent(new Event('change', { bubbles: true }));
+                                            }"""
+                                        )
+                                    except Exception:
+                                        pass
                                     try:
                                         await loc.fill('')
                                     except Exception:
@@ -5664,6 +5739,19 @@ class SentinelAgent:
                                         if cur_val:
                                             for _ in range(len(cur_val) + 5):
                                                 await self._page.keyboard.press('Backspace')
+                                    except Exception:
+                                        pass
+                                    try:
+                                        leftover = await loc.input_value(timeout=500)
+                                        if leftover:
+                                            await loc.evaluate(
+                                                """(el) => {
+                                                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                                    setter.call(el, '');
+                                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }"""
+                                            )
                                     except Exception:
                                         pass
                                     await asyncio.sleep(0.2)
@@ -5739,7 +5827,24 @@ class SentinelAgent:
                                             except Exception:
                                                 continue
                                         if not found:
-                                            print("   ⚠️ No location dropdown options found")
+                                            print("   ⚠️ No location dropdown options found; pressing ArrowDown + Enter")
+                                            await self._page.keyboard.press('ArrowDown')
+                                            await asyncio.sleep(0.2)
+                                            await self._page.keyboard.press('Enter')
+                                            # Ensure value is not left corrupted with IndiaBangalore
+                                            try:
+                                                check_val = (await loc.input_value(timeout=500) or '').strip()
+                                                if 'indiabangalore' in check_val.lower():
+                                                    await loc.evaluate(
+                                                        """(el) => {
+                                                            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                                                            setter.call(el, 'Bengaluru, Karnataka, India');
+                                                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                                                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                                                        }"""
+                                                    )
+                                            except Exception:
+                                                pass
 
                                     await asyncio.sleep(0.5)
                                     continue
@@ -5954,7 +6059,10 @@ class SentinelAgent:
                                 break
                             continue
                         elif 'LINKEDIN_SAFETY_MODAL_CONTINUE_CLICKED' in next_result:
-                            print("🛡️ Acknowledged Safety Reminder")
+                            print("🛡️ Acknowledged Safety Reminder, waiting for application modal to render...")
+                            same_result_count = 0
+                            form_stuck_count = 0
+                            await asyncio.sleep(random.uniform(3.5, 5.0))
                             continue
                         elif 'LINKEDIN_MODAL_STUCK_SKIPPED' in next_result:
                             print(f"⚠️ LinkedIn modal stuck watchdog triggered in autopilot: {next_result}. Skipping job...")
@@ -10798,15 +10906,23 @@ class SentinelAgent:
             # 1. Unknown questions (not answer or conf < 0.65)
             # 2. Genuine long-form / architectural essay prompts
             q_lower = qtext.lower()
-            is_standard_profile = any(k in q_lower for k in [
-                'ctc', 'salary', 'lpa', 'fixed', 'variable', 'experience', 'notice',
-                'lwd', 'last working day', 'location', 'relocate', 'current company',
-                'organization', 'skills', 'tools', 'qualification', 'degree', 'education'
-            ])
-            is_essay = is_textarea and any(k in q_lower for k in [
+            is_essay_keyword = any(k in q_lower for k in [
                 'explain', 'describe', 'why should', 'why do you', 'architecture',
-                'system design', 'cover letter', 'project details', 'challenging problem'
-            ]) and not is_standard_profile
+                'system design', 'cover letter', 'project details', 'challenging problem',
+                'walk us through', 'tell us about', 'details of your', 'write a brief',
+                'specify your experience across', 'specify the tool', 'what was your contribution',
+                'your contribution', 'how did you', 'how would you'
+            ])
+            is_standard_profile = not is_essay_keyword and any(k in q_lower for k in [
+                'current ctc', 'expected ctc', 'in lacs', 'lpa', 'fixed ctc', 'variable ctc',
+                'notice period', 'lwd', 'last working day', 'last working date',
+                'how many years', 'years of experience', 'total experience', 'total exp',
+                'current company', 'current organization', 'highest qualification',
+                'current location', 'preferred location'
+            ])
+            is_essay = is_textarea and (is_essay_keyword or (not is_standard_profile and any(k in q_lower for k in [
+                'design', 'project', 'implement', 'approach', 'solution'
+            ])))
 
             use_llm = llm is not None and (not answer or conf < 0.65 or is_essay) and llm_budget > 0
             if use_llm:
@@ -15723,7 +15839,7 @@ class SentinelAgent:
                         // years; generic-only matches fall through to total experience.
                         const pool = skillMatches.filter(m => !GENERIC_SKILLS.has(m[0]));
                         if (!pool.length) return null;
-                        if (/\\beach\\b/.test(qLower)) {
+                        if (/(?:\\beach\\b|across\\s+(?:these|all)|breakdown|specify\\s+your\\s+experience|in\\s+each|respective\\s+experience)/i.test(qLower)) {
                             return pool.map(m => m[0].replace(/\\b\\w/g, ch => ch.toUpperCase()) + ': ' + formatSkillYears(m[1])).join(', ');
                         }
                         const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower));
@@ -18230,8 +18346,9 @@ return resolveDynamic(bestMatch);
                                                          /please provide|not applicable|unanswered/i.test(existingValue) ||
                                                          (isNumberError && !/^\\d+(\\.\\d+)?$/.test((existingValue || '').trim()));
                                 let resolvedAnswer = labelText ? fuzzyMatch(labelText) : null;
-                                if (!resolvedAnswer || (/[a-zA-Z]/.test(resolvedAnswer || '') && (isNumberError || has20CharLimit)) || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && /last working day|lwd|official last|notice|join/i.test(lowerLabel))) {
+                                if (!resolvedAnswer || (/[a-zA-Z]/.test(resolvedAnswer || '') && (isNumberError || has20CharLimit)) || (isInvalidError && /[a-zA-Z]/.test(existingValue || '') && (/last working day|lwd|official last|notice|join/i.test(lowerLabel) || /experience|hands-on|hands on|years|yoe|knowledge|skills/i.test(lowerLabel)))) {
                                     if (/last working day|lwd|official last|notice|np|how soon|join|serving/i.test(lowerLabel)) resolvedAnswer = '15';
+                                    else if (/experience|hands-on|hands on|years|yoe|knowledge|skills/i.test(lowerLabel)) resolvedAnswer = '4';
                                     else if (/first\\s*name/i.test(lowerLabel)) resolvedAnswer = 'Siddhant';
                                     else if (/last\\s*name|surname/i.test(lowerLabel)) resolvedAnswer = 'Singh';
                                     else if (/mobile|phone/i.test(lowerLabel)) resolvedAnswer = '7905828880';
@@ -18253,7 +18370,7 @@ return resolveDynamic(bestMatch);
                                 // FIX: If the field id contains "numeric", input is number type, or has20CharLimit,
                                 // ensure we have a valid numeric value. If text has no digits, replace with numeric fallback.
                                 const fieldId = input.id || '';
-                                const isNumericField = (/numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || has20CharLimit || (isInvalidError && /notice|np|lwd|days|serving/i.test(labelText))) && !/phone|mobile|tel\\b|contact\\s*number/i.test(lowerLabel);
+                                const isNumericField = (/numeric/i.test(fieldId) || /numeric/i.test(input.name || '') || input.type === 'number' || input.inputMode === 'numeric' || input.getAttribute('pattern')?.includes('[0-9]') || has20CharLimit || (isInvalidError && (/notice|np|lwd|days|serving/i.test(labelText) || /experience|hands-on|hands on|years|yoe|knowledge|skills/i.test(labelText)))) && !/phone|mobile|tel\\b|contact\\s*number/i.test(lowerLabel);
                                 if (isNumericField) {
                                     if (/notice|np|lwd|days|serving|join/i.test(labelText) && (has20CharLimit || /10 to 20|10-20|immediate/i.test(labelText))) {
                                         finalValue = '15';
@@ -18519,6 +18636,8 @@ return resolveDynamic(bestMatch);
                                         }
                                     } else if (isNoticePrompt) {
                                         answer = '15 days (serving notice period)';
+                                    } else if (/preferr?ed\\s*(?:work\\s*)?locations?|locations?\\s*preference/i.test(lowerLabel)) {
+                                        answer = 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida';
                                     } else if (isLocationPrompt) {
                                         answer = 'Bengaluru, Karnataka, India';
                                     } else if (isYesNoPrompt) {
@@ -18563,6 +18682,9 @@ return resolveDynamic(bestMatch);
                                 } else if (combinedText.includes('skill') || combinedText.includes('expertise') || combinedText.includes('technologies') || combinedText.includes('tech stack')) {
                                     answer = 'Java, JavaScript, HTML, CSS, ReactJS, NodeJS, Python, Spring Boot, Hibernate, AWS, SQL, Docker, Kubernetes';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling skill set field');
+                                } else if (/preferr?ed\\s*(?:work\\s*)?locations?|locations?\\s*preference/i.test(combinedText)) {
+                                    answer = 'Bangalore, Delhi NCR, Hyderabad, Mumbai, Pune, Gurgaon, Chennai, Kolkata, Ahmedabad, Noida';
+                                    window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling preferred location');
                                 } else if (combinedText.includes('location') || (combinedText.includes('city') && !combinedText.includes('street'))) {
                                     answer = 'Bangalore';
                                     window.__SENTINEL_DEBUG__&&console.log('Fallback: Filling location/city field');
@@ -23008,8 +23130,20 @@ return resolveDynamic(bestMatch);
                     // SAFETY GUARD: If inside autopilot mode, checkModals() or intercepts did not find an active modal.
                     // NEVER proceed to skip checks or sidebar job selection — return waiting signal to allow modal to mount/render.
                     if (window.__SENTINEL_IN_AUTOPILOT__) {
+                        window.__waitingForModalCount = (window.__waitingForModalCount || 0) + 1;
+                        if (window.__waitingForModalCount > 3) {
+                            // Check if Easy Apply or Continue button is visible on page and click it
+                            const eaBtn = document.querySelector('.jobs-apply-button, button[aria-label*="Easy Apply"], #jobs-apply-button-id');
+                            if (eaBtn && isVisible(eaBtn)) {
+                                window.__waitingForModalCount = 0;
+                                eaBtn.click();
+                                return 'LINKEDIN_EASY_APPLY_CLICKED';
+                            }
+                        }
                         window.__SENTINEL_DEBUG__&&console.log('Inside autopilot mode but no modal detected yet. Returning LINKEDIN_WAITING_FOR_MODAL');
                         return 'LINKEDIN_WAITING_FOR_MODAL';
+                    } else {
+                        window.__waitingForModalCount = 0;
                     }
 
                     // Persistent skip-list across invocations (survives between evaluate calls)

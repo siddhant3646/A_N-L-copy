@@ -254,6 +254,32 @@ class PatternMatcher:
                 "and 7) OpenAPI/Swagger documentation and OWASP top 10 security headers."
             ), max(score, 0.98)
 
+        # 0h2. Backend Technologies Hands-on / Worked With
+        if (
+            ('backend' in ql or 'back-end' in ql or 'back end' in ql)
+            and any(w in ql for w in ('technologies', 'technology', 'tools', 'languages', 'stack', 'frameworks'))
+            and any(w in ql for w in ('worked', 'hands-on', 'hands on', 'experience', 'used', 'proficient', 'list'))
+            and not bool(re.search(r'^(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)', ql))
+        ):
+            return 'Java, Spring Boot, Node.js, Python, PostgreSQL, MongoDB, Kafka, Redis, AWS, Microservices, REST APIs', max(score, 0.98)
+
+        # 0h3. Low-Code / No-Code / RAD Tools / Workflow Builders
+        if ('low-code' in ql or 'no-code' in ql or 'low code' in ql or 'no code' in ql or 'rad tools' in ql or 'workflow builders' in ql or 'visual editors' in ql) and any(w in ql for w in ('describe', 'contribution', 'experience', 'platform', 'designing', 'building')):
+            return (
+                "At Everbridge, I designed and developed core backend execution engines and configurable workflow builders. "
+                "I built JSON-schema-driven workflow execution pipelines that allowed business and ops teams to model automated "
+                "dispute resolution and alerting sequences without code changes. My contribution included designing the BPMN/state-machine "
+                "engine, integrating asynchronous task executors with Apache Kafka and Spring Boot, and creating intuitive visual config interfaces "
+                "with drag-and-drop node chaining in React."
+            ), max(score, 0.98)
+
+        # 0h4. Metadata-Driven / Schema-Driven Architecture
+        if ('metadata-driven' in ql or 'schema-driven' in ql or 'metadata driven' in ql or 'schema driven' in ql or 'configuration contracts' in ql) and any(w in ql for w in ('architecture', 'engine', 'execution', 'design', 'practical experience', 'experience')):
+            return (
+                "Yes, extensive experience designing metadata-driven execution engines using JSON Schema contracts for dynamic form rendering, "
+                "configurable business rule evaluation, and event routing pipelines in Spring Boot."
+            ), max(score, 0.98)
+
         # 0i. Equity / ESOP in Current Company (prevent false positives on CTC breakdown questions)
         is_equity_q = bool(re.search(r'\b(hold(ing)?\s+(any\s+)?equity|equity\s+in(\s+the)?\s+current|stock\s+options?\s+in)\b', ql) or
                            ('equity' in ql and ('current company' in ql or 'employer' in ql or 'hold' in ql)) or
@@ -373,6 +399,11 @@ class PatternMatcher:
                             gate_passed = False
                             break
                 return ('Yes' if gate_passed else 'No'), max(score, 0.98)
+
+        # Guard against returning numeric "4.2 Years" / "4" for "Do you have ... experience" questions that expect a descriptive or Yes/No answer
+        if al in ('4', '4.2', '4.2 Years', '4 Years') and not asks_quantity:
+            if re.match(r'^(?:do\s+you|have\s+you|are\s+you|can\s+you|will\s+you|would\s+you)\b', ql.strip()):
+                return ('Yes' if input_type in ('radio', 'checkbox', 'select') else 'Yes, extensive hands-on experience in production environments.'), max(score, 0.95)
 
         # 0j. Address
         is_address_q = bool(ql in ('address', 'current address', 'permanent address', 'residential address', 'street address', 'address line 1', 'address line 2') or

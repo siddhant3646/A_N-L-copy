@@ -367,7 +367,9 @@ class TestInputTypeAwareResolving(unittest.TestCase):
         defaults = p.get("input_type_defaults", {})
         self.assertEqual(defaults.get("text"), "15")
         self.assertEqual(defaults.get("select"), "15 days")
-        self.assertEqual(defaults.get("radio"), "15")
+        # Radio must carry the "days" unit: bare "15" fails the duration-radio
+        # scoring (ansIsDaysOnly) and fell back to the first option ("Available now").
+        self.assertEqual(defaults.get("radio"), "15 days")
         self.assertEqual(defaults.get("number"), "15")
 
     def test_yes_no_compliance_input_types(self):

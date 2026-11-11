@@ -875,6 +875,11 @@ class SentinelAgent:
         if not has_alternative and '/' in question_lower and not re.search(r'\band\b', question_lower):
             # Slash-separated lists ("Java/ Go/ Rust") are alternatives.
             has_alternative = True
+        # Example lists ("RDBMS databases such as SQL, PostgreSQL, Oracle") are
+        # existential: answer with the strongest listed skill instead of letting
+        # a zero-year domain override ("oracle") drag the answer to 0.
+        if re.search(r'\b(?:such\s+as|including|e\.?g\.)\b', question_lower):
+            return max(specific, key=lambda item: item[1])
         if has_alternative:
             return max(specific, key=lambda item: item[1])
         return min(specific, key=lambda item: item[1])
@@ -1001,7 +1006,7 @@ class SentinelAgent:
 
         for pattern in (
             r'(?:at\s+least|minimum(?:\s+of)?|min\.?|more\s+than|over|above|greater\s+than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)',
-            r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)',
+            r'(\d+(?:\.\d+)?)\s*(?:\+|\bplus\b)\s*(?:years?|yrs?)',
             r'(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s*(?:\+|plus|or\s+more|or\s+above|and\s+above)',
         ):
             for match in re.finditer(pattern, q):
@@ -1131,6 +1136,12 @@ class SentinelAgent:
         has_alternative = bool(re.search(r'\bor\b', q))
         if not has_alternative and '/' in q and not re.search(r'\band\b', q):
             has_alternative = True
+
+        # Example lists ("relational databases such as MySQL and Oracle") are
+        # existential: hands-on with ANY listed example → Yes, even when a
+        # sibling example is a zero-year domain override ("oracle").
+        if re.search(r'\b(?:such\s+as|including|e\.?g\.)\b', q):
+            return 'Yes' if any(years > 0 for _, years in specific_matches) else 'No'
 
         if has_override and not has_alternative:
             return 'No'
@@ -10531,6 +10542,15 @@ class SentinelAgent:
             for o in opts:
                 if any(k in o.lower() for k in ('15 days or less', '<= 15 days', 'less than 15', '< 15 days', 'within 15', '15 days', '15-30')):
                     return o
+            # Priority 2.5: Week-scale options ("2/3 weeks", "2 weeks") — a
+            # short (≤4-week) notice maps to weeks; the month priorities below
+            # must not steal it (2026-11-10: "What is your current notice
+            # period?" picked "1 month" over "2/3 weeks").
+            ans_days_weeks = self._hirist_option_to_days(answer)
+            if ans_days_weeks is not None and 0 < ans_days_weeks <= 28:
+                for o in opts:
+                    if any(k in o.lower() for k in ('2/3 weeks', '2-3 weeks', '2 to 3 weeks', '2 weeks', '3 weeks', 'two weeks', 'three weeks')):
+                        return o
             # Priority 3: Less than 1 month / 1 month or less / Less than 30 days
             for o in opts:
                 if any(k in o.lower() for k in ('< 1 month', '<= 1 month', 'less than a month', 'less than 1 month', '1 month or less', 'within a month', 'less than 30 days', 'less than 30', '< 30 days', '<= 30 days', 'within 30 days')):
@@ -12484,7 +12504,7 @@ class SentinelAgent:
                                 if (/\beach\b/.test(qNormalized)) {{
                                     return yearPool.map(m => m[0].replace(/\b\w/g, ch => ch.toUpperCase()) + ': ' + fmtSkillYears(m[1])).join(', ');
                                 }}
-                                const hasAlt = skillHasAlt;
+                                const hasAlt = skillHasAlt || /(?:such\s+as|including|e\.?g\.)/.test(qNormalized);
                                 const chosen = yearPool.reduce((a, b) => hasAlt ? (b[1] > a[1] ? b : a) : (b[1] < a[1] ? b : a));
                                 return fmtSkillYears(chosen[1]);
                             }}
@@ -12494,6 +12514,10 @@ class SentinelAgent:
                                 && !/certifications?|certified|degree|education|course|training/.test(qNormalized)
                                 && !/describe|explain|briefly/.test(qNormalized);
                             if (isSkillYesNoQ && specificHits.length) {{
+                                // Example lists ("relational databases such as MySQL and
+                                // Oracle") are existential: any listed skill with
+                                // experience → Yes, even if a sibling is a zero override.
+                                if (/(?:such\s+as|including|e\.?g\.)/.test(qNormalized)) return allHits.some(m => m[1] > 0) ? 'Yes' : 'No';
                                 const zeroSet = new Set(ZERO_SKILLS.map(z => normSkillText(z)));
                                 const hasOverride = specificHits.some(m => zeroSet.has(m[0]));
                                 const hasAlt = skillHasAlt;
@@ -15828,7 +15852,7 @@ class SentinelAgent:
                         if (!specific.length) return null;
                         const zeroSet = new Set(ZERO_SKILLS.map(z => normalizeSkillText(z)));
                         const hasOverride = specific.some(m => zeroSet.has(m[0]));
-                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower));
+                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower)) || /(?:such\\s+as|including|e\\.?g\\.)/.test(qLower);
                         if (hasOverride && !hasAlternative) return 'No';
                         if (hasAlternative) return skillMatches.some(m => m[1] > 0) ? 'Yes' : 'No';
                         return specific.every(m => m[1] > 0) ? 'Yes' : 'No';
@@ -15842,7 +15866,7 @@ class SentinelAgent:
                         if (/(?:\\beach\\b|across\\s+(?:these|all)|breakdown|specify\\s+your\\s+experience|in\\s+each|respective\\s+experience)/i.test(qLower)) {
                             return pool.map(m => m[0].replace(/\\b\\w/g, ch => ch.toUpperCase()) + ': ' + formatSkillYears(m[1])).join(', ');
                         }
-                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower));
+                        const hasAlternative = /\\bor\\b/.test(qLower) || (qLower.includes('/') && !/\\band\\b/.test(qLower)) || /(?:such\\s+as|including|e\\.?g\\.)/.test(qLower);
                         const chosen = pool.reduce((a, b) => {
                             if (hasAlternative) return (b[1] > a[1] ? b : a);
                             return (b[1] < a[1] ? b : a);
@@ -15858,7 +15882,7 @@ class SentinelAgent:
                         }
                         const minPatterns = [
                             /(?:at\\s+least|minimum(?:\\s+of)?|min\\.?|more\\s+than|over|above|greater\\s+than)\\s*(\\d+(?:\\.\\d+)?)\\s*\\+?\\s*(?:years?|yrs?)/g,
-                            /(\\d+(?:\\.\\d+)?)\\s*\\+\\s*(?:years?|yrs?)/g,
+                            /(\\d+(?:\\.\\d+)?)\\s*(?:\\+|\\bplus\\b)\\s*(?:years?|yrs?)/g,
                             /(\\d+(?:\\.\\d+)?)\\s*(?:years?|yrs?)\\s*(?:\\+|plus|or\\s+more|or\\s+above|and\\s+above)/g
                         ];
                         minPatterns.forEach(re => {

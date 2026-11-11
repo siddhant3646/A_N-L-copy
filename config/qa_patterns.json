@@ -1032,7 +1032,7 @@
         "textarea": "15",
         "select": "15 days",
         "select-aggressive": "Yes",
-        "radio": "15",
+        "radio": "15 days",
         "checkbox": "15",
         "number": "15"
       },
@@ -10237,7 +10237,7 @@
       "input_type_defaults": {
         "text": "15",
         "number": "15",
-        "radio": "15",
+        "radio": "15 days",
         "select": "15 Days",
         "textarea": "15",
         "checkbox": "15"
@@ -11843,7 +11843,26 @@
         "primary base is mumbai",
         "primary base is delhi",
         "primary base is noida",
-        "primary base is gurgaon"
+        "primary base is gurgaon",
+        "are you originally from vizag",
+        "originally from vizag",
+        "are you from vizag",
+        "are you originally from visakhapatnam",
+        "originally from visakhapatnam",
+        "are you originally from chennai",
+        "originally from chennai",
+        "are you originally from mumbai",
+        "originally from mumbai",
+        "are you originally from pune",
+        "originally from pune",
+        "are you originally from hyderabad",
+        "originally from hyderabad",
+        "are you originally from delhi",
+        "originally from delhi",
+        "are you originally from noida",
+        "originally from noida",
+        "are you originally from gurgaon",
+        "originally from gurgaon"
       ],
       "input_type_defaults": {
         "radio": "No",
@@ -66634,7 +66653,12 @@
     },
     "personal_alternate_email": {
       "patterns": [
-        "alternate email"
+        "alternate email",
+        "alternate email id",
+        "alternate email id if any",
+        "any alternate email id",
+        "alternate email address",
+        "secondary email id"
       ],
       "category": "personal_info",
       "default": "siddhant3646@gmail.com",

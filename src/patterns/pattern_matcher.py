@@ -165,7 +165,7 @@ class PatternMatcher:
         if is_lwd and not asks_day_count:
             lwd_date = datetime.now() + timedelta(days=15)
             lwd_formatted = lwd_date.strftime('%d %b %Y')
-            if al in ('15', '15 days', 'yes', 'no') or not re.search(r'\d{4}|[A-Za-z]{3}', al):
+            if al.lower() in ('15', '15 days', 'yes', 'no', 'serving notice period', 'currently serving notice period') or not re.search(r'\d{4}|[A-Za-z]{3}', al):
                 return lwd_formatted, max(score, 0.98)
 
         # 0.1 Work authorization status (e.g. for India)
@@ -177,6 +177,19 @@ class PatternMatcher:
         if ('without sponsorship' in ql or 'without any sponsorship' in ql) and any(
             w in ql for w in ('proof', 'eligibility', 'eligible', 'identity', 'authorized', 'work in india', 'legally')
         ):
+            return 'Yes', max(score, 0.99)
+
+        # 0.1c US work authorization gate (candidate does not have US work visa/auth)
+        is_us_auth_gate = bool(
+            re.search(r'\b(?:united\s+states|u\.s\.|in\s+the\s+us|in\s+the\s+u\.s\.|in\s+the\s+united\s+states)\b', ql)
+            and re.search(r'\b(?:authorized\s+to\s+work|able\s+to\s+work|eligible\s+to\s+work|work\s+authorization|work\s+permit)\b', ql)
+            and not re.search(r'\b(?:overlap|hours|timezone|time\s*zone|shift)\b', ql)
+        )
+        if is_us_auth_gate:
+            return ('No' if (input_type in ('radio', 'select', 'checkbox') or al.lower() in ('yes', 'not applicable', 'true')) else 'No - authorized to work in India only'), max(score, 0.99)
+
+        # 0.1d US hours acceptability
+        if 'working us hours' in ql or 'work us hours' in ql or ('us hours' in ql and any(w in ql for w in ('acceptable', 'comfortable', 'ready', 'willing', 'okay', 'ok', 'fine'))):
             return 'Yes', max(score, 0.99)
 
         # 0.2 When can you start / earliest availability
@@ -259,7 +272,8 @@ class PatternMatcher:
             ('backend' in ql or 'back-end' in ql or 'back end' in ql)
             and any(w in ql for w in ('technologies', 'technology', 'tools', 'languages', 'stack', 'frameworks'))
             and any(w in ql for w in ('worked', 'hands-on', 'hands on', 'experience', 'used', 'proficient', 'list'))
-            and not bool(re.search(r'^(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)', ql))
+            and not bool(re.search(r'\b(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)\b', ql))
+            and not bool(re.search(r'\b\d+\s*(?:[-–—to]|\+)\s*\d*\s*(?:years?|yrs?)\b', ql))
         ):
             return 'Java, Spring Boot, Node.js, Python, PostgreSQL, MongoDB, Kafka, Redis, AWS, Microservices, REST APIs', max(score, 0.98)
 
@@ -358,8 +372,11 @@ class PatternMatcher:
             return 'Yes', max(score, 0.98)
 
         # 0m. Experience threshold gate ("Do you have 5+ years...", "candidates with 10-15 years...", etc.)
+        if re.search(r'\b(?:managing\s+(?:frontend|backend|platform|engineering\s+teams)|engineering\s+management)\b', ql):
+            return 'No', max(score, 0.98)
+
         is_age_q = bool(re.search(r'\b(?:years?|yrs?)\s+(?:old|of\s+age)\b|\blegal\s+age\b|\b18\+\s*(?:years?\s*)?(?:old|of\s+age)\b|\bat\s+least\s+18\b|\b18\s+or\s+older\b', ql))
-        asks_quantity = bool(re.search(r'^(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)', ql.strip()))
+        asks_quantity = bool(re.search(r'\b(?:how\s+many|how\s+much|what\s+is\s+your|number\s+of\s+years|total\s+years)\b', ql.strip()))
         has_range = bool(re.search(r'(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(\+)?\s*(?:years?|yrs?)\b', ql))
         gate_context = (
             bool(re.search(r'(?:do\s+you|have\s+you|are\s+you|can\s+you|will\s+you|you\s+have|you\s+possess|we\s+are\s+looking|candidates?\s+with|looking\s+for|required|requirement|only|eligible|qualify|pl\s+confirm|confirm\s+if)', ql))
@@ -375,7 +392,7 @@ class PatternMatcher:
                 reqs.append(('range', float(m.group(1)), upper))
             for m in re.finditer(r'(?:at\s+least|minimum(?:\s+of)?|min\.?|more\s+than|over|above|greater\s+than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)', ql):
                 reqs.append(('min', float(m.group(1)), float('inf')))
-            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)', ql):
+            for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:\+|\bplus\b)\s*(?:years?|yrs?)', ql):
                 reqs.append(('min', float(m.group(1)), float('inf')))
             for m in re.finditer(r'(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s*(?:\+|plus|or\s+more|or\s+above|and\s+above)', ql):
                 reqs.append(('min', float(m.group(1)), float('inf')))
@@ -846,6 +863,8 @@ class PatternMatcher:
         # 7. Detect 12th/10th Board percentage / aggregate
         is_board_pct = bool(re.search(r'\b(12th|10th|hsc|ssc|intermediate)\b', ql) and re.search(r'\b(%|percent|percentage|marks|aggregate)\b', ql))
         if is_board_pct:
+            if any(w in ql for w in ('passed out year', 'passing year', 'year and percentage')):
+                return ('2016 and 90%' if re.search(r'\b(10th|ssc)\b', ql) else '2018 and 85%'), max(score, 0.98)
             return ('88' if re.search(r'\b(10th|ssc)\b', ql) else '70'), max(score, 0.98)
 
         # 8. Detect company / payroll company questions vs numeric / salary false positives

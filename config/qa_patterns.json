@@ -1335,7 +1335,15 @@
         "pan card",
         "kindly help us with your pan",
         "pan for registration",
-        "pan card for registration"
+        "pan card for registration",
+        "pan no, mandatory for uploading the profile.",
+        "pan no, mandatory for uploading the profile",
+        "pan no mandatory for uploading the profile",
+        "pan no",
+        "pan no.",
+        "pan number",
+        "enter pan",
+        "enter your pan"
       ],
       "category": "personal_info",
       "default": "MTKPS1941P",
@@ -1348,7 +1356,7 @@
         "checkbox": "Yes",
         "number": ""
       },
-      "priority": 9,
+      "priority": 22,
       "requires_exact_match": true
     },
     "offer_ctc": {
@@ -2011,7 +2019,15 @@
         "your pan card number",
         "mention your pan card number",
         "mention your pan",
-        "mention your pan number"
+        "mention your pan number",
+        "pan no, mandatory for uploading the profile.",
+        "pan no, mandatory for uploading the profile",
+        "pan no mandatory for uploading the profile",
+        "pan no",
+        "pan no.",
+        "pan number",
+        "enter pan",
+        "enter your pan"
       ],
       "category": "personal_info",
       "default": "MTKPS1941P",
@@ -2024,7 +2040,7 @@
         "checkbox": "Yes",
         "number": ""
       },
-      "priority": 9,
+      "priority": 22,
       "requires_exact_match": true
     },
     "dob_and_pan": {
@@ -2889,8 +2905,6 @@
     "docker_kubernetes": {
       "patterns": [
         "docker or kubernetes",
-        "docker",
-        "kubernetes",
         "hands-on exposure to docker",
         "exposure to docker or kubernetes"
       ],
@@ -2930,6 +2944,7 @@
     },
     "kafka_experience": {
       "patterns": [
+        "kafka",
         "experience in kafka",
         "experience in kafka/",
         "experience in kafka/streaming",
@@ -2960,8 +2975,7 @@
         "have you worked with kafka",
         "are you familiar with kafka",
         "kafka knowledge",
-        "exp in kafka",
-        "kafka"
+        "exp in kafka"
       ],
       "category": "yes_no",
       "default": "Yes",
@@ -4503,7 +4517,10 @@
         "checkbox": "Yes",
         "number": "0"
       },
-      "priority": 11
+      "priority": 11,
+      "negative_patterns": [
+        "coding"
+      ]
     },
     "github_url": {
       "patterns": [
@@ -11650,6 +11667,7 @@
       "default": "4.2 Years",
       "priority": 9,
       "patterns": [
+        "kubernetes",
         "years of experience do you have in kubernetes",
         "years of work experience do you have with kubernetes",
         "kubernetes experience",
@@ -11678,6 +11696,7 @@
       "default": "4.2 Years",
       "priority": 9,
       "patterns": [
+        "docker",
         "years of experience do you have in docker",
         "years of work experience do you have with docker",
         "docker experience",
@@ -15010,18 +15029,32 @@
         "us work permit",
         "eligible to work in us",
         "legally authorized us",
-        "only for us based positions"
+        "only for us based positions",
+        "are you able to work in the united states?",
+        "are you able to work in the united states",
+        "able to work in the united states",
+        "are you able to work in the us?",
+        "are you able to work in the us",
+        "able to work in the us",
+        "able to work in us",
+        "are you able to work in the u.s.?",
+        "are you able to work in the u.s.",
+        "able to work in the u.s.",
+        "are you legally authorized to work in the united states?",
+        "are you authorized to work in the united states",
+        "are you authorized to work in the us",
+        "authorized to work in the us"
       ],
       "category": "work_authorization",
-      "default": "Not Applicable",
-      "priority": 15,
+      "default": "No",
+      "priority": 22,
       "input_type_defaults": {
-        "radio": "Not Applicable",
-        "select": "Not Applicable",
+        "radio": "No",
+        "select": "No",
         "checkbox": "No",
         "text": "No",
         "textarea": "No",
-        "number": "N/A"
+        "number": "0"
       }
     },
     "work_authorization_uk": {
@@ -18654,7 +18687,6 @@
     },
     "redux_state_management": {
       "patterns": [
-        "redux",
         "redux toolkit",
         "state management",
         "state management library"
@@ -28324,6 +28356,7 @@
     },
     "exp_redux": {
       "patterns": [
+        "redux",
         "Redux experience",
         "years of experience in Redux",
         "how many years of Redux experience",
@@ -40321,7 +40354,11 @@
         "notice period",
         "ctc",
         "expected",
-        "current"
+        "current",
+        "explain",
+        "please explain",
+        "describe",
+        "experience with"
       ]
     },
     "exp_jenkins": {
@@ -82734,18 +82771,21 @@
         "do you speak spanish",
         "spanish language proficiency",
         "are you proficient in spanish",
-        "spanish fluency"
+        "spanish fluency",
+        "are you fluent in spanish (spoken and written)?",
+        "are you fluent in spanish",
+        "fluent in spanish"
       ],
       "category": "skills",
-      "default": "Fluent",
+      "default": "No",
       "priority": 6,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_french": {
@@ -82753,18 +82793,21 @@
         "do you speak french",
         "french language proficiency",
         "are you proficient in french",
-        "french fluency"
+        "french fluency",
+        "are you fluent in french (spoken and written)?",
+        "are you fluent in french",
+        "fluent in french"
       ],
       "category": "skills",
-      "default": "Fluent",
+      "default": "No",
       "priority": 6,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_german": {
@@ -82772,18 +82815,21 @@
         "do you speak german",
         "german language proficiency",
         "are you proficient in german",
-        "german fluency"
+        "german fluency",
+        "are you fluent in german (spoken and written)?",
+        "are you fluent in german",
+        "fluent in german"
       ],
       "category": "skills",
-      "default": "Fluent",
+      "default": "No",
       "priority": 6,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_mandarin": {
@@ -82810,18 +82856,21 @@
         "do you speak japanese",
         "japanese language proficiency",
         "are you proficient in japanese",
-        "japanese fluency"
+        "japanese fluency",
+        "are you fluent in japanese (spoken and written)?",
+        "are you fluent in japanese",
+        "fluent in japanese"
       ],
       "category": "skills",
-      "default": "Fluent",
+      "default": "No",
       "priority": 6,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_korean": {
@@ -82845,21 +82894,25 @@
     },
     "lang_arabic": {
       "patterns": [
+        "are you fluent in arabic (spoken and written)?",
+        "are you fluent in arabic (spoken and written)",
+        "are you fluent in arabic?",
+        "are you fluent in arabic",
+        "fluent in arabic",
         "do you speak arabic",
         "arabic language proficiency",
-        "are you proficient in arabic",
         "arabic fluency"
       ],
       "category": "skills",
-      "default": "Fluent",
-      "priority": 6,
+      "default": "No",
+      "priority": 22,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_portuguese": {
@@ -82886,18 +82939,21 @@
         "do you speak russian",
         "russian language proficiency",
         "are you proficient in russian",
-        "russian fluency"
+        "russian fluency",
+        "are you fluent in russian (spoken and written)?",
+        "are you fluent in russian",
+        "fluent in russian"
       ],
       "category": "skills",
-      "default": "Fluent",
+      "default": "No",
       "priority": 6,
       "input_type_defaults": {
-        "radio": "Fluent",
-        "select": "Fluent",
-        "text": "Fluent",
-        "textarea": "Fluent",
-        "checkbox": "Yes",
-        "number": "1"
+        "radio": "No",
+        "select": "Not Fluent",
+        "text": "No",
+        "textarea": "No",
+        "checkbox": "No",
+        "number": "0"
       }
     },
     "lang_tamil": {
@@ -83590,7 +83646,8 @@
         "textarea": "Yes",
         "checkbox": "Yes",
         "number": "1"
-      }
+      },
+      "requires_exact_match": true
     },
     "lever_voluntary_disclosure": {
       "patterns": [
@@ -1314777,7 +1314834,7 @@
       "default": "Day Job",
       "priority": 18,
       "input_type_defaults": {
-        "checkbox": "Yes",
+        "checkbox": "Day Job",
         "radio": "Day Job",
         "select": "Day Job",
         "text": "Day Job",
@@ -1316400,6 +1316457,427 @@
         "checkbox": "Serving Notice Period",
         "number": "__DYNAMIC_LWD_DDMMYYYY__",
         "date": "__DYNAMIC_LWD_ISO__"
+      }
+    },
+    "coding_profile_link": {
+      "patterns": [
+        "coding profile link",
+        "coding profile url",
+        "coding profile",
+        "coding link",
+        "coding platform profile link",
+        "coding platform link",
+        "competitive coding profile",
+        "coding profile link / github link",
+        "coding handle",
+        "coding profile handles"
+      ],
+      "category": "personal_info",
+      "default": "https://github.com/siddhant3646",
+      "input_type_defaults": {
+        "text": "https://github.com/siddhant3646",
+        "textarea": "https://github.com/siddhant3646",
+        "radio": "https://github.com/siddhant3646",
+        "select": "https://github.com/siddhant3646",
+        "checkbox": "https://github.com/siddhant3646",
+        "number": ""
+      },
+      "priority": 22,
+      "negative_patterns": [
+        "linkedin"
+      ]
+    },
+    "rest_soap_banking_financial_experience": {
+      "patterns": [
+        "have you developed or consumed rest and soap web services (json / xml) in a banking or financial application? (yes / no, with a one-line example.)",
+        "have you developed or consumed rest and soap web services (json / xml) in a banking or financial application",
+        "have you developed or consumed rest and soap web services",
+        "developed or consumed rest and soap web services in a banking or financial application",
+        "developed or consumed rest and soap web services",
+        "rest and soap web services in a banking or financial application",
+        "rest and soap web services"
+      ],
+      "category": "technical",
+      "default": "Yes, developed and consumed resilient REST and SOAP web services (JSON/XML) for financial workflows with Spring Boot, robust validation, and error handling.",
+      "input_type_defaults": {
+        "radio": "Yes",
+        "checkbox": "Yes",
+        "select": "Yes",
+        "text": "Yes, developed and consumed resilient REST and SOAP web services (JSON/XML) for financial workflows with Spring Boot, robust validation, and error handling.",
+        "textarea": "Yes, developed and consumed resilient REST and SOAP web services (JSON/XML) for financial workflows with Spring Boot, robust validation, and error handling.",
+        "number": "1"
+      },
+      "priority": 22
+    },
+    "tenth_passed_out_year_percentage": {
+      "patterns": [
+        "10th class passed out year and percentage ( for example 2015 and 90%)",
+        "10th class passed out year and percentage",
+        "10th passed out year and percentage",
+        "10th class passing year and percentage",
+        "10th passed out year",
+        "tenth class passed out year and percentage"
+      ],
+      "category": "education",
+      "default": "2016 and 90%",
+      "input_type_defaults": {
+        "text": "2016 and 90%",
+        "textarea": "2016 and 90%",
+        "radio": "2016 and 90%",
+        "select": "2016 and 90%",
+        "checkbox": "2016 and 90%",
+        "number": "2016"
+      },
+      "priority": 22
+    },
+    "twelfth_passed_out_year_percentage": {
+      "patterns": [
+        "12th class or diploma passed out year and percentage (for example 2017 and 85% or diploma 2018 and 85%)",
+        "12th class or diploma passed out year and percentage",
+        "12th class passed out year and percentage",
+        "12th class passing year and percentage",
+        "twelfth class passed out year and percentage"
+      ],
+      "category": "education",
+      "default": "2018 and 85%",
+      "input_type_defaults": {
+        "text": "2018 and 85%",
+        "textarea": "2018 and 85%",
+        "radio": "2018 and 85%",
+        "select": "2018 and 85%",
+        "checkbox": "2018 and 85%",
+        "number": "2018"
+      },
+      "priority": 22
+    },
+    "graduation_passed_out_year_percentage": {
+      "patterns": [
+        "graduation passed out year and percentage (for example b.tech -2021-60%)",
+        "graduation passed out year and percentage",
+        "graduation passing year and percentage",
+        "graduation passed out year",
+        "degree passed out year and percentage",
+        "highest educational qualification with passed out year and percentage"
+      ],
+      "category": "education",
+      "default": "B.Tech - 2022 - 85%",
+      "input_type_defaults": {
+        "text": "B.Tech - 2022 - 85%",
+        "textarea": "B.Tech - 2022 - 85%",
+        "radio": "B.Tech - 2022 - 85%",
+        "select": "B.Tech - 2022 - 85%",
+        "checkbox": "B.Tech - 2022 - 85%",
+        "number": "2022"
+      },
+      "priority": 22
+    },
+    "em_experience": {
+      "patterns": [
+        "how many years of experience do you have in em (in years)?",
+        "how many years of experience do you have in em",
+        "years of experience in em",
+        "experience in em",
+        "experience in em (in years)",
+        "em experience",
+        "experience as em",
+        "how many years in em"
+      ],
+      "category": "experience",
+      "default": "0 Years",
+      "input_type_defaults": {
+        "number": "0",
+        "text": "0 Years",
+        "textarea": "0 Years",
+        "radio": "0",
+        "select": "0 Years",
+        "checkbox": "No"
+      },
+      "priority": 22,
+      "negative_patterns": [
+        "email",
+        "embedded"
+      ]
+    },
+    "attended_interviews_or_received_calls_previously": {
+      "patterns": [
+        "have you attended any interviews or received any calls regarding ibm previously?",
+        "have you attended any interviews or received any calls regarding ibm previously",
+        "have you attended any interviews or received any calls regarding",
+        "attended any interviews or received any calls regarding",
+        "attended any interviews or received any calls",
+        "received any calls regarding ibm",
+        "attended any interviews regarding ibm",
+        "received any calls regarding any company previously"
+      ],
+      "category": "compliance",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "number": "0"
+      },
+      "priority": 22
+    },
+    "iit_nit_iiit_education": {
+      "patterns": [
+        "are you from any iit / nit / iiit - be / b.tech / mtech / mca - education background?",
+        "are you from any iit / nit / iiit - be / b.tech / mtech / mca - education background",
+        "are you from any iit / nit / iiit",
+        "from any iit / nit / iiit",
+        "iit / nit / iiit",
+        "iit/nit/iiit",
+        "tier 1 college (iit/nit)",
+        "premier institute (iit/nit)"
+      ],
+      "category": "education",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No",
+        "textarea": "No",
+        "number": "0"
+      },
+      "priority": 22
+    },
+    "experience_managing_engineering_teams": {
+      "patterns": [
+        "do you have at least 3 years of experience managing frontend, backend and/or platform engineering teams",
+        "experience managing frontend, backend and/or platform engineering teams",
+        "managing frontend, backend and/or platform engineering teams",
+        "experience managing engineering teams",
+        "engineering management & technical leadership do you have at least 3 years of experience managing"
+      ],
+      "category": "experience",
+      "default": "No",
+      "input_type_defaults": {
+        "radio": "No",
+        "checkbox": "No",
+        "select": "No",
+        "text": "No - I am a hands-on Software Engineer 2 (SDE-2) focused on core backend architecture, not people management.",
+        "textarea": "No - I am a hands-on Software Engineer 2 (SDE-2) focused on core backend architecture and engineering implementation, not formal people management.",
+        "number": "0"
+      },
+      "priority": 22
+    },
+    "cloudformation_experience_explanation": {
+      "patterns": [
+        "have you worked with cloudformation? please explain your experience.",
+        "have you worked with cloudformation? please explain your experience",
+        "have you worked with cloudformation please explain your experience",
+        "have you worked with cloudformation",
+        "please explain your cloudformation experience",
+        "explain your experience with cloudformation"
+      ],
+      "category": "technical_screening",
+      "default": "Yes, I have worked with AWS CloudFormation and Terraform to automate infrastructure provisioning, defining YAML templates for VPCs, ECS task definitions, S3 buckets, and RDS instances with automated rollback and parameterization.",
+      "priority": 22,
+      "input_type_defaults": {
+        "text": "Yes, I have worked with AWS CloudFormation and Terraform to automate infrastructure provisioning, defining YAML templates for VPCs, ECS task definitions, S3 buckets, and RDS instances with automated rollback and parameterization.",
+        "textarea": "Yes, I have worked with AWS CloudFormation and Terraform to automate infrastructure provisioning, defining YAML templates for VPCs, ECS task definitions, S3 buckets, and RDS instances with automated rollback and parameterization.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "us_hours_acceptable": {
+      "patterns": [
+        "this job requires working us hours i.e. from 7pm india time to 4am india time. is that acceptable? i",
+        "this job requires working us hours i.e. from 7pm india time to 4am india time. is that acceptable?",
+        "this job requires working us hours i.e. from 7pm india time to 4am india time",
+        "working us hours i.e. from 7pm india time to 4am india time",
+        "working us hours from 7pm india time to 4am india time",
+        "this job requires working us hours"
+      ],
+      "category": "work_mode",
+      "default": "Yes",
+      "priority": 22,
+      "input_type_defaults": {
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "text": "Yes",
+        "textarea": "Yes",
+        "number": "1"
+      }
+    },
+    "exp_gate_over_5_years": {
+      "patterns": [
+        "do you have 7–10 years of overall it experience?",
+        "do you have 7–10 years of overall it experience",
+        "do you have 7-10 years of overall it experience",
+        "do you have 7 to 10 years of overall it experience",
+        "do you have 6+ years of experience with node.js and typescript development?",
+        "do you have 6+ years of  experience with node.js and typescript development?",
+        "do you have 6+ years of experience with node.js and typescript development",
+        "do you have at least 5 to 7 years of hands-on production experience using both react.js/react native",
+        "do you have at least 5 to 7 years of hands-on production experience",
+        "do you have 10 plus years of experience?",
+        "do you have 10 plus years of experience",
+        "do you have 10+ years of experience",
+        "do you have 8+ years of experience",
+        "do you have 7+ years of experience",
+        "do you have 6+ years of experience",
+        "do you have 5+ years of experience"
+      ],
+      "category": "experience",
+      "default": "No",
+      "priority": 22,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "text": "No - I have 4.2 years of total professional software engineering experience.",
+        "textarea": "No - I have 4.2 years of total professional software engineering experience.",
+        "number": "4"
+      }
+    },
+    "notice_period_in_weeks": {
+      "patterns": [
+        "what is your notice period? in weeks?",
+        "what is your notice period in weeks?",
+        "what is your notice period in weeks",
+        "notice period? in weeks?",
+        "notice period in weeks?",
+        "notice period in weeks",
+        "notice period? in weeks",
+        "notice period (in weeks)",
+        "notice period (weeks)",
+        "notice period in no of weeks",
+        "notice period in number of weeks"
+      ],
+      "category": "notice_period",
+      "default": "2 Weeks",
+      "priority": 22,
+      "input_type_defaults": {
+        "number": "2",
+        "text": "2 Weeks",
+        "textarea": "2 Weeks (15 days notice period, currently serving)",
+        "radio": "2",
+        "select": "2 Weeks",
+        "checkbox": "2"
+      }
+    },
+    "serving_notice_period_when_is_lwd": {
+      "patterns": [
+        "if serving notice period, when is your last working day with your employer?",
+        "if serving notice period when is your last working day with your employer",
+        "if serving notice period, when is your last working day",
+        "if serving notice period when is your last working day",
+        "when is your last working day with your employer",
+        "when is your last working day with your current employer",
+        "mention your last working day with your employer",
+        "mention your last working day"
+      ],
+      "category": "notice_period",
+      "default": "__DYNAMIC_LWD__",
+      "dynamic_answer": true,
+      "priority": 22,
+      "input_type_defaults": {
+        "text": "__DYNAMIC_LWD__",
+        "textarea": "__DYNAMIC_LWD__",
+        "date": "__DYNAMIC_LWD__",
+        "radio": "Serving Notice Period",
+        "select": "Serving Notice Period",
+        "checkbox": "Serving Notice Period",
+        "number": "15"
+      }
+    },
+    "official_notice_period_or_serving_lwd": {
+      "patterns": [
+        "your official notice period or if serving lwd?",
+        "your official notice period or if serving lwd",
+        "official notice period or if serving lwd",
+        "official notice period or if serving lwd?",
+        "what is your official notice period or if serving lwd"
+      ],
+      "category": "notice_period",
+      "default": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+      "dynamic_answer": true,
+      "priority": 22,
+      "input_type_defaults": {
+        "text": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+        "textarea": "15 Days (Serving Notice Period, LWD: __DYNAMIC_LWD__)",
+        "number": "15",
+        "radio": "15 Days",
+        "select": "15 Days",
+        "checkbox": "15 Days"
+      }
+    },
+    "production_grade_application_description": {
+      "patterns": [
+        "briefly describe a production-grade application you built or significantly contributed to. what was the scale and your specific role?",
+        "briefly describe a production-grade application you built or significantly contributed to",
+        "describe a production-grade application you built or significantly contributed to",
+        "describe a production-grade application you built",
+        "describe a production grade application you built",
+        "production-grade application you built or significantly contributed to",
+        "production-grade application you built",
+        "production grade application you built"
+      ],
+      "category": "technical_screening",
+      "default": "At Everbridge, I architected and built an event-driven notification dispatch pipeline using Java 21, Spring Boot, and Apache Kafka handling over 10M alerts daily. My role was backend lead: designed the multi-AZ deployment on AWS ECS/EKS, PostgreSQL with read replicas, Redis caching for recipient state (<5ms latency), and implemented Transactional Outbox pattern with idempotent consumers to guarantee zero message loss.",
+      "priority": 22,
+      "input_type_defaults": {
+        "text": "At Everbridge, I architected and built an event-driven notification dispatch pipeline using Java 21, Spring Boot, and Apache Kafka handling over 10M alerts daily. My role was backend lead: designed the multi-AZ deployment on AWS ECS/EKS, PostgreSQL with read replicas, Redis caching for recipient state (<5ms latency), and implemented Transactional Outbox pattern with idempotent consumers to guarantee zero message loss.",
+        "textarea": "At Everbridge, I architected and built an event-driven notification dispatch pipeline using Java 21, Spring Boot, and Apache Kafka handling over 10M alerts daily. My role was backend lead: designed the multi-AZ deployment on AWS ECS/EKS, PostgreSQL with read replicas, Redis caching for recipient state (<5ms latency), and implemented Transactional Outbox pattern with idempotent consumers to guarantee zero message loss.",
+        "radio": "Yes",
+        "select": "Yes",
+        "checkbox": "Yes",
+        "number": "1"
+      }
+    },
+    "loc_current_in_vizag": {
+      "patterns": [
+        "are you currently in vizag?",
+        "are you currently in vizag",
+        "are you in vizag",
+        "currently in vizag",
+        "if you are not currently in vizag are you originally from vizag or nearby?",
+        "if you are not currently in vizag are you originally from vizag or nearby",
+        "are you originally from vizag or nearby"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 22,
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "text": "No, currently based in Bengaluru but open to relocation.",
+        "textarea": "No, currently based in Bengaluru but open to relocation.",
+        "number": "0"
+      }
+    },
+    "loc_based_in_delhi": {
+      "patterns": [
+        "are you based in delhi?",
+        "are you based in delhi",
+        "currently based in delhi",
+        "are you located in delhi"
+      ],
+      "category": "location",
+      "default": "No",
+      "priority": 22,
+      "negative_patterns": [
+        "relocate",
+        "relocation",
+        "willing to relocate",
+        "open to relocate",
+        "ready to relocate"
+      ],
+      "input_type_defaults": {
+        "radio": "No",
+        "select": "No",
+        "checkbox": "No",
+        "text": "No, currently based in Bengaluru but open to relocation.",
+        "textarea": "No, currently based in Bengaluru but open to relocation.",
+        "number": "0"
       }
     }
   },

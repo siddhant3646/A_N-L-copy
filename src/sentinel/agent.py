@@ -168,7 +168,7 @@ GENERIC_SKILL_LABELS = {
 # tech-stack skill answers with the total experience instead.
 ZERO_EXPERIENCE_OVERRIDES = (
     "product manager", "product management", "business development",
-    "engineering manager",
+    "engineering manager", "engineering management", "em",
     "sdet",
     "price elasticity", "promotion model", "cpg", "fmcg", "pharma",
     "healthcare", "health care", "jd edwards", "jde", "dft", "physical design",
@@ -1033,6 +1033,10 @@ class SentinelAgent:
         if re.search(r'\b(?:how\s+many|how\s+much|what\s+is\s+your|whats\s+your|what\'s\s+your|number\s+of\s+years|enter\s+your|mention\s+your|specify\s+your)\b', q) and not re.search(r'\b(?:eligible|qualify|agree|acceptable|confirm)\b', q):
             return None
 
+        # Zero-experience roles/domains in Yes/No gates (e.g. "Do you have 3+ years managing engineering teams?")
+        if re.search(r'\b(?:managing\s+(?:frontend|backend|platform|engineering\s+teams)|engineering\s+management)\b', q):
+            return 'No'
+
         requirements = self._extract_experience_requirements(q)
         if not requirements:
             return None
@@ -1281,6 +1285,52 @@ class SentinelAgent:
         ):
             return 'No', 0.98
 
+        # REST and SOAP web services in banking/financial application
+        if (
+            re.search(r'(?:developed\s+or\s+consumed|developing\s+or\s+consuming).*rest\s+and\s+soap', question_lower)
+            or 'rest and soap web services' in question_lower
+            or ('soap web services' in question_lower and 'rest' in question_lower)
+        ):
+            return (
+                "Yes, developed and consumed resilient REST and SOAP web services (JSON/XML) for financial workflows with Spring Boot, robust validation, and error handling."
+            ), 0.99
+
+        # Coding profile link (GitHub / portfolio, distinct from LinkedIn)
+        if any(kw in question_lower for kw in ['coding profile link', 'coding profile url', 'coding profile', 'coding link', 'coding platform profile', 'competitive coding profile']):
+            return 'https://github.com/siddhant3646', 0.99
+
+        # Education passed out year and percentage
+        if '10th' in question_lower and any(w in question_lower for w in ['passed out year', 'passing year', 'year and percentage']):
+            return '2016 and 90%', 0.99
+        if ('12th' in question_lower or 'diploma' in question_lower) and any(w in question_lower for w in ['passed out year', 'passing year', 'year and percentage']):
+            return '2018 and 85%', 0.99
+        if ('graduation' in question_lower or 'highest educational' in question_lower) and any(w in question_lower for w in ['passed out year', 'passing year', 'year and percentage']):
+            return 'B.Tech - 2022 - 85%', 0.99
+
+        # Previously interviewed or received calls regarding companies
+        if (
+            re.search(r'\b(?:attended\s+(?:any\s+)?interviews?|received\s+(?:any\s+)?calls?)\b.*?(?:regarding|from|with)\b', question_lower)
+            or re.search(r'\b(?:interviewed\s+(?:with|by|for))\b.*?\b(?:previously|before|earlier)\b', question_lower)
+        ) and 'everbridge' not in question_lower and 'fiserv' not in question_lower:
+            return 'No', 0.99
+
+        # Non-spoken foreign languages (candidate is fluent in English and Hindi only)
+        if (
+            re.search(r'\b(?:fluent\s+in|proficient\s+in|speak|knowledge\s+of)\s+(?:arabic|german|french|spanish|japanese|mandarin|russian|italian|dutch|korean)\b', question_lower)
+            or re.search(r'\b(?:arabic|german|french|spanish|japanese|mandarin|russian|italian|dutch|korean)\s+(?:fluency|language|proficiency)\b', question_lower)
+        ):
+            return 'No', 0.99
+
+        # Premier institute education background (candidate graduated from VIT Bhopal)
+        if re.search(r'\b(?:are\s+you\s+from\s+any\s+)?(?:iit\s*/\s*nit\s*/\s*iiit|iit/nit/iiit)\b', question_lower):
+            return 'No', 0.99
+
+        # Engineering manager / EM experience (candidate has 0 years formal people management)
+        if re.search(r'\b(?:experience\s+(?:in|as)|how\s+many\s+years(?:\s+of\s+experience)?\s+(?:do\s+you\s+have\s+)?in)\s+em\b', question_lower) and 'email' not in question_lower and 'embedded' not in question_lower:
+            return ('0' if self._current_platform == 'linkedin' else '0 Years'), 0.99
+        if re.search(r'\bexperience\s+managing\s+(?:frontend,\s*backend|engineering\s+teams)\b', question_lower):
+            return 'No', 0.99
+
         # Virtual hiring/interview drive availability
         if re.search(r'\b(virtual\s*drive|hiring\s*drive|recruitment\s*drive|attend.*drive)\b', question_lower):
             return 'Yes', 0.99
@@ -1309,7 +1359,7 @@ class SentinelAgent:
             return 'Yes', 0.99
 
         # US Time Zones (Outside US candidates)
-        if ('us time zone' in question_lower or 'us time zones' in question_lower or 'us timezone' in question_lower or 'us timezones' in question_lower or 'us hours' in question_lower or 'est hours' in question_lower or 'pst hours' in question_lower or 'cst hours' in question_lower) and any(w in question_lower for w in ['able to work', 'comfortable working', 'willing to work', 'overlap', 'shift', 'candidates outside the us', 'work in us', 'outside the us']):
+        if ('us time zone' in question_lower or 'us time zones' in question_lower or 'us timezone' in question_lower or 'us timezones' in question_lower or 'us hours' in question_lower or 'est hours' in question_lower or 'pst hours' in question_lower or 'cst hours' in question_lower) and any(w in question_lower for w in ['able to work', 'comfortable working', 'willing to work', 'overlap', 'shift', 'candidates outside the us', 'work in us', 'outside the us', 'acceptable', 'ok', 'fine']):
             return 'Yes', 0.99
 
         # US & Foreign Work Authorization & Visa Sponsorship
@@ -1317,11 +1367,26 @@ class SentinelAgent:
         if is_us_foreign:
             if any(kw in question_lower for kw in [
                 'authorized to work', 'legally permitted to work', 'legally authorized',
-                'eligible to work in', 'valid work permit', 'permit to work in', 'work permit'
-            ]):
-                return 'Not Applicable', 0.99
+                'eligible to work in', 'valid work permit', 'permit to work in', 'work permit',
+                'able to work', 'able to work in the'
+            ]) and not any(w in question_lower for w in ['us hours', 'timezone', 'time zone', 'shift', 'overlap']):
+                return 'No', 0.99
             if not any(sw in question_lower for sw in ['support', 'o-1', 'tn']) and ('sponsorship' in question_lower or 'visa sponsorship' in question_lower or 'employment visa' in question_lower or 'h-1b' in question_lower or 'h1b' in question_lower):
                 return 'Not applicable', 0.99
+
+        # Production-grade application description
+        if 'production-grade application' in question_lower or 'production grade application' in question_lower or ('production' in question_lower and 'application you built' in question_lower):
+            return (
+                "At Everbridge, I architected and built an event-driven notification dispatch pipeline using Java 21, Spring Boot, and Apache Kafka handling over 10M alerts daily. My role was backend lead: designed the multi-AZ deployment on AWS ECS/EKS, PostgreSQL with read replicas, Redis caching for recipient state (<5ms latency), and implemented Transactional Outbox pattern with idempotent consumers to guarantee zero message loss."
+            ), 0.99
+
+        # Notice period in weeks
+        if 'notice' in question_lower and any(w in question_lower for w in ['in weeks', 'in week', '(weeks)', '(in weeks)', 'no of weeks', 'number of weeks']):
+            return ('2' if self._current_platform == 'linkedin' else '2 Weeks'), 0.99
+
+        # PAN card mandatory upload or entry
+        if 'pan no' in question_lower or 'pan card' in question_lower or 'pan number' in question_lower or 'your pan' in question_lower:
+            return 'MTKPS1941P', 0.99
 
         # Background check / verification compliance
         if ('background check' in question_lower or 'background verification' in question_lower or 'background investigation' in question_lower or 'bgv' in question_lower) and any(w in question_lower for w in ['willing', 'consent', 'agree', 'undergo', 'subject to', 'comfortable', 'clear', 'accordance']):
@@ -2112,7 +2177,8 @@ class SentinelAgent:
 
         # Academic eligibility (60%+ criteria)
         if ('60%' in question_lower or '60 percent' in question_lower or 'first class' in question_lower) and any(kw in question_lower for kw in ['academic', '10th', '12th', 'graduation', 'throughout']):
-            return 'Yes', 0.98
+            if not any(w in question_lower for w in ['passed out year', 'passing year', 'year and percentage', 'for example', 'passed out']):
+                return 'Yes', 0.98
 
         # Academic backlogs and gaps
         if 'backlog' in question_lower or 'backlogs' in question_lower or 'standing arrears' in question_lower:
@@ -2872,7 +2938,8 @@ class SentinelAgent:
         is_salary_question = (
             bool(re.search(r'\b(ctc|salary|compensation|package|lpa|inr|pay|cctc|ectc|remuneration|financial|gross)\b', question_lower)) and
             not is_conceptual_tech and
-            not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower))
+            not bool(re.search(r'\b(payment gateway|payment system|order management|system design|distributed system|scalable backend|architecture)\b', question_lower)) and
+            not bool(re.search(r'\b(?:financial\s+(?:application|domain|services|system|systems|product|sector|industry|firm|client|institution|space|tech|data|workflows?)|banking\s+(?:or|and)\s+financial|financial\s+(?:or|and)\s+banking)\b', question_lower))
         )
         is_notice_question = any(kw in question_lower for kw in notice_keywords) and not any(kw in question_lower for kw in ['why', 'what excites', 'interested in joining', 'interested to join', 'tell us about yourself', 'motivation', 'supersourcing', 'wissen', 'join from the office', 'join from office', 'join in office'])
         is_experience_question = is_asking_quantity and not is_salary_question and not is_notice_question and not is_rating_question and not is_tech_question and not is_python_lib_question and not any(w in question_lower for w in ['services used', 'and services', 'services you have used', 'technologies used'])
@@ -12709,7 +12776,7 @@ class SentinelAgent:
                         'serving notice', 'serving notice period', 'are you serving notice', 'currently serving notice',
                         'if serving lwd', 'if serving lwd. looking for immediate joiners only',
                         'if serving lwd, looking for immediate joiners only', 'serving lwd',
-                        'if serving notice period immediate joiner', 'last working day'
+                        'if serving notice period immediate joiner'
                     ];
                     noticeKeys.forEach(k => {{
                         const v = KNOWN_PATTERNS[k];
@@ -15567,6 +15634,13 @@ class SentinelAgent:
                                 KNOWN_PATTERNS[k] = '0.5';
                                 return;
                             }
+                            if (kLower.includes('week')) {
+                                KNOWN_PATTERNS[k] = '2';
+                                return;
+                            }
+                            if (kLower.includes('last working') || kLower.includes('lwd') || kLower.includes('when is your last')) {
+                                return;
+                            }
                             if (kLower.includes('19102026') || kLower.includes('numeric_format')) {
                                 KNOWN_PATTERNS[k] = (() => { const d = new Date(); d.setDate(d.getDate() + 15); return String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear(); })();
                                 return;
@@ -15939,6 +16013,25 @@ class SentinelAgent:
                     const isConflictQ = /financial\\s*interest|personal\\s*or\\s*family\\s*relationships|relatives?\\s*(employed|working)|relatives?\\s*in\\s*the\\s*company/i.test(qLower);
                     const isRestrictiveQ = /restrictive\\s*covenants?|noncompete|non-compete|non\\s*compete|confidentiality\\s*agreements?.*restrict|bound\\s*by.*(?:non-compete|noncompete|agreements?)/i.test(qLower);
                     if (isConflictQ || isRestrictiveQ) return 'No';
+
+                    // Audit compliance intercepts
+                    if (/(?:attended\\s+(?:any\\s+)?interviews?|received\\s+(?:any\\s+)?calls?).*(?:regarding|from|with)/i.test(qLower) || /interviewed\\s+(?:with|by|for).*previously/i.test(qLower)) return 'No';
+                    if (/(?:fluent\\s+in|proficient\\s+in|speak|knowledge\\s+of)\\s+(?:arabic|german|french|spanish|japanese|mandarin|russian|italian|dutch|korean)|(?:arabic|german|french|spanish|japanese|mandarin|russian|italian|dutch|korean)\\s+(?:fluency|language|proficiency)/i.test(qLower)) return 'No';
+                    if (/iit\\s*\\/\\s*nit\\s*\\/\\s*iiit|iit\\/nit\\/iiit/i.test(qLower)) return 'No';
+                    if (/(?:coding\\s*profile|coding\\s*link|coding\\s*platform)/i.test(qLower)) return 'https://github.com/siddhant3646';
+                    if (/(?:developed\\s+or\\s+consumed|developing\\s+or\\s+consuming).*rest\\s+and\\s+soap|rest\\s+and\\s+soap.*(?:banking|financial)/i.test(qLower)) return 'Yes, developed and consumed resilient REST and SOAP web services (JSON/XML) for financial workflows with Spring Boot, robust validation, and error handling.';
+                    if (/10th.*passed\\s*out\\s*year|10th.*year\\s*and\\s*percentage/i.test(qLower)) return '2016 and 90%';
+                    if (/(?:12th|diploma).*passed\\s*out\\s*year|(?:12th|diploma).*year\\s*and\\s*percentage/i.test(qLower)) return '2018 and 85%';
+                    if (/graduation.*passed\\s*out\\s*year|graduation.*year\\s*and\\s*percentage/i.test(qLower)) return 'B.Tech - 2022 - 85%';
+                    if (/(?:experience\\s+(?:in|as)|how\\s+many\\s+years.*in)\\s+em\\b/i.test(qLower) && !/email|embedded/i.test(qLower)) return (window.location.hostname.includes('linkedin') ? '0' : '0 Years');
+                    if (/experience\\s+managing\\s+(?:frontend,\\s*backend|engineering\\s+teams)/i.test(qLower)) return 'No';
+                    if (/(?:able\\s+to\\s+work|authorized\\s+to\\s+work).*in\\s+the\\s+(?:united\\s+states|us\\b|u\\.s\\.)/i.test(qLower) && !/(?:hours|timezone|time\\s*zone|shift|overlap)/i.test(qLower)) return 'No';
+                    if (/pan\\s*no|pan\\s*card|pan\\s*number/i.test(qLower)) return 'MTKPS1941P';
+                    if (/production[- ]grade\\s*application/i.test(qLower)) return 'At Everbridge, I architected and built an event-driven notification dispatch pipeline using Java 21, Spring Boot, and Apache Kafka handling over 10M alerts daily. My role was backend lead: designed the multi-AZ deployment on AWS ECS/EKS, PostgreSQL with read replicas, Redis caching for recipient state (<5ms latency), and implemented Transactional Outbox pattern with idempotent consumers to guarantee zero message loss.';
+                    if (/notice.*in\\s*weeks/i.test(qLower)) return (window.location.hostname.includes('linkedin') ? '2' : '2 Weeks');
+                    if (/(?:currently\\s+in|originally\\s+from|are\\s+you\\s+in)\\s+vizag/i.test(qLower)) return 'No';
+                    if (/(?:based\\s+in|located\\s+in)\\s+delhi/i.test(qLower) && !/(?:relocate|relocation|open)/i.test(qLower)) return 'No';
+                    if (/(?:working|work)\\s+us\\s+hours.*(?:acceptable|comfortable|ok|fine)/i.test(qLower)) return 'Yes';
 
                     // Fast-path intercepts for audited questions
                     if (/^(?:please\\s+)?(?:enter\\s+)?(?:your\\s+)?(?:full\\s+)?name(?:\\.|\\?)?$/i.test(cleanQ) || /^full\\s+name$/i.test(cleanQ) || /^(?:candidate\\s+)?(?:full\\s+)?name$/i.test(cleanQ)) return 'Siddhant Singh';
